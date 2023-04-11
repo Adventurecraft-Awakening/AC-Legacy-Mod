@@ -8,10 +8,12 @@ sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
 archivesBaseName = project.archives_base_name
 version = project.mod_version
 group = project.maven_group
+def modId = project.mod_id
 
 loom {
     gluedMinecraftJar()
     customMinecraftManifest.set("https://babric.github.io/manifest-polyfill/${minecraft_version}.json")
+    accessWidenerPath = file("src/main/resources/${modId}.accesswidener")
 }
 
 repositories {
@@ -19,17 +21,35 @@ repositories {
         name = 'Babric'
         url = 'https://maven.glass-launcher.net/babric'
     }
-
+    maven {
+        name 'Jitpack'
+        url 'https://jitpack.io/'
+    }
+    maven {
+        name 'HalfOf2'
+        url 'https://storage.googleapis.com/devan-maven/'
+    }
 	mavenLocal()
 }
 
 dependencies {
+    // Compiles rhino, our javascript dependency, releases can be found here: https://github.com/mozilla/rhino/releases
+    // There are more archived versions on this website: https://www-archive.mozilla.org/rhino/rhino16r2
+    implementation 'rhino:js:1.7R2'
+    include 'rhino:js:1.7R2'
+
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings "net.legacyfabric:beta-yarn:b1.7.3+build.local"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
     implementation "org.slf4j:slf4j-api:1.8.0-beta4"
     implementation "org.apache.logging.log4j:log4j-slf4j18-impl:2.16.0"
+
+    implementation 'com.github.Chocohead:Fabric-ASM:v2.3'
+    include 'com.github.Chocohead:Fabric-ASM:v2.3'
+
+    implementation 'com.google.guava:guava:16+'
+    implementation 'org.apache.commons:commons-lang3:3.12.0'
 }
 
 processResources {

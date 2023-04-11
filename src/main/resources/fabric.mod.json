@@ -20,12 +20,15 @@
   "entrypoints": {
     "main": [
       "dev.adventurecraft.awakening.ACMod"
+    ],
+    "mm:early_risers": [
+      "dev.adventurecraft.awakening.earlyrisers.EnumInitializer"
     ]
   },
   "mixins": [
     "adventurecraft.mixins.json"
   ],
-
+  "accessWidener": "adventurecraft.accesswidener",
   "depends": {
     "fabricloader": ">=0.13.3",
     "minecraft": "1.0.0-beta.7.3"

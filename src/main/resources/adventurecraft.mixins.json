@@ -6,6 +6,11 @@
   "mixins": [
   ],
   "client": [
+    "client.MixinMinecraft",
+    "client.gui.MixinAchievementWidget",
+    "client.gui.screen.menu.MixinVideoSettingsScreen",
+    "entity.player.MixinAbstractClientPlayerEntity",
+    "entity.player.MixinRemoteClientPlayerEntity"
   ],
   "injectors": {
     "defaultRequire": 1
