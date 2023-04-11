@@ -14,8 +14,14 @@ public abstract class MixinMinecraft {
     @Redirect(method = "init", at = @At(
             value = "INVOKE",
             target = "Lorg/lwjgl/opengl/Display;create()V",
+            remap = false,
             ordinal = 0))
     private void init_fixDepth() throws LWJGLException {
-        Display.create((new PixelFormat()).withDepthBits(32));
+        try {
+            Display.create((new PixelFormat()).withDepthBits(32));
+        } catch (LWJGLException e) {
+            e.printStackTrace();
+            Display.create((new PixelFormat()).withDepthBits(24));
+        }
     }
 }
