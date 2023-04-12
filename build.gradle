@@ -49,7 +49,7 @@ dependencies {
     implementation 'com.github.Chocohead:Fabric-ASM:v2.3'
     include 'com.github.Chocohead:Fabric-ASM:v2.3'
 
-    implementation 'com.google.guava:guava:16+'
+    implementation 'com.google.guava:guava:31+'
     implementation 'org.apache.commons:commons-lang3:3.12.0'
 }
 
