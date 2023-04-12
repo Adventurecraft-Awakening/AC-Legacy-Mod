@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.mixin.client;
 
+import dev.adventurecraft.awakening.ACMod;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.opengl.Display;
