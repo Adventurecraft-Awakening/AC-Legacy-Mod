@@ -42,8 +42,8 @@ dependencies {
     mappings "net.legacyfabric:beta-yarn:b1.7.3+build.local"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    implementation "org.slf4j:slf4j-api:1.8.0-beta4"
-    implementation "org.apache.logging.log4j:log4j-slf4j18-impl:2.16.0"
+    implementation "org.slf4j:slf4j-api:2.0.7"
+    implementation "org.apache.logging.log4j:log4j-slf4j18-impl:2.18.0"
 
     implementation 'com.github.Chocohead:Fabric-ASM:v2.3'
     include 'com.github.Chocohead:Fabric-ASM:v2.3'
