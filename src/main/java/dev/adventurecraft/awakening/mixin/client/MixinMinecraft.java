@@ -16,12 +16,23 @@ public abstract class MixinMinecraft {
             target = "Lorg/lwjgl/opengl/Display;create()V",
             remap = false,
             ordinal = 0))
-    private void init_fixDepth() throws LWJGLException {
+    private void init_fixDepth() {
         try {
             Display.create((new PixelFormat()).withDepthBits(32));
-        } catch (LWJGLException e) {
-            e.printStackTrace();
-            Display.create((new PixelFormat()).withDepthBits(24));
+        } catch (LWJGLException e32) {
+            ACMod.LOGGER.warn("Falling back to 24-bit depth buffer since 32-bit failed: ", e32);
+
+            try {
+                Display.create((new PixelFormat()).withDepthBits(24));
+            } catch (LWJGLException e24) {
+                ACMod.LOGGER.warn("Falling back to 16-bit depth buffer since 24-bit failed: ", e24);
+
+                try {
+                    Display.create((new PixelFormat()).withDepthBits(16));
+                } catch (LWJGLException e16) {
+                    ACMod.LOGGER.warn("Falling back to unspecified depth buffer since 16-bit failed: ", e16);
+                }
+            }
         }
     }
 }
