@@ -1,8 +1,10 @@
 package dev.adventurecraft.awakening.mixin.client.options;
 
 import dev.adventurecraft.awakening.client.options.OptionOF;
-import dev.adventurecraft.awakening.common.Config;
+import dev.adventurecraft.awakening.client.options.Config;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
+import dev.adventurecraft.awakening.extension.client.render.ExGameRenderer;
+import dev.adventurecraft.awakening.extension.client.render.ExWorldEventRenderer;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.options.GameOptions;
@@ -207,8 +209,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
 
     private void updateWorldLightLevels() {
         if (this.client.gameRenderer != null) {
-            // TODO:
-            //this.client.gameRenderer.updateWorldLightLevels();
+            ((ExGameRenderer)this.client.gameRenderer).updateWorldLightLevels();
         }
 
         if (this.client.worldRenderer != null) {
@@ -269,8 +270,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
             this.advancedOpengl = false;
         }
 
-        // TODO:
-        //this.client.worldRenderer.setAllRenderesVisible();
+        ((ExWorldEventRenderer)this.client.worldRenderer).setAllRenderersVisible();
 
         ci.cancel();
     }
@@ -1184,5 +1184,10 @@ public abstract class MixinGameOptions implements ExGameOptions {
     @Override
     public boolean ofAnimatedSmoke() {
         return ofAnimatedSmoke;
+    }
+
+    @Override
+    public KeyBinding ofKeyBindZoom() {
+        return ofKeyBindZoom;
     }
 }

@@ -1,5 +1,9 @@
 package dev.adventurecraft.awakening.mixin;
 
+import dev.adventurecraft.awakening.client.options.Config;
+import dev.adventurecraft.awakening.extension.ExClass_66;
+import dev.adventurecraft.awakening.extension.client.render.ExTessellator;
+import dev.adventurecraft.awakening.extension.client.util.ExCameraView;
 import net.minecraft.block.Block;
 import net.minecraft.class_66;
 import net.minecraft.client.render.Tessellator;
@@ -16,13 +20,15 @@ import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.HashSet;
 import java.util.List;
 
-/*
 @Mixin(class_66.class)
-public abstract class MixinClass_66 {
+public abstract class MixinClass_66 implements ExClass_66 {
 
     @Shadow
     public World world;
@@ -75,9 +81,9 @@ public abstract class MixinClass_66 {
     @Shadow
     private boolean field_227;
     @Shadow
-    public List field_224;
+    public List<BlockEntity> field_224;
     @Shadow
-    private List field_228;
+    private List<BlockEntity> field_228;
 
     public boolean isVisibleFromPosition = false;
     public double visibleFromX;
@@ -115,10 +121,6 @@ public abstract class MixinClass_66 {
         }
     }
 
-    private void method_306() {
-        GL11.glTranslatef((float) this.field_240, (float) this.field_241, (float) this.field_242);
-    }
-
     @Overwrite
     public void method_296() {
         if (this.field_249) {
@@ -150,7 +152,7 @@ public abstract class MixinClass_66 {
             }
 
             Chunk.field_953 = false;
-            HashSet var8 = new HashSet();
+            HashSet<BlockEntity> var8 = new HashSet<>();
             var8.addAll(this.field_224);
             this.field_224.clear();
             byte var9 = 1;
@@ -171,7 +173,7 @@ public abstract class MixinClass_66 {
                                 if (!var15) {
                                     var15 = true;
                                     GL11.glNewList(this.field_225 + var12, GL11.GL_COMPILE);
-                                    tesselator.setRenderingChunk(true);
+                                    ((ExTessellator) tesselator).setRenderingChunk(true);
                                     tesselator.start();
                                 }
 
@@ -197,7 +199,7 @@ public abstract class MixinClass_66 {
                 if (var15) {
                     tesselator.tessellate();
                     GL11.glEndList();
-                    tesselator.setRenderingChunk(false);
+                    ((ExTessellator) tesselator).setRenderingChunk(false);
                 } else {
                     var14 = false;
                 }
@@ -211,7 +213,7 @@ public abstract class MixinClass_66 {
                 }
             }
 
-            HashSet var24 = new HashSet();
+            HashSet<BlockEntity> var24 = new HashSet<>();
             var24.addAll(this.field_224);
             var24.removeAll(var8);
             this.field_228.addAll(var24);
@@ -222,15 +224,58 @@ public abstract class MixinClass_66 {
         }
     }
 
-    @Overwrite
-    public void method_300(CameraView var1) {
-        this.field_243 = var1.canSee(this.field_250);
+    @Inject(method = "method_300", at = @At("TAIL"))
+    private void fancyOcclusionCulling(CameraView var1, CallbackInfo ci) {
         if (this.field_243 && Config.isOcclusionEnabled() && Config.isOcclusionFancy()) {
-            this.isInFrustrumFully = var1.isBoundingBoxInFrustumFully(this.field_250);
+            this.isInFrustrumFully = ((ExCameraView) var1).isBoundingBoxInFrustumFully(this.field_250);
         } else {
             this.isInFrustrumFully = false;
         }
     }
-}
 
-*/
+
+    @Override
+    public boolean isVisibleFromPosition() {
+        return this.isVisibleFromPosition;
+    }
+
+    @Override
+    public void isVisibleFromPosition(boolean value) {
+        this.isVisibleFromPosition = value;
+    }
+
+    @Override
+    public double visibleFromX() {
+        return this.visibleFromX;
+    }
+
+    @Override
+    public void visibleFromX(double x) {
+        this.visibleFromX = x;
+    }
+
+    @Override
+    public double visibleFromY() {
+        return this.visibleFromY;
+    }
+
+    @Override
+    public void visibleFromY(double y) {
+        this.visibleFromY = y;
+    }
+
+    @Override
+    public double visibleFromZ() {
+        return this.visibleFromZ;
+    }
+
+    @Override
+    public void visibleFromZ(double z) {
+        this.visibleFromZ = z;
+    }
+
+    @Override
+    public boolean isInFrustrumFully() {
+        return this.isInFrustrumFully;
+    }
+}

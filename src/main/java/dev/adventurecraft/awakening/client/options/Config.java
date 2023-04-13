@@ -1,4 +1,4 @@
-package dev.adventurecraft.awakening.common;
+package dev.adventurecraft.awakening.client.options;
 
 import java.io.File;
 import java.io.FileOutputStream;

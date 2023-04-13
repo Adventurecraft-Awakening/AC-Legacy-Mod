@@ -1,5 +1,7 @@
 package dev.adventurecraft.awakening.extension.client.options;
 
+import net.minecraft.client.options.KeyBinding;
+
 public interface ExGameOptions {
 
     boolean ofFogFancy();
@@ -77,4 +79,6 @@ public interface ExGameOptions {
     boolean ofAnimatedFlame();
 
     boolean ofAnimatedSmoke();
+
+    KeyBinding ofKeyBindZoom();
 }
