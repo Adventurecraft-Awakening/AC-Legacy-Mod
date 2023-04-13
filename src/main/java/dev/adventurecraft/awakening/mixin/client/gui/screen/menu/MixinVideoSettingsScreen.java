@@ -64,12 +64,12 @@ public abstract class MixinVideoSettingsScreen extends Screen {
 
         var5 = this.height / 6 + 21 * (var2 / 2) - 10;
         boolean var9 = false;
-        int var10 = this.width / 2 - 155 + 0;
+        int var10 = this.width / 2 - 155;
         this.buttons.add(new OptionButtonWidget(100, var10, var5, "Animations..."));
         var10 = this.width / 2 - 155 + 160;
         this.buttons.add(new OptionButtonWidget(101, var10, var5, "Details..."));
         var5 += 21;
-        var10 = this.width / 2 - 155 + 0;
+        var10 = this.width / 2 - 155;
         this.buttons.add(new OptionButtonWidget(102, var10, var5, "World..."));
         var10 = this.width / 2 - 155 + 160;
         this.buttons.add(new OptionButtonWidget(103, var10, var5, "Other..."));
@@ -161,7 +161,35 @@ public abstract class MixinVideoSettingsScreen extends Screen {
     }
 
     private String[] getTooltipLines(String var1) {
-        return var1.equals("Graphics") ? new String[]{"Visual quality", "  Fast  - lower quality, faster", "  Fancy - higher quality, slower", "Changes the appearance of clouds, leaves, water,", "shadows and grass sides."} : (var1.equals("Render Distance") ? new String[]{"Visible distance", "  Far - 256m (slower)", "  Normal - 128m", "  Short - 64m (faster)", "  Tiny - 32m (fastest)"} : (var1.equals("Smooth Lighting") ? new String[]{"Smooth lighting", "  OFF - no smooth lighting (faster)", "  1% - light smooth lighting (slower)", "  100% - dark smooth lighting (slower)"} : (var1.equals("Performance") ? new String[]{"FPS Limit", "  Max FPS - no limit (fastest)", "  Balanced - limit 120 FPS (slower)", "  Power saver - limit 40 FPS (slowest)", "  VSync - limit to monitor framerate (60, 30, 20)", "Balanced and Power saver decrease the FPS even if", "the limit value is not reached."} : (var1.equals("3D Anaglyph") ? new String[]{"3D mode used with red-cyan 3D glasses."} : (var1.equals("View Bobbing") ? new String[]{"More realistic movement.", "When using mipmaps set it to OFF for best results."} : (var1.equals("GUI Scale") ? new String[]{"GUI Scale", "Smaller GUI might be faster"} : (var1.equals("Advanced OpenGL") ? new String[]{"Detect and render only visible geometry", "  OFF - all geometry is rendered (slower)", "  Fast - ony visible geometry is rendered (fastest)", "  Fancy - conservative, avoids visual artifacts (faster)", "The option is available only if it is supported by the ", "graphic card."} : (var1.equals("Fog") ? new String[]{"Fog type", "  Fast - faster fog", "  Fancy - slower fog, looks better", "The fancy fog is available only if it is supported by the ", "graphic card."} : (var1.equals("Fog Start") ? new String[]{"Fog start", "  0.2 - the fog starts near the player", "  0.8 - the fog starts far from the player", "This option usually does not affect the performance."} : (var1.equals("Mipmap Level") ? new String[]{"Visual effect which makes distant objects look better", "by smoothing the texture details", "  OFF - no smoothing", "  1 - minimum smoothing", "  4 - maximum smoothing", "This option usually does not affect the performance."} : (var1.equals("Mipmap Type") ? new String[]{"Visual effect which makes distant objects look better", "by smoothing the texture details", "  Nearest - rough smoothing", "  Linear - fine smoothing", "This option usually does not affect the performance."} : (var1.equals("Better Grass") ? new String[]{"Better Grass", "  OFF - default side grass texture, fastest", "  Fast - full side grass texture, slower", "  Fancy - dynamic side grass texture, slowest"} : (var1.equals("Brightness") ? new String[]{"Increases the brightness of darker objects", "  OFF - standard brightness", "  100% - maximum brightness for darker objects", "This options does not change the brightness of ", "fully black objects"} : null)))))))))))));
+        if (var1.equals("Graphics"))
+            return new String[]{"Visual quality", "  Fast  - lower quality, faster", "  Fancy - higher quality, slower", "Changes the appearance of clouds, leaves, water,", "shadows and grass sides."};
+        if (var1.equals("Render Distance"))
+            return new String[]{"Visible distance", "  Far - 256m (slower)", "  Normal - 128m", "  Short - 64m (faster)", "  Tiny - 32m (fastest)"};
+        if (var1.equals("Smooth Lighting"))
+            return new String[]{"Smooth lighting", "  OFF - no smooth lighting (faster)", "  1% - light smooth lighting (slower)", "  100% - dark smooth lighting (slower)"};
+        if (var1.equals("Performance"))
+            return new String[]{"FPS Limit", "  Max FPS - no limit (fastest)", "  Balanced - limit 120 FPS (slower)", "  Power saver - limit 40 FPS (slowest)", "  VSync - limit to monitor framerate (60, 30, 20)", "Balanced and Power saver decrease the FPS even if", "the limit value is not reached."};
+        if (var1.equals("3D Anaglyph"))
+            return new String[]{"3D mode used with red-cyan 3D glasses."};
+        if (var1.equals("View Bobbing"))
+            return new String[]{"More realistic movement.", "When using mipmaps set it to OFF for best results."};
+        if (var1.equals("GUI Scale"))
+            return new String[]{"GUI Scale", "Smaller GUI might be faster"};
+        if (var1.equals("Advanced OpenGL"))
+            return new String[]{"Detect and render only visible geometry", "  OFF - all geometry is rendered (slower)", "  Fast - ony visible geometry is rendered (fastest)", "  Fancy - conservative, avoids visual artifacts (faster)", "The option is available only if it is supported by the ", "graphic card."};
+        if (var1.equals("Fog"))
+            return new String[]{"Fog type", "  Fast - faster fog", "  Fancy - slower fog, looks better", "The fancy fog is available only if it is supported by the ", "graphic card."};
+        if (var1.equals("Fog Start"))
+            return new String[]{"Fog start", "  0.2 - the fog starts near the player", "  0.8 - the fog starts far from the player", "This option usually does not affect the performance."};
+        if (var1.equals("Mipmap Level"))
+            return new String[]{"Visual effect which makes distant objects look better", "by smoothing the texture details", "  OFF - no smoothing", "  1 - minimum smoothing", "  4 - maximum smoothing", "This option usually does not affect the performance."};
+        if (var1.equals("Mipmap Type"))
+            return new String[]{"Visual effect which makes distant objects look better", "by smoothing the texture details", "  Nearest - rough smoothing", "  Linear - fine smoothing", "This option usually does not affect the performance."};
+        if (var1.equals("Better Grass"))
+            return new String[]{"Better Grass", "  OFF - default side grass texture, fastest", "  Fast - full side grass texture, slower", "  Fancy - dynamic side grass texture, slowest"};
+        if (var1.equals("Brightness"))
+            return new String[]{"Increases the brightness of darker objects", "  OFF - standard brightness", "  100% - maximum brightness for darker objects", "This options does not change the brightness of ", "fully black objects"};
+        return null;
     }
 
     private String getButtonName(String var1) {

@@ -9,6 +9,8 @@
     "client.MixinMinecraft",
     "client.gui.MixinAchievementWidget",
     "client.gui.screen.menu.MixinVideoSettingsScreen",
+    "client.options.MixinGameOptions",
+    "client.util.MixinMouseHelper",
     "entity.player.MixinAbstractClientPlayerEntity",
     "entity.player.MixinRemoteClientPlayerEntity"
   ],

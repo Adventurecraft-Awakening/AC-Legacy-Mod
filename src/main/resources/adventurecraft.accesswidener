@@ -3,6 +3,10 @@ accessWidener v1 named
 accessible field net/minecraft/client/gui/widget/ButtonWidget width I
 accessible field net/minecraft/client/gui/widget/ButtonWidget height I
 
+accessible method net/minecraft/block/Block setLightOpacity (I)Lnet/minecraft/block/Block;
+
+accessible field net/minecraft/world/World worldSource Lnet/minecraft/world/source/WorldSource;
+
 # net/minecraft/client/gui/screen/SelectWorldScreen$class_569
 # net/minecraft/item/ItemInstance
 # net/minecraft/tile/Tile drop(Lnet/minecraft/level/Level;IIII)V
