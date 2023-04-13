@@ -1,5 +1,7 @@
 accessWidener v1 named
 
+accessible field net/minecraft/client/Minecraft gameDirectory Ljava/io/File;
+
 accessible field net/minecraft/client/gui/widget/ButtonWidget width I
 accessible field net/minecraft/client/gui/widget/ButtonWidget height I
 

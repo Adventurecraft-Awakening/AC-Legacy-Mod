@@ -3,8 +3,6 @@
   "minVersion": "0.8",
   "package": "dev.adventurecraft.awakening.mixin",
   "compatibilityLevel": "JAVA_8",
-  "mixins": [
-  ],
   "client": [
     "MixinClass_66",
     "client.MixinMinecraft",

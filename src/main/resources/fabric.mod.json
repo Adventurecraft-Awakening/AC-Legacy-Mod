@@ -23,6 +23,9 @@
     ],
     "mm:early_risers": [
       "dev.adventurecraft.awakening.earlyrisers.EnumInitializer"
+    ],
+    "preLaunch": [
+      "dev.adventurecraft.awakening.ACPreLaunchFix"
     ]
   },
   "mixins": [

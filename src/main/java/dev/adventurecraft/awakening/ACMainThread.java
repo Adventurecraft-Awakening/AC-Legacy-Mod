@@ -1,18 +1,21 @@
-package dev.adventurecraft.awakening.mixin.client;
+package dev.adventurecraft.awakening;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.GameStartupError;
 import net.minecraft.client.Minecraft;
 
-@Environment(value= EnvType.CLIENT)
+import java.io.File;
+
+@Environment(value = EnvType.CLIENT)
 public final class ACMainThread extends Minecraft {
 
-    public ACMainThread(int i, int j, boolean bl) {
-        super(null, null, null, i, j, bl);
+    public ACMainThread(int width, int height, boolean fullScreen) {
+        super(null, null, null, width, height, fullScreen);
     }
 
     @Override
     public void showGameStartupError(GameStartupError arg) {
+        // TODO:
     }
 }
