@@ -475,6 +475,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     @Redirect(method = "renderSky", at = @At(
             value = "INVOKE",
             target = "Lorg/lwjgl/opengl/GL11;glCallList(I)V",
+            remap = false,
             ordinal = 0))
     private void configurableSky1(int list) {
         if (Config.isSkyEnabled()) {
@@ -485,6 +486,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     @Redirect(method = "renderSky", at = @At(
             value = "INVOKE",
             target = "Lorg/lwjgl/opengl/GL11;glCallList(I)V",
+            remap = false,
             ordinal = 2))
     private void configurableSky2(int list) {
         if (Config.isSkyEnabled()) {
@@ -495,6 +497,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     @Redirect(method = "renderSky", at = @At(
             value = "INVOKE",
             target = "Lorg/lwjgl/opengl/GL11;glCallList(I)V",
+            remap = false,
             ordinal = 1))
     private void configurableStars(int list) {
         if (Config.isStarsEnabled()) {

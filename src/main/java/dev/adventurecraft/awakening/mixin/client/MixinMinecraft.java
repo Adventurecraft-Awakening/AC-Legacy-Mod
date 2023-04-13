@@ -36,7 +36,7 @@ public abstract class MixinMinecraft {
     @Shadow
     protected abstract void updateScreenResolution(int i, int j);
 
-    @Overwrite
+    @Overwrite(remap = false)
     public static void main(String[] args) {
         Arguments arguments = new Arguments();
         arguments.parse(args);
@@ -137,6 +137,7 @@ public abstract class MixinMinecraft {
     @Inject(method = "toggleFullscreen", at = @At(
             value = "INVOKE",
             target = "Lorg/lwjgl/opengl/Display;setFullscreen(Z)V",
+            remap = false,
             shift = At.Shift.AFTER))
     private void fix_toggleFullscreen(CallbackInfo ci) throws LWJGLException {
         if (!this.isFullscreen) {
