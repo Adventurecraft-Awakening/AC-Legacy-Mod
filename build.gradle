@@ -30,10 +30,41 @@ repositories {
         name 'HalfOf2'
         url 'https://storage.googleapis.com/devan-maven/'
     }
-	mavenLocal()
+    maven {
+        name 'LWJGL3'
+        url 'https://oss.sonatype.org/content/repositories/snapshots/'
+    }
+    mavenLocal()
+}
+
+import org.gradle.internal.os.OperatingSystem
+
+project.ext.lwjglVersion = "3.3.2-SNAPSHOT"
+switch (OperatingSystem.current()) {
+    case OperatingSystem.LINUX:
+        project.ext.lwjglNatives = "natives-linux"
+        break
+    case OperatingSystem.MAC_OS:
+        project.ext.lwjglNatives = "natives-macos"
+        break
+    case OperatingSystem.WINDOWS:
+        def osArch = System.getProperty("os.arch")
+        project.ext.lwjglNatives = osArch.contains("64")
+                ? "natives-windows${osArch.startsWith("aarch64") ? "-arm64" : ""}"
+                : "natives-windows-x86"
+        break
 }
 
 dependencies {
+    // Adds LWJGL3 wrapper
+    implementation "com.github.Adventurecraft-Awakening:AC-LWJGL3-Injector:e56bf10"
+    implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
+
+    runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
+    runtimeOnly "org.lwjgl:lwjgl-glfw::$lwjglNatives"
+    runtimeOnly "org.lwjgl:lwjgl-openal::$lwjglNatives"
+    runtimeOnly "org.lwjgl:lwjgl-opengl::$lwjglNatives"
+
     // Compiles rhino, our javascript dependency, releases can be found here: https://github.com/mozilla/rhino/releases
     // There are more archived versions on this website: https://www-archive.mozilla.org/rhino/rhino16r2
     implementation 'rhino:js:1.7R2'
@@ -51,6 +82,10 @@ dependencies {
 
     implementation 'com.google.guava:guava:31+'
     implementation 'org.apache.commons:commons-lang3:3.12.0'
+}
+
+configurations.all {
+    exclude group: "org.lwjgl.lwjgl"
 }
 
 processResources {

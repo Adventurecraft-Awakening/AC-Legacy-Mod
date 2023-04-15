@@ -411,11 +411,11 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             class_66 var10 = this.field_1808[var9];
             if (var10.field_253) {
                 this.field_1797.clear();
-                ARBOcclusionQuery.glGetQueryObjectuARB(var10.field_254, GL15.GL_QUERY_RESULT_AVAILABLE, this.field_1797);
+                ARBOcclusionQuery.glGetQueryObjectuivARB(var10.field_254, GL15.GL_QUERY_RESULT_AVAILABLE, this.field_1797);
                 if (this.field_1797.get(0) != 0) {
                     var10.field_253 = false;
                     this.field_1797.clear();
-                    ARBOcclusionQuery.glGetQueryObjectuARB(var10.field_254, GL15.GL_QUERY_RESULT, this.field_1797);
+                    ARBOcclusionQuery.glGetQueryObjectuivARB(var10.field_254, GL15.GL_QUERY_RESULT, this.field_1797);
                     boolean var11 = var10.field_252;
                     var10.field_252 = this.field_1797.get(0) > 0;
                     if (var11 && var10.field_252) {
