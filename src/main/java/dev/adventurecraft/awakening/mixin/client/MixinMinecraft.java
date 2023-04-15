@@ -81,9 +81,7 @@ public abstract class MixinMinecraft {
         thread.start();
     }
 
-    @Inject(method = "init", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/Minecraft;getGameDirectory()Ljava/io/File;"))
+    @Inject(method = "init", at = @At("HEAD"))
     private void init_makeResizable(CallbackInfo ci) {
         this.width = this.actualWidth;
         Display.setResizable(true);
