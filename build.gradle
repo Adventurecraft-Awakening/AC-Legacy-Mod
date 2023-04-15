@@ -85,6 +85,7 @@ dependencies {
 }
 
 configurations.all {
+    // Removes LWJGL2 dependencies
     exclude group: "org.lwjgl.lwjgl"
 }
 
