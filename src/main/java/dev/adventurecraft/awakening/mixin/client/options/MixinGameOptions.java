@@ -521,13 +521,10 @@ public abstract class MixinGameOptions implements ExGameOptions {
     private void getFloatValueOF(Option var1, CallbackInfoReturnable<Float> cir) {
         if (var1 == OptionOF.BRIGHTNESS) {
             cir.setReturnValue(this.ofBrightness);
-            cir.cancel();
         } else if (var1 == OptionOF.CLOUD_HEIGHT) {
             cir.setReturnValue(this.ofCloudsHeight);
-            cir.cancel();
         } else if (var1 == OptionOF.AO_LEVEL) {
             cir.setReturnValue(this.ofAoLevel);
-            cir.cancel();
         }
     }
 

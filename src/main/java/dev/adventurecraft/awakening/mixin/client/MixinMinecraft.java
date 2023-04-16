@@ -3,8 +3,12 @@ package dev.adventurecraft.awakening.mixin.client;
 import dev.adventurecraft.awakening.ACMainThread;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.client.options.Config;
+import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import net.fabricmc.loader.impl.util.Arguments;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.options.GameOptions;
+import net.minecraft.client.render.TextRenderer;
+import net.minecraft.client.texture.TextureManager;
 import net.minecraft.client.util.Session;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.opengl.Display;
@@ -174,7 +178,10 @@ public abstract class MixinMinecraft {
         }
     }
 
-    @Redirect(method = "run", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/Display;isActive()Z"))
+    @Redirect(method = "run", at = @At(
+            value = "INVOKE",
+            target = "Lorg/lwjgl/opengl/Display;isActive()Z",
+            remap = false))
     private boolean disableDoubleToggle() {
         return true;
     }

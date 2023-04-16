@@ -136,8 +136,8 @@ public abstract class MixinClass_66 implements ExClass_66 {
 
         Object var23 = Config.getFieldValue("LightCache", "cache");
         if (var23 != null) {
-            Config.callVoid(var23, "clear", new Object[0]);
-            Config.callVoid("BlockCoord", "resetPool", new Object[0]);
+            Config.callVoid(var23, "clear");
+            Config.callVoid("BlockCoord", "resetPool");
         }
 
         Chunk.field_953 = false;

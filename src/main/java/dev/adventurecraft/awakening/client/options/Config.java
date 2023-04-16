@@ -298,7 +298,7 @@ public class Config {
         lightLevels = var0;
     }
 
-    public static boolean callBoolean(String var0, String var1, Object[] var2) {
+    public static boolean callBoolean(String var0, String var1, Object... var2) {
         try {
             Class<?> var3 = getClass(var0);
             if (var3 == null) {
@@ -308,7 +308,7 @@ public class Config {
                 if (var4 == null) {
                     return false;
                 } else {
-                    Boolean var5 = (Boolean) var4.invoke((Object) null, var2);
+                    Boolean var5 = (Boolean) var4.invoke(null, var2);
                     return var5;
                 }
             }
@@ -318,7 +318,7 @@ public class Config {
         }
     }
 
-    public static void callVoid(String var0, String var1, Object[] var2) {
+    public static void callVoid(String var0, String var1, Object... var2) {
         try {
             Class<?> var3 = getClass(var0);
             if (var3 == null) {
@@ -337,7 +337,7 @@ public class Config {
 
     }
 
-    public static void callVoid(Object var0, String var1, Object[] var2) {
+    public static void callVoid(Object var0, String var1, Object... var2) {
         try {
             if (var0 == null) {
                 return;
@@ -404,7 +404,7 @@ public class Config {
         }
     }
 
-    private static Method getMethod(Class<?> var0, String var1, Object[] var2) {
+    private static Method getMethod(Class<?> var0, String var1, Object... var2) {
         Method[] var3 = var0.getMethods();
 
         for (int var4 = 0; var4 < var3.length; ++var4) {
