@@ -92,7 +92,6 @@ public abstract class MixinTessellator implements ExTessellator {
     @Shadow
     public abstract void setTextureXY(double d, double e);
 
-    /*
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(CallbackInfo ci) {
         useTriangles = false;
@@ -318,8 +317,6 @@ public abstract class MixinTessellator implements ExTessellator {
             GL11.glTexCoord2f((float) var1, (float) var2);
         }
     }
-
-     */
 
     public void setRenderingChunk(boolean var1) {
         this.renderingChunk = var1;

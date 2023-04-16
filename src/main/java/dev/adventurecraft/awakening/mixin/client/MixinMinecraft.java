@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.mixin.client;
 
 import dev.adventurecraft.awakening.ACMainThread;
 import dev.adventurecraft.awakening.ACMod;
+import dev.adventurecraft.awakening.client.options.Config;
 import net.fabricmc.loader.impl.util.Arguments;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.util.Session;
@@ -92,24 +93,65 @@ public abstract class MixinMinecraft {
             target = "Lorg/lwjgl/opengl/Display;create()V",
             remap = false,
             ordinal = 0))
-    private void init_fixDepth() {
-        try {
-            Display.create((new PixelFormat()).withDepthBits(32));
-        } catch (LWJGLException e32) {
-            ACMod.LOGGER.warn("Falling back to 24-bit depth buffer since 32-bit failed: ", e32);
+    private void init_disableOriginalDisplay() {
+    }
+
+    @Inject(method = "init", at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/client/Minecraft;options:Lnet/minecraft/client/options/GameOptions;",
+            shift = At.Shift.AFTER,
+            ordinal = 0))
+    private void init_createDisplay(CallbackInfo ci) throws LWJGLException {
+        if (Config.isMultiTexture()) {
+            int sampleCount = Config.getAntialiasingLevel();
+            Config.dbg("MSAA Samples: " + sampleCount);
 
             try {
-                Display.create((new PixelFormat()).withDepthBits(24));
-            } catch (LWJGLException e24) {
-                ACMod.LOGGER.warn("Falling back to 16-bit depth buffer since 24-bit failed: ", e24);
-
-                try {
-                    Display.create((new PixelFormat()).withDepthBits(16));
-                } catch (LWJGLException e16) {
-                    ACMod.LOGGER.warn("Falling back to unspecified depth buffer since 16-bit failed: ", e16);
-                }
+                createDisplay(new PixelFormat().withSamples(sampleCount), true);
+                return;
+            } catch (LWJGLException ex) {
+                ACMod.LOGGER.warn("Error setting MSAA: " + sampleCount + "x: ", ex);
             }
         }
+
+        createDisplay(new PixelFormat(), false);
+    }
+
+    private void createDisplay(PixelFormat pixelFormat, boolean rethrowLast) throws LWJGLException {
+        try {
+            Display.create(pixelFormat.withDepthBits(32));
+            return;
+        } catch (LWJGLException e) {
+            ACMod.LOGGER.warn("Falling back to 24-bit depth buffer since 32-bit failed: ", e);
+        }
+
+        try {
+            Display.create(pixelFormat.withDepthBits(24));
+            return;
+        } catch (LWJGLException e) {
+            ACMod.LOGGER.warn("Falling back to 16-bit depth buffer since 24-bit failed: ", e);
+        }
+
+        try {
+            Display.create(pixelFormat.withDepthBits(16));
+            return;
+        } catch (LWJGLException e) {
+            ACMod.LOGGER.warn("Falling back to 8-bit depth buffer since 16-bit failed: ", e);
+        }
+
+        try {
+            Display.create(pixelFormat.withDepthBits(8));
+        } catch (LWJGLException e) {
+            ACMod.LOGGER.warn("Falling back to unspecified depth buffer since 8-bit failed: ", e);
+
+            if (rethrowLast) {
+                throw e;
+            }
+        }
+
+        Display.create(pixelFormat.withDepthBits(0));
+
+        Config.logOpenGlCaps();
     }
 
     @Inject(method = "run", at = @At(
@@ -132,13 +174,32 @@ public abstract class MixinMinecraft {
         }
     }
 
+    @Redirect(method = "run", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/Display;isActive()Z"))
+    private boolean disableDoubleToggle() {
+        return true;
+    }
+
+    @Redirect(method = "toggleFullscreen", at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/client/Minecraft;width:I"))
+    private int fix_getWidthAfterFullscreen(Minecraft instance) {
+        return Display.getWidth();
+    }
+
+    @Redirect(method = "toggleFullscreen", at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/client/Minecraft;height:I"))
+    private int fix_getHeightAfterFullscreen(Minecraft instance) {
+        return Display.getHeight();
+    }
+
     @Inject(method = "toggleFullscreen", at = @At(
             value = "INVOKE",
             target = "Lorg/lwjgl/opengl/Display;setFullscreen(Z)V",
             remap = false,
             shift = At.Shift.AFTER))
-    private void fix_toggleFullscreen(CallbackInfo ci) throws LWJGLException {
-        if (!this.isFullscreen) {
+    private void fix_restoreSizeAfterFullscreen(CallbackInfo ci) throws LWJGLException {
+        if (!this.isFullscreen && !Display.isMaximized()) {
             Display.setDisplayMode(new DisplayMode(this.width, this.height));
         }
     }

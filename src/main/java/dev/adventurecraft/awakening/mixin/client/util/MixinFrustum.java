@@ -12,19 +12,33 @@ public abstract class MixinFrustum implements ExFrustum {
     public float[][] matrix;
 
     @Override
-    public boolean isBoxInFrustumFully(double var1, double var3, double var5, double var7, double var9, double var11) {
-        for (int var13 = 0; var13 < 6; ++var13) {
-            float var14 = (float) var1;
-            float var15 = (float) var3;
-            float var16 = (float) var5;
-            float var17 = (float) var7;
-            float var18 = (float) var9;
-            float var19 = (float) var11;
-            if (var13 < 4) {
-                if (this.matrix[var13][0] * var14 + this.matrix[var13][1] * var15 + this.matrix[var13][2] * var16 + this.matrix[var13][3] <= 0.0F || this.matrix[var13][0] * var17 + this.matrix[var13][1] * var15 + this.matrix[var13][2] * var16 + this.matrix[var13][3] <= 0.0F || this.matrix[var13][0] * var14 + this.matrix[var13][1] * var18 + this.matrix[var13][2] * var16 + this.matrix[var13][3] <= 0.0F || this.matrix[var13][0] * var17 + this.matrix[var13][1] * var18 + this.matrix[var13][2] * var16 + this.matrix[var13][3] <= 0.0F || this.matrix[var13][0] * var14 + this.matrix[var13][1] * var15 + this.matrix[var13][2] * var19 + this.matrix[var13][3] <= 0.0F || this.matrix[var13][0] * var17 + this.matrix[var13][1] * var15 + this.matrix[var13][2] * var19 + this.matrix[var13][3] <= 0.0F || this.matrix[var13][0] * var14 + this.matrix[var13][1] * var18 + this.matrix[var13][2] * var19 + this.matrix[var13][3] <= 0.0F || this.matrix[var13][0] * var17 + this.matrix[var13][1] * var18 + this.matrix[var13][2] * var19 + this.matrix[var13][3] <= 0.0F) {
+    public boolean isBoxInFrustumFully(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+        float aX = (float) minX;
+        float aY = (float) minY;
+        float aZ = (float) minZ;
+        float bX = (float) maxX;
+        float bY = (float) maxY;
+        float bZ = (float) maxZ;
+        
+        for (int i = 0; i < 6; ++i) {
+            float[] mat = this.matrix[i];
+            float m0 = mat[0];
+            float m1 = mat[1];
+            float m2 = mat[2];
+            float m3 = mat[3];
+            boolean b0 = m0 * aX + m1 * aY + m2 * aZ + m3 <= 0.0F;
+            boolean b1 = m0 * bX + m1 * aY + m2 * aZ + m3 <= 0.0F;
+            boolean b2 = m0 * aX + m1 * bY + m2 * aZ + m3 <= 0.0F;
+            boolean b3 = m0 * bX + m1 * bY + m2 * aZ + m3 <= 0.0F;
+            boolean b4 = m0 * aX + m1 * aY + m2 * bZ + m3 <= 0.0F;
+            boolean b5 = m0 * bX + m1 * aY + m2 * bZ + m3 <= 0.0F;
+            boolean b6 = m0 * aX + m1 * bY + m2 * bZ + m3 <= 0.0F;
+            boolean b7 = m0 * bX + m1 * bY + m2 * bZ + m3 <= 0.0F;
+            if (i < 4) {
+                if (b0 || b1 || b2 || b3 || b4 || b5 || b6 || b7) {
                     return false;
                 }
-            } else if (this.matrix[var13][0] * var14 + this.matrix[var13][1] * var15 + this.matrix[var13][2] * var16 + this.matrix[var13][3] <= 0.0F && this.matrix[var13][0] * var17 + this.matrix[var13][1] * var15 + this.matrix[var13][2] * var16 + this.matrix[var13][3] <= 0.0F && this.matrix[var13][0] * var14 + this.matrix[var13][1] * var18 + this.matrix[var13][2] * var16 + this.matrix[var13][3] <= 0.0F && this.matrix[var13][0] * var17 + this.matrix[var13][1] * var18 + this.matrix[var13][2] * var16 + this.matrix[var13][3] <= 0.0F && this.matrix[var13][0] * var14 + this.matrix[var13][1] * var15 + this.matrix[var13][2] * var19 + this.matrix[var13][3] <= 0.0F && this.matrix[var13][0] * var17 + this.matrix[var13][1] * var15 + this.matrix[var13][2] * var19 + this.matrix[var13][3] <= 0.0F && this.matrix[var13][0] * var14 + this.matrix[var13][1] * var18 + this.matrix[var13][2] * var19 + this.matrix[var13][3] <= 0.0F && this.matrix[var13][0] * var17 + this.matrix[var13][1] * var18 + this.matrix[var13][2] * var19 + this.matrix[var13][3] <= 0.0F) {
+            } else if (b0 && b1 && b2 && b3 && b4 && b5 && b6 && b7) {
                 return false;
             }
         }

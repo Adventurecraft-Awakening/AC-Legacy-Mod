@@ -10,6 +10,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.options.GameOptions;
@@ -44,7 +45,7 @@ public class Config {
         return "OptiFine_1.7.3_HD_AA_G4";
     }
 
-    private static void checkOpenGlCaps() {
+    public static void logOpenGlCaps() {
         log("");
         log(getVersion());
         log("" + new Date());
@@ -67,7 +68,6 @@ public class Config {
         if (!GLContext.getCapabilities().GL_ARB_occlusion_query) {
             log("OpenGL Occlussion culling: Not available (GL_ARB_occlusion_query)");
         }
-
     }
 
     public static boolean isFancyFogAvailable() {
@@ -94,10 +94,6 @@ public class Config {
     }
 
     public static void setGameSettings(GameOptions var0) {
-        if (gameSettings == null) {
-            checkOpenGlCaps();
-        }
-
         gameSettings = var0;
     }
 
@@ -154,7 +150,7 @@ public class Config {
     }
 
     public static void dbg(String var0) {
-        System.out.println(var0);
+        ACMod.LOGGER.info(var0);
     }
 
     public static void log(String var0) {

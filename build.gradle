@@ -57,7 +57,7 @@ switch (OperatingSystem.current()) {
 
 dependencies {
     // Adds LWJGL3 wrapper
-    implementation "com.github.Adventurecraft-Awakening:AC-LWJGL3-Injector:e56bf10"
+    implementation "com.github.Adventurecraft-Awakening:AC-LWJGL3-Injector:7c6d96c"
     implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
 
     runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
