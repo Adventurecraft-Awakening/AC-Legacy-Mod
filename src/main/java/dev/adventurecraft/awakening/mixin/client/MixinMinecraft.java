@@ -178,7 +178,7 @@ public abstract class MixinMinecraft {
         }
     }
 
-    @Redirect(method = "run", at = @At(
+    @Redirect(method = "run", remap = false, at = @At(
             value = "INVOKE",
             target = "Lorg/lwjgl/opengl/Display;isActive()Z",
             remap = false))
