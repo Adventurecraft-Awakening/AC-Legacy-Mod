@@ -3,12 +3,8 @@ package dev.adventurecraft.awakening.mixin.client;
 import dev.adventurecraft.awakening.ACMainThread;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.client.options.Config;
-import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import net.fabricmc.loader.impl.util.Arguments;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.options.GameOptions;
-import net.minecraft.client.render.TextRenderer;
-import net.minecraft.client.texture.TextureManager;
 import net.minecraft.client.util.Session;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.opengl.Display;
@@ -17,9 +13,7 @@ import org.lwjgl.opengl.PixelFormat;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.io.File;
@@ -84,6 +78,11 @@ public abstract class MixinMinecraft {
         Thread thread = new Thread(acThread, "Minecraft main thread");
         thread.setPriority(10);
         thread.start();
+    }
+
+    @ModifyConstant(method = "init", constant = @Constant(stringValue = "Minecraft Minecraft Beta 1.7.3"))
+    private String init_fixTitle(String constant){
+        return "Adventurecraft (Beta 1.7.3)";
     }
 
     @Inject(method = "init", at = @At("HEAD"))
