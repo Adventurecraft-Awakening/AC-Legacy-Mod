@@ -24,6 +24,7 @@
     "defaultRequire": 1
   },
   "mixins": [
-    "client.texture.MixinTextureManager"
+    "client.texture.MixinTextureManager",
+    "entity.MixinBoatEntity"
   ]
 }
