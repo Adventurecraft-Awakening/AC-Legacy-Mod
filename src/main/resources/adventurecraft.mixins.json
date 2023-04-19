@@ -25,6 +25,7 @@
   },
   "mixins": [
     "client.texture.MixinTextureManager",
-    "entity.MixinBoatEntity"
+    "entity.MixinBoatEntity",
+    "world.chunk.MixinServerChunkCache"
   ]
 }

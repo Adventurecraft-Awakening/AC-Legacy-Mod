@@ -84,6 +84,9 @@ dependencies {
 
     implementation 'com.google.guava:guava:31+'
     implementation 'org.apache.commons:commons-lang3:3.12.0'
+
+    implementation 'it.unimi.dsi:fastutil-core:8.5.12'
+    include 'it.unimi.dsi:fastutil-core:8.5.12'
 }
 
 configurations.all {
