@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.mixin.client.texture;
 
+import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.client.options.Config;
 import dev.adventurecraft.awakening.client.texture.*;
 import dev.adventurecraft.awakening.extension.client.ExTextureManager;
@@ -321,13 +322,13 @@ public abstract class MixinTextureManager implements ExTextureManager {
             if (var3.renderMode == var1.renderMode && var3.index == var1.index) {
                 this.textureBinders.remove(var2);
                 --var2;
-                Config.dbg("Texture removed: " + var3 + ", image: " + var3.renderMode + ", index: " + var3.index);
+                ACMod.LOGGER.info("Texture removed: " + var3 + ", image: " + var3.renderMode + ", index: " + var3.index);
             }
         }
 
         this.textureBinders.add(var1);
         var1.updateTexture();
-        Config.dbg("Texture registered: " + var1 + ", image: " + var1.renderMode + ", index: " + var1.index);
+        ACMod.LOGGER.info("Texture registered: " + var1 + ", image: " + var1.renderMode + ", index: " + var1.index);
         this.dynamicTexturesUpdated = false;
     }
 

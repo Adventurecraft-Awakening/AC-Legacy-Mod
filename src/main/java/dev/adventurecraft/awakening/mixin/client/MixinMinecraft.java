@@ -107,7 +107,7 @@ public abstract class MixinMinecraft {
     private void init_createDisplay(CallbackInfo ci) throws LWJGLException {
         if (Config.isMultiTexture()) {
             int sampleCount = Config.getAntialiasingLevel();
-            Config.dbg("MSAA Samples: " + sampleCount);
+            ACMod.LOGGER.info("MSAA Samples: " + sampleCount);
 
             try {
                 createDisplay(new PixelFormat().withSamples(sampleCount), true);

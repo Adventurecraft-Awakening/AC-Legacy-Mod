@@ -18,55 +18,58 @@ import net.minecraft.world.BlockView;
 import org.lwjgl.Sys;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GLContext;
+import org.slf4j.Logger;
 
 public class Config {
     private static GameOptions gameSettings = null;
     private static Minecraft minecraft = null;
-    private static float[] lightLevels = null;
+    private static float lightLevel0 = 0;
+    private static float lightLevel1 = 0;
     private static int iconWidthTerrain = 16;
     private static int iconWidthItems = 16;
     private static Map<String, Class<?>> foundClassesMap = new HashMap<>();
     private static boolean fontRendererUpdated = false;
-    private static File logFile = null;
-    public static final Boolean DEF_FOG_FANCY = Boolean.valueOf(true);
-    public static final Float DEF_FOG_START = Float.valueOf(0.2F);
-    public static final Boolean DEF_OPTIMIZE_RENDER_DISTANCE = Boolean.valueOf(false);
-    public static final Boolean DEF_OCCLUSION_ENABLED = Boolean.valueOf(false);
-    public static final Integer DEF_MIPMAP_LEVEL = Integer.valueOf(0);
-    public static final Integer DEF_MIPMAP_TYPE = Integer.valueOf(9984);
-    public static final Float DEF_ALPHA_FUNC_LEVEL = Float.valueOf(0.1F);
-    public static final Boolean DEF_LOAD_CHUNKS_FAR = Boolean.valueOf(false);
-    public static final Integer DEF_PRELOADED_CHUNKS = Integer.valueOf(0);
-    public static final Integer DEF_CHUNKS_LIMIT = Integer.valueOf(25);
-    public static final Integer DEF_UPDATES_PER_FRAME = Integer.valueOf(3);
-    public static final Boolean DEF_DYNAMIC_UPDATES = Boolean.valueOf(false);
+    public static final boolean DEF_FOG_FANCY = true;
+    public static final float DEF_FOG_START = 0.2F;
+    public static final boolean DEF_OPTIMIZE_RENDER_DISTANCE = false;
+    public static final boolean DEF_OCCLUSION_ENABLED = false;
+    public static final int  DEF_MIPMAP_LEVEL = 0;
+    public static final int DEF_MIPMAP_TYPE = 9984;
+    public static final float DEF_ALPHA_FUNC_LEVEL = 0.1F;
+    public static final boolean DEF_LOAD_CHUNKS_FAR = false;
+    public static final int  DEF_PRELOADED_CHUNKS = 0;
+    public static final int DEF_CHUNKS_LIMIT = 25;
+    public static final int DEF_UPDATES_PER_FRAME = 3;
+    public static final boolean DEF_DYNAMIC_UPDATES = false;
 
     private static String getVersion() {
         return "OptiFine_1.7.3_HD_AA_G4";
     }
 
     public static void logOpenGlCaps() {
-        log("");
-        log(getVersion());
-        log("" + new Date());
-        log("OS: " + System.getProperty("os.name") + " (" + System.getProperty("os.arch") + ") version " + System.getProperty("os.version"));
-        log("Java: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor"));
-        log("VM: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor"));
-        log("LWJGL: " + Sys.getVersion());
-        log("OpenGL: " + GL11.glGetString(GL11.GL_RENDERER) + " version " + GL11.glGetString(GL11.GL_VERSION) + ", " + GL11.glGetString(GL11.GL_VENDOR));
+        Logger logger = ACMod.LOGGER;
+
+        logger.info("");
+        logger.info(getVersion());
+        logger.info("" + new Date());
+        logger.info("OS: " + System.getProperty("os.name") + " (" + System.getProperty("os.arch") + ") version " + System.getProperty("os.version"));
+        logger.info("Java: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor"));
+        logger.info("VM: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor"));
+        logger.info("LWJGL: " + Sys.getVersion());
+        logger.info("OpenGL: " + GL11.glGetString(GL11.GL_RENDERER) + " version " + GL11.glGetString(GL11.GL_VERSION) + ", " + GL11.glGetString(GL11.GL_VENDOR));
         int var0 = getOpenGlVersion();
         String var1 = "" + var0 / 10 + "." + var0 % 10;
-        log("OpenGL Version: " + var1);
+        logger.info("OpenGL Version: " + var1);
         if (!GLContext.getCapabilities().OpenGL12) {
-            log("OpenGL Mipmap levels: Not available (GL12.GL_TEXTURE_MAX_LEVEL)");
+            logger.info("OpenGL Mipmap levels: Not available (GL12.GL_TEXTURE_MAX_LEVEL)");
         }
 
         if (!GLContext.getCapabilities().GL_NV_fog_distance) {
-            log("OpenGL Fancy fog: Not available (GL_NV_fog_distance)");
+            logger.info("OpenGL Fancy fog: Not available (GL_NV_fog_distance)");
         }
 
         if (!GLContext.getCapabilities().GL_ARB_occlusion_query) {
-            log("OpenGL Occlussion culling: Not available (GL_ARB_occlusion_query)");
+            logger.info("OpenGL Occlussion culling: Not available (GL_ARB_occlusion_query)");
         }
     }
 
@@ -147,36 +150,6 @@ public class Config {
 
     public static int getPreloadedChunks() {
         return gameSettings == null ? DEF_PRELOADED_CHUNKS : ((ExGameOptions) gameSettings).ofPreloadedChunks();
-    }
-
-    public static void dbg(String var0) {
-        ACMod.LOGGER.info(var0);
-    }
-
-    public static void log(String var0) {
-        dbg(var0);
-
-        try {
-            if (logFile == null) {
-                logFile = new File(Minecraft.getGameDirectory(), "optifog.log");
-                logFile.delete();
-                logFile.createNewFile();
-            }
-
-            FileOutputStream var1 = new FileOutputStream(logFile, true);
-            OutputStreamWriter var2 = new OutputStreamWriter(var1, "ASCII");
-
-            try {
-                var2.write(var0);
-                var2.write("\n");
-                var2.flush();
-            } finally {
-                var2.close();
-            }
-        } catch (IOException var7) {
-            var7.printStackTrace();
-        }
-
     }
 
     public static int getUpdatesPerFrame() {
@@ -278,24 +251,19 @@ public class Config {
     }
 
     public static float fixAoLight(float var0, float var1) {
-        if (lightLevels == null) {
+        if (var0 > lightLevel0) {
+            return var0;
+        } else if (var1 <= lightLevel1) {
             return var0;
         } else {
-            float var2 = lightLevels[0];
-            float var3 = lightLevels[1];
-            if (var0 > var2) {
-                return var0;
-            } else if (var1 <= var3) {
-                return var0;
-            } else {
-                float var4 = 1.0F - getAmbientOcclusionLevel();
-                return var0 + (var1 - var0) * var4;
-            }
+            float var4 = 1.0F - getAmbientOcclusionLevel();
+            return var0 + (var1 - var0) * var4;
         }
     }
 
     public static void setLightLevels(float[] var0) {
-        lightLevels = var0;
+        lightLevel0 = var0[0];
+        lightLevel1 = var0[1];
     }
 
     public static boolean callBoolean(String var0, String var1, Object... var2) {
@@ -414,7 +382,7 @@ public class Config {
             }
         }
 
-        dbg("No method found for: " + var0.getName() + "." + var1 + "(" + arrayToString(var2) + ")");
+        ACMod.LOGGER.info("No method found for: " + var0.getName() + "." + var1 + "(" + arrayToString(var2) + ")");
         return null;
     }
 
@@ -448,7 +416,7 @@ public class Config {
             try {
                 var1 = Class.forName(var0);
             } catch (ClassNotFoundException var3) {
-                log("Class not found: " + var0);
+                ACMod.LOGGER.info("Class not found: " + var0);
             } catch (Throwable var4) {
                 var4.printStackTrace();
             }
