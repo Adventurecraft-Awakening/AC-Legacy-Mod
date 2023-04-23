@@ -24,8 +24,11 @@
     "defaultRequire": 1
   },
   "mixins": [
+    "block.MixinAbstractFluidBlock",
+    "block.MixinBlock",
     "client.texture.MixinTextureManager",
     "entity.MixinBoatEntity",
+    "world.MixinWorld",
     "world.chunk.MixinServerChunkCache"
   ]
 }

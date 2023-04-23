@@ -1,10 +1,14 @@
 package dev.adventurecraft.awakening.mixin.client.render.block;
 
 import dev.adventurecraft.awakening.client.options.Config;
+import dev.adventurecraft.awakening.extension.client.render.block.ExBlockRenderer;
 import net.minecraft.block.Block;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.block.BlockRenderer;
 import net.minecraft.world.BlockView;
+import net.minecraft.world.World;
+import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -14,10 +18,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 @Mixin(BlockRenderer.class)
-public abstract class MixinBlockRenderer {
+public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
     @Shadow
-    private BlockView blockView;
+    public BlockView blockView;
     @Shadow
     private int textureOverride;
     @Shadow
@@ -159,6 +163,27 @@ public abstract class MixinBlockRenderer {
             boolean v = Config.callBoolean("ModLoader", "RenderWorldBlock", this, this.blockView, var2, var3, var4, var1, var5);
             cir.setReturnValue(v);
         }
+    }
+
+    public void startRenderingBlocks(World var1) {
+        this.blockView = var1;
+        if (Minecraft.isSmoothLightingEnabled()) {
+            GL11.glShadeModel(GL11.GL_SMOOTH);
+        }
+
+        Tessellator.INSTANCE.start();
+        this.renderAllSides = true;
+    }
+
+    public void stopRenderingBlocks() {
+        this.renderAllSides = false;
+        Tessellator.INSTANCE.tessellate();
+        if (Minecraft.isSmoothLightingEnabled()) {
+            GL11.glShadeModel(GL11.GL_FLAT);
+        }
+
+        // TODO:
+        //this.blockView = null;
     }
 
     @Overwrite

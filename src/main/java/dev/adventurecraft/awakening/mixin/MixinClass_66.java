@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.mixin;
 
 import dev.adventurecraft.awakening.client.options.Config;
+import dev.adventurecraft.awakening.common.AC_CoordBlock;
 import dev.adventurecraft.awakening.extension.ExClass_66;
 import dev.adventurecraft.awakening.extension.client.render.ExTessellator;
 import dev.adventurecraft.awakening.extension.client.util.ExCameraView;
