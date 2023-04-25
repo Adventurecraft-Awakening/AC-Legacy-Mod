@@ -8,6 +8,7 @@ import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.entity.player.ExAbstractClientPlayerEntity;
 import dev.adventurecraft.awakening.extension.client.gui.screen.ExScreen;
+import dev.adventurecraft.awakening.extension.client.render.ExWorldEventRenderer;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import dev.adventurecraft.awakening.extension.item.ExItem;
@@ -362,7 +363,9 @@ public abstract class MixinMinecraft implements ExMinecraft {
             value = "INVOKE",
             target = "Ljava/lang/System;currentTimeMillis()J",
             shift = At.Shift.BEFORE,
-            ordinal = 0))
+            ordinal = 0,
+            remap = false),
+            remap = false)
     private void run_setup(CallbackInfo ci) {
         this.textureManager.getTextureId("/terrain.png");
         this.textureManager.getTextureId("/terrain2.png");
@@ -595,7 +598,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
                                                 ((ExWorld) this.world).loadBrightness();
                                             }
 
-                                            //((ExWorldEventRenderer) this.worldRenderer).updateAllTheRenderers(); TODO
+                                            ((ExWorldEventRenderer) this.worldRenderer).updateAllTheRenderers();
                                         }
 
                                         if (Keyboard.getEventKey() == Keyboard.KEY_F5) {
@@ -603,7 +606,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
                                         }
 
                                         if (Keyboard.getEventKey() == Keyboard.KEY_F6) {
-                                            //((ExWorldEventRenderer) this.worldRenderer).resetAll(); TODO
+                                            ((ExWorldEventRenderer) this.worldRenderer).resetAll();
                                             this.overlay.addChatMessage("Resetting all blocks in loaded chunks");
                                         }
 
@@ -1020,7 +1023,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
             //((ExWorld)this.world).getScript().initPlayer(); TODO
         }
 
-        // ((ExWorldEventRenderer)this.worldRenderer).resetForDeath(); TODO
+        ((ExWorldEventRenderer) this.worldRenderer).resetForDeath();
         Vec3i var6 = this.world.getSpawnPosition();
         this.player.afterSpawn();
         this.player.setPositionAndAngles((double) var6.x + 0.5D, var6.y, (double) var6.z + 0.5D, 0.0F, 0.0F);

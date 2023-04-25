@@ -17,6 +17,8 @@ import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunkCache;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.class_366;
@@ -540,7 +542,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
 
     public float getLightValue(int var1, int var2, int var3) {
         int var4 = this.placeBlock(var1, var2, var3);
-        float var5 = 0; //AC_PlayerTorch.getTorchLight(this, var1, var2, var3); TODO
+        float var5 = AC_PlayerTorch.getTorchLight((World) (Object) this, var1, var2, var3);
         return (float) var4 < var5 ? Math.min(var5, 15.0F) : (float) var4;
     }
 
@@ -555,6 +557,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         }
     }
 
+    @Environment(EnvType.CLIENT)
     @Overwrite
     public float getNaturalBrightness(int var1, int var2, int var3, int var4) {
         float var5 = this.getLightValue(var1, var2, var3);

@@ -54,4 +54,9 @@ public abstract class MixinPlayerEntity implements ExPlayerEntity {
     public void setSwappedItems(boolean value) {
         this.swappedItems = value;
     }
+
+    @Override
+    public String getCloakTexture() {
+        return this.cloakTexture;
+    }
 }

@@ -58,4 +58,24 @@ public abstract class MixinLivingEntity implements ExLivingEntity {
     public void setTimesCanJumpInAir(int value) {
         this.timesCanJumpInAir = value;
     }
+
+    @Override
+    public float getFov() {
+        return this.fov;
+    }
+
+    @Override
+    public void setFov(float value) {
+        this.fov = value;
+    }
+
+    @Override
+    public float getExtraFov() {
+        return this.extraFov;
+    }
+
+    @Override
+    public void setExtraFov(float value) {
+        this.extraFov = value;
+    }
 }

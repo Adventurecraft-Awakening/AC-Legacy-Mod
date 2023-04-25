@@ -31,6 +31,9 @@ accessible field net/minecraft/entity/Entity field_1611 I
 accessible field net/minecraft/entity/Entity fallDistance F
 accessible method net/minecraft/entity/Entity setRotation (FF)V
 
+accessible field net/minecraft/entity/ai/pathing/EntityPath field_2691 [Lnet/minecraft/entity/ai/pathing/PathNode;
+accessible field net/minecraft/entity/ai/pathing/EntityPath field_2692 I
+
 accessible field net/minecraft/entity/LivingEntity jumping Z
 
 accessible method net/minecraft/entity/player/PlayerEntity applyDamage (I)V
