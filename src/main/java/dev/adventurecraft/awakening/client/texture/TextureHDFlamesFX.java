@@ -1,13 +1,12 @@
 package dev.adventurecraft.awakening.client.texture;
 
-import java.util.Random;
-
 import dev.adventurecraft.awakening.client.options.Config;
-import net.minecraft.block.Block;
-import net.minecraft.client.render.TextureBinder;
+import net.minecraft.client.render.FireTextureBinder;
 import net.minecraft.client.resource.TexturePack;
 
-public class TextureHDFlamesFX extends TextureBinder implements TextureHDFX {
+import java.util.Random;
+
+public class TextureHDFlamesFX extends FireTextureBinder implements TextureHDFX {
     private int tileWidth;
     private int fireHeight;
     protected float[] buf1;
@@ -15,7 +14,7 @@ public class TextureHDFlamesFX extends TextureBinder implements TextureHDFX {
     private final Random random = new Random();
 
     public TextureHDFlamesFX(int var1) {
-        super(Block.FIRE.texture + var1 * 16);
+        super(var1);
         this.tileWidth = 16;
         this.fireHeight = this.tileWidth + this.tileWidth / 4;
         this.grid = new byte[this.tileWidth * this.tileWidth * 4];

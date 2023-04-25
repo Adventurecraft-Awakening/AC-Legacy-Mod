@@ -824,4 +824,9 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     public int renderAllSortedRenderers(int var1, double var2) {
         return this.method_1542(0, this.field_1808.length, var1, var2);
     }
+
+    @Override
+    public void updateAllTheRenderers() {
+        // TODO
+    }
 }

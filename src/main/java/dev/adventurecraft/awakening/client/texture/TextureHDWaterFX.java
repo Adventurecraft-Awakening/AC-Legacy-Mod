@@ -1,11 +1,10 @@
 package dev.adventurecraft.awakening.client.texture;
 
 import dev.adventurecraft.awakening.client.options.Config;
-import net.minecraft.block.Block;
-import net.minecraft.client.render.TextureBinder;
+import net.minecraft.client.render.FlowingWaterTextureBinder2;
 import net.minecraft.client.resource.TexturePack;
 
-public class TextureHDWaterFX extends TextureBinder implements TextureHDFX {
+public class TextureHDWaterFX extends FlowingWaterTextureBinder2 implements TextureHDFX {
     private TexturePack texturePackBase;
     private int tileWidth;
     protected float[] buf1;
@@ -15,7 +14,6 @@ public class TextureHDWaterFX extends TextureBinder implements TextureHDFX {
     private int tickCounter;
 
     public TextureHDWaterFX() {
-        super(Block.FLOWING_WATER.texture);
         this.tileWidth = 16;
         this.grid = new byte[this.tileWidth * this.tileWidth * 4];
         this.buf1 = new float[this.tileWidth * this.tileWidth];

@@ -1,16 +1,15 @@
 package dev.adventurecraft.awakening.client.texture;
 
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import javax.imageio.ImageIO;
-
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.render.TextureBinder;
+import net.minecraft.client.render.CompassTextureBinder;
 import net.minecraft.client.resource.TexturePack;
-import net.minecraft.item.Item;
 import net.minecraft.util.Vec3i;
 
-public class TextureHDCompassFX extends TextureBinder implements TextureHDFX {
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+
+public class TextureHDCompassFX extends CompassTextureBinder implements TextureHDFX {
     private final Minecraft mc;
     private int tileWidth;
     private TexturePack texturePackBase;
@@ -20,7 +19,7 @@ public class TextureHDCompassFX extends TextureBinder implements TextureHDFX {
     private double angleDiff;
 
     public TextureHDCompassFX(Minecraft var1) {
-        super(Item.COMPASS.getTexturePosition(0));
+        super(var1);
         this.mc = var1;
         this.tileWidth = 16;
         this.setup();
@@ -41,9 +40,12 @@ public class TextureHDCompassFX extends TextureBinder implements TextureHDFX {
         this.renderMode = 1;
 
         try {
-            BufferedImage var1 = ImageIO.read(Minecraft.class.getResource("/gui/items.png"));
+            BufferedImage var1 = null;
             if (this.texturePackBase != null) {
                 var1 = ImageIO.read(this.texturePackBase.getResourceAsStream("/gui/items.png"));
+            }
+            if (var1 == null) {
+                var1 = ImageIO.read(Minecraft.class.getResource("/gui/items.png"));
             }
 
             int var2 = this.index % 16 * this.tileWidth;
@@ -95,8 +97,9 @@ public class TextureHDCompassFX extends TextureBinder implements TextureHDFX {
             }
         }
 
-        double var27;
-        for (var27 = var8 - this.showAngle; var27 < -Math.PI; var27 += Math.PI * 2.0D) {
+        double var27 = var8 - this.showAngle;
+        while (var27 < -Math.PI) {
+            var27 += Math.PI * 2.0D;
         }
 
         while (var27 >= Math.PI) {

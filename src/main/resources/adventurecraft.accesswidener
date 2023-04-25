@@ -2,22 +2,45 @@ accessWidener v1 named
 
 accessible field net/minecraft/client/Minecraft gameDirectory Ljava/io/File;
 accessible field net/minecraft/client/Minecraft instance Lnet/minecraft/client/Minecraft;
+accessible field net/minecraft/client/Minecraft resourceDownloadThread Lnet/minecraft/client/util/ResourceDownloadThread;
+
+accessible method net/minecraft/client/util/ResourceDownloadThread method_108 (Ljava/io/File;Ljava/lang/String;)V
 
 accessible field net/minecraft/client/gui/widget/ButtonWidget width I
 accessible field net/minecraft/client/gui/widget/ButtonWidget height I
 
+accessible field net/minecraft/block/Block resistance F
+accessible method net/minecraft/block/Block init ()V
 accessible method net/minecraft/block/Block setLightOpacity (I)Lnet/minecraft/block/Block;
 accessible method net/minecraft/block/Block setHardness (F)Lnet/minecraft/block/Block;
 accessible method net/minecraft/block/Block setBlastResistance (F)Lnet/minecraft/block/Block;
+accessible method net/minecraft/block/Block setLightEmittance (F)Lnet/minecraft/block/Block;
 accessible method net/minecraft/block/Block setSounds (Lnet/minecraft/block/BlockSounds;)Lnet/minecraft/block/Block;
+extendable method net/minecraft/block/Block drop (Lnet/minecraft/world/World;IIII)V
+
+accessible method net/minecraft/item/Item <init> (I)V
+accessible method net/minecraft/item/Item setDurability (I)Lnet/minecraft/item/Item;
 
 accessible field net/minecraft/world/World autoSaveInterval I
 accessible field net/minecraft/world/World worldSource Lnet/minecraft/world/source/WorldSource;
 accessible field net/minecraft/world/World properties Lnet/minecraft/world/WorldProperties;
+accessible method net/minecraft/world/World notifyOfNeighborChange (IIII)V
+
+accessible field net/minecraft/entity/Entity field_1590 I
+accessible field net/minecraft/entity/Entity field_1611 I
+accessible field net/minecraft/entity/Entity fallDistance F
+accessible method net/minecraft/entity/Entity setRotation (FF)V
 
 accessible field net/minecraft/entity/LivingEntity jumping Z
 
+accessible method net/minecraft/entity/player/PlayerEntity applyDamage (I)V
+
 accessible field net/minecraft/client/render/block/BlockRenderer blockView Lnet/minecraft/world/BlockView;
+
+accessible field net/minecraft/client/render/block/GrassColor map [I
+accessible field net/minecraft/client/render/block/FoliageColor map [I
+
+accessible field net/minecraft/client/texture/TextureManager textures Ljava/util/HashMap;
 
 # net/minecraft/client/gui/screen/SelectWorldScreen$class_569
 # net/minecraft/item/ItemInstance

@@ -5,4 +5,6 @@ public interface ExWorldEventRenderer {
     void setAllRenderersVisible();
 
     int renderAllSortedRenderers(int var1, double var2);
+
+    void updateAllTheRenderers();
 }

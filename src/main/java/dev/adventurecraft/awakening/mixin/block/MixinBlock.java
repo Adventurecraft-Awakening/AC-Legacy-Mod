@@ -124,18 +124,22 @@ public abstract class MixinBlock implements ExBlock {
     public void drop(World var1, int var2, int var3, int var4, ItemStack var5) {
     }
 
+    @Override
     public int getBlockLightValue(BlockView var1, int var2, int var3, int var4) {
         return EMITTANCE[this.id];
     }
 
+    @Override
     public boolean shouldRender(BlockView var1, int var2, int var3, int var4) {
         return true;
     }
 
+    @Override
     public boolean canBeTriggered() {
         return false;
     }
 
+    @Override
     public void addTriggerActivation(World var1, int var2, int var3, int var4) {
         if (this.canBeTriggered()) {
             int var5 = Math.min(var1.getBlockMeta(var2, var3, var4) + 1, 15);
@@ -146,6 +150,7 @@ public abstract class MixinBlock implements ExBlock {
         }
     }
 
+    @Override
     public void removeTriggerActivation(World var1, int var2, int var3, int var4) {
         if (this.canBeTriggered()) {
             int var5 = var1.getBlockMeta(var2, var3, var4) - 1;
@@ -156,28 +161,35 @@ public abstract class MixinBlock implements ExBlock {
         }
     }
 
+    @Override
     public void onTriggerActivated(World var1, int var2, int var3, int var4) {
     }
 
+    @Override
     public void onTriggerDeactivated(World var1, int var2, int var3, int var4) {
     }
 
+    @Override
     public void reset(World var1, int var2, int var3, int var4, boolean var5) {
     }
 
+    @Override
     public int alwaysUseClick(World var1, int var2, int var3, int var4) {
         return -1;
     }
 
+    @Override
     public int getTextureNum() {
         return this.textureNum;
     }
 
+    @Override
     public Block setTextureNum(int var1) {
         this.textureNum = var1;
         return (Block) (Object) this;
     }
 
+    @Override
     public Block setSubTypes(int var1) {
         subTypes[this.id] = var1;
         return (Block) (Object) this;

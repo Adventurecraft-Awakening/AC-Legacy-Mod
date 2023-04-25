@@ -6,11 +6,10 @@ import javax.imageio.ImageIO;
 
 import dev.adventurecraft.awakening.extension.client.ExTextureManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.render.TextureBinder;
+import net.minecraft.client.render.ClockTextureBinder;
 import net.minecraft.client.resource.TexturePack;
-import net.minecraft.item.Item;
 
-public class TextureHDWatchFX extends TextureBinder implements TextureHDFX {
+public class TextureHDWatchFX extends ClockTextureBinder implements TextureHDFX {
     private final Minecraft mc;
     private int tileWidth;
     private TexturePack texturePackBase;
@@ -22,7 +21,7 @@ public class TextureHDWatchFX extends TextureBinder implements TextureHDFX {
     private double angleDiff;
 
     public TextureHDWatchFX(Minecraft var1) {
-        super(Item.CLOCK.getTexturePosition(0));
+        super(var1);
         this.mc = var1;
         this.tileWidth = 16;
         this.setup();
@@ -113,8 +112,9 @@ public class TextureHDWatchFX extends TextureBinder implements TextureHDFX {
             }
         }
 
-        double var28;
-        for (var28 = var1 - this.showAngle; var28 < -Math.PI; var28 += Math.PI * 2.0D) {
+        double var28 = var1 - this.showAngle;
+        while (var28 < -Math.PI) {
+            var28 += Math.PI * 2.0D;
         }
 
         while (var28 >= Math.PI) {

@@ -1,20 +1,18 @@
 package dev.adventurecraft.awakening.client.texture;
 
-import java.util.Random;
-
 import dev.adventurecraft.awakening.client.options.Config;
-import net.minecraft.block.Block;
-import net.minecraft.client.render.TextureBinder;
+import net.minecraft.client.render.PortalTextureBinder;
 import net.minecraft.client.resource.TexturePack;
 import net.minecraft.util.math.MathHelper;
 
-public class TextureHDPortalFX extends TextureBinder implements TextureHDFX {
+import java.util.Random;
+
+public class TextureHDPortalFX extends PortalTextureBinder implements TextureHDFX {
     private int tileWidth;
     private int tickCounter;
     private byte[][] buffer;
 
     public TextureHDPortalFX() {
-        super(Block.PORTAL.texture);
         this.tileWidth = 16;
         this.tickCounter = 0;
         this.setup();

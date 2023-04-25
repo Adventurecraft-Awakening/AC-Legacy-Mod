@@ -1,12 +1,11 @@
 package dev.adventurecraft.awakening.client.texture;
 
 import dev.adventurecraft.awakening.client.options.Config;
-import net.minecraft.block.Block;
-import net.minecraft.client.render.TextureBinder;
+import net.minecraft.client.render.FlowingLavaTextureBinder;
 import net.minecraft.client.resource.TexturePack;
 import net.minecraft.util.math.MathHelper;
 
-public class TextureHDLavaFX extends TextureBinder implements TextureHDFX {
+public class TextureHDLavaFX extends FlowingLavaTextureBinder implements TextureHDFX {
     private TexturePack texturePackBase;
     private int tileWidth;
     protected float[] buf1;
@@ -15,7 +14,6 @@ public class TextureHDLavaFX extends TextureBinder implements TextureHDFX {
     protected float[] buf4;
 
     public TextureHDLavaFX() {
-        super(Block.FLOWING_LAVA.texture);
         this.tileWidth = 16;
         this.grid = new byte[this.tileWidth * this.tileWidth * 4];
         this.buf1 = new float[this.tileWidth * this.tileWidth];

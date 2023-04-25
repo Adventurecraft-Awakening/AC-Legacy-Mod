@@ -4,7 +4,7 @@ plugins {
     id 'maven-publish'
 }
 
-sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
+sourceCompatibility = targetCompatibility = JavaVersion.VERSION_17
 
 archivesBaseName = project.archives_base_name
 version = project.mod_version
@@ -75,6 +75,8 @@ dependencies {
     // There are more archived versions on this website: https://www-archive.mozilla.org/rhino/rhino16r2
     implementation 'rhino:js:1.7R2'
     include 'rhino:js:1.7R2'
+
+    include(implementation(annotationProcessor("com.github.llamalad7.mixinextras:mixinextras-fabric:0.2.0-beta.6")))
 
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings "net.legacyfabric:beta-yarn:b1.7.3+build.4"

@@ -5,20 +5,32 @@
   "compatibilityLevel": "JAVA_8",
   "client": [
     "MixinClass_66",
+    "client.MixinClientInteractionManager",
     "client.MixinMinecraft",
     "client.gui.MixinAchievementWidget",
+    "client.gui.screen.MixinScreen",
+    "client.gui.screen.MixinSelectWorldScreen",
+    "client.gui.screen.menu.MixinTitleScreen",
     "client.gui.screen.menu.MixinVideoSettingsScreen",
     "client.options.MixinGameOptions",
+    "client.render.MixinFireTextureBinder",
+    "client.render.MixinFlowingLavaTextureBinder",
+    "client.render.MixinFlowingLavaTextureBinder2",
+    "client.render.MixinFlowingWaterTextureBinder",
+    "client.render.MixinFlowingWaterTextureBinder2",
     "client.render.MixinGameRenderer",
+    "client.render.MixinPortalTextureBinder",
     "client.render.MixinTessellator",
     "client.render.MixinTextRenderer",
+    "client.render.MixinTextureBinder",
     "client.render.MixinWorldEventRenderer",
     "client.render.block.MixinBlockRenderer",
     "client.util.MixinCamera",
     "client.util.MixinFrustum",
     "client.util.MixinMouseHelper",
     "entity.player.MixinAbstractClientPlayerEntity",
-    "entity.player.MixinRemoteClientPlayerEntity"
+    "entity.player.MixinRemoteClientPlayerEntity",
+    "world.chunk.MixinChunkCache"
   ],
   "injectors": {
     "defaultRequire": 1
@@ -26,9 +38,22 @@
   "mixins": [
     "block.MixinAbstractFluidBlock",
     "block.MixinBlock",
+    "block.MixinLadderBlock",
+    "client.entity.player.MixinAbstractClientPlayerEntity",
+    "client.resource.language.MixinTranslationStorage",
     "client.texture.MixinTextureManager",
+    "entity.MixinBlockEntity",
     "entity.MixinBoatEntity",
+    "entity.MixinEntity",
+    "entity.MixinLivingEntity",
+    "entity.player.MixinPlayerEntity",
+    "inventory.MixinPlayerInventory",
+    "item.MixinItem",
+    "item.MixinItemStack",
+    "util.io.MixinCompoundTag",
     "world.MixinWorld",
+    "world.MixinWorldProperties",
+    "world.chunk.MixinChunk",
     "world.chunk.MixinServerChunkCache"
   ]
 }
