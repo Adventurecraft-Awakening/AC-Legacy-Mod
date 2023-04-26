@@ -82,7 +82,7 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
             if (var24 == 0) {
                 GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.client.textureManager.getTextureId("/terrain.png"));
             } else {
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.client.textureManager.getTextureId(String.format("/terrain%d.png", Integer.valueOf(var24))));
+                GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.client.textureManager.getTextureId(String.format("/terrain%d.png", var24)));
             }
 
             this.blockRenderer.method_48(Block.BY_ID[var2.itemId], var2.getMeta(), var1.getBrightnessAtEyes(1.0F));
@@ -93,7 +93,7 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
                 if (var4 == 0) {
                     var3 = "/terrain.png";
                 } else {
-                    var3 = String.format("/terrain%d.png", Integer.valueOf(var4));
+                    var3 = String.format("/terrain%d.png", var4);
                 }
             }
 

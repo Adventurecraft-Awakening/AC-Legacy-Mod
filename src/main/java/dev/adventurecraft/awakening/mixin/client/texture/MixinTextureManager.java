@@ -252,10 +252,10 @@ public abstract class MixinTextureManager implements ExTextureManager {
     }
 
     private static InputStream getTextureStream(TexturePack pack, String name) {
-        InputStream stream = pack.getResourceAsStream(name);
+        String acName = "/assets/adventurecraft" + name;
+        InputStream stream = pack.getResourceAsStream(acName);
         if (stream == null) {
-            String acName = "/assets/adventurecraft" + name;
-            stream = pack.getResourceAsStream(acName);
+            stream = pack.getResourceAsStream(name);
         }
         return stream;
     }
@@ -637,8 +637,8 @@ public abstract class MixinTextureManager implements ExTextureManager {
     }
 
     @Redirect(method = "reloadTexturesFromTexturePack", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/resource/TexturePack;getResourceAsStream(Ljava/lang/String;)Ljava/io/InputStream;"))
+        value = "INVOKE",
+        target = "Lnet/minecraft/client/resource/TexturePack;getResourceAsStream(Ljava/lang/String;)Ljava/io/InputStream;"))
     private InputStream redirectResourceGetters(TexturePack instance, String s) {
         return getTextureStream(instance, s);
     }
