@@ -797,11 +797,9 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
             boolean var4 = false;
             ItemStack var2 = this.player.inventory.getHeldItem();
-            HeldItemRenderer var3 = this.gameRenderer.heldItemRenderer;
             if (!AC_DebugMode.active) {
                 if (var1 == 0) {
                     var2 = ((ExPlayerInventory) this.player.inventory).getOffhandItemStack();
-                    //var3 = ((ExGameRenderer) this.gameRenderer).getOffHandItemRenderer(); TODO
                     ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
                     var4 = true;
                     ((ExPlayerEntity) this.player).setSwappedItems(true);

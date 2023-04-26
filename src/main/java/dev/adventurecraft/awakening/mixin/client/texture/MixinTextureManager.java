@@ -251,18 +251,9 @@ public abstract class MixinTextureManager implements ExTextureManager {
         return null;
     }
 
-    private static InputStream getTextureStream(TexturePack pack, String name) {
-        String acName = "/assets/adventurecraft" + name;
-        InputStream stream = pack.getResourceAsStream(acName);
-        if (stream == null) {
-            stream = pack.getResourceAsStream(name);
-        }
-        return stream;
-    }
-
     @Override
     public BufferedImage getTextureImage(String name) throws IOException {
-        InputStream stream = getTextureStream(this.texturePackManager.texturePack, name);
+        InputStream stream = ExTextureManager.getAssetStream(this.texturePackManager.texturePack, name);
         return this.readImage(stream);
     }
 
@@ -303,7 +294,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
             }
 
             if (var5 == null) {
-                InputStream var6 = getTextureStream(var4, var2);
+                InputStream var6 = ExTextureManager.getAssetStream(var4, var2);
                 if (var6 == null) {
                     File var7 = new File(var2);
                     if (var7.exists()) {
@@ -640,7 +631,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
         value = "INVOKE",
         target = "Lnet/minecraft/client/resource/TexturePack;getResourceAsStream(Ljava/lang/String;)Ljava/io/InputStream;"))
     private InputStream redirectResourceGetters(TexturePack instance, String s) {
-        return getTextureStream(instance, s);
+        return ExTextureManager.getAssetStream(instance, s);
     }
 
     private void setTextureDimension(int var1, Vec2 var2) {

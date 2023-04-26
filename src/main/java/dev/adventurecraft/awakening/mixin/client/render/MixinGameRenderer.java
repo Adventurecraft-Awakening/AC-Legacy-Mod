@@ -814,4 +814,9 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
             }
         }
     }
+
+    @Override
+    public HeldItemRenderer getOffHandItemRenderer() {
+        return this.offHandItemRenderer;
+    }
 }

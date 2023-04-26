@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.mixin.client.render;
 
 import dev.adventurecraft.awakening.client.options.Config;
+import dev.adventurecraft.awakening.extension.client.ExTextureManager;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.render.QuadPoint;
@@ -11,7 +12,10 @@ import net.minecraft.util.CharacterUtils;
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.injection.*;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Constant;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -55,8 +59,8 @@ public abstract class MixinTextRenderer implements ExTextRenderer {
         try {
             InputStream var2;
             if (Config.getMinecraft() != null) {
-                var1 = ImageIO.read(Config.getMinecraft().texturePackManager.texturePack.getResourceAsStream(this.textureName));
-                var2 = Config.getMinecraft().texturePackManager.texturePack.getResourceAsStream("/font/glyph_sizes.bin");
+                var1 = ImageIO.read(ExTextureManager.getAssetStream(Config.getMinecraft().texturePackManager.texturePack, this.textureName));
+                var2 = ExTextureManager.getAssetStream(Config.getMinecraft().texturePackManager.texturePack, "/font/glyph_sizes.bin");
             } else {
                 var1 = ImageIO.read(ChickenRenderer.class.getResourceAsStream(this.textureName));
                 var2 = ChickenRenderer.class.getResourceAsStream("/font/glyph_sizes.bin");
@@ -149,7 +153,7 @@ public abstract class MixinTextRenderer implements ExTextRenderer {
         }
 
         float var4 = (float) this.charTexWidths[var1] - 0.01F;
-        float var5 = (float) this.charPixelWidths[var1];
+        float var5 = this.charPixelWidths[var1];
         GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
         GL11.glTexCoord2f(var2 / (float) this.imgWidth, var3 / (float) this.imgHeight);
         GL11.glVertex3f(this.xPos, this.yPos, 0.0F);
@@ -183,44 +187,47 @@ public abstract class MixinTextRenderer implements ExTextRenderer {
     }
 
     private void func_22004_c(char var1) {
-        if (this.unicodeWidth[var1] != 0) {
-            int var2 = var1 / 256;
-            if (this.charTexIds[var2] == 0) {
-                this.func_22003_b(var2);
-            }
-
-            if (this.lastBoundTexID != this.charTexIds[var2]) {
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.charTexIds[var2]);
-                this.lastBoundTexID = this.charTexIds[var2];
-            }
-
-            int var3 = this.unicodeWidth[var1] >> 4;
-            int var4 = this.unicodeWidth[var1] & 15;
-            float var5;
-            float var6;
-            if (var4 > 7) {
-                var6 = 16.0F;
-                var5 = 0.0F;
-            } else {
-                var6 = (float) (var4 + 1);
-                var5 = (float) var3;
-            }
-
-            float var7 = (float) (var1 % 16 * 16) + var5;
-            float var8 = (float) ((var1 & 255) / 16 * 16);
-            float var9 = var6 - var5 - 0.02F;
-            GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
-            GL11.glTexCoord2f(var7 / 256.0F, var8 / 256.0F);
-            GL11.glVertex3f(this.xPos, this.yPos, 0.0F);
-            GL11.glTexCoord2f(var7 / 256.0F, (var8 + 15.98F) / 256.0F);
-            GL11.glVertex3f(this.xPos, this.yPos + 7.99F, 0.0F);
-            GL11.glTexCoord2f((var7 + var9) / 256.0F, var8 / 256.0F);
-            GL11.glVertex3f(this.xPos + var9 / 2.0F, this.yPos, 0.0F);
-            GL11.glTexCoord2f((var7 + var9) / 256.0F, (var8 + 15.98F) / 256.0F);
-            GL11.glVertex3f(this.xPos + var9 / 2.0F, this.yPos + 7.99F, 0.0F);
-            GL11.glEnd();
-            this.xPos += (var6 - var5) / 2.0F + 1.0F;
+        if (this.unicodeWidth[var1] == 0) {
+            return;
         }
+
+        int var2 = var1 / 256;
+        if (this.charTexIds[var2] == 0) {
+            this.func_22003_b(var2);
+        }
+
+        if (this.lastBoundTexID != this.charTexIds[var2]) {
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.charTexIds[var2]);
+            this.lastBoundTexID = this.charTexIds[var2];
+        }
+
+        int var3 = this.unicodeWidth[var1] >> 4;
+        int var4 = this.unicodeWidth[var1] & 15;
+        float var5;
+        float var6;
+        if (var4 > 7) {
+            var6 = 16.0F;
+            var5 = 0.0F;
+        } else {
+            var6 = (float) (var4 + 1);
+            var5 = (float) var3;
+        }
+
+        float var7 = (float) (var1 % 16 * 16) + var5;
+        float var8 = (float) ((var1 & 255) / 16 * 16);
+        float var9 = var6 - var5 - 0.02F;
+
+        GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
+        GL11.glTexCoord2f(var7 / 256.0F, var8 / 256.0F);
+        GL11.glVertex3f(this.xPos, this.yPos, 0.0F);
+        GL11.glTexCoord2f(var7 / 256.0F, (var8 + 15.98F) / 256.0F);
+        GL11.glVertex3f(this.xPos, this.yPos + 7.99F, 0.0F);
+        GL11.glTexCoord2f((var7 + var9) / 256.0F, var8 / 256.0F);
+        GL11.glVertex3f(this.xPos + var9 / 2.0F, this.yPos, 0.0F);
+        GL11.glTexCoord2f((var7 + var9) / 256.0F, (var8 + 15.98F) / 256.0F);
+        GL11.glVertex3f(this.xPos + var9 / 2.0F, this.yPos + 7.99F, 0.0F);
+        GL11.glEnd();
+        this.xPos += (var6 - var5) / 2.0F + 1.0F;
     }
 
     private void renderStringImpl(String var1, boolean var2) {
@@ -229,7 +236,7 @@ public abstract class MixinTextRenderer implements ExTextRenderer {
             int var5;
             if (var4 == 167 && var3 + 1 < var1.length()) {
                 var5 = "0123456789abcdef".indexOf(var1.toLowerCase().charAt(var3 + 1));
-                if (var5 < 0 || var5 > 15) {
+                if (var5 < 0) {
                     var5 = 15;
                 }
 
@@ -251,27 +258,28 @@ public abstract class MixinTextRenderer implements ExTextRenderer {
                 }
             }
         }
-
     }
 
     @Overwrite
     public void drawText(String var1, int var2, int var3, int var4, boolean var5) {
         this.checkUpdated();
-        if (var1 != null) {
-            this.lastBoundTexID = 0;
-            if ((var4 & -16777216) == 0) {
-                var4 |= -16777216;
-            }
-
-            if (var5) {
-                var4 = (var4 & 16579836) >> 2 | var4 & -16777216;
-            }
-
-            GL11.glColor4f((float) (var4 >> 16 & 255) / 255.0F, (float) (var4 >> 8 & 255) / 255.0F, (float) (var4 & 255) / 255.0F, (float) (var4 >> 24 & 255) / 255.0F);
-            this.xPos = (float) var2;
-            this.yPos = (float) var3;
-            this.renderStringImpl(var1, var5);
+        if (var1 == null) {
+            return;
         }
+
+        this.lastBoundTexID = 0;
+        if ((var4 & -16777216) == 0) {
+            var4 |= -16777216;
+        }
+
+        if (var5) {
+            var4 = (var4 & 16579836) >> 2 | var4 & -16777216;
+        }
+
+        GL11.glColor4f((float) (var4 >> 16 & 255) / 255.0F, (float) (var4 >> 8 & 255) / 255.0F, (float) (var4 & 255) / 255.0F, (float) (var4 >> 24 & 255) / 255.0F);
+        this.xPos = (float) var2;
+        this.yPos = (float) var3;
+        this.renderStringImpl(var1, var5);
     }
 
     @Overwrite
