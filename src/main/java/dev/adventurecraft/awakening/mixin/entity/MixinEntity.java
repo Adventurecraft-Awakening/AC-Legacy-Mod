@@ -84,7 +84,7 @@ public abstract class MixinEntity implements ExEntity {
             double var2,
             double var3,
             CallbackInfo ci,
-            @Local(name = "var5", print = true) double var5,
+            @Local(name = "f") double var5,
             @Local(name = "var11") double var11,
             @Local(name = "var13") double var13,
             @Local(name = "var15") double var15) {

@@ -319,6 +319,10 @@ public abstract class MixinChunk implements ExChunk {
 
     @Inject(method = "method_881", at = @At("TAIL"))
     private void initTempMap(CallbackInfo ci) {
+        this.initTempMap();
+    }
+
+    private void initTempMap() {
         this.temperatures = this.world.method_1781().getTemperatures(this.temperatures, this.x * 16, this.z * 16, 16, 16);
     }
 
@@ -348,7 +352,7 @@ public abstract class MixinChunk implements ExChunk {
     @Override
     public double getTemperatureValue(int var1, int var2) {
         if (this.temperatures == null) {
-            this.temperatures = this.world.method_1781().getTemperatures(this.temperatures, this.x * 16, this.z * 16, 16, 16);
+            this.initTempMap();
         }
 
         return this.temperatures[var2 << 4 | var1];
