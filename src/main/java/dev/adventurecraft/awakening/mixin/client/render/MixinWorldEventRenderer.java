@@ -46,7 +46,6 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
@@ -462,10 +461,10 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     }
 
     @Redirect(method = "renderSky", at = @At(
-            value = "INVOKE",
-            target = "Lorg/lwjgl/opengl/GL11;glCallList(I)V",
-            remap = false,
-            ordinal = 0))
+        value = "INVOKE",
+        target = "Lorg/lwjgl/opengl/GL11;glCallList(I)V",
+        remap = false,
+        ordinal = 0))
     private void configurableSky1(int list) {
         if (Config.isSkyEnabled()) {
             GL11.glCallList(list);
@@ -473,10 +472,10 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     }
 
     @Redirect(method = "renderSky", at = @At(
-            value = "INVOKE",
-            target = "Lorg/lwjgl/opengl/GL11;glCallList(I)V",
-            remap = false,
-            ordinal = 2))
+        value = "INVOKE",
+        target = "Lorg/lwjgl/opengl/GL11;glCallList(I)V",
+        remap = false,
+        ordinal = 2))
     private void configurableSky2(int list) {
         if (Config.isSkyEnabled()) {
             GL11.glCallList(list);
@@ -484,10 +483,10 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     }
 
     @Redirect(method = "renderSky", at = @At(
-            value = "INVOKE",
-            target = "Lorg/lwjgl/opengl/GL11;glCallList(I)V",
-            remap = false,
-            ordinal = 1))
+        value = "INVOKE",
+        target = "Lorg/lwjgl/opengl/GL11;glCallList(I)V",
+        remap = false,
+        ordinal = 1))
     private void configurableStars(int list) {
         if (Config.isStarsEnabled()) {
             GL11.glCallList(list);
@@ -502,15 +501,15 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     }
 
     @Redirect(method = "method_1552", at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/client/options/GameOptions;fancyGraphics:Z"))
+        value = "FIELD",
+        target = "Lnet/minecraft/client/options/GameOptions;fancyGraphics:Z"))
     private boolean fancyClouds(GameOptions instance) {
         return Config.isCloudsFancy();
     }
 
     @Redirect(method = "method_1552", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/world/dimension/Dimension;getCloudHeight()F"))
+        value = "INVOKE",
+        target = "Lnet/minecraft/world/dimension/Dimension;getCloudHeight()F"))
     private float redirectCloudHeight(Dimension instance) {
         float height = instance.getCloudHeight();
         height += ((ExGameOptions) this.client.options).ofCloudsHeight() * 25.0F;
@@ -837,9 +836,9 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     }
 
     @Redirect(method = "renderEntities", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/render/entity/EntityRenderDispatcher;render(Lnet/minecraft/entity/Entity;F)V",
-            ordinal = 1))
+        value = "INVOKE",
+        target = "Lnet/minecraft/client/render/entity/EntityRenderDispatcher;render(Lnet/minecraft/entity/Entity;F)V",
+        ordinal = 1))
     private void renderEntityBasedOnCamera(EntityRenderDispatcher instance, Entity var7, float var3) {
         ExMinecraft exClient = (ExMinecraft) this.client;
         if ((!exClient.isCameraActive() || !exClient.isCameraPause()) && (!AC_DebugMode.active || var7 instanceof PlayerEntity) && ((ExEntity) var7).getStunned() <= 0) {
@@ -850,11 +849,11 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     }
 
     @Inject(method = "renderEntities", at = @At(
-            value = "INVOKE",
-            target = "Ljava/util/List;size()I",
-            shift = At.Shift.AFTER,
-            ordinal = 0,
-            remap = false))
+        value = "INVOKE",
+        target = "Ljava/util/List;size()I",
+        shift = At.Shift.AFTER,
+        ordinal = 0,
+        remap = false))
     private void renderScriptModels(Vec3d var1, CameraView var2, float var3, CallbackInfo ci) {
         GL11.glPushMatrix();
         GL11.glTranslated(-EntityRenderDispatcher.field_2490, -EntityRenderDispatcher.field_2491, -EntityRenderDispatcher.field_2492);
@@ -882,9 +881,9 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     */
 
     @ModifyExpressionValue(method = "method_1552", at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/entity/LivingEntity;prevRenderY:D",
-            ordinal = 0))
+        value = "FIELD",
+        target = "Lnet/minecraft/entity/LivingEntity;prevRenderY:D",
+        ordinal = 0))
     private double changeCameraY(double value, @Local(ordinal = 0, argsOnly = true) float var1) {
         ExMinecraft exClient = (ExMinecraft) this.client;
         if (exClient.isCameraActive()) {
@@ -895,9 +894,9 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     }
 
     @ModifyExpressionValue(method = "method_1552", at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/entity/LivingEntity;prevX:D",
-            ordinal = 0))
+        value = "FIELD",
+        target = "Lnet/minecraft/entity/LivingEntity;prevX:D",
+        ordinal = 0))
     private double changeCameraX(double value, @Local(ordinal = 0, argsOnly = true) float var1) {
         ExMinecraft exClient = (ExMinecraft) this.client;
         if (exClient.isCameraActive()) {
@@ -908,9 +907,9 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     }
 
     @ModifyExpressionValue(method = "method_1552", at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/entity/LivingEntity;prevX:D",
-            ordinal = 0))
+        value = "FIELD",
+        target = "Lnet/minecraft/entity/LivingEntity;prevX:D",
+        ordinal = 0))
     private double changeCameraZ(double value, @Local(ordinal = 0, argsOnly = true) float var1) {
         ExMinecraft exClient = (ExMinecraft) this.client;
         if (exClient.isCameraActive()) {
@@ -920,6 +919,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         return value;
     }
 
+    @Override
     public void drawCursorSelection(LivingEntity var1, ItemStack var2, float var3) {
         if (AC_ItemCursor.bothSet && var2 != null && var2.itemId >= AC_Items.cursor.id && var2.itemId <= AC_Items.cursor.id + 20) {
             GL11.glEnable(GL11.GL_BLEND);
@@ -976,6 +976,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
 
     }
 
+    @Override
     public void drawEntityPath(Entity var1, LivingEntity var2, float var3) {
         if (!(var1 instanceof IEntityPather var4)) {
             return;
@@ -1014,6 +1015,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         GL11.glDisable(GL11.GL_BLEND);
     }
 
+    @Override
     public void drawEntityFOV(LivingEntity var1, LivingEntity var2, float var3) {
         if (var1 == var2) {
             return;
@@ -1074,9 +1076,9 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
                     case "footstep" -> new FootstepParticle(this.textureManager, this.world, var2, var4, var6);
                     case "splash" -> new WaterParticleEntity(this.world, var2, var4, var6, var8, var10, var12);
                     case "largesmoke" ->
-                            new SmokeParticleEntity(this.world, var2, var4, var6, var8, var10, var12, 2.5F);
+                        new SmokeParticleEntity(this.world, var2, var4, var6, var8, var10, var12, 2.5F);
                     case "reddust" ->
-                            new RedstoneParticleEntity(this.world, var2, var4, var6, (float) var8, (float) var10, (float) var12);
+                        new RedstoneParticleEntity(this.world, var2, var4, var6, (float) var8, (float) var10, (float) var12);
                     case "snowballpoof" -> new PoofParticleEntity(this.world, var2, var4, var6, Item.SNOWBALL);
                     case "snowshovel" -> new SnowPuffParticle(this.world, var2, var4, var6, var8, var10, var12);
                     case "slime" -> new PoofParticleEntity(this.world, var2, var4, var6, Item.SLIMEBALL);

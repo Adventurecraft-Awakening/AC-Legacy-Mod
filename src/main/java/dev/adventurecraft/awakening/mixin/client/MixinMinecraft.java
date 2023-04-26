@@ -1189,6 +1189,11 @@ public abstract class MixinMinecraft implements ExMinecraft {
     }
 
     @Override
+    public LivingEntity getCutsceneCameraEntity() {
+        return this.cutsceneCameraEntity;
+    }
+
+    @Override
     public AC_GuiStore getStoreGUI() {
         return this.storeGUI;
     }

@@ -19,6 +19,7 @@
     "client.render.MixinFlowingWaterTextureBinder",
     "client.render.MixinFlowingWaterTextureBinder2",
     "client.render.MixinGameRenderer",
+    "client.render.MixinHeldItemRenderer",
     "client.render.MixinPortalTextureBinder",
     "client.render.MixinTessellator",
     "client.render.MixinTextRenderer",

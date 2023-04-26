@@ -1,0 +1,5 @@
+root = true
+
+[*]
+
+ij_java_continuation_indent_size = 4

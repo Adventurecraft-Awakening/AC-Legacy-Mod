@@ -36,6 +36,21 @@ public abstract class MixinPlayerEntity implements ExPlayerEntity {
     }
 
     @Override
+    public void swingOffhandItem() {
+        this.swingProgressIntOffhand = -1;
+        this.isSwingingOffhand = true;
+    }
+
+    @Override
+    public float getSwingOffhandProgress(float var1) {
+        float var2 = this.swingProgressOffhand - this.prevSwingProgressOffhand;
+        if (var2 < 0.0F) {
+            ++var2;
+        }
+        return this.prevSwingProgressOffhand + var2 * var1;
+    }
+
+    @Override
     public int getHeartPiecesCount() {
         return this.numHeartPieces;
     }

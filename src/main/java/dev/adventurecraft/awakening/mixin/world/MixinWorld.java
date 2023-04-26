@@ -1320,6 +1320,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         this.undoStack.redo((World) (Object) this);
     }
 
+    @Override
     public Entity getEntityByID(int var1) {
         Iterator<Entity> var2 = this.entities.iterator();
 
@@ -1335,6 +1336,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         return var3;
     }
 
+    @Override
     public float getFogStart(float var1, float var2) {
         ExWorldProperties props = (ExWorldProperties) this.properties;
         if (props.isOverrideFogDensity()) {
@@ -1346,6 +1348,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         return var1;
     }
 
+    @Override
     public float getFogEnd(float var1, float var2) {
         ExWorldProperties props = (ExWorldProperties) this.properties;
         if (props.isOverrideFogDensity()) {
@@ -1357,6 +1360,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         return var1;
     }
 
+    @Override
     public BlockEntity getBlockTileEntityDontCreate(int var1, int var2, int var3) {
         Chunk var4 = this.getChunkFromCache(var1 >> 4, var3 >> 4);
         if (var4 != null) {
@@ -1365,6 +1369,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         return null;
     }
 
+    @Override
     public double getTemperatureValue(int var1, int var2) {
         if (var1 >= -32000000 && var2 >= -32000000 && var1 < 32000000 && var2 <= 32000000) {
             ExChunk chunk = (ExChunk) this.getChunkFromCache(var1 >> 4, var2 >> 4);
@@ -1375,6 +1380,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         return 0.0D;
     }
 
+    @Override
     public void setTemperatureValue(int var1, int var2, double var3) {
         if (var1 >= -32000000 && var2 >= -32000000 && var1 < 32000000 && var2 <= 32000000) {
             ExChunk var5 = (ExChunk) this.getChunkFromCache(var1 >> 4, var2 >> 4);

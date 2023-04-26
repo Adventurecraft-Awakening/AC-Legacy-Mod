@@ -6,6 +6,10 @@ public interface ExPlayerEntity extends ExLivingEntity {
 
     boolean isUsingUmbrella();
 
+    void swingOffhandItem();
+
+    float getSwingOffhandProgress(float var1);
+
     int getHeartPiecesCount();
 
     void setHeartPiecesCount(int value);

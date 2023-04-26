@@ -3,6 +3,7 @@ package dev.adventurecraft.awakening.extension.client;
 import dev.adventurecraft.awakening.common.AC_CutsceneCamera;
 import dev.adventurecraft.awakening.common.AC_GuiStore;
 import dev.adventurecraft.awakening.common.AC_MapList;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.world.World;
 
 public interface ExMinecraft {
@@ -34,6 +35,8 @@ public interface ExMinecraft {
     AC_CutsceneCamera getActiveCutsceneCamera();
 
     void setActiveCutsceneCamera(AC_CutsceneCamera value);
+
+    LivingEntity getCutsceneCameraEntity();
 
     AC_GuiStore getStoreGUI();
 
