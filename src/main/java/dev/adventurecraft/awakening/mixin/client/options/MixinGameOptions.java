@@ -88,6 +88,10 @@ public abstract class MixinGameOptions implements ExGameOptions {
     public KeyBinding sneakKey;
     @Shadow
     protected Minecraft client;
+    @Shadow
+    public int difficulty;
+    @Shadow
+    public int guiScale;
 
     public boolean ofFogFancy = false;
     public float ofFogStart = 0.8F;
@@ -129,17 +133,6 @@ public abstract class MixinGameOptions implements ExGameOptions {
     public boolean ofAnimatedSmoke = true;
     public KeyBinding ofKeyBindZoom;
     public List<KeyBinding> keyBindings;
-    public int difficulty;
-    public boolean hideHud;
-    public boolean thirdPerson;
-    public boolean debugHud;
-    public String lastServer;
-    public boolean field_1445;
-    public boolean cinematicMode;
-    public boolean alwaysFalse;
-    public float field_1448;
-    public float field_1449;
-    public int guiScale;
 
     @Shadow
     public abstract float getFloatValue(Option var1);
@@ -175,17 +168,6 @@ public abstract class MixinGameOptions implements ExGameOptions {
         this.keyBindings.add(this.inventoryKey);
         this.keyBindings.add(this.chatKey);
         this.keyBindings.add(this.fogKey);
-        this.difficulty = 2;
-        this.hideHud = false;
-        this.thirdPerson = false;
-        this.debugHud = false;
-        this.lastServer = "";
-        this.field_1445 = false;
-        this.cinematicMode = false;
-        this.alwaysFalse = false;
-        this.field_1448 = 1.0F;
-        this.field_1449 = 1.0F;
-        this.guiScale = 0;
     }
 
     @Inject(method = "setFloatOption", at = @At("TAIL"))
@@ -209,7 +191,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
 
     private void updateWorldLightLevels() {
         if (this.client.gameRenderer != null) {
-            ((ExGameRenderer)this.client.gameRenderer).updateWorldLightLevels();
+            ((ExGameRenderer) this.client.gameRenderer).updateWorldLightLevels();
         }
 
         if (this.client.worldRenderer != null) {
@@ -251,11 +233,11 @@ public abstract class MixinGameOptions implements ExGameOptions {
     }
 
     @Inject(method = "setIntOption", at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/client/options/GameOptions;advancedOpengl:Z",
-            ordinal = 0,
-            shift = At.Shift.BEFORE),
-            cancellable = true)
+        value = "FIELD",
+        target = "Lnet/minecraft/client/options/GameOptions;advancedOpengl:Z",
+        ordinal = 0,
+        shift = At.Shift.BEFORE),
+        cancellable = true)
     private void setIntOptionOF_ADVANCED_OPENGL(Option var1, int var2, CallbackInfo ci) {
         if (!Config.isOcclusionAvailable()) {
             this.ofOcclusionFancy = false;
@@ -270,17 +252,17 @@ public abstract class MixinGameOptions implements ExGameOptions {
             this.advancedOpengl = false;
         }
 
-        ((ExWorldEventRenderer)this.client.worldRenderer).setAllRenderersVisible();
+        ((ExWorldEventRenderer) this.client.worldRenderer).setAllRenderersVisible();
 
         ci.cancel();
     }
 
     @Inject(method = "setIntOption", at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/client/options/GameOptions;fpsLimit:I",
-            ordinal = 0,
-            shift = At.Shift.BEFORE),
-            cancellable = true)
+        value = "FIELD",
+        target = "Lnet/minecraft/client/options/GameOptions;fpsLimit:I",
+        ordinal = 0,
+        shift = At.Shift.BEFORE),
+        cancellable = true)
     private void setIntOptionOF_LIMIT_FRAMERATE(Option var1, int var2, CallbackInfo ci) {
         this.fpsLimit = (this.fpsLimit + var2) % 4;
         Display.setVSyncEnabled(this.fpsLimit == 3);
@@ -289,9 +271,9 @@ public abstract class MixinGameOptions implements ExGameOptions {
     }
 
     @Inject(method = "setIntOption", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/options/GameOptions;saveOptions()V",
-            shift = At.Shift.BEFORE))
+        value = "INVOKE",
+        target = "Lnet/minecraft/client/options/GameOptions;saveOptions()V",
+        shift = At.Shift.BEFORE))
     private void setIntOptionOF(Option var1, int var2, CallbackInfo ci) {
         if (var1 == OptionOF.FOG_FANCY) {
             if (!Config.isFancyFogAvailable()) {
@@ -517,7 +499,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
     }
 
     @Inject(method = "getFloatValue", at = @At("HEAD"),
-            cancellable = true)
+        cancellable = true)
     private void getFloatValueOF(Option var1, CallbackInfoReturnable<Float> cir) {
         if (var1 == OptionOF.BRIGHTNESS) {
             cir.setReturnValue(this.ofBrightness);
@@ -728,17 +710,17 @@ public abstract class MixinGameOptions implements ExGameOptions {
     }
 
     @Inject(method = "load", at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/client/options/GameOptions;fpsLimit:I",
-            shift = At.Shift.AFTER))
+        value = "FIELD",
+        target = "Lnet/minecraft/client/options/GameOptions;fpsLimit:I",
+        shift = At.Shift.AFTER))
     private void load_fpsLimit(CallbackInfo ci) {
         Display.setVSyncEnabled(this.fpsLimit == 3);
     }
 
     @Inject(method = "load", at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/client/options/GameOptions;ao:Z",
-            shift = At.Shift.AFTER))
+        value = "FIELD",
+        target = "Lnet/minecraft/client/options/GameOptions;ao:Z",
+        shift = At.Shift.AFTER))
     private void load_ao(CallbackInfo ci) {
         if (this.ao) {
             this.ofAoLevel = 1.0F;
@@ -748,11 +730,11 @@ public abstract class MixinGameOptions implements ExGameOptions {
     }
 
     @Inject(method = "load", at = @At(
-            value = "INVOKE",
-            target = "Ljava/lang/String;equals(Ljava/lang/Object;)Z",
-            shift = At.Shift.BEFORE,
-            ordinal = 0),
-            locals = LocalCapture.CAPTURE_FAILHARD)
+        value = "INVOKE",
+        target = "Ljava/lang/String;equals(Ljava/lang/Object;)Z",
+        shift = At.Shift.BEFORE,
+        ordinal = 0),
+        locals = LocalCapture.CAPTURE_FAILHARD)
     private void loadOF(CallbackInfo ci, BufferedReader var1, String var2, String[] var3) {
         if (var3[0].equals("ofFogFancy") && var3.length >= 2) {
             this.ofFogFancy = var3[1].equals("true");
@@ -948,10 +930,10 @@ public abstract class MixinGameOptions implements ExGameOptions {
     }
 
     @Inject(method = "saveOptions", at = @At(
-            value = "INVOKE",
-            target = "Ljava/io/PrintWriter;close()V",
-            shift = At.Shift.BEFORE),
-            locals = LocalCapture.CAPTURE_FAILHARD)
+        value = "INVOKE",
+        target = "Ljava/io/PrintWriter;close()V",
+        shift = At.Shift.BEFORE),
+        locals = LocalCapture.CAPTURE_FAILHARD)
     private void saveOptionsOF(CallbackInfo ci, PrintWriter var1, int var2) {
         var1.println("ofFogFancy:" + this.ofFogFancy);
         var1.println("ofFogStart:" + this.ofFogStart);
