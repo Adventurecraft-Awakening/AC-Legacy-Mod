@@ -20,6 +20,11 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock, AC_IBlockColor, AC_TexturedBlock {
 
     @Override
+    public int getTextureForSide(BlockView view, int x, int y, int z, int side) {
+        return (int)getTextureForSideEx(view, x, y, z, side);
+    }
+
+    @Override
     public long getTextureForSideEx(BlockView view, int x, int y, int z, int side) {
         if (side == 1) {
             return getTopTexture(view, x, y, z);
@@ -30,15 +35,12 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
         }
     }
 
-    private static int getTopTexture(BlockView view, int x, int y, int z) {
+    private int getTopTexture(BlockView view, int x, int y, int z) {
         int meta = view.getBlockMeta(x, y, z);
-        if (meta == 0) {
-            return 0;
-        }
-        return 232 + meta - 1;
+        return getTextureForSide(0, meta);
     }
 
-    private static long getSideTexture(BlockView view, int x, int y, int z, int side) {
+    private long getSideTexture(BlockView view, int x, int y, int z, int side) {
         BetterGrassOption option = Config.getBetterGrassOption();
 
         Material var6 = view.getMaterial(x, y + 1, z);
@@ -83,7 +85,7 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
                 return 3;
             }
         }
-        return (long)getTopTexture(view, x, y, z) & (1L << 32);
+        return (long)getTopTexture(view, x, y, z) | (1L << 32);
     }
 
     @Redirect(method = "onScheduledTick", at = @At(
@@ -96,8 +98,9 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
         return result;
     }
 
-    public int getTextureForSide(int var1, int var2) {
-        return var2 == 0 ? 0 : 232 + var2 - 1;
+    @Override
+    public int getTextureForSide(int var1, int meta) {
+        return meta == 0 ? 0 : 232 + meta - 1;
     }
 
     public int getRenderType() {

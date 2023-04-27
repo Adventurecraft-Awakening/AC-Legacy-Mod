@@ -6,6 +6,7 @@ import dev.adventurecraft.awakening.client.options.Config;
 import dev.adventurecraft.awakening.common.AC_BlockOverlay;
 import dev.adventurecraft.awakening.common.AC_Blocks;
 import dev.adventurecraft.awakening.common.AC_TileEntityTree;
+import dev.adventurecraft.awakening.extension.block.AC_TexturedBlock;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.block.ExGrassBlock;
 import dev.adventurecraft.awakening.extension.client.render.block.ExBlockRenderer;
@@ -249,6 +250,10 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         this.blockView = null;
     }
 
+    private static boolean hasColorBit(long textureId) {
+        return ((textureId >> 32) & 1) == 1;
+    }
+
     @Overwrite
     public boolean method_50(Block var1, int var2, int var3, int var4, float var5, float var6, float var7) {
         this.field_92 = true;
@@ -451,7 +456,6 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             var10 = true;
         }
 
-        int var25;
         if (this.renderAllSides || var1.isSideRendered(this.blockView, var2, var3, var4 - 1, 2)) {
             if (this.field_55 <= 0) {
                 var24 = this.field_96;
@@ -521,33 +525,23 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             this.field_59 *= var24;
             this.field_63 *= var24;
             this.field_68 *= var24;
-            var25 = var1.getTextureForSide(this.blockView, var2, var3, var4, 2);
-            /*
-            if (var9) {
-                if (var25 == 3) {
-                    var25 = Config.getSideGrassTexture(this.blockView, var2, var3, var4, 2);
-                    if (var25 == 0) {
-                        this.field_56 *= var5;
-                        this.field_57 *= var5;
-                        this.field_58 *= var5;
-                        this.field_59 *= var5;
-                        this.field_60 *= var6;
-                        this.field_61 *= var6;
-                        this.field_62 *= var6;
-                        this.field_63 *= var6;
-                        this.field_64 *= var7;
-                        this.field_65 *= var7;
-                        this.field_66 *= var7;
-                        this.field_68 *= var7;
-                    }
-                }
+            long var25 = ((AC_TexturedBlock) var1).getTextureForSideEx(this.blockView, var2, var3, var4, 2);
+            if (hasColorBit(var25)) {
+                this.field_56 *= var5;
+                this.field_57 *= var5;
+                this.field_58 *= var5;
+                this.field_59 *= var5;
+                this.field_60 *= var6;
+                this.field_61 *= var6;
+                this.field_62 *= var6;
+                this.field_63 *= var6;
+                this.field_64 *= var7;
+                this.field_65 *= var7;
+                this.field_66 *= var7;
+                this.field_68 *= var7;
+            }
 
-                if (var25 == 68) {
-                    var25 = Config.getSideSnowGrassTexture(this.blockView, var2, var3, var4, 2);
-                }
-            }*/
-
-            this.renderEastFace(var1, var2, var3, var4, var25);
+            this.renderEastFace(var1, var2, var3, var4, (int) var25);
             if (fancyGrass && var25 == 3 && this.textureOverride < 0) {
                 this.field_56 *= var5;
                 this.field_57 *= var5;
@@ -636,34 +630,23 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             this.field_59 *= var24;
             this.field_63 *= var24;
             this.field_68 *= var24;
-            var25 = var1.getTextureForSide(this.blockView, var2, var3, var4, 3);
-            /*
-            if (var9) {
-                if (var25 == 3) {
-                    var25 = Config.getSideGrassTexture(this.blockView, var2, var3, var4, 3);
-                    if (var25 == 0) {
-                        this.field_56 *= var5;
-                        this.field_57 *= var5;
-                        this.field_58 *= var5;
-                        this.field_59 *= var5;
-                        this.field_60 *= var6;
-                        this.field_61 *= var6;
-                        this.field_62 *= var6;
-                        this.field_63 *= var6;
-                        this.field_64 *= var7;
-                        this.field_65 *= var7;
-                        this.field_66 *= var7;
-                        this.field_68 *= var7;
-                    }
-                }
-
-                if (var25 == 68) {
-                    var25 = Config.getSideSnowGrassTexture(this.blockView, var2, var3, var4, 3);
-                }
+            long var25 = ((AC_TexturedBlock) var1).getTextureForSideEx(this.blockView, var2, var3, var4, 3);
+            if (hasColorBit(var25)) {
+                this.field_56 *= var5;
+                this.field_57 *= var5;
+                this.field_58 *= var5;
+                this.field_59 *= var5;
+                this.field_60 *= var6;
+                this.field_61 *= var6;
+                this.field_62 *= var6;
+                this.field_63 *= var6;
+                this.field_64 *= var7;
+                this.field_65 *= var7;
+                this.field_66 *= var7;
+                this.field_68 *= var7;
             }
-*/
 
-            this.renderWestFace(var1, var2, var3, var4, var25);
+            this.renderWestFace(var1, var2, var3, var4, (int) var25);
             if (fancyGrass && var25 == 3 && this.textureOverride < 0) {
                 this.field_56 *= var5;
                 this.field_57 *= var5;
@@ -752,34 +735,23 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             this.field_59 *= var24;
             this.field_63 *= var24;
             this.field_68 *= var24;
-            var25 = var1.getTextureForSide(this.blockView, var2, var3, var4, 4);
-            /*
-            if (var9) {
-                if (var25 == 3) {
-                    var25 = Config.getSideGrassTexture(this.blockView, var2, var3, var4, 4);
-                    if (var25 == 0) {
-                        this.field_56 *= var5;
-                        this.field_57 *= var5;
-                        this.field_58 *= var5;
-                        this.field_59 *= var5;
-                        this.field_60 *= var6;
-                        this.field_61 *= var6;
-                        this.field_62 *= var6;
-                        this.field_63 *= var6;
-                        this.field_64 *= var7;
-                        this.field_65 *= var7;
-                        this.field_66 *= var7;
-                        this.field_68 *= var7;
-                    }
-                }
-
-                if (var25 == 68) {
-                    var25 = Config.getSideSnowGrassTexture(this.blockView, var2, var3, var4, 4);
-                }
+            long var25 = ((AC_TexturedBlock) var1).getTextureForSideEx(this.blockView, var2, var3, var4, 4);
+            if (hasColorBit(var25)) {
+                this.field_56 *= var5;
+                this.field_57 *= var5;
+                this.field_58 *= var5;
+                this.field_59 *= var5;
+                this.field_60 *= var6;
+                this.field_61 *= var6;
+                this.field_62 *= var6;
+                this.field_63 *= var6;
+                this.field_64 *= var7;
+                this.field_65 *= var7;
+                this.field_66 *= var7;
+                this.field_68 *= var7;
             }
-*/
 
-            this.renderNorthFace(var1, var2, var3, var4, var25);
+            this.renderNorthFace(var1, var2, var3, var4, (int) var25);
             if (fancyGrass && var25 == 3 && this.textureOverride < 0) {
                 this.field_56 *= var5;
                 this.field_57 *= var5;
@@ -868,34 +840,23 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             this.field_59 *= var24;
             this.field_63 *= var24;
             this.field_68 *= var24;
-            var25 = var1.getTextureForSide(this.blockView, var2, var3, var4, 5);
-            /*
-            if (var9) {
-                if (var25 == 3) {
-                    var25 = Config.getSideGrassTexture(this.blockView, var2, var3, var4, 5);
-                    if (var25 == 0) {
-                        this.field_56 *= var5;
-                        this.field_57 *= var5;
-                        this.field_58 *= var5;
-                        this.field_59 *= var5;
-                        this.field_60 *= var6;
-                        this.field_61 *= var6;
-                        this.field_62 *= var6;
-                        this.field_63 *= var6;
-                        this.field_64 *= var7;
-                        this.field_65 *= var7;
-                        this.field_66 *= var7;
-                        this.field_68 *= var7;
-                    }
-                }
-
-                if (var25 == 68) {
-                    var25 = Config.getSideSnowGrassTexture(this.blockView, var2, var3, var4, 5);
-                }
+            long var25 = ((AC_TexturedBlock) var1).getTextureForSideEx(this.blockView, var2, var3, var4, 5);
+            if (hasColorBit(var25)) {
+                this.field_56 *= var5;
+                this.field_57 *= var5;
+                this.field_58 *= var5;
+                this.field_59 *= var5;
+                this.field_60 *= var6;
+                this.field_61 *= var6;
+                this.field_62 *= var6;
+                this.field_63 *= var6;
+                this.field_64 *= var7;
+                this.field_65 *= var7;
+                this.field_66 *= var7;
+                this.field_68 *= var7;
             }
-*/
 
-            this.renderSouthFace(var1, var2, var3, var4, var25);
+            this.renderSouthFace(var1, var2, var3, var4, (int) var25);
             if (fancyGrass && var25 == 3 && this.textureOverride < 0) {
                 this.field_56 *= var5;
                 this.field_57 *= var5;
@@ -980,8 +941,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             }
 
             var9.color(var19 * var28, var22 * var28, var25 * var28);
-            long var29 = ((ExBlock) var1).getTextureForSideEx(this.blockView, var2, var3, var4, 2);
-            if (((var29 >> 32) & 1) == 1) {
+            long var29 = ((AC_TexturedBlock) var1).getTextureForSideEx(this.blockView, var2, var3, var4, 2);
+            if (hasColorBit(var29)) {
                 var9.color(var19 * var28 * var5, var22 * var28 * var6, var25 * var28 * var7);
             }
 
@@ -1001,8 +962,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             }
 
             var9.color(var19 * var28, var22 * var28, var25 * var28);
-            long var29 = ((ExBlock) var1).getTextureForSideEx(this.blockView, var2, var3, var4, 3);
-            if (((var29 >> 32) & 1) == 1) {
+            long var29 = ((AC_TexturedBlock) var1).getTextureForSideEx(this.blockView, var2, var3, var4, 3);
+            if (hasColorBit(var29)) {
                 var9.color(var19 * var28 * var5, var22 * var28 * var6, var25 * var28 * var7);
             }
 
@@ -1022,8 +983,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             }
 
             var9.color(var20 * var28, var23 * var28, var26 * var28);
-            long var29 = ((ExBlock) var1).getTextureForSideEx(this.blockView, var2, var3, var4, 4);
-            if (((var29 >> 32) & 1) == 1) {
+            long var29 = ((AC_TexturedBlock) var1).getTextureForSideEx(this.blockView, var2, var3, var4, 4);
+            if (hasColorBit(var29)) {
                 var9.color(var20 * var28 * var5, var23 * var28 * var6, var26 * var28 * var7);
             }
 
@@ -1043,8 +1004,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             }
 
             var9.color(var20 * var28, var23 * var28, var26 * var28);
-            long var29 = ((ExBlock) var1).getTextureForSideEx(this.blockView, var2, var3, var4, 5);
-            if (((var29 >> 32) & 1) == 1) {
+            long var29 = ((AC_TexturedBlock) var1).getTextureForSideEx(this.blockView, var2, var3, var4, 5);
+            if (hasColorBit(var29)) {
                 var9.color(var20 * var28 * var5, var23 * var28 * var6, var26 * var28 * var7);
             }
 

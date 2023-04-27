@@ -80,6 +80,9 @@ public abstract class MixinBlock implements ExBlock, AC_TexturedBlock {
     public int id;
 
     @Shadow
+    public abstract int getTextureForSide(int j, int l);
+
+    @Shadow
     public abstract int getTextureForSide(BlockView arg, int i, int j, int k, int l);
 
     @Inject(method = "<clinit>", at = @At(
