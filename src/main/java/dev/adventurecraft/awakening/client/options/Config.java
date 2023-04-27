@@ -1,9 +1,5 @@
 package dev.adventurecraft.awakening.client.options;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Date;
@@ -14,7 +10,6 @@ import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.options.GameOptions;
-import net.minecraft.world.BlockView;
 import org.lwjgl.Sys;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GLContext;
@@ -33,11 +28,11 @@ public class Config {
     public static final float DEF_FOG_START = 0.2F;
     public static final boolean DEF_OPTIMIZE_RENDER_DISTANCE = false;
     public static final boolean DEF_OCCLUSION_ENABLED = false;
-    public static final int  DEF_MIPMAP_LEVEL = 0;
+    public static final int DEF_MIPMAP_LEVEL = 0;
     public static final int DEF_MIPMAP_TYPE = 9984;
     public static final float DEF_ALPHA_FUNC_LEVEL = 0.1F;
     public static final boolean DEF_LOAD_CHUNKS_FAR = false;
-    public static final int  DEF_PRELOADED_CHUNKS = 0;
+    public static final int DEF_PRELOADED_CHUNKS = 0;
     public static final int DEF_CHUNKS_LIMIT = 25;
     public static final int DEF_UPDATES_PER_FRAME = 3;
     public static final boolean DEF_DYNAMIC_UPDATES = false;
@@ -187,23 +182,27 @@ public class Config {
     }
 
     public static boolean isTreesFancy() {
+        if (gameSettings == null)
+            return false;
         if (((ExGameOptions) gameSettings).ofTrees() == 0)
             return gameSettings.fancyGraphics;
         return ((ExGameOptions) gameSettings).ofTrees() == 2;
     }
 
     public static boolean isGrassFancy() {
+        if (gameSettings == null)
+            return false;
         if (((ExGameOptions) gameSettings).ofGrass() == 0)
             return gameSettings.fancyGraphics;
         return ((ExGameOptions) gameSettings).ofGrass() == 2;
     }
 
     public static int limit(int var0, int var1, int var2) {
-        return var0 < var1 ? var1 : (var0 > var2 ? var2 : var0);
+        return var0 < var1 ? var1 : Math.min(var0, var2);
     }
 
     public static float limit(float var0, float var1, float var2) {
-        return var0 < var1 ? var1 : (var0 > var2 ? var2 : var0);
+        return var0 < var1 ? var1 : Math.min(var0, var2);
     }
 
     public static boolean isAnimatedWater() {
@@ -454,71 +453,11 @@ public class Config {
         return 64;
     }
 
-    public static int getSideGrassTexture(BlockView var0, int var1, int var2, int var3, int var4) {
-        if (!isBetterGrass()) {
-            return 3;
-        } else {
-            if (isBetterGrassFancy()) {
-                --var2;
-                switch (var4) {
-                    case 2:
-                        --var3;
-                        break;
-                    case 3:
-                        ++var3;
-                        break;
-                    case 4:
-                        --var1;
-                        break;
-                    case 5:
-                        ++var1;
-                }
-
-                int var5 = var0.getBlockId(var1, var2, var3);
-                if (var5 != 2) {
-                    return 3;
-                }
-            }
-
-            return 0;
+    public static BetterGrassOption getBetterGrassOption() {
+        if (gameSettings != null) {
+            return ((ExGameOptions) gameSettings).ofBetterGrass();
         }
-    }
-
-    public static int getSideSnowGrassTexture(BlockView var0, int var1, int var2, int var3, int var4) {
-        if (!isBetterGrass()) {
-            return 68;
-        } else {
-            if (isBetterGrassFancy()) {
-                switch (var4) {
-                    case 2:
-                        --var3;
-                        break;
-                    case 3:
-                        ++var3;
-                        break;
-                    case 4:
-                        --var1;
-                        break;
-                    case 5:
-                        ++var1;
-                }
-
-                int var5 = var0.getBlockId(var1, var2, var3);
-                if (var5 != 78 && var5 != 80) {
-                    return 68;
-                }
-            }
-
-            return 66;
-        }
-    }
-
-    public static boolean isBetterGrass() {
-        return gameSettings != null && ((ExGameOptions) gameSettings).ofBetterGrass() != 3;
-    }
-
-    public static boolean isBetterGrassFancy() {
-        return gameSettings != null && ((ExGameOptions) gameSettings).ofBetterGrass() == 2;
+        return BetterGrassOption.OFF;
     }
 
     public static boolean isFontRendererUpdated() {

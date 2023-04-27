@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.mixin.client.texture;
 
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.client.options.Config;
+import dev.adventurecraft.awakening.client.render.AC_TextureBinder;
 import dev.adventurecraft.awakening.client.texture.*;
 import dev.adventurecraft.awakening.common.AC_TextureAnimated;
 import dev.adventurecraft.awakening.common.Vec2;
@@ -399,8 +400,15 @@ public abstract class MixinTextureManager implements ExTextureManager {
             }
         }
 
+        String tex = ((AC_TextureBinder) var1).getTexture();
+        Vec2 var2 = this.getTextureResolution(tex);
+        if (var2 == null) {
+            this.getTextureId(tex);
+            var2 = this.getTextureResolution(tex);
+        }
+
         this.textureBinders.add(var1);
-        var1.updateTexture();
+        ((AC_TextureBinder) var1).onTick(var2);
         ACMod.LOGGER.info("Texture registered: " + var1 + ", image: " + var1.renderMode + ", index: " + var1.index);
         this.dynamicTexturesUpdated = false;
     }
@@ -502,7 +510,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
                     }
 
                     if (this.currentImageBuffer.limit() <= 0) {
-                        var2.updateTexture();
+                        ((AC_TextureBinder) var2).onTick(var4);
                         if (var2.grid == null) {
                             continue;
                         }
@@ -658,7 +666,9 @@ public abstract class MixinTextureManager implements ExTextureManager {
             if (textureBinder.renderMode == var1 && textureBinder instanceof TextureHDFX hdfx) {
                 hdfx.setTexturePackBase(this.texturePackManager.texturePack);
                 hdfx.setTileWidth(var2.x / 16);
-                textureBinder.updateTexture();
+                
+                Vec2 var3 = this.getTextureResolution(((AC_TextureBinder) textureBinder).getTexture());
+                ((AC_TextureBinder) textureBinder).onTick(var3);
             }
         }
     }

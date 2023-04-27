@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.extension.client.options;
 
+import dev.adventurecraft.awakening.client.options.BetterGrassOption;
 import net.minecraft.client.options.KeyBinding;
 
 public interface ExGameOptions {
@@ -42,7 +43,7 @@ public interface ExGameOptions {
 
     int ofWater();
 
-    int ofBetterGrass();
+    BetterGrassOption ofBetterGrass();
 
     int ofAutoSaveTicks();
 

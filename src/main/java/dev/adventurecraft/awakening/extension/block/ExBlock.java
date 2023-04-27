@@ -5,7 +5,7 @@ import net.minecraft.block.Block;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 
-public interface ExBlock {
+public interface ExBlock extends AC_TexturedBlock {
 
     int[] subTypes = new int[256];
 

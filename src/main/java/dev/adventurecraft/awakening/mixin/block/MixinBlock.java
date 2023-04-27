@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.mixin.block;
 
 import dev.adventurecraft.awakening.common.AC_BlockColor;
 import dev.adventurecraft.awakening.common.AC_ItemSubtypes;
+import dev.adventurecraft.awakening.extension.block.AC_TexturedBlock;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.fabricmc.api.EnvType;
@@ -20,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Block.class)
-public abstract class MixinBlock implements ExBlock {
+public abstract class MixinBlock implements ExBlock, AC_TexturedBlock {
 
     private int textureNum;
 
@@ -77,6 +78,9 @@ public abstract class MixinBlock implements ExBlock {
     @Shadow
     @Final
     public int id;
+
+    @Shadow
+    public abstract int getTextureForSide(BlockView arg, int i, int j, int k, int l);
 
     @Inject(method = "<clinit>", at = @At(
             value = "FIELD",
@@ -193,5 +197,10 @@ public abstract class MixinBlock implements ExBlock {
     public Block setSubTypes(int var1) {
         subTypes[this.id] = var1;
         return (Block) (Object) this;
+    }
+
+    @Override
+    public long getTextureForSideEx(BlockView view, int x, int y, int z, int side) {
+        return this.getTextureForSide(view, x, y, z, side);
     }
 }

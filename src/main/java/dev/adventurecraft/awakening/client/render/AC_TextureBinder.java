@@ -9,4 +9,6 @@ public interface AC_TextureBinder {
     void loadImage();
 
     void loadImage(String var0);
+
+    String getTexture();
 }

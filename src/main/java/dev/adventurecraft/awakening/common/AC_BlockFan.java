@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
+import dev.adventurecraft.awakening.extension.client.particle.ExParticleManager;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
@@ -101,15 +102,10 @@ public class AC_BlockFan extends Block {
                 }
 
                 AxixAlignedBoundingBox var17 = this.getCollisionShape(var1, var2, var3, var4).duplicateAndExpand(var7, var8, var9);
-                List var11 = var1.getEntities(Entity.class, var17);
-                Iterator var12 = var11.iterator();
+                var var11 = (List<Entity>) var1.getEntities(Entity.class, var17);
 
-                Object var13;
-                Entity var14;
                 double var15;
-                while (var12.hasNext()) {
-                    var13 = var12.next();
-                    var14 = (Entity) var13;
+                for (Entity var14 : var11) {
                     if (!(var14 instanceof FallingBlockEntity)) {
                         var15 = var14.distanceTo((double) var2 + 0.5D, (double) var3 + 0.5D, (double) var4 + 0.5D) * (double) Math.abs(var7 + var8 + var9) / 4.0D;
                         var14.accelerate(0.07D * (double) var7 / var15, 0.07D * (double) var8 / var15, 0.07D * (double) var9 / var15);
@@ -119,13 +115,10 @@ public class AC_BlockFan extends Block {
                     }
                 }
 
-                /* TODO
-                var11 = Minecraft.instance.particleManager.getEffectsWithinAABB(var17);
-                var12 = var11.iterator();
+                var11.clear();
+                ((ExParticleManager) Minecraft.instance.particleManager).getEffectsWithinAABB(var17, var11);
 
-                while (var12.hasNext()) {
-                    var13 = var12.next();
-                    var14 = (Entity) var13;
+                for (Entity var14 : var11) {
                     if (!(var14 instanceof FallingBlockEntity)) {
                         var15 = var14.distanceTo((double) var2 + 0.5D, (double) var3 + 0.5D, (double) var4 + 0.5D) * (double) Math.abs(var7 + var8 + var9) / 4.0D;
                         var14.accelerate(0.03D * (double) var7 / var15, 0.03D * (double) var8 / var15, 0.03D * (double) var9 / var15);
@@ -133,7 +126,6 @@ public class AC_BlockFan extends Block {
                 }
 
                 Minecraft.instance.particleManager.addParticle(new AC_EntityAirFX(var1, (double) var2 + var5.nextDouble(), (double) var3 + var5.nextDouble(), (double) var4 + var5.nextDouble()));
-                */
             }
         }
     }
@@ -142,7 +134,6 @@ public class AC_BlockFan extends Block {
         if (this.fanOn) {
             var1.method_216(var2, var3, var4, this.id, this.getTickrate());
         }
-
     }
 
     public boolean canUse(World var1, int var2, int var3, int var4, PlayerEntity var5) {

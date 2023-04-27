@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.mixin.client.render;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
+import dev.adventurecraft.awakening.client.options.BetterGrassOption;
 import dev.adventurecraft.awakening.client.options.Config;
 import dev.adventurecraft.awakening.client.render.ItemRendererHD;
 import dev.adventurecraft.awakening.common.*;
@@ -186,11 +187,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         }
 
         Minecraft.isPremiumCheckTime = 0L;
-        BlockRenderer.field_67 = Config.isGrassFancy();
-        if (Config.isBetterGrassFancy()) {
-            BlockRenderer.field_67 = true;
-        }
-
+        
         Block.LEAVES.updateTexture(Config.isTreesFancy());
         Config.setMinecraft(this.client);
         if (Config.getIconWidthTerrain() > 0 && !(this.heldItemRenderer instanceof ItemRendererHD)) {

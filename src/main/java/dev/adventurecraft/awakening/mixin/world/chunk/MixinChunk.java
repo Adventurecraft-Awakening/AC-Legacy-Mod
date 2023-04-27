@@ -56,8 +56,6 @@ public abstract class MixinChunk implements ExChunk {
     @Final
     public int z;
 
-    private static boolean isNotPopulating = true;
-
     public double[] temperatures;
     public long lastUpdated;
 
@@ -83,53 +81,53 @@ public abstract class MixinChunk implements ExChunk {
     }
 
     @Redirect(method = "method_892", at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/block/Block;LIGHT_OPACITY:[I",
-            args = {"array=get", "fuzz=9"}))
+        value = "FIELD",
+        target = "Lnet/minecraft/block/Block;LIGHT_OPACITY:[I",
+        args = {"array=get", "fuzz=9"}))
     private int redirect0_translate256(
-            int[] array,
-            int index,
-            @Local(name = "var4") int var4,
-            @Local(name = "var5") int var5) {
+        int[] array,
+        int index,
+        @Local(name = "var4") int var4,
+        @Local(name = "var5") int var5) {
         return ExChunk.translate256(this.blocks[var5 + var4 - 1]);
     }
 
     @Redirect(method = "generateHeightmap", at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/block/Block;LIGHT_OPACITY:[I",
-            args = {"array=get", "fuzz=9"},
-            ordinal = 0))
+        value = "FIELD",
+        target = "Lnet/minecraft/block/Block;LIGHT_OPACITY:[I",
+        args = {"array=get", "fuzz=9"},
+        ordinal = 0))
     private int redirect1_translate256(
-            int[] array,
-            int index,
-            @Local(name = "var4") int var4,
-            @Local(name = "var5") int var5) {
+        int[] array,
+        int index,
+        @Local(name = "var4") int var4,
+        @Local(name = "var5") int var5) {
         return ExChunk.translate256(this.blocks[var5 + var4 - 1]);
     }
 
     @Redirect(method = "generateHeightmap", at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/block/Block;LIGHT_OPACITY:[I",
-            args = {"array=get", "fuzz=9"},
-            ordinal = 1))
+        value = "FIELD",
+        target = "Lnet/minecraft/block/Block;LIGHT_OPACITY:[I",
+        args = {"array=get", "fuzz=9"},
+        ordinal = 1))
     private int redirect2_translate256(
-            int[] array,
-            int index,
-            @Local(name = "var5") int var5,
-            @Local(name = "var7") int var7) {
+        int[] array,
+        int index,
+        @Local(name = "var5") int var5,
+        @Local(name = "var7") int var7) {
         return ExChunk.translate256(this.blocks[var5 + var7]);
     }
 
     @Redirect(method = "method_889", at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/block/Block;LIGHT_OPACITY:[I",
-            args = {"array=get", "fuzz=9"},
-            ordinal = 0))
+        value = "FIELD",
+        target = "Lnet/minecraft/block/Block;LIGHT_OPACITY:[I",
+        args = {"array=get", "fuzz=9"},
+        ordinal = 0))
     private int redirect3_translate256(
-            int[] array,
-            int index,
-            @Local(name = "var5") int var5,
-            @Local(name = "var6") int var6) {
+        int[] array,
+        int index,
+        @Local(name = "var5") int var5,
+        @Local(name = "var6") int var6) {
         return ExChunk.translate256(this.blocks[var6 + var5 - 1]);
     }
 
@@ -139,26 +137,26 @@ public abstract class MixinChunk implements ExChunk {
     }
 
     @Redirect(method = "generateHeightmap", at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/world/chunk/Chunk;field_967:Z"))
+        value = "FIELD",
+        target = "Lnet/minecraft/world/chunk/Chunk;field_967:Z"))
     private void removeWrite0_field967(Chunk instance, boolean value) {
     }
 
     @Redirect(method = "method_888", at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/world/chunk/Chunk;field_967:Z"))
+        value = "FIELD",
+        target = "Lnet/minecraft/world/chunk/Chunk;field_967:Z"))
     private void removeWrite1_field967(Chunk instance, boolean value) {
     }
 
     @Redirect(method = "method_889", at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/world/chunk/Chunk;field_967:Z"))
+        value = "FIELD",
+        target = "Lnet/minecraft/world/chunk/Chunk;field_967:Z"))
     private void removeWrite2_field967(Chunk instance, boolean value) {
     }
 
     @Redirect(method = "method_865", at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/world/chunk/Chunk;field_967:Z"))
+        value = "FIELD",
+        target = "Lnet/minecraft/world/chunk/Chunk;field_967:Z"))
     private void removeWrite3_field967(Chunk instance, boolean value) {
     }
 
@@ -212,7 +210,7 @@ public abstract class MixinChunk implements ExChunk {
                 Block.BY_ID[var4].onBlockPlaced(this.world, var12, var2, var10);
             }
 
-            if (isNotPopulating) {
+            if (ACMod.chunkIsNotPopulating) {
                 this.field_967 = true;
             }
 
@@ -266,7 +264,7 @@ public abstract class MixinChunk implements ExChunk {
                 Block.BY_ID[var4].onBlockPlaced(this.world, var11, var2, var9);
             }
 
-            if (isNotPopulating) {
+            if (ACMod.chunkIsNotPopulating) {
                 this.field_967 = true;
             }
 
@@ -289,7 +287,7 @@ public abstract class MixinChunk implements ExChunk {
             ((ExWorld) this.world).getUndoStack().recordChange(var1 + (this.x << 4), var2, var3 + (this.z << 4), var5, var6, var8, var5, var4, null);
         }
 
-        if (isNotPopulating) {
+        if (ACMod.chunkIsNotPopulating) {
             this.field_967 = true;
         }
 
@@ -297,23 +295,23 @@ public abstract class MixinChunk implements ExChunk {
     }
 
     @WrapWithCondition(method = "addEntity", at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/world/chunk/Chunk;field_969:Z"))
+        value = "FIELD",
+        target = "Lnet/minecraft/world/chunk/Chunk;field_969:Z"))
     private boolean guardWrite_field969(Chunk instance, boolean value, @Local Entity var1) {
         return !(var1 instanceof PlayerEntity);
     }
 
     @Redirect(method = "placeBlockEntity", at = @At(
-            value = "INVOKE",
-            target = "Ljava/io/PrintStream;println(Ljava/lang/String;)V",
-            remap = false))
+        value = "INVOKE",
+        target = "Ljava/io/PrintStream;println(Ljava/lang/String;)V",
+        remap = false))
     private void printBetterBlockEntityError(
-            PrintStream instance,
-            String s,
-            @Local(ordinal = 0, argsOnly = true) int x,
-            @Local(ordinal = 1, argsOnly = true) int y,
-            @Local(ordinal = 2, argsOnly = true) int z,
-            @Local(argsOnly = true) BlockEntity entity) {
+        PrintStream instance,
+        String s,
+        @Local(ordinal = 0, argsOnly = true) int x,
+        @Local(ordinal = 1, argsOnly = true) int y,
+        @Local(ordinal = 2, argsOnly = true) int z,
+        @Local(argsOnly = true) BlockEntity entity) {
         ACMod.LOGGER.error("No block entity container: BlockID: %d, TileEntity: %s, Coord: %d  %d  %d", this.getBlockId(x, y, z), ((ExBlockEntity) entity).getClassName(), entity.x, entity.y, entity.z);
     }
 
@@ -327,8 +325,8 @@ public abstract class MixinChunk implements ExChunk {
     }
 
     @Redirect(method = "method_883", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/entity/BlockEntity;invalidate()V"))
+        value = "INVOKE",
+        target = "Lnet/minecraft/entity/BlockEntity;invalidate()V"))
     private void killOnSave(BlockEntity instance) {
         ((ExBlockEntity) instance).setKilledFromSaving(true);
         instance.invalidate();

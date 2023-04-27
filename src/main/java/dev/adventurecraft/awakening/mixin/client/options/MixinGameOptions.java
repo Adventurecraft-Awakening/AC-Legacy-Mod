@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.mixin.client.options;
 
+import dev.adventurecraft.awakening.client.options.BetterGrassOption;
 import dev.adventurecraft.awakening.client.options.OptionOF;
 import dev.adventurecraft.awakening.client.options.Config;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
@@ -112,7 +113,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
     public int ofGrass = 0;
     public int ofRain = 0;
     public int ofWater = 0;
-    public int ofBetterGrass = 3;
+    public BetterGrassOption ofBetterGrass = BetterGrassOption.OFF;
     public int ofAutoSaveTicks = 4000;
     public boolean ofFastDebugInfo = false;
     public boolean ofWeather = true;
@@ -348,7 +349,6 @@ public abstract class MixinGameOptions implements ExGameOptions {
                 this.ofGrass = 0;
             }
 
-            BlockRenderer.field_67 = Config.isGrassFancy();
             this.client.worldRenderer.method_1537();
         }
 
@@ -422,11 +422,11 @@ public abstract class MixinGameOptions implements ExGameOptions {
         }
 
         if (var1 == OptionOF.BETTER_GRASS) {
-            ++this.ofBetterGrass;
-            if (this.ofBetterGrass > 3) {
-                this.ofBetterGrass = 1;
-            }
-
+            ofBetterGrass = switch (this.ofBetterGrass) {
+                case OFF -> BetterGrassOption.FAST;
+                case FAST -> BetterGrassOption.FANCY;
+                case FANCY -> BetterGrassOption.OFF;
+            };
             this.client.worldRenderer.method_1537();
         }
 
@@ -569,74 +569,50 @@ public abstract class MixinGameOptions implements ExGameOptions {
         } else if (var1 == OptionOF.SMOOTH_INPUT) {
             return this.ofSmoothInput ? var4 + "ON" : var4 + "OFF";
         } else if (var1 == OptionOF.CLOUDS) {
-            switch (this.ofClouds) {
-                case 1:
-                    return var4 + "Fast";
-                case 2:
-                    return var4 + "Fancy";
-                case 3:
-                    return var4 + "OFF";
-                default:
-                    return var4 + "Default";
-            }
+            return switch (this.ofClouds) {
+                case 1 -> var4 + "Fast";
+                case 2 -> var4 + "Fancy";
+                case 3 -> var4 + "OFF";
+                default -> var4 + "Default";
+            };
         } else if (var1 == OptionOF.TREES) {
-            switch (this.ofTrees) {
-                case 1:
-                    return var4 + "Fast";
-                case 2:
-                    return var4 + "Fancy";
-                default:
-                    return var4 + "Default";
-            }
+            return switch (this.ofTrees) {
+                case 1 -> var4 + "Fast";
+                case 2 -> var4 + "Fancy";
+                default -> var4 + "Default";
+            };
         } else if (var1 == OptionOF.GRASS) {
-            switch (this.ofGrass) {
-                case 1:
-                    return var4 + "Fast";
-                case 2:
-                    return var4 + "Fancy";
-                default:
-                    return var4 + "Default";
-            }
+            return switch (this.ofGrass) {
+                case 1 -> var4 + "Fast";
+                case 2 -> var4 + "Fancy";
+                default -> var4 + "Default";
+            };
         } else if (var1 == OptionOF.RAIN) {
-            switch (this.ofRain) {
-                case 1:
-                    return var4 + "Fast";
-                case 2:
-                    return var4 + "Fancy";
-                case 3:
-                    return var4 + "OFF";
-                default:
-                    return var4 + "Default";
-            }
+            return switch (this.ofRain) {
+                case 1 -> var4 + "Fast";
+                case 2 -> var4 + "Fancy";
+                case 3 -> var4 + "OFF";
+                default -> var4 + "Default";
+            };
         } else if (var1 == OptionOF.WATER) {
-            switch (this.ofWater) {
-                case 1:
-                    return var4 + "Fast";
-                case 2:
-                    return var4 + "Fancy";
-                case 3:
-                    return var4 + "OFF";
-                default:
-                    return var4 + "Default";
-            }
+            return switch (this.ofWater) {
+                case 1 -> var4 + "Fast";
+                case 2 -> var4 + "Fancy";
+                case 3 -> var4 + "OFF";
+                default -> var4 + "Default";
+            };
         } else if (var1 == OptionOF.ANIMATED_WATER) {
-            switch (this.ofAnimatedWater) {
-                case 1:
-                    return var4 + "Dynamic";
-                case 2:
-                    return var4 + "OFF";
-                default:
-                    return var4 + "ON";
-            }
+            return switch (this.ofAnimatedWater) {
+                case 1 -> var4 + "Dynamic";
+                case 2 -> var4 + "OFF";
+                default -> var4 + "ON";
+            };
         } else if (var1 == OptionOF.ANIMATED_LAVA) {
-            switch (this.ofAnimatedLava) {
-                case 1:
-                    return var4 + "Dynamic";
-                case 2:
-                    return var4 + "OFF";
-                default:
-                    return var4 + "ON";
-            }
+            return switch (this.ofAnimatedLava) {
+                case 1 -> var4 + "Dynamic";
+                case 2 -> var4 + "OFF";
+                default -> var4 + "ON";
+            };
         } else if (var1 == OptionOF.ANIMATED_FIRE) {
             return this.ofAnimatedFire ? var4 + "ON" : var4 + "OFF";
         } else if (var1 == OptionOF.ANIMATED_PORTAL) {
@@ -660,14 +636,11 @@ public abstract class MixinGameOptions implements ExGameOptions {
                 return var4 + "3min";
             return var4 + "30min";
         } else if (var1 == OptionOF.BETTER_GRASS) {
-            switch (this.ofBetterGrass) {
-                case 1:
-                    return var4 + "Fast";
-                case 2:
-                    return var4 + "Fancy";
-                default:
-                    return var4 + "OFF";
-            }
+            return switch (this.ofBetterGrass) {
+                case FAST -> var4 + "Fast";
+                case FANCY -> var4 + "Fancy";
+                default -> var4 + "OFF";
+            };
         } else {
             if (var1 == OptionOF.WEATHER)
                 return this.ofWeather ? var4 + "ON" : var4 + "OFF";
@@ -879,8 +852,11 @@ public abstract class MixinGameOptions implements ExGameOptions {
         }
 
         if (var3[0].equals("ofBetterGrass") && var3.length >= 2) {
-            this.ofBetterGrass = Integer.parseInt(var3[1]);
-            this.ofBetterGrass = Config.limit(this.ofBetterGrass, 1, 3);
+            try {
+                this.ofBetterGrass = BetterGrassOption.valueOf(var3[1]);
+            } catch (IllegalArgumentException e) {
+                this.ofBetterGrass = BetterGrassOption.OFF;
+            }
         }
 
         if (var3[0].equals("ofWeather") && var3.length >= 2) {
@@ -1071,7 +1047,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
     }
 
     @Override
-    public int ofBetterGrass() {
+    public BetterGrassOption ofBetterGrass() {
         return ofBetterGrass;
     }
 

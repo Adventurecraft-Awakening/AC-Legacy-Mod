@@ -2,7 +2,7 @@
   "required": true,
   "minVersion": "0.8",
   "package": "dev.adventurecraft.awakening.mixin",
-  "compatibilityLevel": "JAVA_8",
+  "compatibilityLevel": "JAVA_17",
   "client": [
     "MixinClass_66",
     "client.MixinClientInteractionManager",
@@ -13,6 +13,7 @@
     "client.gui.screen.menu.MixinTitleScreen",
     "client.gui.screen.menu.MixinVideoSettingsScreen",
     "client.options.MixinGameOptions",
+    "client.particle.MixinParticleManager",
     "client.render.MixinFireTextureBinder",
     "client.render.MixinFlowingLavaTextureBinder",
     "client.render.MixinFlowingLavaTextureBinder2",
@@ -41,6 +42,7 @@
   "mixins": [
     "block.MixinAbstractFluidBlock",
     "block.MixinBlock",
+    "block.MixinGrassBlock",
     "block.MixinLadderBlock",
     "client.entity.player.MixinAbstractClientPlayerEntity",
     "client.resource.language.MixinTranslationStorage",
