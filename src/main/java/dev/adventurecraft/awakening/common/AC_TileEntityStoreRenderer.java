@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.block.ExBlock;
+import dev.adventurecraft.awakening.extension.client.render.entity.ExItemRenderer;
 import net.minecraft.block.Block;
 import net.minecraft.client.render.entity.EntityRenderDispatcher;
 import net.minecraft.client.render.entity.ItemRenderer;
@@ -70,6 +71,6 @@ public class AC_TileEntityStoreRenderer extends BlockEntityRenderer {
     }
 
     static {
-        // renderItem.scale = 1.5F; TODO
+        ((ExItemRenderer) renderItem).setScale(1.5F);
     }
 }

@@ -2,12 +2,24 @@ package dev.adventurecraft.awakening.mixin.entity;
 
 import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.io.CompoundTag;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 
 @Mixin(LivingEntity.class)
-public abstract class MixinLivingEntity implements ExLivingEntity {
+public abstract class MixinLivingEntity extends MixinEntity implements ExLivingEntity {
+
+    @Shadow
+    protected float horizontalVelocity;
+    @Shadow
+    protected float forwardVelocity;
+    @Shadow
+    public boolean jumping;
+    @Shadow
+    protected float movementSpeed;
 
     public int maxHealth;
     public ItemStack heldItem;
@@ -28,6 +40,27 @@ public abstract class MixinLivingEntity implements ExLivingEntity {
     public int randomLookNext = 0;
     public int randomLookRate = 100;
     public int randomLookRateVariation = 40;
+
+    @Shadow
+    protected void tickHandSwing() {
+        throw new AssertionError();
+    }
+
+    @Shadow
+    public abstract boolean method_928(Entity arg);
+
+    @Shadow
+    public abstract void lookAt(Entity arg, float f, float g);
+
+    @Shadow
+    public void writeAdditional(CompoundTag arg) {
+        throw new AssertionError();
+    }
+
+    @Shadow
+    public void readAdditional(CompoundTag arg) {
+        throw new AssertionError();
+    }
 
     @Override
     public int getMaxHealth() {

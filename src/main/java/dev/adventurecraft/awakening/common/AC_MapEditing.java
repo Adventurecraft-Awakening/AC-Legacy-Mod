@@ -5,6 +5,7 @@ import java.nio.IntBuffer;
 
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.client.render.block.ExBlockRenderer;
+import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.render.Tessellator;
@@ -107,9 +108,9 @@ public class AC_MapEditing {
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL14.GL_CONSTANT_ALPHA, GL14.GL_ONE_MINUS_CONSTANT_ALPHA);
         this.mc.textureManager.bindTexture(this.mc.textureManager.getTextureId("/terrain.png"));
-        ((ExBlockRenderer)this.renderBlocks).startRenderingBlocks(this.world);
+        ((ExBlockRenderer) this.renderBlocks).startRenderingBlocks(this.world);
         this.drawBlock(this.cursor.x + this.getCursorXOffset(), this.cursor.y + this.getCursorYOffset(), this.cursor.z + this.getCursorZOffset(), this.selectedBlockID, this.selectedMetadata);
-        ((ExBlockRenderer)this.renderBlocks).stopRenderingBlocks();
+        ((ExBlockRenderer) this.renderBlocks).stopRenderingBlocks();
         GL11.glDisable(GL11.GL_BLEND);
         GL11.glPopMatrix();
     }
@@ -139,13 +140,13 @@ public class AC_MapEditing {
                 this.mc.textureManager.bindTexture(this.mc.textureManager.getTextureId(String.format("/terrain%d.png", var10)));
             }
 
-            ((ExBlockRenderer)this.renderBlocks).startRenderingBlocks(this.world);
+            ((ExBlockRenderer) this.renderBlocks).startRenderingBlocks(this.world);
 
             for (int var11 = AC_ItemCursor.minX; var11 <= AC_ItemCursor.maxX; ++var11) {
                 for (int var12 = AC_ItemCursor.minY; var12 <= AC_ItemCursor.maxY; ++var12) {
                     for (int var13 = AC_ItemCursor.minZ; var13 <= AC_ItemCursor.maxZ; ++var13) {
                         int var14 = this.mc.world.getBlockId(var11, var12, var13);
-                        if (Block.BY_ID[var14] != null && ((ExBlock)Block.BY_ID[var14]).getTextureNum() == var10) {
+                        if (Block.BY_ID[var14] != null && ((ExBlock) Block.BY_ID[var14]).getTextureNum() == var10) {
                             int var15 = this.mc.world.getBlockMeta(var11, var12, var13);
                             this.drawBlock(var11 + var7, var12 + var8, var13 + var9, var14, var15);
                         }
@@ -153,7 +154,7 @@ public class AC_MapEditing {
                 }
             }
 
-            ((ExBlockRenderer)this.renderBlocks).stopRenderingBlocks();
+            ((ExBlockRenderer) this.renderBlocks).stopRenderingBlocks();
         }
 
         GL11.glDisable(GL11.GL_BLEND);
@@ -167,9 +168,9 @@ public class AC_MapEditing {
         }
         int var7 = this.world.getBlockId(var1, var2, var3);
         int var8 = this.world.getBlockMeta(var1, var2, var3);
-        //this.world.setBlockAndMetadataTemp(var1, var2, var3, var4, var5); TODO
+        ((ExWorld) this.world).setBlockAndMetadataTemp(var1, var2, var3, var4, var5);
         this.renderBlocks.render(var6, var1, var2, var3);
-        //this.world.setBlockAndMetadataTemp(var1, var2, var3, var7, var8); TODO
+        ((ExWorld) this.world).setBlockAndMetadataTemp(var1, var2, var3, var7, var8);
     }
 
     private void drawBox(AxixAlignedBoundingBox var1) {

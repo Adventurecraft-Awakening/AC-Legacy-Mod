@@ -4,10 +4,16 @@ import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.AC_Blocks;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.ItemEntity;
+import net.minecraft.entity.data.DataTracker;
+import net.minecraft.util.math.AxixAlignedBoundingBox;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import org.objectweb.asm.Opcodes;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -16,47 +22,75 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.Random;
+
 @Mixin(Entity.class)
 public abstract class MixinEntity implements ExEntity {
 
     @Shadow
-    public double x;
-
+    public int entityId;
     @Shadow
-    public double y;
-
+    public Entity passenger;
     @Shadow
-    public float height;
-
+    public Entity vehicle;
     @Shadow
     public World world;
-
     @Shadow
-    public float standingEyeHeight;
-
+    public double prevX;
+    @Shadow
+    public double prevY;
+    @Shadow
+    public double prevZ;
+    @Shadow
+    public double x;
+    @Shadow
+    public double y;
     @Shadow
     public double z;
-
-    @Shadow
-    public float field_1635;
-
-    @Shadow
-    public int field_1611;
-
-    @Shadow
-    public double yVelocity;
-
-    @Shadow
-    public float fallDistance;
-
-    @Shadow
-    public float yaw;
-
     @Shadow
     public double xVelocity;
-
+    @Shadow
+    public double yVelocity;
     @Shadow
     public double zVelocity;
+    @Shadow
+    public float yaw;
+    @Shadow
+    public float pitch;
+    @Shadow
+    public float prevYaw;
+    @Shadow
+    public float prevPitch;
+    @Final
+    @Shadow
+    public AxixAlignedBoundingBox boundingBox;
+    @Shadow
+    public boolean onGround;
+    @Shadow
+    public boolean field_1624;
+    @Shadow
+    public float standingEyeHeight;
+    @Shadow
+    public float width;
+    @Shadow
+    public float height;
+    @Shadow
+    public float field_1635;
+    @Shadow
+    public float fallDistance;
+    @Shadow
+    public int field_1611;
+    @Shadow
+    protected Random rand;
+    @Shadow
+    public int air;
+
+    public boolean isFlying;
+    public int stunned;
+    public boolean collidesWithClipBlocks = true;
+    public int collisionX;
+    public int collisionZ;
+    public float moveYawOffset = 0.0F;
 
     @Shadow
     protected abstract void handleFallDamage(float f);
@@ -67,27 +101,46 @@ public abstract class MixinEntity implements ExEntity {
     @Shadow
     public abstract boolean damage(Entity arg, int i);
 
-    public boolean isFlying;
-    public int stunned;
-    public boolean collidesWithClipBlocks = true;
-    public int collisionX;
-    public int collisionZ;
-    public float moveYawOffset = 0.0F;
+    @Shadow
+    public void tick() {
+        throw new AssertionError();
+    }
+
+    @Shadow
+    public abstract void remove();
+
+    @Shadow
+    public abstract boolean method_1334();
+
+    @Shadow
+    public abstract void setPosition(double d, double e, double f);
+
+    @Shadow
+    protected abstract void setSize(float f, float g);
+
+    @Shadow
+    public abstract void move(double d, double e, double f);
+
+    @Shadow
+    public abstract ItemEntity dropItem(int i, int j);
+
+    @Shadow
+    public abstract boolean method_1335();
 
     @Inject(method = "move", at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/entity/Entity;z:D",
-            shift = At.Shift.AFTER,
-            ordinal = 2))
+        value = "FIELD",
+        target = "Lnet/minecraft/entity/Entity;z:D",
+        shift = At.Shift.AFTER,
+        ordinal = 2))
     private void collideInMove(
-            double var1,
-            double var2,
-            double var3,
-            CallbackInfo ci,
-            @Local(name = "f") double var5,
-            @Local(name = "var11") double var11,
-            @Local(name = "var13") double var13,
-            @Local(name = "var15") double var15) {
+        double var1,
+        double var2,
+        double var3,
+        CallbackInfo ci,
+        @Local(name = "f") double var5,
+        @Local(name = "var11") double var11,
+        @Local(name = "var13") double var13,
+        @Local(name = "var15") double var15) {
         this.collisionX = Double.compare(var11, var1);
 
         int var22;
@@ -127,10 +180,10 @@ public abstract class MixinEntity implements ExEntity {
     }
 
     @Redirect(method = "move", at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/entity/Entity;field_1611:I",
-            opcode = Opcodes.PUTFIELD,
-            ordinal = 0))
+        value = "FIELD",
+        target = "Lnet/minecraft/entity/Entity;field_1611:I",
+        opcode = Opcodes.PUTFIELD,
+        ordinal = 0))
     private void moveCeil(Entity instance, int value) {
         instance.field_1611 = (int) ((double) this.field_1611 + Math.ceil((this.field_1635 - (float) this.field_1611)));
     }
@@ -160,9 +213,9 @@ public abstract class MixinEntity implements ExEntity {
     }
 
     @Redirect(method = "method_1353", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/entity/Entity;accelerate(DDD)V",
-            ordinal = 1))
+        value = "INVOKE",
+        target = "Lnet/minecraft/entity/Entity;accelerate(DDD)V",
+        ordinal = 1))
     private void reverseAccelerateDir(Entity instance, double var2, double var3, double var4) {
         if (instance.method_1380()) {
             instance.accelerate(var2, var3, var4);
@@ -172,8 +225,8 @@ public abstract class MixinEntity implements ExEntity {
     }
 
     @Redirect(method = "isInsideWall", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/world/World;canSuffocate(III)Z"))
+        value = "INVOKE",
+        target = "Lnet/minecraft/world/World;canSuffocate(III)Z"))
     private boolean preventSuffocate(World instance, int x, int y, int z) {
         return instance.canSuffocate(x, y, z) && instance.method_1783(x, y, z);
     }

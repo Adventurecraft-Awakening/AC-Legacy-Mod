@@ -455,6 +455,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         }
     }
 
+    @Override
     public boolean setBlockAndMetadataTemp(int var1, int var2, int var3, int var4, int var5) {
         if (var1 >= -32000000 && var3 >= -32000000 && var1 < 32000000 && var3 <= 32000000) {
             if (var2 < 0) {
@@ -584,6 +585,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         return this.rayTraceBlocks2(var1, var2, var3, var4, true);
     }
 
+    @Override
     public HitResult rayTraceBlocks2(Vec3d var1, Vec3d var2, boolean var3, boolean var4, boolean var5) {
         if (!Double.isNaN(var1.x) && !Double.isNaN(var1.y) && !Double.isNaN(var1.z)) {
             if (!Double.isNaN(var2.x) && !Double.isNaN(var2.y) && !Double.isNaN(var2.z)) {
@@ -729,14 +731,9 @@ public abstract class MixinWorld implements ExWorld, BlockView {
 
                     return null;
                 }
-
-                return null;
-            } else {
-                return null;
             }
-        } else {
-            return null;
         }
+        return null;
     }
 
     @Redirect(method = "spawnEntity", at = @At(

@@ -173,7 +173,8 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
     @ModifyConstant(method = "method_1840", constant = @Constant(floatValue = 2.0F),
         slice = @Slice(from = @At(
             value = "INVOKE",
-            target = "Lorg/lwjgl/opengl/GL11;glScaled(DDD)V")))
+            target = "Lorg/lwjgl/opengl/GL11;glScaled(DDD)V",
+            remap = false)))
     private float reducePerspectiveFarPlane(float value) {
         return 1.1F; // Was 1.0 originally
     }
@@ -187,7 +188,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         }
 
         Minecraft.isPremiumCheckTime = 0L;
-        
+
         Block.LEAVES.updateTexture(Config.isTreesFancy());
         Config.setMinecraft(this.client);
         if (Config.getIconWidthTerrain() > 0 && !(this.heldItemRenderer instanceof ItemRendererHD)) {

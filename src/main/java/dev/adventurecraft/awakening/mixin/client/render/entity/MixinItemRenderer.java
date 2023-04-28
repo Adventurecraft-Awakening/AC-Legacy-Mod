@@ -3,6 +3,7 @@ package dev.adventurecraft.awakening.mixin.client.render.entity;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.common.AC_IItemReload;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
+import dev.adventurecraft.awakening.extension.client.render.entity.ExItemRenderer;
 import net.minecraft.block.Block;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.TextRenderer;
@@ -19,7 +20,7 @@ import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 @Mixin(ItemRenderer.class)
-public abstract class MixinItemRenderer extends EntityRenderer {
+public abstract class MixinItemRenderer extends EntityRenderer implements ExItemRenderer {
 
     @Shadow
     protected abstract void method_1485(Tessellator arg, int i, int j, int k, int l, int m);
@@ -133,5 +134,10 @@ public abstract class MixinItemRenderer extends EntityRenderer {
                 GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
             }
         }
+    }
+
+    @Override
+    public void setScale(float value) {
+        this.scale = value;
     }
 }

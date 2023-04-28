@@ -8,6 +8,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.resource.language.TranslationStorage;
 import net.minecraft.entity.BlockEntity;
 import net.minecraft.entity.Entity;
+import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.dimension.Dimension;
@@ -31,6 +33,10 @@ public interface ExWorld {
     void loadMapTextures();
 
     void loadMapMusic();
+
+    HitResult rayTraceBlocks2(Vec3d var1, Vec3d var2, boolean var3, boolean var4, boolean var5);
+
+    boolean setBlockAndMetadataTemp(int var1, int var2, int var3, int var4, int var5);
 
     void cancelBlockUpdate(int var1, int var2, int var3, int var4);
 

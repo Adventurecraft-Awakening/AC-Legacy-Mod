@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.common;
 
 import java.util.Random;
 
+import dev.adventurecraft.awakening.extension.entity.ExFallingBlockEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.FallingBlockEntity;
@@ -27,7 +28,7 @@ public class AC_BlockPushable extends AC_BlockColor {
     private void tryToFall(World var1, int var2, int var3, int var4) {
         if (canFallBelow(var1, var2, var3 - 1, var4) && var3 >= 0) {
             FallingBlockEntity var5 = new FallingBlockEntity(var1, (float) var2 + 0.5F, (float) var3 + 0.5F, (float) var4 + 0.5F, this.id);
-            //var5.metadata = var1.getBlockMeta(var2, var3, var4); TODO
+            ((ExFallingBlockEntity) var5).setBlockMeta(var1.getBlockMeta(var2, var3, var4));
             var1.spawnEntity(var5);
         }
 

@@ -17,6 +17,10 @@ accessible method net/minecraft/block/Block setBlastResistance (F)Lnet/minecraft
 accessible method net/minecraft/block/Block setLightEmittance (F)Lnet/minecraft/block/Block;
 accessible method net/minecraft/block/Block setSounds (Lnet/minecraft/block/BlockSounds;)Lnet/minecraft/block/Block;
 extendable method net/minecraft/block/Block drop (Lnet/minecraft/world/World;IIII)V
+accessible method net/minecraft/block/Block isInsideYZ (Lnet/minecraft/util/math/Vec3d;)Z
+accessible method net/minecraft/block/Block isInsideXZ (Lnet/minecraft/util/math/Vec3d;)Z
+accessible method net/minecraft/block/Block isInsideXY (Lnet/minecraft/util/math/Vec3d;)Z
+
 
 accessible method net/minecraft/item/Item <init> (I)V
 accessible method net/minecraft/item/Item setDurability (I)Lnet/minecraft/item/Item;
@@ -31,12 +35,17 @@ accessible field net/minecraft/entity/Entity field_1611 I
 accessible field net/minecraft/entity/Entity fallDistance F
 accessible method net/minecraft/entity/Entity setRotation (FF)V
 
+accessible field net/minecraft/entity/ai/pathing/EntityPath field_2690 I
+mutable field net/minecraft/entity/ai/pathing/EntityPath field_2690 I
 accessible field net/minecraft/entity/ai/pathing/EntityPath field_2691 [Lnet/minecraft/entity/ai/pathing/PathNode;
+mutable field net/minecraft/entity/ai/pathing/EntityPath field_2691 [Lnet/minecraft/entity/ai/pathing/PathNode;
 accessible field net/minecraft/entity/ai/pathing/EntityPath field_2692 I
 
 accessible field net/minecraft/entity/LivingEntity jumping Z
 
 accessible method net/minecraft/entity/player/PlayerEntity applyDamage (I)V
+
+accessible field net/minecraft/entity/projectile/ArrowEntity ticksFlying I
 
 accessible field net/minecraft/client/render/block/BlockRenderer blockView Lnet/minecraft/world/BlockView;
 
