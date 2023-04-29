@@ -2,9 +2,7 @@ package dev.adventurecraft.awakening.mixin.client.render;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
-import dev.adventurecraft.awakening.client.options.BetterGrassOption;
 import dev.adventurecraft.awakening.client.options.Config;
-import dev.adventurecraft.awakening.client.render.ItemRendererHD;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
@@ -26,8 +24,6 @@ import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.HeldItemRenderer;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.WorldEventRenderer;
-import net.minecraft.client.render.block.BlockRenderer;
-import net.minecraft.client.render.entity.EntityRenderDispatcher;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -41,14 +37,12 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GLContext;
 import org.lwjgl.opengl.NVFogDistance;
-import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 import java.nio.FloatBuffer;
 import java.util.List;
@@ -191,10 +185,6 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
 
         Block.LEAVES.updateTexture(Config.isTreesFancy());
         Config.setMinecraft(this.client);
-        if (Config.getIconWidthTerrain() > 0 && !(this.heldItemRenderer instanceof ItemRendererHD)) {
-            this.heldItemRenderer = new ItemRendererHD(this.client);
-            EntityRenderDispatcher.INSTANCE.heldItemRenderer = this.heldItemRenderer;
-        }
 
         if (var2 != null) {
             var2.autoSaveInterval = ((ExGameOptions) this.client.options).ofAutoSaveTicks();

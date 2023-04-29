@@ -1,11 +1,5 @@
 package dev.adventurecraft.awakening.client.options;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import net.minecraft.client.Minecraft;
@@ -15,14 +9,13 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GLContext;
 import org.slf4j.Logger;
 
+import java.util.Date;
+
 public class Config {
     private static GameOptions gameSettings = null;
     private static Minecraft minecraft = null;
     private static float lightLevel0 = 0;
     private static float lightLevel1 = 0;
-    private static int iconWidthTerrain = 16;
-    private static int iconWidthItems = 16;
-    private static Map<String, Class<?>> foundClassesMap = new HashMap<>();
     private static boolean fontRendererUpdated = false;
     public static final boolean DEF_FOG_FANCY = true;
     public static final float DEF_FOG_START = 0.2F;
@@ -265,192 +258,12 @@ public class Config {
         lightLevel1 = var0[1];
     }
 
-    public static boolean callBoolean(String var0, String var1, Object... var2) {
-        try {
-            Class<?> var3 = getClass(var0);
-            if (var3 == null) {
-                return false;
-            } else {
-                Method var4 = getMethod(var3, var1, var2);
-                if (var4 == null) {
-                    return false;
-                } else {
-                    Boolean var5 = (Boolean) var4.invoke(null, var2);
-                    return var5;
-                }
-            }
-        } catch (Throwable var6) {
-            var6.printStackTrace();
-            return false;
-        }
-    }
-
-    public static void callVoid(String var0, String var1, Object... var2) {
-        try {
-            Class<?> var3 = getClass(var0);
-            if (var3 == null) {
-                return;
-            }
-
-            Method var4 = getMethod(var3, var1, var2);
-            if (var4 == null) {
-                return;
-            }
-
-            var4.invoke((Object) null, var2);
-        } catch (Throwable var5) {
-            var5.printStackTrace();
-        }
-
-    }
-
-    public static void callVoid(Object var0, String var1, Object... var2) {
-        try {
-            if (var0 == null) {
-                return;
-            }
-
-            Class<?> var3 = var0.getClass();
-            if (var3 == null) {
-                return;
-            }
-
-            Method var4 = getMethod(var3, var1, var2);
-            if (var4 == null) {
-                return;
-            }
-
-            var4.invoke(var0, var2);
-        } catch (Throwable var5) {
-            var5.printStackTrace();
-        }
-
-    }
-
-    public static Object getFieldValue(String var0, String var1) {
-        try {
-            Class<?> var2 = getClass(var0);
-            if (var2 == null) {
-                return null;
-            } else {
-                Field var3 = var2.getDeclaredField(var1);
-                if (var3 == null) {
-                    return null;
-                } else {
-                    Object var4 = var3.get((Object) null);
-                    return var4;
-                }
-            }
-        } catch (Throwable var5) {
-            var5.printStackTrace();
-            return null;
-        }
-    }
-
-    public static Object getFieldValue(Object var0, String var1) {
-        try {
-            if (var0 == null) {
-                return null;
-            } else {
-                Class<?> var2 = var0.getClass();
-                if (var2 == null) {
-                    return null;
-                } else {
-                    Field var3 = var2.getField(var1);
-                    if (var3 == null) {
-                        return null;
-                    } else {
-                        Object var4 = var3.get(var0);
-                        return var4;
-                    }
-                }
-            }
-        } catch (Throwable var5) {
-            var5.printStackTrace();
-            return null;
-        }
-    }
-
-    private static Method getMethod(Class<?> var0, String var1, Object... var2) {
-        Method[] var3 = var0.getMethods();
-
-        for (int var4 = 0; var4 < var3.length; ++var4) {
-            Method var5 = var3[var4];
-            if (var5.getName().equals(var1) && var5.getParameterTypes().length == var2.length) {
-                return var5;
-            }
-        }
-
-        ACMod.LOGGER.info("No method found for: " + var0.getName() + "." + var1 + "(" + arrayToString(var2) + ")");
-        return null;
-    }
-
-    public static String arrayToString(Object[] var0) {
-        StringBuffer var1 = new StringBuffer(var0.length * 5);
-
-        for (int var2 = 0; var2 < var0.length; ++var2) {
-            Object var3 = var0[var2];
-            if (var2 > 0) {
-                var1.append(", ");
-            }
-
-            var1.append(String.valueOf(var3));
-        }
-
-        return var1.toString();
-    }
-
-    public static boolean hasModLoader() {
-        Class<?> var0 = getClass("ModLoader");
-        return var0 != null;
-    }
-
-    private static Class<?> getClass(String var0) {
-        Class<?> var1 = foundClassesMap.get(var0);
-        if (var1 != null) {
-            return var1;
-        } else if (foundClassesMap.containsKey(var0)) {
-            return null;
-        } else {
-            try {
-                var1 = Class.forName(var0);
-            } catch (ClassNotFoundException var3) {
-                ACMod.LOGGER.info("Class not found: " + var0);
-            } catch (Throwable var4) {
-                var4.printStackTrace();
-            }
-
-            foundClassesMap.put(var0, var1);
-            return var1;
-        }
-    }
-
     public static void setMinecraft(Minecraft var0) {
         minecraft = var0;
     }
 
     public static Minecraft getMinecraft() {
         return minecraft;
-    }
-
-    public static int getIconWidthTerrain() {
-        return iconWidthTerrain;
-    }
-
-    public static int getIconWidthItems() {
-        return iconWidthItems;
-    }
-
-    public static void setIconWidthItems(int var0) {
-        iconWidthItems = var0;
-    }
-
-    public static void setIconWidthTerrain(int var0) {
-        iconWidthTerrain = var0;
-    }
-
-    public static int getMaxDynamicTileWidth() {
-        return 64;
     }
 
     public static BetterGrassOption getBetterGrassOption() {
@@ -491,7 +304,6 @@ public class Config {
         } catch (InterruptedException var3) {
             var3.printStackTrace();
         }
-
     }
 
     public static boolean isTimeDayOnly() {
@@ -512,17 +324,5 @@ public class Config {
 
     public static int getAntialiasingLevel() {
         return gameSettings == null ? 0 : ((ExGameOptions) gameSettings).ofAaLevel();
-    }
-
-    public static boolean between(int var0, int var1, int var2) {
-        return var0 >= var1 && var0 <= var2;
-    }
-
-    public static boolean isTerrainIconClamped(int var0) {
-        return !between(var0, 0, 2) && !between(var0, 4, 10) && !between(var0, 16, 21) && !between(var0, 32, 37) && !between(var0, 40, 40) && !between(var0, 48, 53) && !between(var0, 64, 67) && !between(var0, 69, 75) && !between(var0, 86, 87) && !between(var0, 102, 107) && !between(var0, 109, 110) && !between(var0, 113, 114) && !between(var0, 116, 121) && !between(var0, 129, 133) && !between(var0, 144, 147) && !between(var0, 160, 165) && !between(var0, 176, 181) && !between(var0, 192, 195) && !between(var0, 205, 207) && !between(var0, 208, 210) && !between(var0, 222, 223) && !between(var0, 225, 225) && !between(var0, 237, 239) && !between(var0, 240, 249) && !between(var0, 254, 255);
-    }
-
-    public static boolean isMultiTexture() {
-        return true;
     }
 }

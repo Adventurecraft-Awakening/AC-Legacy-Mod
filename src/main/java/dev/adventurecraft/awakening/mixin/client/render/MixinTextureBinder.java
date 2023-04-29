@@ -1,6 +1,5 @@
 package dev.adventurecraft.awakening.mixin.client.render;
 
-import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.client.render.AC_TextureBinder;
 import dev.adventurecraft.awakening.common.Vec2;
 import net.minecraft.client.render.TextureBinder;

@@ -3,19 +3,16 @@ package dev.adventurecraft.awakening.mixin.client.texture;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.client.options.Config;
 import dev.adventurecraft.awakening.client.render.AC_TextureBinder;
-import dev.adventurecraft.awakening.client.texture.*;
 import dev.adventurecraft.awakening.common.AC_TextureAnimated;
 import dev.adventurecraft.awakening.common.Vec2;
 import dev.adventurecraft.awakening.extension.client.ExTextureManager;
-import dev.adventurecraft.awakening.extension.client.render.ExTessellator;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.TexturePackManager;
 import net.minecraft.client.options.GameOptions;
+import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.TextureBinder;
-import net.minecraft.client.resource.DefaultTexturePack;
 import net.minecraft.client.resource.TexturePack;
 import net.minecraft.client.texture.TextureManager;
 import net.minecraft.client.util.GLAllocationUtils;
@@ -39,11 +36,16 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Mixin(TextureManager.class)
 public abstract class MixinTextureManager implements ExTextureManager {
+
+    private static final int GL_TEXTURE_MAX_ANISOTROPY_EXT = 0x84FE;
+    private static final int GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT = 0x84FF;
 
     @Shadow
     public static boolean field_1245;
@@ -69,14 +71,9 @@ public abstract class MixinTextureManager implements ExTextureManager {
     @Shadow
     private boolean isBlurTexture;
 
-    private int terrainTextureId = -1;
-    private int guiItemsTextureId = -1;
-    private boolean hdTexturesInstalled = false;
     private Int2ObjectOpenHashMap<Vec2> textureDimensionsMap = new Int2ObjectOpenHashMap<>();
     private Map<String, byte[]> textureDataMap = new HashMap<>();
-    private int tickCounter = 0;
     private ByteBuffer[] mipImageDatas;
-    private boolean dynamicTexturesUpdated = false;
 
     private ArrayList<String> replacedTextures = new ArrayList<>();
     private HashMap<String, AC_TextureAnimated> textureAnimations = new HashMap<>();
@@ -90,37 +87,34 @@ public abstract class MixinTextureManager implements ExTextureManager {
     }
 
     @Overwrite
-    public void bindImageToId(BufferedImage var1, int var2) {
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, var2);
+    public void bindImageToId(BufferedImage image, int texId) {
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, texId);
         field_1245 = Config.isUseMipmaps();
-        int var3;
-        int var4;
-        if (field_1245 && var2 != this.guiItemsTextureId) {
-            var3 = Config.getMipmapType();
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, var3);
+        if (field_1245 /* TODO && texId != this.guiItemsTextureId*/) {
+            int mipType = Config.getMipmapType();
+            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, mipType);
             GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
             if (GLContext.getCapabilities().OpenGL12) {
                 GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_BASE_LEVEL, 0);
-                var4 = Config.getMipmapLevel();
-                if (var4 >= 4) {
-                    int var5 = Math.min(var1.getWidth(), var1.getHeight());
-                    var4 = this.getMaxMipmapLevel(var5);
-                    if (var4 < 0) {
-                        var4 = 0;
+                int mipLevel = Config.getMipmapLevel();
+                if (mipLevel >= 4) {
+                    int minDim = Math.min(image.getWidth(), image.getHeight());
+                    mipLevel = this.getMaxMipmapLevel(minDim);
+                    if (mipLevel < 0) {
+                        mipLevel = 0;
                     }
                 }
 
-                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_MAX_LEVEL, var4);
+                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_MAX_LEVEL, mipLevel);
             }
 
             if (GLContext.getCapabilities().GL_EXT_texture_filter_anisotropic) {
                 FloatBuffer var18 = BufferUtils.createFloatBuffer(16);
                 var18.rewind();
-                GL11.glGetFloat('\u84ff', var18);
-                float var19 = var18.get(0);
-                float var6 = (float) Config.getAnisotropicFilterLevel();
-                var6 = Math.min(var6, var19);
-                GL11.glTexParameterf(GL11.GL_TEXTURE_2D, '\u84fe', var6);
+                GL11.glGetFloat(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, var18);
+                float anisoLimit = var18.get(0);
+                float anisoLevel = Math.min(Config.getAnisotropicFilterLevel(), anisoLimit);
+                GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisoLevel);
             }
         } else {
             GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
@@ -140,106 +134,65 @@ public abstract class MixinTextureManager implements ExTextureManager {
             GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL11.GL_REPEAT);
         }
 
-        var3 = var1.getWidth();
-        var4 = var1.getHeight();
-        this.setTextureDimension(var2, new Vec2(var3, var4));
-        int[] var20 = new int[var3 * var4];
-        byte[] var21 = new byte[var3 * var4 * 4];
-        var1.getRGB(0, 0, var3, var4, var20, 0, var3);
-        int var7 = 0;
-        int[] var8 = new int[255];
+        int texW = image.getWidth();
+        int texH = image.getHeight();
+        this.setTextureDimension(texId, new Vec2(texW, texH));
 
-        int var10;
-        int var11;
-        int var12;
-        int var13;
-        int var14;
-        int var15;
-        for (int var9 = 0; var9 < var20.length; ++var9) {
-            var10 = var20[var9] >> 24 & 255;
-            var11 = var20[var9] >> 16 & 255;
-            var12 = var20[var9] >> 8 & 255;
-            var13 = var20[var9] & 255;
+        int[] srcColors = new int[texW * texH];
+        byte[] dstColors = new byte[texW * texH * 4];
+        image.getRGB(0, 0, texW, texH, srcColors, 0, texW);
+
+        boolean hasAvgColor = false;
+        int avgColor = 0;
+
+        for (int i = 0; i < srcColors.length; ++i) {
+            int color;
+            int a = srcColors[i] >> 24 & 255;
+            int r = srcColors[i] >> 16 & 255;
+            int g = srcColors[i] >> 8 & 255;
+            int b = srcColors[i] & 255;
+
             if (this.gameOptions != null && this.gameOptions.anaglyph3d) {
-                var14 = (var11 * 30 + var12 * 59 + var13 * 11) / 100;
-                var15 = (var11 * 30 + var12 * 70) / 100;
-                int var16 = (var11 * 30 + var13 * 70) / 100;
-                var11 = var14;
-                var12 = var15;
-                var13 = var16;
+                int r3D = (r * 30 + g * 59 + b * 11) / 100;
+                int g3D = (r * 30 + g * 70) / 100;
+                int b3D = (r * 30 + b * 70) / 100;
+                r = r3D;
+                g = g3D;
+                b = b3D;
             }
 
-            if (var10 == 0) {
-                boolean var23 = false;
-                if (var2 != this.terrainTextureId && var2 != this.guiItemsTextureId) {
-                    if (var7 == 0) {
-                        var7 = this.getAverageOpaqueColor(var20);
+            if (a == 0) {
+                /* TODO
+                if (texId == this.terrainTextureId || texId == this.guiItemsTextureId) {
+                    color = -1;
+                } else*/
+                {
+                    if (!hasAvgColor) {
+                        avgColor = this.getAverageOpaqueColor(srcColors);
+                        hasAvgColor = true;
                     }
-
-                    var14 = var7;
-                } else {
-                    var14 = -1;
+                    color = avgColor;
                 }
 
-                var11 = var14 >> 16 & 255;
-                var12 = var14 >> 8 & 255;
-                var13 = var14 & 255;
+                r = color >> 16 & 255;
+                g = color >> 8 & 255;
+                b = color & 255;
             }
 
-            var21[var9 * 4 + 0] = (byte) var11;
-            var21[var9 * 4 + 1] = (byte) var12;
-            var21[var9 * 4 + 2] = (byte) var13;
-            var21[var9 * 4 + 3] = (byte) var10;
+            dstColors[i * 4 + 0] = (byte) r;
+            dstColors[i * 4 + 1] = (byte) g;
+            dstColors[i * 4 + 2] = (byte) b;
+            dstColors[i * 4 + 3] = (byte) a;
         }
 
-        this.checkImageDataSize(var3);
+        this.checkImageDataSize(texW);
         this.currentImageBuffer.clear();
-        this.currentImageBuffer.put(var21);
-        this.currentImageBuffer.position(0).limit(var21.length);
-        GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA, var3, var4, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, this.currentImageBuffer);
+        this.currentImageBuffer.put(dstColors);
+        this.currentImageBuffer.position(0).limit(dstColors.length);
+        GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA, texW, texH, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, this.currentImageBuffer);
         if (field_1245) {
-            this.generateMipMaps(this.currentImageBuffer, var3, var4);
+            this.generateMipMaps(this.currentImageBuffer, texW, texH);
         }
-
-        if (!Config.isMultiTexture() || (var2 != this.terrainTextureId && var2 != this.guiItemsTextureId)) {
-            return;
-        }
-
-        int[] var22 = null;
-        if (var2 == this.terrainTextureId) {
-            var22 = ExTessellator.terrainTextures;
-        }
-
-        if (var2 == this.guiItemsTextureId) {
-            var22 = ExTessellator.itemTextures;
-        }
-
-        var10 = var3 / 16;
-        var11 = var4 / 16;
-
-        for (var12 = 0; var12 < 16; ++var12) {
-            for (var13 = 0; var13 < 16; ++var13) {
-                var14 = var13 * var10;
-                var15 = var12 * var11;
-                BufferedImage var24 = var1.getSubimage(var14, var15, var10, var11);
-                int var17 = var12 * 16 + var13;
-                if (var22[var17] == 0) {
-                    this.field_1249.clear();
-                    GLAllocationUtils.genTextures(this.field_1249);
-                    var22[var17] = this.field_1249.get(0);
-                }
-
-                if (var2 == this.guiItemsTextureId) {
-                    this.isClampTexture = true;
-                } else {
-                    this.isClampTexture = Config.isTerrainIconClamped(var17);
-                }
-
-                this.bindImageToId(var24, var22[var17]);
-            }
-        }
-
-        this.isClampTexture = false;
     }
 
     @Override
@@ -361,35 +314,37 @@ public abstract class MixinTextureManager implements ExTextureManager {
         }
     }
 
-    private void generateMipMaps(ByteBuffer var1, int var2, int var3) {
-        ByteBuffer var4 = var1;
+    private void generateMipMaps(ByteBuffer image, int width, int height) {
+        ByteBuffer srcImage = image;
 
-        for (int var5 = 1; var5 <= 16; ++var5) {
-            int var6 = var2 >> var5 - 1;
-            int var7 = var2 >> var5;
-            int var8 = var3 >> var5;
-            if (var7 <= 0 || var8 <= 0) {
+        for (int level = 1; level <= 16; ++level) {
+            int prevWidth = width >> (level - 1);
+            int levelWidth = width >> level;
+            int levelHeight = height >> level;
+            if (levelWidth <= 0 || levelHeight <= 0) {
                 break;
             }
 
-            ByteBuffer var9 = this.mipImageDatas[var5 - 1];
+            ByteBuffer dstImage = this.mipImageDatas[level - 1];
 
-            for (int var10 = 0; var10 < var7; ++var10) {
-                for (int var11 = 0; var11 < var8; ++var11) {
-                    int var12 = var4.getInt((var10 * 2 + 0 + (var11 * 2 + 0) * var6) * 4);
-                    int var13 = var4.getInt((var10 * 2 + 1 + (var11 * 2 + 0) * var6) * 4);
-                    int var14 = var4.getInt((var10 * 2 + 1 + (var11 * 2 + 1) * var6) * 4);
-                    int var15 = var4.getInt((var10 * 2 + 0 + (var11 * 2 + 1) * var6) * 4);
-                    int var16 = this.weightedAverageColor(var12, var13, var14, var15);
-                    var9.putInt((var10 + var11 * var7) * 4, var16);
+            for (int y = 0; y < levelHeight; ++y) {
+                for (int x = 0; x < levelWidth; ++x) {
+                    int topLeft = srcImage.getInt((x * 2 + 0 + (y * 2 + 0) * prevWidth) * 4);
+                    int topRight = srcImage.getInt((x * 2 + 1 + (y * 2 + 0) * prevWidth) * 4);
+                    int botLeft = srcImage.getInt((x * 2 + 0 + (y * 2 + 1) * prevWidth) * 4);
+                    int botRight = srcImage.getInt((x * 2 + 1 + (y * 2 + 1) * prevWidth) * 4);
+
+                    int color = this.weightedAverageColor(topLeft, topRight, botRight, botLeft);
+                    dstImage.putInt((x + y * levelWidth) * 4, color);
                 }
             }
 
-            GL11.glTexImage2D(GL11.GL_TEXTURE_2D, var5, GL11.GL_RGBA, var7, var8, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, var9);
-            var4 = var9;
+            GL11.glTexImage2D(GL11.GL_TEXTURE_2D, level, GL11.GL_RGBA, levelWidth, levelHeight, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, dstImage);
+            srcImage = dstImage;
         }
     }
 
+    @Overwrite
     public void addTextureBinder(TextureBinder var1) {
         for (int var2 = 0; var2 < this.textureBinders.size(); ++var2) {
             TextureBinder var3 = this.textureBinders.get(var2);
@@ -410,171 +365,119 @@ public abstract class MixinTextureManager implements ExTextureManager {
         this.textureBinders.add(var1);
         ((AC_TextureBinder) var1).onTick(var2);
         ACMod.LOGGER.info("Texture registered: " + var1 + ", image: " + var1.renderMode + ", index: " + var1.index);
-        this.dynamicTexturesUpdated = false;
     }
 
-    private void generateMipMapsSub(int var1, int var2, int var3, int var4, ByteBuffer var5, int var6, boolean var7, int var8, int var9) {
-        ByteBuffer var10 = var5;
+    private void generateMipMapsSub(int subX, int subY, int tileW, int tileH, ByteBuffer image, int texSize, boolean fastColor) {
+        ByteBuffer srcImage = image;
 
-        for (int var11 = 1; var11 <= 16; ++var11) {
-            int var12 = var3 >> var11 - 1;
-            int var13 = var3 >> var11;
-            int var14 = var4 >> var11;
-            int var15 = var1 >> var11;
-            int var16 = var2 >> var11;
-            if (var13 <= 0 || var14 <= 0) {
+        for (int level = 1; level <= 16; ++level) {
+            int prevWidth = tileW >> level - 1;
+            int levelWidth = tileW >> level;
+            int levelHeight = tileH >> level;
+            int levelX = subX >> level;
+            int levelY = subY >> level;
+            if (levelWidth <= 0 || levelHeight <= 0) {
                 break;
             }
 
-            ByteBuffer var17 = this.mipImageDatas[var11 - 1];
+            ByteBuffer dstImage = this.mipImageDatas[level - 1];
 
-            int var18;
-            int var19;
-            int var20;
-            int var21;
-            int var22;
-            for (var18 = 0; var18 < var13; ++var18) {
-                for (var19 = 0; var19 < var14; ++var19) {
-                    var20 = var10.getInt((var18 * 2 + 0 + (var19 * 2 + 0) * var12) * 4);
-                    var21 = var10.getInt((var18 * 2 + 1 + (var19 * 2 + 0) * var12) * 4);
-                    var22 = var10.getInt((var18 * 2 + 1 + (var19 * 2 + 1) * var12) * 4);
-                    int var23 = var10.getInt((var18 * 2 + 0 + (var19 * 2 + 1) * var12) * 4);
-                    int var24;
-                    if (var7) {
-                        var24 = this.method_1086(this.method_1086(var20, var21), this.method_1086(var22, var23));
+            for (int y = 0; y < levelHeight; ++y) {
+                for (int x = 0; x < levelWidth; ++x) {
+                    int topLeft = srcImage.getInt((x * 2 + 0 + (y * 2 + 0) * prevWidth) * 4);
+                    int topRight = srcImage.getInt((x * 2 + 1 + (y * 2 + 0) * prevWidth) * 4);
+                    int botLeft = srcImage.getInt((x * 2 + 0 + (y * 2 + 1) * prevWidth) * 4);
+                    int botRight = srcImage.getInt((x * 2 + 1 + (y * 2 + 1) * prevWidth) * 4);
+
+                    int color;
+                    if (fastColor) {
+                        color = this.method_1086(this.method_1086(topLeft, topRight), this.method_1086(botRight, botLeft));
                     } else {
-                        var24 = this.weightedAverageColor(var20, var21, var22, var23);
+                        color = this.weightedAverageColor(topLeft, topRight, botRight, botLeft);
                     }
-
-                    var17.putInt((var18 + var19 * var13) * 4, var24);
+                    dstImage.putInt((x + y * levelWidth) * 4, color);
                 }
             }
 
-            for (var18 = 0; var18 < var6; ++var18) {
-                for (var19 = 0; var19 < var6; ++var19) {
-                    var20 = var18 * var13;
-                    var21 = var19 * var14;
-                    if (Config.isMultiTexture() && var8 == this.terrainTextureId) {
-                        var22 = var19 * 16 + var18;
-                        GL11.glBindTexture(GL11.GL_TEXTURE_2D, ExTessellator.terrainTextures[var9 + var22]);
-                        var20 = 0;
-                        var21 = 0;
-                    }
+            for (int tileY = 0; tileY < texSize; ++tileY) {
+                int yOffset = levelY + tileY * levelHeight;
 
-                    GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, var11, var15 + var20, var16 + var21, var13, var14, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, var17);
+                for (int tileX = 0; tileX < texSize; ++tileX) {
+                    int xOffset = levelX + tileX * levelWidth;
+
+                    GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, level, xOffset, yOffset, levelWidth, levelHeight, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, dstImage);
                 }
             }
 
-            var10 = var17;
+            srcImage = dstImage;
         }
-
     }
 
     public void tick() {
-        this.checkHdTextures();
-        ++this.tickCounter;
-        this.terrainTextureId = this.getTextureId("/terrain.png");
-        this.guiItemsTextureId = this.getTextureId("/gui/items.png");
+        // TODO:
+        //this.terrainTextureId = this.getTextureId("/terrain.png");
+        //this.guiItemsTextureId = this.getTextureId("/gui/items.png");
 
-        int var1;
-        TextureBinder var2;
-        for (var1 = 0; var1 < this.textureBinders.size(); ++var1) {
-            var2 = this.textureBinders.get(var1);
-            var2.render3d = this.gameOptions.anaglyph3d;
-            if (!var2.getClass().getName().equals("ModTextureStatic") || !this.dynamicTexturesUpdated) {
-                boolean var3 = false;
-                int var14;
-                if (var2.renderMode == 0) {
-                    var14 = this.terrainTextureId;
+        for (TextureBinder binder : this.textureBinders) {
+            binder.render3d = this.gameOptions.anaglyph3d;
+
+            int texId = this.getTextureId(((AC_TextureBinder) binder).getTexture());
+            Vec2 texSize = this.getTextureDimensions(texId);
+            if (texSize == null) {
+                throw new IllegalArgumentException("Unknown dimensions for texture id: " + texId);
+            }
+
+            int tileW = texSize.x / 16;
+            int tileH = texSize.y / 16;
+            this.checkImageDataSize(texSize.x);
+            this.currentImageBuffer.limit(0);
+
+            if (this.currentImageBuffer.limit() <= 0) {
+                ((AC_TextureBinder) binder).onTick(texSize);
+                if (binder.grid == null) {
+                    continue;
+                }
+
+                int gridIndex = tileW * tileH * 4;
+                if (binder.grid.length == gridIndex) {
+                    this.currentImageBuffer.clear();
+                    this.currentImageBuffer.put(binder.grid);
+                    this.currentImageBuffer.position(0).limit(binder.grid.length);
                 } else {
-                    var14 = this.guiItemsTextureId;
+                    this.copyScaled(binder.grid, this.currentImageBuffer, tileW);
                 }
+            }
 
-                Vec2 var4 = this.getTextureDimensions(var14);
-                if (var4 == null) {
-                    throw new IllegalArgumentException("Unknown dimensions for texture id: " + var14);
-                }
+            binder.bindTexture((TextureManager) (Object) this);
+            boolean fastColor = this.scalesWithFastColor(binder);
 
-                int var5 = var4.x / 16;
-                int var6 = var4.y / 16;
-                this.checkImageDataSize(var4.x);
-                this.currentImageBuffer.limit(0);
-                boolean var7 = this.updateCustomTexture(var2, this.currentImageBuffer, var4.x / 16);
-                if (!var7 || this.currentImageBuffer.limit() > 0) {
-                    boolean var8;
-                    if (this.currentImageBuffer.limit() <= 0) {
-                        var8 = this.updateDefaultTexture(var2, this.currentImageBuffer, var4.x / 16);
-                        if (var8 && this.currentImageBuffer.limit() <= 0) {
-                            continue;
-                        }
-                    }
+            for (int tileY = 0; tileY < binder.textureSize; ++tileY) {
+                for (int tileX = 0; tileX < binder.textureSize; ++tileX) {
+                    int subX = binder.index % 16 * tileW + tileX * tileW;
+                    int subY = binder.index / 16 * tileH + tileY * tileH;
+                    GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, subX, subY, tileW, tileH, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, this.currentImageBuffer);
 
-                    if (this.currentImageBuffer.limit() <= 0) {
-                        ((AC_TextureBinder) var2).onTick(var4);
-                        if (var2.grid == null) {
-                            continue;
-                        }
-
-                        int var15 = var5 * var6 * 4;
-                        if (var2.grid.length == var15) {
-                            this.currentImageBuffer.clear();
-                            this.currentImageBuffer.put(var2.grid);
-                            this.currentImageBuffer.position(0).limit(var2.grid.length);
-                        } else {
-                            this.copyScaled(var2.grid, this.currentImageBuffer, var5);
-                        }
-                    }
-
-                    var2.bindTexture((TextureManager) (Object) this);
-                    var8 = this.scalesWithFastColor(var2);
-
-                    int var9;
-                    int var10;
-                    for (var9 = 0; var9 < var2.textureSize; ++var9) {
-                        for (var10 = 0; var10 < var2.textureSize; ++var10) {
-                            int var11 = var2.index % 16 * var5 + var9 * var5;
-                            int var12 = var2.index / 16 * var6 + var10 * var6;
-                            GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, var11, var12, var5, var6, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, this.currentImageBuffer);
-                            if (field_1245 && var9 == 0 && var10 == 0) {
-                                this.generateMipMapsSub(var11, var12, var5, var6, this.currentImageBuffer, var2.textureSize, var8, 0, 0);
-                            }
-                        }
-                    }
-
-                    if (Config.isMultiTexture() && var14 == this.terrainTextureId) {
-                        for (var9 = 0; var9 < var2.textureSize; ++var9) {
-                            for (var10 = 0; var10 < var2.textureSize; ++var10) {
-                                byte var16 = 0;
-                                byte var17 = 0;
-                                int var13 = var10 * 16 + var9;
-                                GL11.glBindTexture(GL11.GL_TEXTURE_2D, ExTessellator.terrainTextures[var2.index + var13]);
-                                GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, var16, var17, var5, var6, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, this.currentImageBuffer);
-                                if (field_1245 && var9 == 0 && var10 == 0) {
-                                    this.generateMipMapsSub(var16, var17, var5, var6, this.currentImageBuffer, var2.textureSize, var8, var14, var2.index);
-                                }
-                            }
-                        }
+                    if (field_1245 && tileX == 0 && tileY == 0) {
+                        this.generateMipMapsSub(subX, subY, tileW, tileH, this.currentImageBuffer, binder.textureSize, fastColor);
                     }
                 }
             }
         }
 
-        this.dynamicTexturesUpdated = true;
+        for (TextureBinder binder : this.textureBinders) {
+            if (binder.id <= 0) {
+                continue;
+            }
 
-        for (var1 = 0; var1 < this.textureBinders.size(); ++var1) {
-            var2 = this.textureBinders.get(var1);
-            if (var2.id > 0) {
-                this.currentImageBuffer.clear();
-                this.currentImageBuffer.put(var2.grid);
-                this.currentImageBuffer.position(0).limit(var2.grid.length);
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, var2.id);
-                GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, 16, 16, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, this.currentImageBuffer);
-                if (field_1245) {
-                    this.generateMipMapsSub(0, 0, 16, 16, this.currentImageBuffer, var2.textureSize, false, 0, 0);
-                }
+            this.currentImageBuffer.clear();
+            this.currentImageBuffer.put(binder.grid);
+            this.currentImageBuffer.position(0).limit(binder.grid.length);
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, binder.id);
+            GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, 16, 16, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, this.currentImageBuffer);
+            if (field_1245) {
+                this.generateMipMapsSub(0, 0, 16, 16, this.currentImageBuffer, binder.textureSize, false);
             }
         }
-
     }
 
     @Shadow
@@ -631,7 +534,6 @@ public abstract class MixinTextureManager implements ExTextureManager {
     @Inject(method = "reloadTexturesFromTexturePack", at = @At("HEAD"))
     private void clearOnReload(CallbackInfo ci) {
         this.textureDataMap.clear();
-        this.dynamicTexturesUpdated = false;
         Config.setFontRendererUpdated(false);
     }
 
@@ -644,269 +546,21 @@ public abstract class MixinTextureManager implements ExTextureManager {
 
     private void setTextureDimension(int var1, Vec2 var2) {
         this.textureDimensionsMap.put(var1, var2);
-        if (var1 == this.terrainTextureId) {
-            Config.setIconWidthTerrain(var2.x / 16);
-            this.updateDynamicTextures(0, var2);
-        }
-
-        if (var1 == this.guiItemsTextureId) {
-            Config.setIconWidthItems(var2.x / 16);
-            this.updateDynamicTextures(1, var2);
-        }
     }
 
     private Vec2 getTextureDimensions(int var1) {
         return this.textureDimensionsMap.get(var1);
     }
 
-    private void updateDynamicTextures(int var1, Vec2 var2) {
-        this.checkHdTextures();
-
-        for (TextureBinder textureBinder : this.textureBinders) {
-            if (textureBinder.renderMode == var1 && textureBinder instanceof TextureHDFX hdfx) {
-                hdfx.setTexturePackBase(this.texturePackManager.texturePack);
-                hdfx.setTileWidth(var2.x / 16);
-                
-                Vec2 var3 = this.getTextureResolution(((AC_TextureBinder) textureBinder).getTexture());
-                ((AC_TextureBinder) textureBinder).onTick(var3);
-            }
-        }
-    }
-
-    public boolean updateCustomTexture(TextureBinder var1, ByteBuffer var2, int var3) {
-        if (var1.index == Block.STILL_WATER.texture) {
-            if (Config.isGeneratedWater()) {
-                return false;
-            }
-            return this.updateCustomTexture(var1, "/custom_water_still.png", var2, var3, Config.isAnimatedWater(), 1);
-        }
-        if (var1.index == Block.STILL_WATER.texture + 1) {
-            if (Config.isGeneratedWater()) {
-                return false;
-            }
-            return this.updateCustomTexture(var1, "/custom_water_flowing.png", var2, var3, Config.isAnimatedWater(), 1);
-        }
-        if (var1.index == Block.STILL_LAVA.texture) {
-            if (Config.isGeneratedLava()) {
-                return false;
-            }
-            return this.updateCustomTexture(var1, "/custom_lava_still.png", var2, var3, Config.isAnimatedLava(), 1);
-        }
-        if (var1.index == Block.STILL_LAVA.texture + 1) {
-            if (Config.isGeneratedLava()) {
-                return false;
-            }
-            return this.updateCustomTexture(var1, "/custom_lava_flowing.png", var2, var3, Config.isAnimatedLava(), 1);
-        }
-        if (var1.index == Block.PORTAL.texture)
-            return this.updateCustomTexture(var1, "/custom_portal.png", var2, var3, Config.isAnimatedPortal(), 1);
-        if (var1.index == Block.FIRE.texture)
-            return this.updateCustomTexture(var1, "/custom_fire_n_s.png", var2, var3, Config.isAnimatedFire(), 1);
-        if (var1.index == Block.FIRE.texture + 16)
-            return this.updateCustomTexture(var1, "/custom_fire_e_w.png", var2, var3, Config.isAnimatedFire(), 1);
-        return false;
-    }
-
-    private boolean updateDefaultTexture(TextureBinder var1, ByteBuffer var2, int var3) {
-        if (this.texturePackManager.texturePack instanceof DefaultTexturePack) {
-            return false;
-        }
-        if (var1.index == Block.STILL_WATER.texture) {
-            if (Config.isGeneratedWater()) {
-                return false;
-            }
-            return this.updateDefaultTexture(var1, var2, var3, false, 1);
-        }
-        if (var1.index == Block.STILL_WATER.texture + 1) {
-            if (Config.isGeneratedWater()) {
-                return false;
-            }
-            return this.updateDefaultTexture(var1, var2, var3, Config.isAnimatedWater(), 1);
-        }
-        if (var1.index == Block.STILL_LAVA.texture) {
-            if (Config.isGeneratedLava()) {
-                return false;
-            }
-            return this.updateDefaultTexture(var1, var2, var3, false, 1);
-        }
-        if (var1.index == Block.STILL_LAVA.texture + 1) {
-            if (Config.isGeneratedLava()) {
-                return false;
-            }
-            return this.updateDefaultTexture(var1, var2, var3, Config.isAnimatedLava(), 3);
-        }
-        return false;
-    }
-
-    private boolean updateDefaultTexture(TextureBinder var1, ByteBuffer var2, int var3, boolean var4, int var5) {
-        int var6 = var1.index;
-        if (!var4 && this.dynamicTexturesUpdated) {
-            return true;
-        } else {
-            byte[] var7 = this.getTerrainIconData(var6, var3);
-            if (var7 == null) {
-                return false;
-            } else {
-                var2.clear();
-                int var8 = var7.length;
-                if (var4) {
-                    int var9 = var3 - this.tickCounter / var5 % var3;
-                    int var10 = var9 * var3 * 4;
-                    var2.put(var7, var10, var8 - var10);
-                    var2.put(var7, 0, var10);
-                } else {
-                    var2.put(var7, 0, var8);
-                }
-
-                var2.position(0).limit(var8);
-                return true;
-            }
-        }
-    }
-
-    private boolean updateCustomTexture(TextureBinder var1, String var2, ByteBuffer var3, int var4, boolean var5, int var6) {
-        byte[] var7 = this.getCustomTextureData(var2, var4);
-        if (var7 == null) {
-            return false;
-        } else if (!var5 && this.dynamicTexturesUpdated) {
-            return true;
-        } else {
-            int var8 = var4 * var4 * 4;
-            int var9 = var7.length / var8;
-            int var10 = this.tickCounter / var6 % var9;
-            int var11 = 0;
-            if (var5) {
-                var11 = var8 * var10;
-            }
-
-            var3.clear();
-            var3.put(var7, var11, var8);
-            var3.position(0).limit(var8);
-            return true;
-        }
-    }
-
-    private byte[] getTerrainIconData(int var1, int var2) {
-        String var3 = "Tile-" + var1;
-        byte[] var4 = this.getCustomTextureData(var3, var2);
-        if (var4 != null) {
-            return var4;
-        } else {
-            byte[] var5 = this.getCustomTextureData("/terrain.png", var2 * 16);
-            if (var5 == null) {
-                return null;
-            } else {
-                var4 = new byte[var2 * var2 * 4];
-                int var6 = var1 % 16;
-                int var7 = var1 / 16;
-                int var8 = var6 * var2;
-                int var9 = var7 * var2;
-                int var10000 = var8 + var2;
-                var10000 = var9 + var2;
-
-                for (int var12 = 0; var12 < var2; ++var12) {
-                    int var13 = var9 + var12;
-
-                    for (int var14 = 0; var14 < var2; ++var14) {
-                        int var15 = var8 + var14;
-                        int var16 = 4 * (var15 + var13 * var2 * 16);
-                        int var17 = 4 * (var14 + var12 * var2);
-                        var4[var17 + 0] = var5[var16 + 0];
-                        var4[var17 + 1] = var5[var16 + 1];
-                        var4[var17 + 2] = var5[var16 + 2];
-                        var4[var17 + 3] = var5[var16 + 3];
-                    }
-                }
-
-                this.setCustomTextureData(var3, var4);
-                return var4;
-            }
-        }
-    }
-
-    public byte[] getCustomTextureData(String var1, int var2) {
-        byte[] var3 = this.textureDataMap.get(var1);
-        if (var3 == null) {
-            if (this.textureDataMap.containsKey(var1)) {
-                return null;
-            }
-
-            var3 = this.loadImage(var1, var2);
-            this.textureDataMap.put(var1, var3);
-        }
-
-        return var3;
-    }
-
-    private void setCustomTextureData(String var1, byte[] var2) {
-        this.textureDataMap.put(var1, var2);
-    }
-
-    private byte[] loadImage(String var1, int var2) {
-        try {
-            TexturePack var3 = this.texturePackManager.texturePack;
-            if (var3 == null) {
-                return null;
-            } else {
-                InputStream var4 = var3.getResourceAsStream(var1);
-                if (var4 == null) {
-                    return null;
-                } else {
-                    BufferedImage var5 = this.readImage(var4);
-                    if (var5 == null) {
-                        return null;
-                    } else {
-                        if (var2 > 0 && var5.getWidth() != var2) {
-                            double var6 = var5.getHeight() / var5.getWidth();
-                            int var8 = (int) ((double) var2 * var6);
-                            var5 = ExTextureManager.scaleBufferedImage(var5, var2, var8);
-                        }
-
-                        int var19 = var5.getWidth();
-                        int var7 = var5.getHeight();
-                        int[] var20 = new int[var19 * var7];
-                        byte[] var9 = new byte[var19 * var7 * 4];
-                        var5.getRGB(0, 0, var19, var7, var20, 0, var19);
-
-                        for (int var10 = 0; var10 < var20.length; ++var10) {
-                            int var11 = var20[var10] >> 24 & 255;
-                            int var12 = var20[var10] >> 16 & 255;
-                            int var13 = var20[var10] >> 8 & 255;
-                            int var14 = var20[var10] & 255;
-                            if (this.gameOptions != null && this.gameOptions.anaglyph3d) {
-                                int var15 = (var12 * 30 + var13 * 59 + var14 * 11) / 100;
-                                int var16 = (var12 * 30 + var13 * 70) / 100;
-                                int var17 = (var12 * 30 + var14 * 70) / 100;
-                                var12 = var15;
-                                var13 = var16;
-                                var14 = var17;
-                            }
-
-                            var9[var10 * 4 + 0] = (byte) var12;
-                            var9[var10 * 4 + 1] = (byte) var13;
-                            var9[var10 * 4 + 2] = (byte) var14;
-                            var9[var10 * 4 + 3] = (byte) var11;
-                        }
-
-                        return var9;
-                    }
-                }
-            }
-        } catch (Exception var18) {
-            var18.printStackTrace();
-            return null;
-        }
-    }
-
-    private void checkImageDataSize(int var1) {
+    private void checkImageDataSize(int width) {
         if (this.currentImageBuffer != null) {
-            int var2 = var1 * var1 * 4;
+            int var2 = width * width * 4;
             if (this.currentImageBuffer.capacity() >= var2) {
                 return;
             }
         }
 
-        this.allocateImageData(var1);
+        this.allocateImageData(width);
     }
 
     private void allocateImageData(int var1) {
@@ -920,34 +574,16 @@ public abstract class MixinTextureManager implements ExTextureManager {
             var3.add(var6);
         }
 
-        this.mipImageDatas = var3.toArray(new ByteBuffer[var3.size()]);
+        this.mipImageDatas = var3.toArray(new ByteBuffer[0]);
     }
 
-    public void checkHdTextures() {
-        if (!this.hdTexturesInstalled) {
-            Minecraft var1 = Config.getMinecraft();
-            if (var1 != null) {
-                this.addTextureBinder(new TextureHDLavaFX());
-                this.addTextureBinder(new TextureHDWaterFX());
-                this.addTextureBinder(new TextureHDPortalFX());
-                this.addTextureBinder(new TextureHDCompassFX(var1));
-                this.addTextureBinder(new TextureHDWatchFX(var1));
-                this.addTextureBinder(new TextureHDWaterFlowFX());
-                this.addTextureBinder(new TextureHDLavaFlowFX());
-                this.addTextureBinder(new TextureHDFlamesFX(0));
-                this.addTextureBinder(new TextureHDFlamesFX(1));
-                this.hdTexturesInstalled = true;
-            }
-        }
-    }
-
-    private int getMaxMipmapLevel(int var1) {
-        int var2;
-        for (var2 = 0; var1 > 0; ++var2) {
-            var1 /= 2;
+    private int getMaxMipmapLevel(int dim) {
+        int size;
+        for (size = 0; dim > 0; ++size) {
+            dim /= 2;
         }
 
-        return var2 - 1;
+        return size - 1;
     }
 
     private void copyScaled(byte[] var1, ByteBuffer var2, int var3) {

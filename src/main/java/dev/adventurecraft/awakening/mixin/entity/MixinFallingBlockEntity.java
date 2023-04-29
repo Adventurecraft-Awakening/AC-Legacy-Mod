@@ -102,6 +102,11 @@ public abstract class MixinFallingBlockEntity extends MixinEntity implements ExF
     }
 
     @Override
+    public int getBlockMeta() {
+        return this.blockMeta;
+    }
+
+    @Override
     public void setBlockMeta(int value) {
         this.blockMeta = value;
     }

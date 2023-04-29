@@ -5,7 +5,6 @@ import dev.adventurecraft.awakening.common.AC_CoordBlock;
 import dev.adventurecraft.awakening.common.AC_LightCache;
 import dev.adventurecraft.awakening.extension.ExClass_66;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
-import dev.adventurecraft.awakening.extension.client.render.ExTessellator;
 import dev.adventurecraft.awakening.extension.client.util.ExCameraView;
 import net.minecraft.block.Block;
 import net.minecraft.class_66;
@@ -189,7 +188,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
                                     var16 = true;
                                     GL11.glBindTexture(GL11.GL_TEXTURE_2D, textures[texId]);
 
-                                    ((ExTessellator) tesselator).setRenderingChunk(true);
+                                    //((ExTessellator) tesselator).setRenderingChunk(true);
                                     tesselator.start();
                                     //tesselator.setOffset(-this.field_231, -this.field_232, -this.field_233);
                                 }
@@ -223,7 +222,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
                 //GL11.glPopMatrix();
                 GL11.glEndList();
                 //tesselator.setOffset(0.0D, 0.0D, 0.0D);
-                ((ExTessellator) tesselator).setRenderingChunk(false);
+                //((ExTessellator) tesselator).setRenderingChunk(false);
             } else {
                 var13 = false;
             }
