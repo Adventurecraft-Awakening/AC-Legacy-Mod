@@ -7,6 +7,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 
 public class InventoryDebug implements Inventory {
+
     private String inventoryTitle;
     private int size;
     private ItemStack[] inventoryContents;
@@ -60,7 +61,6 @@ public class InventoryDebug implements Inventory {
             }
         }
 
-        /* TODO
         for (var2 = 0; var2 < 15; ++var2) {
             if (var1 > AC_Blocks.pillarStone.id) {
                 --var1;
@@ -270,7 +270,6 @@ public class InventoryDebug implements Inventory {
                 --var1;
             }
         }
-        */
 
         for (var2 = 0; var2 < 15; ++var2) {
             if (var1 > Item.DYE_POWDER.id) {
@@ -354,7 +353,6 @@ public class InventoryDebug implements Inventory {
             var2 = 0;
         }
 
-        /* TODO
         for (var3 = 0; var3 < 15; ++var3) {
             if (var1 > AC_Blocks.pillarStone.id) {
                 --var1;
@@ -739,7 +737,6 @@ public class InventoryDebug implements Inventory {
         if (var1 > AC_Blocks.slopes4.id) {
             var2 = 0;
         }
-        */
 
         for (var3 = 0; var3 < 15; ++var3) {
             if (var1 > Item.DYE_POWDER.id) {

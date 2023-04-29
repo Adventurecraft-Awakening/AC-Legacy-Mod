@@ -12,6 +12,7 @@ import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 
 public class AC_BlockTriggerMemory extends BlockWithEntity {
+
     protected AC_BlockTriggerMemory(int var1, int var2) {
         super(var1, var2, Material.AIR);
     }
@@ -54,7 +55,6 @@ public class AC_BlockTriggerMemory extends BlockWithEntity {
             var5.isActivated = true;
             this.triggerActivate(var1, var2, var3, var4);
         }
-
     }
 
     public void onTriggerDeactivated(World var1, int var2, int var3, int var4) {
@@ -63,7 +63,6 @@ public class AC_BlockTriggerMemory extends BlockWithEntity {
             var5.isActivated = true;
             this.triggerActivate(var1, var2, var3, var4);
         }
-
     }
 
     public void triggerActivate(World var1, int var2, int var3, int var4) {
@@ -110,7 +109,6 @@ public class AC_BlockTriggerMemory extends BlockWithEntity {
         if (var6.isActivated) {
             this.triggerActivate(var1, var2, var3, var4);
         }
-
     }
 
     public void reset(World var1, int var2, int var3, int var4, boolean var5) {
@@ -119,6 +117,5 @@ public class AC_BlockTriggerMemory extends BlockWithEntity {
             var6.isActivated = false;
             this.triggerDeactivate(var1, var2, var3, var4);
         }
-
     }
 }

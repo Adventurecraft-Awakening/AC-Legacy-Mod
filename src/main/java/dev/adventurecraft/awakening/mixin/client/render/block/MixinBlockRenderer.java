@@ -27,6 +27,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.Slice;
 
 import java.util.Random;
 
@@ -290,20 +291,13 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         this.field_69 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(var2, var3 + 1, var4 - 1)];
         this.field_80 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(var2, var3 - 1, var4 + 1)];
         this.field_77 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(var2, var3 - 1, var4 - 1)];
-        if (var1.texture == 3) {
+        boolean doGrassEdges = fancyGrass && var1.id == Block.GRASS.id;
+        if (doGrassEdges || this.textureOverride >= 0) {
             var20 = false;
-            var19 = var20;
-            var18 = var20;
-            var17 = var20;
-            var15 = var20;
-        }
-
-        if (this.textureOverride >= 0) {
-            var20 = false;
-            var19 = var20;
-            var18 = var20;
-            var17 = var20;
-            var15 = var20;
+            var19 = false;
+            var18 = false;
+            var17 = false;
+            var15 = false;
         }
 
         float var21;
@@ -542,7 +536,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             }
 
             this.renderEastFace(var1, var2, var3, var4, (int) var25);
-            if (fancyGrass && var25 == 3 && this.textureOverride < 0) {
+            if (doGrassEdges && var25 == 3 && this.textureOverride < 0) {
                 this.field_56 *= var5;
                 this.field_57 *= var5;
                 this.field_58 *= var5;
@@ -647,7 +641,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             }
 
             this.renderWestFace(var1, var2, var3, var4, (int) var25);
-            if (fancyGrass && var25 == 3 && this.textureOverride < 0) {
+            if (doGrassEdges && var25 == 3 && this.textureOverride < 0) {
                 this.field_56 *= var5;
                 this.field_57 *= var5;
                 this.field_58 *= var5;
@@ -752,7 +746,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             }
 
             this.renderNorthFace(var1, var2, var3, var4, (int) var25);
-            if (fancyGrass && var25 == 3 && this.textureOverride < 0) {
+            if (doGrassEdges && var25 == 3 && this.textureOverride < 0) {
                 this.field_56 *= var5;
                 this.field_57 *= var5;
                 this.field_58 *= var5;
@@ -857,7 +851,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             }
 
             this.renderSouthFace(var1, var2, var3, var4, (int) var25);
-            if (fancyGrass && var25 == 3 && this.textureOverride < 0) {
+            if (doGrassEdges && var25 == 3 && this.textureOverride < 0) {
                 this.field_56 *= var5;
                 this.field_57 *= var5;
                 this.field_58 *= var5;
@@ -1732,9 +1726,16 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         return var5;
     }
 
-    @Redirect(method = "method_48", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/block/Block;getTextureForSide(I)I"))
+    @Redirect(
+        method = "method_48",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/block/Block;getTextureForSide(I)I"),
+        slice = @Slice(
+            to = @At(
+                value = "INVOKE",
+                target = "Lnet/minecraft/block/Block;getTextureForSide(I)I",
+                ordinal = 11)))
     public int useTextureForSide(Block instance, int i, @Local(index = 2, argsOnly = true) int var2) {
         return instance.getTextureForSide(i, var2);
     }

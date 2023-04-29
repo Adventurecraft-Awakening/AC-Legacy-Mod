@@ -50,7 +50,6 @@ public class AC_TileEntityMinMaxRenderer extends BlockEntityRenderer {
             GL11.glDisable(GL11.GL_BLEND);
             GL11.glPopMatrix();
         }
-
     }
 
     public void render(BlockEntity var1, double var2, double var4, double var6, float var8) {

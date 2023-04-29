@@ -85,11 +85,16 @@ public abstract class MixinBlock implements ExBlock, AC_IBlockColor, AC_Textured
     @Shadow
     public abstract int getTextureForSide(BlockView arg, int i, int j, int k, int l);
 
+    @Shadow
+    public int getRenderType() {
+        throw new AssertionError();
+    }
+
     @Inject(method = "<clinit>", at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/item/Item;byId:[Lnet/minecraft/item/Item;",
-            shift = At.Shift.BEFORE,
-            ordinal = 0))
+        value = "FIELD",
+        target = "Lnet/minecraft/item/Item;byId:[Lnet/minecraft/item/Item;",
+        shift = At.Shift.BEFORE,
+        ordinal = 0))
     private static void changeBlocksAndItems(CallbackInfo ci) {
         BY_ID[1] = null;
         BY_ID[4] = null;
@@ -110,10 +115,10 @@ public abstract class MixinBlock implements ExBlock, AC_IBlockColor, AC_Textured
 
     @Environment(EnvType.CLIENT)
     @Redirect(method = "getBrightness", at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/block/Block;EMITTANCE:[I",
-            opcode = Opcodes.GETSTATIC,
-            args = "array=get"))
+        value = "FIELD",
+        target = "Lnet/minecraft/block/Block;EMITTANCE:[I",
+        opcode = Opcodes.GETSTATIC,
+        args = "array=get"))
     private int getBlockLightForBrightness(int[] emittance, int index, BlockView var1, int var2, int var3, int var4) {
         return this.getBlockLightValue(var1, var2, var3, var4);
     }

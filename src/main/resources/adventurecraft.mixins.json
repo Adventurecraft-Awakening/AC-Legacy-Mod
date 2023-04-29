@@ -27,6 +27,7 @@
     "client.render.MixinTextureBinder",
     "client.render.MixinWorldEventRenderer",
     "client.render.block.MixinBlockRenderer",
+    "client.render.entity.MixinBlockEntityRenderDispatcher",
     "client.render.entity.MixinFallingBlockRenderer",
     "client.render.entity.MixinItemRenderer",
     "client.render.entity.MixinPlayerRenderer",
