@@ -43,10 +43,14 @@ public interface ExWorldProperties {
     boolean isOverrideFogColor();
 
     void setOverrideFogColor(boolean overrideFogColor);
-    
+
     boolean getIceMelts();
 
     void setIceMelts(boolean value);
+
+    boolean getLeavesDecay();
+
+    void setLeavesDecay(boolean value);
 
     boolean getMobsBurn();
 

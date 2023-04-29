@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.mixin.block;
 
-import dev.adventurecraft.awakening.common.AC_BlockColor;
+import dev.adventurecraft.awakening.common.AC_IBlockColor;
 import dev.adventurecraft.awakening.common.AC_ItemSubtypes;
 import dev.adventurecraft.awakening.extension.block.AC_TexturedBlock;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
@@ -21,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Block.class)
-public abstract class MixinBlock implements ExBlock, AC_TexturedBlock {
+public abstract class MixinBlock implements ExBlock, AC_IBlockColor, AC_TexturedBlock {
 
     private int textureNum;
 
@@ -96,7 +96,7 @@ public abstract class MixinBlock implements ExBlock, AC_TexturedBlock {
 
         STONE = (new StoneBlock(1, 215)).setHardness(1.5F).setBlastResistance(10.0F).setSounds(PISTON_SOUNDS).setTranslationKey("stone");
         ((ExBlock) GRASS).setSubTypes(5);
-        COBBLESTONE = (new AC_BlockColor(4, 214, Material.STONE)).setHardness(2.0F).setBlastResistance(10.0F).setSounds(PISTON_SOUNDS).setTranslationKey("stonebrick");
+        COBBLESTONE = (new Block(4, 214, Material.STONE)).setHardness(2.0F).setBlastResistance(10.0F).setSounds(PISTON_SOUNDS).setTranslationKey("stonebrick");
         FLOWING_WATER.setHardness(0.5F);
         STILL_WATER.setHardness(0.5F);
         FLOWING_LAVA.setHardness(0.5F);

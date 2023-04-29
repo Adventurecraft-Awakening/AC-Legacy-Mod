@@ -2,15 +2,19 @@ package dev.adventurecraft.awakening.mixin;
 
 import dev.adventurecraft.awakening.client.options.Config;
 import dev.adventurecraft.awakening.common.AC_CoordBlock;
+import dev.adventurecraft.awakening.common.AC_LightCache;
 import dev.adventurecraft.awakening.extension.ExClass_66;
+import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.client.render.ExTessellator;
 import dev.adventurecraft.awakening.extension.client.util.ExCameraView;
 import net.minecraft.block.Block;
 import net.minecraft.class_66;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.block.BlockRenderer;
 import net.minecraft.client.render.entity.BlockEntityRenderDispatcher;
 import net.minecraft.client.render.entity.ItemRenderer;
+import net.minecraft.client.texture.TextureManager;
 import net.minecraft.client.util.CameraView;
 import net.minecraft.entity.BlockEntity;
 import net.minecraft.util.math.AxixAlignedBoundingBox;
@@ -96,11 +100,14 @@ public abstract class MixinClass_66 implements ExClass_66 {
     @Shadow
     public abstract void method_305();
 
+    @Shadow
+    protected abstract void method_306();
+
     @Inject(method = "method_298", at = @At(
-            value = "INVOKE_ASSIGN",
-            target = "Lnet/minecraft/util/math/AxixAlignedBoundingBox;create(DDDDDD)Lnet/minecraft/util/math/AxixAlignedBoundingBox;",
-            shift = At.Shift.BEFORE),
-            cancellable = true)
+        value = "INVOKE_ASSIGN",
+        target = "Lnet/minecraft/util/math/AxixAlignedBoundingBox;create(DDDDDD)Lnet/minecraft/util/math/AxixAlignedBoundingBox;",
+        shift = At.Shift.BEFORE),
+        cancellable = true)
     public void setNeedsBoxUpdate(int i, int j, int k, CallbackInfo ci) {
         this.field_250 = AxixAlignedBoundingBox.create((float) i, (float) j, (float) k, (float) (i + this.field_234), (float) (j + this.field_235), (float) (k + this.field_236));
         this.needsBoxUpdate = true;
@@ -124,7 +131,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
 
         this.field_252 = true;
         this.isVisibleFromPosition = false;
-        int var22 = this.field_231;
+        int var1 = this.field_231;
         int var2 = this.field_232;
         int var3 = this.field_233;
         int var4 = this.field_231 + this.field_234;
@@ -135,82 +142,112 @@ public abstract class MixinClass_66 implements ExClass_66 {
             this.field_244[var7] = true;
         }
 
-        Object var23 = Config.getFieldValue("LightCache", "cache");
-        if (var23 != null) {
-            Config.callVoid(var23, "clear");
-            Config.callVoid("BlockCoord", "resetPool");
+        Chunk.field_953 = false;
+        HashSet<BlockEntity> var23 = new HashSet<>();
+        var23.addAll(this.field_224);
+        this.field_224.clear();
+        byte var8 = 1;
+        WorldPopulationRegion var9 = new WorldPopulationRegion(this.world, var1 - var8, var2 - var8, var3 - var8, var4 + var8, var5 + var8, var6 + var8);
+        BlockRenderer var10 = new BlockRenderer(var9);
+        TextureManager texMan = Minecraft.instance.textureManager;
+
+        int[] textures = new int[4];
+        textures[0] = texMan.getTextureId("/terrain.png");
+        for (int texId = 2; texId < textures.length; texId++) {
+            textures[texId] = texMan.getTextureId(String.format("/terrain%d.png", texId));
         }
 
-        Chunk.field_953 = false;
-        HashSet<BlockEntity> var8 = new HashSet<>();
-        var8.addAll(this.field_224);
-        this.field_224.clear();
-        byte var9 = 1;
-        WorldPopulationRegion var10 = new WorldPopulationRegion(this.world, var22 - var9, var2 - var9, var3 - var9, var4 + var9, var5 + var9, var6 + var9);
-        BlockRenderer var11 = new BlockRenderer(var10);
-
-        for (int var12 = 0; var12 < 2; ++var12) {
-
+        for (int var11 = 0; var11 < 2; ++var11) {
+            boolean var12 = false;
             boolean var13 = false;
             boolean var14 = false;
-            boolean var15 = false;
 
-            for (int var16 = var2; var16 < var5; ++var16) {
-                for (int var17 = var3; var17 < var6; ++var17) {
-                    for (int var18 = var22; var18 < var4; ++var18) {
-                        int var19 = var10.getBlockId(var18, var16, var17);
-                        if (var19 > 0) {
-                            if (!var15) {
-                                var15 = true;
-                                GL11.glNewList(this.field_225 + var12, GL11.GL_COMPILE);
-                                ((ExTessellator) tesselator).setRenderingChunk(true);
-                                tesselator.start();
-                            }
+            for (int texId = 0; texId < textures.length; ++texId) {
+                if (texId == 1) {
+                    continue;
+                }
+                boolean var16 = false;
 
-                            if (var12 == 0 && Block.HAS_BLOCK_ENTITY[var19]) {
-                                BlockEntity var20 = var10.getBlockEntity(var18, var16, var17);
-                                if (BlockEntityRenderDispatcher.INSTANCE.hasCustomRenderer(var20)) {
-                                    this.field_224.add(var20);
+                for (int var17 = var2; var17 < var5; ++var17) {
+                    for (int var18 = var3; var18 < var6; ++var18) {
+                        for (int var19 = var1; var19 < var4; ++var19) {
+                            int var20 = var9.getBlockId(var19, var17, var18);
+                            if (var20 > 0 && texId == ((ExBlock) Block.BY_ID[var20]).getTextureNum()) {
+                                if (!var14) {
+                                    var14 = true;
+                                    GL11.glNewList(this.field_225 + var11, GL11.GL_COMPILE);
+
+                                    //GL11.glPushMatrix();
+                                    //this.method_306();
+                                    //float var21 = 1.000001F;
+                                    //GL11.glTranslatef((float) (-this.field_236) / 2.0F, (float) (-this.field_235) / 2.0F, (float) (-this.field_236) / 2.0F);
+                                    //GL11.glScalef(var21, var21, var21);
+                                    //GL11.glTranslatef((float) this.field_236 / 2.0F, (float) this.field_235 / 2.0F, (float) this.field_236 / 2.0F);
+                                }
+
+                                if (!var16) {
+                                    var16 = true;
+                                    GL11.glBindTexture(GL11.GL_TEXTURE_2D, textures[texId]);
+
+                                    ((ExTessellator) tesselator).setRenderingChunk(true);
+                                    tesselator.start();
+                                    //tesselator.setOffset(-this.field_231, -this.field_232, -this.field_233);
+                                }
+
+                                if (var11 == 0 && Block.HAS_BLOCK_ENTITY[var20]) {
+                                    BlockEntity var25 = var9.getBlockEntity(var19, var17, var18);
+                                    if (BlockEntityRenderDispatcher.INSTANCE.hasCustomRenderer(var25)) {
+                                        this.field_224.add(var25);
+                                    }
+                                }
+
+                                Block var26 = Block.BY_ID[var20];
+                                int var22 = var26.getRenderPass();
+                                if (var22 != var11) {
+                                    var12 = true;
+                                } else if (var22 == var11) {
+                                    var13 |= var10.render(var26, var19, var17, var18);
                                 }
                             }
-
-                            Block var25 = Block.BY_ID[var19];
-                            int var21 = var25.getRenderPass();
-                            if (var21 != var12) {
-                                var13 = true;
-                            } else if (var21 == var12) {
-                                var14 |= var11.render(var25, var18, var16, var17);
-                            }
                         }
+                    }
+
+                    if (var16) {
+                        tesselator.tessellate();
+                        var16 = false;
                     }
                 }
             }
 
-            if (var15) {
-                tesselator.tessellate();
+            if (var14) {
+                //GL11.glPopMatrix();
                 GL11.glEndList();
+                //tesselator.setOffset(0.0D, 0.0D, 0.0D);
                 ((ExTessellator) tesselator).setRenderingChunk(false);
             } else {
-                var14 = false;
+                var13 = false;
             }
 
-            if (var14) {
-                this.field_244[var12] = false;
+            if (var13) {
+                this.field_244[var11] = false;
             }
 
-            if (!var13) {
+            if (!var12) {
                 break;
             }
         }
 
         HashSet<BlockEntity> var24 = new HashSet<>();
         var24.addAll(this.field_224);
-        var24.removeAll(var8);
+        var24.removeAll(var23);
         this.field_228.addAll(var24);
-        var8.removeAll(this.field_224);
-        this.field_228.removeAll(var8);
+        var23.removeAll(this.field_224);
+        this.field_228.removeAll(var23);
         this.field_223 = Chunk.field_953;
         this.field_227 = true;
+
+        AC_LightCache.cache.clear();
+        AC_CoordBlock.resetPool();
     }
 
     @Inject(method = "method_300", at = @At("TAIL"))

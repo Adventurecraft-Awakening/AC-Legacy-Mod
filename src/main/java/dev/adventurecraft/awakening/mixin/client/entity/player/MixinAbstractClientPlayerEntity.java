@@ -137,6 +137,12 @@ public abstract class MixinAbstractClientPlayerEntity extends PlayerEntity imple
                 this.client.overlay.addChatMessage(String.format("Ice Melts: %b", worldProps.getIceMelts()));
                 break;
 
+            case "/toggledecay":
+                worldProps = ((ExWorldProperties) this.world.properties);
+                worldProps.setLeavesDecay(!worldProps.getLeavesDecay());
+                this.client.overlay.addChatMessage(String.format("Leaves Decay: %b", worldProps.getLeavesDecay()));
+                break;
+
             case "/cameraadd":
                 activeCamera = ((ExMinecraft) this.client).getActiveCutsceneCamera();
                 if (activeCamera != null) {
@@ -243,6 +249,7 @@ public abstract class MixinAbstractClientPlayerEntity extends PlayerEntity imple
                 this.client.overlay.addChatMessage("/mobsburn - Toggles mobs burning in daylight");
                 this.client.overlay.addChatMessage("/removemobs - Sets all mobs except the player as dead");
                 this.client.overlay.addChatMessage("/togglemelting - Toggles ice melting");
+                this.client.overlay.addChatMessage("/toggledecay - Toggles leaf decay");
                 break;
 
                 /* TODO

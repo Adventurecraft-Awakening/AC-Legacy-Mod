@@ -8,7 +8,7 @@ import net.minecraft.block.material.Material;
 import net.minecraft.entity.FallingBlockEntity;
 import net.minecraft.world.World;
 
-public class AC_BlockPushable extends AC_BlockColor {
+public class AC_BlockPushable extends Block {
     public AC_BlockPushable(int var1, int var2, Material var3) {
         super(var1, var2, var3);
     }
@@ -31,7 +31,6 @@ public class AC_BlockPushable extends AC_BlockColor {
             ((ExFallingBlockEntity) var5).setBlockMeta(var1.getBlockMeta(var2, var3, var4));
             var1.spawnEntity(var5);
         }
-
     }
 
     public int getTickrate() {

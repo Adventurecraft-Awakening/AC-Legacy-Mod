@@ -19,7 +19,9 @@ public abstract class MixinPlayerRenderer extends LivingEntityRenderer {
         super(var1, var2);
     }
 
-    @ModifyExpressionValue(method = "method_827(Lnet/minecraft/entity/player/PlayerEntity;F)V", at = @At(
+    @ModifyExpressionValue(
+        method = "method_827(Lnet/minecraft/entity/player/PlayerEntity;F)V",
+        at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/render/entity/PlayerRenderer;method_2027(Ljava/lang/String;Ljava/lang/String;)Z",
             ordinal = 1))
@@ -27,7 +29,9 @@ public abstract class MixinPlayerRenderer extends LivingEntityRenderer {
         return ((ExPlayerEntity) var1).getCloakTexture() != null || value;
     }
 
-    @Inject(method = "method_827(Lnet/minecraft/entity/player/PlayerEntity;F)V", at = @At(
+    @Inject(
+        method = "method_827(Lnet/minecraft/entity/player/PlayerEntity;F)V",
+        at = @At(
             value = "INVOKE",
             target = "Lorg/lwjgl/opengl/GL11;glPushMatrix()V",
             shift = At.Shift.BEFORE,

@@ -33,6 +33,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     public double tempOffset;
     private WorldGenProperties worldGenProps = new WorldGenProperties();
     public boolean iceMelts = true;
+    public boolean leavesDecay = true;
     public CompoundTag triggerData = null;
     float timeOfDay;
     float timeRate;
@@ -382,6 +383,16 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     @Override
     public void setIceMelts(boolean iceMelts) {
         this.iceMelts = iceMelts;
+    }
+
+    @Override
+    public boolean getLeavesDecay() {
+        return this.leavesDecay;
+    }
+
+    @Override
+    public void setLeavesDecay(boolean value) {
+        this.leavesDecay = value;
     }
 
     @Override

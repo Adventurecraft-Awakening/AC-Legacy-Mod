@@ -9,11 +9,13 @@ public class AC_BlockLadderSubtypes extends LadderBlock implements AC_IBlockColo
         super(var1, var2);
     }
 
+    @Override
     public int getTextureForSide(int var1, int var2) {
         var2 /= 4;
         return this.texture + var2;
     }
 
+    @Override
     public void onBlockPlaced(World var1, int var2, int var3, int var4, int var5) {
         int var6 = var1.getBlockMeta(var2, var3, var4);
         int var7 = 0;
@@ -45,9 +47,11 @@ public class AC_BlockLadderSubtypes extends LadderBlock implements AC_IBlockColo
         var1.setBlockMeta(var2, var3, var4, var6);
     }
 
+    @Override
     public void onAdjacentBlockUpdate(World var1, int var2, int var3, int var4, int var5) {
     }
 
+    @Override
     public void incrementColor(World var1, int var2, int var3, int var4) {
         int var5 = var1.getBlockMeta(var2, var3, var4);
         var1.setBlockMeta(var2, var3, var4, (var5 + 4) % 16);

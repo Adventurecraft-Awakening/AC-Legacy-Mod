@@ -10,6 +10,7 @@ accessible field net/minecraft/client/gui/widget/ButtonWidget width I
 accessible field net/minecraft/client/gui/widget/ButtonWidget height I
 
 accessible field net/minecraft/block/Block resistance F
+accessible method net/minecraft/block/Block <init> (IILnet/minecraft/block/material/Material;)V
 accessible method net/minecraft/block/Block init ()V
 accessible method net/minecraft/block/Block setLightOpacity (I)Lnet/minecraft/block/Block;
 accessible method net/minecraft/block/Block setHardness (F)Lnet/minecraft/block/Block;

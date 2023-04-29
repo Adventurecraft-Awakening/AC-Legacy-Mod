@@ -1065,31 +1065,34 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             return this.renderPiston(var1, var2, var3, var4, false);
         } else if (var5 == 17) {
             return this.renderPistonHead(var1, var2, var3, var4, true);
-        } else if (var5 != 30) {
-            if (var5 == 31) {
-                boolean var7 = this.renderStandardBlock(var1, var2, var3, var4);
-                if (((ExWorld) Minecraft.instance.world).getTriggerManager().isActivated(var2, var3, var4)) {
-                    Tessellator.INSTANCE.color(1.0F, 1.0F, 1.0F);
-                    this.textureOverride = 99;
-                } else {
-                    this.textureOverride = 115;
-                }
-
-                this.renderTorchTilted(var1, var2, (double) var3 + 0.25D, var4, 0.0D, 0.0D);
-                this.textureOverride = -1;
-                return var7;
-            } else {
-                return var5 == 32 ? this.renderSpikes(var1, var2, var3, var4) : (var5 == 33 ? this.renderTable(var1, var2, var3, var4) : (var5 == 34 ? this.renderChair(var1, var2, var3, var4) : (var5 == 35 ? this.renderRope(var1, var2, var3, var4) : (var5 == 36 ? this.renderBlockTree(var1, var2, var3, var4) : (var5 == 37 ? this.renderBlockOverlay(var1, var2, var3, var4) : (var5 == 38 ? this.renderBlockSlope(var1, var2, var3, var4) : false))))));
-            }
-        } else {
+        } else if (var5 == 30) {
             if (this.blockView != null && this.textureOverride == -1) {
                 int var6 = this.blockView.getBlockId(var2, var3 + 1, var4);
                 if (var6 == 0 || !((ExBlock) Block.BY_ID[var6]).shouldRender(this.blockView, var2, var3 + 1, var4)) {
                     this.renderGrass(var1, var2, var3, var4);
                 }
             }
-
             return this.renderStandardBlock(var1, var2, var3, var4);
+        } else if (var5 == 31) {
+            boolean var7 = this.renderStandardBlock(var1, var2, var3, var4);
+            if (((ExWorld) Minecraft.instance.world).getTriggerManager().isActivated(var2, var3, var4)) {
+                Tessellator.INSTANCE.color(1.0F, 1.0F, 1.0F);
+                this.textureOverride = 99;
+            } else {
+                this.textureOverride = 115;
+            }
+            this.renderTorchTilted(var1, var2, (double) var3 + 0.25D, var4, 0.0D, 0.0D);
+            this.textureOverride = -1;
+            return var7;
+        } else {
+            if (var5 == 32) return this.renderSpikes(var1, var2, var3, var4);
+            if (var5 == 33) return this.renderTable(var1, var2, var3, var4);
+            if (var5 == 34) return this.renderChair(var1, var2, var3, var4);
+            if (var5 == 35) return this.renderRope(var1, var2, var3, var4);
+            if (var5 == 36) return this.renderBlockTree(var1, var2, var3, var4);
+            if (var5 == 37) return this.renderBlockOverlay(var1, var2, var3, var4);
+            if (var5 == 38) return this.renderBlockSlope(var1, var2, var3, var4);
+            return false;
         }
     }
 
@@ -1986,7 +1989,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             if (var19 == null || var19.getRenderType() != 38 || var20 != 2 && var20 != 3) {
                 var20 = this.blockView.getBlockMeta(var2 + 1, var3, var4) & 3;
                 var19 = Block.BY_ID[this.blockView.getBlockId(var2 + 1, var3, var4)];
-                if (var19 != null && var19.getRenderType() == 38 && (var20 == 2 || var20 == 3)) {
+                if (var19 != null && var19.getRenderType() == 38) {
                     if (var20 == 2) {
                         var5.color(0.9F * var18, 0.9F * var18, 0.9F * var18);
                         var5.vertex(var2 + 1, var3, var4, var10, var16);
@@ -2088,7 +2091,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             if (var19 == null || var19.getRenderType() != 38 || var20 != 2 && var20 != 3) {
                 var20 = this.blockView.getBlockMeta(var2 - 1, var3, var4) & 3;
                 var19 = Block.BY_ID[this.blockView.getBlockId(var2 - 1, var3, var4)];
-                if (var19 != null && var19.getRenderType() == 38 && (var20 == 2 || var20 == 3)) {
+                if (var19 != null && var19.getRenderType() == 38) {
                     if (var20 == 3) {
                         var5.color(0.9F * var18, 0.9F * var18, 0.9F * var18);
                         var5.vertex(var2, var3, var4 + 1, var10, var16);
@@ -2104,7 +2107,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                         var5.vertex(var2 + 1, var3, var4, var10, var16);
                         var5.vertex(var2, var3, var4, var12, var16);
                         var5.vertex(var2, var3, var4, var12, var16);
-                    } else {
+                    } else if (var20 == 2) {
                         var5.color(0.9F * var18, 0.9F * var18, 0.9F * var18);
                         var5.vertex(var2, var3 + 1, var4 + 1, var12, var14);
                         var5.vertex(var2, var3 + 1, var4 + 1, var12, var14);
@@ -2194,7 +2197,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                 if (var22 == null || var22.getRenderType() != 38 || var21 != 0 && var21 != 1) {
                     var21 = this.blockView.getBlockMeta(var2, var3, var4 + 1) & 3;
                     var22 = Block.BY_ID[this.blockView.getBlockId(var2, var3, var4 + 1)];
-                    if (var22 != null && var22.getRenderType() == 38 && (var21 == 0 || var21 == 1)) {
+                    if (var22 != null && var22.getRenderType() == 38) {
                         if (var21 == 0) {
                             var5.color(0.8F * var18, 0.8F * var18, 0.8F * var18);
                             var5.vertex(var2, var3, var4, var10, var16);
@@ -2211,7 +2214,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                             var5.vertex(var2 + 1, var3 + 1, var4 + 1, var10, var14);
                             var5.vertex(var2 + 1, var3, var4 + 1, var10, var16);
                             var5.vertex(var2 + 1, var3, var4 + 1, var10, var16);
-                        } else {
+                        } else if (var21 == 1) {
                             var5.color(0.8F * var18, 0.8F * var18, 0.8F * var18);
                             var5.vertex(var2, var3 + 1, var4 + 1, var10, var14);
                             var5.vertex(var2, var3 + 1, var4 + 1, var10, var14);
@@ -2301,7 +2304,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                 if (var22 == null || var22.getRenderType() != 38 || var21 != 0 && var21 != 1) {
                     var21 = this.blockView.getBlockMeta(var2, var3, var4 - 1) & 3;
                     var22 = Block.BY_ID[this.blockView.getBlockId(var2, var3, var4 - 1)];
-                    if (var22 != null && var22.getRenderType() == 38 && (var21 == 0 || var21 == 1)) {
+                    if (var22 != null && var22.getRenderType() == 38) {
                         if (var21 == 0) {
                             var5.color(0.8F * var18, 0.8F * var18, 0.8F * var18);
                             var5.vertex(var2, var3, var4, var10, var16);
@@ -2318,7 +2321,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                             var5.vertex(var2 + 1, var3 + 1, var4, var12, var14);
                             var5.vertex(var2 + 1, var3, var4 + 1, var10, var16);
                             var5.vertex(var2 + 1, var3, var4 + 1, var10, var16);
-                        } else {
+                        } else if (var21 == 1) {
                             var5.color(0.8F * var18, 0.8F * var18, 0.8F * var18);
                             var5.vertex(var2, var3 + 1, var4, var12, var14);
                             var5.vertex(var2, var3 + 1, var4, var12, var14);
@@ -2404,7 +2407,6 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                 }
             }
         }
-
         return true;
     }
 
@@ -2419,52 +2421,52 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         float var12 = ((ExGrassBlock) Block.GRASS).grassMultiplier(var11);
         if (var12 < 0.0F) {
             return false;
-        } else {
-            var8 *= var12;
-            var9 *= var12;
-            var10 *= var12;
-            var5.color(var6 * var8, var6 * var9, var6 * var10);
-            double var13 = var2;
-            double var15 = (float) var3 - 1.0F / 16.0F + 1.0F;
-            double var17 = var4;
-            this.rand.setSeed(var2 * var2 * 3121 + var2 * 45238971 + var4 * var4 * 418711 + var4 * 13761 + var3);
-            short var37 = 168;
-            int var19 = (var37 & 15) << 4;
-            int var20 = var37 & 240;
-            var19 += this.rand.nextInt(32);
-            double var21 = (float) var19 / 256.0F;
-            double var23 = ((float) var19 + 15.99F) / 256.0F;
-            double var25 = (float) var20 / 256.0F;
-            double var27 = ((float) var20 + 15.99F) / 256.0F;
-            double var29 = var13 + 0.5D - (double) 0.45F;
-            double var31 = var13 + 0.5D + (double) 0.45F;
-            double var33 = var17 + 0.5D - (double) 0.45F;
-            double var35 = var17 + 0.5D + (double) 0.45F;
-            var5.vertex(var29, var15 + 1.0D, var33, var21, var25);
-            var5.vertex(var29, var15 + 0.0D, var33, var21, var27);
-            var5.vertex(var31, var15 + 0.0D, var35, var23, var27);
-            var5.vertex(var31, var15 + 1.0D, var35, var23, var25);
-            var5.vertex(var31, var15 + 1.0D, var35, var21, var25);
-            var5.vertex(var31, var15 + 0.0D, var35, var21, var27);
-            var5.vertex(var29, var15 + 0.0D, var33, var23, var27);
-            var5.vertex(var29, var15 + 1.0D, var33, var23, var25);
-            var19 = (var37 & 15) << 4;
-            var20 = var37 & 240;
-            var19 += this.rand.nextInt(32);
-            var21 = (float) var19 / 256.0F;
-            var23 = ((float) var19 + 15.99F) / 256.0F;
-            var25 = (float) var20 / 256.0F;
-            var27 = ((float) var20 + 15.99F) / 256.0F;
-            var5.vertex(var29, var15 + 1.0D, var35, var21, var25);
-            var5.vertex(var29, var15 + 0.0D, var35, var21, var27);
-            var5.vertex(var31, var15 + 0.0D, var33, var23, var27);
-            var5.vertex(var31, var15 + 1.0D, var33, var23, var25);
-            var5.vertex(var31, var15 + 1.0D, var33, var21, var25);
-            var5.vertex(var31, var15 + 0.0D, var33, var21, var27);
-            var5.vertex(var29, var15 + 0.0D, var35, var23, var27);
-            var5.vertex(var29, var15 + 1.0D, var35, var23, var25);
-            return true;
         }
+
+        var8 *= var12;
+        var9 *= var12;
+        var10 *= var12;
+        var5.color(var6 * var8, var6 * var9, var6 * var10);
+        double var13 = var2;
+        double var15 = (float) var3 - 1.0F / 16.0F + 1.0F;
+        double var17 = var4;
+        this.rand.setSeed(var2 * var2 * 3121 + var2 * 45238971 + var4 * var4 * 418711 + var4 * 13761 + var3);
+        short var37 = 168;
+        int var19 = (var37 & 15) << 4;
+        int var20 = var37 & 240;
+        var19 += this.rand.nextInt(32);
+        double var21 = (float) var19 / 256.0F;
+        double var23 = ((float) var19 + 15.99F) / 256.0F;
+        double var25 = (float) var20 / 256.0F;
+        double var27 = ((float) var20 + 15.99F) / 256.0F;
+        double var29 = var13 + 0.5D - (double) 0.45F;
+        double var31 = var13 + 0.5D + (double) 0.45F;
+        double var33 = var17 + 0.5D - (double) 0.45F;
+        double var35 = var17 + 0.5D + (double) 0.45F;
+        var5.vertex(var29, var15 + 1.0D, var33, var21, var25);
+        var5.vertex(var29, var15 + 0.0D, var33, var21, var27);
+        var5.vertex(var31, var15 + 0.0D, var35, var23, var27);
+        var5.vertex(var31, var15 + 1.0D, var35, var23, var25);
+        var5.vertex(var31, var15 + 1.0D, var35, var21, var25);
+        var5.vertex(var31, var15 + 0.0D, var35, var21, var27);
+        var5.vertex(var29, var15 + 0.0D, var33, var23, var27);
+        var5.vertex(var29, var15 + 1.0D, var33, var23, var25);
+        var19 = (var37 & 15) << 4;
+        var20 = var37 & 240;
+        var19 += this.rand.nextInt(32);
+        var21 = (float) var19 / 256.0F;
+        var23 = ((float) var19 + 15.99F) / 256.0F;
+        var25 = (float) var20 / 256.0F;
+        var27 = ((float) var20 + 15.99F) / 256.0F;
+        var5.vertex(var29, var15 + 1.0D, var35, var21, var25);
+        var5.vertex(var29, var15 + 0.0D, var35, var21, var27);
+        var5.vertex(var31, var15 + 0.0D, var33, var23, var27);
+        var5.vertex(var31, var15 + 1.0D, var33, var23, var25);
+        var5.vertex(var31, var15 + 1.0D, var33, var21, var25);
+        var5.vertex(var31, var15 + 0.0D, var33, var21, var27);
+        var5.vertex(var29, var15 + 0.0D, var35, var23, var27);
+        var5.vertex(var29, var15 + 1.0D, var35, var23, var25);
+        return true;
     }
 
     public boolean renderSpikes(Block var1, int var2, int var3, int var4) {

@@ -5,10 +5,13 @@ import net.minecraft.client.resource.language.TranslationStorage;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 
 @Mixin(TranslationStorage.class)
@@ -16,6 +19,24 @@ public abstract class MixinTranslationStorage implements ExTranslationStorage {
 
     @Shadow
     private Properties translations;
+
+    private static InputStream loadResource(String name) {
+        String acName = "/assets/adventurecraft" + name;
+        InputStream stream = MixinTranslationStorage.class.getResourceAsStream(acName);
+        if (stream == null) {
+            stream = MixinTranslationStorage.class.getResourceAsStream(name);
+        }
+        return stream;
+    }
+
+    @Redirect(
+        method = "<init>",
+        at = @At(
+            value = "INVOKE",
+            target = "Ljava/lang/Class;getResourceAsStream(Ljava/lang/String;)Ljava/io/InputStream;"))
+    private InputStream useLoadResource(Class<?> instance, String s) {
+        return loadResource(s);
+    }
 
     @Overwrite
     public String translateNameOrEmpty(String var1) {
@@ -32,7 +53,7 @@ public abstract class MixinTranslationStorage implements ExTranslationStorage {
     @Override
     public void loadMapTranslation(File var1) {
         try {
-            this.translations.load(MixinTranslationStorage.class.getResourceAsStream("/lang/en_US.lang"));
+            this.translations.load(loadResource("/lang/en_US.lang"));
         } catch (IOException var5) {
         }
 

@@ -2,17 +2,19 @@ package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import net.minecraft.block.Block;
+import net.minecraft.block.BlockWithEntity;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.BlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.world.World;
 
-public class AC_BlockTriggerPushable extends AC_BlockContainerColor {
+public class AC_BlockTriggerPushable extends BlockWithEntity implements AC_IBlockColor {
+
     protected AC_BlockTriggerPushable(int var1, int var2) {
         super(var1, var2, Material.STONE);
     }
 
+    @Override
     protected BlockEntity createBlockEntity() {
         return new AC_TileEntityTriggerPushable();
     }
@@ -21,6 +23,7 @@ public class AC_BlockTriggerPushable extends AC_BlockContainerColor {
         return var1.getBlockId(var2, var3, var4) == AC_Blocks.pushableBlock.id && var1.getBlockMeta(var2, var3, var4) == var5;
     }
 
+    @Override
     public void onAdjacentBlockUpdate(World var1, int var2, int var3, int var4, int var5) {
         AC_TileEntityTriggerPushable var6 = (AC_TileEntityTriggerPushable) var1.getBlockEntity(var2, var3, var4);
         int var7 = var1.getBlockMeta(var2, var3, var4);
@@ -56,6 +59,7 @@ public class AC_BlockTriggerPushable extends AC_BlockContainerColor {
         var5.maxZ = AC_ItemCursor.maxZ;
     }
 
+    @Override
     public boolean canUse(World var1, int var2, int var3, int var4, PlayerEntity var5) {
         if (AC_DebugMode.active && var5.getHeldItem() != null && var5.getHeldItem().itemId == AC_Items.cursor.id) {
             AC_TileEntityTriggerPushable var6 = (AC_TileEntityTriggerPushable) var1.getBlockEntity(var2, var3, var4);
@@ -66,8 +70,9 @@ public class AC_BlockTriggerPushable extends AC_BlockContainerColor {
         }
     }
 
+    @Override
     public void incrementColor(World var1, int var2, int var3, int var4) {
-        super.incrementColor(var1, var2, var3, var4);
+        AC_IBlockColor.super.incrementColor(var1, var2, var3, var4);
         this.onAdjacentBlockUpdate(var1, var2, var3, var4, 0);
     }
 }
