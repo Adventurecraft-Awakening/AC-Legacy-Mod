@@ -1,12 +1,13 @@
 package dev.adventurecraft.awakening.mixin.client.resource.language;
 
+import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.client.resource.language.ExTranslationStorage;
 import net.minecraft.client.resource.language.TranslationStorage;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -17,53 +18,52 @@ import java.util.Properties;
 @Mixin(TranslationStorage.class)
 public abstract class MixinTranslationStorage implements ExTranslationStorage {
 
+    private Properties initialTranslations;
+
     @Shadow
     private Properties translations;
 
-    private static InputStream loadResource(String name) {
-        String acName = "/assets/adventurecraft" + name;
-        InputStream stream = MixinTranslationStorage.class.getResourceAsStream(acName);
-        if (stream == null) {
-            stream = MixinTranslationStorage.class.getResourceAsStream(name);
-        }
-        return stream;
+    @Inject(method = "<init>", at = @At("TAIL"))
+    private void copyInitialTranslations(CallbackInfo ci) {
+        this.initialTranslations = (Properties) this.translations.clone();
+
+        this.loadAcTranslations();
     }
 
-    @Redirect(
-        method = "<init>",
-        at = @At(
-            value = "INVOKE",
-            target = "Ljava/lang/Class;getResourceAsStream(Ljava/lang/String;)Ljava/io/InputStream;"))
-    private InputStream useLoadResource(Class<?> instance, String s) {
-        return loadResource(s);
+    private void loadAcTranslations(String name) {
+        try {
+            String acName = "/assets/adventurecraft" + name;
+            InputStream stream = ACMod.class.getResourceAsStream(acName);
+            this.translations.load(stream);
+        } catch (IOException e) {
+            // TODO: ACMod.LOGGER.warn about resource load
+            e.printStackTrace();
+        }
     }
 
-    @Overwrite
-    public String translateNameOrEmpty(String var1) {
-        String var2 = this.translations.getProperty(var1 + ".name", "");
-        if (var2.equals("") && var1 != null) {
-            String[] var3 = var1.split("\\.");
-            var2 = var3[var3.length - 1];
-            this.translations.setProperty(var1, var2);
-        }
+    private void loadAcTranslations() {
+        this.loadAcTranslations("/lang/en_US.lang");
+    }
 
-        return var2;
+    private void reset() {
+        this.translations.clear();
+        this.translations.putAll(this.initialTranslations);
+
+        this.loadAcTranslations();
     }
 
     @Override
-    public void loadMapTranslation(File var1) {
-        try {
-            this.translations.load(loadResource("/lang/en_US.lang"));
-        } catch (IOException var5) {
-        }
+    public void loadMapTranslation(File mapPath) {
+        this.reset();
 
         try {
-            File var2 = new File(var1, "/lang/en_US.lang");
-            if (var2.exists()) {
-                FileInputStream var3 = new FileInputStream(var2);
-                this.translations.load(var3);
+            File file = new File(mapPath, "/lang/en_US.lang");
+            if (file.exists()) {
+                FileInputStream stream = new FileInputStream(file);
+                this.translations.load(stream);
             }
         } catch (IOException var4) {
+            // TODO: ACMod.LOGGER.warn about resource load
         }
     }
 }
