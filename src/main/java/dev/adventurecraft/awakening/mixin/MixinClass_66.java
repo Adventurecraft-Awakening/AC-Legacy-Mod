@@ -130,12 +130,12 @@ public abstract class MixinClass_66 implements ExClass_66 {
 
         this.field_252 = true;
         this.isVisibleFromPosition = false;
-        int var1 = this.field_231;
-        int var2 = this.field_232;
-        int var3 = this.field_233;
-        int var4 = this.field_231 + this.field_234;
-        int var5 = this.field_232 + this.field_235;
-        int var6 = this.field_233 + this.field_236;
+        int startX = this.field_231;
+        int startY = this.field_232;
+        int startZ = this.field_233;
+        int width = this.field_231 + this.field_234;
+        int height = this.field_232 + this.field_235;
+        int depth = this.field_233 + this.field_236;
 
         for (int var7 = 0; var7 < 2; ++var7) {
             this.field_244[var7] = true;
@@ -146,8 +146,8 @@ public abstract class MixinClass_66 implements ExClass_66 {
         var23.addAll(this.field_224);
         this.field_224.clear();
         byte var8 = 1;
-        WorldPopulationRegion var9 = new WorldPopulationRegion(this.world, var1 - var8, var2 - var8, var3 - var8, var4 + var8, var5 + var8, var6 + var8);
-        BlockRenderer var10 = new BlockRenderer(var9);
+        WorldPopulationRegion region = new WorldPopulationRegion(this.world, startX - var8, startY - var8, startZ - var8, width + var8, height + var8, depth + var8);
+        BlockRenderer blockRenderer = new BlockRenderer(region);
         TextureManager texMan = Minecraft.instance.textureManager;
 
         int[] textures = new int[4];
@@ -156,7 +156,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
             textures[texId] = texMan.getTextureId(String.format("/terrain%d.png", texId));
         }
 
-        for (int var11 = 0; var11 < 2; ++var11) {
+        for (int renderPass = 0; renderPass < 2; ++renderPass) {
             boolean var12 = false;
             boolean var13 = false;
             boolean var14 = false;
@@ -167,14 +167,14 @@ public abstract class MixinClass_66 implements ExClass_66 {
                 }
                 boolean var16 = false;
 
-                for (int var17 = var2; var17 < var5; ++var17) {
-                    for (int var18 = var3; var18 < var6; ++var18) {
-                        for (int var19 = var1; var19 < var4; ++var19) {
-                            int var20 = var9.getBlockId(var19, var17, var18);
-                            if (var20 > 0 && texId == ((ExBlock) Block.BY_ID[var20]).getTextureNum()) {
+                for (int y = startY; y < height; ++y) {
+                    for (int z = startZ; z < depth; ++z) {
+                        for (int x = startX; x < width; ++x) {
+                            int blockId = region.getBlockId(x, y, z);
+                            if (blockId > 0 && texId == ((ExBlock) Block.BY_ID[blockId]).getTextureNum()) {
                                 if (!var14) {
                                     var14 = true;
-                                    GL11.glNewList(this.field_225 + var11, GL11.GL_COMPILE);
+                                    GL11.glNewList(this.field_225 + renderPass, GL11.GL_COMPILE);
 
                                     //GL11.glPushMatrix();
                                     //this.method_306();
@@ -193,19 +193,19 @@ public abstract class MixinClass_66 implements ExClass_66 {
                                     //tesselator.setOffset(-this.field_231, -this.field_232, -this.field_233);
                                 }
 
-                                if (var11 == 0 && Block.HAS_BLOCK_ENTITY[var20]) {
-                                    BlockEntity var25 = var9.getBlockEntity(var19, var17, var18);
-                                    if (BlockEntityRenderDispatcher.INSTANCE.hasCustomRenderer(var25)) {
-                                        this.field_224.add(var25);
+                                if (renderPass == 0 && Block.HAS_BLOCK_ENTITY[blockId]) {
+                                    BlockEntity entity = region.getBlockEntity(x, y, z);
+                                    if (BlockEntityRenderDispatcher.INSTANCE.hasCustomRenderer(entity)) {
+                                        this.field_224.add(entity);
                                     }
                                 }
 
-                                Block var26 = Block.BY_ID[var20];
-                                int var22 = var26.getRenderPass();
-                                if (var22 != var11) {
+                                Block block = Block.BY_ID[blockId];
+                                int blockRenderPass = block.getRenderPass();
+                                if (blockRenderPass != renderPass) {
                                     var12 = true;
-                                } else if (var22 == var11) {
-                                    var13 |= var10.render(var26, var19, var17, var18);
+                                } else if (blockRenderPass == renderPass) {
+                                    var13 |= blockRenderer.render(block, x, y, z);
                                 }
                             }
                         }
@@ -228,7 +228,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
             }
 
             if (var13) {
-                this.field_244[var11] = false;
+                this.field_244[renderPass] = false;
             }
 
             if (!var12) {
@@ -240,6 +240,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
         var24.addAll(this.field_224);
         var24.removeAll(var23);
         this.field_228.addAll(var24);
+
         var23.removeAll(this.field_224);
         this.field_228.removeAll(var23);
         this.field_223 = Chunk.field_953;

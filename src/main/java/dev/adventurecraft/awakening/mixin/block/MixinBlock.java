@@ -113,14 +113,10 @@ public abstract class MixinBlock implements ExBlock, AC_IBlockColor, AC_Textured
         Item.byId[TALLGRASS.id] = (new AC_ItemSubtypes(TALLGRASS.id - 256)).setTranslationKey("tallgrass");
     }
 
-    @Environment(EnvType.CLIENT)
-    @Redirect(method = "getBrightness", at = @At(
-        value = "FIELD",
-        target = "Lnet/minecraft/block/Block;EMITTANCE:[I",
-        opcode = Opcodes.GETSTATIC,
-        args = "array=get"))
-    private int getBlockLightForBrightness(int[] emittance, int index, BlockView var1, int var2, int var3, int var4) {
-        return this.getBlockLightValue(var1, var2, var3, var4);
+    @Environment(value=EnvType.CLIENT)
+    @Overwrite
+    public float getBrightness(BlockView arg, int i, int j, int k) {
+        return arg.getNaturalBrightness(i, j, k, this.getBlockLightValue(arg, i, j, k));
     }
 
     @Overwrite
