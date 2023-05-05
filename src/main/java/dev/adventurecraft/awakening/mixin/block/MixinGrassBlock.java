@@ -1,15 +1,17 @@
 package dev.adventurecraft.awakening.mixin.block;
 
 import dev.adventurecraft.awakening.ACMod;
-import dev.adventurecraft.awakening.client.options.BetterGrassOption;
+import dev.adventurecraft.awakening.client.options.ConnectedGrassOption;
 import dev.adventurecraft.awakening.client.options.Config;
 import dev.adventurecraft.awakening.common.AC_IBlockColor;
 import dev.adventurecraft.awakening.extension.block.AC_TexturedBlock;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.block.ExGrassBlock;
+import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import net.minecraft.block.Block;
 import net.minecraft.block.GrassBlock;
 import net.minecraft.block.material.Material;
+import net.minecraft.client.Minecraft;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
@@ -21,7 +23,7 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
 
     @Override
     public int getTextureForSide(BlockView view, int x, int y, int z, int side) {
-        return (int)getTextureForSideEx(view, x, y, z, side);
+        return (int) getTextureForSideEx(view, x, y, z, side);
     }
 
     @Override
@@ -41,14 +43,14 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
     }
 
     private long getSideTexture(BlockView view, int x, int y, int z, int side) {
-        BetterGrassOption option = Config.getBetterGrassOption();
+        ConnectedGrassOption option = Config.getConnectedGrassOption();
 
-        Material var6 = view.getMaterial(x, y + 1, z);
-        if (var6 == Material.SNOW || var6 == Material.SNOW_BLOCK) {
-            if (option == BetterGrassOption.OFF) {
+        Material material = view.getMaterial(x, y + 1, z);
+        if (material == Material.SNOW || material == Material.SNOW_BLOCK) {
+            if (option == ConnectedGrassOption.OFF) {
                 return 68;
             }
-            if (option == BetterGrassOption.FANCY) {
+            if (option == ConnectedGrassOption.FANCY) {
                 int nX = x;
                 int nZ = z;
                 switch (side) {
@@ -66,10 +68,10 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
             return 66;
         }
 
-        if (option == BetterGrassOption.OFF) {
+        if (option == ConnectedGrassOption.OFF) {
             return 3;
         }
-        if (option == BetterGrassOption.FANCY) {
+        if (option == ConnectedGrassOption.FANCY) {
             int nX = x;
             int nY = y - 1;
             int nZ = z;
@@ -85,7 +87,7 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
                 return 3;
             }
         }
-        return (long)getTopTexture(view, x, y, z) | (1L << 32);
+        return (long) getTopTexture(view, x, y, z) | (1L << 32);
     }
 
     @Redirect(method = "onScheduledTick", at = @At(
@@ -104,8 +106,7 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
     }
 
     public int getRenderType() {
-        return 30;
-        // return ((ExGameOptions)Minecraft.instance.options.grass3d) ? 30 : super.getRenderType(); TODO
+        return ((ExGameOptions) Minecraft.instance.options).isGrass3d() ? 30 : super.getRenderType();
     }
 
     @Override

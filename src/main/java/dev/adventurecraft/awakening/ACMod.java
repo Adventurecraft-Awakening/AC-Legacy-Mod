@@ -1,10 +1,15 @@
 package dev.adventurecraft.awakening;
 
+import sun.misc.Unsafe;
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Field;
+
 public class ACMod implements ModInitializer {
+
+    public static final Unsafe UNSAFE;
 
     public static boolean chunkIsNotPopulating = true;
 
@@ -20,5 +25,15 @@ public class ACMod implements ModInitializer {
         // Proceed with mild caution.
 
         LOGGER.info("Hello AC world!");
+    }
+
+    static {
+        try {
+            Field field = Unsafe.class.getDeclaredField("theUnsafe");
+            field.setAccessible(true);
+            UNSAFE = (Unsafe) field.get(null);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new RuntimeException("Couldn't obtain reference to sun.misc.Unsafe", e);
+        }
     }
 }

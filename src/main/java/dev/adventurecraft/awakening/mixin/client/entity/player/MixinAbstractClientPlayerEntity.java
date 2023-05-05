@@ -238,7 +238,7 @@ public abstract class MixinAbstractClientPlayerEntity extends PlayerEntity imple
                 */
 
             case "/help":
-                this.client.overlay.addChatMessage("AdventureCraft Commands");
+                this.client.overlay.addChatMessage("Adventurecraft Commands");
                 this.client.overlay.addChatMessage("/config - Allows the world to be configed");
                 this.client.overlay.addChatMessage("/day - Changes time to daytime");
                 this.client.overlay.addChatMessage("/night - Changes time to nighttime");

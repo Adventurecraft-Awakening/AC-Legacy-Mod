@@ -22,7 +22,6 @@ accessible method net/minecraft/block/Block isInsideYZ (Lnet/minecraft/util/math
 accessible method net/minecraft/block/Block isInsideXZ (Lnet/minecraft/util/math/Vec3d;)Z
 accessible method net/minecraft/block/Block isInsideXY (Lnet/minecraft/util/math/Vec3d;)Z
 
-
 accessible method net/minecraft/item/Item <init> (I)V
 accessible method net/minecraft/item/Item setDurability (I)Lnet/minecraft/item/Item;
 
@@ -54,6 +53,13 @@ accessible field net/minecraft/client/render/block/GrassColor map [I
 accessible field net/minecraft/client/render/block/FoliageColor map [I
 
 accessible field net/minecraft/client/texture/TextureManager textures Ljava/util/HashMap;
+
+accessible field net/minecraft/client/gui/screen/Screen buttons Ljava/util/List;
+accessible field net/minecraft/client/gui/screen/Screen textRenderer Lnet/minecraft/client/render/TextRenderer;
+
+accessible method net/minecraft/client/gui/GuiElement fillGradient (IIIIII)V
+
+accessible field net/minecraft/client/gui/widgets/SliderWidget option Lnet/minecraft/client/options/Option;
 
 # net/minecraft/client/gui/screen/SelectWorldScreen$class_569
 # net/minecraft/item/ItemInstance

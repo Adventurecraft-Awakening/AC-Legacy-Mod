@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.mixin.client.options;
 
-import dev.adventurecraft.awakening.client.options.BetterGrassOption;
+import dev.adventurecraft.awakening.client.options.ConnectedGrassOption;
 import dev.adventurecraft.awakening.client.options.OptionOF;
 import dev.adventurecraft.awakening.client.options.Config;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
@@ -11,7 +11,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.options.KeyBinding;
 import net.minecraft.client.options.Option;
-import net.minecraft.client.render.block.BlockRenderer;
 import net.minecraft.client.resource.language.Internationalization;
 import net.minecraft.client.resource.language.TranslationStorage;
 import net.minecraft.world.chunk.Chunk;
@@ -113,7 +112,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
     public int ofGrass = 0;
     public int ofRain = 0;
     public int ofWater = 0;
-    public BetterGrassOption ofBetterGrass = BetterGrassOption.OFF;
+    public ConnectedGrassOption ofConnectedGrass = ConnectedGrassOption.OFF;
     public int ofAutoSaveTicks = 4000;
     public boolean ofFastDebugInfo = false;
     public boolean ofWeather = true;
@@ -134,6 +133,8 @@ public abstract class MixinGameOptions implements ExGameOptions {
     public boolean ofAnimatedSmoke = true;
     public KeyBinding ofKeyBindZoom;
     public List<KeyBinding> keyBindings;
+    public boolean autoFarClip = false;
+    public boolean grass3d = true;
 
     @Shadow
     public abstract float getFloatValue(Option var1);
@@ -334,7 +335,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
             }
         }
 
-        if (var1 == OptionOF.TREES) {
+        if (var1 == OptionOF.LEAVES) {
             ++this.ofTrees;
             if (this.ofTrees > 2) {
                 this.ofTrees = 0;
@@ -421,11 +422,11 @@ public abstract class MixinGameOptions implements ExGameOptions {
             }
         }
 
-        if (var1 == OptionOF.BETTER_GRASS) {
-            ofBetterGrass = switch (this.ofBetterGrass) {
-                case OFF -> BetterGrassOption.FAST;
-                case FAST -> BetterGrassOption.FANCY;
-                case FANCY -> BetterGrassOption.OFF;
+        if (var1 == OptionOF.CONNECTED_GRASS) {
+            ofConnectedGrass = switch (this.ofConnectedGrass) {
+                case OFF -> ConnectedGrassOption.FAST;
+                case FAST -> ConnectedGrassOption.FANCY;
+                case FANCY -> ConnectedGrassOption.OFF;
             };
             this.client.worldRenderer.method_1537();
         }
@@ -496,10 +497,19 @@ public abstract class MixinGameOptions implements ExGameOptions {
             this.ofAfLevel = Config.limit(this.ofAfLevel, 1, 16);
             this.client.textureManager.reloadTexturesFromTexturePack();
         }
+
+
+        if (var1 == OptionOF.AUTO_FAR_CLIP) {
+            this.autoFarClip = !this.autoFarClip;
+        }
+
+        if (var1 == OptionOF.GRASS_3D) {
+            this.grass3d = !this.grass3d;
+            this.client.worldRenderer.method_1537();
+        }
     }
 
-    @Inject(method = "getFloatValue", at = @At("HEAD"),
-        cancellable = true)
+    @Inject(method = "getFloatValue", at = @At("HEAD"), cancellable = true)
     private void getFloatValueOF(Option var1, CallbackInfoReturnable<Float> cir) {
         if (var1 == OptionOF.BRIGHTNESS) {
             cir.setReturnValue(this.ofBrightness);
@@ -507,6 +517,15 @@ public abstract class MixinGameOptions implements ExGameOptions {
             cir.setReturnValue(this.ofCloudsHeight);
         } else if (var1 == OptionOF.AO_LEVEL) {
             cir.setReturnValue(this.ofAoLevel);
+        }
+    }
+
+    @Inject(method = "getBooleanValue", at = @At("HEAD"), cancellable = true)
+    private void getBooleanValueOF(Option var1, CallbackInfoReturnable<Boolean> cir) {
+        if (var1 == OptionOF.AUTO_FAR_CLIP) {
+            cir.setReturnValue(this.autoFarClip);
+        } else if (var1 == OptionOF.GRASS_3D) {
+            cir.setReturnValue(this.grass3d);
         }
     }
 
@@ -575,7 +594,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
                 case 3 -> var4 + "OFF";
                 default -> var4 + "Default";
             };
-        } else if (var1 == OptionOF.TREES) {
+        } else if (var1 == OptionOF.LEAVES) {
             return switch (this.ofTrees) {
                 case 1 -> var4 + "Fast";
                 case 2 -> var4 + "Fancy";
@@ -635,8 +654,8 @@ public abstract class MixinGameOptions implements ExGameOptions {
             if (this.ofAutoSaveTicks <= 4000)
                 return var4 + "3min";
             return var4 + "30min";
-        } else if (var1 == OptionOF.BETTER_GRASS) {
-            return switch (this.ofBetterGrass) {
+        } else if (var1 == OptionOF.CONNECTED_GRASS) {
+            return switch (this.ofConnectedGrass) {
                 case FAST -> var4 + "Fast";
                 case FANCY -> var4 + "Fancy";
                 default -> var4 + "OFF";
@@ -851,11 +870,11 @@ public abstract class MixinGameOptions implements ExGameOptions {
             this.ofAutoSaveTicks = Config.limit(this.ofAutoSaveTicks, 40, 40000);
         }
 
-        if (var3[0].equals("ofBetterGrass") && var3.length >= 2) {
+        if (var3[0].equals("ofConnectedGrass") && var3.length >= 2) {
             try {
-                this.ofBetterGrass = BetterGrassOption.valueOf(var3[1]);
+                this.ofConnectedGrass = ConnectedGrassOption.valueOf(var3[1]);
             } catch (IllegalArgumentException e) {
-                this.ofBetterGrass = BetterGrassOption.OFF;
+                this.ofConnectedGrass = ConnectedGrassOption.OFF;
             }
         }
 
@@ -903,6 +922,14 @@ public abstract class MixinGameOptions implements ExGameOptions {
             this.ofAfLevel = Integer.parseInt(var3[1]);
             this.ofAfLevel = Config.limit(this.ofAfLevel, 1, 16);
         }
+
+        if (var3[0].equals("autoFarClip")) {
+            this.autoFarClip = var3[1].equals("true");
+        }
+
+        if (var3[0].equals("grass3d")) {
+            this.grass3d = var3[1].equals("true");
+        }
     }
 
     @Inject(method = "saveOptions", at = @At(
@@ -938,7 +965,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
         var1.println("ofAnimatedSmoke:" + this.ofAnimatedSmoke);
         var1.println("ofFastDebugInfo:" + this.ofFastDebugInfo);
         var1.println("ofAutoSaveTicks:" + this.ofAutoSaveTicks);
-        var1.println("ofBetterGrass:" + this.ofBetterGrass);
+        var1.println("ofConnectedGrass:" + this.ofConnectedGrass);
         var1.println("ofWeather:" + this.ofWeather);
         var1.println("ofSky:" + this.ofSky);
         var1.println("ofStars:" + this.ofStars);
@@ -949,6 +976,8 @@ public abstract class MixinGameOptions implements ExGameOptions {
         var1.println("ofClearWater:" + this.ofClearWater);
         var1.println("ofAaLevel:" + this.ofAaLevel);
         var1.println("ofAfLevel:" + this.ofAfLevel);
+        var1.println("autoFarClip:" + this.autoFarClip);
+        var1.println("grass3d:" + this.grass3d);
     }
 
     @Override
@@ -1027,7 +1056,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
     }
 
     @Override
-    public int ofTrees() {
+    public int ofLeaves() {
         return ofTrees;
     }
 
@@ -1047,8 +1076,8 @@ public abstract class MixinGameOptions implements ExGameOptions {
     }
 
     @Override
-    public BetterGrassOption ofBetterGrass() {
-        return ofBetterGrass;
+    public ConnectedGrassOption ofConnectedGrass() {
+        return ofConnectedGrass;
     }
 
     @Override
@@ -1144,5 +1173,15 @@ public abstract class MixinGameOptions implements ExGameOptions {
     @Override
     public KeyBinding ofKeyBindZoom() {
         return ofKeyBindZoom;
+    }
+
+    @Override
+    public boolean isGrass3d() {
+        return this.grass3d;
+    }
+
+    @Override
+    public boolean isAutoFarClip() {
+        return this.autoFarClip;
     }
 }

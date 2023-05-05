@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.client.options;
 
-public enum BetterGrassOption {
+public enum ConnectedGrassOption {
     OFF,
     FAST,
     FANCY,

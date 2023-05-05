@@ -183,7 +183,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
 
         Minecraft.isPremiumCheckTime = 0L;
 
-        Block.LEAVES.updateTexture(Config.isTreesFancy());
+        Block.LEAVES.updateTexture(Config.isLeavesFancy());
         Config.setMinecraft(this.client);
 
         if (var2 != null) {
@@ -762,10 +762,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
 
     public float getFarPlane() {
         float d = (float) (256 >> this.client.options.viewDistance);
-        /* TODO
-        if (!((ExGameOptions) this.client.options).getAutoFarClip()) {
-        } else*/
-        {
+        if (((ExGameOptions) this.client.options).isAutoFarClip()) {
             long var1 = ((ExMinecraft) this.client).getAvgFrameTime();
             if (var1 > 33333333L) {
                 this.farClipAdjustment *= 0.99F;

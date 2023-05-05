@@ -133,7 +133,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
 
     @Overwrite
     public void method_1537() {
-        Block.LEAVES.updateTexture(Config.isTreesFancy());
+        Block.LEAVES.updateTexture(Config.isLeavesFancy());
         this.field_1782 = this.client.options.viewDistance;
         int var1;
         if (this.field_1809 != null) {

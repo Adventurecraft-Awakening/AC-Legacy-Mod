@@ -9,8 +9,6 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GLContext;
 import org.slf4j.Logger;
 
-import java.util.Date;
-
 public class Config {
     private static GameOptions gameSettings = null;
     private static Minecraft minecraft = null;
@@ -30,23 +28,19 @@ public class Config {
     public static final int DEF_UPDATES_PER_FRAME = 3;
     public static final boolean DEF_DYNAMIC_UPDATES = false;
 
-    private static String getVersion() {
-        return "OptiFine_1.7.3_HD_AA_G4";
-    }
-
     public static void logOpenGlCaps() {
         Logger logger = ACMod.LOGGER;
 
-        logger.info("");
-        logger.info(getVersion());
-        logger.info("" + new Date());
         logger.info("OS: " + System.getProperty("os.name") + " (" + System.getProperty("os.arch") + ") version " + System.getProperty("os.version"));
         logger.info("Java: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor"));
         logger.info("VM: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor"));
         logger.info("LWJGL: " + Sys.getVersion());
-        logger.info("OpenGL: " + GL11.glGetString(GL11.GL_RENDERER) + " version " + GL11.glGetString(GL11.GL_VERSION) + ", " + GL11.glGetString(GL11.GL_VENDOR));
+        logger.info("OpenGL GL_RENDERER: " + GL11.glGetString(GL11.GL_RENDERER));
+        logger.info("OpenGL GL_VERSION: " + GL11.glGetString(GL11.GL_VERSION));
+        logger.info("OpenGL GL_VENDOR: " + GL11.glGetString(GL11.GL_VENDOR));
+
         int var0 = getOpenGlVersion();
-        String var1 = "" + var0 / 10 + "." + var0 % 10;
+        String var1 = var0 / 10 + "." + var0 % 10;
         logger.info("OpenGL Version: " + var1);
         if (!GLContext.getCapabilities().OpenGL12) {
             logger.info("OpenGL Mipmap levels: Not available (GL12.GL_TEXTURE_MAX_LEVEL)");
@@ -174,12 +168,12 @@ public class Config {
         return ((ExGameOptions) gameSettings).ofClouds() == 3;
     }
 
-    public static boolean isTreesFancy() {
+    public static boolean isLeavesFancy() {
         if (gameSettings == null)
             return false;
-        if (((ExGameOptions) gameSettings).ofTrees() == 0)
+        if (((ExGameOptions) gameSettings).ofLeaves() == 0)
             return gameSettings.fancyGraphics;
-        return ((ExGameOptions) gameSettings).ofTrees() == 2;
+        return ((ExGameOptions) gameSettings).ofLeaves() == 2;
     }
 
     public static boolean isGrassFancy() {
@@ -266,11 +260,11 @@ public class Config {
         return minecraft;
     }
 
-    public static BetterGrassOption getBetterGrassOption() {
+    public static ConnectedGrassOption getConnectedGrassOption() {
         if (gameSettings != null) {
-            return ((ExGameOptions) gameSettings).ofBetterGrass();
+            return ((ExGameOptions) gameSettings).ofConnectedGrass();
         }
-        return BetterGrassOption.OFF;
+        return ConnectedGrassOption.OFF;
     }
 
     public static boolean isFontRendererUpdated() {

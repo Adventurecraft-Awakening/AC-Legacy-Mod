@@ -1,7 +1,6 @@
 package dev.adventurecraft.awakening.mixin.client.render.block;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import dev.adventurecraft.awakening.client.options.BetterGrassOption;
 import dev.adventurecraft.awakening.client.options.Config;
 import dev.adventurecraft.awakening.common.AC_BlockOverlay;
 import dev.adventurecraft.awakening.common.AC_Blocks;
@@ -260,7 +259,6 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         this.field_92 = true;
         boolean var8 = Config.getAmbientOcclusionLevel() > 0.0F;
         boolean fancyGrass = Config.isGrassFancy();
-        boolean var9 = Config.getBetterGrassOption() != BetterGrassOption.OFF;
         boolean var10 = false;
         float var11 = this.field_93;
         float var12 = this.field_93;

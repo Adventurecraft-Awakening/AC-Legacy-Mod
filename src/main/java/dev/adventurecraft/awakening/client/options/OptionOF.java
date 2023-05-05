@@ -15,7 +15,7 @@ public final class OptionOF {
     public static final Option BRIGHTNESS = ClassTinkerers.getEnum(Option.class, "BRIGHTNESS");
     public static final Option CLOUDS = ClassTinkerers.getEnum(Option.class, "CLOUDS");
     public static final Option CLOUD_HEIGHT = ClassTinkerers.getEnum(Option.class, "CLOUD_HEIGHT");
-    public static final Option TREES = ClassTinkerers.getEnum(Option.class, "TREES");
+    public static final Option LEAVES = ClassTinkerers.getEnum(Option.class, "LEAVES");
     public static final Option GRASS = ClassTinkerers.getEnum(Option.class, "GRASS");
     public static final Option RAIN = ClassTinkerers.getEnum(Option.class, "RAIN");
     public static final Option WATER = ClassTinkerers.getEnum(Option.class, "WATER");
@@ -26,7 +26,7 @@ public final class OptionOF {
     public static final Option AO_LEVEL = ClassTinkerers.getEnum(Option.class, "AO_LEVEL");
     public static final Option FAST_DEBUG_INFO = ClassTinkerers.getEnum(Option.class, "FAST_DEBUG_INFO");
     public static final Option AUTOSAVE_TICKS = ClassTinkerers.getEnum(Option.class, "AUTOSAVE_TICKS");
-    public static final Option BETTER_GRASS = ClassTinkerers.getEnum(Option.class, "BETTER_GRASS");
+    public static final Option CONNECTED_GRASS = ClassTinkerers.getEnum(Option.class, "CONNECTED_GRASS");
     public static final Option ANIMATED_REDSTONE = ClassTinkerers.getEnum(Option.class, "ANIMATED_REDSTONE");
     public static final Option ANIMATED_EXPLOSION = ClassTinkerers.getEnum(Option.class, "ANIMATED_EXPLOSION");
     public static final Option ANIMATED_FLAME = ClassTinkerers.getEnum(Option.class, "ANIMATED_FLAME");

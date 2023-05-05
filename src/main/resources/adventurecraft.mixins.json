@@ -59,6 +59,7 @@
     "block.MixinLeavesBlock",
     "block.MixinStairsBlock",
     "client.entity.player.MixinAbstractClientPlayerEntity",
+    "client.gui.screen.menu.MixinOptionsScreen",
     "client.resource.language.MixinTranslationStorage",
     "client.texture.MixinTextureManager",
     "entity.MixinBlockEntity",

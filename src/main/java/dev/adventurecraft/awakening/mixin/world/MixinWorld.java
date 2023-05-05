@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.mixin.world;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
+import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.client.render.AC_TextureBinder;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
@@ -389,32 +390,26 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         }
 
         try {
-            ChunkCache cache = (ChunkCache) getUnsafe().allocateInstance(ChunkCache.class);
+            ChunkCache cache = (ChunkCache) ACMod.UNSAFE.allocateInstance(ChunkCache.class);
             ((ExChunkCache) cache).init((World) (Object) this, var1, this.dimension.createWorldSource());
             return cache;
-        } catch (NoSuchFieldException | IllegalAccessException | InstantiationException e) {
+        } catch (InstantiationException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private static Unsafe getUnsafe() throws NoSuchFieldException, IllegalAccessException {
-        Field singleoneInstanceField = Unsafe.class.getDeclaredField("theUnsafe");
-        singleoneInstanceField.setAccessible(true);
-        return (Unsafe) singleoneInstanceField.get(null);
-    }
-
     @Redirect(method = "method_212", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/world/WorldProperties;setSpawnPosition(III)V"))
+        value = "INVOKE",
+        target = "Lnet/minecraft/world/WorldProperties;setSpawnPosition(III)V"))
     private void spawnAtUncoveredBlock(WorldProperties instance, int var1, int var2, int var3) {
         this.properties.setSpawnPosition(var1, this.getFirstUncoveredBlockY(var1, var3), var3);
     }
 
     @Inject(method = "initSpawnPoint", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/world/WorldProperties;setSpawnZ(I)V",
-            shift = At.Shift.AFTER),
-            locals = LocalCapture.CAPTURE_FAILHARD)
+        value = "INVOKE",
+        target = "Lnet/minecraft/world/WorldProperties;setSpawnZ(I)V",
+        shift = At.Shift.AFTER),
+        locals = LocalCapture.CAPTURE_FAILHARD)
     private void spawnAtUncoveredBlock(CallbackInfo ci, int var1, int var2) {
         this.properties.setSpawnY(this.getFirstUncoveredBlockY(var1, var2));
     }
@@ -438,8 +433,8 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     }
 
     @Redirect(method = "method_271", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/world/dimension/DimensionData;saveWorldDataOnServer(Lnet/minecraft/world/WorldProperties;Ljava/util/List;)V"))
+        value = "INVOKE",
+        target = "Lnet/minecraft/world/dimension/DimensionData;saveWorldDataOnServer(Lnet/minecraft/world/WorldProperties;Ljava/util/List;)V"))
     private void modifySave(DimensionData instance, WorldProperties worldProperties, List<PlayerEntity> list) {
         /* TODO
         worldProperties.globalScope = ScopeTag.getTagFromScope(this.script.globalScope);
@@ -737,9 +732,9 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     }
 
     @Redirect(method = "spawnEntity", at = @At(
-            value = "INVOKE",
-            target = "Ljava/util/List;add(Ljava/lang/Object;)Z",
-            ordinal = 1))
+        value = "INVOKE",
+        target = "Ljava/util/List;add(Ljava/lang/Object;)Z",
+        ordinal = 1))
     private <E> boolean spawnIfNotExisting(List<E> instance, E var1) {
         if (!instance.contains(var1)) {
             return instance.add(var1);
@@ -748,10 +743,10 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     }
 
     @Inject(method = "method_190", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/block/Block;doesBoxCollide(Lnet/minecraft/world/World;IIILnet/minecraft/util/math/AxixAlignedBoundingBox;Ljava/util/ArrayList;)V",
-            shift = At.Shift.BEFORE),
-            locals = LocalCapture.CAPTURE_FAILHARD)
+        value = "INVOKE",
+        target = "Lnet/minecraft/block/Block;doesBoxCollide(Lnet/minecraft/world/World;IIILnet/minecraft/util/math/AxixAlignedBoundingBox;Ljava/util/ArrayList;)V",
+        shift = At.Shift.BEFORE),
+        locals = LocalCapture.CAPTURE_FAILHARD)
     private void addBoxCollide(Entity var1, AxixAlignedBoundingBox var2, CallbackInfoReturnable<List<AxixAlignedBoundingBox>> cir, int var3, int var4, int var5, int var6, int var7, int var8, int var9, int var10, int var11, Block var12) {
         if ((((ExEntity) var1).getCollidesWithClipBlocks() || var12.id != AC_Blocks.clipBlock.id && !ExLadderBlock.isLadderID(var12.id))) {
             var12.doesBoxCollide((World) (Object) this, var9, var11, var10, var2, this.field_189);
@@ -759,8 +754,8 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     }
 
     @Redirect(method = "method_190", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/block/Block;doesBoxCollide(Lnet/minecraft/world/World;IIILnet/minecraft/util/math/AxixAlignedBoundingBox;Ljava/util/ArrayList;)V"))
+        value = "INVOKE",
+        target = "Lnet/minecraft/block/Block;doesBoxCollide(Lnet/minecraft/world/World;IIILnet/minecraft/util/math/AxixAlignedBoundingBox;Ljava/util/ArrayList;)V"))
     private void redirectBoxCollide(Block instance, World var1, int var2, int var3, int var4, AxixAlignedBoundingBox var5, ArrayList<AxixAlignedBoundingBox> var6) {
     }
 
@@ -810,25 +805,25 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     }
 
     @ModifyExpressionValue(method = "method_227", at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/entity/Entity;removed:Z",
-            ordinal = 2))
+        value = "FIELD",
+        target = "Lnet/minecraft/entity/Entity;removed:Z",
+        ordinal = 2))
     private boolean fixupRemoveCondition(boolean value, @Local Entity var2) {
         ExMinecraft mc = (ExMinecraft) Minecraft.instance;
         return value && !var2.removed && (!mc.isCameraActive() || !mc.isCameraPause()) && (!AC_DebugMode.active || var2 instanceof PlayerEntity);
     }
 
     @Inject(method = "method_227", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/world/World;method_241(Lnet/minecraft/entity/Entity;)V",
-            shift = At.Shift.AFTER))
+        value = "INVOKE",
+        target = "Lnet/minecraft/world/World;method_241(Lnet/minecraft/entity/Entity;)V",
+        shift = At.Shift.AFTER))
     private void fixupBoundingBox(CallbackInfo ci) {
         AxixAlignedBoundingBox.method_85();
     }
 
     @Redirect(method = "method_227", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/world/World;getChunkFromCache(II)Lnet/minecraft/world/chunk/Chunk;"))
+        value = "INVOKE",
+        target = "Lnet/minecraft/world/World;getChunkFromCache(II)Lnet/minecraft/world/chunk/Chunk;"))
     private Chunk ignoreIfKilledOnSave(World instance, int j, int i, @Local BlockEntity var5) {
         if (((ExBlockEntity) var5).isKilledFromSaving()) {
             return null;
@@ -907,16 +902,16 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     }
 
     @Inject(method = "setBlockEntity", at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/world/World;field_190:Z",
-            shift = At.Shift.BEFORE))
+        value = "FIELD",
+        target = "Lnet/minecraft/world/World;field_190:Z",
+        shift = At.Shift.BEFORE))
     private void removeBlockEntityOnSet(int var1, int var2, int var3, BlockEntity var4, CallbackInfo ci) {
         this.removeBlockEntity(var1, var2, var3);
     }
 
     @Redirect(method = "removeBlockEntity", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/world/World;getBlockEntity(III)Lnet/minecraft/entity/BlockEntity;"))
+        value = "INVOKE",
+        target = "Lnet/minecraft/world/World;getBlockEntity(III)Lnet/minecraft/entity/BlockEntity;"))
     private BlockEntity removeBlockEntityDontCreate(World instance, int var1, int var2, int var3) {
         return this.getBlockTileEntityDontCreate(var1, var2, var3);
     }

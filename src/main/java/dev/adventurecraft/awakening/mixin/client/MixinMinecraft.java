@@ -296,12 +296,14 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
         try {
             createDisplay(new PixelFormat().withSamples(sampleCount), true);
+            Config.logOpenGlCaps();
             return;
         } catch (LWJGLException ex) {
             ACMod.LOGGER.warn("Error setting MSAA: " + sampleCount + "x: ", ex);
         }
 
         createDisplay(new PixelFormat(), false);
+        Config.logOpenGlCaps();
     }
 
     private void createDisplay(PixelFormat pixelFormat, boolean rethrowLast) throws LWJGLException {
@@ -337,8 +339,6 @@ public abstract class MixinMinecraft implements ExMinecraft {
         }
 
         Display.create(pixelFormat.withDepthBits(0));
-
-        Config.logOpenGlCaps();
     }
 
     @Inject(method = "init", at = @At(
