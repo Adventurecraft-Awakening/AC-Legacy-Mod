@@ -18,6 +18,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.particle.*;
 import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.render.GameRenderer;
+import net.minecraft.client.render.RenderList;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.WorldEventRenderer;
 import net.minecraft.client.render.entity.EntityRenderDispatcher;
@@ -101,6 +102,8 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     @Shadow
     private int field_1783;
     @Shadow
+    int[] field_1796;
+    @Shadow
     IntBuffer field_1797;
     @Shadow
     private int field_1787;
@@ -115,6 +118,8 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     @Shadow
     private int field_1792;
     @Shadow
+    private RenderList[] renderLists;
+    @Shadow
     double field_1800;
     @Shadow
     double field_1801;
@@ -122,7 +127,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     double field_1802;
 
     private long lastMovedTime = System.currentTimeMillis();
-    private IntBuffer field_22019_aY = BufferUtils.createIntBuffer(65536);
+    private IntBuffer renderListBuffer = BufferUtils.createIntBuffer(65536);
 
     double prevReposX;
     double prevReposY;
@@ -131,41 +136,47 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     @Shadow
     protected abstract void method_1553(int i, int j, int k);
 
+    @Inject(method = "<init>", at = @At("TAIL"))
+    private void removeNeedlessAllocs(Minecraft var1, TextureManager var2, CallbackInfo ci) {
+        this.renderLists = null;
+        this.field_1796 = null;
+    }
+
     @Overwrite
     public void method_1537() {
         Block.LEAVES.updateTexture(Config.isLeavesFancy());
         this.field_1782 = this.client.options.viewDistance;
-        int var1;
+        int renderDist;
         if (this.field_1809 != null) {
-            for (var1 = 0; var1 < this.field_1809.length; ++var1) {
-                this.field_1809[var1].method_302();
+            for (renderDist = 0; renderDist < this.field_1809.length; ++renderDist) {
+                this.field_1809[renderDist].method_302();
             }
         }
 
-        var1 = 64 << 3 - this.field_1782;
+        renderDist = 64 << 3 - this.field_1782;
         if (Config.isLoadChunksFar()) {
-            var1 = 512;
+            renderDist = 512;
         }
 
         if (Config.isFarView()) {
-            if (var1 < 512) {
-                var1 *= 3;
+            if (renderDist < 512) {
+                renderDist *= 3;
             } else {
-                var1 *= 2;
+                renderDist *= 2;
             }
         }
 
-        var1 += Config.getPreloadedChunks() * 2 * 16;
-        if (!Config.isFarView() && var1 > 400) {
-            var1 = 400;
+        renderDist += Config.getPreloadedChunks() * 2 * 16;
+        if (!Config.isFarView() && renderDist > 400) {
+            renderDist = 400;
         }
 
         this.prevReposX = -9999.0D;
         this.prevReposY = -9999.0D;
         this.prevReposZ = -9999.0D;
-        this.field_1810 = var1 / 16 + 1;
+        this.field_1810 = renderDist / 16 + 1;
         this.field_1811 = 8;
-        this.field_1812 = var1 / 16 + 1;
+        this.field_1812 = renderDist / 16 + 1;
         this.field_1809 = new class_66[this.field_1810 * this.field_1811 * this.field_1812];
         this.field_1808 = new class_66[this.field_1810 * this.field_1811 * this.field_1812];
         int var2 = 0;
@@ -177,33 +188,33 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         this.field_1780 = this.field_1811;
         this.field_1781 = this.field_1812;
 
-        int var4;
-        for (var4 = 0; var4 < this.field_1807.size(); ++var4) {
-            class_66 var5 = this.field_1807.get(var4);
-            if (var5 != null) {
-                var5.field_249 = false;
+        for (class_66 viz : this.field_1807) {
+            if (viz != null) {
+                viz.field_249 = false;
             }
         }
 
         this.field_1807.clear();
         this.blockEntities.clear();
 
-        for (var4 = 0; var4 < this.field_1810; ++var4) {
-            for (int var8 = 0; var8 < this.field_1811; ++var8) {
-                for (int var6 = 0; var6 < this.field_1812; ++var6) {
-                    int var7 = (var6 * this.field_1811 + var8) * this.field_1810 + var4;
-                    this.field_1809[var7] = new class_66(this.world, this.blockEntities, var4 * 16, var8 * 16, var6 * 16, 16, this.field_1813 + var2);
+        for (int cX = 0; cX < this.field_1810; ++cX) {
+            for (int cY = 0; cY < this.field_1811; ++cY) {
+                for (int cZ = 0; cZ < this.field_1812; ++cZ) {
+                    int vizIndex = (cZ * this.field_1811 + cY) * this.field_1810 + cX;
+                    class_66 viz = new class_66(this.world, this.blockEntities, cX * 16, cY * 16, cZ * 16, 16, this.field_1813 + var2);
+                    this.field_1808[vizIndex] = viz;
+
                     if (this.field_1817) {
-                        this.field_1809[var7].field_254 = this.field_1816.get(var3);
+                        viz.field_254 = this.field_1816.get(var3);
                     }
 
-                    this.field_1809[var7].field_253 = false;
-                    this.field_1809[var7].field_252 = true;
-                    this.field_1809[var7].field_243 = false;
-                    this.field_1809[var7].field_251 = var3++;
-                    this.field_1809[var7].method_305();
-                    this.field_1808[var7] = this.field_1809[var7];
-                    this.field_1807.add(this.field_1809[var7]);
+                    viz.field_253 = false;
+                    viz.field_252 = true;
+                    viz.field_243 = false;
+                    viz.field_251 = var3++;
+                    viz.method_305();
+                    this.field_1809[vizIndex] = viz;
+                    this.field_1807.add(viz);
                     var2 += 3;
                 }
             }
@@ -225,15 +236,14 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     }
 
     @Overwrite
-    public int method_1548(LivingEntity var1, int var2, double var3) {
+    public int method_1548(LivingEntity entity, int renderPass, double deltaTime) {
         if (this.field_1807.size() < 10) {
-            byte var5 = 10;
-
-            for (int var6 = 0; var6 < var5; ++var6) {
+            int vizEnd = 10;
+            for (int vizStart = 0; vizStart < vizEnd; ++vizStart) {
                 this.field_1792 = (this.field_1792 + 1) % this.field_1809.length;
-                class_66 var7 = this.field_1809[this.field_1792];
-                if (var7.field_249 && !this.field_1807.contains(var7)) {
-                    this.field_1807.add(var7);
+                class_66 viz = this.field_1809[this.field_1792];
+                if (viz.field_249 && !this.field_1807.contains(viz)) {
+                    this.field_1807.add(viz);
                 }
             }
         }
@@ -243,7 +253,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             this.method_1537();
         }
 
-        if (var2 == 0) {
+        if (renderPass == 0) {
             this.field_1787 = 0;
             this.field_1788 = 0;
             this.field_1789 = 0;
@@ -251,74 +261,71 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             this.field_1791 = 0;
         }
 
-        double var39 = var1.prevRenderX + (var1.x - var1.prevRenderX) * var3;
-        double var40 = var1.prevRenderY + (var1.y - var1.prevRenderY) * var3;
-        double var9 = var1.prevRenderZ + (var1.z - var1.prevRenderZ) * var3;
-        double var11 = var1.x - this.field_1800;
-        double var13 = var1.y - this.field_1801;
-        double var15 = var1.z - this.field_1802;
-        double var17 = var11 * var11 + var13 * var13 + var15 * var15;
-        int var19;
-        if (var17 > 64.0D) {
-            this.field_1800 = var1.x;
-            this.field_1801 = var1.y;
-            this.field_1802 = var1.z;
-            var19 = Config.getPreloadedChunks() * 64;
-            double var20 = var1.x - this.prevReposX;
-            double var22 = var1.y - this.prevReposY;
-            double var24 = var1.z - this.prevReposZ;
-            double var26 = var20 * var20 + var22 * var22 + var24 * var24;
-            if (var26 > (double) (var19 * var19) + 64.0D) {
-                this.prevReposX = var1.x;
-                this.prevReposY = var1.y;
-                this.prevReposZ = var1.z;
-                this.method_1553(MathHelper.floor(var1.x), MathHelper.floor(var1.y), MathHelper.floor(var1.z));
+        double peX = entity.prevRenderX + (entity.x - entity.prevRenderX) * deltaTime;
+        double peY = entity.prevRenderY + (entity.y - entity.prevRenderY) * deltaTime;
+        double peZ = entity.prevRenderZ + (entity.z - entity.prevRenderZ) * deltaTime;
+        double eVizX = entity.x - this.field_1800;
+        double eVizY = entity.y - this.field_1801;
+        double eVizZ = entity.z - this.field_1802;
+        double eVizSqr = eVizX * eVizX + eVizY * eVizY + eVizZ * eVizZ;
+        if (eVizSqr > 64.0D) {
+            this.field_1800 = entity.x;
+            this.field_1801 = entity.y;
+            this.field_1802 = entity.z;
+            int preloadCount = Config.getPreloadedChunks() * 64;
+            double eprX = entity.x - this.prevReposX;
+            double eprY = entity.y - this.prevReposY;
+            double eprZ = entity.z - this.prevReposZ;
+            double eprSqr = eprX * eprX + eprY * eprY + eprZ * eprZ;
+            if (eprSqr > (double) (preloadCount * preloadCount) + 64.0D) {
+                this.prevReposX = entity.x;
+                this.prevReposY = entity.y;
+                this.prevReposZ = entity.z;
+                this.method_1553(MathHelper.floor(entity.x), MathHelper.floor(entity.y), MathHelper.floor(entity.z));
             }
 
-            Arrays.sort(this.field_1808, new EntityOppositeComparator(var1));
+            Arrays.sort(this.field_1808, new EntityOppositeComparator(entity));
         }
 
-        if (((ExGameOptions) this.client.options).ofSmoothFps() && var2 == 0) {
+        if (((ExGameOptions) this.client.options).ofSmoothFps() && renderPass == 0) {
             GL11.glFinish();
         }
 
-        if (((ExGameOptions) this.client.options).ofSmoothInput() && var2 == 0) {
+        if (((ExGameOptions) this.client.options).ofSmoothInput() && renderPass == 0) {
             Config.sleep(1L);
         }
 
-        byte var41 = 0;
-        int var42 = 0;
-        if (this.field_1817 && this.client.options.advancedOpengl && !this.client.options.anaglyph3d && var2 == 0) {
-            byte var21 = 0;
-            byte var43 = 20;
-            this.checkOcclusionQueryResult(var21, var43, var1.x, var1.y, var1.z);
+        if (this.field_1817 && this.client.options.advancedOpengl && !this.client.options.anaglyph3d && renderPass == 0) {
+            int vizStart0 = 0;
+            int vizEnd0 = 20;
+            this.checkOcclusionQueryResult(vizStart0, vizEnd0, entity.x, entity.y, entity.z);
 
-            int var23;
-            for (var23 = var21; var23 < var43; ++var23) {
-                this.field_1808[var23].field_252 = true;
+            for (int vizIndex = vizStart0; vizIndex < vizEnd0; ++vizIndex) {
+                this.field_1808[vizIndex].field_252 = true;
             }
 
-            var19 = var41 + this.method_1542(var21, var43, var2, var3);
-            var23 = var43;
-            int var44 = 0;
-            byte var25 = 30;
+            int queryCount = 0;
+            int chunkCount = this.method_1542(vizStart0, vizEnd0, renderPass, deltaTime);
+            int vizEnd = vizEnd0;
+            int vizOffset = 0;
+            int vizStep = 30;
 
-            int var27;
-            for (int var45 = this.field_1810 / 2; var23 < this.field_1808.length; var19 += this.method_1542(var27, var23, var2, var3)) {
-                var27 = var23;
-                if (var44 < var45) {
-                    ++var44;
+            int vizLimit = this.field_1810 / 2;
+            while (vizEnd < this.field_1808.length) {
+                int vizStart = vizEnd;
+                if (vizOffset < vizLimit) {
+                    ++vizOffset;
                 } else {
-                    --var44;
+                    --vizOffset;
                 }
 
-                var23 += var44 * var25;
-                if (var23 <= var27) {
-                    var23 = var27 + 10;
+                vizEnd += vizOffset * vizStep;
+                if (vizEnd <= vizStart) {
+                    vizEnd = vizStart + 10;
                 }
 
-                if (var23 > this.field_1808.length) {
-                    var23 = this.field_1808.length;
+                if (vizEnd > this.field_1808.length) {
+                    vizEnd = this.field_1808.length;
                 }
 
                 GL11.glDisable(GL11.GL_TEXTURE_2D);
@@ -327,55 +334,50 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
                 GL11.glDisable(GL11.GL_FOG);
                 GL11.glColorMask(false, false, false, false);
                 GL11.glDepthMask(false);
-                this.checkOcclusionQueryResult(var27, var23, var1.x, var1.y, var1.z);
+                this.checkOcclusionQueryResult(vizStart, vizEnd, entity.x, entity.y, entity.z);
                 GL11.glPushMatrix();
-                float var28 = 0.0F;
-                float var29 = 0.0F;
-                float var30 = 0.0F;
+                float xOffset = 0.0F;
+                float yOffset = 0.0F;
+                float zOffset = 0.0F;
 
-                for (int var31 = var27; var31 < var23; ++var31) {
-                    class_66 var32 = this.field_1808[var31];
-                    if (var32.method_304()) {
-                        var32.field_243 = false;
-                    } else if (var32.field_243) {
-                        if (Config.isOcclusionFancy() && !((ExClass_66) var32).isInFrustrumFully()) {
-                            var32.field_252 = true;
-                        } else if (var32.field_243 && !var32.field_253) {
-                            float var33;
-                            float var34;
-                            float var35;
-                            float var36;
-                            if (((ExClass_66) var32).isVisibleFromPosition()) {
-                                var33 = Math.abs((float) (((ExClass_66) var32).visibleFromX() - var1.x));
-                                var34 = Math.abs((float) (((ExClass_66) var32).visibleFromY() - var1.y));
-                                var35 = Math.abs((float) (((ExClass_66) var32).visibleFromZ() - var1.z));
-                                var36 = var33 + var34 + var35;
-                                if ((double) var36 < 10.0D + (double) var31 / 1000.0D) {
-                                    var32.field_252 = true;
+                for (int vizIndex = vizStart; vizIndex < vizEnd; ++vizIndex) {
+                    class_66 viz = this.field_1808[vizIndex];
+                    if (viz.method_304()) {
+                        viz.field_243 = false;
+                    } else if (viz.field_243) {
+                        if (Config.isOcclusionFancy() && !((ExClass_66) viz).isInFrustrumFully()) {
+                            viz.field_252 = true;
+                        } else if (viz.field_243 && !viz.field_253) {
+                            if (((ExClass_66) viz).isVisibleFromPosition()) {
+                                float dX = Math.abs((float) (((ExClass_66) viz).visibleFromX() - entity.x));
+                                float dY = Math.abs((float) (((ExClass_66) viz).visibleFromY() - entity.y));
+                                float dZ = Math.abs((float) (((ExClass_66) viz).visibleFromZ() - entity.z));
+                                float len = dX + dY + dZ;
+                                if ((double) len < 10.0D + (double) vizIndex / 1000.0D) {
+                                    viz.field_252 = true;
                                     continue;
                                 }
-
-                                ((ExClass_66) var32).isVisibleFromPosition(false);
+                                ((ExClass_66) viz).isVisibleFromPosition(false);
                             }
 
-                            var33 = (float) ((double) var32.field_237 - var39);
-                            var34 = (float) ((double) var32.field_238 - var40);
-                            var35 = (float) ((double) var32.field_239 - var9);
-                            var36 = var33 - var28;
-                            float var37 = var34 - var29;
-                            float var38 = var35 - var30;
-                            if (var36 != 0.0F || var37 != 0.0F || var38 != 0.0F) {
-                                GL11.glTranslatef(var36, var37, var38);
-                                var28 += var36;
-                                var29 += var37;
-                                var30 += var38;
+                            float dX = (float) (viz.field_237 - peX);
+                            float dY = (float) (viz.field_238 - peY);
+                            float dZ = (float) (viz.field_239 - peZ);
+                            float mX = dX - xOffset;
+                            float mY = dY - yOffset;
+                            float mZ = dZ - zOffset;
+                            if (mX != 0.0F || mY != 0.0F || mZ != 0.0F) {
+                                GL11.glTranslatef(mX, mY, mZ);
+                                xOffset += mX;
+                                yOffset += mY;
+                                zOffset += mZ;
                             }
 
-                            ARBOcclusionQuery.glBeginQueryARB(GL15.GL_SAMPLES_PASSED, var32.field_254);
-                            var32.method_303();
+                            ARBOcclusionQuery.glBeginQueryARB(GL15.GL_SAMPLES_PASSED, viz.field_254);
+                            viz.method_303();
                             ARBOcclusionQuery.glEndQueryARB(GL15.GL_SAMPLES_PASSED);
-                            var32.field_253 = true;
-                            ++var42;
+                            viz.field_253 = true;
+                            ++queryCount;
                         }
                     }
                 }
@@ -386,78 +388,84 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
                 GL11.glEnable(GL11.GL_TEXTURE_2D);
                 GL11.glEnable(GL11.GL_ALPHA_TEST);
                 GL11.glEnable(GL11.GL_FOG);
-            }
-        } else {
-            var19 = var41 + this.method_1542(0, this.field_1808.length, var2, var3);
-        }
 
-        return var19;
+                chunkCount += this.method_1542(vizStart, vizEnd, renderPass, deltaTime);
+            }
+            return chunkCount;
+        } else {
+            int chunkCount = this.method_1542(0, this.field_1808.length, renderPass, deltaTime);
+            return chunkCount;
+        }
     }
 
-    private void checkOcclusionQueryResult(int var1, int var2, double var3, double var5, double var7) {
-        for (int var9 = var1; var9 < var2; ++var9) {
-            class_66 var10 = this.field_1808[var9];
-            if (var10.field_253) {
-                this.field_1797.clear();
-                ARBOcclusionQuery.glGetQueryObjectuivARB(var10.field_254, GL15.GL_QUERY_RESULT_AVAILABLE, this.field_1797);
-                if (this.field_1797.get(0) != 0) {
-                    var10.field_253 = false;
-                    this.field_1797.clear();
-                    ARBOcclusionQuery.glGetQueryObjectuivARB(var10.field_254, GL15.GL_QUERY_RESULT, this.field_1797);
-                    boolean var11 = var10.field_252;
-                    var10.field_252 = this.field_1797.get(0) > 0;
-                    if (var11 && var10.field_252) {
-                        ((ExClass_66) var10).isVisibleFromPosition(true);
-                        ((ExClass_66) var10).visibleFromX(var3);
-                        ((ExClass_66) var10).visibleFromY(var5);
-                        ((ExClass_66) var10).visibleFromZ(var7);
-                    }
-                }
+    private void checkOcclusionQueryResult(int vizStart, int vizEnd, double x, double y, double z) {
+        for (int vizIndex = vizStart; vizIndex < vizEnd; ++vizIndex) {
+            class_66 viz = this.field_1808[vizIndex];
+            if (!viz.field_253) {
+                continue;
+            }
+
+            this.field_1797.clear();
+            ARBOcclusionQuery.glGetQueryObjectuivARB(viz.field_254, GL15.GL_QUERY_RESULT_AVAILABLE, this.field_1797);
+            if (this.field_1797.get(0) == 0) {
+                continue;
+            }
+            viz.field_253 = false;
+
+            this.field_1797.clear();
+            ARBOcclusionQuery.glGetQueryObjectuivARB(viz.field_254, GL15.GL_QUERY_RESULT, this.field_1797);
+            boolean wasVisible = viz.field_252;
+            viz.field_252 = this.field_1797.get(0) > 0;
+            if (wasVisible && viz.field_252) {
+                ((ExClass_66) viz).isVisibleFromPosition(true);
+                ((ExClass_66) viz).visibleFromX(x);
+                ((ExClass_66) viz).visibleFromY(y);
+                ((ExClass_66) viz).visibleFromZ(z);
             }
         }
     }
 
     @Overwrite
-    private int method_1542(int var1, int var2, int var3, double var4) {
-        this.field_22019_aY.clear();
-        int var6 = 0;
+    private int method_1542(int vizStart, int vizEnd, int renderPass, double deltaTime) {
+        this.renderListBuffer.clear();
 
-        for (int var7 = var1; var7 < var2; ++var7) {
-            if (var3 == 0) {
+        for (int vizIndex = vizStart; vizIndex < vizEnd; ++vizIndex) {
+            class_66 viz = this.field_1808[vizIndex];
+            if (renderPass == 0) {
                 ++this.field_1787;
-                if (this.field_1808[var7].field_244[var3]) {
+                if (viz.field_244[renderPass]) {
                     ++this.field_1791;
-                } else if (!this.field_1808[var7].field_243) {
+                } else if (!viz.field_243) {
                     ++this.field_1788;
-                } else if (this.field_1817 && !this.field_1808[var7].field_252) {
+                } else if (this.field_1817 && !viz.field_252) {
                     ++this.field_1789;
                 } else {
                     ++this.field_1790;
                 }
             }
 
-            if (!this.field_1808[var7].field_244[var3] && this.field_1808[var7].field_243 && (!this.field_1817 || this.field_1808[var7].field_252)) {
-                int var8 = this.field_1808[var7].method_297(var3);
-                if (var8 >= 0) {
-                    this.field_22019_aY.put(var8);
-                    ++var6;
+            if (!viz.field_244[renderPass] && viz.field_243 && (!this.field_1817 || viz.field_252)) {
+                int renderListId = viz.method_297(renderPass);
+                if (renderListId >= 0) {
+                    this.renderListBuffer.put(renderListId);
                 }
             }
         }
 
-        this.field_22019_aY.flip();
-        LivingEntity var14 = this.client.viewEntity;
-        double var15 = var14.prevRenderX + (var14.x - var14.prevRenderX) * var4;
-        double var10 = var14.prevRenderY + (var14.y - var14.prevRenderY) * var4;
-        double var12 = var14.prevRenderZ + (var14.z - var14.prevRenderZ) * var4;
-        GL11.glTranslatef((float) (-var15), (float) (-var10), (float) (-var12));
-        GL11.glCallLists(this.field_22019_aY);
-        GL11.glTranslatef((float) var15, (float) var10, (float) var12);
-        return var6;
+        this.renderListBuffer.flip();
+        LivingEntity entity = this.client.viewEntity;
+        double eprprX = entity.prevRenderX + (entity.x - entity.prevRenderX) * deltaTime;
+        double eprprY = entity.prevRenderY + (entity.y - entity.prevRenderY) * deltaTime;
+        double eprprZ = entity.prevRenderZ + (entity.z - entity.prevRenderZ) * deltaTime;
+        GL11.glTranslatef((float) (-eprprX), (float) (-eprprY), (float) (-eprprZ));
+        GL11.glCallLists(this.renderListBuffer);
+        GL11.glTranslatef((float) eprprX, (float) eprprY, (float) eprprZ);
+        return this.renderListBuffer.limit();
     }
 
     @Overwrite
     public void method_1540(int var1, double var2) {
+        // Do not draw RenderLists
     }
 
     @Redirect(method = "renderSky", at = @At(

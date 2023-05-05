@@ -11,7 +11,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.TexturePackManager;
 import net.minecraft.client.options.GameOptions;
-import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.TextureBinder;
 import net.minecraft.client.resource.TexturePack;
 import net.minecraft.client.texture.TextureManager;
