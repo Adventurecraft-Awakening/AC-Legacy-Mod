@@ -266,25 +266,50 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         boolean var18 = true;
         boolean var19 = true;
         boolean var20 = true;
-        this.field_93 = var1.getBrightness(this.blockView, var2, var3, var4);
-        this.field_94 = var1.getBrightness(this.blockView, var2 - 1, var3, var4);
-        this.field_95 = var1.getBrightness(this.blockView, var2, var3 - 1, var4);
-        this.field_96 = var1.getBrightness(this.blockView, var2, var3, var4 - 1);
-        this.field_97 = var1.getBrightness(this.blockView, var2 + 1, var3, var4);
-        this.field_98 = var1.getBrightness(this.blockView, var2, var3 + 1, var4);
-        this.field_99 = var1.getBrightness(this.blockView, var2, var3, var4 + 1);
-        this.field_70 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(var2 + 1, var3 + 1, var4)];
-        this.field_78 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(var2 + 1, var3 - 1, var4)];
-        this.field_74 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(var2 + 1, var3, var4 + 1)];
-        this.field_76 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(var2 + 1, var3, var4 - 1)];
-        this.field_71 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(var2 - 1, var3 + 1, var4)];
-        this.field_79 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(var2 - 1, var3 - 1, var4)];
-        this.field_73 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(var2 - 1, var3, var4 - 1)];
-        this.field_75 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(var2 - 1, var3, var4 + 1)];
-        this.field_72 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(var2, var3 + 1, var4 + 1)];
-        this.field_69 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(var2, var3 + 1, var4 - 1)];
-        this.field_80 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(var2, var3 - 1, var4 + 1)];
-        this.field_77 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(var2, var3 - 1, var4 - 1)];
+
+        boolean renderBottom = this.renderAllSides || var1.isSideRendered(this.blockView, var2, var3 - 1, var4, 0);
+        boolean renderTop = this.renderAllSides || var1.isSideRendered(this.blockView, var2, var3 + 1, var4, 1);
+        boolean renderEast = this.renderAllSides || var1.isSideRendered(this.blockView, var2, var3, var4 - 1, 2);
+        boolean renderWest = this.renderAllSides || var1.isSideRendered(this.blockView, var2, var3, var4 + 1, 3);
+        boolean renderNorth = this.renderAllSides || var1.isSideRendered(this.blockView, var2 - 1, var3, var4, 4);
+        boolean renderSouth = this.renderAllSides || var1.isSideRendered(this.blockView, var2 + 1, var3, var4, 5);
+
+        if (renderTop || renderSouth)
+            this.field_70 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(var2 + 1, var3 + 1, var4)];
+
+        if (renderBottom || renderSouth)
+            this.field_78 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(var2 + 1, var3 - 1, var4)];
+
+        if (renderWest || renderSouth)
+            this.field_74 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(var2 + 1, var3, var4 + 1)];
+
+        if (renderEast || renderSouth)
+            this.field_76 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(var2 + 1, var3, var4 - 1)];
+
+        if (renderTop || renderNorth)
+            this.field_71 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(var2 - 1, var3 + 1, var4)];
+
+        if (renderBottom || renderNorth)
+            this.field_79 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(var2 - 1, var3 - 1, var4)];
+
+        if (renderEast || renderNorth)
+            this.field_73 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(var2 - 1, var3, var4 - 1)];
+
+        if (renderWest || renderNorth)
+            this.field_75 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(var2 - 1, var3, var4 + 1)];
+
+        if (renderTop || renderWest)
+            this.field_72 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(var2, var3 + 1, var4 + 1)];
+
+        if (renderTop || renderEast)
+            this.field_69 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(var2, var3 + 1, var4 - 1)];
+
+        if (renderBottom || renderWest)
+            this.field_80 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(var2, var3 - 1, var4 + 1)];
+
+        if (renderBottom || renderEast)
+            this.field_77 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(var2, var3 - 1, var4 - 1)];
+
         boolean doGrassEdges = fancyGrass && var1.id == Block.GRASS.id;
         if (doGrassEdges || this.textureOverride >= 0) {
             var20 = false;
@@ -294,27 +319,27 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             var15 = false;
         }
 
-        if (this.renderAllSides || var1.isSideRendered(this.blockView, var2, var3 - 1, var4, 0)) {
+        if (renderBottom) {
             var10 |= this.renderBottomSide(var1, var2, var3, var4, var5, var6, var7, var8, var15);
         }
 
-        if (this.renderAllSides || var1.isSideRendered(this.blockView, var2, var3 + 1, var4, 1)) {
+        if (renderTop) {
             var10 |= this.renderTopSide(var1, var2, var3, var4, var5, var6, var7, var8, var16);
         }
 
-        if (this.renderAllSides || var1.isSideRendered(this.blockView, var2, var3, var4 - 1, 2)) {
+        if (renderEast) {
             var10 |= this.renderEastSide(var1, var2, var3, var4, var5, var6, var7, var8, var17, doGrassEdges);
         }
 
-        if (this.renderAllSides || var1.isSideRendered(this.blockView, var2, var3, var4 + 1, 3)) {
+        if (renderWest) {
             var10 |= this.renderWestSide(var1, var2, var3, var4, var5, var6, var7, var8, var18, doGrassEdges);
         }
 
-        if (this.renderAllSides || var1.isSideRendered(this.blockView, var2 - 1, var3, var4, 4)) {
+        if (renderNorth) {
             var10 |= this.renderNorthSide(var1, var2, var3, var4, var5, var6, var7, var8, var19, doGrassEdges);
         }
 
-        if (this.renderAllSides || var1.isSideRendered(this.blockView, var2 + 1, var3, var4, 5)) {
+        if (renderSouth) {
             var10 |= this.renderSouthSide(var1, var2, var3, var4, var5, var6, var7, var8, var20, doGrassEdges);
         }
 
@@ -323,6 +348,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     private boolean renderBottomSide(Block var1, int var2, int var3, int var4, float var5, float var6, float var7, boolean var8, boolean var15) {
+        this.field_95 = var1.getBrightness(this.blockView, var2, var3 - 1, var4);
+
         float var21;
         float var22;
         float var23;
@@ -400,6 +427,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     private boolean renderTopSide(Block var1, int var2, int var3, int var4, float var5, float var6, float var7, boolean var8, boolean var16) {
+        this.field_98 = var1.getBrightness(this.blockView, var2, var3 + 1, var4);
+
         float var21;
         float var22;
         float var23;
@@ -477,6 +506,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     private boolean renderEastSide(Block var1, int var2, int var3, int var4, float var5, float var6, float var7, boolean var8, boolean var17, boolean doGrassEdges) {
+        this.field_96 = var1.getBrightness(this.blockView, var2, var3, var4 - 1);
+
         float var21;
         float var22;
         float var23;
@@ -586,6 +617,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     private boolean renderWestSide(Block var1, int var2, int var3, int var4, float var5, float var6, float var7, boolean var8, boolean var18, boolean doGrassEdges) {
+        this.field_99 = var1.getBrightness(this.blockView, var2, var3, var4 + 1);
+
         float var21;
         float var22;
         float var23;
@@ -695,6 +728,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     private boolean renderNorthSide(Block var1, int var2, int var3, int var4, float var5, float var6, float var7, boolean var8, boolean var19, boolean doGrassEdges) {
+        this.field_94 = var1.getBrightness(this.blockView, var2 - 1, var3, var4);
+
         float var21;
         float var22;
         float var23;
@@ -804,6 +839,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     private boolean renderSouthSide(Block var1, int var2, int var3, int var4, float var5, float var6, float var7, boolean var8, boolean var20, boolean doGrassEdges) {
+        this.field_97 = var1.getBrightness(this.blockView, var2 + 1, var3, var4);
+
         float var21;
         float var22;
         float var23;
