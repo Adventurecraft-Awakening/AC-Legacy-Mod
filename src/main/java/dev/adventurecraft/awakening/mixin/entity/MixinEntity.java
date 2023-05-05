@@ -137,10 +137,10 @@ public abstract class MixinEntity implements ExEntity {
         double var2,
         double var3,
         CallbackInfo ci,
-        @Local(name = "f") double var5,
-        @Local(name = "var11") double var11,
-        @Local(name = "var13") double var13,
-        @Local(name = "var15") double var15) {
+        @Local(argsOnly = true, ordinal = 2) double var5,
+        @Local(ordinal = 5) double var11,
+        @Local(ordinal = 6) double var13,
+        @Local(ordinal = 7) double var15) {
         this.collisionX = Double.compare(var11, var1);
 
         int var22;

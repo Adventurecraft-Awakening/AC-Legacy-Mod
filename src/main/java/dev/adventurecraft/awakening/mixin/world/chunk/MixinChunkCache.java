@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.mixin.world.chunk;
 
+import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunkCache;
 import net.minecraft.class_255;
 import net.minecraft.client.Minecraft;
@@ -11,8 +12,10 @@ import net.minecraft.world.chunk.ChunkIO;
 import net.minecraft.world.source.WorldSource;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(ChunkCache.class)
 public abstract class MixinChunkCache implements ExChunkCache {
@@ -98,17 +101,28 @@ public abstract class MixinChunkCache implements ExChunkCache {
     }
 
     @ModifyConstant(method = "method_1243", constant = @Constant(intValue = 15))
-    public int useMask0(int value) {
+    private int useMask0(int value) {
         return this.mask;
     }
 
     @ModifyConstant(method = {"isChunkLoaded", "getChunk"}, constant = @Constant(intValue = 31))
-    public int useMask1(int value) {
+    private int useMask1(int value) {
         return this.mask;
     }
 
     @ModifyConstant(method = {"isChunkLoaded", "getChunk"}, constant = @Constant(intValue = 32))
-    public int useChunksWide0(int value) {
+    private int useChunksWide0(int value) {
         return this.chunksWide;
+    }
+
+    @Redirect(
+        method = "decorate",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/source/WorldSource;decorate(Lnet/minecraft/world/source/WorldSource;II)V"))
+    private void setChunkPopulatingOnDecorate(WorldSource instance, WorldSource worldSource, int x, int z) {
+        ACMod.chunkIsNotPopulating = false;
+        instance.decorate(worldSource, x, z);
+        ACMod.chunkIsNotPopulating = true;
     }
 }

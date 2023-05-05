@@ -1988,7 +1988,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             if (var19 == null || var19.getRenderType() != 38 || var20 != 2 && var20 != 3) {
                 var20 = this.blockView.getBlockMeta(var2 + 1, var3, var4) & 3;
                 var19 = Block.BY_ID[this.blockView.getBlockId(var2 + 1, var3, var4)];
-                if (var19 != null && var19.getRenderType() == 38) {
+                if (var19 != null && var19.getRenderType() == 38 && (var20 == 2 || var20 == 3)) {
                     if (var20 == 2) {
                         var5.color(0.9F * var18, 0.9F * var18, 0.9F * var18);
                         var5.vertex(var2 + 1, var3, var4, var10, var16);
@@ -2090,7 +2090,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             if (var19 == null || var19.getRenderType() != 38 || var20 != 2 && var20 != 3) {
                 var20 = this.blockView.getBlockMeta(var2 - 1, var3, var4) & 3;
                 var19 = Block.BY_ID[this.blockView.getBlockId(var2 - 1, var3, var4)];
-                if (var19 != null && var19.getRenderType() == 38) {
+                if (var19 != null && var19.getRenderType() == 38 && (var20 == 2 || var20 == 3)) {
                     if (var20 == 3) {
                         var5.color(0.9F * var18, 0.9F * var18, 0.9F * var18);
                         var5.vertex(var2, var3, var4 + 1, var10, var16);
@@ -2106,7 +2106,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                         var5.vertex(var2 + 1, var3, var4, var10, var16);
                         var5.vertex(var2, var3, var4, var12, var16);
                         var5.vertex(var2, var3, var4, var12, var16);
-                    } else if (var20 == 2) {
+                    } else {
                         var5.color(0.9F * var18, 0.9F * var18, 0.9F * var18);
                         var5.vertex(var2, var3 + 1, var4 + 1, var12, var14);
                         var5.vertex(var2, var3 + 1, var4 + 1, var12, var14);
@@ -2196,7 +2196,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                 if (var22 == null || var22.getRenderType() != 38 || var21 != 0 && var21 != 1) {
                     var21 = this.blockView.getBlockMeta(var2, var3, var4 + 1) & 3;
                     var22 = Block.BY_ID[this.blockView.getBlockId(var2, var3, var4 + 1)];
-                    if (var22 != null && var22.getRenderType() == 38) {
+                    if (var22 != null && var22.getRenderType() == 38 && (var21 == 0 || var21 == 1)) {
                         if (var21 == 0) {
                             var5.color(0.8F * var18, 0.8F * var18, 0.8F * var18);
                             var5.vertex(var2, var3, var4, var10, var16);
@@ -2213,7 +2213,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                             var5.vertex(var2 + 1, var3 + 1, var4 + 1, var10, var14);
                             var5.vertex(var2 + 1, var3, var4 + 1, var10, var16);
                             var5.vertex(var2 + 1, var3, var4 + 1, var10, var16);
-                        } else if (var21 == 1) {
+                        } else {
                             var5.color(0.8F * var18, 0.8F * var18, 0.8F * var18);
                             var5.vertex(var2, var3 + 1, var4 + 1, var10, var14);
                             var5.vertex(var2, var3 + 1, var4 + 1, var10, var14);
@@ -2303,7 +2303,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                 if (var22 == null || var22.getRenderType() != 38 || var21 != 0 && var21 != 1) {
                     var21 = this.blockView.getBlockMeta(var2, var3, var4 - 1) & 3;
                     var22 = Block.BY_ID[this.blockView.getBlockId(var2, var3, var4 - 1)];
-                    if (var22 != null && var22.getRenderType() == 38) {
+                    if (var22 != null && var22.getRenderType() == 38 && (var21 == 0 || var21 == 1)) {
                         if (var21 == 0) {
                             var5.color(0.8F * var18, 0.8F * var18, 0.8F * var18);
                             var5.vertex(var2, var3, var4, var10, var16);
@@ -2320,7 +2320,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                             var5.vertex(var2 + 1, var3 + 1, var4, var12, var14);
                             var5.vertex(var2 + 1, var3, var4 + 1, var10, var16);
                             var5.vertex(var2 + 1, var3, var4 + 1, var10, var16);
-                        } else if (var21 == 1) {
+                        } else {
                             var5.color(0.8F * var18, 0.8F * var18, 0.8F * var18);
                             var5.vertex(var2, var3 + 1, var4, var12, var14);
                             var5.vertex(var2, var3 + 1, var4, var12, var14);
