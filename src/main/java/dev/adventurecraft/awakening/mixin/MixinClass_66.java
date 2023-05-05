@@ -252,7 +252,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
 
     @Inject(method = "method_300", at = @At("TAIL"))
     private void fancyOcclusionCulling(CameraView var1, CallbackInfo ci) {
-        if (this.field_243 && Config.isOcclusionEnabled() && Config.isOcclusionFancy()) {
+        if (this.field_243 && Config.isOcclusionFancy()) {
             this.isInFrustrumFully = ((ExCameraView) var1).isBoundingBoxInFrustumFully(this.field_250);
         } else {
             this.isInFrustrumFully = false;
