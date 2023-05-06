@@ -221,14 +221,14 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         }
 
         if (this.world != null) {
-            Entity var9 = this.client.viewEntity;
-            if (var9 == null) {
-                var9 = this.client.player;
+            Entity entity = this.client.viewEntity;
+            if (entity == null) {
+                entity = this.client.player;
             }
 
-            if (var9 != null) {
-                this.method_1553(MathHelper.floor(var9.x), MathHelper.floor(var9.y), MathHelper.floor(var9.z));
-                Arrays.sort(this.field_1808, new EntityOppositeComparator(var9));
+            if (entity != null) {
+                this.method_1553(MathHelper.floor(entity.x), MathHelper.floor(entity.y), MathHelper.floor(entity.z));
+                Arrays.sort(this.field_1808, new EntityOppositeComparator(entity));
             }
         }
 
@@ -295,107 +295,115 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             Config.sleep(1L);
         }
 
-        if (this.field_1817 && this.client.options.advancedOpengl && !this.client.options.anaglyph3d && renderPass == 0) {
-            int vizStart0 = 0;
-            int vizEnd0 = 20;
-            this.checkOcclusionQueryResult(vizStart0, vizEnd0, entity.x, entity.y, entity.z);
-
-            for (int vizIndex = vizStart0; vizIndex < vizEnd0; ++vizIndex) {
-                this.field_1808[vizIndex].field_252 = true;
-            }
-
-            int queryCount = 0;
-            int chunkCount = this.method_1542(vizStart0, vizEnd0, renderPass, deltaTime);
-            int vizEnd = vizEnd0;
-            int vizOffset = 0;
-            int vizStep = 30;
-
-            int vizLimit = this.field_1810 / 2;
-            while (vizEnd < this.field_1808.length) {
-                int vizStart = vizEnd;
-                if (vizOffset < vizLimit) {
-                    ++vizOffset;
-                } else {
-                    --vizOffset;
-                }
-
-                vizEnd += vizOffset * vizStep;
-                if (vizEnd <= vizStart) {
-                    vizEnd = vizStart + 10;
-                }
-
-                if (vizEnd > this.field_1808.length) {
-                    vizEnd = this.field_1808.length;
-                }
-
-                GL11.glDisable(GL11.GL_TEXTURE_2D);
-                GL11.glDisable(GL11.GL_LIGHTING);
-                GL11.glDisable(GL11.GL_ALPHA_TEST);
-                GL11.glDisable(GL11.GL_FOG);
-                GL11.glColorMask(false, false, false, false);
-                GL11.glDepthMask(false);
-                this.checkOcclusionQueryResult(vizStart, vizEnd, entity.x, entity.y, entity.z);
-                GL11.glPushMatrix();
-                float xOffset = 0.0F;
-                float yOffset = 0.0F;
-                float zOffset = 0.0F;
-
-                for (int vizIndex = vizStart; vizIndex < vizEnd; ++vizIndex) {
-                    class_66 viz = this.field_1808[vizIndex];
-                    if (viz.method_304()) {
-                        viz.field_243 = false;
-                    } else if (viz.field_243) {
-                        if (Config.isOcclusionFancy() && !((ExClass_66) viz).isInFrustrumFully()) {
-                            viz.field_252 = true;
-                        } else if (viz.field_243 && !viz.field_253) {
-                            if (((ExClass_66) viz).isVisibleFromPosition()) {
-                                float dX = Math.abs((float) (((ExClass_66) viz).visibleFromX() - entity.x));
-                                float dY = Math.abs((float) (((ExClass_66) viz).visibleFromY() - entity.y));
-                                float dZ = Math.abs((float) (((ExClass_66) viz).visibleFromZ() - entity.z));
-                                float len = dX + dY + dZ;
-                                if ((double) len < 10.0D + (double) vizIndex / 1000.0D) {
-                                    viz.field_252 = true;
-                                    continue;
-                                }
-                                ((ExClass_66) viz).isVisibleFromPosition(false);
-                            }
-
-                            float dX = (float) (viz.field_237 - peX);
-                            float dY = (float) (viz.field_238 - peY);
-                            float dZ = (float) (viz.field_239 - peZ);
-                            float mX = dX - xOffset;
-                            float mY = dY - yOffset;
-                            float mZ = dZ - zOffset;
-                            if (mX != 0.0F || mY != 0.0F || mZ != 0.0F) {
-                                GL11.glTranslatef(mX, mY, mZ);
-                                xOffset += mX;
-                                yOffset += mY;
-                                zOffset += mZ;
-                            }
-
-                            ARBOcclusionQuery.glBeginQueryARB(GL15.GL_SAMPLES_PASSED, viz.field_254);
-                            viz.method_303();
-                            ARBOcclusionQuery.glEndQueryARB(GL15.GL_SAMPLES_PASSED);
-                            viz.field_253 = true;
-                            ++queryCount;
-                        }
-                    }
-                }
-
-                GL11.glPopMatrix();
-                GL11.glColorMask(true, true, true, true);
-                GL11.glDepthMask(true);
-                GL11.glEnable(GL11.GL_TEXTURE_2D);
-                GL11.glEnable(GL11.GL_ALPHA_TEST);
-                GL11.glEnable(GL11.GL_FOG);
-
-                chunkCount += this.method_1542(vizStart, vizEnd, renderPass, deltaTime);
-            }
-            return chunkCount;
-        } else {
+        if (renderPass != 0 || !this.field_1817 || !this.client.options.advancedOpengl || this.client.options.anaglyph3d) {
             int chunkCount = this.method_1542(0, this.field_1808.length, renderPass, deltaTime);
             return chunkCount;
         }
+
+        int vizStart0 = 0;
+        int vizEnd0 = 20;
+        this.checkOcclusionQueryResult(vizStart0, vizEnd0, entity.x, entity.y, entity.z);
+
+        for (int vizIndex = vizStart0; vizIndex < vizEnd0; ++vizIndex) {
+            this.field_1808[vizIndex].field_252 = true;
+        }
+
+        int queryCount = 0;
+        int chunkCount = this.method_1542(vizStart0, vizEnd0, renderPass, deltaTime);
+        int vizEnd = vizEnd0;
+        int vizOffset = 0;
+        int vizStep = 30;
+
+        int vizLimit = this.field_1810 / 2;
+        while (vizEnd < this.field_1808.length) {
+            int vizStart = vizEnd;
+            if (vizOffset < vizLimit) {
+                ++vizOffset;
+            } else {
+                --vizOffset;
+            }
+
+            vizEnd += vizOffset * vizStep;
+            if (vizEnd <= vizStart) {
+                vizEnd = vizStart + 10;
+            }
+
+            if (vizEnd > this.field_1808.length) {
+                vizEnd = this.field_1808.length;
+            }
+
+            GL11.glDisable(GL11.GL_TEXTURE_2D);
+            GL11.glDisable(GL11.GL_LIGHTING);
+            GL11.glDisable(GL11.GL_ALPHA_TEST);
+            GL11.glDisable(GL11.GL_FOG);
+            GL11.glColorMask(false, false, false, false);
+            GL11.glDepthMask(false);
+            this.checkOcclusionQueryResult(vizStart, vizEnd, entity.x, entity.y, entity.z);
+            GL11.glPushMatrix();
+            float xOffset = 0.0F;
+            float yOffset = 0.0F;
+            float zOffset = 0.0F;
+
+            for (int vizIndex = vizStart; vizIndex < vizEnd; ++vizIndex) {
+                class_66 viz = this.field_1808[vizIndex];
+                if (viz.method_304()) {
+                    viz.field_243 = false;
+                    continue;
+                }
+                if (!viz.field_243) {
+                    continue;
+                }
+
+                if (Config.isOcclusionFancy() && !((ExClass_66) viz).isInFrustrumFully()) {
+                    viz.field_252 = true;
+                    continue;
+                }
+                if (!viz.field_243 || viz.field_253) {
+                    continue;
+                }
+
+                if (((ExClass_66) viz).isVisibleFromPosition()) {
+                    float dX = Math.abs((float) (((ExClass_66) viz).visibleFromX() - entity.x));
+                    float dY = Math.abs((float) (((ExClass_66) viz).visibleFromY() - entity.y));
+                    float dZ = Math.abs((float) (((ExClass_66) viz).visibleFromZ() - entity.z));
+                    float len = dX + dY + dZ;
+                    if ((double) len < 10.0D + (double) vizIndex / 1000.0D) {
+                        viz.field_252 = true;
+                        continue;
+                    }
+                    ((ExClass_66) viz).isVisibleFromPosition(false);
+                }
+
+                float dX = (float) (viz.field_237 - peX);
+                float dY = (float) (viz.field_238 - peY);
+                float dZ = (float) (viz.field_239 - peZ);
+                float mX = dX - xOffset;
+                float mY = dY - yOffset;
+                float mZ = dZ - zOffset;
+                if (mX != 0.0F || mY != 0.0F || mZ != 0.0F) {
+                    GL11.glTranslatef(mX, mY, mZ);
+                    xOffset += mX;
+                    yOffset += mY;
+                    zOffset += mZ;
+                }
+
+                ARBOcclusionQuery.glBeginQueryARB(GL15.GL_SAMPLES_PASSED, viz.field_254);
+                viz.method_303();
+                ARBOcclusionQuery.glEndQueryARB(GL15.GL_SAMPLES_PASSED);
+                viz.field_253 = true;
+                ++queryCount;
+            }
+
+            GL11.glPopMatrix();
+            GL11.glColorMask(true, true, true, true);
+            GL11.glDepthMask(true);
+            GL11.glEnable(GL11.GL_TEXTURE_2D);
+            GL11.glEnable(GL11.GL_ALPHA_TEST);
+            GL11.glEnable(GL11.GL_FOG);
+
+            chunkCount += this.method_1542(vizStart, vizEnd, renderPass, deltaTime);
+        }
+        return chunkCount;
     }
 
     private void checkOcclusionQueryResult(int vizStart, int vizEnd, double x, double y, double z) {
@@ -457,7 +465,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         double eprprX = entity.prevRenderX + (entity.x - entity.prevRenderX) * deltaTime;
         double eprprY = entity.prevRenderY + (entity.y - entity.prevRenderY) * deltaTime;
         double eprprZ = entity.prevRenderZ + (entity.z - entity.prevRenderZ) * deltaTime;
-        GL11.glTranslatef((float) (-eprprX), (float) (-eprprY), (float) (-eprprZ));
+        GL11.glTranslatef((float) -eprprX, (float) -eprprY, (float) -eprprZ);
         GL11.glCallLists(this.renderListBuffer);
         GL11.glTranslatef((float) eprprX, (float) eprprY, (float) eprprZ);
         return this.renderListBuffer.limit();
@@ -525,53 +533,49 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     }
 
     @Overwrite
-    public void renderClouds(float var1) {
+    public void renderClouds(float deltaTime) {
         GL11.glDisable(GL11.GL_CULL_FACE);
-        float var2 = (float) (this.client.viewEntity.prevRenderY + (this.client.viewEntity.y - this.client.viewEntity.prevRenderY) * (double) var1);
-        Tessellator var3 = Tessellator.INSTANCE;
-        float var4 = 12.0F;
-        float var5 = 4.0F;
-        double var6 = (this.client.viewEntity.prevX + (this.client.viewEntity.x - this.client.viewEntity.prevX) * (double) var1 + (double) (((float) this.field_1818 + var1) * 0.03F)) / (double) var4;
-        double var8 = (this.client.viewEntity.prevZ + (this.client.viewEntity.z - this.client.viewEntity.prevZ) * (double) var1) / (double) var4 + (double) 0.33F;
-        float var10 = this.world.dimension.getCloudHeight() - var2 + 0.33F;
-        var10 += ((ExGameOptions) this.client.options).ofCloudsHeight() * 25.0F;
-        int var11 = MathHelper.floor(var6 / 2048.0D);
-        int var12 = MathHelper.floor(var8 / 2048.0D);
-        var6 -= (var11 * 2048);
-        var8 -= (var12 * 2048);
+        double cloudBaseY = this.client.viewEntity.prevRenderY + (this.client.viewEntity.y - this.client.viewEntity.prevRenderY) * deltaTime;
+        Tessellator ts = Tessellator.INSTANCE;
+        int tileWidth = 12;
+        int tileHeight = 4;
+        double cloudX = (this.client.viewEntity.prevX + (this.client.viewEntity.x - this.client.viewEntity.prevX) * deltaTime + ((double) this.field_1818 + deltaTime) * 0.03) / tileWidth;
+        double cloudZ = (this.client.viewEntity.prevZ + (this.client.viewEntity.z - this.client.viewEntity.prevZ) * deltaTime) / tileWidth + 0.33;
+        double cloudY = this.world.dimension.getCloudHeight() - cloudBaseY + 0.33;
+        cloudY += ((ExGameOptions) this.client.options).ofCloudsHeight() * 25.0;
+        int cloudWrapX = MathHelper.floor(cloudX / 2048.0);
+        int cloudWrapZ = MathHelper.floor(cloudZ / 2048.0);
+        cloudX -= cloudWrapX * 2048;
+        cloudZ -= cloudWrapZ * 2048;
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.textureManager.getTextureId("/environment/clouds.png"));
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        Vec3d var13 = this.world.method_282(var1);
-        float var14 = (float) var13.x;
-        float var15 = (float) var13.y;
-        float var16 = (float) var13.z;
-        float var17;
-        float var18;
-        float var19;
+        Vec3d cloudColor = this.world.method_282(deltaTime);
+        float red = (float) cloudColor.x;
+        float green = (float) cloudColor.y;
+        float blue = (float) cloudColor.z;
         if (this.client.options.anaglyph3d) {
-            var17 = (var14 * 30.0F + var15 * 59.0F + var16 * 11.0F) / 100.0F;
-            var18 = (var14 * 30.0F + var15 * 70.0F) / 100.0F;
-            var19 = (var14 * 30.0F + var16 * 70.0F) / 100.0F;
-            var14 = var17;
-            var15 = var18;
-            var16 = var19;
+            float r3D = (red * 30.0F + green * 59.0F + blue * 11.0F) / 100.0F;
+            float g3D = (red * 30.0F + green * 70.0F) / 100.0F;
+            float b3D = (red * 30.0F + blue * 70.0F) / 100.0F;
+            red = r3D;
+            green = g3D;
+            blue = b3D;
         }
 
-        var17 = (float) (var6 * 0.0D);
-        var18 = (float) (var8 * 0.0D);
-        var19 = 0.00390625F;
-        var17 = (float) MathHelper.floor(var6) * var19;
-        var18 = (float) MathHelper.floor(var8) * var19;
-        float var20 = (float) (var6 - (double) MathHelper.floor(var6));
-        float var21 = (float) (var8 - (double) MathHelper.floor(var8));
-        byte var22 = 8;
-        byte var23 = 3;
-        float var24 = 1.0F / 1024.0F;
-        GL11.glScalef(var4, 1.0F, var4);
+        double uvScale = 1 / 256.0;
+        double baseU = MathHelper.floor(cloudX) * uvScale;
+        double baseV = MathHelper.floor(cloudZ) * uvScale;
 
-        for (int var25 = 0; var25 < 2; ++var25) {
-            if (var25 == 0) {
+        double cloudFracX = cloudX - MathHelper.floor(cloudX);
+        double cloudFracZ = cloudZ - MathHelper.floor(cloudZ);
+        int patchWidth = 8;
+        int patchBound = 3;
+        double xOffset = 0; //1.0 / 1024.0; TODO this offset seemed to make things worse
+        GL11.glScaled(tileWidth, 1.0F, tileWidth);
+
+        for (int renderPass = 0; renderPass < 2; ++renderPass) {
+            if (renderPass == 0) {
                 GL11.glColorMask(false, false, false, false);
             } else if (this.client.options.anaglyph3d) {
                 if (GameRenderer.field_2341 == 0) {
@@ -583,83 +587,107 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
                 GL11.glColorMask(true, true, true, true);
             }
 
-            double var26 = 0.02D;
+            ts.start();
 
-            for (int var28 = -var23 + 1; var28 <= var23; ++var28) {
-                for (int var29 = -var23 + 1; var29 <= var23; ++var29) {
-                    var3.start();
-                    float var30 = (float) (var28 * var22);
-                    float var31 = (float) (var29 * var22);
-                    float var32 = var30 - var20;
-                    float var33 = var31 - var21;
-                    var3.color(var14 * 0.9F, var15 * 0.9F, var16 * 0.9F, 0.8F);
-                    int var34;
-                    if (var28 > -1) {
-                        var3.setNormal(-1.0F, 0.0F, 0.0F);
+            double y0 = cloudY + 0.0;
+            double y1 = y0 + tileHeight;
 
-                        for (var34 = 0; var34 < var22; ++var34) {
-                            var3.vertex(var32 + (float) var34 + 0.0F, (double) (var10 + 0.0F) + var26, var33 + (float) var22, (var30 + (float) var34 + 0.5F) * var19 + var17, (var31 + (float) var22) * var19 + var18);
-                            var3.vertex(var32 + (float) var34 + 0.0F, (double) (var10 + var5) - var26, var33 + (float) var22, (var30 + (float) var34 + 0.5F) * var19 + var17, (var31 + (float) var22) * var19 + var18);
-                            var3.vertex(var32 + (float) var34 + 0.0F, (double) (var10 + var5) - var26, var33 + 0.0F, (var30 + (float) var34 + 0.5F) * var19 + var17, (var31 + 0.0F) * var19 + var18);
-                            var3.vertex(var32 + (float) var34 + 0.0F, (double) (var10 + 0.0F) + var26, var33 + 0.0F, (var30 + (float) var34 + 0.5F) * var19 + var17, (var31 + 0.0F) * var19 + var18);
+            for (int xPatch = -patchBound + 1; xPatch <= patchBound; ++xPatch) {
+
+                double startU = xPatch * patchWidth;
+                double x0 = startU - cloudFracX;
+                double x1 = x0 + patchWidth;
+
+                double u0 = startU * uvScale + baseU;
+                double u1 = (startU + patchWidth) * uvScale + baseU;
+
+                for (int zPatch = -patchBound + 1; zPatch <= patchBound; ++zPatch) {
+
+                    double startV = zPatch * patchWidth;
+                    double z0 = startV - cloudFracZ;
+                    double z1 = z0 + patchWidth;
+
+                    double v0 = startV * uvScale + baseV;
+                    double v1 = (startV + patchWidth) * uvScale + baseV;
+
+                    ts.color(red * 0.9F, green * 0.9F, blue * 0.9F, 0.8F);
+                    if (xPatch > -1) {
+                        ts.setNormal(-1.0F, 0.0F, 0.0F);
+
+                        for (int pX = 0; pX < patchWidth; ++pX) {
+                            double vX = x0 + pX;
+                            double vU = (startU + pX + 0.5) * uvScale + baseU;
+                            ts.vertex(vX, y0, z1, vU, v1);
+                            ts.vertex(vX, y1, z1, vU, v1);
+                            ts.vertex(vX, y1, z0, vU, v0);
+                            ts.vertex(vX, y0, z0, vU, v0);
                         }
                     }
 
-                    if (var28 <= 1) {
-                        var3.setNormal(1.0F, 0.0F, 0.0F);
+                    if (xPatch <= 1) {
+                        ts.setNormal(1.0F, 0.0F, 0.0F);
 
-                        for (var34 = 0; var34 < var22; ++var34) {
-                            var3.vertex(var32 + (float) var34 + 1.0F - var24, (double) (var10 + 0.0F) + var26, var33 + (float) var22, (var30 + (float) var34 + 0.5F) * var19 + var17, (var31 + (float) var22) * var19 + var18);
-                            var3.vertex(var32 + (float) var34 + 1.0F - var24, (double) (var10 + var5) - var26, var33 + (float) var22, (var30 + (float) var34 + 0.5F) * var19 + var17, (var31 + (float) var22) * var19 + var18);
-                            var3.vertex(var32 + (float) var34 + 1.0F - var24, (double) (var10 + var5) - var26, var33 + 0.0F, (var30 + (float) var34 + 0.5F) * var19 + var17, (var31 + 0.0F) * var19 + var18);
-                            var3.vertex(var32 + (float) var34 + 1.0F - var24, (double) (var10 + 0.0F) + var26, var33 + 0.0F, (var30 + (float) var34 + 0.5F) * var19 + var17, (var31 + 0.0F) * var19 + var18);
+                        for (int pX = 0; pX < patchWidth; ++pX) {
+                            double vX = x0 + pX + 1.0 - xOffset;
+                            double vU = (startU + pX + 0.5) * uvScale + baseU;
+                            ts.vertex(vX, y0, z1, vU, v1);
+                            ts.vertex(vX, y1, z1, vU, v1);
+                            ts.vertex(vX, y1, z0, vU, v0);
+                            ts.vertex(vX, y0, z0, vU, v0);
                         }
                     }
 
-                    var3.color(var14 * 0.8F, var15 * 0.8F, var16 * 0.8F, 0.8F);
-                    if (var29 > -1) {
-                        var3.setNormal(0.0F, 0.0F, -1.0F);
+                    ts.color(red * 0.8F, green * 0.8F, blue * 0.8F, 0.8F);
+                    if (zPatch > -1) {
+                        ts.setNormal(0.0F, 0.0F, -1.0F);
 
-                        for (var34 = 0; var34 < var22; ++var34) {
-                            var3.vertex(var32 + 0.0F, (double) (var10 + var5) - var26, var33 + (float) var34 + 0.0F, (var30 + 0.0F) * var19 + var17, (var31 + (float) var34 + 0.5F) * var19 + var18);
-                            var3.vertex(var32 + (float) var22, (double) (var10 + var5) - var26, var33 + (float) var34 + 0.0F, (var30 + (float) var22) * var19 + var17, (var31 + (float) var34 + 0.5F) * var19 + var18);
-                            var3.vertex(var32 + (float) var22, (double) (var10 + 0.0F) + var26, var33 + (float) var34 + 0.0F, (var30 + (float) var22) * var19 + var17, (var31 + (float) var34 + 0.5F) * var19 + var18);
-                            var3.vertex(var32 + 0.0F, (double) (var10 + 0.0F) + var26, var33 + (float) var34 + 0.0F, (var30 + 0.0F) * var19 + var17, (var31 + (float) var34 + 0.5F) * var19 + var18);
+                        for (int pZ = 0; pZ < patchWidth; ++pZ) {
+                            double vZ = z0 + pZ;
+                            double vV = (startV + pZ + 0.5F) * uvScale + baseV;
+                            ts.vertex(x0, y1, vZ, u0, vV);
+                            ts.vertex(x1, (y1), vZ, u1, vV);
+                            ts.vertex(x1, y0, vZ, u1, vV);
+                            ts.vertex(x0, y0, vZ, u0, vV);
                         }
                     }
 
-                    if (var29 <= 1) {
-                        var3.setNormal(0.0F, 0.0F, 1.0F);
+                    if (zPatch <= 1) {
+                        ts.setNormal(0.0F, 0.0F, 1.0F);
 
-                        for (var34 = 0; var34 < var22; ++var34) {
-                            var3.vertex(var32 + 0.0F, (double) (var10 + var5) - var26, var33 + (float) var34 + 1.0F - var24, (var30 + 0.0F) * var19 + var17, (var31 + (float) var34 + 0.5F) * var19 + var18);
-                            var3.vertex(var32 + (float) var22, (double) (var10 + var5) - var26, var33 + (float) var34 + 1.0F - var24, (var30 + (float) var22) * var19 + var17, (var31 + (float) var34 + 0.5F) * var19 + var18);
-                            var3.vertex(var32 + (float) var22, (double) (var10 + 0.0F) + var26, var33 + (float) var34 + 1.0F - var24, (var30 + (float) var22) * var19 + var17, (var31 + (float) var34 + 0.5F) * var19 + var18);
-                            var3.vertex(var32 + 0.0F, (double) (var10 + 0.0F) + var26, var33 + (float) var34 + 1.0F - var24, (var30 + 0.0F) * var19 + var17, (var31 + (float) var34 + 0.5F) * var19 + var18);
+                        for (int pZ = 0; pZ < patchWidth; ++pZ) {
+                            double vZ = z0 + pZ + 1.0 - xOffset;
+                            double vV = (startV + pZ + 0.5) * uvScale + baseV;
+                            ts.vertex(x0, y1, vZ, u0, vV);
+                            ts.vertex(x1, y1, vZ, u1, vV);
+                            ts.vertex(x1, y0, vZ, u1, vV);
+                            ts.vertex(x0, y0, vZ, u0, vV);
                         }
                     }
 
-                    if (var10 > -var5 - 1.0F) {
-                        var3.color(var14 * 0.7F, var15 * 0.7F, var16 * 0.7F, 0.8F);
-                        var3.setNormal(0.0F, -1.0F, 0.0F);
-                        var3.vertex(var32 + 0.0F, var10 + 0.0F, var33 + (float) var22, (var30 + 0.0F) * var19 + var17, (var31 + (float) var22) * var19 + var18);
-                        var3.vertex(var32 + (float) var22, var10 + 0.0F, var33 + (float) var22, (var30 + (float) var22) * var19 + var17, (var31 + (float) var22) * var19 + var18);
-                        var3.vertex(var32 + (float) var22, var10 + 0.0F, var33 + 0.0F, (var30 + (float) var22) * var19 + var17, (var31 + 0.0F) * var19 + var18);
-                        var3.vertex(var32 + 0.0F, var10 + 0.0F, var33 + 0.0F, (var30 + 0.0F) * var19 + var17, (var31 + 0.0F) * var19 + var18);
+                    if (y0 > -tileHeight - 1.0F) {
+                        ts.color(red * 0.7F, green * 0.7F, blue * 0.7F, 0.8F);
+                        ts.setNormal(0.0F, -1.0F, 0.0F);
+
+                        ts.vertex(x0, y0, z1, u0, v1);
+                        ts.vertex(x1, y0, z1, u1, v1);
+                        ts.vertex(x1, y0, z0, u1, v0);
+                        ts.vertex(x0, y0, z0, u0, v0);
                     }
 
-                    if (var10 <= var5 + 1.0F) {
-                        var3.color(var14, var15, var16, 0.8F);
-                        var3.setNormal(0.0F, 1.0F, 0.0F);
-                        var3.vertex(var32 + 0.0F, var10 + var5 - var24, var33 + (float) var22, (var30 + 0.0F) * var19 + var17, (var31 + (float) var22) * var19 + var18);
-                        var3.vertex(var32 + (float) var22, var10 + var5 - var24, var33 + (float) var22, (var30 + (float) var22) * var19 + var17, (var31 + (float) var22) * var19 + var18);
-                        var3.vertex(var32 + (float) var22, var10 + var5 - var24, var33 + 0.0F, (var30 + (float) var22) * var19 + var17, (var31 + 0.0F) * var19 + var18);
-                        var3.vertex(var32 + 0.0F, var10 + var5 - var24, var33 + 0.0F, (var30 + 0.0F) * var19 + var17, (var31 + 0.0F) * var19 + var18);
-                    }
+                    if (y0 <= tileHeight + 1.0F) {
+                        ts.color(red, green, blue, 0.8F);
+                        ts.setNormal(0.0F, 1.0F, 0.0F);
 
-                    var3.tessellate();
+                        double vY = y1 - xOffset;
+                        ts.vertex(x0, vY, z1, u0, v1);
+                        ts.vertex(x1, vY, z1, u1, v1);
+                        ts.vertex(x1, vY, z0, u1, v0);
+                        ts.vertex(x0, vY, z0, u0, v0);
+                    }
                 }
             }
+
+            ts.tessellate();
         }
 
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
@@ -671,117 +699,117 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     public boolean method_1549(LivingEntity var1, boolean var2) {
         if (this.field_1807.size() <= 0) {
             return false;
-        } else {
-            int var3 = 0;
-            int var4 = Config.getUpdatesPerFrame();
-            if (Config.isDynamicUpdates() && !this.isMoving(var1)) {
-                var4 *= 3;
-            }
-
-            byte var5 = 4;
-            int var6 = 0;
-            class_66 var7 = null;
-            float var8 = Float.MAX_VALUE;
-            int var9 = -1;
-
-            long avgFrameTime = 0L;
-            if (AC_PlayerTorch.isTorchActive()) {
-                avgFrameTime = ((ExMinecraft) Minecraft.instance).getAvgFrameTime();
-            }
-
-            int var10;
-            for (var10 = 0; var10 < this.field_1807.size(); ++var10) {
-                class_66 var11 = this.field_1807.get(var10);
-                if (var11 == null) {
-                    continue;
-                }
-
-                ++var6;
-                if (!var11.field_249) {
-                    this.field_1807.set(var10, null);
-                } else {
-                    float var12 = var11.method_299(var1);
-                    if (var12 <= 256.0F && this.isActingNow()) {
-                        var11.method_296();
-                        var11.field_249 = false;
-                        this.field_1807.set(var10, null);
-                        ++var3;
-                    } else {
-                        if (var12 > 256.0F && var3 >= var4) {
-                            break;
-                        }
-
-                        if (!var11.field_243) {
-                            var12 *= var5;
-                        }
-
-                        if (var7 == null) {
-                            var7 = var11;
-                            var8 = var12;
-                            var9 = var10;
-                        } else if (var12 < var8) {
-                            var7 = var11;
-                            var8 = var12;
-                            var9 = var10;
-                        }
-                    }
-                }
-
-                // TODO: investigate if this should be here. Optifine messed with this method a lot.
-                if (AC_PlayerTorch.isTorchActive() && (var9 >= 3 || var10 > 40000000L || var9 >= 2 && var10 > 16666666L)) {
-                    break;
-                }
-            }
-
-            int var16;
-            if (var7 != null) {
-                var7.method_296();
-                var7.field_249 = false;
-                this.field_1807.set(var9, null);
-                ++var3;
-                float var15 = var8 / 5.0F;
-
-                for (var16 = 0; var16 < this.field_1807.size() && var3 < var4; ++var16) {
-                    class_66 var17 = this.field_1807.get(var16);
-                    if (var17 != null) {
-                        float var13 = var17.method_299(var1);
-                        if (!var17.field_243) {
-                            var13 *= var5;
-                        }
-
-                        float var14 = Math.abs(var13 - var8);
-                        if (var14 < var15) {
-                            var17.method_296();
-                            var17.field_249 = false;
-                            this.field_1807.set(var16, null);
-                            ++var3;
-                        }
-                    }
-                }
-            }
-
-            if (var6 == 0) {
-                this.field_1807.clear();
-            }
-
-            if (this.field_1807.size() > 100 && var6 < this.field_1807.size() * 4 / 5) {
-                var10 = 0;
-
-                for (var16 = 0; var16 < this.field_1807.size(); ++var16) {
-                    class_66 var18 = this.field_1807.get(var16);
-                    if (var18 != null && var16 != var10) {
-                        this.field_1807.set(var10, var18);
-                        ++var10;
-                    }
-                }
-
-                for (var16 = this.field_1807.size() - 1; var16 >= var10; --var16) {
-                    this.field_1807.remove(var16);
-                }
-            }
-
-            return true;
         }
+
+        int var3 = 0;
+        int var4 = Config.getUpdatesPerFrame();
+        if (Config.isDynamicUpdates() && !this.isMoving(var1)) {
+            var4 *= 3;
+        }
+
+        byte var5 = 4;
+        int var6 = 0;
+        class_66 var7 = null;
+        float var8 = Float.MAX_VALUE;
+        int var9 = -1;
+
+        long avgFrameTime = 0L;
+        if (AC_PlayerTorch.isTorchActive()) {
+            avgFrameTime = ((ExMinecraft) Minecraft.instance).getAvgFrameTime();
+        }
+
+        int var10;
+        for (var10 = 0; var10 < this.field_1807.size(); ++var10) {
+            class_66 var11 = this.field_1807.get(var10);
+            if (var11 == null) {
+                continue;
+            }
+
+            ++var6;
+            if (!var11.field_249) {
+                this.field_1807.set(var10, null);
+            } else {
+                float var12 = var11.method_299(var1);
+                if (var12 <= 256.0F && this.isActingNow()) {
+                    var11.method_296();
+                    var11.field_249 = false;
+                    this.field_1807.set(var10, null);
+                    ++var3;
+                } else {
+                    if (var12 > 256.0F && var3 >= var4) {
+                        break;
+                    }
+
+                    if (!var11.field_243) {
+                        var12 *= var5;
+                    }
+
+                    if (var7 == null) {
+                        var7 = var11;
+                        var8 = var12;
+                        var9 = var10;
+                    } else if (var12 < var8) {
+                        var7 = var11;
+                        var8 = var12;
+                        var9 = var10;
+                    }
+                }
+            }
+
+            // TODO: investigate if this should be here. Optifine messed with this method a lot.
+            if (AC_PlayerTorch.isTorchActive() && (var9 >= 3 || var10 > 40000000L || var9 >= 2 && var10 > 16666666L)) {
+                break;
+            }
+        }
+
+        int var16;
+        if (var7 != null) {
+            var7.method_296();
+            var7.field_249 = false;
+            this.field_1807.set(var9, null);
+            ++var3;
+            float var15 = var8 / 5.0F;
+
+            for (var16 = 0; var16 < this.field_1807.size() && var3 < var4; ++var16) {
+                class_66 var17 = this.field_1807.get(var16);
+                if (var17 != null) {
+                    float var13 = var17.method_299(var1);
+                    if (!var17.field_243) {
+                        var13 *= var5;
+                    }
+
+                    float var14 = Math.abs(var13 - var8);
+                    if (var14 < var15) {
+                        var17.method_296();
+                        var17.field_249 = false;
+                        this.field_1807.set(var16, null);
+                        ++var3;
+                    }
+                }
+            }
+        }
+
+        if (var6 == 0) {
+            this.field_1807.clear();
+        }
+
+        if (this.field_1807.size() > 100 && var6 < this.field_1807.size() * 4 / 5) {
+            var10 = 0;
+
+            for (var16 = 0; var16 < this.field_1807.size(); ++var16) {
+                class_66 var18 = this.field_1807.get(var16);
+                if (var18 != null && var16 != var10) {
+                    this.field_1807.set(var10, var18);
+                    ++var10;
+                }
+            }
+
+            for (var16 = this.field_1807.size() - 1; var16 >= var10; --var16) {
+                this.field_1807.remove(var16);
+            }
+        }
+
+        return true;
     }
 
     private boolean isMoving(LivingEntity entity) {
