@@ -418,9 +418,9 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             viz.field_252 = this.field_1797.get(0) > 0;
             if (wasVisible && viz.field_252) {
                 ((ExClass_66) viz).isVisibleFromPosition(true);
-                ((ExClass_66) viz).visibleFromX(x);
-                ((ExClass_66) viz).visibleFromY(y);
-                ((ExClass_66) viz).visibleFromZ(z);
+                ((ExClass_66) viz).setVisibleFromX(x);
+                ((ExClass_66) viz).setVisibleFromY(y);
+                ((ExClass_66) viz).setVisibleFromZ(z);
             }
         }
     }

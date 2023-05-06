@@ -53,12 +53,6 @@ public abstract class MixinClass_66 implements ExClass_66 {
     @Shadow
     public int field_236;
     @Shadow
-    public int field_237;
-    @Shadow
-    public int field_238;
-    @Shadow
-    public int field_239;
-    @Shadow
     public int field_240;
     @Shadow
     public int field_241;
@@ -68,12 +62,6 @@ public abstract class MixinClass_66 implements ExClass_66 {
     public boolean field_243;
     @Shadow
     public boolean[] field_244;
-    @Shadow
-    public int field_245;
-    @Shadow
-    public int field_246;
-    @Shadow
-    public int field_247;
     @Shadow
     public boolean field_249;
     @Shadow
@@ -167,9 +155,9 @@ public abstract class MixinClass_66 implements ExClass_66 {
                 }
                 boolean var16 = false;
 
-                for (int y = startY; y < height; ++y) {
+                for (int x = startX; x < width; ++x) {
                     for (int z = startZ; z < depth; ++z) {
-                        for (int x = startX; x < width; ++x) {
+                        for (int y = startY; y < height; ++y) {
                             int blockId = region.getBlockId(x, y, z);
                             if (blockId > 0 && texId == ((ExBlock) Block.BY_ID[blockId]).getTextureNum()) {
                                 if (!var14) {
@@ -276,7 +264,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
     }
 
     @Override
-    public void visibleFromX(double x) {
+    public void setVisibleFromX(double x) {
         this.visibleFromX = x;
     }
 
@@ -286,7 +274,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
     }
 
     @Override
-    public void visibleFromY(double y) {
+    public void setVisibleFromY(double y) {
         this.visibleFromY = y;
     }
 
@@ -296,7 +284,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
     }
 
     @Override
-    public void visibleFromZ(double z) {
+    public void setVisibleFromZ(double z) {
         this.visibleFromZ = z;
     }
 

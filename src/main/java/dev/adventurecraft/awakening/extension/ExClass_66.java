@@ -7,13 +7,16 @@ public interface ExClass_66 {
     void isVisibleFromPosition(boolean value);
 
     double visibleFromX();
-    void visibleFromX(double x);
+
+    void setVisibleFromX(double x);
 
     double visibleFromY();
-    void visibleFromY(double y);
+
+    void setVisibleFromY(double y);
 
     double visibleFromZ();
-    void visibleFromZ(double z);
+
+    void setVisibleFromZ(double z);
 
     boolean isInFrustrumFully();
 }

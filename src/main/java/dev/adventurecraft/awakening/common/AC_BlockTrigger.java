@@ -57,9 +57,9 @@ public class AC_BlockTrigger extends BlockWithEntity {
         }
         tileEntity.visited = false;
 
-        for (int bY = y - 1; bY <= y + 1; ++bY) {
+        for (int bX = x - 1; bX <= x + 1; ++bX) {
             for (int bZ = z - 1; bZ <= z + 1; ++bZ) {
-                for (int bX = x - 1; bX <= x + 1; ++bX) {
+                for (int bY = y - 1; bY <= y + 1; ++bY) {
                     if (world.getBlockId(bX, bY, bZ) == this.id) {
                         this.setNotVisited(world, bX, bY, bZ);
                     }
@@ -85,9 +85,9 @@ public class AC_BlockTrigger extends BlockWithEntity {
             return true;
         }
 
-        for (int bY = y - 1; bY <= y + 1; ++bY) {
+        for (int bX = x - 1; bX <= x + 1; ++bX) {
             for (int bZ = z - 1; bZ <= z + 1; ++bZ) {
-                for (int bX = x - 1; bX <= x + 1; ++bX) {
+                for (int bY = y - 1; bY <= y + 1; ++bY) {
                     if (world.getBlockId(bX, bY, bZ) == this.id && this._isAlreadyActivated(world, bX, bY, bZ)) {
                         return true;
                     }
@@ -111,9 +111,9 @@ public class AC_BlockTrigger extends BlockWithEntity {
         tileEntity.visited = true;
         ((ExWorld) world).getTriggerManager().removeArea(x, y, z);
 
-        for (int bY = y - 1; bY <= y + 1; ++bY) {
+        for (int bX = x - 1; bX <= x + 1; ++bX) {
             for (int bZ = z - 1; bZ <= z + 1; ++bZ) {
-                for (int bX = x - 1; bX <= x + 1; ++bX) {
+                for (int bY = y - 1; bY <= y + 1; ++bY) {
                     if (world.getBlockId(bX, bY, bZ) == this.id) {
                         this._removeArea(world, bX, bY, bZ);
                     }
@@ -170,9 +170,9 @@ public class AC_BlockTrigger extends BlockWithEntity {
         tileEntity.maxY = AC_ItemCursor.maxY;
         tileEntity.maxZ = AC_ItemCursor.maxZ;
 
-        for (int bY = y - 1; bY <= y + 1; ++bY) {
+        for (int bX = x - 1; bX <= x + 1; ++bX) {
             for (int bZ = z - 1; bZ <= z + 1; ++bZ) {
-                for (int bX = x - 1; bX <= x + 1; ++bX) {
+                for (int bY = y - 1; bY <= y + 1; ++bY) {
                     if (world.getBlockId(bX, bY, bZ) == this.id) {
                         this.setTriggerToSelection(world, bX, bY, bZ);
                     }
@@ -188,9 +188,9 @@ public class AC_BlockTrigger extends BlockWithEntity {
         }
         tileEntity.resetOnTrigger = reset;
 
-        for (int bY = y - 1; bY <= y + 1; ++bY) {
+        for (int bX = x - 1; bX <= x + 1; ++bX) {
             for (int bZ = z - 1; bZ <= z + 1; ++bZ) {
-                for (int bX = x - 1; bX <= x + 1; ++bX) {
+                for (int bY = y - 1; bY <= y + 1; ++bY) {
                     if (world.getBlockId(bX, bY, bZ) == this.id) {
                         this.setTriggerReset(world, bX, bY, bZ, reset);
                     }
