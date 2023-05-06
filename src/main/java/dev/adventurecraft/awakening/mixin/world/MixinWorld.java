@@ -44,22 +44,17 @@ import net.minecraft.world.dimension.Dimension;
 import net.minecraft.world.dimension.DimensionData;
 import net.minecraft.world.dimension.McRegionDimensionFile;
 import net.minecraft.world.source.WorldSource;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
-import sun.misc.Unsafe;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.lang.reflect.Field;
 import java.util.*;
 
 @Mixin(World.class)
@@ -67,9 +62,6 @@ public abstract class MixinWorld implements ExWorld, BlockView {
 
     @Shadow
     static int field_179;
-
-    @Shadow
-    private Set field_194;
 
     @Shadow
     public WorldProperties properties;
@@ -82,6 +74,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
 
     @Shadow
     @Final
+    @Mutable
     public Dimension dimension;
 
     @Shadow
@@ -92,6 +85,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
 
     @Shadow
     @Final
+    @Mutable
     protected DimensionData dimensionData;
 
     @Shadow
@@ -131,6 +125,9 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     protected int field_209;
 
     @Shadow
+    public boolean field_215;
+
+    @Shadow
     private TreeSet<class_366> treeSet;
 
     @Shadow
@@ -138,6 +135,38 @@ public abstract class MixinWorld implements ExWorld, BlockView {
 
     @Shadow
     private List<class_417> lightingUpdates;
+
+    @Shadow
+    @Final
+    @Mutable
+    protected int unusedIncrement;
+
+    @Shadow
+    private List unloadedEntities;
+
+    @Shadow
+    public List blockEntities;
+
+    @Shadow
+    private List field_185;
+
+    @Shadow
+    public List weatherEntities;
+
+    @Shadow
+    private long field_186;
+
+    @Shadow
+    private List field_196;
+
+    @Shadow
+    private boolean field_193;
+
+    @Shadow
+    private boolean field_192;
+
+    @Shadow
+    private long time;
 
     public File levelDir;
     private int[] coordOrder;
@@ -223,18 +252,51 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     @Shadow
     public abstract boolean setBlock(int i, int j, int k, int l);
 
+    @Shadow
+    public abstract void method_237();
+
+    @Shadow
+    protected abstract void method_212();
+
     @Override
-    public void initWorld(String var1, DimensionData var2, String var3) {
+    public void initWorld(String mapName, DimensionData dimData, String saveName, long seed, Dimension dimension) {
+        this.unusedIncrement = 1013904223;
+        this.fogColorOverridden = false;
+        this.fogDensityOverridden = false;
+        this.firstTick = true;
+        this.newSave = false;
+        this.triggerManager = new AC_TriggerManager((World) (Object) this);
+        this.undoStack = new AC_UndoStack();
         File var7 = Minecraft.getGameDirectory();
         File var8 = new File(var7, "../maps");
-        File var9 = new File(var8, var1);
+        File var9 = new File(var8, mapName);
         ((ExTranslationStorage) TranslationStorage.getInstance()).loadMapTranslation(var9);
-        this.mapHandler = new McRegionDimensionFile(var8, var1, false);
+        this.mapHandler = new McRegionDimensionFile(var8, mapName, false);
         this.levelDir = var9;
-        this.field_194 = null;
-        if (var2 != null) {
-            this.mapTracker = new MapTracker(var2);
-            this.properties = var2.getLevelProperties();
+        this.lightingUpdates = new ArrayList<>();
+        this.entities = new ArrayList<>();
+        this.unloadedEntities = new ArrayList<>();
+        this.treeSet = new TreeSet<>();
+        this.field_184 = new HashSet<>();
+        this.blockEntities = new ArrayList<>();
+        this.field_185 = new ArrayList<>();
+        this.players = new ArrayList<>();
+        this.weatherEntities = new ArrayList<>();
+        this.field_186 = 16777215L;
+        this.field_203 = (new Random()).nextInt();
+        this.time = System.currentTimeMillis();
+        this.autoSaveInterval = 40;
+        this.rand = new Random();
+        this.worldListeners = new ArrayList<>();
+        this.field_189 = new ArrayList<>();
+        this.field_192 = true;
+        this.field_193 = true;
+        this.field_195 = this.rand.nextInt(12000);
+        this.field_196 = new ArrayList<>();
+        this.dimensionData = dimData;
+        if (dimData != null) {
+            this.mapTracker = new MapTracker(dimData);
+            this.properties = dimData.getLevelProperties();
         } else {
             this.mapTracker = new MapTracker(this.mapHandler);
         }
@@ -245,7 +307,24 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         }
 
         if (!AC_TerrainImage.loadMap(var9)) {
-            AC_TerrainImage.loadMap(new File(new File(var7, "saves"), var3));
+            AC_TerrainImage.loadMap(new File(new File(var7, "saves"), saveName));
+        }
+
+        this.field_215 = this.properties == null;
+        if (dimension != null) {
+            this.dimension = dimension;
+        } else if (this.properties != null && this.properties.getDimensionId() == -1) {
+            this.dimension = Dimension.getByID(-1);
+        } else {
+            this.dimension = Dimension.getByID(0);
+        }
+
+        boolean newProps = false;
+        if (this.properties == null) {
+            this.properties = new WorldProperties(seed, saveName);
+            newProps = true;
+        } else {
+            this.properties.setName(saveName);
         }
 
         ((ExWorldProperties) this.properties).getWorldGenProps().useImages = AC_TerrainImage.isLoaded;
@@ -253,9 +332,11 @@ public abstract class MixinWorld implements ExWorld, BlockView {
             this.triggerManager.loadFromTagCompound(((ExWorldProperties) this.properties).getTriggerData());
         }
 
+        this.dimension.initDimension((World) (Object) this);
         this.loadBrightness();
-
-        if (this.newSave) {
+        this.worldSource = this.getChunkCache();
+        if (newProps) {
+            this.method_212();
             this.field_221 = true;
             int var11 = 0;
 
@@ -268,22 +349,25 @@ public abstract class MixinWorld implements ExWorld, BlockView {
             this.field_221 = false;
         }
 
-        /* TODO
+        this.method_237();
+        this.initWeatherGradients();
+
         this.loadMapMusic();
         this.loadMapSounds();
+        /* TODO
         this.script = new Script(this);
-        if(this.properties.globalScope != null) {
+        if (this.properties.globalScope != null) {
             ScopeTag.loadScopeFromTag(this.script.globalScope, this.properties.globalScope);
         }
 
         this.scriptHandler = new AC_JScriptHandler(this, var9);
         this.musicScripts = new AC_MusicScripts(this.script, var9, this.scriptHandler);
-        if(this.properties.musicScope != null) {
+        if (this.properties.musicScope != null) {
             ScopeTag.loadScopeFromTag(this.musicScripts.scope, this.properties.musicScope);
         }
 
         this.scope = this.script.getNewScope();
-        if(this.properties.worldScope != null) {
+        if (this.properties.worldScope != null) {
             ScopeTag.loadScopeFromTag(this.scope, this.properties.worldScope);
         }
 

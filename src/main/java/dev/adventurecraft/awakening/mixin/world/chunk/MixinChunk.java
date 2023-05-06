@@ -312,7 +312,7 @@ public abstract class MixinChunk implements ExChunk {
         @Local(ordinal = 1, argsOnly = true) int y,
         @Local(ordinal = 2, argsOnly = true) int z,
         @Local(argsOnly = true) BlockEntity entity) {
-        ACMod.LOGGER.error("No block entity container: BlockID: %d, TileEntity: %s, Coord: %d  %d  %d", this.getBlockId(x, y, z), ((ExBlockEntity) entity).getClassName(), entity.x, entity.y, entity.z);
+        ACMod.LOGGER.error(String.format("No block entity container: BlockID: %d, TileEntity: %s, Coord: %d  %d  %d", this.getBlockId(x, y, z), ((ExBlockEntity) entity).getClassName(), entity.x, entity.y, entity.z));
     }
 
     @Inject(method = "method_881", at = @At("TAIL"))

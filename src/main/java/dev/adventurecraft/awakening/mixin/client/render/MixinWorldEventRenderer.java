@@ -784,9 +784,9 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         }
     }
 
-    private boolean isMoving(LivingEntity var1) {
-        boolean var2 = this.isMovingNow(var1);
-        if (var2) {
+    private boolean isMoving(LivingEntity entity) {
+        boolean moving = this.isMovingNow(entity);
+        if (moving) {
             this.lastMovedTime = System.currentTimeMillis();
             return true;
         } else {
@@ -794,16 +794,16 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         }
     }
 
-    private boolean isMovingNow(LivingEntity var1) {
-        double var2 = 0.001D;
-        if (var1.jumping) return true;
-        if (var1.method_1373()) return true;
-        if ((double) var1.lastHandSwingProgress > var2) return true;
+    private boolean isMovingNow(LivingEntity entity) {
+        double threshold = 0.001D;
+        if (entity.jumping) return true;
+        if (entity.method_1373()) return true;
+        if ((double) entity.lastHandSwingProgress > threshold) return true;
         if (this.client.mouseHelper.xDelta != 0) return true;
         if (this.client.mouseHelper.yDelta != 0) return true;
-        if (Math.abs(var1.x - var1.prevX) > var2) return true;
-        if (Math.abs(var1.y - var1.prevY) > var2) return true;
-        return Math.abs(var1.z - var1.prevZ) > var2;
+        if (Math.abs(entity.x - entity.prevX) > threshold) return true;
+        if (Math.abs(entity.y - entity.prevY) > threshold) return true;
+        return Math.abs(entity.z - entity.prevZ) > threshold;
     }
 
     private boolean isActingNow() {

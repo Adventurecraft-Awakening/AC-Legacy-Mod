@@ -32,7 +32,6 @@ import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.options.Option;
 import net.minecraft.client.particle.ParticleManager;
 import net.minecraft.client.render.GameRenderer;
-import net.minecraft.client.render.HeldItemRenderer;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.WorldEventRenderer;
 import net.minecraft.client.sound.SoundHelper;
