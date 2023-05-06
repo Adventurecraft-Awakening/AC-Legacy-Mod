@@ -16,7 +16,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -174,9 +173,8 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         System.arraycopy(((MixinWorldProperties) (Object) var1).brightness, 0, this.brightness, 0, 16);
     }
 
-    @Inject(method = "getPlayerTag", at = @At("RETURN"))
-    private void addToPlayerTag(CallbackInfoReturnable<CompoundTag> cir) {
-        CompoundTag var1 = cir.getReturnValue();
+    @Inject(method = "updateProperties", at = @At("TAIL"))
+    private void insertWorldPropsForAC(CompoundTag var1, CompoundTag var2, CallbackInfo ci) {
         WorldGenProperties wgp = this.worldGenProps;
         var1.put("TemperatureOffset", this.tempOffset);
         var1.put("nextEntityID", Entity.field_1590);
