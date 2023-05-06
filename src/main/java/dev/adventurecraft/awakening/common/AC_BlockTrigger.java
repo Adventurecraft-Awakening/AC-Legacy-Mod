@@ -4,7 +4,6 @@ import java.util.Random;
 
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockWithEntity;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.BlockEntity;
@@ -51,164 +50,165 @@ public class AC_BlockTrigger extends BlockWithEntity {
         return AC_DebugMode.active;
     }
 
-    private void setNotVisited(World var1, int var2, int var3, int var4) {
-        AC_TileEntityTrigger var5 = (AC_TileEntityTrigger) var1.getBlockEntity(var2, var3, var4);
-        if (var5 != null && var5.visited) {
-            var5.visited = false;
+    private void setNotVisited(World world, int x, int y, int z) {
+        AC_TileEntityTrigger tileEntity = (AC_TileEntityTrigger) world.getBlockEntity(x, y, z);
+        if (tileEntity == null || !tileEntity.visited) {
+            return;
+        }
+        tileEntity.visited = false;
 
-            for (int var6 = var2 - 1; var6 <= var2 + 1; ++var6) {
-                for (int var7 = var3 - 1; var7 <= var3 + 1; ++var7) {
-                    for (int var8 = var4 - 1; var8 <= var4 + 1; ++var8) {
-                        if (var1.getBlockId(var6, var7, var8) == this.id) {
-                            this.setNotVisited(var1, var6, var7, var8);
-                        }
+        for (int bY = y - 1; bY <= y + 1; ++bY) {
+            for (int bZ = z - 1; bZ <= z + 1; ++bZ) {
+                for (int bX = x - 1; bX <= x + 1; ++bX) {
+                    if (world.getBlockId(bX, bY, bZ) == this.id) {
+                        this.setNotVisited(world, bX, bY, bZ);
+                    }
+                }
+            }
+        }
+    }
+
+    public boolean isAlreadyActivated(World world, int x, int y, int z) {
+        boolean activated = this._isAlreadyActivated(world, x, y, z);
+        this.setNotVisited(world, x, y, z);
+        return activated;
+    }
+
+    private boolean _isAlreadyActivated(World world, int x, int y, int z) {
+        AC_TileEntityTrigger tileEntity = (AC_TileEntityTrigger) world.getBlockEntity(x, y, z);
+        if (tileEntity == null || tileEntity.visited) {
+            return false;
+        }
+        tileEntity.visited = true;
+
+        if (tileEntity.activated > 0) {
+            return true;
+        }
+
+        for (int bY = y - 1; bY <= y + 1; ++bY) {
+            for (int bZ = z - 1; bZ <= z + 1; ++bZ) {
+                for (int bX = x - 1; bX <= x + 1; ++bX) {
+                    if (world.getBlockId(bX, bY, bZ) == this.id && this._isAlreadyActivated(world, bX, bY, bZ)) {
+                        return true;
                     }
                 }
             }
         }
 
+        return false;
     }
 
-    public boolean isAlreadyActivated(World var1, int var2, int var3, int var4) {
-        boolean var5 = this._isAlreadyActivated(var1, var2, var3, var4);
-        this.setNotVisited(var1, var2, var3, var4);
-        return var5;
+    public void removeArea(World world, int x, int y, int z) {
+        this._removeArea(world, x, y, z);
+        this.setNotVisited(world, x, y, z);
     }
 
-    private boolean _isAlreadyActivated(World var1, int var2, int var3, int var4) {
-        boolean var5 = false;
-        AC_TileEntityTrigger var6 = (AC_TileEntityTrigger) var1.getBlockEntity(var2, var3, var4);
-        if (var6 != null && !var6.visited) {
-            var6.visited = true;
-            if (var6.activated > 0) {
-                return true;
-            }
-
-            for (int var7 = var2 - 1; var7 <= var2 + 1; ++var7) {
-                for (int var8 = var3 - 1; var8 <= var3 + 1; ++var8) {
-                    for (int var9 = var4 - 1; var9 <= var4 + 1; ++var9) {
-                        if (var1.getBlockId(var7, var8, var9) == this.id && this._isAlreadyActivated(var1, var7, var8, var9)) {
-                            var5 = true;
-                            break;
-                        }
-                    }
-
-                    if (var5) {
-                        break;
-                    }
-                }
-
-                if (var5) {
-                    break;
-                }
-            }
+    private void _removeArea(World world, int x, int y, int z) {
+        AC_TileEntityTrigger tileEntity = (AC_TileEntityTrigger) world.getBlockEntity(x, y, z);
+        if (tileEntity.visited) {
+            return;
         }
+        tileEntity.visited = true;
+        ((ExWorld) world).getTriggerManager().removeArea(x, y, z);
 
-        return var5;
-    }
-
-    public void removeArea(World var1, int var2, int var3, int var4) {
-        this._removeArea(var1, var2, var3, var4);
-        this.setNotVisited(var1, var2, var3, var4);
-    }
-
-    private void _removeArea(World var1, int var2, int var3, int var4) {
-        AC_TileEntityTrigger var5 = (AC_TileEntityTrigger) var1.getBlockEntity(var2, var3, var4);
-        if (!var5.visited) {
-            var5.visited = true;
-            ((ExWorld) var1).getTriggerManager().removeArea(var2, var3, var4);
-
-            for (int var6 = var2 - 1; var6 <= var2 + 1; ++var6) {
-                for (int var7 = var3 - 1; var7 <= var3 + 1; ++var7) {
-                    for (int var8 = var4 - 1; var8 <= var4 + 1; ++var8) {
-                        if (var1.getBlockId(var6, var7, var8) == this.id) {
-                            this._removeArea(var1, var6, var7, var8);
-                        }
+        for (int bY = y - 1; bY <= y + 1; ++bY) {
+            for (int bZ = z - 1; bZ <= z + 1; ++bZ) {
+                for (int bX = x - 1; bX <= x + 1; ++bX) {
+                    if (world.getBlockId(bX, bY, bZ) == this.id) {
+                        this._removeArea(world, bX, bY, bZ);
                     }
                 }
             }
         }
-
     }
 
-    public void onEntityCollision(World var1, int var2, int var3, int var4, Entity var5) {
-        if (!AC_DebugMode.active) {
-            AC_TileEntityTrigger var6 = (AC_TileEntityTrigger) var1.getBlockEntity(var2, var3, var4);
-            if (var5 instanceof PlayerEntity) {
-                if (!this.isAlreadyActivated(var1, var2, var3, var4)) {
-                    if (!var6.resetOnTrigger) {
-                        ((ExWorld) var1).getTriggerManager().addArea(var2, var3, var4, new AC_TriggerArea(var6.minX, var6.minY, var6.minZ, var6.maxX, var6.maxY, var6.maxZ));
-                    } else {
-                        ExBlock.resetArea(var1, var6.minX, var6.minY, var6.minZ, var6.maxX, var6.maxY, var6.maxZ);
-                    }
-                }
+    public void onEntityCollision(World world, int x, int y, int z, Entity entity) {
+        if (AC_DebugMode.active) {
+            return;
+        }
+        if (!(entity instanceof PlayerEntity)) {
+            return;
+        }
 
-                var6.activated = 2;
+        AC_TileEntityTrigger tileEntity = (AC_TileEntityTrigger) world.getBlockEntity(x, y, z);
+        if (!this.isAlreadyActivated(world, x, y, z)) {
+            if (!tileEntity.resetOnTrigger) {
+                ((ExWorld) world).getTriggerManager().addArea(x, y, z, new AC_TriggerArea(tileEntity.minX, tileEntity.minY, tileEntity.minZ, tileEntity.maxX, tileEntity.maxY, tileEntity.maxZ));
+            } else {
+                ExBlock.resetArea(world, tileEntity.minX, tileEntity.minY, tileEntity.minZ, tileEntity.maxX, tileEntity.maxY, tileEntity.maxZ);
             }
+        }
+        tileEntity.activated = 2;
+    }
 
+    public void deactivateTrigger(World world, int x, int y, int z) {
+        if (this.isAlreadyActivated(world, x, y, z)) {
+            return;
+        }
+
+        AC_TileEntityTrigger tileEntity = (AC_TileEntityTrigger) world.getBlockEntity(x, y, z);
+        if (!tileEntity.resetOnTrigger) {
+            this.removeArea(world, x, y, z);
         }
     }
 
-    public void deactivateTrigger(World var1, int var2, int var3, int var4) {
-        AC_TileEntityTrigger var5 = (AC_TileEntityTrigger) var1.getBlockEntity(var2, var3, var4);
-        if (!this.isAlreadyActivated(var1, var2, var3, var4) && !var5.resetOnTrigger) {
-            this.removeArea(var1, var2, var3, var4);
+    public void setTriggerToSelection(World world, int x, int y, int z) {
+        AC_TileEntityMinMax tileEntity = (AC_TileEntityMinMax) world.getBlockEntity(x, y, z);
+        if (tileEntity.minX == AC_ItemCursor.minX &&
+            tileEntity.minY == AC_ItemCursor.minY &&
+            tileEntity.minZ == AC_ItemCursor.minZ &&
+            tileEntity.maxX == AC_ItemCursor.maxX &&
+            tileEntity.maxY == AC_ItemCursor.maxY &&
+            tileEntity.maxZ == AC_ItemCursor.maxZ) {
+            return;
         }
 
-    }
+        tileEntity.minX = AC_ItemCursor.minX;
+        tileEntity.minY = AC_ItemCursor.minY;
+        tileEntity.minZ = AC_ItemCursor.minZ;
+        tileEntity.maxX = AC_ItemCursor.maxX;
+        tileEntity.maxY = AC_ItemCursor.maxY;
+        tileEntity.maxZ = AC_ItemCursor.maxZ;
 
-    public void setTriggerToSelection(World var1, int var2, int var3, int var4) {
-        AC_TileEntityMinMax var5 = (AC_TileEntityMinMax) var1.getBlockEntity(var2, var3, var4);
-        if (var5.minX != AC_ItemCursor.minX || var5.minY != AC_ItemCursor.minY || var5.minZ != AC_ItemCursor.minZ || var5.maxX != AC_ItemCursor.maxX || var5.maxY != AC_ItemCursor.maxY || var5.maxZ != AC_ItemCursor.maxZ) {
-            var5.minX = AC_ItemCursor.minX;
-            var5.minY = AC_ItemCursor.minY;
-            var5.minZ = AC_ItemCursor.minZ;
-            var5.maxX = AC_ItemCursor.maxX;
-            var5.maxY = AC_ItemCursor.maxY;
-            var5.maxZ = AC_ItemCursor.maxZ;
-
-            for (int var6 = var2 - 1; var6 <= var2 + 1; ++var6) {
-                for (int var7 = var3 - 1; var7 <= var3 + 1; ++var7) {
-                    for (int var8 = var4 - 1; var8 <= var4 + 1; ++var8) {
-                        if (var1.getBlockId(var6, var7, var8) == this.id) {
-                            this.setTriggerToSelection(var1, var6, var7, var8);
-                        }
-                    }
-                }
-            }
-
-        }
-    }
-
-    public void setTriggerReset(World var1, int var2, int var3, int var4, boolean var5) {
-        AC_TileEntityTrigger var6 = (AC_TileEntityTrigger) var1.getBlockEntity(var2, var3, var4);
-        if (var6.resetOnTrigger != var5) {
-            var6.resetOnTrigger = var5;
-
-            for (int var7 = var2 - 1; var7 <= var2 + 1; ++var7) {
-                for (int var8 = var3 - 1; var8 <= var3 + 1; ++var8) {
-                    for (int var9 = var4 - 1; var9 <= var4 + 1; ++var9) {
-                        if (var1.getBlockId(var7, var8, var9) == this.id) {
-                            this.setTriggerReset(var1, var7, var8, var9, var5);
-                        }
+        for (int bY = y - 1; bY <= y + 1; ++bY) {
+            for (int bZ = z - 1; bZ <= z + 1; ++bZ) {
+                for (int bX = x - 1; bX <= x + 1; ++bX) {
+                    if (world.getBlockId(bX, bY, bZ) == this.id) {
+                        this.setTriggerToSelection(world, bX, bY, bZ);
                     }
                 }
             }
-
         }
     }
 
-    public boolean canUse(World var1, int var2, int var3, int var4, PlayerEntity var5) {
-        if (AC_DebugMode.active && var5.getHeldItem() != null && var5.getHeldItem().itemId == AC_Items.cursor.id) {
-            AC_TileEntityTrigger var6 = (AC_TileEntityTrigger) var1.getBlockEntity(var2, var3, var4);
-            AC_GuiTrigger.showUI(var1, var2, var3, var4, var6);
+    public void setTriggerReset(World world, int x, int y, int z, boolean reset) {
+        AC_TileEntityTrigger tileEntity = (AC_TileEntityTrigger) world.getBlockEntity(x, y, z);
+        if (tileEntity.resetOnTrigger == reset) {
+            return;
         }
+        tileEntity.resetOnTrigger = reset;
 
+        for (int bY = y - 1; bY <= y + 1; ++bY) {
+            for (int bZ = z - 1; bZ <= z + 1; ++bZ) {
+                for (int bX = x - 1; bX <= x + 1; ++bX) {
+                    if (world.getBlockId(bX, bY, bZ) == this.id) {
+                        this.setTriggerReset(world, bX, bY, bZ, reset);
+                    }
+                }
+            }
+        }
+    }
+
+    public boolean canUse(World world, int x, int y, int z, PlayerEntity player) {
+        if (AC_DebugMode.active && player.getHeldItem() != null && player.getHeldItem().itemId == AC_Items.cursor.id) {
+            AC_TileEntityTrigger tileEntity = (AC_TileEntityTrigger) world.getBlockEntity(x, y, z);
+            AC_GuiTrigger.showUI(world, x, y, z, tileEntity);
+        }
         return true;
     }
 
-    public void reset(World var1, int var2, int var3, int var4, boolean var5) {
-        AC_TileEntityTrigger var6 = (AC_TileEntityTrigger) var1.getBlockEntity(var2, var3, var4);
-        var6.activated = 0;
+    public void reset(World world, int x, int y, int z, boolean var5) {
+        AC_TileEntityTrigger tileEntity = (AC_TileEntityTrigger) world.getBlockEntity(x, y, z);
+        tileEntity.activated = 0;
     }
 }
