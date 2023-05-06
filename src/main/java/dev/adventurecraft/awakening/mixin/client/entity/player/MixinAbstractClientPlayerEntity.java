@@ -26,7 +26,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.Iterator;
 import java.util.List;
 
 @Mixin(AbstractClientPlayerEntity.class)
@@ -86,6 +85,18 @@ public abstract class MixinAbstractClientPlayerEntity extends PlayerEntity imple
         if (!press) {
             ci.cancel();
         }
+    }
+
+    @Redirect(
+        method = "method_1373",
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/client/PlayerKeypressManager;sneak:Z"))
+    private boolean defaultSneakIfNullKeyManager(PlayerKeypressManager instance) {
+        if (instance == null) {
+            return false;
+        }
+        return instance.sneak;
     }
 
     public void displayGUIPalette() {

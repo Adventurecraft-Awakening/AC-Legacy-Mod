@@ -798,7 +798,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         double threshold = 0.001D;
         if (entity.jumping) return true;
         if (entity.method_1373()) return true;
-        if ((double) entity.lastHandSwingProgress > threshold) return true;
+        if (entity.lastHandSwingProgress > threshold) return true;
         if (this.client.mouseHelper.xDelta != 0) return true;
         if (this.client.mouseHelper.yDelta != 0) return true;
         if (Math.abs(entity.x - entity.prevX) > threshold) return true;

@@ -43,7 +43,6 @@ public class AC_GuiMapSelect extends Screen {
         }
 
         this.client.texturePackManager.findTexturePacks();
-        Minecraft var10003 = this.client;
         this.fileLocation = (new File(Minecraft.getGameDirectory(), "texturepacks")).getAbsolutePath();
         this.field_6459_i = 32;
         this.field_6458_j = this.height - 58 + 4;
@@ -52,35 +51,36 @@ public class AC_GuiMapSelect extends Screen {
     }
 
     protected void buttonClicked(ButtonWidget var1) {
-        if (var1.active) {
-            if (var1.id == 6) {
-                if (this.selectedMap == null) {
-                    this.client.openScreen(this.parent);
-                } else {
-                    if (this.saveName != null) {
-                        if (this.saveName.equals("")) {
-                            File var2 = Minecraft.getGameDirectory();
-                            File var3 = new File(var2, "saves");
-                            int var4 = 1;
+        if (!var1.active) {
+            return;
+        }
 
-                            File var5;
-                            do {
-                                this.saveName = String.format("%s - Save %d", this.selectedMap.name, var4);
-                                var5 = new File(var3, this.saveName);
-                                ++var4;
-                            } while (var5.exists());
-                        }
+        if (var1.id == 6) {
+            if (this.selectedMap == null) {
+                this.client.openScreen(this.parent);
+            } else {
+                if (this.saveName != null) {
+                    if (this.saveName.equals("")) {
+                        File var2 = Minecraft.getGameDirectory();
+                        File var3 = new File(var2, "saves");
+                        int var4 = 1;
 
-                        ((ExMinecraft) this.client).saveMapUsed(this.saveName, this.selectedMap.name);
+                        File var5;
+                        do {
+                            this.saveName = String.format("%s - Save %d", this.selectedMap.name, var4);
+                            var5 = new File(var3, this.saveName);
+                            ++var4;
+                        } while (var5.exists());
                     }
 
-                    this.client.interactionManager = new SingleplayerInteractionManager(this.client);
-                    ((ExMinecraft) this.client).startWorld(this.saveName, this.saveName, 0L, this.selectedMap.name);
+                    ((ExMinecraft) this.client).saveMapUsed(this.saveName, this.selectedMap.name);
                 }
-            } else if (var1.id == 7) {
-                this.client.openScreen(new GuiCreateNewMap(this));
-            }
 
+                this.client.interactionManager = new SingleplayerInteractionManager(this.client);
+                ((ExMinecraft) this.client).startWorld(this.saveName, this.saveName, 0L, this.selectedMap.name);
+            }
+        } else if (var1.id == 7) {
+            this.client.openScreen(new GuiCreateNewMap(this));
         }
     }
 
