@@ -41,32 +41,39 @@ public abstract class MixinAbstractClientPlayerEntity extends PlayerEntity imple
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(Minecraft minecraft, World world, Session session, int dimensionId, CallbackInfo ci) {
-        //this.name = world.properties.playerName; TODO
+        this.name = ((ExWorldProperties) world.properties).getPlayerName();
         movementSpeed = 1.0f;
     }
 
     @Redirect(method = "tickHandSwing", at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/client/PlayerKeypressManager;perpendicularMovement:F"))
+        value = "FIELD",
+        target = "Lnet/minecraft/client/PlayerKeypressManager;perpendicularMovement:F"))
     private float multiplyPerpendicularMovementBySpeed(PlayerKeypressManager instance) {
         return this.movementSpeed * instance.perpendicularMovement;
     }
 
-    @Redirect(method = "tickHandSwing", at = @At(
+    @Redirect(
+        method = "tickHandSwing",
+        at = @At(
             value = "FIELD",
             target = "Lnet/minecraft/client/PlayerKeypressManager;parallelMovement:F"))
     private float multiplyParallelMovementBySpeed(PlayerKeypressManager instance) {
         return this.movementSpeed * instance.parallelMovement;
     }
 
-    @Redirect(method = "updateDespawnCounter", at = @At(
+    @Redirect(
+        method = "updateDespawnCounter",
+        at = @At(
             value = "FIELD",
-            target = "Lnet/minecraft/world/World;isClient:Z"))
+            target = "Lnet/minecraft/world/World;isClient:Z",
+            ordinal = 1))
     private boolean disableDimensionSwitch(World instance) {
         return true;
     }
 
-    @Redirect(method = "updateDespawnCounter", at = @At(
+    @Redirect(
+        method = "updateDespawnCounter",
+        at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/entity/player/AbstractClientPlayerEntity;method_1372(DDD)Z"))
     private boolean disableMethod_1372(AbstractClientPlayerEntity instance, double e, double f, double v) {
@@ -153,7 +160,7 @@ public abstract class MixinAbstractClientPlayerEntity extends PlayerEntity imple
                         this.client.overlay.addChatMessage("/cameraadd must have a time specified for the point");
                         return;
                     } catch (NumberFormatException var7) {
-                        this.client.overlay.addChatMessage("\'" + var1.substring(11) + "\' is not a valid number");
+                        this.client.overlay.addChatMessage("'" + var1.substring(11) + "' is not a valid number");
                         return;
                     }
 

@@ -90,6 +90,7 @@
     "item.MixinItemStack",
     "util.io.MixinCompoundTag",
     "world.MixinWorld",
+    "world.MixinWorldManager",
     "world.MixinWorldPopulationRegion",
     "world.MixinWorldProperties",
     "world.chunk.MixinChunk",

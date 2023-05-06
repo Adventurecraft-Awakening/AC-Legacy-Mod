@@ -264,6 +264,11 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     }
 
     @Override
+    public String getPlayerName() {
+        return this.playerName;
+    }
+
+    @Override
     public float[] getBrightness() {
         return this.brightness;
     }

@@ -27,7 +27,7 @@ public class AC_Blocks {
     public static final AC_BlockMusic musicTriggered = (AC_BlockMusic) (new AC_BlockMusic(165, 9)).setHardness(1.5F).setBlastResistance(10.0F).setSounds(Block.PISTON_SOUNDS).setTranslationKey("music");
     public static final Block pushableBlock = (new AC_BlockPushable(166, 212, Material.STONE)).setHardness(2.0F).setBlastResistance(10.0F).setSounds(Block.PISTON_SOUNDS).setTranslationKey("pushable");
     public static final AC_BlockTimer timer = (AC_BlockTimer) (new AC_BlockTimer(167, 8)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("timer");
-    //public static final AC_BlockMessage message = (AC_BlockMessage) (new AC_BlockMessage(168, 7)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("message"); TODO
+    public static final AC_BlockMessage message = (AC_BlockMessage) (new AC_BlockMessage(168, 7)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("message");
     public static final Block fan = (new AC_BlockFan(169, 184, true)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("fan");
     public static final Block camera = (new AC_BlockCamera(170, 6)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("camera");
     public static final Block lightBulb = (new AC_BlockLightBulb(171, 14)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("lightBulb");
@@ -80,15 +80,17 @@ public class AC_Blocks {
     public static final Block slopes3 = (new AC_BlockSlope(240, Block.COBBLESTONE, 200)).setTranslationKey("slopes");
     public static final Block slopes4 = (new AC_BlockSlope(241, Block.COBBLESTONE, 204)).setTranslationKey("slopes");
 
-    public static void convertACVersion(byte[] var0) {
-        if (var0 != null) {
-            for (int var1 = 0; var1 < var0.length; ++var1) {
-                int var2 = ExChunk.translate256(var0[var1]);
-                if (var2 >= 100 && var2 <= 122) {
-                    var0[var1] = (byte) ExChunk.translate128(var2 + 50);
-                } else if (var2 >= 152 && var2 <= 155) {
-                    var0[var1] = (byte) ExChunk.translate128(var2 + 21);
-                }
+    public static void convertACVersion(byte[] blocks) {
+        if (blocks == null) {
+            return;
+        }
+
+        for (int i = 0; i < blocks.length; ++i) {
+            int id = ExChunk.translate256(blocks[i]);
+            if (id >= 100 && id <= 122) {
+                blocks[i] = (byte) ExChunk.translate128(id + 50);
+            } else if (id >= 152 && id <= 155) {
+                blocks[i] = (byte) ExChunk.translate128(id + 21);
             }
         }
     }
@@ -108,7 +110,7 @@ public class AC_Blocks {
         ((ExBlock) musicTriggered).setTextureNum(2);
         ((ExBlock) pushableBlock).setTextureNum(3);
         ((ExBlock) timer).setTextureNum(2);
-        //((ExBlock) message).setTextureNum(2); TODO
+        ((ExBlock) message).setTextureNum(2);
         ((ExBlock) camera).setTextureNum(2);
         ((ExBlock) lightBulb).setTextureNum(2);
         //((ExBlock) script).setTextureNum(2); TODO

@@ -32,24 +32,24 @@ public class AC_TileEntityStorage extends AC_TileEntityMinMax {
     }
 
     public void saveCurrentArea() {
-        int var1 = 0;
+        int blockIndex = 0;
         this.tileEntities.clear();
 
-        for (int var2 = this.minX; var2 <= this.maxX; ++var2) {
-            for (int var3 = this.minZ; var3 <= this.maxZ; ++var3) {
-                for (int var4 = this.minY; var4 <= this.maxY; ++var4) {
-                    int var5 = this.world.getBlockId(var2, var4, var3);
-                    int var6 = this.world.getBlockMeta(var2, var4, var3);
-                    this.blockIDs[var1] = (byte) ExChunk.translate128(var5);
-                    this.metadatas[var1] = (byte) var6;
-                    BlockEntity var7 = this.world.getBlockEntity(var2, var4, var3);
-                    if (var7 != null) {
-                        CompoundTag var8 = new CompoundTag();
-                        var7.writeNBT(var8);
-                        this.tileEntities.add(var8);
+        for (int x = this.minX; x <= this.maxX; ++x) {
+            for (int z = this.minZ; z <= this.maxZ; ++z) {
+                for (int y = this.minY; y <= this.maxY; ++y) {
+                    int id = this.world.getBlockId(x, y, z);
+                    int meta = this.world.getBlockMeta(x, y, z);
+                    this.blockIDs[blockIndex] = (byte) ExChunk.translate128(id);
+                    this.metadatas[blockIndex] = (byte) meta;
+                    BlockEntity tileEntity = this.world.getBlockEntity(x, y, z);
+                    if (tileEntity != null) {
+                        CompoundTag tag = new CompoundTag();
+                        tileEntity.writeNBT(tag);
+                        this.tileEntities.add(tag);
                     }
 
-                    ++var1;
+                    ++blockIndex;
                 }
             }
         }
@@ -59,53 +59,51 @@ public class AC_TileEntityStorage extends AC_TileEntityMinMax {
 
     public void loadCurrentArea() {
         if (this.blockIDs != null) {
-            int var1 = 0;
+            int blockIndex = 0;
 
-            for (int var2 = this.minX; var2 <= this.maxX; ++var2) {
-                for (int var3 = this.minZ; var3 <= this.maxZ; ++var3) {
-                    for (int var4 = this.minY; var4 <= this.maxY; ++var4) {
-                        int var5 = this.world.getBlockId(var2, var4, var3);
-                        ((ExWorld) this.world).cancelBlockUpdate(var2, var4, var3, var5);
-                        int var6 = ExChunk.translate256(this.blockIDs[var1]);
-                        byte var7 = this.metadatas[var1];
-                        this.world.placeBlockWithMetaData(var2, var4, var3, var6, var7);
-                        this.world.removeBlockEntity(var2, var4, var3);
-                        ++var1;
+            for (int x = this.minX; x <= this.maxX; ++x) {
+                for (int z = this.minZ; z <= this.maxZ; ++z) {
+                    for (int y = this.minY; y <= this.maxY; ++y) {
+                        int id = this.world.getBlockId(x, y, z);
+                        ((ExWorld) this.world).cancelBlockUpdate(x, y, z, id);
+                        int id256 = ExChunk.translate256(this.blockIDs[blockIndex]);
+                        byte meta = this.metadatas[blockIndex];
+                        this.world.placeBlockWithMetaData(x, y, z, id256, meta);
+                        this.world.removeBlockEntity(x, y, z);
+                        ++blockIndex;
                     }
                 }
             }
 
-            for (CompoundTag var9 : this.tileEntities) {
-                BlockEntity var10 = ofNBT(var9);
-                this.world.setBlockEntity(var10.x, var10.y, var10.z, var10);
+            for (CompoundTag tag : this.tileEntities) {
+                BlockEntity tileEntity = ofNBT(tag);
+                this.world.setBlockEntity(tileEntity.x, tileEntity.y, tileEntity.z, tileEntity);
             }
-
         }
     }
 
-    public void readNBT(CompoundTag var1) {
-        super.readNBT(var1);
-        if (var1.containsKey("blockIDs")) {
-            this.blockIDs = var1.getByteArray("blockIDs");
+    public void readNBT(CompoundTag tag) {
+        super.readNBT(tag);
+        if (tag.containsKey("blockIDs")) {
+            this.blockIDs = tag.getByteArray("blockIDs");
         }
 
-        if (var1.containsKey("metadatas")) {
-            this.metadatas = var1.getByteArray("metadatas");
+        if (tag.containsKey("metadatas")) {
+            this.metadatas = tag.getByteArray("metadatas");
         }
 
-        if (var1.containsKey("numTiles")) {
+        if (tag.containsKey("numTiles")) {
             this.tileEntities.clear();
-            int var2 = var1.getInt("numTiles");
+            int tileCount = tag.getInt("numTiles");
 
-            for (int var3 = 0; var3 < var2; ++var3) {
-                this.tileEntities.add(var1.getCompoundTag(String.format("tile%d", var3)));
+            for (int i = 0; i < tileCount; ++i) {
+                this.tileEntities.add(tag.getCompoundTag(String.format("tile%d", i)));
             }
         }
 
-        if (!var1.containsKey("acVersion") && ((ExWorldProperties) Minecraft.instance.world.properties).isOriginallyFromAC()) {
+        if (!tag.containsKey("acVersion") && ((ExWorldProperties) Minecraft.instance.world.properties).isOriginallyFromAC()) {
             AC_Blocks.convertACVersion(this.blockIDs);
         }
-
     }
 
     public void writeNBT(CompoundTag var1) {
@@ -119,16 +117,16 @@ public class AC_TileEntityStorage extends AC_TileEntityMinMax {
         }
 
         if (!this.tileEntities.isEmpty()) {
-            int var2 = 0;
+            int tileIndex = 0;
 
-            for (CompoundTag var4 : this.tileEntities) {
-                var1.put(String.format("tile%d", var2), (AbstractTag) var4);
-                ++var2;
+            for (CompoundTag tag : this.tileEntities) {
+                var1.put(String.format("tile%d", tileIndex), (AbstractTag) tag);
+                ++tileIndex;
             }
 
-            var1.put("numTiles", var2);
+            var1.put("numTiles", tileIndex);
         }
 
-        var1.put("acVersion", (int) 0);
+        var1.put("acVersion", 0);
     }
 }

@@ -12,6 +12,8 @@ public interface ExWorldProperties {
 
     String getPlayingMusic();
 
+    String getPlayerName();
+
     float[] getBrightness();
 
     double getTempOffset();

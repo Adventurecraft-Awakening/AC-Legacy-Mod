@@ -16,7 +16,6 @@ public class AC_TileEntityTrigger extends AC_TileEntityMinMax {
                 AC_Blocks.triggerBlock.deactivateTrigger(this.world, this.x, this.y, this.z);
             }
         }
-
     }
 
     public void readNBT(CompoundTag var1) {

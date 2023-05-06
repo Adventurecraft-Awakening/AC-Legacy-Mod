@@ -34,22 +34,21 @@ public class AC_BlockMessage extends BlockWithEntity {
         return true;
     }
 
-    public void onTriggerActivated(World var1, int var2, int var3, int var4) {
-        AC_TileEntityMessage var5 = (AC_TileEntityMessage) var1.getBlockEntity(var2, var3, var4);
-        if (!var5.message.equals("")) {
-            Minecraft.instance.overlay.addChatMessage(var5.message);
+    public void onTriggerActivated(World world, int x, int y, int z) {
+        AC_TileEntityMessage tileEntity = (AC_TileEntityMessage) world.getBlockEntity(x, y, z);
+        if (!tileEntity.message.equals("")) {
+            Minecraft.instance.overlay.addChatMessage(tileEntity.message);
         }
 
-        if (!var5.sound.equals("")) {
-            var1.playSound((double) var2 + 0.5D, (double) var3 + 0.5D, (double) var4 + 0.5D, var5.sound, 1.0F, 1.0F);
+        if (!tileEntity.sound.equals("")) {
+            world.playSound(x + 0.5D, y + 0.5D, z + 0.5D, tileEntity.sound, 1.0F, 1.0F);
         }
-
     }
 
-    public boolean canUse(World var1, int var2, int var3, int var4, PlayerEntity var5) {
+    public boolean canUse(World world, int x, int y, int z, PlayerEntity player) {
         if (AC_DebugMode.active) {
-            AC_TileEntityMessage var6 = (AC_TileEntityMessage) var1.getBlockEntity(var2, var3, var4);
-            AC_GuiMessage.showUI(var1, var6);
+            AC_TileEntityMessage tileEntity = (AC_TileEntityMessage) world.getBlockEntity(x, y, z);
+            AC_GuiMessage.showUI(world, tileEntity);
             return true;
         } else {
             return false;
