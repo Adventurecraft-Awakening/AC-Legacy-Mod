@@ -3,6 +3,7 @@ package dev.adventurecraft.awakening.mixin.entity.projectile;
 import dev.adventurecraft.awakening.common.AC_Blocks;
 import dev.adventurecraft.awakening.extension.block.ExLadderBlock;
 import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
+import dev.adventurecraft.awakening.extension.entity.projectile.ExArrowEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.mixin.entity.MixinEntity;
 import net.minecraft.block.Block;
@@ -23,7 +24,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.List;
 
 @Mixin(ArrowEntity.class)
-public abstract class MixinArrowEntity extends MixinEntity {
+public abstract class MixinArrowEntity extends MixinEntity implements ExArrowEntity {
 
     @Shadow
     private int blockX;
@@ -209,5 +210,15 @@ public abstract class MixinArrowEntity extends MixinEntity {
             this.prevYaw += 180.0F;
             this.ticksFlying = 0;
         }
+    }
+
+    @Override
+    public int getAttackStrength() {
+        return this.attackStrength;
+    }
+
+    @Override
+    public void setAttackStrength(int value) {
+        this.attackStrength = value;
     }
 }

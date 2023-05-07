@@ -35,6 +35,8 @@ accessible field net/minecraft/entity/Entity field_1611 I
 accessible field net/minecraft/entity/Entity fallDistance F
 accessible method net/minecraft/entity/Entity setRotation (FF)V
 
+accessible field net/minecraft/entity/EntityRegistry CLASS_TO_STRING_ID Ljava/util/Map;
+
 accessible field net/minecraft/entity/ai/pathing/EntityPath field_2690 I
 mutable field net/minecraft/entity/ai/pathing/EntityPath field_2690 I
 accessible field net/minecraft/entity/ai/pathing/EntityPath field_2691 [Lnet/minecraft/entity/ai/pathing/PathNode;

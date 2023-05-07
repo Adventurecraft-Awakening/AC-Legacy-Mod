@@ -26,6 +26,6 @@ public abstract class MixinGhastEntity extends MixinFlyingEntity {
             target = "Lnet/minecraft/world/World;spawnEntity(Lnet/minecraft/entity/Entity;)Z",
             shift = At.Shift.BEFORE))
     private void modifyAttackStrength(CallbackInfo ci, @Local FireballEntity fireball) {
-        ((ExFireballEntity) fireball).setRadius(this.attackStrength);
+        ((ExFireballEntity) fireball).setRadius(this.getAttackStrength());
     }
 }
