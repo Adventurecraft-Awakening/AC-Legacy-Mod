@@ -74,7 +74,7 @@ public abstract class MixinTitleScreen extends Screen {
         } else if (var1.id == 6) {
             this.client.openScreen(new AC_GuiMapSelect(this, ""));
         } else if (var1.id == 7) {
-            this.client.openScreen(new AC_GuiMapSelect(this, (String) null));
+            this.client.openScreen(new AC_GuiMapSelect(this, null));
         }
     }
 
