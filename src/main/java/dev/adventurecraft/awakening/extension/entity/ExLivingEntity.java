@@ -2,6 +2,8 @@ package dev.adventurecraft.awakening.extension.entity;
 
 public interface ExLivingEntity {
 
+    boolean protectedByShield(double x, double y, double z);
+
     float getFov();
 
     public void setFov(float value);
@@ -9,6 +11,8 @@ public interface ExLivingEntity {
     float getExtraFov();
 
     void setExtraFov(float value);
+
+    double getGravity();
 
     int getMaxHealth();
 

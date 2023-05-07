@@ -195,11 +195,10 @@ public abstract class MixinArrowEntity extends MixinEntity {
     }
 
     public void handleHitEntity(HitResult var1) {
-        // TODO:
-        /*if (var1.field_1989 instanceof LivingEntity && ((ExLivingEntity) var1.field_1989).protectedByShield(this.prevX, this.prevY, this.prevZ)) {
+        if (var1.field_1989 instanceof LivingEntity && ((ExLivingEntity) var1.field_1989).protectedByShield(this.prevX, this.prevY, this.prevZ)) {
             this.world.playSound((Entity) (Object) this, "random.drr", 1.0F, 1.2F / (this.rand.nextFloat() * 0.2F + 0.9F));
             this.remove();
-        } else */if (var1.field_1989.damage(this.owner, this.attackStrength)) {
+        } else if (var1.field_1989.damage(this.owner, this.attackStrength)) {
             this.world.playSound((Entity) (Object) this, "random.drr", 1.0F, 1.2F / (this.rand.nextFloat() * 0.2F + 0.9F));
             this.remove();
         } else {

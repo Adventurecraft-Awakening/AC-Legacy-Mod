@@ -77,11 +77,15 @@ public abstract class MixinEntity implements ExEntity {
     @Shadow
     public float field_1635;
     @Shadow
+    public boolean field_1642;
+    @Shadow
     public float fallDistance;
     @Shadow
     public int field_1611;
     @Shadow
     protected Random rand;
+    @Shadow
+    public int field_1613;
     @Shadow
     public int air;
 
@@ -126,6 +130,15 @@ public abstract class MixinEntity implements ExEntity {
 
     @Shadow
     public abstract boolean method_1335();
+
+    @Shadow
+    protected abstract void setAttacked();
+
+    @Shadow
+    public abstract boolean method_1344(double d, double e, double f);
+
+    @Shadow
+    public abstract boolean method_1373();
 
     @Inject(method = "move", at = @At(
         value = "FIELD",
