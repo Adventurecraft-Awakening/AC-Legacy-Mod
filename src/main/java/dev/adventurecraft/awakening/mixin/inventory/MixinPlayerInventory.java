@@ -4,6 +4,7 @@ import dev.adventurecraft.awakening.common.AC_IItemReload;
 import dev.adventurecraft.awakening.common.AC_Items;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
+import dev.adventurecraft.awakening.extension.item.ExArmorItem;
 import dev.adventurecraft.awakening.extension.item.ExItem;
 import dev.adventurecraft.awakening.extension.item.ExItemStack;
 import net.fabricmc.api.EnvType;
@@ -248,6 +249,30 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
 
         if (var2 != null) {
             ((ExItem) Item.byId[var2.itemId]).onAddToSlot(this.player, var3, var2.getMeta());
+        }
+    }
+
+    @Overwrite
+    public int getArmorValue() {
+        float maxDamage = 0.0F;
+        int remaining = 0;
+        int durability = 0;
+
+        for (ItemStack item : this.armor) {
+            if (item != null && item.getItem() instanceof ArmorItem) {
+                int itemDurability = item.getDurability();
+                int itemDamage = item.getDamage();
+                int itemRemaining = itemDurability - itemDamage;
+                remaining += itemRemaining;
+                durability += itemDurability;
+                maxDamage += ((ExArmorItem) item.getItem()).getMaxDamage();
+            }
+        }
+
+        if (durability == 0) {
+            return 0;
+        } else {
+            return (int) ((maxDamage - 1.0F) * (float) remaining) / durability + 1;
         }
     }
 

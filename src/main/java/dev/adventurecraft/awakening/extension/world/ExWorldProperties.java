@@ -87,4 +87,6 @@ public interface ExWorldProperties {
     void setOverlay(String value);
 
     boolean isOriginallyFromAC();
+
+    boolean isInventoryCraftingAllowed();
 }

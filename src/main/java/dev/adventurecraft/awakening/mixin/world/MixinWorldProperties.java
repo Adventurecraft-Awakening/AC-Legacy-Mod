@@ -370,7 +370,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
 
     @Override
     public boolean isOverrideFogColor() {
-        return overrideFogColor;
+        return this.overrideFogColor;
     }
 
     @Override
@@ -440,7 +440,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
 
     @Override
     public boolean isOverrideFogDensity() {
-        return overrideFogDensity;
+        return this.overrideFogDensity;
     }
 
     @Override
@@ -450,7 +450,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
 
     @Override
     public float getFogStart() {
-        return fogStart;
+        return this.fogStart;
     }
 
     @Override
@@ -460,7 +460,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
 
     @Override
     public float getFogEnd() {
-        return fogEnd;
+        return this.fogEnd;
     }
 
     @Override
@@ -480,6 +480,11 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
 
     @Override
     public boolean isOriginallyFromAC() {
-        return originallyFromAC;
+        return this.originallyFromAC;
+    }
+
+    @Override
+    public boolean isInventoryCraftingAllowed() {
+        return this.allowsInventoryCrafting;
     }
 }
