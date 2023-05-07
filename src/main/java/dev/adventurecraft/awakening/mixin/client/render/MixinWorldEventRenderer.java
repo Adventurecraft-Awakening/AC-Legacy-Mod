@@ -718,21 +718,20 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             avgFrameTime = ((ExMinecraft) Minecraft.instance).getAvgFrameTime();
         }
 
-        int var10;
-        for (var10 = 0; var10 < this.field_1807.size(); ++var10) {
-            class_66 var11 = this.field_1807.get(var10);
-            if (var11 == null) {
+        for (int var10 = 0; var10 < this.field_1807.size(); ++var10) {
+            class_66 viz = this.field_1807.get(var10);
+            if (viz == null) {
                 continue;
             }
 
             ++var6;
-            if (!var11.field_249) {
+            if (!viz.field_249) {
                 this.field_1807.set(var10, null);
             } else {
-                float var12 = var11.method_299(var1);
+                float var12 = viz.method_299(var1);
                 if (var12 <= 256.0F && this.isActingNow()) {
-                    var11.method_296();
-                    var11.field_249 = false;
+                    viz.method_296();
+                    viz.field_249 = false;
                     this.field_1807.set(var10, null);
                     ++var3;
                 } else {
@@ -740,16 +739,16 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
                         break;
                     }
 
-                    if (!var11.field_243) {
+                    if (!viz.field_243) {
                         var12 *= var5;
                     }
 
                     if (var7 == null) {
-                        var7 = var11;
+                        var7 = viz;
                         var8 = var12;
                         var9 = var10;
                     } else if (var12 < var8) {
-                        var7 = var11;
+                        var7 = viz;
                         var8 = var12;
                         var9 = var10;
                     }
@@ -757,12 +756,11 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             }
 
             // TODO: investigate if this should be here. Optifine messed with this method a lot.
-            if (AC_PlayerTorch.isTorchActive() && (var9 >= 3 || var10 > 40000000L || var9 >= 2 && var10 > 16666666L)) {
-                break;
-            }
+            //if (AC_PlayerTorch.isTorchActive() && (var6 >= 3 || avgFrameTime > 40000000L || var6 >= 2 && avgFrameTime > 16666666L)) {
+            //    break;
+            //}
         }
 
-        int var16;
         if (var7 != null) {
             var7.method_296();
             var7.field_249 = false;
@@ -770,18 +768,18 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             ++var3;
             float var15 = var8 / 5.0F;
 
-            for (var16 = 0; var16 < this.field_1807.size() && var3 < var4; ++var16) {
-                class_66 var17 = this.field_1807.get(var16);
-                if (var17 != null) {
-                    float var13 = var17.method_299(var1);
-                    if (!var17.field_243) {
+            for (int var16 = 0; var16 < this.field_1807.size() && var3 < var4; ++var16) {
+                class_66 viz = this.field_1807.get(var16);
+                if (viz != null) {
+                    float var13 = viz.method_299(var1);
+                    if (!viz.field_243) {
                         var13 *= var5;
                     }
 
                     float var14 = Math.abs(var13 - var8);
                     if (var14 < var15) {
-                        var17.method_296();
-                        var17.field_249 = false;
+                        viz.method_296();
+                        viz.field_249 = false;
                         this.field_1807.set(var16, null);
                         ++var3;
                     }
@@ -794,18 +792,18 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         }
 
         if (this.field_1807.size() > 100 && var6 < this.field_1807.size() * 4 / 5) {
-            var10 = 0;
+            int offset = 0;
 
-            for (var16 = 0; var16 < this.field_1807.size(); ++var16) {
-                class_66 var18 = this.field_1807.get(var16);
-                if (var18 != null && var16 != var10) {
-                    this.field_1807.set(var10, var18);
-                    ++var10;
+            for (int i = 0; i < this.field_1807.size(); ++i) {
+                class_66 viz = this.field_1807.get(i);
+                if (viz != null && i != offset) {
+                    this.field_1807.set(offset, viz);
+                    ++offset;
                 }
             }
 
-            for (var16 = this.field_1807.size() - 1; var16 >= var10; --var16) {
-                this.field_1807.remove(var16);
+            if (this.field_1807.size() > offset) {
+                this.field_1807.subList(offset, this.field_1807.size()).clear();
             }
         }
 

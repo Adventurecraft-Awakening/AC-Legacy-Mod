@@ -39,6 +39,9 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
     protected String type;
 
     @Shadow
+    public float handSwingProgress;
+
+    @Shadow
     public int health;
 
     @Shadow
@@ -154,6 +157,11 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
 
     @Shadow
     public abstract float getHandSwingProgress(float f);
+
+    @Shadow
+    public void baseTick() {
+        throw new AssertionError();
+    }
 
     public boolean method_928(Entity var1) {
         double var2 = -180.0D * Math.atan2(var1.x - this.x, var1.z - this.z) / Math.PI;

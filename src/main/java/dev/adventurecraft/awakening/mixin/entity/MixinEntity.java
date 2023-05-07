@@ -69,6 +69,8 @@ public abstract class MixinEntity implements ExEntity {
     @Shadow
     public boolean field_1624;
     @Shadow
+    public boolean removed;
+    @Shadow
     public float standingEyeHeight;
     @Shadow
     public float width;
@@ -84,6 +86,10 @@ public abstract class MixinEntity implements ExEntity {
     public int field_1611;
     @Shadow
     protected Random rand;
+    @Shadow
+    public int field_1646;
+    @Shadow
+    public int fireTicks;
     @Shadow
     public int field_1613;
     @Shadow
