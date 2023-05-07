@@ -65,6 +65,7 @@
     "client.resource.language.MixinTranslationStorage",
     "client.texture.MixinTextureManager",
     "container.MixinPlayerContainer",
+    "dimension.MixinDimension",
     "entity.MixinBlockEntity",
     "entity.MixinBoatEntity",
     "entity.MixinEntity",
@@ -103,6 +104,8 @@
     "world.MixinWorldPopulationRegion",
     "world.MixinWorldProperties",
     "world.chunk.MixinChunk",
-    "world.chunk.MixinServerChunkCache"
+    "world.chunk.MixinServerChunkCache",
+    "world.gen.MixinBiomeSource",
+    "world.source.MixinOverworldWorldSource"
   ]
 }
