@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.mixin.client.render.block;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.client.options.Config;
+import dev.adventurecraft.awakening.client.options.ConnectedGrassOption;
 import dev.adventurecraft.awakening.common.AC_BlockOverlay;
 import dev.adventurecraft.awakening.common.AC_Blocks;
 import dev.adventurecraft.awakening.common.AC_TileEntityTree;
@@ -258,7 +259,6 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     public boolean method_50(Block var1, int var2, int var3, int var4, float var5, float var6, float var7) {
         this.field_92 = true;
         boolean var8 = Config.getAmbientOcclusionLevel() > 0.0F;
-        boolean fancyGrass = Config.isGrassFancy();
         boolean var10 = false;
         boolean var15 = true;
         boolean var16 = true;
@@ -310,7 +310,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         if (renderBottom || renderEast)
             this.field_77 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(var2, var3 - 1, var4 - 1)];
 
-        boolean doGrassEdges = fancyGrass && var1.id == Block.GRASS.id;
+        boolean doGrassEdges = var1.id == Block.GRASS.id && Config.getConnectedGrassOption() != ConnectedGrassOption.OFF;
         if (doGrassEdges || this.textureOverride >= 0) {
             var20 = false;
             var19 = false;
@@ -952,7 +952,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     @Overwrite
     public boolean method_58(Block var1, int var2, int var3, int var4, float var5, float var6, float var7) {
         this.field_92 = false;
-        boolean fancyGrass = Config.isGrassFancy();
+        boolean doGrassEdges = var1.id == Block.GRASS.id && Config.getConnectedGrassOption() != ConnectedGrassOption.OFF;
         Tessellator var9 = Tessellator.INSTANCE;
         boolean var10 = false;
         float var11 = 0.5F;
@@ -971,7 +971,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         float var24 = var11;
         float var25 = var13;
         float var26 = var14;
-        if (var1 != Block.GRASS) {
+
+        if (var1.id != Block.GRASS.id) {
             var18 = var11 * var5;
             var19 = var13 * var5;
             var20 = var14 * var5;
@@ -1016,7 +1017,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             }
 
             this.renderEastFace(var1, var2, var3, var4, (int) var29);
-            if (fancyGrass && var29 == 3 && this.textureOverride < 0) {
+            if (doGrassEdges && var29 == 3 && this.textureOverride < 0) {
                 var9.color(var19 * var28 * var5, var22 * var28 * var6, var25 * var28 * var7);
                 this.renderEastFace(var1, var2, var3, var4, 38);
             }
@@ -1037,7 +1038,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             }
 
             this.renderWestFace(var1, var2, var3, var4, (int) var29);
-            if (fancyGrass && var29 == 3 && this.textureOverride < 0) {
+            if (doGrassEdges && var29 == 3 && this.textureOverride < 0) {
                 var9.color(var19 * var28 * var5, var22 * var28 * var6, var25 * var28 * var7);
                 this.renderWestFace(var1, var2, var3, var4, 38);
             }
@@ -1058,7 +1059,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             }
 
             this.renderNorthFace(var1, var2, var3, var4, (int) var29);
-            if (fancyGrass && var29 == 3 && this.textureOverride < 0) {
+            if (doGrassEdges && var29 == 3 && this.textureOverride < 0) {
                 var9.color(var20 * var28 * var5, var23 * var28 * var6, var26 * var28 * var7);
                 this.renderNorthFace(var1, var2, var3, var4, 38);
             }
@@ -1079,7 +1080,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             }
 
             this.renderSouthFace(var1, var2, var3, var4, (int) var29);
-            if (fancyGrass && var29 == 3 && this.textureOverride < 0) {
+            if (doGrassEdges && var29 == 3 && this.textureOverride < 0) {
                 var9.color(var20 * var28 * var5, var23 * var28 * var6, var26 * var28 * var7);
                 this.renderSouthFace(var1, var2, var3, var4, 38);
             }
