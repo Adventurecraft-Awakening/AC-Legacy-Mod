@@ -4,12 +4,16 @@ import dev.adventurecraft.awakening.mixin.entity.MixinMobEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.monster.MonsterEntity;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(MonsterEntity.class)
 public abstract class MixinMonsterEntity extends MixinMobEntity {
+
+    @Shadow
+    protected int attackDamage;
 
     @Inject(method = "damage", at = @At("HEAD"))
     private void remindOnHit(Entity var1, int var2, CallbackInfoReturnable<Boolean> cir) {

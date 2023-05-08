@@ -117,7 +117,9 @@ public abstract class MixinEntity implements ExEntity {
     }
 
     @Shadow
-    public abstract void remove();
+    public void remove() {
+        throw new AssertionError();
+    }
 
     @Shadow
     public abstract boolean method_1334();
@@ -145,6 +147,9 @@ public abstract class MixinEntity implements ExEntity {
 
     @Shadow
     public abstract boolean method_1373();
+
+    @Shadow
+    public abstract float distanceTo(Entity arg);
 
     @Inject(method = "move", at = @At(
         value = "FIELD",

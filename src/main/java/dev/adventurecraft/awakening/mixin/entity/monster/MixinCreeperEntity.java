@@ -10,11 +10,7 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(CreeperEntity.class)
-public abstract class MixinCreeperEntity extends MonsterEntity {
-
-    public MixinCreeperEntity(World arg) {
-        super(arg);
-    }
+public abstract class MixinCreeperEntity extends MixinMonsterEntity {
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(World var1, CallbackInfo ci) {
