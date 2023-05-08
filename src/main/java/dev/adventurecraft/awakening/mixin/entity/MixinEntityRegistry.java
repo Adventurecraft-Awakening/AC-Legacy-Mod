@@ -25,11 +25,11 @@ public abstract class MixinEntityRegistry implements ExEntityRegistry {
         register(ThrownEggEntity.class, "Egg", 12);
         register(FireballEntity.class, "Fireball", 13);
         register(FishHookEntity.class, "FishingRod", 14);
-        // register(AC_EntitySkeletonSword.class, "SkeletonSword", 58); TODO
+        //register(AC_EntitySkeletonSword.class, "SkeletonSword", 58); TODO
         register(AC_EntitySkeletonBoss.class, "SkeletonBoss", 59);
         register(AC_EntityBat.class, "Bat", 60);
         register(AC_EntityRat.class, "Rat", 61);
-        //register(AC_EntityNPC.class, "NPC", 62); TODO
+        register(AC_EntityNPC.class, "NPC", 62);
         //register(AC_EntitySkeletonRifle.class, "SkeletonRifle", 63); TODO
         //register(AC_EntitySkeletonShotgun.class, "SkeletonShotgun", 64); TODO
         //register(AC_EntityZombiePistol.class, "ZombiePistol", 65); TODO
@@ -37,6 +37,6 @@ public abstract class MixinEntityRegistry implements ExEntityRegistry {
         register(AC_EntityBoomerang.class, "Boomerang", 1001);
         register(AC_EntityArrowBomb.class, "Bomb Arrow", 1002);
         register(AC_EntityHookshot.class, "Hookshot", 1003);
-        //register(AC_EntityLivingScript.class, "Script", 1004); TODO
+        register(AC_EntityLivingScript.class, "Script", 1004);
     }
 }

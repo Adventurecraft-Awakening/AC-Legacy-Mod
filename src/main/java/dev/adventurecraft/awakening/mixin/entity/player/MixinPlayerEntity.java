@@ -396,4 +396,9 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
     public String getCloakTexture() {
         return this.cloakTexture;
     }
+
+    @Override
+    public void setCloakTexture(String value) {
+        this.cloakTexture = value;
+    }
 }

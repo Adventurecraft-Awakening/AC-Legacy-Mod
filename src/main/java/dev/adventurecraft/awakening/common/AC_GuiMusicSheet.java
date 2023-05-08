@@ -1,5 +1,7 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.extension.client.gui.screen.ExScreen;
+import dev.adventurecraft.awakening.extension.world.ExWorld;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
@@ -7,6 +9,7 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 
 public class AC_GuiMusicSheet extends Screen {
+
     private String instrument;
     private IntArrayList notesPlayed;
     private String notesPlayedString;
@@ -21,12 +24,15 @@ public class AC_GuiMusicSheet extends Screen {
         this.songPlayed = null;
     }
 
+    @Override
     public void tick() {
     }
 
+    @Override
     public void initVanillaScreen() {
     }
 
+    @Override
     protected void keyPressed(char var1, int var2) {
         super.keyPressed(var1, var2);
         if (this.songPlayed == null && var2 >= 2 && var2 <= 11) {
@@ -51,7 +57,6 @@ public class AC_GuiMusicSheet extends Screen {
             this.spaceTaken += 11;
             this.notesPlayed.add(var2);
 
-            /* TODO
             if (var2 == 2) {
                 MusicPlayer.playNoteFromEntity(this.client.world, this.client.player, this.instrument, 'D', var3, 0.5F, 1.0F);
                 this.notesPlayedString = this.notesPlayedString + var1;
@@ -84,18 +89,18 @@ public class AC_GuiMusicSheet extends Screen {
                 this.notesPlayedString = this.notesPlayedString + var1;
             }
 
-            String var4 = this.client.world.musicScripts.executeMusic(this.notesPlayedString);
+            String var4 = ((ExWorld) this.client.world).getMusicScripts().executeMusic(this.notesPlayedString);
             if (var4 != null) {
                 this.songPlayed = var4;
                 this.timeToFade = 2500L + System.currentTimeMillis();
                 this.client.hasFocus = true;
-                this.disableInputGrabbing = true;
+                ((ExScreen) this).setDisabledInputGrabbing(true);
                 this.client.mouseHelper.grabCursor();
             }
-            */
         }
     }
 
+    @Override
     public void render(int var1, int var2, float var3) {
         float var4 = 1.0F;
         int var5 = Integer.MIN_VALUE;
@@ -107,7 +112,7 @@ public class AC_GuiMusicSheet extends Screen {
                 var5 = (int) (128.0F * var7) << 24;
                 var6 = (int) (255.0F * var7) << 24;
                 if ((double) var7 < 0.004D) {
-                    this.client.openScreen((Screen) null);
+                    this.client.openScreen(null);
                     return;
                 }
             }
@@ -155,6 +160,7 @@ public class AC_GuiMusicSheet extends Screen {
         Minecraft.instance.openScreen(new AC_GuiMusicSheet(var0));
     }
 
+    @Override
     public boolean isPauseScreen() {
         return false;
     }

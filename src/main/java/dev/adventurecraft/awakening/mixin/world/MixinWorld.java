@@ -19,6 +19,10 @@ import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunkCache;
+import dev.adventurecraft.awakening.script.EntityDescriptions;
+import dev.adventurecraft.awakening.script.ScopeTag;
+import dev.adventurecraft.awakening.script.Script;
+import dev.adventurecraft.awakening.script.ScriptModel;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.Block;
@@ -45,6 +49,7 @@ import net.minecraft.world.dimension.Dimension;
 import net.minecraft.world.dimension.DimensionData;
 import net.minecraft.world.dimension.McRegionDimensionFile;
 import net.minecraft.world.source.WorldSource;
+import org.mozilla.javascript.Scriptable;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -180,12 +185,10 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     boolean firstTick = true;
     boolean newSave;
     public AC_UndoStack undoStack = new AC_UndoStack();
-    /* TODO
-    public Script script = new Script(this);
+    public Script script = new Script((World) (Object) this);
     public AC_JScriptHandler scriptHandler;
     public AC_MusicScripts musicScripts;
     public Scriptable scope;
-    */
 
     @Shadow
     public abstract int getBlockId(int i, int j, int k);
@@ -328,9 +331,11 @@ public abstract class MixinWorld implements ExWorld, BlockView {
             this.properties.setName(saveName);
         }
 
-        ((ExWorldProperties) this.properties).getWorldGenProps().useImages = AC_TerrainImage.isLoaded;
-        if (((ExWorldProperties) this.properties).getTriggerData() != null) {
-            this.triggerManager.loadFromTagCompound(((ExWorldProperties) this.properties).getTriggerData());
+        var props = (ExWorldProperties) this.properties;
+
+        props.getWorldGenProps().useImages = AC_TerrainImage.isLoaded;
+        if (props.getTriggerData() != null) {
+            this.triggerManager.loadFromTagCompound(props.getTriggerData());
         }
 
         this.dimension.initDimension((World) (Object) this);
@@ -355,25 +360,27 @@ public abstract class MixinWorld implements ExWorld, BlockView {
 
         this.loadMapMusic();
         this.loadMapSounds();
-        /* TODO
-        this.script = new Script(this);
-        if (this.properties.globalScope != null) {
-            ScopeTag.loadScopeFromTag(this.script.globalScope, this.properties.globalScope);
+
+        this.script = new Script((World) (Object) this);
+
+        if (props.getGlobalScope() != null) {
+            ScopeTag.loadScopeFromTag(this.script.globalScope, props.getGlobalScope());
         }
 
-        this.scriptHandler = new AC_JScriptHandler(this, var9);
+        this.scriptHandler = new AC_JScriptHandler((World) (Object) this, var9);
         this.musicScripts = new AC_MusicScripts(this.script, var9, this.scriptHandler);
-        if (this.properties.musicScope != null) {
-            ScopeTag.loadScopeFromTag(this.musicScripts.scope, this.properties.musicScope);
+        if (props.getMusicScope() != null) {
+            ScopeTag.loadScopeFromTag(this.musicScripts.scope, props.getMusicScope());
         }
 
         this.scope = this.script.getNewScope();
-        if (this.properties.worldScope != null) {
-            ScopeTag.loadScopeFromTag(this.scope, this.properties.worldScope);
+        if (props.getWorldScope() != null) {
+            ScopeTag.loadScopeFromTag(this.scope, props.getWorldScope());
         }
 
         this.loadSoundOverrides();
         EntityDescriptions.loadDescriptions(new File(var9, "entitys"));
+        /* TODO
         AC_ItemCustom.loadItems(new File(var9, "items"));
         AC_TileEntityNpcPath.lastEntity = null;
         */
@@ -521,11 +528,11 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         value = "INVOKE",
         target = "Lnet/minecraft/world/dimension/DimensionData;saveWorldDataOnServer(Lnet/minecraft/world/WorldProperties;Ljava/util/List;)V"))
     private void modifySave(DimensionData instance, WorldProperties worldProperties, List<PlayerEntity> list) {
-        /* TODO
-        worldProperties.globalScope = ScopeTag.getTagFromScope(this.script.globalScope);
-        worldProperties.worldScope = ScopeTag.getTagFromScope(this.scope);
-        worldProperties.musicScope = ScopeTag.getTagFromScope(this.musicScripts.scope);
-        */
+        var exProps = (ExWorldProperties) worldProperties;
+        exProps.setGlobalScope(ScopeTag.getTagFromScope(this.script.globalScope));
+        exProps.setWorldScope(ScopeTag.getTagFromScope(this.scope));
+        exProps.setMusicScope(ScopeTag.getTagFromScope(this.musicScripts.scope));
+
         if (this.dimensionData != null) {
             this.dimensionData.saveWorldDataOnServer(worldProperties, list);
         }
@@ -621,6 +628,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         }
     }
 
+    @Override
     public float getLightValue(int var1, int var2, int var3) {
         int var4 = this.placeBlock(var1, var2, var3);
         float var5 = AC_PlayerTorch.getTorchLight((World) (Object) this, var1, var2, var3);
@@ -1051,25 +1059,23 @@ public abstract class MixinWorld implements ExWorld, BlockView {
 
     @Overwrite
     public void method_242() {
-        ExWorldProperties props = (ExWorldProperties) this.properties;
-        /* TODO
+        var props = (ExWorldProperties) this.properties;
         if (this.firstTick) {
-            if (this.newSave && !props.onNewSaveScript.equals("")) {
-                this.scriptHandler.runScript(props.onNewSaveScript, this.scope);
+            if (this.newSave && !props.getOnNewSaveScript().equals("")) {
+                this.scriptHandler.runScript(props.getOnNewSaveScript(), this.scope);
             }
 
-            if (!props.onLoadScript.equals("")) {
-                this.scriptHandler.runScript(props.onLoadScript, this.scope);
+            if (!props.getOnLoadScript().equals("")) {
+                this.scriptHandler.runScript(props.getOnLoadScript(), this.scope);
             }
 
             this.firstTick = false;
         }
 
         ScriptModel.updateAll();
-        if (!this.properties.onUpdateScript.equals("")) {
-            this.scriptHandler.runScript(props.onUpdateScript, this.scope);
+        if (!props.getOnUpdateScript().equals("")) {
+            this.scriptHandler.runScript(props.getOnUpdateScript(), this.scope);
         }
-        */
 
         this.fogColorOverridden = props.isOverrideFogColor();
         this.fogDensityOverridden = props.isOverrideFogDensity();
@@ -1097,7 +1103,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
             this.DoSnowModUpdate();
         }
 
-        // this.script.wakeupScripts(var4); TODO
+        this.script.wakeupScripts(var4);
     }
 
     @Overwrite
@@ -1528,5 +1534,25 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     @Override
     public AC_TriggerManager getTriggerManager() {
         return this.triggerManager;
+    }
+
+    @Override
+    public Script getScript() {
+        return this.script;
+    }
+
+    @Override
+    public AC_JScriptHandler getScriptHandler() {
+        return this.scriptHandler;
+    }
+
+    @Override
+    public AC_MusicScripts getMusicScripts() {
+        return this.musicScripts;
+    }
+
+    @Override
+    public Scriptable getScope() {
+        return this.scope;
     }
 }

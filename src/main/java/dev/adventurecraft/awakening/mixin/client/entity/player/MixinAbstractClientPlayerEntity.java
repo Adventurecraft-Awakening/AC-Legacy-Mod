@@ -1,9 +1,6 @@
 package dev.adventurecraft.awakening.mixin.client.entity.player;
 
-import dev.adventurecraft.awakening.common.AC_CutsceneCamera;
-import dev.adventurecraft.awakening.common.AC_DebugMode;
-import dev.adventurecraft.awakening.common.AC_GuiPalette;
-import dev.adventurecraft.awakening.common.InventoryDebug;
+import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.entity.player.ExAbstractClientPlayerEntity;
 import dev.adventurecraft.awakening.extension.client.render.ExWorldEventRenderer;
@@ -26,6 +23,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.Iterator;
 import java.util.List;
 
 @Mixin(AbstractClientPlayerEntity.class)
@@ -81,7 +79,7 @@ public abstract class MixinAbstractClientPlayerEntity extends PlayerEntity imple
 
     @Inject(method = "method_136", at = @At(value = "HEAD"), cancellable = true)
     private void redirectMethod136ToScript(int var1, boolean var2, CallbackInfo ci) {
-        boolean press = true; //this.world.script.keyboard.processPlayerKeyPress(var1, var2); TODO
+        boolean press = ((ExWorld) this.world).getScript().keyboard.processPlayerKeyPress(var1, var2);
         if (!press) {
             ci.cancel();
         }
@@ -239,21 +237,17 @@ public abstract class MixinAbstractClientPlayerEntity extends PlayerEntity imple
                 AC_DebugMode.isFluidHittable = !AC_DebugMode.isFluidHittable;
                 break;
 
-                /* TODO
             case "/scriptstats":
                 AC_GuiScriptStats.showUI();
                 break;
 
             case "/scriptstatreset":
-                Iterator var3 = this.world.scriptHandler.scripts.values().iterator();
-                while (var3.hasNext()) {
-                    AC_JScriptInfo var10 = (AC_JScriptInfo) var3.next();
+                for (AC_JScriptInfo var10 : ((ExWorld) this.world).getScriptHandler().scripts.values()) {
                     var10.maxTime = 0L;
                     var10.count = 0;
                     var10.totalTime = 0L;
                 }
                 break;
-                */
 
             case "/help":
                 this.client.overlay.addChatMessage("Adventurecraft Commands");
@@ -270,14 +264,12 @@ public abstract class MixinAbstractClientPlayerEntity extends PlayerEntity imple
                 this.client.overlay.addChatMessage("/toggledecay - Toggles leaf decay");
                 break;
 
-                /* TODO
             default:
-                String var11 = this.world.script.runString(var2);
+                String var11 = ((ExWorld) this.world).getScript().runString(var2);
                 if (var11 != null) {
                     this.client.overlay.addChatMessage(var11);
                 }
                 break;
-                */
         }
     }
 }

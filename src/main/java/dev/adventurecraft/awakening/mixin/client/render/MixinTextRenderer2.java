@@ -31,6 +31,7 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
         this.drawText(var1, var2, var3, var4);
     }
 
+    @Override
     public void drawStringWithShadow(String var1, float var2, float var3, int var4) {
         this.renderString(var1, var2 + 1.0F, var3 + 1.0F, var4, true);
         this.drawString(var1, var2, var3, var4);
@@ -41,6 +42,7 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
         this.drawText(var1, var2, var3, var4, false);
     }
 
+    @Override
     public void drawString(String var1, float var2, float var3, int var4) {
         this.renderString(var1, var2, var3, var4, false);
     }
@@ -50,7 +52,7 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
         this.renderString(var1, (float) var2, (float) var3, var4, var5);
     }
 
-    public void renderString(String var1, float var2, float var3, int var4, boolean var5) {
+    private void renderString(String var1, float var2, float var3, int var4, boolean var5) {
         if (var1 != null) {
             if (var5) {
                 int var6 = var4 & -16777216;

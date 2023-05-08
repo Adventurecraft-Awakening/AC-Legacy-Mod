@@ -18,6 +18,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 public class AC_EntityHookshot extends Entity {
+
     int timeBeforeTurnAround;
     boolean turningAround;
     public boolean attachedToSurface;
@@ -38,10 +39,10 @@ public class AC_EntityHookshot extends Entity {
         this(var1);
         this.mainHand = var3;
         this.setRotation(var2.yaw, var2.pitch);
-        double var5 = (double) (-MathHelper.sin(var2.yaw * 3.141593F / 180.0F));
-        double var7 = (double) MathHelper.cos(var2.yaw * 3.141593F / 180.0F);
+        double var5 = -MathHelper.sin(var2.yaw * 3.141593F / 180.0F);
+        double var7 = MathHelper.cos(var2.yaw * 3.141593F / 180.0F);
         this.xVelocity = var5 * (double) MathHelper.cos(var2.pitch / 180.0F * 3.141593F);
-        this.yVelocity = (double) (-MathHelper.sin(var2.pitch / 180.0F * 3.141593F));
+        this.yVelocity = -MathHelper.sin(var2.pitch / 180.0F * 3.141593F);
         this.zVelocity = var7 * (double) MathHelper.cos(var2.pitch / 180.0F * 3.141593F);
         this.setHeading();
         this.setPosition(var2.x, var2.y, var2.z);
@@ -58,15 +59,16 @@ public class AC_EntityHookshot extends Entity {
     public void setHeading() {
         float var1 = MathHelper.sqrt(this.xVelocity * this.xVelocity + this.zVelocity * this.zVelocity);
         this.prevYaw = this.yaw = (float) (Math.atan2(this.xVelocity, this.zVelocity) * 180.0D / (double) ((float) Math.PI));
-        this.prevPitch = this.pitch = (float) (Math.atan2(this.yVelocity, (double) var1) * 180.0D / (double) ((float) Math.PI));
+        this.prevPitch = this.pitch = (float) (Math.atan2(this.yVelocity, var1) * 180.0D / (double) ((float) Math.PI));
     }
 
     public void setHeadingReverse() {
         float var1 = MathHelper.sqrt(this.xVelocity * this.xVelocity + this.zVelocity * this.zVelocity);
         this.prevYaw = this.yaw = (float) (Math.atan2(-this.xVelocity, -this.zVelocity) * 180.0D / (double) ((float) Math.PI));
-        this.prevPitch = this.pitch = (float) (Math.atan2(-this.yVelocity, (double) var1) * 180.0D / (double) ((float) Math.PI));
+        this.prevPitch = this.pitch = (float) (Math.atan2(-this.yVelocity, var1) * 180.0D / (double) ((float) Math.PI));
     }
 
+    @Override
     public void tick() {
         if (this.item != null && this.returnsTo instanceof PlayerEntity) {
             PlayerEntity var1 = (PlayerEntity) this.returnsTo;
@@ -172,23 +174,29 @@ public class AC_EntityHookshot extends Entity {
         }
     }
 
+    @Override
     protected void writeAdditional(CompoundTag var1) {
     }
 
+    @Override
     public void readAdditional(CompoundTag var1) {
         this.remove();
     }
 
+    @Override
     public void onPlayerCollision(PlayerEntity var1) {
     }
 
+    @Override
     public boolean damage(Entity var1, int var2) {
         return false;
     }
 
+    @Override
     protected void initDataTracker() {
     }
 
+    @Override
     public void remove() {
         if (this.item != null) {
             this.item.setMeta(0);

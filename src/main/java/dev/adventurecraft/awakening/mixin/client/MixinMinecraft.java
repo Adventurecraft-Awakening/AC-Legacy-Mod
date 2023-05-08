@@ -14,6 +14,8 @@ import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import dev.adventurecraft.awakening.extension.item.ExItem;
 import dev.adventurecraft.awakening.extension.item.ExItemStack;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
+import dev.adventurecraft.awakening.script.ScriptEntity;
+import dev.adventurecraft.awakening.script.ScriptItem;
 import dev.adventurecraft.awakening.script.ScriptVec3;
 import net.fabricmc.loader.impl.util.Arguments;
 import net.minecraft.block.Block;
@@ -61,6 +63,10 @@ import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.PixelFormat;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -367,7 +373,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         this.textureManager.getTextureId("/terrain.png");
         this.textureManager.getTextureId("/terrain2.png");
         this.textureManager.getTextureId("/terrain3.png");
-        //ContextFactory.initGlobal(new ContextFactory()); TODO
+        ContextFactory.initGlobal(new ContextFactory());
     }
 
     @Redirect(method = "run", at = @At(
@@ -397,10 +403,8 @@ public abstract class MixinMinecraft implements ExMinecraft {
         target = "Lnet/minecraft/client/Minecraft;stop()V",
         shift = At.Shift.BEFORE))
     private void run_stop(CallbackInfo ci) {
-        /* TODO
         ContextFactory.getGlobal().enterContext();
         Context.exit();
-         */
     }
 
     @Inject(method = "run", at = @At(
@@ -901,72 +905,78 @@ public abstract class MixinMinecraft implements ExMinecraft {
                 this.gameRenderer.heldItemRenderer.method_1865();
             }
 
-            /* TODO
             if (var2 != null) {
+                Scriptable globalScope = ((ExWorld) this.world).getScript().globalScope;
+
                 Object var13;
                 if (this.lastItemUsed != var2) {
-                    var13 = Context.javaToJS(new ScriptItem(var2), this.world.script.globalScope);
-                    ScriptableObject.putProperty(this.world.script.globalScope, "lastItemUsed", var13);
+                    var13 = Context.javaToJS(new ScriptItem(var2), globalScope);
+                    ScriptableObject.putProperty(globalScope, "lastItemUsed", var13);
                     this.lastItemUsed = var2;
                 }
 
                 if (this.hitResult == null) {
                     if (this.lastEntityHit != null) {
                         this.lastEntityHit = null;
-                        var13 = Context.javaToJS((Object) null, this.world.script.globalScope);
-                        ScriptableObject.putProperty(this.world.script.globalScope, "hitEntity", var13);
+                        var13 = Context.javaToJS(null, globalScope);
+                        ScriptableObject.putProperty(globalScope, "hitEntity", var13);
                     }
 
                     if (this.lastBlockHit != null) {
                         this.lastBlockHit = null;
-                        var13 = Context.javaToJS((Object) null, this.world.script.globalScope);
-                        ScriptableObject.putProperty(this.world.script.globalScope, "hitBlock", var13);
+                        var13 = Context.javaToJS(null, globalScope);
+                        ScriptableObject.putProperty(globalScope, "hitBlock", var13);
                     }
                 } else if (this.hitResult.type == HitType.field_790) {
                     if (this.lastEntityHit != this.hitResult.field_1989) {
                         this.lastEntityHit = this.hitResult.field_1989;
-                        var13 = Context.javaToJS(ScriptEntity.getEntityClass(this.hitResult.field_1989), this.world.script.globalScope);
-                        ScriptableObject.putProperty(this.world.script.globalScope, "hitEntity", var13);
+                        var13 = Context.javaToJS(ScriptEntity.getEntityClass(this.hitResult.field_1989), globalScope);
+                        ScriptableObject.putProperty(globalScope, "hitEntity", var13);
                     }
 
                     if (this.lastBlockHit != null) {
                         this.lastBlockHit = null;
-                        var13 = Context.javaToJS((Object) null, this.world.script.globalScope);
-                        ScriptableObject.putProperty(this.world.script.globalScope, "hitBlock", var13);
+                        var13 = Context.javaToJS(null, globalScope);
+                        ScriptableObject.putProperty(globalScope, "hitBlock", var13);
                     }
                 } else if (this.hitResult.type != HitType.field_789) {
                     if (this.lastEntityHit != null) {
                         this.lastEntityHit = null;
-                        var13 = Context.javaToJS((Object) null, this.world.script.globalScope);
-                        ScriptableObject.putProperty(this.world.script.globalScope, "hitEntity", var13);
+                        var13 = Context.javaToJS(null, globalScope);
+                        ScriptableObject.putProperty(globalScope, "hitEntity", var13);
                     }
 
                     if (this.lastBlockHit != null) {
                         this.lastBlockHit = null;
-                        var13 = Context.javaToJS((Object) null, this.world.script.globalScope);
-                        ScriptableObject.putProperty(this.world.script.globalScope, "hitBlock", var13);
+                        var13 = Context.javaToJS(null, globalScope);
+                        ScriptableObject.putProperty(globalScope, "hitBlock", var13);
                     }
                 } else {
-                    if (this.lastBlockHit == null || this.lastBlockHit.x != (double) this.hitResult.x || this.lastBlockHit.y != (double) this.hitResult.y || this.lastBlockHit.z != (double) this.hitResult.z) {
+                    if (this.lastBlockHit == null ||
+                        this.lastBlockHit.x != (double) this.hitResult.x ||
+                        this.lastBlockHit.y != (double) this.hitResult.y ||
+                        this.lastBlockHit.z != (double) this.hitResult.z) {
+
                         this.lastBlockHit = new ScriptVec3((float) this.hitResult.x, (float) this.hitResult.y, (float) this.hitResult.z);
-                        var13 = Context.javaToJS(this.lastBlockHit, this.world.script.globalScope);
-                        ScriptableObject.putProperty(this.world.script.globalScope, "hitBlock", var13);
+                        var13 = Context.javaToJS(this.lastBlockHit, globalScope);
+                        ScriptableObject.putProperty(globalScope, "hitBlock", var13);
                     }
 
                     if (this.lastEntityHit != null) {
                         this.lastEntityHit = null;
-                        var13 = Context.javaToJS((Object) null, this.world.script.globalScope);
-                        ScriptableObject.putProperty(this.world.script.globalScope, "hitEntity", var13);
+                        var13 = Context.javaToJS(null, globalScope);
+                        ScriptableObject.putProperty(globalScope, "hitEntity", var13);
                     }
                 }
 
                 if (var2.usesMeta()) {
-                    this.world.scriptHandler.runScript(String.format("item_%d_%d.js", new Object[]{var2.itemId, var2.getMeta()}), this.world.scope, false);
+                    ((ExWorld) this.world).getScriptHandler().runScript(
+                        String.format("item_%d_%d.js", var2.itemId, var2.getMeta()), ((ExWorld) this.world).getScope(), false);
                 } else {
-                    this.world.scriptHandler.runScript(String.format("item_%d.js", new Object[]{var2.itemId}), this.world.scope, false);
+                    ((ExWorld) this.world).getScriptHandler().runScript(
+                        String.format("item_%d.js", var2.itemId), ((ExWorld) this.world).getScope(), false);
                 }
             }
-            */
 
             if (var4) {
                 ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
@@ -993,7 +1003,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         shift = At.Shift.AFTER))
     private void initPlayerOnInit(World var1, String var2, PlayerEntity var3, CallbackInfo ci) {
         this.cutsceneCameraEntity = this.interactionManager.method_1717(var1);
-        //((ExWorld) this.world.getScript()).initPlayer(); TODO
+        ((ExWorld) this.world).getScript().initPlayer();
     }
 
     @Overwrite
@@ -1015,7 +1025,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
             this.world.removeEntity(this.player);
         } else {
             this.player = (AbstractClientPlayerEntity) this.interactionManager.method_1717(this.world);
-            //((ExWorld)this.world).getScript().initPlayer(); TODO
+            ((ExWorld) this.world).getScript().initPlayer();
         }
 
         ((ExWorldEventRenderer) this.worldRenderer).resetForDeath();

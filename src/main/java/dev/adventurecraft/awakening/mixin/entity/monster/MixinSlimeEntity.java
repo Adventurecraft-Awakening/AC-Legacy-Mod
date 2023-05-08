@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.mixin.entity.monster;
 
+import dev.adventurecraft.awakening.extension.entity.monster.ExSlimeEntity;
 import dev.adventurecraft.awakening.mixin.entity.MixinLivingEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.monster.SlimeEntity;
@@ -13,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(SlimeEntity.class)
-public abstract class MixinSlimeEntity extends MixinLivingEntity {
+public abstract class MixinSlimeEntity extends MixinLivingEntity implements ExSlimeEntity {
 
     @Shadow
     public abstract int getSize();
@@ -62,5 +63,15 @@ public abstract class MixinSlimeEntity extends MixinLivingEntity {
                 1.0F,
                 (this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F + 1.0F);
         }
+    }
+
+    @Override
+    public int getAttackStrength() {
+        return this.attackStrength;
+    }
+
+    @Override
+    public void setAttackStrength(int value) {
+        this.attackStrength = value;
     }
 }

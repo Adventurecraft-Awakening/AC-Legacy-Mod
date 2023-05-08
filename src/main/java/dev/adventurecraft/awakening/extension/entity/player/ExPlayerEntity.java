@@ -18,6 +18,7 @@ public interface ExPlayerEntity extends ExLivingEntity {
 
     void setSwappedItems(boolean value);
 
-
     String getCloakTexture();
+
+    void setCloakTexture(String value);
 }

@@ -484,6 +484,11 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     }
 
     @Override
+    public Map<String, String> getReplacementTextures() {
+        return this.replacementTextures;
+    }
+
+    @Override
     public boolean isOriginallyFromAC() {
         return this.originallyFromAC;
     }
@@ -491,5 +496,65 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     @Override
     public boolean isInventoryCraftingAllowed() {
         return this.allowsInventoryCrafting;
+    }
+
+    @Override
+    public String getOnNewSaveScript() {
+        return onNewSaveScript;
+    }
+
+    @Override
+    public void setOnNewSaveScript(String onNewSaveScript) {
+        this.onNewSaveScript = onNewSaveScript;
+    }
+
+    @Override
+    public String getOnLoadScript() {
+        return onLoadScript;
+    }
+
+    @Override
+    public void setOnLoadScript(String onLoadScript) {
+        this.onLoadScript = onLoadScript;
+    }
+
+    @Override
+    public String getOnUpdateScript() {
+        return onUpdateScript;
+    }
+
+    @Override
+    public void setOnUpdateScript(String onUpdateScript) {
+        this.onUpdateScript = onUpdateScript;
+    }
+
+    @Override
+    public CompoundTag getGlobalScope() {
+        return this.globalScope;
+    }
+
+    @Override
+    public void setGlobalScope(CompoundTag value) {
+        this.globalScope = value;
+    }
+
+    @Override
+    public CompoundTag getWorldScope() {
+        return this.worldScope;
+    }
+
+    @Override
+    public void setWorldScope(CompoundTag value) {
+        this.worldScope = value;
+    }
+
+    @Override
+    public CompoundTag getMusicScope() {
+        return this.musicScope;
+    }
+
+    @Override
+    public void setMusicScope(CompoundTag value) {
+        this.musicScope = value;
     }
 }

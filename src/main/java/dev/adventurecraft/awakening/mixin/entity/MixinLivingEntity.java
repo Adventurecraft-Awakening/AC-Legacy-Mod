@@ -739,6 +739,11 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
     }
 
     @Override
+    public void setGravity(double value) {
+        this.gravity = value;
+    }
+
+    @Override
     public int getMaxHealth() {
         return this.maxHealth;
     }
@@ -746,6 +751,16 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
     @Override
     public void setMaxHealth(int value) {
         this.maxHealth = value;
+    }
+
+    @Override
+    public ItemStack getHeldItem() {
+        return heldItem;
+    }
+
+    @Override
+    public void setHeldItem(ItemStack value) {
+        this.heldItem = value;
     }
 
     @Override
@@ -769,6 +784,11 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
     }
 
     @Override
+    public void setTexture(String value) {
+        this.texture = value;
+    }
+
+    @Override
     public float getFov() {
         return this.fov;
     }
@@ -786,5 +806,114 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
     @Override
     public void setExtraFov(float value) {
         this.extraFov = value;
+    }
+
+    @Override
+    public float getMovementSpeed() {
+        return movementSpeed;
+    }
+
+    @Override
+    public void setMovementSpeed(float value) {
+        this.movementSpeed = value;
+    }
+
+    @Override
+    public int getJumpsLeft() {
+        return jumpsLeft;
+    }
+
+    @Override
+    public void setJumpsLeft(int value) {
+        this.jumpsLeft = value;
+    }
+
+    @Override
+    public double getJumpVelocity() {
+        return jumpVelocity;
+    }
+
+    @Override
+    public void setJumpVelocity(double value) {
+        this.jumpVelocity = value;
+    }
+
+    @Override
+    public double getJumpWallMultiplier() {
+        return jumpWallMultiplier;
+    }
+
+    @Override
+    public void setJumpWallMultiplier(double value) {
+        this.jumpWallMultiplier = value;
+    }
+
+    @Override
+    public double getJumpInAirMultiplier() {
+        return jumpInAirMultiplier;
+    }
+
+    public void setJumpInAirMultiplier(double value) {
+        this.jumpInAirMultiplier = value;
+    }
+
+    @Override
+    public float getAirControl() {
+        return airControl;
+    }
+
+    @Override
+    public void setAirControl(float value) {
+        this.airControl = value;
+    }
+
+    @Override
+    public boolean getCanLookRandomly() {
+        return canLookRandomly;
+    }
+
+    @Override
+    public void setCanLookRandomly(boolean value) {
+        this.canLookRandomly = value;
+    }
+
+    @Override
+    public float getRandomLookVelocity() {
+        return randomLookVelocity;
+    }
+
+    @Override
+    public void setRandomLookVelocity(float value) {
+        this.randomLookVelocity = value;
+    }
+
+    @Override
+    public int getRandomLookNext() {
+        return randomLookNext;
+    }
+
+    @Override
+    public void setRandomLookNext(int value) {
+        this.randomLookNext = value;
+    }
+
+    @Override
+    public int getRandomLookRate() {
+        return randomLookRate;
+    }
+
+    @Override
+    public void setRandomLookRate(int value) {
+        this.randomLookRate = value;
+    }
+
+    @Override
+    public int getRandomLookRateVariation() {
+        return randomLookRateVariation;
+    }
+
+    @Override
+    public void setRandomLookRateVariation(int value) {
+        this.randomLookRateVariation = value;
     }
 }

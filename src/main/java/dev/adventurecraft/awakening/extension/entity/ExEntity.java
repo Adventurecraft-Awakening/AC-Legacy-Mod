@@ -1,10 +1,8 @@
 package dev.adventurecraft.awakening.extension.entity;
 
-import net.minecraft.entity.Entity;
+import dev.adventurecraft.awakening.common.AC_IMultiAttackEntity;
 
-public interface ExEntity {
-
-    boolean attackEntityFromMulti(Entity var1, int var2);
+public interface ExEntity extends AC_IMultiAttackEntity {
 
     boolean handleFlying();
 

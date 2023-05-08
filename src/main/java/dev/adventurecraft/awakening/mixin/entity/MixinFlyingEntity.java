@@ -13,4 +13,9 @@ public abstract class MixinFlyingEntity extends MixinLivingEntity implements ExF
     public int getAttackStrength() {
         return this.attackStrength;
     }
+
+    @Override
+    public void setAttackStrength(int value) {
+        this.attackStrength = value;
+    }
 }

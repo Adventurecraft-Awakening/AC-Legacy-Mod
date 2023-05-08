@@ -63,10 +63,10 @@ public abstract class MixinBlockEntity implements ExBlockEntity {
         register(AC_TileEntityHealDamage.class, "HealDamage");
         register(AC_TileEntityTeleport.class, "Teleport");
         register(AC_TileEntityTree.class, "Tree");
-        //register(AC_TileEntityScript.class, "Script"); TODO
+        register(AC_TileEntityScript.class, "Script");
         register(AC_TileEntityStore.class, "Store");
         register(AC_TileEntityEffect.class, "Effect");
         register(AC_TileEntityUrl.class, "Url");
-        //register(AC_TileEntityNpcPath.class, "NpcPath"); TODO
+        register(AC_TileEntityNpcPath.class, "NpcPath");
     }
 }

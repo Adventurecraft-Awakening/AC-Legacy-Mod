@@ -1,9 +1,12 @@
 package dev.adventurecraft.awakening.extension.world;
 
 import dev.adventurecraft.awakening.ACMod;
+import dev.adventurecraft.awakening.common.AC_JScriptHandler;
+import dev.adventurecraft.awakening.common.AC_MusicScripts;
 import dev.adventurecraft.awakening.common.AC_TriggerManager;
 import dev.adventurecraft.awakening.common.AC_UndoStack;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
+import dev.adventurecraft.awakening.script.Script;
 import net.minecraft.class_366;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resource.language.TranslationStorage;
@@ -20,6 +23,7 @@ import net.minecraft.world.chunk.ChunkIO;
 import net.minecraft.world.dimension.Dimension;
 import net.minecraft.world.dimension.DimensionData;
 import net.minecraft.world.dimension.McRegionDimensionFile;
+import org.mozilla.javascript.Scriptable;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -43,6 +47,8 @@ public interface ExWorld {
     HitResult rayTraceBlocks2(Vec3d var1, Vec3d var2, boolean var3, boolean var4, boolean var5);
 
     boolean setBlockAndMetadataTemp(int var1, int var2, int var3, int var4, int var5);
+
+    float getLightValue(int var1, int var2, int var3);
 
     void cancelBlockUpdate(int var1, int var2, int var3, int var4);
 
@@ -81,6 +87,14 @@ public interface ExWorld {
     String[] getSoundList();
 
     AC_TriggerManager getTriggerManager();
+
+    Script getScript();
+
+    AC_JScriptHandler getScriptHandler();
+
+    AC_MusicScripts getMusicScripts();
+
+    Scriptable getScope();
 
     static World createWorld(String mapName, DimensionData dimData, String saveName, long seed, Dimension dimension) {
         try {

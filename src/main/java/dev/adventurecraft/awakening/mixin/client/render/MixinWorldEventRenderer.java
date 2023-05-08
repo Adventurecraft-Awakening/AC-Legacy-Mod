@@ -12,6 +12,7 @@ import dev.adventurecraft.awakening.extension.client.render.ExWorldEventRenderer
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunkCache;
+import dev.adventurecraft.awakening.script.ScriptModel;
 import net.minecraft.block.Block;
 import net.minecraft.class_66;
 import net.minecraft.client.Minecraft;
@@ -891,7 +892,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     private void renderScriptModels(Vec3d var1, CameraView var2, float var3, CallbackInfo ci) {
         GL11.glPushMatrix();
         GL11.glTranslated(-EntityRenderDispatcher.field_2490, -EntityRenderDispatcher.field_2491, -EntityRenderDispatcher.field_2492);
-        //ScriptModel.renderAll(var3); TODO
+        ScriptModel.renderAll(var3);
         GL11.glPopMatrix();
     }
 

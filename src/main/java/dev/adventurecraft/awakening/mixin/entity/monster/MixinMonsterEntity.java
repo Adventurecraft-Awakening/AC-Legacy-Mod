@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.mixin.entity.monster;
 
+import dev.adventurecraft.awakening.extension.entity.monster.ExMonsterEntity;
 import dev.adventurecraft.awakening.mixin.entity.MixinMobEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.monster.MonsterEntity;
@@ -10,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(MonsterEntity.class)
-public abstract class MixinMonsterEntity extends MixinMobEntity {
+public abstract class MixinMonsterEntity extends MixinMobEntity implements ExMonsterEntity {
 
     @Shadow
     protected int attackDamage;
@@ -33,5 +34,15 @@ public abstract class MixinMonsterEntity extends MixinMobEntity {
         } else {
             return false;
         }
+    }
+
+    @Override
+    public int getAttackDamage() {
+        return this.attackDamage;
+    }
+
+    @Override
+    public void setAttackDamage(int value) {
+        this.attackDamage = value;
     }
 }

@@ -1,8 +1,7 @@
 package dev.adventurecraft.awakening.extension.entity;
 
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityRegistry;
-
-import javax.swing.text.html.parser.Entity;
 
 public interface ExEntityRegistry {
 

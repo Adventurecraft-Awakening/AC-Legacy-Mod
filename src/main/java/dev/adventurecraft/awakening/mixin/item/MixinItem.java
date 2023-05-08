@@ -28,8 +28,8 @@ public abstract class MixinItem implements ExItem {
     public abstract boolean usesMeta();
 
     @Redirect(method = "getTexturePosition(Lnet/minecraft/item/ItemStack;)I", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/item/ItemStack;getMeta()I"))
+        value = "INVOKE",
+        target = "Lnet/minecraft/item/ItemStack;getMeta()I"))
     private int defaultMetaForTexPos(ItemStack instance) {
         if (instance != null) {
             return instance.getMeta();
@@ -83,7 +83,6 @@ public abstract class MixinItem implements ExItem {
 
     @Override
     public void onAddToSlot(PlayerEntity var1, int var2, int var3) {
-        /* TODO
         ExWorld world = (ExWorld) Minecraft.instance.world;
         Scriptable var4 = world.getScope();
         var4.put("slotID", var4, var2);
@@ -92,12 +91,10 @@ public abstract class MixinItem implements ExItem {
         } else {
             world.getScriptHandler().runScript(String.format("item_onAddToSlot_%d.js", this.id), var4, false);
         }
-        */
     }
 
     @Override
     public void onRemovedFromSlot(PlayerEntity var1, int var2, int var3) {
-        /* TODO
         ExWorld world = (ExWorld) Minecraft.instance.world;
         Scriptable var4 = world.getScope();
         var4.put("slotID", var4, var2);
@@ -106,6 +103,5 @@ public abstract class MixinItem implements ExItem {
         } else {
             world.getScriptHandler().runScript(String.format("item_onRemovedFromSlot_%d.js", this.id), var4, false);
         }
-         */
     }
 }

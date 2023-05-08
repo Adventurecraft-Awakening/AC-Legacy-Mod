@@ -4,10 +4,12 @@ import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.AC_TerrainImage;
 import dev.adventurecraft.awakening.common.AC_Version;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
+import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
+import dev.adventurecraft.awakening.script.ScriptUIContainer;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
@@ -36,7 +38,7 @@ import java.util.List;
 import java.util.Random;
 
 @Mixin(InGameHud.class)
-public abstract class MixinInGameHud extends GuiElement {
+public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
 
     @Shadow
     private List<ChatMessage> chatMessages;
@@ -65,12 +67,12 @@ public abstract class MixinInGameHud extends GuiElement {
     @Shadow
     protected abstract void renderVingette(float f, int i, int j);
 
-    //public ScriptUIContainer scriptUI; TODO
+    public ScriptUIContainer scriptUI;
     public boolean hudEnabled = true;
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(Minecraft var1, CallbackInfo ci) {
-        //this.scriptUI = new ScriptUIContainer(0.0F, 0.0F, (ScriptUIContainer)null); TODO
+        this.scriptUI = new ScriptUIContainer(0.0F, 0.0F, null);
     }
 
     @Overwrite
@@ -322,7 +324,7 @@ public abstract class MixinInGameHud extends GuiElement {
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GL11.glDisable(GL11.GL_ALPHA_TEST);
         GL11.glDisable(GL11.GL_DEPTH_TEST);
-        //this.scriptUI.render(textRenderer, this.client.textureManager, var1); TODO
+        this.scriptUI.render(textRenderer, this.client.textureManager, var1);
         GL11.glEnable(GL11.GL_DEPTH_TEST);
         byte var34 = 10;
         var12 = false;
@@ -388,5 +390,20 @@ public abstract class MixinInGameHud extends GuiElement {
         GL11.glEnable(GL11.GL_DEPTH_TEST);
         GL11.glEnable(GL11.GL_ALPHA_TEST);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+    }
+
+    @Override
+    public ScriptUIContainer getScriptUI() {
+        return this.scriptUI;
+    }
+
+    @Override
+    public boolean getHudEnabled() {
+        return this.hudEnabled;
+    }
+
+    @Override
+    public void setHudEnabled(boolean value) {
+        this.hudEnabled = value;
     }
 }

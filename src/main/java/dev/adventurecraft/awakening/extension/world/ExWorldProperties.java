@@ -4,6 +4,8 @@ import dev.adventurecraft.awakening.common.WorldGenProperties;
 import net.minecraft.util.io.CompoundTag;
 import net.minecraft.world.World;
 
+import java.util.Map;
+
 public interface ExWorldProperties {
 
     WorldGenProperties getWorldGenProps();
@@ -88,7 +90,34 @@ public interface ExWorldProperties {
 
     void setOverlay(String value);
 
+    Map<String, String> getReplacementTextures();
+
     boolean isOriginallyFromAC();
 
     boolean isInventoryCraftingAllowed();
+
+
+    String getOnNewSaveScript();
+
+    void setOnNewSaveScript(String onNewSaveScript);
+
+    String getOnLoadScript();
+
+    void setOnLoadScript(String onLoadScript);
+
+    String getOnUpdateScript();
+
+    void setOnUpdateScript(String onUpdateScript);
+
+    CompoundTag getGlobalScope();
+
+    void setGlobalScope(CompoundTag value);
+
+    CompoundTag getWorldScope();
+
+    void setWorldScope(CompoundTag value);
+
+    CompoundTag getMusicScope();
+
+    void setMusicScope(CompoundTag value);
 }

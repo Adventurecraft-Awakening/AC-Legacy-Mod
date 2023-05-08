@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.mixin.client.gui.screen.ingame;
 
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
+import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import dev.adventurecraft.awakening.extension.client.sound.ExSoundHelper;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.PauseScreen;
@@ -21,7 +22,7 @@ public abstract class MixinPauseScreen extends Screen {
             shift = At.Shift.BEFORE,
             ordinal = 1))
     private void resetOnExit(ButtonWidget button, CallbackInfo ci) {
-        //((ExInGameHud) this.client.overlay).getScriptUI().clear(); TODO
+        ((ExInGameHud) this.client.overlay).getScriptUI().clear();
         ((ExMinecraft) this.client).setCameraActive(false);
         ((ExSoundHelper) this.client.soundHelper).stopMusic();
     }

@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.mixin.entity;
 
 import dev.adventurecraft.awakening.common.IEntityPather;
+import dev.adventurecraft.awakening.extension.entity.ExMobEntity;
 import dev.adventurecraft.awakening.extension.entity.ai.pathing.ExEntityPath;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.MobEntity;
@@ -13,7 +14,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 
 @Mixin(MobEntity.class)
-public abstract class MixinMobEntity extends MixinLivingEntity implements IEntityPather {
+public abstract class MixinMobEntity extends MixinLivingEntity implements ExMobEntity, IEntityPather {
 
     @Shadow
     protected Entity entity;
@@ -181,5 +182,25 @@ public abstract class MixinMobEntity extends MixinLivingEntity implements IEntit
         if (var1.containsKey("canForgetTargetRandomly")) {
             this.canPathRandomly = var1.getBoolean("canForgetTargetRandomly");
         }
+    }
+
+    @Override
+    public boolean getCanForgetTargetRandomly() {
+        return this.canForgetTargetRandomly;
+    }
+
+    @Override
+    public void setCanForgetTargetRandomly(boolean value) {
+        this.canForgetTargetRandomly = value;
+    }
+
+    @Override
+    public boolean getCanPathRandomly() {
+        return this.canPathRandomly;
+    }
+
+    @Override
+    public void setCanPathRandomly(boolean value) {
+        this.canPathRandomly = value;
     }
 }
