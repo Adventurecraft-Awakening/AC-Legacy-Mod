@@ -24,7 +24,7 @@ public abstract class MixinPlayerContainer {
                 target = "Lnet/minecraft/container/PlayerContainer;addSlot(Lnet/minecraft/container/slot/Slot;)V",
                 ordinal = 1)))
     private boolean conditionalCraftingSlots(PlayerContainer instance, Slot slot) {
-        return ((ExWorldProperties) Minecraft.instance.world.properties).isInventoryCraftingAllowed();
+        return ((ExWorldProperties) Minecraft.instance.world.properties).getAllowsInventoryCrafting();
     }
 
     @ModifyArg(

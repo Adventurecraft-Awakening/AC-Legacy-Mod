@@ -4,6 +4,7 @@ import dev.adventurecraft.awakening.common.*;
 import net.minecraft.client.render.entity.EntityRenderDispatcher;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.render.entity.LivingEntityRenderer;
+import net.minecraft.client.render.entity.model.BipedEntityModel;
 import net.minecraft.client.render.entity.model.SkeletonEntityModel;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -31,8 +32,8 @@ public abstract class MixinEntityRenderDispatcher {
         map.put(AC_EntityBat.class, new LivingEntityRenderer(new AC_ModelBat(), 0.3F));
         map.put(AC_EntityRat.class, new LivingEntityRenderer(new AC_ModelRat(), 0.0F));
         map.put(AC_EntityCamera.class, new RenderCamera(new ModelCamera(), 0.0F));
-        //map.put(AC_EntityNPC.class, new AC_RenderNPC(new BipedEntityModel())); TODO
-        //map.put(AC_EntityLivingScript.class, new AC_RenderBipedScaledScripted(new BipedEntityModel())); TODO
+        map.put(AC_EntityNPC.class, new AC_RenderNPC(new BipedEntityModel()));
+        map.put(AC_EntityLivingScript.class, new AC_RenderBipedScaledScripted(new BipedEntityModel()));
 
         for (EntityRenderer entityRenderer : map.values()) {
             entityRenderer.setDispatcher((EntityRenderDispatcher) (Object) this);

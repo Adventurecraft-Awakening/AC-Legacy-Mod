@@ -48,7 +48,7 @@ public abstract class MixinBlockEntity implements ExBlockEntity {
 
     @Inject(method = "<clinit>", at = @At("TAIL"))
     private static void registerACEntities(CallbackInfo ci) {
-        //register(AC_TileEntityMobSpawner.class, "MobSpawnerNew"); TODO
+        register(AC_TileEntityMobSpawner.class, "MobSpawnerNew");
         register(AC_TileEntityTrigger.class, "Trigger");
         register(AC_TileEntityTriggerInverter.class, "TriggerInverter");
         register(AC_TileEntityTriggerMemory.class, "TriggerMemory");

@@ -29,6 +29,8 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     @Shadow
     private long time;
 
+    @Shadow
+    private CompoundTag playerData;
     public double tempOffset;
     private WorldGenProperties worldGenProps = new WorldGenProperties();
     public boolean iceMelts = true;
@@ -272,6 +274,11 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     }
 
     @Override
+    public void setPlayerName(String value) {
+        this.playerName = value;
+    }
+
+    @Override
     public float[] getBrightness() {
         return this.brightness;
     }
@@ -494,8 +501,13 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     }
 
     @Override
-    public boolean isInventoryCraftingAllowed() {
+    public boolean getAllowsInventoryCrafting() {
         return this.allowsInventoryCrafting;
+    }
+
+    @Override
+    public void setAllowsInventoryCrafting(boolean value) {
+        this.allowsInventoryCrafting = value;
     }
 
     @Override

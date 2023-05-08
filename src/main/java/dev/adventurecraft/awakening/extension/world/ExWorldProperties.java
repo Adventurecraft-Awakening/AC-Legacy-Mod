@@ -18,6 +18,8 @@ public interface ExWorldProperties {
 
     String getPlayerName();
 
+    void setPlayerName(String value);
+
     float[] getBrightness();
 
     double getTempOffset();
@@ -94,8 +96,9 @@ public interface ExWorldProperties {
 
     boolean isOriginallyFromAC();
 
-    boolean isInventoryCraftingAllowed();
+    boolean getAllowsInventoryCrafting();
 
+    void setAllowsInventoryCrafting(boolean value);
 
     String getOnNewSaveScript();
 

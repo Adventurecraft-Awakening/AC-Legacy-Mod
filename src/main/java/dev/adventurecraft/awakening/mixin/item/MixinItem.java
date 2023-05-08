@@ -72,16 +72,6 @@ public abstract class MixinItem implements ExItem {
     }
 
     @Override
-    public boolean isLighting(ItemStack var1) {
-        return false;
-    }
-
-    @Override
-    public boolean isMuzzleFlash(ItemStack var1) {
-        return false;
-    }
-
-    @Override
     public void onAddToSlot(PlayerEntity var1, int var2, int var3) {
         ExWorld world = (ExWorld) Minecraft.instance.world;
         Scriptable var4 = world.getScope();

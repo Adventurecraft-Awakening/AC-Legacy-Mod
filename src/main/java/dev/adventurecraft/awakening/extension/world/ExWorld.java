@@ -72,6 +72,8 @@ public interface ExWorld {
 
     File getLevelDir();
 
+    String[] getScriptFiles();
+
     float getTimeOfDay();
 
     void setTimeOfDay(long var1);

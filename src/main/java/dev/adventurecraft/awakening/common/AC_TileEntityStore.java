@@ -9,7 +9,7 @@ public class AC_TileEntityStore extends BlockEntity {
     public int buyItemDamage;
     public int buySupply;
     public int buySupplyLeft = 1;
-    public int sellItemID = AC_Items.hammer.id; // AC_Items.shotgun.id; TODO
+    public int sellItemID = AC_Items.shotgun.id;
     public int sellItemAmount = 1;
     public int sellItemDamage = 0;
     public AC_TriggerArea tradeTrigger;

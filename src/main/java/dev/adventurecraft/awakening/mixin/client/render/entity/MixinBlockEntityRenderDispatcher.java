@@ -26,7 +26,7 @@ public abstract class MixinBlockEntityRenderDispatcher {
         renderers.put(AC_TileEntityTriggerMemory.class, new AC_TileEntityMinMaxRenderer(0.0F, 1.0F, 0.0F));
         renderers.put(AC_TileEntityTimer.class, new AC_TileEntityMinMaxRenderer(0.4F, 0.17647F, 0.56863F));
         renderers.put(AC_TileEntityRedstoneTrigger.class, new AC_TileEntityMinMaxRenderer(1.0F, 0.0F, 0.0F));
-        //renderers.put(AC_TileEntityMobSpawner.class, new AC_TileEntityMobSpawnerRenderer()); TODO
+        renderers.put(AC_TileEntityMobSpawner.class, new AC_TileEntityMobSpawnerRenderer());
         renderers.put(AC_TileEntityStore.class, new AC_TileEntityStoreRenderer());
         renderers.put(AC_TileEntityEffect.class, new AC_TileEntityEffectRenderer());
 

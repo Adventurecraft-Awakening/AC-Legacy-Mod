@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.mixin.client.gui.screen.menu;
 
+import dev.adventurecraft.awakening.common.AC_GuiMapDownload;
 import dev.adventurecraft.awakening.common.AC_GuiMapSelect;
 import dev.adventurecraft.awakening.common.AC_Version;
 import dev.adventurecraft.awakening.extension.client.sound.ExSoundHelper;
@@ -72,7 +73,7 @@ public abstract class MixinTitleScreen extends Screen {
         } else if (var1.id == 4) {
             this.client.scheduleStop();
         } else if (var1.id == 5) {
-            //this.client.openScreen(new AC_GuiMapDownload(this)); TODO
+            this.client.openScreen(new AC_GuiMapDownload(this));
         } else if (var1.id == 6) {
             this.client.openScreen(new AC_GuiMapSelect(this, ""));
         } else if (var1.id == 7) {

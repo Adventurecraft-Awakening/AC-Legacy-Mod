@@ -56,8 +56,23 @@ public abstract class MixinItemStack implements ExItemStack {
     }
 
     @Override
-    public boolean isReloading() {
+    public boolean getReloading() {
         return this.reloading;
+    }
+
+    @Override
+    public void setReloading(boolean value) {
+        this.reloading = value;
+    }
+
+    @Override
+    public boolean getJustReloaded() {
+        return this.justReloaded;
+    }
+
+    @Override
+    public void setJustReloaded(boolean value) {
+        this.justReloaded = value;
     }
 
     @Override

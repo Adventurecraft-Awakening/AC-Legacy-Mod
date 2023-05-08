@@ -198,7 +198,6 @@ public abstract class MixinAbstractClientPlayerEntity extends PlayerEntity imple
                 this.client.overlay.addChatMessage(String.format("Mobs Burn in Daylight: %b", worldProps.getMobsBurn()));
                 break;
 
-            /* TODO
             case "/config":
                 this.client.openScreen(new AC_GuiWorldConfig(this.world));
                 break;
@@ -206,7 +205,6 @@ public abstract class MixinAbstractClientPlayerEntity extends PlayerEntity imple
             case "/test":
                 this.client.openScreen(new AC_GuiMapEditHUD(this.world));
                 break;
-            */
 
             case "/renderpaths":
                 AC_DebugMode.renderPaths = !AC_DebugMode.renderPaths;

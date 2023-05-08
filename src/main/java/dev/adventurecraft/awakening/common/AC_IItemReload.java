@@ -6,5 +6,5 @@ import net.minecraft.world.World;
 
 public interface AC_IItemReload {
 
-	void reload(ItemStack var1, World var2, PlayerEntity var3);
+	void reload(ItemStack stack, World world, PlayerEntity player);
 }

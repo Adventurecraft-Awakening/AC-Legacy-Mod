@@ -25,6 +25,8 @@ accessible method net/minecraft/block/Block isInsideXY (Lnet/minecraft/util/math
 accessible method net/minecraft/item/Item <init> (I)V
 accessible method net/minecraft/item/Item setDurability (I)Lnet/minecraft/item/Item;
 
+extendable class net/minecraft/item/ItemStack
+
 accessible field net/minecraft/world/World autoSaveInterval I
 accessible field net/minecraft/world/World worldSource Lnet/minecraft/world/source/WorldSource;
 accessible field net/minecraft/world/World properties Lnet/minecraft/world/WorldProperties;
@@ -51,6 +53,8 @@ accessible field net/minecraft/entity/LivingEntity target Lnet/minecraft/entity/
 
 accessible method net/minecraft/entity/player/PlayerEntity applyDamage (I)V
 
+accessible method net/minecraft/entity/animal/WolfEntity spawnBoneParticles (Z)V
+
 accessible method net/minecraft/inventory/PlayerInventory getSlotWithItem (I)I
 
 accessible field net/minecraft/entity/projectile/ArrowEntity blockX I
@@ -70,6 +74,7 @@ accessible field net/minecraft/client/texture/TextureManager textures Ljava/util
 
 accessible field net/minecraft/client/gui/screen/Screen buttons Ljava/util/List;
 accessible field net/minecraft/client/gui/screen/Screen textRenderer Lnet/minecraft/client/render/TextRenderer;
+accessible field net/minecraft/client/gui/screen/Screen lastClickedButton Lnet/minecraft/client/gui/widget/ButtonWidget;
 
 accessible method net/minecraft/client/gui/GuiElement fillGradient (IIIIII)V
 

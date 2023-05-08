@@ -380,10 +380,8 @@ public abstract class MixinWorld implements ExWorld, BlockView {
 
         this.loadSoundOverrides();
         EntityDescriptions.loadDescriptions(new File(var9, "entitys"));
-        /* TODO
         AC_ItemCustom.loadItems(new File(var9, "items"));
         AC_TileEntityNpcPath.lastEntity = null;
-        */
     }
 
     @Override
@@ -1494,6 +1492,21 @@ public abstract class MixinWorld implements ExWorld, BlockView {
             this.coordOrder[var2] = this.coordOrder[var2 + var3];
             this.coordOrder[var2 + var3] = var4;
         }
+    }
+
+    @Override
+    public String[] getScriptFiles() {
+        File scriptDir = new File(this.levelDir, "scripts");
+        File[] files = scriptDir.listFiles();
+        if (files == null) {
+            return null;
+        }
+
+        String[] scripts = new String[files.length];
+        for (int i = 0; i < scripts.length; i++) {
+            scripts[i] = files[i].getName();
+        }
+        return scripts;
     }
 
     @Override

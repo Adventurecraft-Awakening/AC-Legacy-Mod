@@ -20,10 +20,6 @@ public interface ExItem {
 
     boolean mainActionLeftClick();
 
-    boolean isLighting(ItemStack var1);
-
-    boolean isMuzzleFlash(ItemStack var1);
-
     void onAddToSlot(PlayerEntity var1, int var2, int var3);
 
     void onRemovedFromSlot(PlayerEntity var1, int var2, int var3);

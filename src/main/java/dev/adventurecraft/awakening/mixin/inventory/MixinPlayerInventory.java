@@ -35,7 +35,7 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
     protected abstract int getFirstEmptySlotIndex();
 
     @Shadow
-    protected abstract int getSlotWithItem(int i);
+    public abstract int getSlotWithItem(int i);
 
     @Shadow
     public abstract int getMaxItemCount();
@@ -133,7 +133,7 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
                     exItem.setTimeLeft(exItem.getTimeLeft() - 1);
                 }
 
-                if ((var1 == this.selectedHotBarSlot || var1 == this.offhandItem) && exItem.getTimeLeft() == 0 && exItem.isReloading()) {
+                if ((var1 == this.selectedHotBarSlot || var1 == this.offhandItem) && exItem.getTimeLeft() == 0 && exItem.getReloading()) {
                     AC_IItemReload var3 = (AC_IItemReload) Item.byId[var2.itemId];
                     var3.reload(var2, this.player.world, this.player);
                 }

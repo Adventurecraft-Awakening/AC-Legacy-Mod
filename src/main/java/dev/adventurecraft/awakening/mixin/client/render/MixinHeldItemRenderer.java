@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.mixin.client.render;
 
+import dev.adventurecraft.awakening.common.AC_IItemLight;
 import dev.adventurecraft.awakening.common.AC_Items;
 import dev.adventurecraft.awakening.common.Vec2;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
@@ -86,124 +87,125 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
             }
 
             this.blockRenderer.method_48(Block.BY_ID[var2.itemId], var2.getMeta(), var1.getBrightnessAtEyes(1.0F));
-        } else {
-            String var3 = "/gui/items.png";
-            if (var2.itemId < 256) {
-                int var4 = ((ExBlock) Block.BY_ID[var2.itemId]).getTextureNum();
-                if (var4 == 0) {
-                    var3 = "/terrain.png";
-                } else {
-                    var3 = String.format("/terrain%d.png", var4);
-                }
-            }
-
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.client.textureManager.getTextureId(var3));
-            Vec2 var25 = ((ExTextureManager) this.client.textureManager).getTextureResolution(var3);
-            int var5 = var25.x / 16;
-            int var6 = var25.y / 16;
-            float var7 = 0.5F / (float) var25.x;
-            float var8 = 0.5F / (float) var25.x;
-            Tessellator var9 = Tessellator.INSTANCE;
-            int var10 = var1.getHeldItemTexture(var2);
-            float var11 = ((float) (var10 % 16 * 16) + 0.0F) / 256.0F;
-            float var12 = ((float) (var10 % 16 * 16) + 15.99F) / 256.0F;
-            float var13 = ((float) (var10 / 16 * 16) + 0.0F) / 256.0F;
-            float var14 = ((float) (var10 / 16 * 16) + 15.99F) / 256.0F;
-            float var15 = 1.0F;
-            float var16 = 0.0F;
-            float var17 = 0.3F;
-            GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-            GL11.glTranslatef(-var16, -var17, 0.0F);
-            float var18 = 1.5F;
-            GL11.glScalef(var18, var18, var18);
-            if (this.itemRotate) {
-                GL11.glRotatef(50.0F, 0.0F, 1.0F, 0.0F);
-                GL11.glRotatef(335.0F, 0.0F, 0.0F, 1.0F);
-            }
-
-            GL11.glTranslatef(-(15.0F / 16.0F), -(1.0F / 16.0F), 0.0F);
-            float var19 = 1.0F / 16.0F;
-            var9.start();
-            var9.setNormal(0.0F, 0.0F, 1.0F);
-            var9.vertex(0.0D, 0.0D, 0.0D, var12, var14);
-            var9.vertex(var15, 0.0D, 0.0D, var11, var14);
-            var9.vertex(var15, 1.0D, 0.0D, var11, var13);
-            var9.vertex(0.0D, 1.0D, 0.0D, var12, var13);
-            var9.tessellate();
-            var9.start();
-            var9.setNormal(0.0F, 0.0F, -1.0F);
-            var9.vertex(0.0D, 1.0D, 0.0F - var19, var12, var13);
-            var9.vertex(var15, 1.0D, 0.0F - var19, var11, var13);
-            var9.vertex(var15, 0.0D, 0.0F - var19, var11, var14);
-            var9.vertex(0.0D, 0.0D, 0.0F - var19, var12, var14);
-            var9.tessellate();
-            var9.start();
-            var9.setNormal(-1.0F, 0.0F, 0.0F);
-
-            int var20;
-            float var21;
-            float var22;
-            float var23;
-            for (var20 = 0; var20 < var5; ++var20) {
-                var21 = (float) var20 / (float) var5;
-                var22 = var12 + (var11 - var12) * var21 - var7;
-                var23 = var15 * var21;
-                var9.vertex(var23, 0.0D, 0.0F - var19, var22, var14);
-                var9.vertex(var23, 0.0D, 0.0D, var22, var14);
-                var9.vertex(var23, 1.0D, 0.0D, var22, var13);
-                var9.vertex(var23, 1.0D, 0.0F - var19, var22, var13);
-            }
-
-            var9.tessellate();
-            var9.start();
-            var9.setNormal(1.0F, 0.0F, 0.0F);
-
-            for (var20 = 0; var20 < var5; ++var20) {
-                var21 = (float) var20 / (float) var5;
-                var22 = var12 + (var11 - var12) * var21 - var7;
-                var23 = var15 * var21 + 1.0F / (float) var5;
-                var9.vertex(var23, 1.0D, 0.0F - var19, var22, var13);
-                var9.vertex(var23, 1.0D, 0.0D, var22, var13);
-                var9.vertex(var23, 0.0D, 0.0D, var22, var14);
-                var9.vertex(var23, 0.0D, 0.0F - var19, var22, var14);
-            }
-
-            var9.tessellate();
-            var9.start();
-            var9.setNormal(0.0F, 1.0F, 0.0F);
-
-            for (var20 = 0; var20 < var6; ++var20) {
-                var21 = (float) var20 / (float) var6;
-                var22 = var14 + (var13 - var14) * var21 - var8;
-                var23 = var15 * var21 + 1.0F / (float) var6;
-                var9.vertex(0.0D, var23, 0.0D, var12, var22);
-                var9.vertex(var15, var23, 0.0D, var11, var22);
-                var9.vertex(var15, var23, 0.0F - var19, var11, var22);
-                var9.vertex(0.0D, var23, 0.0F - var19, var12, var22);
-            }
-
-            var9.tessellate();
-            var9.start();
-            var9.setNormal(0.0F, -1.0F, 0.0F);
-
-            for (var20 = 0; var20 < var6; ++var20) {
-                var21 = (float) var20 / (float) var6;
-                var22 = var14 + (var13 - var14) * var21 - var8;
-                var23 = var15 * var21;
-                var9.vertex(var15, var23, 0.0D, var11, var22);
-                var9.vertex(0.0D, var23, 0.0D, var12, var22);
-                var9.vertex(0.0D, var23, 0.0F - var19, var12, var22);
-                var9.vertex(var15, var23, 0.0F - var19, var11, var22);
-            }
-
-            var9.tessellate();
-            if (((ExItem) Item.byId[var2.itemId]).isMuzzleFlash(var2)) {
-                this.renderMuzzleFlash();
-            }
-
-            GL11.glDisable(GL12.GL_RESCALE_NORMAL);
+            GL11.glPopMatrix();
+            return;
         }
 
+        String var3 = "/gui/items.png";
+        if (var2.itemId < 256) {
+            int var4 = ((ExBlock) Block.BY_ID[var2.itemId]).getTextureNum();
+            if (var4 == 0) {
+                var3 = "/terrain.png";
+            } else {
+                var3 = String.format("/terrain%d.png", var4);
+            }
+        }
+
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.client.textureManager.getTextureId(var3));
+        Vec2 var25 = ((ExTextureManager) this.client.textureManager).getTextureResolution(var3);
+        int var5 = var25.x / 16;
+        int var6 = var25.y / 16;
+        float var7 = 0.5F / (float) var25.x;
+        float var8 = 0.5F / (float) var25.x;
+        Tessellator var9 = Tessellator.INSTANCE;
+        int var10 = var1.getHeldItemTexture(var2);
+        float var11 = ((float) (var10 % 16 * 16) + 0.0F) / 256.0F;
+        float var12 = ((float) (var10 % 16 * 16) + 15.99F) / 256.0F;
+        float var13 = ((float) (var10 / 16 * 16) + 0.0F) / 256.0F;
+        float var14 = ((float) (var10 / 16 * 16) + 15.99F) / 256.0F;
+        float var15 = 1.0F;
+        float var16 = 0.0F;
+        float var17 = 0.3F;
+        GL11.glEnable(GL12.GL_RESCALE_NORMAL);
+        GL11.glTranslatef(-var16, -var17, 0.0F);
+        float var18 = 1.5F;
+        GL11.glScalef(var18, var18, var18);
+        if (this.itemRotate) {
+            GL11.glRotatef(50.0F, 0.0F, 1.0F, 0.0F);
+            GL11.glRotatef(335.0F, 0.0F, 0.0F, 1.0F);
+        }
+
+        GL11.glTranslatef(-(15.0F / 16.0F), -(1.0F / 16.0F), 0.0F);
+        float var19 = 1.0F / 16.0F;
+        var9.start();
+        var9.setNormal(0.0F, 0.0F, 1.0F);
+        var9.vertex(0.0D, 0.0D, 0.0D, var12, var14);
+        var9.vertex(var15, 0.0D, 0.0D, var11, var14);
+        var9.vertex(var15, 1.0D, 0.0D, var11, var13);
+        var9.vertex(0.0D, 1.0D, 0.0D, var12, var13);
+        var9.tessellate();
+        var9.start();
+        var9.setNormal(0.0F, 0.0F, -1.0F);
+        var9.vertex(0.0D, 1.0D, 0.0F - var19, var12, var13);
+        var9.vertex(var15, 1.0D, 0.0F - var19, var11, var13);
+        var9.vertex(var15, 0.0D, 0.0F - var19, var11, var14);
+        var9.vertex(0.0D, 0.0D, 0.0F - var19, var12, var14);
+        var9.tessellate();
+        var9.start();
+        var9.setNormal(-1.0F, 0.0F, 0.0F);
+
+        int var20;
+        float var21;
+        float var22;
+        float var23;
+        for (var20 = 0; var20 < var5; ++var20) {
+            var21 = (float) var20 / (float) var5;
+            var22 = var12 + (var11 - var12) * var21 - var7;
+            var23 = var15 * var21;
+            var9.vertex(var23, 0.0D, 0.0F - var19, var22, var14);
+            var9.vertex(var23, 0.0D, 0.0D, var22, var14);
+            var9.vertex(var23, 1.0D, 0.0D, var22, var13);
+            var9.vertex(var23, 1.0D, 0.0F - var19, var22, var13);
+        }
+
+        var9.tessellate();
+        var9.start();
+        var9.setNormal(1.0F, 0.0F, 0.0F);
+
+        for (var20 = 0; var20 < var5; ++var20) {
+            var21 = (float) var20 / (float) var5;
+            var22 = var12 + (var11 - var12) * var21 - var7;
+            var23 = var15 * var21 + 1.0F / (float) var5;
+            var9.vertex(var23, 1.0D, 0.0F - var19, var22, var13);
+            var9.vertex(var23, 1.0D, 0.0D, var22, var13);
+            var9.vertex(var23, 0.0D, 0.0D, var22, var14);
+            var9.vertex(var23, 0.0D, 0.0F - var19, var22, var14);
+        }
+
+        var9.tessellate();
+        var9.start();
+        var9.setNormal(0.0F, 1.0F, 0.0F);
+
+        for (var20 = 0; var20 < var6; ++var20) {
+            var21 = (float) var20 / (float) var6;
+            var22 = var14 + (var13 - var14) * var21 - var8;
+            var23 = var15 * var21 + 1.0F / (float) var6;
+            var9.vertex(0.0D, var23, 0.0D, var12, var22);
+            var9.vertex(var15, var23, 0.0D, var11, var22);
+            var9.vertex(var15, var23, 0.0F - var19, var11, var22);
+            var9.vertex(0.0D, var23, 0.0F - var19, var12, var22);
+        }
+
+        var9.tessellate();
+        var9.start();
+        var9.setNormal(0.0F, -1.0F, 0.0F);
+
+        for (var20 = 0; var20 < var6; ++var20) {
+            var21 = (float) var20 / (float) var6;
+            var22 = var14 + (var13 - var14) * var21 - var8;
+            var23 = var15 * var21;
+            var9.vertex(var15, var23, 0.0D, var11, var22);
+            var9.vertex(0.0D, var23, 0.0D, var12, var22);
+            var9.vertex(0.0D, var23, 0.0F - var19, var12, var22);
+            var9.vertex(var15, var23, 0.0F - var19, var11, var22);
+        }
+
+        var9.tessellate();
+        if (Item.byId[var2.itemId] instanceof AC_IItemLight lightItem && lightItem.isMuzzleFlash(var2)) {
+            this.renderMuzzleFlash();
+        }
+
+        GL11.glDisable(GL12.GL_RESCALE_NORMAL);
         GL11.glPopMatrix();
     }
 

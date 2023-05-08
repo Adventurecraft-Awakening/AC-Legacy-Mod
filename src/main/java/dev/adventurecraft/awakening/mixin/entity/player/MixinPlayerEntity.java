@@ -1,9 +1,6 @@
 package dev.adventurecraft.awakening.mixin.entity.player;
 
-import dev.adventurecraft.awakening.common.AC_Blocks;
-import dev.adventurecraft.awakening.common.AC_DebugMode;
-import dev.adventurecraft.awakening.common.AC_Items;
-import dev.adventurecraft.awakening.common.AC_PlayerTorch;
+import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import dev.adventurecraft.awakening.extension.item.ExItem;
@@ -123,14 +120,20 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
 
     @Inject(method = "updateDespawnCounter", at = @At("TAIL"))
     private void updateLantern(CallbackInfo ci) {
-        ItemStack var6 = this.inventory.main[this.inventory.selectedHotBarSlot];
-        ItemStack var7 = this.inventory.main[((ExPlayerInventory) this.inventory).getOffhandItem()];
-        boolean emitLight = var6 != null && ((ExItem) Item.byId[var6.itemId]).isLighting(var6);
-        emitLight |= var7 != null && ((ExItem) Item.byId[var7.itemId]).isLighting(var7);
+        ItemStack handItem = this.inventory.getHeldItem();
+        ItemStack offhandItem = ((ExPlayerInventory) this.inventory).getOffhandItemStack();
+
+        boolean emitLight = false;
+        if (handItem != null && Item.byId[handItem.itemId] instanceof AC_IItemLight handLight) {
+            emitLight |= handLight.isLighting(handItem);
+        }
+        if (offhandItem != null && Item.byId[offhandItem.itemId] instanceof AC_IItemLight offhandLight) {
+            emitLight |= offhandLight.isLighting(offhandItem);
+        }
 
         if (!emitLight &&
-            (var6 == null || var6.itemId != Block.TORCH.id && var6.itemId != AC_Blocks.lights1.id) &&
-            (var7 == null || var7.itemId != Block.TORCH.id && var7.itemId != AC_Blocks.lights1.id)) {
+            (handItem == null || handItem.itemId != Block.TORCH.id && handItem.itemId != AC_Blocks.lights1.id) &&
+            (offhandItem == null || offhandItem.itemId != Block.TORCH.id && offhandItem.itemId != AC_Blocks.lights1.id)) {
             AC_PlayerTorch.setTorchState(this.world, false);
         } else {
             AC_PlayerTorch.setTorchState(this.world, true);
@@ -142,11 +145,10 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
         }
 
         if (!this.onGround) {
-            if (this.inventory.getHeldItem() != null && this.inventory.getHeldItem().itemId == AC_Items.umbrella.id) {
-                this.inventory.getHeldItem().setMeta(1);
+            if (handItem != null && handItem.itemId == AC_Items.umbrella.id) {
+                handItem.setMeta(1);
             }
 
-            ItemStack offhandItem = ((ExPlayerInventory) this.inventory).getOffhandItemStack();
             if (offhandItem != null && offhandItem.itemId == AC_Items.umbrella.id) {
                 offhandItem.setMeta(1);
             }

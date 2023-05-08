@@ -4,21 +4,29 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 
-class AC_ItemLantern extends Item {
+class AC_ItemLantern extends Item implements AC_IItemLight {
+
     public AC_ItemLantern(int var1) {
         super(var1);
         this.maxStackSize = 1;
     }
 
-    public boolean isLighting(ItemStack var1) {
-        if (var1.getMeta() < var1.getDurability()) {
-            var1.setMeta(var1.getMeta() + 1);
+    @Override
+    public boolean isLighting(ItemStack stack) {
+        if (stack.getMeta() < stack.getDurability()) {
+            stack.setMeta(stack.getMeta() + 1);
             return true;
-        } else if (var1.getMeta() == var1.getDurability() && Minecraft.instance.player.inventory.removeItem(AC_Items.oil.id)) {
-            var1.setMeta(0);
-            return true;
-        } else {
-            return false;
         }
+        // TODO: check entity holding item instead?
+        if (stack.getMeta() == stack.getDurability() && Minecraft.instance.player.inventory.removeItem(AC_Items.oil.id)) {
+            stack.setMeta(0);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean isMuzzleFlash(ItemStack stack) {
+        return false;
     }
 }

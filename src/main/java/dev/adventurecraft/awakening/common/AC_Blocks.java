@@ -11,8 +11,8 @@ public class AC_Blocks {
 
     public static final Block lockedDoor = (new AC_BlockLockedDoor(150, 208, AC_Items.doorKey.id)).setHardness(5.0F).setSounds(Block.WOOD_SOUNDS).setTranslationKey("lockedDoor");
     public static final Block lockedBossDoor = (new AC_BlockLockedDoor(156, 210, AC_Items.bossKey.id)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("lockedBossDoor");
-    //public static final Block newMobSpawner = (new AC_BlockMobSpawner(151, 65)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("mobSpawner2"); TODO
-    //public static final Block spawnBlock = (new AC_BlockSpawn(152, 0)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("spawn"); TODO
+    public static final Block newMobSpawner = (new AC_BlockMobSpawner(151, 65)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("mobSpawner2");
+    public static final Block spawnBlock = (new AC_BlockSpawn(152, 0)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("spawn");
     public static final AC_BlockTrigger triggerBlock = (AC_BlockTrigger) (new AC_BlockTrigger(153, 1)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("trigger");
     public static final Block triggerDoor = (new AC_BlockTriggeredDoor(154)).setHardness(5.0F).setSounds(Block.WOOD_SOUNDS).setTranslationKey("triggeredDoor");
     public static final Block spikeBlock = (new AC_BlockSpike(155)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("spike");
@@ -32,7 +32,7 @@ public class AC_Blocks {
     public static final Block camera = (new AC_BlockCamera(170, 6)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("camera");
     public static final Block lightBulb = (new AC_BlockLightBulb(171, 14)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("lightBulb");
     public static final Block fanOff = (new AC_BlockFan(172, 200, false)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("fan");
-    //public static final Block script = (new AC_BlockScript(173, 15)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("script"); TODO
+    public static final Block script = (new AC_BlockScript(173, 15)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("script");
     public static final Block store = (new AC_BlockStore(174, 49)).setHardness(5.0F).setSounds(Block.GLASS_SOUNDS).setTranslationKey("store");
     public static final Block effect = (new AC_BlockEffect(175, 244)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("effect");
     public static final Block darkness = (new AC_BlockDarkness(200, 10)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("darkness");
@@ -41,7 +41,7 @@ public class AC_Blocks {
     public static final Block healDamage = (new AC_BlockHealDamage(203, 12)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("healDamage");
     public static final Block teleport = (new AC_BlockTeleport(204, 13)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("teleport");
     public static final Block url = (new AC_BlockUrl(176, 245)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("url");
-    //public static final Block npcPath = (new AC_BlockNpcPath(177, 247)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("NPC Path Block"); TODO
+    public static final Block npcPath = (new AC_BlockNpcPath(177, 247)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("NPC Path Block");
     public static final Block pillarStone = (new AC_BlockPillar(205, 32)).setHardness(5.0F).setSounds(Block.PISTON_SOUNDS).setTranslationKey("pillarStone");
     public static final Block pillarMetal = (new AC_BlockPillar(206, 80)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("pillarMetal");
     public static final Block plant1 = (new AC_BlockPlant(207, 112)).setHardness(5.0F).setSounds(Block.GRASS_SOUNDS).setTranslationKey("flower");
@@ -98,7 +98,7 @@ public class AC_Blocks {
     static {
         ((ExBlock) lockedDoor).setTextureNum(3);
         ((ExBlock) lockedBossDoor).setTextureNum(3);
-        //((ExBlock) spawnBlock).setTextureNum(2); TODO
+        ((ExBlock) spawnBlock).setTextureNum(2);
         ((ExBlock) triggerBlock).setTextureNum(2);
         ((ExBlock) triggerDoor).setTextureNum(3);
         ((ExBlock) spikeBlock).setTextureNum(3);
@@ -113,7 +113,8 @@ public class AC_Blocks {
         ((ExBlock) message).setTextureNum(2);
         ((ExBlock) camera).setTextureNum(2);
         ((ExBlock) lightBulb).setTextureNum(2);
-        //((ExBlock) script).setTextureNum(2); TODO
+        ((ExBlock) script).setTextureNum(2);
+        ((ExBlock) script).setTextureNum(2);
         ((ExBlock) effect).setTextureNum(3);
         ((ExBlock) darkness).setTextureNum(2);
         ((ExBlock) triggerPushable).setTextureNum(3);
@@ -121,7 +122,7 @@ public class AC_Blocks {
         ((ExBlock) healDamage).setTextureNum(2);
         ((ExBlock) teleport).setTextureNum(2);
         ((ExBlock) url).setTextureNum(3);
-        //((ExBlock) npcPath).setTextureNum(3); TODO
+        ((ExBlock) npcPath).setTextureNum(3);
         ((ExBlock) pillarStone).setTextureNum(2);
         ((ExBlock) pillarMetal).setTextureNum(2);
         ((ExBlock) plant1).setTextureNum(2);
