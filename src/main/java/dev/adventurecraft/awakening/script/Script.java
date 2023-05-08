@@ -15,6 +15,8 @@ import org.mozilla.javascript.ScriptableObject;
 @SuppressWarnings("unused")
 public class Script {
 
+    static final String SCRIPT_PACKAGE = "dev.adventurecraft.awakening.script";
+
     public Scriptable globalScope;
     Scriptable curScope;
     Scriptable runScope;
@@ -36,7 +38,7 @@ public class Script {
     public Script(World var1) {
         this.cx.setOptimizationLevel(-1);
         if (!shutterSet) {
-            this.cx.setClassShutter(var11 -> var11.startsWith("dev.adventurecraft.awakening.script") ||
+            this.cx.setClassShutter(var11 -> var11.startsWith(SCRIPT_PACKAGE) ||
                 var11.equals("java.lang.Object") ||
                 var11.equals("java.lang.String") ||
                 var11.equals("java.lang.Double") ||
@@ -79,14 +81,14 @@ public class Script {
         var2 = Context.javaToJS(null, this.globalScope);
         ScriptableObject.putProperty(this.globalScope, "hitEntity", var2);
         ScriptableObject.putProperty(this.globalScope, "hitBlock", var2);
-        this.runString("Item = dev.adventurecraft.awakening.script.ScriptItem");
-        this.runString("UILabel = dev.adventurecraft.awakening.script.ScriptUILabel");
-        this.runString("UISprite = dev.adventurecraft.awakening.script.ScriptUISprite");
-        this.runString("UIRect = dev.adventurecraft.awakening.script.ScriptUIRect");
-        this.runString("UIContainer = dev.adventurecraft.awakening.script.ScriptUIContainer");
-        this.runString("UIContainer = dev.adventurecraft.awakening.script.ScriptUIContainer");
-        this.runString("Model = dev.adventurecraft.awakening.script.ScriptModel");
-        this.runString("Vec3 = dev.adventurecraft.awakening.script.ScriptVec3");
+        this.runString(String.format("Item = Packages.%s.ScriptItem", SCRIPT_PACKAGE));
+        this.runString(String.format("UILabel = Packages.%s.ScriptUILabel", SCRIPT_PACKAGE));
+        this.runString(String.format("UISprite = Packages.%s.ScriptUISprite", SCRIPT_PACKAGE));
+        this.runString(String.format("UIRect = Packages.%s.ScriptUIRect", SCRIPT_PACKAGE));
+        this.runString(String.format("UIContainer = Packages.%s.ScriptUIContainer", SCRIPT_PACKAGE));
+        this.runString(String.format("UIContainer = Packages.%s.ScriptUIContainer", SCRIPT_PACKAGE));
+        this.runString(String.format("Model = Packages.%s.ScriptModel", SCRIPT_PACKAGE));
+        this.runString(String.format("Vec3 = Packages.%s.ScriptVec3", SCRIPT_PACKAGE));
     }
 
     public void addObject(String var1, Object var2) {
