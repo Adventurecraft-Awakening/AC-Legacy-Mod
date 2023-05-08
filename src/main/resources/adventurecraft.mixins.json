@@ -117,6 +117,10 @@
     "world.chunk.MixinChunk",
     "world.chunk.MixinServerChunkCache",
     "world.gen.MixinBiomeSource",
-    "world.source.MixinOverworldWorldSource"
+    "world.source.MixinOverworldWorldSource",
+    "world.world.biome.MixinBiome",
+    "world.world.biome.MixinForestBiome",
+    "world.world.biome.MixinHellBiome",
+    "world.world.biome.MixinTaigaBiome"
   ]
 }

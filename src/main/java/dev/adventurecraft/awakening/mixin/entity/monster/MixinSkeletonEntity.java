@@ -40,14 +40,15 @@ public abstract class MixinSkeletonEntity extends MixinMonsterEntity {
     @Inject(
         method = "tryAttack",
         at = @At(
-            value = "INVOKE_ASSIGN",
-            target = "Lnet/minecraft/entity/projectile/ArrowEntity;<init>(Lnet/minecraft/world/World;Lnet/minecraft/entity/LivingEntity;)V"))
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/World;spawnEntity(Lnet/minecraft/entity/Entity;)Z",
+            shift = At.Shift.BEFORE))
     private void setArrowStrength(Entity var1, float var2, CallbackInfo ci, @Local ArrowEntity arrowEntity) {
         ((ExArrowEntity) arrowEntity).setAttackStrength(this.attackDamage);
     }
 
     @Overwrite
-    protected void getDrops() {
+    public void getDrops() {
         if (this.getMobDrops() != 0) {
             int dropAmount = this.rand.nextInt(3) + 1;
 
