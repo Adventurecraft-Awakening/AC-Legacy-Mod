@@ -498,8 +498,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         int var3;
         if (this.player != null) {
             WorldSource var1 = this.world.getCache();
-            if (var1 instanceof ChunkCache) {
-                ChunkCache var2 = (ChunkCache) var1;
+            if (var1 instanceof ChunkCache var2) {
                 var3 = MathHelper.floor((float) ((int) this.player.x)) >> 4;
                 int var4 = MathHelper.floor((float) ((int) this.player.z)) >> 4;
                 var2.method_1242(var3, var4);
@@ -543,136 +542,139 @@ public abstract class MixinMinecraft implements ExMinecraft {
                 while (true) {
                     long var7;
                     do {
-                        if (!Mouse.next()) {
-                            if (this.attackCooldown > 0) {
-                                --this.attackCooldown;
+                        if (Mouse.next()) {
+                            var7 = System.currentTimeMillis() - this.lastTickTime;
+                            continue;
+                        }
+
+                        if (this.attackCooldown > 0) {
+                            --this.attackCooldown;
+                        }
+
+                        while (true) {
+                            do {
+                                if (!Keyboard.next()) {
+                                    if (this.currentScreen == null || ((ExScreen) this.currentScreen).isDisabledInputGrabbing()) {
+                                        if (Mouse.isButtonDown(0) && (float) (this.ticksPlayed - this.mouseTicksProcessed) >= 0.0F && this.hasFocus) {
+                                            this.method_2107(0);
+                                        }
+
+                                        if (Mouse.isButtonDown(1) && (float) (this.ticksPlayed - this.rightMouseTicksRan) >= 0.0F && this.hasFocus) {
+                                            this.method_2107(1);
+                                        }
+                                    }
+
+                                    this.method_2110(0, (this.currentScreen == null || ((ExScreen) this.currentScreen).isDisabledInputGrabbing()) && Mouse.isButtonDown(0) && this.hasFocus);
+                                    break label405;
+                                }
+
+                                this.player.method_136(Keyboard.getEventKey(), Keyboard.getEventKeyState());
+                            } while (!Keyboard.getEventKeyState());
+
+                            if (Keyboard.getEventKey() == Keyboard.KEY_F11) {
+                                this.toggleFullscreen();
+                            } else {
+                                if (this.currentScreen != null && !((ExScreen) this.currentScreen).isDisabledInputGrabbing()) {
+                                    // TODO: fix doubled events (one for key press, one for text input)
+                                    this.currentScreen.onKeyboardEvent();
+                                } else {
+                                    if (Keyboard.getEventKey() == Keyboard.KEY_ESCAPE) {
+                                        this.openPauseMenu();
+                                    }
+
+                                    if (Keyboard.getEventKey() == Keyboard.KEY_S && Keyboard.isKeyDown(Keyboard.KEY_F3)) {
+                                        this.forceResourceReload();
+                                    }
+
+                                    if (Keyboard.getEventKey() == Keyboard.KEY_F1) {
+                                        this.options.hideHud = !this.options.hideHud;
+                                    }
+
+                                    if (Keyboard.getEventKey() == Keyboard.KEY_F3) {
+                                        this.options.debugHud = !this.options.debugHud;
+                                    }
+
+                                    if (Keyboard.getEventKey() == Keyboard.KEY_F4) {
+                                        AC_DebugMode.active = !AC_DebugMode.active;
+                                        if (AC_DebugMode.active) {
+                                            this.overlay.addChatMessage("Debug Mode Active");
+                                        } else {
+                                            this.overlay.addChatMessage("Debug Mode Deactivated");
+                                            ((ExWorld) this.world).loadBrightness();
+                                        }
+
+                                        ((ExWorldEventRenderer) this.worldRenderer).updateAllTheRenderers();
+                                    }
+
+                                    if (Keyboard.getEventKey() == Keyboard.KEY_F5) {
+                                        this.options.thirdPerson = !this.options.thirdPerson;
+                                    }
+
+                                    if (Keyboard.getEventKey() == Keyboard.KEY_F6) {
+                                        ((ExWorldEventRenderer) this.worldRenderer).resetAll();
+                                        this.overlay.addChatMessage("Resetting all blocks in loaded chunks");
+                                    }
+
+                                    if (Keyboard.getEventKey() == Keyboard.KEY_F7) {
+                                        ((ExAbstractClientPlayerEntity) this.player).displayGUIPalette();
+                                    }
+
+                                    if (Keyboard.getEventKey() == this.options.inventoryKey.key) {
+                                        this.openScreen(new PlayerInventoryScreen(this.player));
+                                    }
+
+                                    if (Keyboard.getEventKey() == this.options.dropKey.key) {
+                                        this.player.dropSelectedItem();
+                                    }
+
+                                    if ((this.hasWorld() || AC_DebugMode.active) && Keyboard.getEventKey() == this.options.chatKey.key) {
+                                        this.openScreen(new ChatScreen());
+                                    }
+
+                                    if (AC_DebugMode.active && (Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL))) {
+                                        if (Keyboard.getEventKey() == Keyboard.KEY_Z) {
+                                            ((ExWorld) this.world).undo();
+                                        } else if (Keyboard.getEventKey() == Keyboard.KEY_Y) {
+                                            ((ExWorld) this.world).redo();
+                                        }
+                                    }
+                                }
+
+                                int var8 = 0;
+
+                                while (true) {
+                                    if (var8 >= 9) {
+                                        if (Keyboard.getEventKey() == this.options.fogKey.key) {
+                                            this.options.setIntOption(Option.RENDER_DISTANCE, !Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) && !Keyboard.isKeyDown(Keyboard.KEY_RSHIFT) ? 1 : -1);
+                                        }
+                                        break;
+                                    }
+
+                                    if (Keyboard.getEventKey() == Keyboard.KEY_1 + var8) {
+                                        if (!Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) && !Keyboard.isKeyDown(Keyboard.KEY_RCONTROL)) {
+                                            if (var8 == ((ExPlayerInventory) this.player.inventory).getOffhandItem()) {
+                                                ((ExPlayerInventory) this.player.inventory).setOffhandItem(this.player.inventory.selectedHotBarSlot);
+                                            }
+
+                                            this.player.inventory.selectedHotBarSlot = var8;
+                                        } else {
+                                            if (var8 == this.player.inventory.selectedHotBarSlot) {
+                                                this.player.inventory.selectedHotBarSlot = ((ExPlayerInventory) this.player.inventory).getOffhandItem();
+                                            }
+
+                                            ((ExPlayerInventory) this.player.inventory).setOffhandItem(var8);
+                                        }
+                                    }
+
+                                    ++var8;
+                                }
                             }
 
-                            while (true) {
-                                do {
-                                    if (!Keyboard.next()) {
-                                        if (this.currentScreen == null || ((ExScreen) this.currentScreen).isDisabledInputGrabbing()) {
-                                            if (Mouse.isButtonDown(0) && (float) (this.ticksPlayed - this.mouseTicksProcessed) >= 0.0F && this.hasFocus) {
-                                                this.method_2107(0);
-                                            }
-
-                                            if (Mouse.isButtonDown(1) && (float) (this.ticksPlayed - this.rightMouseTicksRan) >= 0.0F && this.hasFocus) {
-                                                this.method_2107(1);
-                                            }
-                                        }
-
-                                        this.method_2110(0, (this.currentScreen == null || ((ExScreen) this.currentScreen).isDisabledInputGrabbing()) && Mouse.isButtonDown(0) && this.hasFocus);
-                                        break label405;
-                                    }
-
-                                    this.player.method_136(Keyboard.getEventKey(), Keyboard.getEventKeyState());
-                                } while (!Keyboard.getEventKeyState());
-
-                                if (Keyboard.getEventKey() == Keyboard.KEY_F11) {
-                                    this.toggleFullscreen();
-                                } else {
-                                    if (this.currentScreen != null && !((ExScreen) this.currentScreen).isDisabledInputGrabbing()) {
-                                        this.currentScreen.onKeyboardEvent();
-                                    } else {
-                                        if (Keyboard.getEventKey() == Keyboard.KEY_ESCAPE) {
-                                            this.openPauseMenu();
-                                        }
-
-                                        if (Keyboard.getEventKey() == Keyboard.KEY_S && Keyboard.isKeyDown(Keyboard.KEY_F3)) {
-                                            this.forceResourceReload();
-                                        }
-
-                                        if (Keyboard.getEventKey() == Keyboard.KEY_F1) {
-                                            this.options.hideHud = !this.options.hideHud;
-                                        }
-
-                                        if (Keyboard.getEventKey() == Keyboard.KEY_F3) {
-                                            this.options.debugHud = !this.options.debugHud;
-                                        }
-
-                                        if (Keyboard.getEventKey() == Keyboard.KEY_F4) {
-                                            AC_DebugMode.active = !AC_DebugMode.active;
-                                            if (AC_DebugMode.active) {
-                                                this.overlay.addChatMessage("Debug Mode Active");
-                                            } else {
-                                                this.overlay.addChatMessage("Debug Mode Deactivated");
-                                                ((ExWorld) this.world).loadBrightness();
-                                            }
-
-                                            ((ExWorldEventRenderer) this.worldRenderer).updateAllTheRenderers();
-                                        }
-
-                                        if (Keyboard.getEventKey() == Keyboard.KEY_F5) {
-                                            this.options.thirdPerson = !this.options.thirdPerson;
-                                        }
-
-                                        if (Keyboard.getEventKey() == Keyboard.KEY_F6) {
-                                            ((ExWorldEventRenderer) this.worldRenderer).resetAll();
-                                            this.overlay.addChatMessage("Resetting all blocks in loaded chunks");
-                                        }
-
-                                        if (Keyboard.getEventKey() == Keyboard.KEY_F7) {
-                                            ((ExAbstractClientPlayerEntity) this.player).displayGUIPalette();
-                                        }
-
-                                        if (Keyboard.getEventKey() == this.options.inventoryKey.key) {
-                                            this.openScreen(new PlayerInventoryScreen(this.player));
-                                        }
-
-                                        if (Keyboard.getEventKey() == this.options.dropKey.key) {
-                                            this.player.dropSelectedItem();
-                                        }
-
-                                        if ((this.hasWorld() || AC_DebugMode.active) && Keyboard.getEventKey() == this.options.chatKey.key) {
-                                            this.openScreen(new ChatScreen());
-                                        }
-
-                                        if (AC_DebugMode.active && (Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL))) {
-                                            if (Keyboard.getEventKey() == Keyboard.KEY_Z) {
-                                                ((ExWorld) this.world).undo();
-                                            } else if (Keyboard.getEventKey() == Keyboard.KEY_Y) {
-                                                ((ExWorld) this.world).redo();
-                                            }
-                                        }
-                                    }
-
-                                    int var8 = 0;
-
-                                    while (true) {
-                                        if (var8 >= 9) {
-                                            if (Keyboard.getEventKey() == this.options.fogKey.key) {
-                                                this.options.setIntOption(Option.RENDER_DISTANCE, !Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) && !Keyboard.isKeyDown(Keyboard.KEY_RSHIFT) ? 1 : -1);
-                                            }
-                                            break;
-                                        }
-
-                                        if (Keyboard.getEventKey() == Keyboard.KEY_1 + var8) {
-                                            if (!Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) && !Keyboard.isKeyDown(Keyboard.KEY_RCONTROL)) {
-                                                if (var8 == ((ExPlayerInventory) this.player.inventory).getOffhandItem()) {
-                                                    ((ExPlayerInventory) this.player.inventory).setOffhandItem(this.player.inventory.selectedHotBarSlot);
-                                                }
-
-                                                this.player.inventory.selectedHotBarSlot = var8;
-                                            } else {
-                                                if (var8 == this.player.inventory.selectedHotBarSlot) {
-                                                    this.player.inventory.selectedHotBarSlot = ((ExPlayerInventory) this.player.inventory).getOffhandItem();
-                                                }
-
-                                                ((ExPlayerInventory) this.player.inventory).setOffhandItem(var8);
-                                            }
-                                        }
-
-                                        ++var8;
-                                    }
-                                }
-
-                                if (this.world != null) {
-                                    //((ExWorld) this.world).getScript().keyboard.processKeyPress(Keyboard.getEventKey());
-                                }
+                            if (this.world != null) {
+                                ((ExWorld) this.world).getScript().keyboard.processKeyPress(Keyboard.getEventKey());
                             }
                         }
 
-                        var7 = System.currentTimeMillis() - this.lastTickTime;
                     } while (var7 > 200L);
 
                     var3 = Mouse.getEventDWheel();

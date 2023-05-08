@@ -265,7 +265,7 @@ public abstract class MixinAbstractClientPlayerEntity extends PlayerEntity imple
                 break;
 
             default:
-                String var11 = ((ExWorld) this.world).getScript().runString(var2);
+                String var11 = ((ExWorld) this.world).getScript().runString(var1);
                 if (var11 != null) {
                     this.client.overlay.addChatMessage(var11);
                 }
