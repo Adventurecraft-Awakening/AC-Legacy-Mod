@@ -21,6 +21,7 @@
     "client.gui.screen.ingame.MixinPauseScreen",
     "client.gui.screen.menu.MixinTitleScreen",
     "client.gui.screen.menu.MixinVideoSettingsScreen",
+    "client.model.MixinCuboid",
     "client.options.MixinGameOptions",
     "client.particle.MixinParticleManager",
     "client.render.MixinFireTextureBinder",
