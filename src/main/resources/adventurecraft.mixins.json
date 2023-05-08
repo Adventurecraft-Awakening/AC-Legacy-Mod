@@ -47,6 +47,7 @@
     "client.util.MixinCamera",
     "client.util.MixinFrustum",
     "client.util.MixinMouseHelper",
+    "client.util.MixinResourceDownloadThread",
     "entity.player.MixinAbstractClientPlayerEntity",
     "entity.player.MixinRemoteClientPlayerEntity",
     "world.chunk.MixinChunkCache"
