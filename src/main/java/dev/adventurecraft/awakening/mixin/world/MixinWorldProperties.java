@@ -262,6 +262,11 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     }
 
     @Override
+    public void setPlayingMusic(String value) {
+        this.playingMusic = value;
+    }
+
+    @Override
     public String getPlayerName() {
         return this.playerName;
     }

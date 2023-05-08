@@ -12,6 +12,7 @@ import dev.adventurecraft.awakening.extension.client.ExTextureManager;
 import dev.adventurecraft.awakening.extension.client.render.block.ExFoliageColor;
 import dev.adventurecraft.awakening.extension.client.render.block.ExGrassColor;
 import dev.adventurecraft.awakening.extension.client.resource.language.ExTranslationStorage;
+import dev.adventurecraft.awakening.extension.client.sound.ExSoundHelper;
 import dev.adventurecraft.awakening.extension.entity.ExBlockEntity;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
@@ -1330,7 +1331,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
 
         String playingMusic = ((ExWorldProperties) this.properties).getPlayingMusic();
         if (!playingMusic.equals("")) {
-            //Minecraft.instance.soundHelper.playMusicFromStreaming(playingMusic, 0, 0); TODO
+            ((ExSoundHelper) Minecraft.instance.soundHelper).playMusicFromStreaming(playingMusic, 0, 0);
         }
     }
 

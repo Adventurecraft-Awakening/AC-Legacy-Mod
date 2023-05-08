@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.mixin.client.gui.screen.menu;
 
 import dev.adventurecraft.awakening.common.AC_GuiMapSelect;
 import dev.adventurecraft.awakening.common.AC_Version;
+import dev.adventurecraft.awakening.extension.client.sound.ExSoundHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.SelectWorldScreen;
@@ -33,7 +34,7 @@ public abstract class MixinTitleScreen extends Screen {
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(CallbackInfo ci) {
         //ScriptModel.clearAll(); TODO
-        //Minecraft.instance.soundHelper.stopMusic(); TODO
+        ((ExSoundHelper) Minecraft.instance.soundHelper).stopMusic();
     }
 
     @Overwrite

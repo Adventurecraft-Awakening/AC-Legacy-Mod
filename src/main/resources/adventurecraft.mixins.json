@@ -40,6 +40,8 @@
     "client.render.entity.MixinItemRenderer",
     "client.render.entity.MixinPlayerRenderer",
     "client.render.entity.block.MixinPistonRenderer",
+    "client.sound.MixinSoundHelper",
+    "client.sound.MixinSoundMap",
     "client.util.MixinCamera",
     "client.util.MixinFrustum",
     "client.util.MixinMouseHelper",

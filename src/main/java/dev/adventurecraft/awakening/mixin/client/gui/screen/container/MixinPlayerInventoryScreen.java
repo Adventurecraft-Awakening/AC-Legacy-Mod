@@ -18,7 +18,7 @@ public abstract class MixinPlayerInventoryScreen extends ContainerScreen {
     }
 
     @Overwrite
-    protected void renderForeground() {
+    public void renderForeground() {
     }
 
     @Inject(
