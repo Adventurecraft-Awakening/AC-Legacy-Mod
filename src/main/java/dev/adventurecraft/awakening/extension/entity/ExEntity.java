@@ -7,7 +7,7 @@ public interface ExEntity {
     boolean attackEntityFromMulti(Entity var1, int var2);
 
     boolean handleFlying();
-    
+
     void setIsFlying(boolean value);
 
     boolean getCollidesWithClipBlocks();
@@ -17,4 +17,8 @@ public interface ExEntity {
     int getStunned();
 
     void setStunned(int value);
+
+    int getCollisionX();
+
+    int getCollisionZ();
 }

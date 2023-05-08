@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.extension.entity;
 
-public interface ExLivingEntity {
+public interface ExLivingEntity extends ExEntity {
 
     boolean protectedByShield(double x, double y, double z);
 

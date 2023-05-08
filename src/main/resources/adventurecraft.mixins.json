@@ -12,6 +12,7 @@
     "client.entity.particle.MixinFootstepParticle",
     "client.entity.particle.MixinPickupParticleEntity",
     "client.gui.MixinAchievementWidget",
+    "client.gui.MixinInGameHud",
     "client.gui.screen.MixinScreen",
     "client.gui.screen.MixinSelectWorldScreen",
     "client.gui.screen.container.MixinPlayerInventoryScreen",

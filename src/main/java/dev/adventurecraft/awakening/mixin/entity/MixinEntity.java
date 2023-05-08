@@ -1,14 +1,10 @@
 package dev.adventurecraft.awakening.mixin.entity;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.AC_Blocks;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.data.DataTracker;
 import net.minecraft.util.math.AxixAlignedBoundingBox;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
@@ -288,5 +284,15 @@ public abstract class MixinEntity implements ExEntity {
     @Override
     public void setStunned(int value) {
         this.stunned = value;
+    }
+
+    @Override
+    public int getCollisionX() {
+        return this.collisionX;
+    }
+
+    @Override
+    public int getCollisionZ() {
+        return this.collisionZ;
     }
 }
