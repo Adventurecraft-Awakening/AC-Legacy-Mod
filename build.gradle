@@ -84,17 +84,15 @@ dependencies {
     implementation "org.slf4j:slf4j-api:1.8.0-beta4"
     implementation "org.apache.logging.log4j:log4j-slf4j18-impl:2.18.0"
 
-    implementation 'com.github.Chocohead:Fabric-ASM:v2.3'
-    include 'com.github.Chocohead:Fabric-ASM:v2.3'
+    include(implementation('com.github.Chocohead:Fabric-ASM:v2.3'))
 
     implementation 'com.google.guava:guava:31+'
     implementation 'org.apache.commons:commons-lang3:3.12.0'
 
-    implementation 'it.unimi.dsi:fastutil-core:8.5.12'
-    include 'it.unimi.dsi:fastutil-core:8.5.12'
+    include(implementation('it.unimi.dsi:fastutil-core:8.5.12'))
 }
 
-configurations.all {
+configurations.configureEach {
     // Removes LWJGL2 dependencies
     exclude group: "org.lwjgl.lwjgl"
 }
