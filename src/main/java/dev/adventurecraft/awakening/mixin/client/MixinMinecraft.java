@@ -793,201 +793,203 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
     @Overwrite
     private void method_2107(int var1) {
-        if (var1 != 0 || this.attackCooldown <= 0) {
-            if (AC_DebugMode.active) {
-                ((ExWorld) this.world).getUndoStack().startRecording();
+        if (var1 == 0 && this.attackCooldown > 0) {
+            return;
+        }
+
+        if (AC_DebugMode.active) {
+            ((ExWorld) this.world).getUndoStack().startRecording();
+        }
+
+        boolean var4 = false;
+        ItemStack var2 = this.player.inventory.getHeldItem();
+        if (!AC_DebugMode.active) {
+            if (var1 == 0) {
+                var2 = ((ExPlayerInventory) this.player.inventory).getOffhandItemStack();
+                ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
+                var4 = true;
+                ((ExPlayerEntity) this.player).setSwappedItems(true);
             }
 
-            boolean var4 = false;
-            ItemStack var2 = this.player.inventory.getHeldItem();
-            if (!AC_DebugMode.active) {
-                if (var1 == 0) {
-                    var2 = ((ExPlayerInventory) this.player.inventory).getOffhandItemStack();
-                    ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
-                    var4 = true;
-                    ((ExPlayerEntity) this.player).setSwappedItems(true);
-                }
-
-                int var5 = 5;
-                if (var2 != null) {
-                    var5 = ((ExItem) Item.byId[var2.itemId]).getItemUseDelay();
-                }
-
-                if (var1 == 0) {
-                    this.mouseTicksProcessed = this.ticksPlayed + var5;
-                } else {
-                    this.rightMouseTicksRan = this.ticksPlayed + var5;
-                }
-
-                if (var2 != null && ((ExItem) Item.byId[var2.itemId]).mainActionLeftClick()) {
-                    var1 = 0;
-                } else {
-                    var1 = 1;
-                }
-            } else {
-                this.mouseTicksProcessed = this.ticksPlayed + 5;
-                this.rightMouseTicksRan = this.ticksPlayed + 5;
+            int var5 = 5;
+            if (var2 != null) {
+                var5 = ((ExItem) Item.byId[var2.itemId]).getItemUseDelay();
             }
 
             if (var1 == 0) {
-                this.player.swingHand();
+                this.mouseTicksProcessed = this.ticksPlayed + var5;
+            } else {
+                this.rightMouseTicksRan = this.ticksPlayed + var5;
             }
 
-            boolean var12 = true;
-            if (this.hitResult == null) {
-                if (var1 == 0 && !(this.interactionManager instanceof CreativeClientInteractionManager)) {
-                    this.attackCooldown = 10;
-                }
-            } else if (this.hitResult.type == HitType.field_790) {
-                if (var1 == 0) {
-                    this.interactionManager.attack(this.player, this.hitResult.field_1989);
-                }
+            if (var2 != null && ((ExItem) Item.byId[var2.itemId]).mainActionLeftClick()) {
+                var1 = 0;
+            } else {
+                var1 = 1;
+            }
+        } else {
+            this.mouseTicksProcessed = this.ticksPlayed + 5;
+            this.rightMouseTicksRan = this.ticksPlayed + 5;
+        }
 
-                if (var1 == 1) {
-                    this.interactionManager.method_1714(this.player, this.hitResult.field_1989);
-                }
-            } else if (this.hitResult.type == HitType.field_789) {
-                int var6 = this.hitResult.x;
-                int var7 = this.hitResult.y;
-                int var8 = this.hitResult.z;
-                int var9 = this.hitResult.field_1987;
-                Block var10 = Block.BY_ID[this.world.getBlockId(var6, var7, var8)];
+        if (var1 == 0) {
+            this.player.swingHand();
+        }
+
+        boolean var12 = true;
+        if (this.hitResult == null) {
+            if (var1 == 0 && !(this.interactionManager instanceof CreativeClientInteractionManager)) {
+                this.attackCooldown = 10;
+            }
+        } else if (this.hitResult.type == HitType.field_790) {
+            if (var1 == 0) {
+                this.interactionManager.attack(this.player, this.hitResult.field_1989);
+            }
+
+            if (var1 == 1) {
+                this.interactionManager.method_1714(this.player, this.hitResult.field_1989);
+            }
+        } else if (this.hitResult.type == HitType.field_789) {
+            int var6 = this.hitResult.x;
+            int var7 = this.hitResult.y;
+            int var8 = this.hitResult.z;
+            int var9 = this.hitResult.field_1987;
+            Block var10 = Block.BY_ID[this.world.getBlockId(var6, var7, var8)];
+            if (var10 != null) {
                 if (!AC_DebugMode.active && (var10.id == Block.CHEST.id || var10.id == AC_Blocks.store.id)) {
                     var1 = 1;
                 }
 
-                if (var10 != null) {
-                    int var11;
-                    if (!AC_DebugMode.active) {
-                        var11 = ((ExBlock) var10).alwaysUseClick(this.world, var6, var7, var8);
-                        if (var11 != -1) {
-                            var1 = var11;
-                        }
-                    }
-
-                    if (var1 == 0) {
-                        this.interactionManager.destroyFireAndBreakBlock(var6, var7, var8, this.hitResult.field_1987);
-                        if (var2 != null) {
-                            ((ExItemStack) (Object) var2).useItemLeftClick(this.player, this.world, var6, var7, var8, var9);
-                        }
-                    } else {
-                        var11 = var2 == null ? 0 : var2.count;
-                        if (this.interactionManager.useItemOnBlock(this.player, this.world, var2, var6, var7, var8, var9)) {
-                            var12 = false;
-                            this.player.swingHand();
-                        }
-
-                        if (var2 == null) {
-                            if (var4) {
-                                ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
-                                ((ExPlayerEntity) this.player).setSwappedItems(false);
-                            }
-
-                            if (AC_DebugMode.active) {
-                                ((ExWorld) this.world).getUndoStack().stopRecording();
-                            }
-
-                            return;
-                        }
-
-                        if (var2.count == 0 && var2 == this.player.inventory.main[this.player.inventory.selectedHotBarSlot]) {
-                            this.player.inventory.main[this.player.inventory.selectedHotBarSlot] = null;
-                        } else if (var2.count != var11) {
-                            this.gameRenderer.heldItemRenderer.method_1863();
-                        }
+                int var11;
+                if (!AC_DebugMode.active) {
+                    var11 = ((ExBlock) var10).alwaysUseClick(this.world, var6, var7, var8);
+                    if (var11 != -1) {
+                        var1 = var11;
                     }
                 }
-            }
 
-            if (var12 && var1 == 0 && var2 != null && Item.byId[var2.itemId] != null) {
-                ((ExItem) Item.byId[var2.itemId]).onItemLeftClick(var2, this.world, this.player);
-            }
-
-            if (var12 && var1 == 1 && var2 != null && this.interactionManager.method_1712(this.player, this.world, var2)) {
-                this.gameRenderer.heldItemRenderer.method_1865();
-            }
-
-            if (var2 != null) {
-                Scriptable globalScope = ((ExWorld) this.world).getScript().globalScope;
-
-                Object var13;
-                if (this.lastItemUsed != var2) {
-                    var13 = Context.javaToJS(new ScriptItem(var2), globalScope);
-                    ScriptableObject.putProperty(globalScope, "lastItemUsed", var13);
-                    this.lastItemUsed = var2;
-                }
-
-                if (this.hitResult == null) {
-                    if (this.lastEntityHit != null) {
-                        this.lastEntityHit = null;
-                        var13 = Context.javaToJS(null, globalScope);
-                        ScriptableObject.putProperty(globalScope, "hitEntity", var13);
-                    }
-
-                    if (this.lastBlockHit != null) {
-                        this.lastBlockHit = null;
-                        var13 = Context.javaToJS(null, globalScope);
-                        ScriptableObject.putProperty(globalScope, "hitBlock", var13);
-                    }
-                } else if (this.hitResult.type == HitType.field_790) {
-                    if (this.lastEntityHit != this.hitResult.field_1989) {
-                        this.lastEntityHit = this.hitResult.field_1989;
-                        var13 = Context.javaToJS(ScriptEntity.getEntityClass(this.hitResult.field_1989), globalScope);
-                        ScriptableObject.putProperty(globalScope, "hitEntity", var13);
-                    }
-
-                    if (this.lastBlockHit != null) {
-                        this.lastBlockHit = null;
-                        var13 = Context.javaToJS(null, globalScope);
-                        ScriptableObject.putProperty(globalScope, "hitBlock", var13);
-                    }
-                } else if (this.hitResult.type != HitType.field_789) {
-                    if (this.lastEntityHit != null) {
-                        this.lastEntityHit = null;
-                        var13 = Context.javaToJS(null, globalScope);
-                        ScriptableObject.putProperty(globalScope, "hitEntity", var13);
-                    }
-
-                    if (this.lastBlockHit != null) {
-                        this.lastBlockHit = null;
-                        var13 = Context.javaToJS(null, globalScope);
-                        ScriptableObject.putProperty(globalScope, "hitBlock", var13);
+                if (var1 == 0) {
+                    this.interactionManager.destroyFireAndBreakBlock(var6, var7, var8, this.hitResult.field_1987);
+                    if (var2 != null) {
+                        ((ExItemStack) var2).useItemLeftClick(this.player, this.world, var6, var7, var8, var9);
                     }
                 } else {
-                    if (this.lastBlockHit == null ||
-                        this.lastBlockHit.x != (double) this.hitResult.x ||
-                        this.lastBlockHit.y != (double) this.hitResult.y ||
-                        this.lastBlockHit.z != (double) this.hitResult.z) {
-
-                        this.lastBlockHit = new ScriptVec3((float) this.hitResult.x, (float) this.hitResult.y, (float) this.hitResult.z);
-                        var13 = Context.javaToJS(this.lastBlockHit, globalScope);
-                        ScriptableObject.putProperty(globalScope, "hitBlock", var13);
+                    var11 = var2 == null ? 0 : var2.count;
+                    if (this.interactionManager.useItemOnBlock(this.player, this.world, var2, var6, var7, var8, var9)) {
+                        var12 = false;
+                        this.player.swingHand();
                     }
 
-                    if (this.lastEntityHit != null) {
-                        this.lastEntityHit = null;
-                        var13 = Context.javaToJS(null, globalScope);
-                        ScriptableObject.putProperty(globalScope, "hitEntity", var13);
+                    if (var2 == null) {
+                        if (var4) {
+                            ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
+                            ((ExPlayerEntity) this.player).setSwappedItems(false);
+                        }
+
+                        if (AC_DebugMode.active) {
+                            ((ExWorld) this.world).getUndoStack().stopRecording();
+                        }
+
+                        return;
+                    }
+
+                    if (var2.count == 0 && var2 == this.player.inventory.main[this.player.inventory.selectedHotBarSlot]) {
+                        this.player.inventory.main[this.player.inventory.selectedHotBarSlot] = null;
+                    } else if (var2.count != var11) {
+                        this.gameRenderer.heldItemRenderer.method_1863();
                     }
                 }
+            }
+        }
 
-                if (var2.usesMeta()) {
-                    ((ExWorld) this.world).getScriptHandler().runScript(
-                        String.format("item_%d_%d.js", var2.itemId, var2.getMeta()), ((ExWorld) this.world).getScope(), false);
-                } else {
-                    ((ExWorld) this.world).getScriptHandler().runScript(
-                        String.format("item_%d.js", var2.itemId), ((ExWorld) this.world).getScope(), false);
+        if (var12 && var1 == 0 && var2 != null && Item.byId[var2.itemId] != null) {
+            ((ExItem) Item.byId[var2.itemId]).onItemLeftClick(var2, this.world, this.player);
+        }
+
+        if (var12 && var1 == 1 && var2 != null && this.interactionManager.method_1712(this.player, this.world, var2)) {
+            this.gameRenderer.heldItemRenderer.method_1865();
+        }
+
+        if (var2 != null) {
+            Scriptable globalScope = ((ExWorld) this.world).getScript().globalScope;
+
+            Object var13;
+            if (this.lastItemUsed != var2) {
+                var13 = Context.javaToJS(new ScriptItem(var2), globalScope);
+                ScriptableObject.putProperty(globalScope, "lastItemUsed", var13);
+                this.lastItemUsed = var2;
+            }
+
+            if (this.hitResult == null) {
+                if (this.lastEntityHit != null) {
+                    this.lastEntityHit = null;
+                    var13 = Context.javaToJS(null, globalScope);
+                    ScriptableObject.putProperty(globalScope, "hitEntity", var13);
+                }
+
+                if (this.lastBlockHit != null) {
+                    this.lastBlockHit = null;
+                    var13 = Context.javaToJS(null, globalScope);
+                    ScriptableObject.putProperty(globalScope, "hitBlock", var13);
+                }
+            } else if (this.hitResult.type == HitType.field_790) {
+                if (this.lastEntityHit != this.hitResult.field_1989) {
+                    this.lastEntityHit = this.hitResult.field_1989;
+                    var13 = Context.javaToJS(ScriptEntity.getEntityClass(this.hitResult.field_1989), globalScope);
+                    ScriptableObject.putProperty(globalScope, "hitEntity", var13);
+                }
+
+                if (this.lastBlockHit != null) {
+                    this.lastBlockHit = null;
+                    var13 = Context.javaToJS(null, globalScope);
+                    ScriptableObject.putProperty(globalScope, "hitBlock", var13);
+                }
+            } else if (this.hitResult.type != HitType.field_789) {
+                if (this.lastEntityHit != null) {
+                    this.lastEntityHit = null;
+                    var13 = Context.javaToJS(null, globalScope);
+                    ScriptableObject.putProperty(globalScope, "hitEntity", var13);
+                }
+
+                if (this.lastBlockHit != null) {
+                    this.lastBlockHit = null;
+                    var13 = Context.javaToJS(null, globalScope);
+                    ScriptableObject.putProperty(globalScope, "hitBlock", var13);
+                }
+            } else {
+                if (this.lastBlockHit == null ||
+                    this.lastBlockHit.x != (double) this.hitResult.x ||
+                    this.lastBlockHit.y != (double) this.hitResult.y ||
+                    this.lastBlockHit.z != (double) this.hitResult.z) {
+
+                    this.lastBlockHit = new ScriptVec3((float) this.hitResult.x, (float) this.hitResult.y, (float) this.hitResult.z);
+                    var13 = Context.javaToJS(this.lastBlockHit, globalScope);
+                    ScriptableObject.putProperty(globalScope, "hitBlock", var13);
+                }
+
+                if (this.lastEntityHit != null) {
+                    this.lastEntityHit = null;
+                    var13 = Context.javaToJS(null, globalScope);
+                    ScriptableObject.putProperty(globalScope, "hitEntity", var13);
                 }
             }
 
-            if (var4) {
-                ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
-                ((ExPlayerEntity) this.player).setSwappedItems(false);
+            if (var2.usesMeta()) {
+                ((ExWorld) this.world).getScriptHandler().runScript(
+                    String.format("item_%d_%d.js", var2.itemId, var2.getMeta()), ((ExWorld) this.world).getScope(), false);
+            } else {
+                ((ExWorld) this.world).getScriptHandler().runScript(
+                    String.format("item_%d.js", var2.itemId), ((ExWorld) this.world).getScope(), false);
             }
+        }
 
-            if (AC_DebugMode.active) {
-                ((ExWorld) this.world).getUndoStack().stopRecording();
-            }
+        if (var4) {
+            ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
+            ((ExPlayerEntity) this.player).setSwappedItems(false);
+        }
+
+        if (AC_DebugMode.active) {
+            ((ExWorld) this.world).getUndoStack().stopRecording();
         }
     }
 
