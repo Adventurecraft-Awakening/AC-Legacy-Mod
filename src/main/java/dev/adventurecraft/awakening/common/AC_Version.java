@@ -6,7 +6,7 @@ import java.io.FileReader;
 
 public class AC_Version {
     public static String version = "Adventurecraft - Minecraft Beta 1.7.3";
-    public static String shortVersion = "Adventurecraft - Minecraft Beta 1.7.3";
+    public static String shortVersion = "AC - MC b1.7.3";
 
     private static void getVersion() {
         try {
@@ -16,7 +16,7 @@ public class AC_Version {
                 String var2 = var1.readLine();
                 if (var2 != null) {
                     version = String.format("Adventurecraft %s", var2);
-                    shortVersion = String.format("AC %s - (MC 1.7.3)", var2);
+                    shortVersion = String.format("AC %s - MC b1.7.3", var2);
                 }
             }
         } catch (Exception var3) {
