@@ -9,9 +9,9 @@ import net.minecraft.util.math.AxixAlignedBoundingBox;
 import net.minecraft.world.World;
 
 public class AC_BlockTree extends BlockWithEntity implements AC_IBlockColor {
+
     protected AC_BlockTree(int var1, int var2) {
         super(var1, var2, Material.PLANT);
-        float var3 = 0.2F;
     }
 
     @Override
@@ -25,7 +25,7 @@ public class AC_BlockTree extends BlockWithEntity implements AC_IBlockColor {
     }
 
     @Override
-    public AxixAlignedBoundingBox getCollisionShape(World var1, int var2, int var3, int var4) {
+    public AxixAlignedBoundingBox getCollisionShape(World world, int x, int y, int z) {
         return null;
     }
 
@@ -50,18 +50,17 @@ public class AC_BlockTree extends BlockWithEntity implements AC_IBlockColor {
     }
 
     @Override
-    public boolean canUse(World var1, int var2, int var3, int var4, PlayerEntity var5) {
+    public boolean canUse(World world, int x, int y, int z, PlayerEntity player) {
         if (AC_DebugMode.active) {
-            AC_TileEntityTree var6 = (AC_TileEntityTree) var1.getBlockEntity(var2, var3, var4);
-            AC_GuiTree.showUI(var1, var2, var3, var4, var6);
+            var entity = (AC_TileEntityTree) world.getBlockEntity(x, y, z);
+            AC_GuiTree.showUI(world, x, y, z, entity);
         }
-
         return true;
     }
 
     @Override
-    public void incrementColor(World var1, int var2, int var3, int var4) {
-        int var5 = var1.getBlockMeta(var2, var3, var4);
-        var1.setBlockMeta(var2, var3, var4, (var5 + 1) % ExBlock.subTypes[this.id]);
+    public void incrementColor(World world, int x, int y, int z) {
+        int var5 = world.getBlockMeta(x, y, z);
+        world.setBlockMeta(x, y, z, (var5 + 1) % ExBlock.subTypes[this.id]);
     }
 }

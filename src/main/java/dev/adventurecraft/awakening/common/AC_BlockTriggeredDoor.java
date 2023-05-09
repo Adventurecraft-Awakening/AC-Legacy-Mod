@@ -8,42 +8,50 @@ import net.minecraft.util.math.AxixAlignedBoundingBox;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 
-public class AC_BlockTriggeredDoor extends Block {
+public class AC_BlockTriggeredDoor extends Block implements AC_ITriggerBlock {
+
     protected AC_BlockTriggeredDoor(int var1) {
         super(var1, Material.WOOD);
         this.texture = 208;
     }
 
+    @Override
     public boolean isFullOpaque() {
         return false;
     }
 
+    @Override
     public boolean isCollidable() {
         return AC_DebugMode.active;
     }
 
-    public boolean shouldRender(BlockView var1, int var2, int var3, int var4) {
-        return AC_DebugMode.active || ((ExWorld) Minecraft.instance.world).getTriggerManager().isActivated(var2, var3, var4);
+    @Override
+    public boolean shouldRender(BlockView view, int x, int y, int z) {
+        return AC_DebugMode.active || ((ExWorld) Minecraft.instance.world).getTriggerManager().isActivated(x, y, z);
     }
 
-    public AxixAlignedBoundingBox getCollisionShape(World var1, int var2, int var3, int var4) {
-        if (((ExWorld) var1).getTriggerManager().isActivated(var2, var3, var4) && !AC_DebugMode.active) {
-            return super.getCollisionShape(var1, var2, var3, var4);
+    @Override
+    public AxixAlignedBoundingBox getCollisionShape(World world, int x, int y, int z) {
+        if (((ExWorld) world).getTriggerManager().isActivated(x, y, z) && !AC_DebugMode.active) {
+            return super.getCollisionShape(world, x, y, z);
         }
         return null;
     }
 
+    @Override
     public boolean canBeTriggered() {
         return true;
     }
 
-    public void onTriggerActivated(World var1, int var2, int var3, int var4) {
-        var1.playSound((double) var2 + 0.5D, (double) var3 + 0.5D, (double) var4 + 0.5D, "random.door_open", 1.0F, var1.rand.nextFloat() * 0.1F + 0.9F);
-        var1.notifyListeners(var2, var3, var4);
+    @Override
+    public void onTriggerActivated(World world, int x, int y, int z) {
+        world.playSound((double) x + 0.5D, (double) y + 0.5D, (double) z + 0.5D, "random.door_open", 1.0F, world.rand.nextFloat() * 0.1F + 0.9F);
+        world.notifyListeners(x, y, z);
     }
 
-    public void onTriggerDeactivated(World var1, int var2, int var3, int var4) {
-        var1.playSound((double) var2 + 0.5D, (double) var3 + 0.5D, (double) var4 + 0.5D, "random.door_close", 1.0F, var1.rand.nextFloat() * 0.1F + 0.9F);
-        var1.notifyListeners(var2, var3, var4);
+    @Override
+    public void onTriggerDeactivated(World world, int x, int y, int z) {
+        world.playSound((double) x + 0.5D, (double) y + 0.5D, (double) z + 0.5D, "random.door_close", 1.0F, world.rand.nextFloat() * 0.1F + 0.9F);
+        world.notifyListeners(x, y, z);
     }
 }

@@ -6,25 +6,30 @@ import net.minecraft.util.math.AxixAlignedBoundingBox;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 
-public class AC_BlockDarkness extends Block {
-	protected AC_BlockDarkness(int var1, int var2) {
-		super(var1, var2, Material.AIR);
-		this.setLightOpacity(2);
-	}
+public class AC_BlockDarkness extends Block implements AC_ITriggerBlock {
 
-	public boolean isFullOpaque() {
-		return false;
-	}
+    protected AC_BlockDarkness(int var1, int var2) {
+        super(var1, var2, Material.AIR);
+        this.setLightOpacity(2);
+    }
 
-	public AxixAlignedBoundingBox getCollisionShape(World var1, int var2, int var3, int var4) {
-		return null;
-	}
+    @Override
+    public boolean isFullOpaque() {
+        return false;
+    }
 
-	public boolean shouldRender(BlockView var1, int var2, int var3, int var4) {
-		return AC_DebugMode.active;
-	}
+    @Override
+    public AxixAlignedBoundingBox getCollisionShape(World var1, int var2, int var3, int var4) {
+        return null;
+    }
 
-	public boolean isCollidable() {
-		return AC_DebugMode.active;
-	}
+    @Override
+    public boolean shouldRender(BlockView view, int x, int y, int z) {
+        return AC_DebugMode.active;
+    }
+
+    @Override
+    public boolean isCollidable() {
+        return AC_DebugMode.active;
+    }
 }

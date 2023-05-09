@@ -10,7 +10,7 @@ import net.minecraft.util.math.AxixAlignedBoundingBox;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 
-public class AC_BlockMobSpawner extends BlockWithEntity {
+public class AC_BlockMobSpawner extends BlockWithEntity implements AC_ITriggerBlock {
 
     protected AC_BlockMobSpawner(int var1, int var2) {
         super(var1, var2, Material.AIR);
@@ -44,33 +44,37 @@ public class AC_BlockMobSpawner extends BlockWithEntity {
     @Override
     public boolean canUse(World var1, int var2, int var3, int var4, PlayerEntity var5) {
         if (AC_DebugMode.active) {
-            AC_TileEntityMobSpawner var6 = (AC_TileEntityMobSpawner) var1.getBlockEntity(var2, var3, var4);
-            AC_GuiMobSpawner.showUI(var6);
+            var entity = (AC_TileEntityMobSpawner) var1.getBlockEntity(var2, var3, var4);
+            AC_GuiMobSpawner.showUI(entity);
             return true;
         } else {
             return false;
         }
     }
 
-    public boolean shouldRender(BlockView var1, int var2, int var3, int var4) {
+    @Override
+    public boolean shouldRender(BlockView view, int x, int y, int z) {
         return AC_DebugMode.active;
     }
 
+    @Override
     public boolean canBeTriggered() {
         return true;
     }
 
-    public void onTriggerActivated(World var1, int var2, int var3, int var4) {
-        AC_TileEntityMobSpawner var5 = (AC_TileEntityMobSpawner) var1.getBlockEntity(var2, var3, var4);
-        if (var5.spawnOnTrigger && !AC_DebugMode.triggerResetActive) {
-            var5.spawnMobs();
+    @Override
+    public void onTriggerActivated(World world, int x, int y, int z) {
+        var entity = (AC_TileEntityMobSpawner) world.getBlockEntity(x, y, z);
+        if (entity.spawnOnTrigger && !AC_DebugMode.triggerResetActive) {
+            entity.spawnMobs();
         }
     }
 
-    public void onTriggerDeactivated(World var1, int var2, int var3, int var4) {
-        AC_TileEntityMobSpawner var5 = (AC_TileEntityMobSpawner) var1.getBlockEntity(var2, var3, var4);
-        if (var5.spawnOnDetrigger && !AC_DebugMode.triggerResetActive) {
-            var5.spawnMobs();
+    @Override
+    public void onTriggerDeactivated(World world, int x, int y, int z) {
+        var entity = (AC_TileEntityMobSpawner) world.getBlockEntity(x, y, z);
+        if (entity.spawnOnDetrigger && !AC_DebugMode.triggerResetActive) {
+            entity.spawnMobs();
         }
     }
 
@@ -79,13 +83,14 @@ public class AC_BlockMobSpawner extends BlockWithEntity {
         return AC_DebugMode.active;
     }
 
-    public void reset(World var1, int var2, int var3, int var4, boolean var5) {
-        AC_TileEntityMobSpawner var6 = (AC_TileEntityMobSpawner) var1.getBlockEntity(var2, var3, var4);
-        if (!var5) {
-            var6.hasDroppedItem = false;
+    @Override
+    public void reset(World world, int x, int y, int z, boolean forDeath) {
+        var entity = (AC_TileEntityMobSpawner) world.getBlockEntity(x, y, z);
+        if (!forDeath) {
+            entity.hasDroppedItem = false;
         }
 
-        var6.resetMobs();
-        var6.delay = 0;
+        entity.resetMobs();
+        entity.delay = 0;
     }
 }

@@ -8,19 +8,23 @@ import net.minecraft.block.material.Material;
 import net.minecraft.entity.FallingBlockEntity;
 import net.minecraft.world.World;
 
-public class AC_BlockPushable extends Block {
+public class AC_BlockPushable extends AC_BlockColor {
+
     public AC_BlockPushable(int var1, int var2, Material var3) {
         super(var1, var2, var3);
     }
 
-    public void onBlockPlaced(World var1, int var2, int var3, int var4) {
-        var1.method_216(var2, var3, var4, this.id, this.getTickrate());
+    @Override
+    public void onBlockPlaced(World world, int x, int y, int z) {
+        world.method_216(x, y, z, this.id, this.getTickrate());
     }
 
-    public void onAdjacentBlockUpdate(World var1, int var2, int var3, int var4, int var5) {
-        var1.method_216(var2, var3, var4, this.id, this.getTickrate());
+    @Override
+    public void onAdjacentBlockUpdate(World world, int x, int y, int z, int id) {
+        world.method_216(x, y, z, this.id, this.getTickrate());
     }
 
+    @Override
     public void onScheduledTick(World var1, int var2, int var3, int var4, Random var5) {
         this.tryToFall(var1, var2, var3, var4);
     }
@@ -33,6 +37,7 @@ public class AC_BlockPushable extends Block {
         }
     }
 
+    @Override
     public int getTickrate() {
         return 3;
     }

@@ -41,10 +41,10 @@ public abstract class MixinFallingBlock extends Block implements AC_IBlockColor 
     }
 
     @Override
-    public void incrementColor(World var1, int var2, int var3, int var4) {
+    public void incrementColor(World world, int x, int y, int z) {
         if (ExBlock.subTypes[this.id] > 0) {
-            int var5 = var1.getBlockMeta(var2, var3, var4);
-            var1.setBlockMeta(var2, var3, var4, (var5 + 1) % ExBlock.subTypes[this.id]);
+            int var5 = world.getBlockMeta(x, y, z);
+            world.setBlockMeta(x, y, z, (var5 + 1) % ExBlock.subTypes[this.id]);
         }
     }
 }

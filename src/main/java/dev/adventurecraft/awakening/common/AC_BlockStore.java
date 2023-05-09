@@ -10,51 +10,60 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 
-public class AC_BlockStore extends BlockWithEntity {
+public class AC_BlockStore extends BlockWithEntity implements AC_ITriggerBlock {
+
     protected AC_BlockStore(int var1, int var2) {
         super(var1, var2, Material.GLASS);
     }
 
+    @Override
     protected BlockEntity createBlockEntity() {
         return new AC_TileEntityStore();
     }
 
+    @Override
     public boolean isFullOpaque() {
         return false;
     }
 
+    @Override
     public int getRenderPass() {
         return 1;
     }
 
-    public boolean canUse(World var1, int var2, int var3, int var4, PlayerEntity var5) {
-        AC_TileEntityStore var6 = (AC_TileEntityStore) var1.getBlockEntity(var2, var3, var4);
+    @Override
+    public boolean canUse(World world, int x, int y, int z, PlayerEntity player) {
+        var entity = (AC_TileEntityStore) world.getBlockEntity(x, y, z);
         if (AC_DebugMode.active) {
-            AC_GuiStoreDebug.showUI(var6);
-            return true;
-        } else if (var6.buySupplyLeft == 0) {
-            return false;
-        } else {
-            if (var6.sellItemID != 0 && !((ExPlayerInventory) var5.inventory).consumeItemAmount(var6.sellItemID, var6.sellItemDamage, var6.sellItemAmount)) {
-                Minecraft.instance.overlay.addChatMessage("Don\'t have enough to trade.");
-            } else {
-                if (var6.buyItemID != 0) {
-                    var5.inventory.addStack(new ItemStack(var6.buyItemID, var6.buyItemAmount, var6.buyItemDamage));
-                }
-
-                --var6.buySupplyLeft;
-                if (var6.tradeTrigger != null) {
-                    ((ExWorld) var1).getTriggerManager().addArea(var2, var3, var4, var6.tradeTrigger);
-                    ((ExWorld) var1).getTriggerManager().removeArea(var2, var3, var4);
-                }
-            }
-
+            AC_GuiStoreDebug.showUI(entity);
             return true;
         }
+
+        if (entity.buySupplyLeft == 0) {
+            return false;
+        }
+
+        if (entity.sellItemID != 0 &&
+            !((ExPlayerInventory) player.inventory).consumeItemAmount(entity.sellItemID, entity.sellItemDamage, entity.sellItemAmount)) {
+            Minecraft.instance.overlay.addChatMessage("Don't have enough to trade.");
+            return true;
+        }
+
+        if (entity.buyItemID != 0) {
+            player.inventory.addStack(new ItemStack(entity.buyItemID, entity.buyItemAmount, entity.buyItemDamage));
+        }
+
+        --entity.buySupplyLeft;
+        if (entity.tradeTrigger != null) {
+            ((ExWorld) world).getTriggerManager().addArea(x, y, z, entity.tradeTrigger);
+            ((ExWorld) world).getTriggerManager().removeArea(x, y, z);
+        }
+        return true;
     }
 
-    public void reset(World var1, int var2, int var3, int var4, boolean var5) {
-        AC_TileEntityStore var6 = (AC_TileEntityStore) var1.getBlockEntity(var2, var3, var4);
-        var6.buySupplyLeft = var6.buySupply;
+    @Override
+    public void reset(World world, int x, int y, int z, boolean forDeath) {
+        var entity = (AC_TileEntityStore) world.getBlockEntity(x, y, z);
+        entity.buySupplyLeft = entity.buySupply;
     }
 }

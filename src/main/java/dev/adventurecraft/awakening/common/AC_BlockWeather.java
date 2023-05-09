@@ -10,66 +10,75 @@ import net.minecraft.util.math.AxixAlignedBoundingBox;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 
-public class AC_BlockWeather extends BlockWithEntity {
+public class AC_BlockWeather extends BlockWithEntity implements AC_ITriggerBlock {
+
     protected AC_BlockWeather(int var1, int var2) {
         super(var1, var2, Material.AIR);
     }
 
+    @Override
     protected BlockEntity createBlockEntity() {
         return new AC_TileEntityWeather();
     }
 
+    @Override
     public boolean isFullOpaque() {
         return false;
     }
 
-    public AxixAlignedBoundingBox getCollisionShape(World var1, int var2, int var3, int var4) {
+    @Override
+    public AxixAlignedBoundingBox getCollisionShape(World world, int x, int y, int z) {
         return null;
     }
 
-    public boolean shouldRender(BlockView var1, int var2, int var3, int var4) {
+    @Override
+    public boolean shouldRender(BlockView view, int x, int y, int z) {
         return AC_DebugMode.active;
     }
 
+    @Override
     public boolean canBeTriggered() {
         return true;
     }
 
-    public void onTriggerActivated(World var1, int var2, int var3, int var4) {
-        AC_TileEntityWeather var5 = (AC_TileEntityWeather) var1.getBlockEntity(var2, var3, var4);
-        if (var5.changePrecipitate) {
-            var1.properties.setRaining(var5.precipitate);
-            ((ExWorld) var1).resetCoordOrder();
+    @Override
+    public void onTriggerActivated(World world, int x, int y, int z) {
+        var entity = (AC_TileEntityWeather) world.getBlockEntity(x, y, z);
+        if (entity.changePrecipitate) {
+            world.properties.setRaining(entity.precipitate);
+            ((ExWorld) world).resetCoordOrder();
         }
 
-        if (var5.changeTempOffset) {
-            ((ExWorldProperties) var1.properties).setTempOffset(var5.tempOffset);
-            ((ExWorld) var1).resetCoordOrder();
+        if (entity.changeTempOffset) {
+            ((ExWorldProperties) world.properties).setTempOffset(entity.tempOffset);
+            ((ExWorld) world).resetCoordOrder();
         }
 
-        if (var5.changeTimeOfDay) {
-            ((ExWorld) var1).setTimeOfDay((long) var5.timeOfDay);
+        if (entity.changeTimeOfDay) {
+            ((ExWorld) world).setTimeOfDay((long) entity.timeOfDay);
         }
 
-        if (var5.changeTimeRate) {
-            ((ExWorldProperties) var1.properties).setTimeRate(var5.timeRate);
+        if (entity.changeTimeRate) {
+            ((ExWorldProperties) world.properties).setTimeRate(entity.timeRate);
         }
-
     }
 
-    public void onTriggerDeactivated(World var1, int var2, int var3, int var4) {
+    @Override
+    public void onTriggerDeactivated(World world, int x, int y, int z) {
     }
 
-    public boolean canUse(World var1, int var2, int var3, int var4, PlayerEntity var5) {
-        if (AC_DebugMode.active && var5.getHeldItem() != null && var5.getHeldItem().itemId == AC_Items.cursor.id) {
-            AC_TileEntityWeather var6 = (AC_TileEntityWeather) var1.getBlockEntity(var2, var3, var4);
-            AC_GuiWeather.showUI(var1, var6);
+    @Override
+    public boolean canUse(World world, int x, int y, int z, PlayerEntity player) {
+        if (AC_DebugMode.active && player.getHeldItem() != null && player.getHeldItem().itemId == AC_Items.cursor.id) {
+            var entity = (AC_TileEntityWeather) world.getBlockEntity(x, y, z);
+            AC_GuiWeather.showUI(world, entity);
             return true;
         } else {
             return false;
         }
     }
 
+    @Override
     public boolean isCollidable() {
         return AC_DebugMode.active;
     }

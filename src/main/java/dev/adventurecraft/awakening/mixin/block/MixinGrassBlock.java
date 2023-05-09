@@ -105,14 +105,15 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
         return meta == 0 ? 0 : 232 + meta - 1;
     }
 
+    @Override
     public int getRenderType() {
         return ((ExGameOptions) Minecraft.instance.options).isGrass3d() ? 30 : super.getRenderType();
     }
 
     @Override
-    public void incrementColor(World var1, int var2, int var3, int var4) {
-        int var5 = var1.getBlockMeta(var2, var3, var4);
-        var1.setBlockMeta(var2, var3, var4, (var5 + 1) % ExBlock.subTypes[this.id]);
+    public void incrementColor(World world, int x, int y, int z) {
+        int meta = world.getBlockMeta(x, y, z);
+        world.setBlockMeta(x, y, z, (meta + 1) % ExBlock.subTypes[this.id]);
     }
 
     @Override

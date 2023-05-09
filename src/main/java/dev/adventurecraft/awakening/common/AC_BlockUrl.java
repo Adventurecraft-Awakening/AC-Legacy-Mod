@@ -8,48 +8,57 @@ import net.minecraft.util.math.AxixAlignedBoundingBox;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 
-public class AC_BlockUrl extends BlockWithEntity {
+public class AC_BlockUrl extends BlockWithEntity implements AC_ITriggerBlock {
+
     protected AC_BlockUrl(int var1, int var2) {
         super(var1, var2, Material.AIR);
     }
 
+    @Override
     protected BlockEntity createBlockEntity() {
         return new AC_TileEntityUrl();
     }
 
+    @Override
     public boolean isFullOpaque() {
         return false;
     }
 
-    public AxixAlignedBoundingBox getCollisionShape(World var1, int var2, int var3, int var4) {
+    @Override
+    public AxixAlignedBoundingBox getCollisionShape(World world, int x, int y, int z) {
         return null;
     }
 
-    public boolean shouldRender(BlockView var1, int var2, int var3, int var4) {
+    @Override
+    public boolean shouldRender(BlockView view, int x, int y, int z) {
         return AC_DebugMode.active;
     }
 
+    @Override
     public boolean canBeTriggered() {
         return true;
     }
 
-    public void onTriggerActivated(World var1, int var2, int var3, int var4) {
-        AC_TileEntityUrl var5 = (AC_TileEntityUrl) var1.getBlockEntity(var2, var3, var4);
-        if (var5.url != null && !var5.url.equals("")) {
-            AC_GuiUrlRequest.showUI(var5.url);
+    @Override
+    public void onTriggerActivated(World world, int x, int y, int z) {
+        var entity = (AC_TileEntityUrl) world.getBlockEntity(x, y, z);
+        if (entity.url != null && !entity.url.equals("")) {
+            AC_GuiUrlRequest.showUI(entity.url);
         }
     }
 
-    public boolean canUse(World var1, int var2, int var3, int var4, PlayerEntity var5) {
+    @Override
+    public boolean canUse(World world, int x, int y, int z, PlayerEntity player) {
         if (AC_DebugMode.active) {
-            AC_TileEntityUrl var6 = (AC_TileEntityUrl) var1.getBlockEntity(var2, var3, var4);
-            AC_GuiUrl.showUI(var1, var6);
+            var entity = (AC_TileEntityUrl) world.getBlockEntity(x, y, z);
+            AC_GuiUrl.showUI(world, entity);
             return true;
         } else {
             return false;
         }
     }
 
+    @Override
     public boolean isCollidable() {
         return AC_DebugMode.active;
     }

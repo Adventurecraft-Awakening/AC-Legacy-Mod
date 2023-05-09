@@ -26,145 +26,149 @@ public class AC_BlockStairMulti extends Block implements AC_IBlockColor {
         this.setLightOpacity(255);
     }
 
-    public void updateBoundingBox(BlockView var1, int var2, int var3, int var4) {
+    @Override
+    public void updateBoundingBox(BlockView view, int x, int y, int z) {
         this.setBoundingBox(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
     }
 
-    public AxixAlignedBoundingBox getCollisionShape(World var1, int var2, int var3, int var4) {
-        return super.getCollisionShape(var1, var2, var3, var4);
+    @Override
+    public AxixAlignedBoundingBox getCollisionShape(World world, int x, int y, int z) {
+        return super.getCollisionShape(world, x, y, z);
     }
 
+    @Override
     public boolean isFullOpaque() {
         return false;
     }
 
+    @Override
     public boolean isFullCube() {
         return false;
     }
 
+    @Override
     public int getRenderType() {
         return 10;
     }
 
-    public boolean isSideRendered(BlockView var1, int var2, int var3, int var4, int var5) {
-        return super.isSideRendered(var1, var2, var3, var4, var5);
+    @Override
+    public boolean isSideRendered(BlockView view, int x, int y, int z, int side) {
+        return super.isSideRendered(view, x, y, z, side);
     }
 
-    public void doesBoxCollide(World var1, int var2, int var3, int var4, AxixAlignedBoundingBox var5, ArrayList var6) {
-        int var7 = var1.getBlockMeta(var2, var3, var4) & 3;
+    @Override
+    public void doesBoxCollide(World world, int x, int y, int z, AxixAlignedBoundingBox box, ArrayList hits) {
+        int coreMeta = world.getBlockMeta(x, y, z) & 3;
         this.setBoundingBox(0.0F, 0.0F, 0.0F, 1.0F, 0.5F, 1.0F);
-        super.doesBoxCollide(var1, var2, var3, var4, var5, var6);
-        if (var7 == 0) {
-            Block var8 = Block.BY_ID[var1.getBlockId(var2 - 1, var3, var4)];
-            int var9;
-            if (var8 != null && var8.getRenderType() == this.getRenderType()) {
-                var9 = var1.getBlockMeta(var2 - 1, var3, var4) & 3;
-                if (var9 == 2) {
+        super.doesBoxCollide(world, x, y, z, box, hits);
+        if (coreMeta == 0) {
+            Block blockNX = Block.BY_ID[world.getBlockId(x - 1, y, z)];
+            if (blockNX != null && blockNX.getRenderType() == this.getRenderType()) {
+                int meta = world.getBlockMeta(x - 1, y, z) & 3;
+                if (meta == 2) {
                     this.setBoundingBox(0.0F, 0.5F, 0.5F, 0.5F, 1.0F, 1.0F);
-                    super.doesBoxCollide(var1, var2, var3, var4, var5, var6);
-                } else if (var9 == 3) {
+                    super.doesBoxCollide(world, x, y, z, box, hits);
+                } else if (meta == 3) {
                     this.setBoundingBox(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 0.5F);
-                    super.doesBoxCollide(var1, var2, var3, var4, var5, var6);
+                    super.doesBoxCollide(world, x, y, z, box, hits);
                 }
             }
 
-            var9 = var1.getBlockMeta(var2 + 1, var3, var4) & 3;
-            var8 = Block.BY_ID[var1.getBlockId(var2 + 1, var3, var4)];
-            if (var8 != null && var8.getRenderType() == this.getRenderType()) {
-                if (var9 == 2) {
+            Block blockPX = Block.BY_ID[world.getBlockId(x + 1, y, z)];
+            if (blockPX != null && blockPX.getRenderType() == this.getRenderType()) {
+                int meta = world.getBlockMeta(x + 1, y, z) & 3;
+                if (meta == 2) {
                     this.setBoundingBox(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
-                    super.doesBoxCollide(var1, var2, var3, var4, var5, var6);
-                } else if (var9 == 3) {
+                    super.doesBoxCollide(world, x, y, z, box, hits);
+                } else if (meta == 3) {
                     this.setBoundingBox(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
-                    super.doesBoxCollide(var1, var2, var3, var4, var5, var6);
+                    super.doesBoxCollide(world, x, y, z, box, hits);
                 }
             } else {
                 this.setBoundingBox(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 1.0F);
-                super.doesBoxCollide(var1, var2, var3, var4, var5, var6);
+                super.doesBoxCollide(world, x, y, z, box, hits);
             }
         } else {
-            int var10;
-            Block var11;
-            if (var7 == 1) {
-                var10 = var1.getBlockMeta(var2 - 1, var3, var4) & 3;
-                var11 = Block.BY_ID[var1.getBlockId(var2 - 1, var3, var4)];
-                if (var11 != null && var11.getRenderType() == this.getRenderType()) {
-                    if (var10 == 3) {
+            if (coreMeta == 1) {
+                Block blockNX = Block.BY_ID[world.getBlockId(x - 1, y, z)];
+                if (blockNX != null && blockNX.getRenderType() == this.getRenderType()) {
+                    int meta = world.getBlockMeta(x - 1, y, z) & 3;
+                    if (meta == 3) {
                         this.setBoundingBox(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 0.5F);
-                        super.doesBoxCollide(var1, var2, var3, var4, var5, var6);
-                    } else if (var10 == 2) {
+                        super.doesBoxCollide(world, x, y, z, box, hits);
+                    } else if (meta == 2) {
                         this.setBoundingBox(0.0F, 0.5F, 0.5F, 0.5F, 1.0F, 1.0F);
-                        super.doesBoxCollide(var1, var2, var3, var4, var5, var6);
+                        super.doesBoxCollide(world, x, y, z, box, hits);
                     }
                 } else {
                     this.setBoundingBox(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 1.0F);
-                    super.doesBoxCollide(var1, var2, var3, var4, var5, var6);
+                    super.doesBoxCollide(world, x, y, z, box, hits);
                 }
 
-                var11 = Block.BY_ID[var1.getBlockId(var2 + 1, var3, var4)];
-                if (var11 != null && var11.getRenderType() == this.getRenderType()) {
-                    var10 = var1.getBlockMeta(var2 + 1, var3, var4) & 3;
-                    if (var10 == 2) {
+                Block blockPX = Block.BY_ID[world.getBlockId(x + 1, y, z)];
+                if (blockPX != null && blockPX.getRenderType() == this.getRenderType()) {
+                    int meta = world.getBlockMeta(x + 1, y, z) & 3;
+                    if (meta == 2) {
                         this.setBoundingBox(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
-                        super.doesBoxCollide(var1, var2, var3, var4, var5, var6);
-                    } else if (var10 == 3) {
+                        super.doesBoxCollide(world, x, y, z, box, hits);
+                    } else if (meta == 3) {
                         this.setBoundingBox(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
-                        super.doesBoxCollide(var1, var2, var3, var4, var5, var6);
+                        super.doesBoxCollide(world, x, y, z, box, hits);
                     }
                 }
-            } else if (var7 == 2) {
-                var11 = Block.BY_ID[var1.getBlockId(var2, var3, var4 - 1)];
-                if (var11 != null && var11.getRenderType() == this.getRenderType()) {
-                    var10 = var1.getBlockMeta(var2, var3, var4 - 1) & 3;
-                    if (var10 == 1) {
+            } else if (coreMeta == 2) {
+                Block blockNZ = Block.BY_ID[world.getBlockId(x, y, z - 1)];
+                if (blockNZ != null && blockNZ.getRenderType() == this.getRenderType()) {
+                    int meta = world.getBlockMeta(x, y, z - 1) & 3;
+                    if (meta == 1) {
                         this.setBoundingBox(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 0.5F);
-                        super.doesBoxCollide(var1, var2, var3, var4, var5, var6);
-                    } else if (var10 == 0) {
+                        super.doesBoxCollide(world, x, y, z, box, hits);
+                    } else if (meta == 0) {
                         this.setBoundingBox(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
-                        super.doesBoxCollide(var1, var2, var3, var4, var5, var6);
+                        super.doesBoxCollide(world, x, y, z, box, hits);
                     }
                 }
 
-                var10 = var1.getBlockMeta(var2, var3, var4 + 1) & 3;
-                var11 = Block.BY_ID[var1.getBlockId(var2, var3, var4 + 1)];
-                if (var11 != null && var11.getRenderType() == this.getRenderType()) {
-                    if (var10 == 0) {
+                Block blockPZ = Block.BY_ID[world.getBlockId(x, y, z + 1)];
+                if (blockPZ != null && blockPZ.getRenderType() == this.getRenderType()) {
+                    int meta = world.getBlockMeta(x, y, z + 1) & 3;
+                    if (meta == 0) {
                         this.setBoundingBox(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
-                        super.doesBoxCollide(var1, var2, var3, var4, var5, var6);
-                    } else if (var10 == 1) {
+                        super.doesBoxCollide(world, x, y, z, box, hits);
+                    } else if (meta == 1) {
                         this.setBoundingBox(0.0F, 0.5F, 0.5F, 0.5F, 1.0F, 1.0F);
-                        super.doesBoxCollide(var1, var2, var3, var4, var5, var6);
+                        super.doesBoxCollide(world, x, y, z, box, hits);
                     }
                 } else {
                     this.setBoundingBox(0.0F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
-                    super.doesBoxCollide(var1, var2, var3, var4, var5, var6);
+                    super.doesBoxCollide(world, x, y, z, box, hits);
                 }
-            } else if (var7 == 3) {
-                var11 = Block.BY_ID[var1.getBlockId(var2, var3, var4 + 1)];
-                if (var11 != null && var11.getRenderType() == this.getRenderType()) {
-                    var10 = var1.getBlockMeta(var2, var3, var4 + 1) & 3;
-                    if (var10 == 1) {
+            } else if (coreMeta == 3) {
+                Block blockPZ = Block.BY_ID[world.getBlockId(x, y, z + 1)];
+                if (blockPZ != null && blockPZ.getRenderType() == this.getRenderType()) {
+                    int meta = world.getBlockMeta(x, y, z + 1) & 3;
+                    if (meta == 1) {
                         this.setBoundingBox(0.0F, 0.5F, 0.5F, 0.5F, 1.0F, 1.0F);
-                        super.doesBoxCollide(var1, var2, var3, var4, var5, var6);
-                    } else if (var10 == 0) {
+                        super.doesBoxCollide(world, x, y, z, box, hits);
+                    } else if (meta == 0) {
                         this.setBoundingBox(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
-                        super.doesBoxCollide(var1, var2, var3, var4, var5, var6);
+                        super.doesBoxCollide(world, x, y, z, box, hits);
                     }
                 }
 
-                var10 = var1.getBlockMeta(var2, var3, var4 - 1) & 3;
-                var11 = Block.BY_ID[var1.getBlockId(var2, var3, var4 - 1)];
-                if (var11 != null && var11.getRenderType() == this.getRenderType()) {
-                    if (var10 == 0) {
+                Block blockNZ = Block.BY_ID[world.getBlockId(x, y, z - 1)];
+                if (blockNZ != null && blockNZ.getRenderType() == this.getRenderType()) {
+                    int meta = world.getBlockMeta(x, y, z - 1) & 3;
+                    if (meta == 0) {
                         this.setBoundingBox(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
-                        super.doesBoxCollide(var1, var2, var3, var4, var5, var6);
-                    } else if (var10 == 1) {
+                        super.doesBoxCollide(world, x, y, z, box, hits);
+                    } else if (meta == 1) {
                         this.setBoundingBox(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 0.5F);
-                        super.doesBoxCollide(var1, var2, var3, var4, var5, var6);
+                        super.doesBoxCollide(world, x, y, z, box, hits);
                     }
                 } else {
                     this.setBoundingBox(0.0F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
-                    super.doesBoxCollide(var1, var2, var3, var4, var5, var6);
+                    super.doesBoxCollide(world, x, y, z, box, hits);
                 }
             }
         }
@@ -172,132 +176,156 @@ public class AC_BlockStairMulti extends Block implements AC_IBlockColor {
         this.setBoundingBox(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
     }
 
-    public void randomDisplayTick(World var1, int var2, int var3, int var4, Random var5) {
-        this.modelBlock.randomDisplayTick(var1, var2, var3, var4, var5);
+    @Override
+    public void randomDisplayTick(World world, int x, int y, int z, Random rand) {
+        this.modelBlock.randomDisplayTick(world, x, y, z, rand);
     }
 
-    public void activate(World var1, int var2, int var3, int var4, PlayerEntity var5) {
-        this.modelBlock.activate(var1, var2, var3, var4, var5);
+    @Override
+    public void activate(World world, int x, int y, int z, PlayerEntity player) {
+        this.modelBlock.activate(world, x, y, z, player);
     }
 
-    public void activate(World var1, int var2, int var3, int var4, int var5) {
-        this.modelBlock.activate(var1, var2, var3, var4, var5);
+    @Override
+    public void activate(World world, int x, int y, int z, int var5) {
+        this.modelBlock.activate(world, x, y, z, var5);
     }
 
-    public float getBrightness(BlockView var1, int var2, int var3, int var4) {
-        return this.modelBlock.getBrightness(var1, var2, var3, var4);
+    @Override
+    public float getBrightness(BlockView view, int x, int y, int z) {
+        return this.modelBlock.getBrightness(view, x, y, z);
     }
 
+    @Override
     public float getBlastResistance(Entity var1) {
         return this.modelBlock.getBlastResistance(var1);
     }
 
+    @Override
     public int getRenderPass() {
         return this.modelBlock.getRenderPass();
     }
 
-    public int getDropId(int var1, Random var2) {
-        return this.modelBlock.getDropId(var1, var2);
+    @Override
+    public int getDropId(int meta, Random rand) {
+        return this.modelBlock.getDropId(meta, rand);
     }
 
-    public int getDropCount(Random var1) {
-        return this.modelBlock.getDropCount(var1);
+    @Override
+    public int getDropCount(Random rand) {
+        return this.modelBlock.getDropCount(rand);
     }
 
+    @Override
     public int getTextureForSide(int var1, int var2) {
         return this.texture + (var2 >> 2);
     }
 
+    @Override
     public int getTickrate() {
         return this.modelBlock.getTickrate();
     }
 
-    public AxixAlignedBoundingBox getOutlineShape(World var1, int var2, int var3, int var4) {
-        return this.modelBlock.getOutlineShape(var1, var2, var3, var4);
+    @Override
+    public AxixAlignedBoundingBox getOutlineShape(World world, int x, int y, int z) {
+        return this.modelBlock.getOutlineShape(world, x, y, z);
     }
 
-    public void onCollideWithEntity(World var1, int var2, int var3, int var4, Entity var5, Vec3d var6) {
-        this.modelBlock.onCollideWithEntity(var1, var2, var3, var4, var5, var6);
+    @Override
+    public void onCollideWithEntity(World world, int x, int y, int z, Entity entity, Vec3d var6) {
+        this.modelBlock.onCollideWithEntity(world, x, y, z, entity, var6);
     }
 
+    @Override
     public boolean isCollidable() {
         return this.modelBlock.isCollidable();
     }
 
+    @Override
     public boolean isCollidable(int var1, boolean var2) {
         return this.modelBlock.isCollidable(var1, var2);
     }
 
-    public boolean canPlaceAt(World var1, int var2, int var3, int var4) {
-        return this.modelBlock.canPlaceAt(var1, var2, var3, var4);
+    @Override
+    public boolean canPlaceAt(World world, int x, int y, int z) {
+        return this.modelBlock.canPlaceAt(world, x, y, z);
     }
 
-    public void onBlockPlaced(World var1, int var2, int var3, int var4) {
-        this.onAdjacentBlockUpdate(var1, var2, var3, var4, 0);
-        this.modelBlock.onBlockPlaced(var1, var2, var3, var4);
+    @Override
+    public void onBlockPlaced(World world, int x, int y, int z) {
+        this.onAdjacentBlockUpdate(world, x, y, z, 0);
+        this.modelBlock.onBlockPlaced(world, x, y, z);
     }
 
-    public void onBlockRemoved(World var1, int var2, int var3, int var4) {
-        this.modelBlock.onBlockRemoved(var1, var2, var3, var4);
+    @Override
+    public void onBlockRemoved(World world, int x, int y, int z) {
+        this.modelBlock.onBlockRemoved(world, x, y, z);
     }
 
-    public void beforeDestroyedByExplosion(World var1, int var2, int var3, int var4, int var5, float var6) {
-        this.modelBlock.beforeDestroyedByExplosion(var1, var2, var3, var4, var5, var6);
+    @Override
+    public void beforeDestroyedByExplosion(World world, int x, int y, int z, int meta, float var6) {
+        this.modelBlock.beforeDestroyedByExplosion(world, x, y, z, meta, var6);
     }
 
-    public void drop(World var1, int var2, int var3, int var4, int var5) {
-        this.modelBlock.drop(var1, var2, var3, var4, var5);
+    @Override
+    public void drop(World world, int x, int y, int z, int meta) {
+        this.modelBlock.drop(world, x, y, z, meta);
     }
 
-    public void onSteppedOn(World var1, int var2, int var3, int var4, Entity var5) {
-        this.modelBlock.onSteppedOn(var1, var2, var3, var4, var5);
+    @Override
+    public void onSteppedOn(World world, int x, int y, int z, Entity entity) {
+        this.modelBlock.onSteppedOn(world, x, y, z, entity);
     }
 
-    public void onScheduledTick(World var1, int var2, int var3, int var4, Random var5) {
-        this.modelBlock.onScheduledTick(var1, var2, var3, var4, var5);
+    @Override
+    public void onScheduledTick(World world, int x, int y, int z, Random rand) {
+        this.modelBlock.onScheduledTick(world, x, y, z, rand);
     }
 
-    public boolean canUse(World var1, int var2, int var3, int var4, PlayerEntity var5) {
-        return this.modelBlock.canUse(var1, var2, var3, var4, var5);
+    @Override
+    public boolean canUse(World world, int x, int y, int z, PlayerEntity player) {
+        return this.modelBlock.canUse(world, x, y, z, player);
     }
 
-    public void onDestroyedByExplosion(World var1, int var2, int var3, int var4) {
-        this.modelBlock.onDestroyedByExplosion(var1, var2, var3, var4);
+    @Override
+    public void onDestroyedByExplosion(World world, int x, int y, int z) {
+        this.modelBlock.onDestroyedByExplosion(world, x, y, z);
     }
 
-    public void afterPlaced(World var1, int var2, int var3, int var4, LivingEntity var5) {
-        int var6 = var1.getBlockMeta(var2, var3, var4);
-        int var7 = MathHelper.floor((double) (var5.yaw * 4.0F / 360.0F) + 0.5D) & 3;
-        if (var7 == 0) {
-            var1.setBlockMeta(var2, var3, var4, 2 + var6);
+    @Override
+    public void afterPlaced(World world, int x, int y, int z, LivingEntity placer) {
+        int meta = world.getBlockMeta(x, y, z);
+        int direction = MathHelper.floor((double) (placer.yaw * 4.0F / 360.0F) + 0.5D) & 3;
+        if (direction == 0) {
+            world.setBlockMeta(x, y, z, 2 + meta);
         }
 
-        if (var7 == 1) {
-            var1.setBlockMeta(var2, var3, var4, 1 + var6);
+        if (direction == 1) {
+            world.setBlockMeta(x, y, z, 1 + meta);
         }
 
-        if (var7 == 2) {
-            var1.setBlockMeta(var2, var3, var4, 3 + var6);
+        if (direction == 2) {
+            world.setBlockMeta(x, y, z, 3 + meta);
         }
 
-        if (var7 == 3) {
-            var1.setBlockMeta(var2, var3, var4, 0 + var6);
+        if (direction == 3) {
+            world.setBlockMeta(x, y, z, 0 + meta);
         }
     }
 
     @Override
-    public int getColorMetaData(BlockView var1, int var2, int var3, int var4) {
-        return var1.getBlockMeta(var2, var3, var4) >> 2;
+    public int getColorMetaData(BlockView view, int x, int y, int z) {
+        return view.getBlockMeta(x, y, z) >> 2;
     }
 
     @Override
-    public void setColorMetaData(World var1, int var2, int var3, int var4, int var5) {
-        var1.setBlockMeta(var2, var3, var4, var1.getBlockMeta(var2, var3, var4) & 3 | var5 << 2);
+    public void setColorMetaData(World world, int x, int y, int z, int meta) {
+        world.setBlockMeta(x, y, z, world.getBlockMeta(x, y, z) & 3 | meta << 2);
     }
 
     @Override
-    public void incrementColor(World var1, int var2, int var3, int var4) {
-        int var5 = (this.getColorMetaData(var1, var2, var3, var4) + 1) % 16;
-        this.setColorMetaData(var1, var2, var3, var4, var5);
+    public void incrementColor(World world, int x, int y, int z) {
+        int var5 = (this.getColorMetaData(world, x, y, z) + 1) % 16;
+        this.setColorMetaData(world, x, y, z, var5);
     }
 }

@@ -13,49 +13,58 @@ import net.minecraft.util.math.AxixAlignedBoundingBox;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 
-public class AC_BlockTrigger extends BlockWithEntity {
+public class AC_BlockTrigger extends BlockWithEntity implements AC_ITriggerBlock {
+
     protected AC_BlockTrigger(int var1, int var2) {
         super(var1, var2, Material.AIR);
     }
 
+    @Override
     protected BlockEntity createBlockEntity() {
         return new AC_TileEntityTrigger();
     }
 
-    public int getDropId(int var1, Random var2) {
+    @Override
+    public int getDropId(int meta, Random rand) {
         return 0;
     }
 
-    public int getDropCount(Random var1) {
+    @Override
+    public int getDropCount(Random rand) {
         return 0;
     }
 
+    @Override
     public boolean isFullOpaque() {
         return false;
     }
 
-    public AxixAlignedBoundingBox getCollisionShape(World var1, int var2, int var3, int var4) {
+    @Override
+    public AxixAlignedBoundingBox getCollisionShape(World world, int x, int y, int z) {
         return null;
     }
 
-    public boolean shouldRender(BlockView var1, int var2, int var3, int var4) {
+    @Override
+    public boolean shouldRender(BlockView view, int x, int y, int z) {
         return AC_DebugMode.active;
     }
 
-    public int getTextureForSide(BlockView var1, int var2, int var3, int var4, int var5) {
-        return super.getTextureForSide(var1, var2, var3, var4, var5);
+    @Override
+    public int getTextureForSide(BlockView view, int x, int y, int z, int side) {
+        return super.getTextureForSide(view, x, y, z, side);
     }
 
+    @Override
     public boolean isCollidable() {
         return AC_DebugMode.active;
     }
 
     private void setNotVisited(World world, int x, int y, int z) {
-        AC_TileEntityTrigger tileEntity = (AC_TileEntityTrigger) world.getBlockEntity(x, y, z);
-        if (tileEntity == null || !tileEntity.visited) {
+        var entity = (AC_TileEntityTrigger) world.getBlockEntity(x, y, z);
+        if (entity == null || !entity.visited) {
             return;
         }
-        tileEntity.visited = false;
+        entity.visited = false;
 
         for (int bX = x - 1; bX <= x + 1; ++bX) {
             for (int bZ = z - 1; bZ <= z + 1; ++bZ) {
@@ -75,13 +84,13 @@ public class AC_BlockTrigger extends BlockWithEntity {
     }
 
     private boolean _isAlreadyActivated(World world, int x, int y, int z) {
-        AC_TileEntityTrigger tileEntity = (AC_TileEntityTrigger) world.getBlockEntity(x, y, z);
-        if (tileEntity == null || tileEntity.visited) {
+        var entity = (AC_TileEntityTrigger) world.getBlockEntity(x, y, z);
+        if (entity == null || entity.visited) {
             return false;
         }
-        tileEntity.visited = true;
+        entity.visited = true;
 
-        if (tileEntity.activated > 0) {
+        if (entity.activated > 0) {
             return true;
         }
 
@@ -104,11 +113,11 @@ public class AC_BlockTrigger extends BlockWithEntity {
     }
 
     private void _removeArea(World world, int x, int y, int z) {
-        AC_TileEntityTrigger tileEntity = (AC_TileEntityTrigger) world.getBlockEntity(x, y, z);
-        if (tileEntity.visited) {
+        var entity = (AC_TileEntityTrigger) world.getBlockEntity(x, y, z);
+        if (entity.visited) {
             return;
         }
-        tileEntity.visited = true;
+        entity.visited = true;
         ((ExWorld) world).getTriggerManager().removeArea(x, y, z);
 
         for (int bX = x - 1; bX <= x + 1; ++bX) {
@@ -122,6 +131,7 @@ public class AC_BlockTrigger extends BlockWithEntity {
         }
     }
 
+    @Override
     public void onEntityCollision(World world, int x, int y, int z, Entity entity) {
         if (AC_DebugMode.active) {
             return;
@@ -130,7 +140,7 @@ public class AC_BlockTrigger extends BlockWithEntity {
             return;
         }
 
-        AC_TileEntityTrigger tileEntity = (AC_TileEntityTrigger) world.getBlockEntity(x, y, z);
+        var tileEntity = (AC_TileEntityTrigger) world.getBlockEntity(x, y, z);
         if (!this.isAlreadyActivated(world, x, y, z)) {
             if (!tileEntity.resetOnTrigger) {
                 ((ExWorld) world).getTriggerManager().addArea(x, y, z, new AC_TriggerArea(tileEntity.minX, tileEntity.minY, tileEntity.minZ, tileEntity.maxX, tileEntity.maxY, tileEntity.maxZ));
@@ -182,11 +192,11 @@ public class AC_BlockTrigger extends BlockWithEntity {
     }
 
     public void setTriggerReset(World world, int x, int y, int z, boolean reset) {
-        AC_TileEntityTrigger tileEntity = (AC_TileEntityTrigger) world.getBlockEntity(x, y, z);
-        if (tileEntity.resetOnTrigger == reset) {
+        var entity = (AC_TileEntityTrigger) world.getBlockEntity(x, y, z);
+        if (entity.resetOnTrigger == reset) {
             return;
         }
-        tileEntity.resetOnTrigger = reset;
+        entity.resetOnTrigger = reset;
 
         for (int bX = x - 1; bX <= x + 1; ++bX) {
             for (int bZ = z - 1; bZ <= z + 1; ++bZ) {
@@ -199,15 +209,17 @@ public class AC_BlockTrigger extends BlockWithEntity {
         }
     }
 
+    @Override
     public boolean canUse(World world, int x, int y, int z, PlayerEntity player) {
         if (AC_DebugMode.active && player.getHeldItem() != null && player.getHeldItem().itemId == AC_Items.cursor.id) {
-            AC_TileEntityTrigger tileEntity = (AC_TileEntityTrigger) world.getBlockEntity(x, y, z);
-            AC_GuiTrigger.showUI(world, x, y, z, tileEntity);
+            var entity = (AC_TileEntityTrigger) world.getBlockEntity(x, y, z);
+            AC_GuiTrigger.showUI(world, x, y, z, entity);
         }
         return true;
     }
 
-    public void reset(World world, int x, int y, int z, boolean var5) {
+    @Override
+    public void reset(World world, int x, int y, int z, boolean forDeath) {
         AC_TileEntityTrigger tileEntity = (AC_TileEntityTrigger) world.getBlockEntity(x, y, z);
         tileEntity.activated = 0;
     }

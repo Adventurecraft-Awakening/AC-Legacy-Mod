@@ -8,7 +8,7 @@ import net.minecraft.util.math.AxixAlignedBoundingBox;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 
-public class AC_BlockNpcPath extends BlockWithEntity {
+public class AC_BlockNpcPath extends BlockWithEntity implements AC_ITriggerBlock {
 
     public AC_BlockNpcPath(int var1, int var2) {
         super(var1, var2, Material.STONE);
@@ -29,7 +29,8 @@ public class AC_BlockNpcPath extends BlockWithEntity {
         return false;
     }
 
-    public boolean shouldRender(BlockView var1, int var2, int var3, int var4) {
+    @Override
+    public boolean shouldRender(BlockView view, int x, int y, int z) {
         return AC_DebugMode.active;
     }
 
@@ -38,23 +39,25 @@ public class AC_BlockNpcPath extends BlockWithEntity {
         return AC_DebugMode.active;
     }
 
+    @Override
     public boolean canBeTriggered() {
         return true;
     }
 
-    public void onTriggerActivated(World var1, int var2, int var3, int var4) {
-        AC_TileEntityNpcPath var5 = (AC_TileEntityNpcPath) var1.getBlockEntity(var2, var3, var4);
-        if (var5 != null) {
-            var5.pathEntity();
+    @Override
+    public void onTriggerActivated(World world, int x, int y, int z) {
+        var entity = (AC_TileEntityNpcPath) world.getBlockEntity(x, y, z);
+        if (entity != null) {
+            entity.pathEntity();
         }
     }
 
     @Override
-    public boolean canUse(World var1, int var2, int var3, int var4, PlayerEntity var5) {
-        if (AC_DebugMode.active && var5.getHeldItem() != null && var5.getHeldItem().itemId == AC_Items.cursor.id) {
-            AC_TileEntityNpcPath var6 = (AC_TileEntityNpcPath) var1.getBlockEntity(var2, var3, var4);
-            if (var6 != null) {
-                AC_GuiNpcPath.showUI(var6);
+    public boolean canUse(World world, int x, int y, int z, PlayerEntity player) {
+        if (AC_DebugMode.active && player.getHeldItem() != null && player.getHeldItem().itemId == AC_Items.cursor.id) {
+            var entity = (AC_TileEntityNpcPath) world.getBlockEntity(x, y, z);
+            if (entity != null) {
+                AC_GuiNpcPath.showUI(entity);
             }
 
             return true;

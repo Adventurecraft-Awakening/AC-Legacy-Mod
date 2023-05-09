@@ -1,8 +1,7 @@
 package dev.adventurecraft.awakening.mixin.block;
 
-import dev.adventurecraft.awakening.common.AC_IBlockColor;
+import dev.adventurecraft.awakening.common.AC_BlockColor;
 import dev.adventurecraft.awakening.common.AC_ItemSubtypes;
-import dev.adventurecraft.awakening.extension.block.AC_TexturedBlock;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.fabricmc.api.EnvType;
@@ -13,15 +12,13 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
-import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Block.class)
-public abstract class MixinBlock implements ExBlock, AC_IBlockColor, AC_TexturedBlock {
+public abstract class MixinBlock implements ExBlock {
 
     private int textureNum;
 
@@ -101,7 +98,7 @@ public abstract class MixinBlock implements ExBlock, AC_IBlockColor, AC_Textured
 
         STONE = (new StoneBlock(1, 215)).setHardness(1.5F).setBlastResistance(10.0F).setSounds(PISTON_SOUNDS).setTranslationKey("stone");
         ((ExBlock) GRASS).setSubTypes(5);
-        COBBLESTONE = (new Block(4, 214, Material.STONE)).setHardness(2.0F).setBlastResistance(10.0F).setSounds(PISTON_SOUNDS).setTranslationKey("stonebrick");
+        COBBLESTONE = (new AC_BlockColor(4, 214, Material.STONE)).setHardness(2.0F).setBlastResistance(10.0F).setSounds(PISTON_SOUNDS).setTranslationKey("stonebrick");
         FLOWING_WATER.setHardness(0.5F);
         STILL_WATER.setHardness(0.5F);
         FLOWING_LAVA.setHardness(0.5F);
@@ -113,7 +110,7 @@ public abstract class MixinBlock implements ExBlock, AC_IBlockColor, AC_Textured
         Item.byId[TALLGRASS.id] = (new AC_ItemSubtypes(TALLGRASS.id - 256)).setTranslationKey("tallgrass");
     }
 
-    @Environment(value=EnvType.CLIENT)
+    @Environment(value = EnvType.CLIENT)
     @Overwrite
     public float getBrightness(BlockView arg, int i, int j, int k) {
         return arg.getNaturalBrightness(i, j, k, this.getBlockLightValue(arg, i, j, k));
@@ -133,57 +130,8 @@ public abstract class MixinBlock implements ExBlock, AC_IBlockColor, AC_Textured
     }
 
     @Override
-    public int getBlockLightValue(BlockView var1, int var2, int var3, int var4) {
+    public int getBlockLightValue(BlockView view, int x, int y, int z) {
         return EMITTANCE[this.id];
-    }
-
-    @Override
-    public boolean shouldRender(BlockView var1, int var2, int var3, int var4) {
-        return true;
-    }
-
-    @Override
-    public boolean canBeTriggered() {
-        return false;
-    }
-
-    @Override
-    public void addTriggerActivation(World var1, int var2, int var3, int var4) {
-        if (this.canBeTriggered()) {
-            int var5 = Math.min(var1.getBlockMeta(var2, var3, var4) + 1, 15);
-            var1.method_223(var2, var3, var4, var5);
-            if (var5 == 1) {
-                this.onTriggerActivated(var1, var2, var3, var4);
-            }
-        }
-    }
-
-    @Override
-    public void removeTriggerActivation(World var1, int var2, int var3, int var4) {
-        if (this.canBeTriggered()) {
-            int var5 = var1.getBlockMeta(var2, var3, var4) - 1;
-            var1.method_223(var2, var3, var4, Math.max(var5, 0));
-            if (var5 == 0) {
-                this.onTriggerDeactivated(var1, var2, var3, var4);
-            }
-        }
-    }
-
-    @Override
-    public void onTriggerActivated(World var1, int var2, int var3, int var4) {
-    }
-
-    @Override
-    public void onTriggerDeactivated(World var1, int var2, int var3, int var4) {
-    }
-
-    @Override
-    public void reset(World var1, int var2, int var3, int var4, boolean var5) {
-    }
-
-    @Override
-    public int alwaysUseClick(World var1, int var2, int var3, int var4) {
-        return -1;
     }
 
     @Override

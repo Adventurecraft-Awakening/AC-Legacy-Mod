@@ -1,8 +1,5 @@
 package dev.adventurecraft.awakening.common;
 
-import java.util.Iterator;
-import java.util.List;
-
 import net.minecraft.block.BlockWithEntity;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
@@ -12,59 +9,71 @@ import net.minecraft.util.math.AxixAlignedBoundingBox;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 
-public class AC_BlockTeleport extends BlockWithEntity {
+import java.util.List;
+
+public class AC_BlockTeleport extends BlockWithEntity implements AC_ITriggerBlock {
+
     protected AC_BlockTeleport(int var1, int var2) {
         super(var1, var2, Material.AIR);
     }
 
+    @Override
     protected BlockEntity createBlockEntity() {
         return new AC_TileEntityTeleport();
     }
 
+    @Override
     public boolean isFullOpaque() {
         return false;
     }
 
-    public AxixAlignedBoundingBox getCollisionShape(World var1, int var2, int var3, int var4) {
+    @Override
+    public AxixAlignedBoundingBox getCollisionShape(World world, int x, int y, int z) {
         return null;
     }
 
-    public boolean shouldRender(BlockView var1, int var2, int var3, int var4) {
+    @Override
+    public boolean shouldRender(BlockView view, int x, int y, int z) {
         return AC_DebugMode.active;
     }
 
+    @Override
     public boolean canBeTriggered() {
         return true;
     }
 
-    public void onTriggerActivated(World var1, int var2, int var3, int var4) {
-        AC_TileEntityTeleport var5 = (AC_TileEntityTeleport) var1.getBlockEntity(var2, var3, var4);
+    @Override
+    public void onTriggerActivated(World world, int x, int y, int z) {
+        var tileEntity = (AC_TileEntityTeleport) world.getBlockEntity(x, y, z);
 
-        int var6 = var5.y;
-        while (var6 < 128 && var1.getMaterial(var5.x, var6, var5.z) != Material.AIR) {
-            ++var6;
+        int targetY = tileEntity.y;
+        while (targetY < 128 && world.getMaterial(tileEntity.x, targetY, tileEntity.z) != Material.AIR) {
+            ++targetY;
         }
 
-        for (PlayerEntity var9 : (List<PlayerEntity>) var1.players) {
-            var9.setPosition((double) var5.x + 0.5D, (double) var6, (double) var5.z + 0.5D);
+        for (PlayerEntity player : (List<PlayerEntity>) world.players) {
+            player.setPosition((double) tileEntity.x + 0.5D, targetY, (double) tileEntity.z + 0.5D);
         }
 
     }
 
-    public void onTriggerDeactivated(World var1, int var2, int var3, int var4) {
+    @Override
+    public void onTriggerDeactivated(World world, int x, int y, int z) {
     }
 
+    @Override
     public boolean isCollidable() {
         return AC_DebugMode.active;
     }
 
-    public boolean canUse(World var1, int var2, int var3, int var4, PlayerEntity var5) {
-        if (AC_DebugMode.active && var5.getHeldItem() != null && var5.getHeldItem().itemId == AC_Items.cursor.id) {
-            AC_TileEntityTeleport var6 = (AC_TileEntityTeleport) var1.getBlockEntity(var2, var3, var4);
-            var6.x = AC_ItemCursor.minX;
-            var6.y = AC_ItemCursor.minY;
-            var6.z = AC_ItemCursor.minZ;
-            Minecraft.instance.overlay.addChatMessage(String.format("Setting Teleport (%d, %d, %d)", var6.x, var6.y, var6.z));
+    @Override
+    public boolean canUse(World world, int x, int y, int z, PlayerEntity player) {
+        if (AC_DebugMode.active && player.getHeldItem() != null && player.getHeldItem().itemId == AC_Items.cursor.id) {
+            var entity = (AC_TileEntityTeleport) world.getBlockEntity(x, y, z);
+            entity.x = AC_ItemCursor.minX;
+            entity.y = AC_ItemCursor.minY;
+            entity.z = AC_ItemCursor.minZ;
+            Minecraft.instance.overlay.addChatMessage(String.format("Setting Teleport (%d, %d, %d)", entity.x, entity.y, entity.z));
             return true;
         } else {
             return false;

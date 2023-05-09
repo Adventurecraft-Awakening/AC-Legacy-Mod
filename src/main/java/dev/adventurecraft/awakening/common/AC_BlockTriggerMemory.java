@@ -11,111 +11,130 @@ import net.minecraft.util.math.AxixAlignedBoundingBox;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 
-public class AC_BlockTriggerMemory extends BlockWithEntity {
+public class AC_BlockTriggerMemory extends BlockWithEntity implements AC_ITriggerBlock {
 
     protected AC_BlockTriggerMemory(int var1, int var2) {
         super(var1, var2, Material.AIR);
     }
 
+    @Override
     protected BlockEntity createBlockEntity() {
         return new AC_TileEntityTriggerMemory();
     }
 
-    public int getDropId(int var1, Random var2) {
+    @Override
+    public int getDropId(int meta, Random rand) {
         return 0;
     }
 
-    public int getDropCount(Random var1) {
+    @Override
+    public int getDropCount(Random rand) {
         return 0;
     }
 
+    @Override
     public boolean isFullOpaque() {
         return false;
     }
 
-    public AxixAlignedBoundingBox getCollisionShape(World var1, int var2, int var3, int var4) {
+    @Override
+    public AxixAlignedBoundingBox getCollisionShape(World world, int x, int y, int z) {
         return null;
     }
 
-    public boolean shouldRender(BlockView var1, int var2, int var3, int var4) {
+    @Override
+    public boolean shouldRender(BlockView view, int x, int y, int z) {
         return AC_DebugMode.active;
     }
 
+    @Override
     public boolean isCollidable() {
         return AC_DebugMode.active;
     }
 
+    @Override
     public boolean canBeTriggered() {
         return true;
     }
 
-    public void onTriggerActivated(World var1, int var2, int var3, int var4) {
-        AC_TileEntityTriggerMemory var5 = (AC_TileEntityTriggerMemory) var1.getBlockEntity(var2, var3, var4);
-        if (!var5.isActivated && !var5.activateOnDetrigger) {
-            var5.isActivated = true;
-            this.triggerActivate(var1, var2, var3, var4);
+    @Override
+    public void onTriggerActivated(World world, int x, int y, int z) {
+        var entity = (AC_TileEntityTriggerMemory) world.getBlockEntity(x, y, z);
+        if (!entity.isActivated && !entity.activateOnDetrigger) {
+            entity.isActivated = true;
+            this.triggerActivate(world, x, y, z);
         }
     }
 
-    public void onTriggerDeactivated(World var1, int var2, int var3, int var4) {
-        AC_TileEntityTriggerMemory var5 = (AC_TileEntityTriggerMemory) var1.getBlockEntity(var2, var3, var4);
-        if (!var5.isActivated && var5.activateOnDetrigger) {
-            var5.isActivated = true;
-            this.triggerActivate(var1, var2, var3, var4);
+    @Override
+    public void onTriggerDeactivated(World world, int x, int y, int z) {
+        var entity = (AC_TileEntityTriggerMemory) world.getBlockEntity(x, y, z);
+        if (!entity.isActivated && entity.activateOnDetrigger) {
+            entity.isActivated = true;
+            this.triggerActivate(world, x, y, z);
         }
     }
 
-    public void triggerActivate(World var1, int var2, int var3, int var4) {
-        AC_TileEntityTriggerMemory var5 = (AC_TileEntityTriggerMemory) var1.getBlockEntity(var2, var3, var4);
-        ((ExWorld) var1).getTriggerManager().addArea(var2, var3, var4, new AC_TriggerArea(var5.minX, var5.minY, var5.minZ, var5.maxX, var5.maxY, var5.maxZ));
+    public void triggerActivate(World world, int x, int y, int z) {
+        var entity = (AC_TileEntityTriggerMemory) world.getBlockEntity(x, y, z);
+        ((ExWorld) world).getTriggerManager().addArea(x, y, z, new AC_TriggerArea(entity.minX, entity.minY, entity.minZ, entity.maxX, entity.maxY, entity.maxZ));
     }
 
-    public void triggerDeactivate(World var1, int var2, int var3, int var4) {
-        ((ExWorld) var1).getTriggerManager().removeArea(var2, var3, var4);
+    public void triggerDeactivate(World world, int x, int y, int z) {
+        ((ExWorld) world).getTriggerManager().removeArea(x, y, z);
     }
 
-    public void onBlockRemoved(World var1, int var2, int var3, int var4) {
-        AC_TileEntityTriggerMemory var5 = (AC_TileEntityTriggerMemory) var1.getBlockEntity(var2, var3, var4);
-        if (var5.isSet()) {
-            if (var1.getBlockMeta(var2, var3, var4) > 0) {
-                this.onTriggerDeactivated(var1, var2, var3, var4);
+    @Override
+    public void onBlockRemoved(World world, int x, int y, int z) {
+        var entity = (AC_TileEntityTriggerMemory) world.getBlockEntity(x, y, z);
+        if (entity.isSet()) {
+            if (world.getBlockMeta(x, y, z) > 0) {
+                this.onTriggerDeactivated(world, x, y, z);
             } else {
-                this.onTriggerActivated(var1, var2, var3, var4);
+                this.onTriggerActivated(world, x, y, z);
             }
         }
 
-        super.onBlockRemoved(var1, var2, var3, var4);
+        super.onBlockRemoved(world, x, y, z);
     }
 
-    public void setTriggerToSelection(World var1, int var2, int var3, int var4) {
-        AC_TileEntityTriggerMemory var5 = (AC_TileEntityTriggerMemory) var1.getBlockEntity(var2, var3, var4);
-        if (var5.minX != AC_ItemCursor.minX || var5.minY != AC_ItemCursor.minY || var5.minZ != AC_ItemCursor.minZ || var5.maxX != AC_ItemCursor.maxX || var5.maxY != AC_ItemCursor.maxY || var5.maxZ != AC_ItemCursor.maxZ) {
-            var5.set(AC_ItemCursor.minX, AC_ItemCursor.minY, AC_ItemCursor.minZ, AC_ItemCursor.maxX, AC_ItemCursor.maxY, AC_ItemCursor.maxZ);
+    public void setTriggerToSelection(World world, int x, int y, int z) {
+        var entity = (AC_TileEntityTriggerMemory) world.getBlockEntity(x, y, z);
+        if (entity.minX != AC_ItemCursor.minX ||
+            entity.minY != AC_ItemCursor.minY ||
+            entity.minZ != AC_ItemCursor.minZ ||
+            entity.maxX != AC_ItemCursor.maxX ||
+            entity.maxY != AC_ItemCursor.maxY ||
+            entity.maxZ != AC_ItemCursor.maxZ) {
+            entity.set(AC_ItemCursor.minX, AC_ItemCursor.minY, AC_ItemCursor.minZ, AC_ItemCursor.maxX, AC_ItemCursor.maxY, AC_ItemCursor.maxZ);
         }
     }
 
-    public boolean canUse(World var1, int var2, int var3, int var4, PlayerEntity var5) {
-        if (AC_DebugMode.active && var5.getHeldItem() != null && var5.getHeldItem().itemId == AC_Items.cursor.id) {
-            AC_TileEntityTriggerMemory var6 = (AC_TileEntityTriggerMemory) var1.getBlockEntity(var2, var3, var4);
-            AC_GuiTriggerMemory.showUI(var1, var2, var3, var4, var6);
+    @Override
+    public boolean canUse(World world, int x, int y, int z, PlayerEntity player) {
+        if (AC_DebugMode.active && player.getHeldItem() != null && player.getHeldItem().itemId == AC_Items.cursor.id) {
+            var entity = (AC_TileEntityTriggerMemory) world.getBlockEntity(x, y, z);
+            AC_GuiTriggerMemory.showUI(world, x, y, z, entity);
             return true;
         } else {
             return false;
         }
     }
 
-    public void onScheduledTick(World var1, int var2, int var3, int var4, Random var5) {
-        AC_TileEntityTriggerMemory var6 = (AC_TileEntityTriggerMemory) var1.getBlockEntity(var2, var3, var4);
-        if (var6.isActivated) {
-            this.triggerActivate(var1, var2, var3, var4);
+    @Override
+    public void onScheduledTick(World world, int x, int y, int z, Random rand) {
+        var entity = (AC_TileEntityTriggerMemory) world.getBlockEntity(x, y, z);
+        if (entity.isActivated) {
+            this.triggerActivate(world, x, y, z);
         }
     }
 
-    public void reset(World var1, int var2, int var3, int var4, boolean var5) {
-        AC_TileEntityTriggerMemory var6 = (AC_TileEntityTriggerMemory) var1.getBlockEntity(var2, var3, var4);
-        if ((!var5 || var6.resetOnDeath) && var6.isActivated) {
-            var6.isActivated = false;
-            this.triggerDeactivate(var1, var2, var3, var4);
+    @Override
+    public void reset(World world, int x, int y, int z, boolean forDeath) {
+        var entity = (AC_TileEntityTriggerMemory) world.getBlockEntity(x, y, z);
+        if ((!forDeath || entity.resetOnDeath) && entity.isActivated) {
+            entity.isActivated = false;
+            this.triggerDeactivate(world, x, y, z);
         }
     }
 }

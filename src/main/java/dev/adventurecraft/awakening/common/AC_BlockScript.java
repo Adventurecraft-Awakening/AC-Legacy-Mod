@@ -9,7 +9,7 @@ import net.minecraft.util.math.AxixAlignedBoundingBox;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 
-public class AC_BlockScript extends BlockWithEntity {
+public class AC_BlockScript extends BlockWithEntity implements AC_ITriggerBlock {
 
     protected AC_BlockScript(int var1, int var2) {
         super(var1, var2, Material.AIR);
@@ -30,6 +30,7 @@ public class AC_BlockScript extends BlockWithEntity {
         return null;
     }
 
+    @Override
     public boolean shouldRender(BlockView view, int x, int y, int z) {
         return AC_DebugMode.active;
     }
@@ -44,10 +45,12 @@ public class AC_BlockScript extends BlockWithEntity {
         return AC_DebugMode.active;
     }
 
+    @Override
     public boolean canBeTriggered() {
         return true;
     }
 
+    @Override
     public void onTriggerActivated(World world, int x, int y, int z) {
         var entity = (AC_TileEntityScript) world.getBlockEntity(x, y, z);
         if (!entity.onTriggerScriptFile.equals("")) {
@@ -57,6 +60,7 @@ public class AC_BlockScript extends BlockWithEntity {
         entity.isActivated = true;
     }
 
+    @Override
     public void onTriggerDeactivated(World world, int x, int y, int z) {
         var entity = (AC_TileEntityScript) world.getBlockEntity(x, y, z);
         if (!entity.onDetriggerScriptFile.equals("")) {

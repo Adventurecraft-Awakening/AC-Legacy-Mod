@@ -7,28 +7,34 @@ import net.minecraft.util.math.AxixAlignedBoundingBox;
 import net.minecraft.world.World;
 
 public class AC_BlockSpike extends Block {
-	protected AC_BlockSpike(int var1) {
-		super(var1, 246, Material.METAL);
-	}
 
-	public AxixAlignedBoundingBox getCollisionShape(World var1, int var2, int var3, int var4) {
-		float var5 = 0.25F;
-		return AxixAlignedBoundingBox.createAndAddToList((double)((float)var2 + var5), (double)var3, (double)((float)var4 + var5), (double)((float)(var2 + 1) - var5), (double)((float)(var3 + 1) - var5), (double)((float)(var4 + 1) - var5));
-	}
+    protected AC_BlockSpike(int var1) {
+        super(var1, 246, Material.METAL);
+    }
 
-	public boolean isFullCube() {
-		return false;
-	}
+    @Override
+    public AxixAlignedBoundingBox getCollisionShape(World world, int x, int y, int z) {
+        float var5 = 0.25F;
+        return AxixAlignedBoundingBox.createAndAddToList((float) x + var5, y, (float) z + var5, (float) (x + 1) - var5, (float) (y + 1) - var5, (float) (z + 1) - var5);
+    }
 
-	public boolean isFullOpaque() {
-		return false;
-	}
+    @Override
+    public boolean isFullCube() {
+        return false;
+    }
 
-	public int getRenderType() {
-		return 32;
-	}
+    @Override
+    public boolean isFullOpaque() {
+        return false;
+    }
 
-	public void onEntityCollision(World var1, int var2, int var3, int var4, Entity var5) {
-		var5.damage((Entity)null, 10);
-	}
+    @Override
+    public int getRenderType() {
+        return 32;
+    }
+
+    @Override
+    public void onEntityCollision(World world, int x, int y, int z, Entity entity) {
+        entity.damage(null, 10);
+    }
 }

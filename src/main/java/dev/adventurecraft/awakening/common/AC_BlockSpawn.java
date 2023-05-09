@@ -11,47 +11,57 @@ import net.minecraft.util.math.AxixAlignedBoundingBox;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 
-public class AC_BlockSpawn extends Block {
+public class AC_BlockSpawn extends Block implements AC_ITriggerBlock {
+
     protected AC_BlockSpawn(int var1, int var2) {
         super(var1, var2, Material.AIR);
     }
 
+    @Override
     public int getDropId(int var1, Random var2) {
         return 0;
     }
 
+    @Override
     public int getDropCount(Random var1) {
         return 0;
     }
 
+    @Override
     public boolean isFullOpaque() {
         return false;
     }
 
-    public AxixAlignedBoundingBox getCollisionShape(World var1, int var2, int var3, int var4) {
+    @Override
+    public AxixAlignedBoundingBox getCollisionShape(World world, int x, int y, int z) {
         return null;
     }
 
-    public boolean shouldRender(BlockView var1, int var2, int var3, int var4) {
+    @Override
+    public boolean shouldRender(BlockView view, int x, int y, int z) {
         return AC_DebugMode.active;
     }
 
+    @Override
     public boolean isCollidable() {
         return AC_DebugMode.active;
     }
 
-    public void onEntityCollision(World var1, int var2, int var3, int var4, Entity var5) {
-        if (var5 instanceof PlayerEntity) {
-            var1.properties.setSpawnPosition(var2, var3, var4);
-            ((ExWorld) var1).setSpawnYaw(var5.yaw);
+    @Override
+    public void onEntityCollision(World world, int x, int y, int z, Entity entity) {
+        if (entity instanceof PlayerEntity) {
+            world.properties.setSpawnPosition(x, y, z);
+            ((ExWorld) world).setSpawnYaw(entity.yaw);
         }
     }
 
+    @Override
     public boolean canBeTriggered() {
         return true;
     }
 
-    public void onTriggerActivated(World var1, int var2, int var3, int var4) {
-        var1.properties.setSpawnPosition(var2, var3, var4);
+    @Override
+    public void onTriggerActivated(World world, int x, int y, int z) {
+        world.properties.setSpawnPosition(x, y, z);
     }
 }

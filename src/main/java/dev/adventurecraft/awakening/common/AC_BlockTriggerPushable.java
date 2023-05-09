@@ -19,51 +19,51 @@ public class AC_BlockTriggerPushable extends BlockWithEntity implements AC_IBloc
         return new AC_TileEntityTriggerPushable();
     }
 
-    private boolean checkBlock(World var1, int var2, int var3, int var4, int var5) {
-        return var1.getBlockId(var2, var3, var4) == AC_Blocks.pushableBlock.id && var1.getBlockMeta(var2, var3, var4) == var5;
+    private boolean checkBlock(World world, int x, int y, int z, int meta) {
+        return world.getBlockId(x, y, z) == AC_Blocks.pushableBlock.id && world.getBlockMeta(x, y, z) == meta;
     }
 
     @Override
-    public void onAdjacentBlockUpdate(World var1, int var2, int var3, int var4, int var5) {
-        AC_TileEntityTriggerPushable var6 = (AC_TileEntityTriggerPushable) var1.getBlockEntity(var2, var3, var4);
-        int var7 = var1.getBlockMeta(var2, var3, var4);
-        boolean var8 = this.checkBlock(var1, var2 + 1, var3, var4, var7);
-        var8 |= this.checkBlock(var1, var2 - 1, var3, var4, var7);
-        var8 |= this.checkBlock(var1, var2, var3 + 1, var4, var7);
-        var8 |= this.checkBlock(var1, var2, var3 - 1, var4, var7);
-        var8 |= this.checkBlock(var1, var2, var3, var4 + 1, var7);
-        var8 |= this.checkBlock(var1, var2, var3, var4 - 1, var7);
-        if (var6.activated) {
-            if (!var8) {
-                var6.activated = false;
-                ((ExWorld) var1).getTriggerManager().removeArea(var2, var3, var4);
+    public void onAdjacentBlockUpdate(World world, int x, int y, int z, int id) {
+        var entity = (AC_TileEntityTriggerPushable) world.getBlockEntity(x, y, z);
+        int meta = world.getBlockMeta(x, y, z);
+        boolean pushable = this.checkBlock(world, x + 1, y, z, meta);
+        pushable |= this.checkBlock(world, x - 1, y, z, meta);
+        pushable |= this.checkBlock(world, x, y + 1, z, meta);
+        pushable |= this.checkBlock(world, x, y - 1, z, meta);
+        pushable |= this.checkBlock(world, x, y, z + 1, meta);
+        pushable |= this.checkBlock(world, x, y, z - 1, meta);
+        if (entity.activated) {
+            if (!pushable) {
+                entity.activated = false;
+                ((ExWorld) world).getTriggerManager().removeArea(x, y, z);
             }
-        } else if (var8) {
-            var6.activated = true;
-            if (!var6.resetOnTrigger) {
-                ((ExWorld) var1).getTriggerManager().addArea(var2, var3, var4, new AC_TriggerArea(var6.minX, var6.minY, var6.minZ, var6.maxX, var6.maxY, var6.maxZ));
+        } else if (pushable) {
+            entity.activated = true;
+            if (!entity.resetOnTrigger) {
+                ((ExWorld) world).getTriggerManager().addArea(x, y, z, new AC_TriggerArea(entity.minX, entity.minY, entity.minZ, entity.maxX, entity.maxY, entity.maxZ));
             } else {
-                ExBlock.resetArea(var1, var6.minX, var6.minY, var6.minZ, var6.maxX, var6.maxY, var6.maxZ);
+                ExBlock.resetArea(world, entity.minX, entity.minY, entity.minZ, entity.maxX, entity.maxY, entity.maxZ);
             }
         }
 
     }
 
-    public void setTriggerToSelection(World var1, int var2, int var3, int var4) {
-        AC_TileEntityMinMax var5 = (AC_TileEntityMinMax) var1.getBlockEntity(var2, var3, var4);
-        var5.minX = AC_ItemCursor.minX;
-        var5.minY = AC_ItemCursor.minY;
-        var5.minZ = AC_ItemCursor.minZ;
-        var5.maxX = AC_ItemCursor.maxX;
-        var5.maxY = AC_ItemCursor.maxY;
-        var5.maxZ = AC_ItemCursor.maxZ;
+    public void setTriggerToSelection(World world, int x, int y, int z) {
+        var entity = (AC_TileEntityMinMax) world.getBlockEntity(x, y, z);
+        entity.minX = AC_ItemCursor.minX;
+        entity.minY = AC_ItemCursor.minY;
+        entity.minZ = AC_ItemCursor.minZ;
+        entity.maxX = AC_ItemCursor.maxX;
+        entity.maxY = AC_ItemCursor.maxY;
+        entity.maxZ = AC_ItemCursor.maxZ;
     }
 
     @Override
-    public boolean canUse(World var1, int var2, int var3, int var4, PlayerEntity var5) {
-        if (AC_DebugMode.active && var5.getHeldItem() != null && var5.getHeldItem().itemId == AC_Items.cursor.id) {
-            AC_TileEntityTriggerPushable var6 = (AC_TileEntityTriggerPushable) var1.getBlockEntity(var2, var3, var4);
-            AC_GuiTriggerPushable.showUI(var6);
+    public boolean canUse(World world, int x, int y, int z, PlayerEntity player) {
+        if (AC_DebugMode.active && player.getHeldItem() != null && player.getHeldItem().itemId == AC_Items.cursor.id) {
+            var entity = (AC_TileEntityTriggerPushable) world.getBlockEntity(x, y, z);
+            AC_GuiTriggerPushable.showUI(entity);
             return true;
         } else {
             return false;
@@ -71,8 +71,8 @@ public class AC_BlockTriggerPushable extends BlockWithEntity implements AC_IBloc
     }
 
     @Override
-    public void incrementColor(World var1, int var2, int var3, int var4) {
-        AC_IBlockColor.super.incrementColor(var1, var2, var3, var4);
-        this.onAdjacentBlockUpdate(var1, var2, var3, var4, 0);
+    public void incrementColor(World world, int x, int y, int z) {
+        AC_IBlockColor.super.incrementColor(world, x, y, z);
+        this.onAdjacentBlockUpdate(world, x, y, z, 0);
     }
 }

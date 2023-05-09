@@ -9,69 +9,83 @@ import net.minecraft.util.math.AxixAlignedBoundingBox;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 
-public class AC_BlockTimer extends BlockWithEntity {
+public class AC_BlockTimer extends BlockWithEntity implements AC_ITriggerBlock {
+
     protected AC_BlockTimer(int var1, int var2) {
         super(var1, var2, Material.AIR);
     }
 
+    @Override
     protected BlockEntity createBlockEntity() {
         return new AC_TileEntityTimer();
     }
 
+    @Override
     public boolean isFullOpaque() {
         return false;
     }
 
-    public AxixAlignedBoundingBox getCollisionShape(World var1, int var2, int var3, int var4) {
+    @Override
+    public AxixAlignedBoundingBox getCollisionShape(World world, int x, int y, int z) {
         return null;
     }
 
-    public boolean shouldRender(BlockView var1, int var2, int var3, int var4) {
+    @Override
+    public boolean shouldRender(BlockView view, int x, int y, int z) {
         return AC_DebugMode.active;
     }
 
+    @Override
     public boolean canBeTriggered() {
         return true;
     }
 
-    public void setTriggerToSelection(World var1, int var2, int var3, int var4) {
-        AC_TileEntityMinMax var5 = (AC_TileEntityMinMax) var1.getBlockEntity(var2, var3, var4);
-        if (var5.minX != AC_ItemCursor.minX || var5.minY != AC_ItemCursor.minY || var5.minZ != AC_ItemCursor.minZ || var5.maxX != AC_ItemCursor.maxX || var5.maxY != AC_ItemCursor.maxY || var5.maxZ != AC_ItemCursor.maxZ) {
-            var5.minX = AC_ItemCursor.minX;
-            var5.minY = AC_ItemCursor.minY;
-            var5.minZ = AC_ItemCursor.minZ;
-            var5.maxX = AC_ItemCursor.maxX;
-            var5.maxY = AC_ItemCursor.maxY;
-            var5.maxZ = AC_ItemCursor.maxZ;
+    public void setTriggerToSelection(World world, int x, int y, int z) {
+        var entity = (AC_TileEntityMinMax) world.getBlockEntity(x, y, z);
+        if (entity.minX != AC_ItemCursor.minX ||
+            entity.minY != AC_ItemCursor.minY ||
+            entity.minZ != AC_ItemCursor.minZ ||
+            entity.maxX != AC_ItemCursor.maxX ||
+            entity.maxY != AC_ItemCursor.maxY ||
+            entity.maxZ != AC_ItemCursor.maxZ) {
+
+            entity.minX = AC_ItemCursor.minX;
+            entity.minY = AC_ItemCursor.minY;
+            entity.minZ = AC_ItemCursor.minZ;
+            entity.maxX = AC_ItemCursor.maxX;
+            entity.maxY = AC_ItemCursor.maxY;
+            entity.maxZ = AC_ItemCursor.maxZ;
         }
     }
 
-    public void onTriggerActivated(World var1, int var2, int var3, int var4) {
-        AC_TileEntityTimer var5 = (AC_TileEntityTimer) var1.getBlockEntity(var2, var3, var4);
-        if (var5.canActivate && !var5.active) {
-            var5.startActive();
+    @Override
+    public void onTriggerActivated(World world, int x, int y, int z) {
+        var entity = (AC_TileEntityTimer) world.getBlockEntity(x, y, z);
+        if (entity.canActivate && !entity.active) {
+            entity.startActive();
         }
-
     }
 
-    public boolean canUse(World var1, int var2, int var3, int var4, PlayerEntity var5) {
+    @Override
+    public boolean canUse(World world, int x, int y, int z, PlayerEntity player) {
         if (AC_DebugMode.active) {
-            AC_TileEntityTimer var6 = (AC_TileEntityTimer) var1.getBlockEntity(var2, var3, var4);
-            AC_GuiTimer.showUI(var1, var2, var3, var4, var6);
+            var entity = (AC_TileEntityTimer) world.getBlockEntity(x, y, z);
+            AC_GuiTimer.showUI(world, x, y, z, entity);
         }
-
         return true;
     }
 
+    @Override
     public boolean isCollidable() {
         return AC_DebugMode.active;
     }
 
-    public void reset(World var1, int var2, int var3, int var4, boolean var5) {
-        AC_TileEntityTimer var6 = (AC_TileEntityTimer) var1.getBlockEntity(var2, var3, var4);
-        var6.active = false;
-        var6.canActivate = true;
-        var6.ticks = 0;
-        ((ExWorld) var1).getTriggerManager().removeArea(var2, var3, var4);
+    @Override
+    public void reset(World world, int x, int y, int z, boolean forDeath) {
+        var entity = (AC_TileEntityTimer) world.getBlockEntity(x, y, z);
+        entity.active = false;
+        entity.canActivate = true;
+        entity.ticks = 0;
+        ((ExWorld) world).getTriggerManager().removeArea(x, y, z);
     }
 }

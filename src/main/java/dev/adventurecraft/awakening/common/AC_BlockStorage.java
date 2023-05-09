@@ -8,49 +8,59 @@ import net.minecraft.util.math.AxixAlignedBoundingBox;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 
-public class AC_BlockStorage extends BlockWithEntity {
-	protected AC_BlockStorage(int var1, int var2) {
-		super(var1, var2, Material.AIR);
-	}
+public class AC_BlockStorage extends BlockWithEntity implements AC_ITriggerBlock {
 
-	protected BlockEntity createBlockEntity() {
-		return new AC_TileEntityStorage();
-	}
+    protected AC_BlockStorage(int var1, int var2) {
+        super(var1, var2, Material.AIR);
+    }
 
-	public boolean isFullOpaque() {
-		return false;
-	}
+    @Override
+    protected BlockEntity createBlockEntity() {
+        return new AC_TileEntityStorage();
+    }
 
-	public AxixAlignedBoundingBox getCollisionShape(World var1, int var2, int var3, int var4) {
-		return null;
-	}
+    @Override
+    public boolean isFullOpaque() {
+        return false;
+    }
 
-	public boolean shouldRender(BlockView var1, int var2, int var3, int var4) {
-		return AC_DebugMode.active;
-	}
+    @Override
+    public AxixAlignedBoundingBox getCollisionShape(World world, int x, int y, int z) {
+        return null;
+    }
 
-	public boolean canBeTriggered() {
-		return true;
-	}
+    @Override
+    public boolean shouldRender(BlockView view, int x, int y, int z) {
+        return AC_DebugMode.active;
+    }
 
-	public void onTriggerActivated(World var1, int var2, int var3, int var4) {
-		AC_TileEntityStorage var5 = (AC_TileEntityStorage)var1.getBlockEntity(var2, var3, var4);
-		var5.loadCurrentArea();
-	}
+    @Override
+    public boolean canBeTriggered() {
+        return true;
+    }
 
-	public void onTriggerDeactivated(World var1, int var2, int var3, int var4) {
-	}
+    @Override
+    public void onTriggerActivated(World world, int x, int y, int z) {
+        var entity = (AC_TileEntityStorage) world.getBlockEntity(x, y, z);
+        entity.loadCurrentArea();
+    }
 
-	public boolean canUse(World var1, int var2, int var3, int var4, PlayerEntity var5) {
-		if(AC_DebugMode.active) {
-			AC_TileEntityStorage var6 = (AC_TileEntityStorage)var1.getBlockEntity(var2, var3, var4);
-			AC_GuiStorage.showUI(var6);
-		}
+    @Override
+    public void onTriggerDeactivated(World world, int x, int y, int z) {
+    }
 
-		return true;
-	}
+    @Override
+    public boolean canUse(World world, int x, int y, int z, PlayerEntity player) {
+        if (AC_DebugMode.active) {
+            var entity = (AC_TileEntityStorage) world.getBlockEntity(x, y, z);
+            AC_GuiStorage.showUI(entity);
+        }
 
-	public boolean isCollidable() {
-		return AC_DebugMode.active;
-	}
+        return true;
+    }
+
+    @Override
+    public boolean isCollidable() {
+        return AC_DebugMode.active;
+    }
 }

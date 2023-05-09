@@ -22,83 +22,91 @@ import net.minecraft.util.math.AxixAlignedBoundingBox;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 
-public class AC_BlockEffect extends BlockWithEntity {
+public class AC_BlockEffect extends BlockWithEntity implements AC_ITriggerBlock {
+
     static boolean needsReloadForRevert = true;
 
     protected AC_BlockEffect(int var1, int var2) {
         super(var1, var2, Material.AIR);
     }
 
+    @Override
     protected BlockEntity createBlockEntity() {
         return new AC_TileEntityEffect();
     }
 
+    @Override
     public boolean isFullOpaque() {
         return false;
     }
 
-    public AxixAlignedBoundingBox getCollisionShape(World var1, int var2, int var3, int var4) {
+    @Override
+    public AxixAlignedBoundingBox getCollisionShape(World world, int x, int y, int z) {
         return null;
     }
 
-    public boolean shouldRender(BlockView var1, int var2, int var3, int var4) {
+    @Override
+    public boolean shouldRender(BlockView view, int x, int y, int z) {
         return AC_DebugMode.active;
     }
 
+    @Override
     public boolean isCollidable() {
         return AC_DebugMode.active;
     }
 
+    @Override
     public boolean canBeTriggered() {
         return true;
     }
 
-    public void onTriggerActivated(World var1, int var2, int var3, int var4) {
-        ExWorldProperties worldProps = (ExWorldProperties) var1.properties;
+    @Override
+    public void onTriggerActivated(World world, int x, int y, int z) {
+        ExWorldProperties worldProps = (ExWorldProperties) world.properties;
 
-        AC_TileEntityEffect var5 = (AC_TileEntityEffect) var1.getBlockEntity(var2, var3, var4);
-        var5.isActivated = true;
-        var5.ticksBeforeParticle = 0;
-        if (var5.changeFogColor == 1) {
+        var entity = (AC_TileEntityEffect) world.getBlockEntity(x, y, z);
+        entity.isActivated = true;
+        entity.ticksBeforeParticle = 0;
+        if (entity.changeFogColor == 1) {
             worldProps.setOverrideFogColor(true);
-            worldProps.setFogR(var5.fogR);
-            worldProps.setFogG(var5.fogG);
-            worldProps.setFogB(var5.fogB);
-        } else if (var5.changeFogColor == 2) {
+            worldProps.setFogR(entity.fogR);
+            worldProps.setFogG(entity.fogG);
+            worldProps.setFogB(entity.fogB);
+        } else if (entity.changeFogColor == 2) {
             worldProps.setOverrideFogColor(false);
         }
 
-        if (var5.changeFogDensity == 1) {
+        if (entity.changeFogDensity == 1) {
             worldProps.setOverrideFogDensity(true);
-            worldProps.setFogStart(var5.fogStart);
-            worldProps.setFogEnd(var5.fogEnd);
-        } else if (var5.changeFogDensity == 2) {
+            worldProps.setFogStart(entity.fogStart);
+            worldProps.setFogEnd(entity.fogEnd);
+        } else if (entity.changeFogDensity == 2) {
             worldProps.setOverrideFogDensity(false);
         }
 
-        if (var5.setOverlay) {
-            worldProps.setOverlay(var5.overlay);
+        if (entity.setOverlay) {
+            worldProps.setOverlay(entity.overlay);
         }
 
-        if (var5.replaceTextures) {
-            this.replaceTextures(var1, var5.textureReplacement);
-        } else if (var5.revertTextures) {
-            revertTextures(var1);
+        if (entity.replaceTextures) {
+            this.replaceTextures(world, entity.textureReplacement);
+        } else if (entity.revertTextures) {
+            revertTextures(world);
         }
     }
 
-    public static void revertTextures(World var0) {
+    public static void revertTextures(World world) {
         ((ExTextureManager) Minecraft.instance.textureManager).revertTextures();
         if (needsReloadForRevert) {
             ExGrassColor.loadGrass("/misc/grasscolor.png");
             ExFoliageColor.loadFoliage("/misc/foliagecolor.png");
-            AC_TerrainImage.loadWaterMap(new File(((ExWorld) var0).getLevelDir(), "watermap.png"));
-            AC_TerrainImage.loadBiomeMap(new File(((ExWorld) var0).getLevelDir(), "biomemap.png"));
+            AC_TerrainImage.loadWaterMap(new File(((ExWorld) world).getLevelDir(), "watermap.png"));
+            AC_TerrainImage.loadBiomeMap(new File(((ExWorld) world).getLevelDir(), "biomemap.png"));
             Minecraft.instance.worldRenderer.method_1148();
             needsReloadForRevert = false;
         }
 
-        ((ExWorldProperties) var0.properties).revertTextures();
+        ((ExWorldProperties) world.properties).revertTextures();
     }
 
     public void replaceTextures(World var1, String var2) {
@@ -129,17 +137,17 @@ public class AC_BlockEffect extends BlockWithEntity {
         }
     }
 
-    public static boolean replaceTexture(World var0, String var1, String var2) {
+    public static boolean replaceTexture(World world, String var1, String var2) {
         String var3 = var1.toLowerCase();
         ExTextureManager texManager = (ExTextureManager) Minecraft.instance.textureManager;
-        if (!((ExWorldProperties) var0.properties).addReplacementTexture(var1, var2)) {
+        if (!((ExWorldProperties) world.properties).addReplacementTexture(var1, var2)) {
             return false;
         } else if (var3.equals("/watermap.png")) {
-            AC_TerrainImage.loadWaterMap(new File(((ExWorld) var0).getLevelDir(), var2));
+            AC_TerrainImage.loadWaterMap(new File(((ExWorld) world).getLevelDir(), var2));
             needsReloadForRevert = true;
             return true;
         } else if (var3.equals("/biomemap.png")) {
-            AC_TerrainImage.loadBiomeMap(new File(((ExWorld) var0).getLevelDir(), var2));
+            AC_TerrainImage.loadBiomeMap(new File(((ExWorld) world).getLevelDir(), var2));
             needsReloadForRevert = true;
             return true;
         } else if (var3.equals("/misc/grasscolor.png")) {
@@ -174,15 +182,17 @@ public class AC_BlockEffect extends BlockWithEntity {
         }
     }
 
-    public void onTriggerDeactivated(World var1, int var2, int var3, int var4) {
-        AC_TileEntityEffect var5 = (AC_TileEntityEffect) var1.getBlockEntity(var2, var3, var4);
-        var5.isActivated = false;
+    @Override
+    public void onTriggerDeactivated(World world, int x, int y, int z) {
+        var entity = (AC_TileEntityEffect) world.getBlockEntity(x, y, z);
+        entity.isActivated = false;
     }
 
-    public boolean canUse(World var1, int var2, int var3, int var4, PlayerEntity var5) {
-        if (AC_DebugMode.active && var5.getHeldItem() != null && var5.getHeldItem().itemId == AC_Items.cursor.id) {
-            AC_TileEntityEffect var6 = (AC_TileEntityEffect) var1.getBlockEntity(var2, var3, var4);
-            AC_GuiEffect.showUI(var6);
+    @Override
+    public boolean canUse(World world, int x, int y, int z, PlayerEntity player) {
+        if (AC_DebugMode.active && player.getHeldItem() != null && player.getHeldItem().itemId == AC_Items.cursor.id) {
+            var entity = (AC_TileEntityEffect) world.getBlockEntity(x, y, z);
+            AC_GuiEffect.showUI(entity);
             return true;
         } else {
             return false;

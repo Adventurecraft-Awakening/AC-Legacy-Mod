@@ -1495,6 +1495,11 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     }
 
     @Override
+    public File getLevelDir() {
+        return this.levelDir;
+    }
+
+    @Override
     public String[] getScriptFiles() {
         File scriptDir = new File(this.levelDir, "scripts");
         File[] files = scriptDir.listFiles();

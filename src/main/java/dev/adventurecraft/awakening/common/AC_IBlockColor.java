@@ -8,40 +8,36 @@ public interface AC_IBlockColor {
     int numColors = 7;
     int defaultColor = 13421772;
 
-    default int getDefaultColor() {
-        return defaultColor;
-    }
-
-    default int getColorMultiplier(BlockView var1, int var2, int var3, int var4) {
-        int var5 = this.getColorMetaData(var1, var2, var3, var4);
-        if (var5 == 1) {
-            var5 = 16775065;
-        } else if (var5 == 2) {
-            var5 = 16767663;
-        } else if (var5 == 3) {
-            var5 = 10736540;
-        } else if (var5 == 4) {
-            var5 = 9755639;
-        } else if (var5 == 5) {
-            var5 = 8880573;
-        } else if (var5 == 6) {
-            var5 = 15539236;
+    default int getColorMultiplier(BlockView view, int x, int y, int z) {
+        int meta = this.getColorMetaData(view, x, y, z);
+        if (meta == 1) {
+            meta = 16775065;
+        } else if (meta == 2) {
+            meta = 16767663;
+        } else if (meta == 3) {
+            meta = 10736540;
+        } else if (meta == 4) {
+            meta = 9755639;
+        } else if (meta == 5) {
+            meta = 8880573;
+        } else if (meta == 6) {
+            meta = 15539236;
         } else {
-            var5 = this.getDefaultColor();
+            meta = defaultColor;
         }
-        return var5;
+        return meta;
     }
 
-    default int getColorMetaData(BlockView var1, int var2, int var3, int var4) {
-        return var1.getBlockMeta(var2, var3, var4);
+    default int getColorMetaData(BlockView view, int x, int y, int z) {
+        return view.getBlockMeta(x, y, z);
     }
 
-    default void setColorMetaData(World var1, int var2, int var3, int var4, int var5) {
-        var1.setBlockMeta(var2, var3, var4, var5);
+    default void setColorMetaData(World world, int x, int y, int z, int meta) {
+        world.setBlockMeta(x, y, z, meta);
     }
 
-    default void incrementColor(World var1, int var2, int var3, int var4) {
-        int var5 = (this.getColorMetaData(var1, var2, var3, var4) + 1) % numColors;
-        this.setColorMetaData(var1, var2, var3, var4, var5);
+    default void incrementColor(World world, int x, int y, int z) {
+        int meta = (this.getColorMetaData(world, x, y, z) + 1) % numColors;
+        this.setColorMetaData(world, x, y, z, meta);
     }
 }
