@@ -705,7 +705,11 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         int var3 = 0;
         int var4 = Config.getUpdatesPerFrame();
         if (Config.isDynamicUpdates() && !this.isMoving(var1)) {
-            var4 *= 3;
+            if (((ExMinecraft) this.client).isCameraActive()) {
+                var4 *= 2;
+            } else {
+                var4 *= 3;
+            }
         }
 
         byte var5 = 4;
