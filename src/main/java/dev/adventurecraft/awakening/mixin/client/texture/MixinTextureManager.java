@@ -30,15 +30,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Mixin(TextureManager.class)
 public abstract class MixinTextureManager implements ExTextureManager {
@@ -194,6 +192,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <T extends TextureBinder> T getTextureBinder(Class<T> type) {
         for (TextureBinder binder : this.textureBinders) {
@@ -206,7 +205,10 @@ public abstract class MixinTextureManager implements ExTextureManager {
 
     @Override
     public BufferedImage getTextureImage(String name) throws IOException {
-        InputStream stream = ExTextureManager.getAssetStream(this.texturePackManager.texturePack, name);
+        InputStream stream = this.texturePackManager.texturePack.getResourceAsStream(name);
+        if (stream == null) {
+            throw new FileNotFoundException(name);
+        }
         return this.readImage(stream);
     }
 
@@ -247,7 +249,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
             }
 
             if (var5 == null) {
-                InputStream var6 = ExTextureManager.getAssetStream(var4, var2);
+                InputStream var6 = var4.getResourceAsStream(var2);
                 if (var6 == null) {
                     File var7 = new File(var2);
                     if (var7.exists()) {
@@ -536,11 +538,27 @@ public abstract class MixinTextureManager implements ExTextureManager {
         Config.setFontRendererUpdated(false);
     }
 
-    @Redirect(method = "reloadTexturesFromTexturePack", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/client/resource/TexturePack;getResourceAsStream(Ljava/lang/String;)Ljava/io/InputStream;"))
-    private InputStream redirectResourceGetters(TexturePack instance, String s) {
-        return ExTextureManager.getAssetStream(instance, s);
+    @Redirect(
+        method = "reloadTexturesFromTexturePack",
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/client/texture/TextureManager;textures:Ljava/util/HashMap;"))
+    private HashMap<String, Integer> useEmptySetForTextureReload(TextureManager instance) {
+        return new HashMap<>();
+    }
+
+    @Inject(
+        method = "reloadTexturesFromTexturePack",
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/client/texture/TextureManager;textures:Ljava/util/HashMap;",
+            shift = At.Shift.BEFORE,
+            ordinal = 0))
+    private void useCustomTextureReload(CallbackInfo ci) {
+        for (String key : this.textures.keySet()) {
+            int id = this.textures.get(key);
+            this.loadTexture(id, key);
+        }
     }
 
     private void setTextureDimension(int var1, Vec2 var2) {

@@ -3,12 +3,10 @@ package dev.adventurecraft.awakening.extension.client;
 import dev.adventurecraft.awakening.common.AC_TextureAnimated;
 import dev.adventurecraft.awakening.common.Vec2;
 import net.minecraft.client.render.TextureBinder;
-import net.minecraft.client.resource.TexturePack;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.io.InputStream;
 
 public interface ExTextureManager {
 
@@ -38,14 +36,5 @@ public interface ExTextureManager {
         var4.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         var4.drawImage(var0, 0, 0, var1, var2, null);
         return var3;
-    }
-
-    static InputStream getAssetStream(TexturePack pack, String name) {
-        String acName = "/assets/adventurecraft" + name;
-        InputStream stream = pack.getResourceAsStream(acName);
-        if (stream == null) {
-            stream = pack.getResourceAsStream(name);
-        }
-        return stream;
     }
 }

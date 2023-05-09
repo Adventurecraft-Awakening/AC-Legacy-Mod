@@ -1,12 +1,12 @@
 package dev.adventurecraft.awakening.mixin.client.render;
 
 import dev.adventurecraft.awakening.client.options.Config;
-import dev.adventurecraft.awakening.extension.client.ExTextureManager;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.render.QuadPoint;
 import net.minecraft.client.render.TextRenderer;
 import net.minecraft.client.render.entity.ChickenRenderer;
+import net.minecraft.client.resource.TexturePack;
 import net.minecraft.client.texture.TextureManager;
 import net.minecraft.util.CharacterUtils;
 import org.lwjgl.opengl.GL11;
@@ -59,8 +59,9 @@ public abstract class MixinTextRenderer implements ExTextRenderer {
         try {
             InputStream var2;
             if (Config.getMinecraft() != null) {
-                var1 = ImageIO.read(ExTextureManager.getAssetStream(Config.getMinecraft().texturePackManager.texturePack, this.textureName));
-                var2 = ExTextureManager.getAssetStream(Config.getMinecraft().texturePackManager.texturePack, "/font/glyph_sizes.bin");
+                TexturePack texturePack = Config.getMinecraft().texturePackManager.texturePack;
+                var1 = ImageIO.read(texturePack.getResourceAsStream(this.textureName));
+                var2 = texturePack.getResourceAsStream("/font/glyph_sizes.bin");
             } else {
                 var1 = ImageIO.read(ChickenRenderer.class.getResourceAsStream(this.textureName));
                 var2 = ChickenRenderer.class.getResourceAsStream("/font/glyph_sizes.bin");
