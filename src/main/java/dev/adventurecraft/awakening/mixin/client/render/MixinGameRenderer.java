@@ -3,6 +3,7 @@ package dev.adventurecraft.awakening.mixin.client.render;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.client.options.Config;
+import dev.adventurecraft.awakening.client.options.ConnectedGrassOption;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
@@ -24,6 +25,7 @@ import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.HeldItemRenderer;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.WorldEventRenderer;
+import net.minecraft.client.render.block.BlockRenderer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -182,6 +184,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         }
 
         Minecraft.isPremiumCheckTime = 0L;
+        BlockRenderer.field_67 = Config.isGrassFancy() || Config.getConnectedGrassOption() == ConnectedGrassOption.FANCY;
 
         Block.LEAVES.updateTexture(Config.isLeavesFancy());
         Config.setMinecraft(this.client);

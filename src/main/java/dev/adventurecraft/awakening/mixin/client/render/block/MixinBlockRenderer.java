@@ -37,6 +37,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     private Random rand = new Random();
 
     @Shadow
+    public static boolean field_67;
+    @Shadow
     public BlockView blockView;
     @Shadow
     private int textureOverride;
@@ -44,8 +46,6 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     private boolean renderAllSides;
     @Shadow
     private boolean field_92;
-    @Shadow
-    private float field_93;
     @Shadow
     private float field_94;
     @Shadow
@@ -310,7 +310,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         if (renderBottom || renderEast)
             this.field_77 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(var2, var3 - 1, var4 - 1)];
 
-        boolean doGrassEdges = var1.id == Block.GRASS.id && Config.getConnectedGrassOption() != ConnectedGrassOption.OFF;
+        boolean doGrassEdges = field_67 && var1.id == Block.GRASS.id;
         if (doGrassEdges || this.textureOverride >= 0) {
             var20 = false;
             var19 = false;
@@ -952,7 +952,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     @Overwrite
     public boolean method_58(Block var1, int var2, int var3, int var4, float var5, float var6, float var7) {
         this.field_92 = false;
-        boolean doGrassEdges = var1.id == Block.GRASS.id && Config.getConnectedGrassOption() != ConnectedGrassOption.OFF;
+        boolean doGrassEdges = field_67 && var1.id == Block.GRASS.id;
         Tessellator var9 = Tessellator.INSTANCE;
         boolean var10 = false;
         float var11 = 0.5F;
