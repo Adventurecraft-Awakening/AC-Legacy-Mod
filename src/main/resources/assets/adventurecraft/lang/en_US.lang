@@ -149,6 +149,7 @@ tile.triggerMemory.name=Trigger Memory
 tile.triggerPushable.name=Trigger Pushable
 tile.url.name=URL Block
 tile.weather.name=Weather
+tile.npcPathBlock.name=NPC Path Block
 
 ## Adventurecraft Items
 item.bomb.name=Bomb

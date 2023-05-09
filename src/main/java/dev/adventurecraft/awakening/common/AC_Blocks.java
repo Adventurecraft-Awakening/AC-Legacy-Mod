@@ -41,7 +41,7 @@ public class AC_Blocks {
     public static final Block healDamage = (new AC_BlockHealDamage(203, 12)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("healDamage");
     public static final Block teleport = (new AC_BlockTeleport(204, 13)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("teleport");
     public static final Block url = (new AC_BlockUrl(176, 245)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("url");
-    public static final Block npcPath = (new AC_BlockNpcPath(177, 247)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("NPC Path Block");
+    public static final Block npcPath = (new AC_BlockNpcPath(177, 247)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("npcPathBlock");
     public static final Block pillarStone = (new AC_BlockPillar(205, 32)).setHardness(5.0F).setSounds(Block.PISTON_SOUNDS).setTranslationKey("pillarStone");
     public static final Block pillarMetal = (new AC_BlockPillar(206, 80)).setHardness(5.0F).setSounds(Block.METAL_SOUNDS).setTranslationKey("pillarMetal");
     public static final Block plant1 = (new AC_BlockPlant(207, 112)).setHardness(5.0F).setSounds(Block.GRASS_SOUNDS).setTranslationKey("flower");
