@@ -26,205 +26,211 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
     private IntBuffer field_2464;
 
     @Overwrite
-    public void drawTextWithShadow(String var1, int var2, int var3, int var4) {
-        this.drawText(var1, var2 + 1, var3 + 1, var4, true);
-        this.drawText(var1, var2, var3, var4);
+    public void drawTextWithShadow(String text, int x, int y, int color) {
+        this.drawText(text, x + 1, y + 1, color, true);
+        this.drawText(text, x, y, color);
     }
 
     @Override
-    public void drawStringWithShadow(String var1, float var2, float var3, int var4) {
-        this.renderString(var1, var2 + 1.0F, var3 + 1.0F, var4, true);
-        this.drawString(var1, var2, var3, var4);
+    public void drawStringWithShadow(String text, float x, float y, int color) {
+        this.renderString(text, x + 1.0F, y + 1.0F, color, true);
+        this.drawString(text, x, y, color);
     }
 
     @Overwrite
-    public void drawText(String var1, int var2, int var3, int var4) {
-        this.drawText(var1, var2, var3, var4, false);
+    public void drawText(String text, int x, int y, int color) {
+        this.drawText(text, x, y, color, false);
     }
 
     @Override
-    public void drawString(String var1, float var2, float var3, int var4) {
-        this.renderString(var1, var2, var3, var4, false);
+    public void drawString(String text, float x, float y, int color) {
+        this.renderString(text, x, y, color, false);
     }
 
     @Overwrite
-    public void drawText(String var1, int var2, int var3, int var4, boolean var5) {
-        this.renderString(var1, (float) var2, (float) var3, var4, var5);
+    public void drawText(String text, int x, int y, int color, boolean shadow) {
+        this.renderString(text, (float) x, (float) y, color, shadow);
     }
 
-    private void renderString(String var1, float var2, float var3, int var4, boolean var5) {
-        if (var1 != null) {
-            if (var5) {
-                int var6 = var4 & -16777216;
-                var4 = (var4 & 16579836) >> 2;
-                var4 += var6;
-            }
+    private void renderString(String text, float x, float y, int color, boolean shadow) {
+        if (text == null) {
+            return;
+        }
 
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.field_2461);
-            float var13 = (float) (var4 >> 16 & 255) / 255.0F;
-            float var7 = (float) (var4 >> 8 & 255) / 255.0F;
-            float var8 = (float) (var4 & 255) / 255.0F;
-            float var9 = (float) (var4 >> 24 & 255) / 255.0F;
-            if (var9 == 0.0F) {
-                var9 = 1.0F;
-            }
+        if (shadow) {
+            int tmp = color & -16777216;
+            color = (color & 16579836) >> 2;
+            color += tmp;
+        }
 
-            GL11.glColor4f(var13, var7, var8, var9);
-            this.field_2464.clear();
-            GL11.glPushMatrix();
-            GL11.glTranslatef(var2, var3, 0.0F);
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.field_2461);
+        float red = (float) (color >> 16 & 255) / 255.0F;
+        float green = (float) (color >> 8 & 255) / 255.0F;
+        float blue = (float) (color & 255) / 255.0F;
+        float alpha = (float) (color >> 24 & 255) / 255.0F;
+        if (alpha == 0.0F) {
+            alpha = 1.0F;
+        }
 
-            for (int var10 = 0; var10 < var1.length(); ++var10) {
-                int var11;
-                for (; var1.length() > var10 + 1 && var1.charAt(var10) == 167; var10 += 2) {
-                    var11 = "0123456789abcdef".indexOf(var1.toLowerCase().charAt(var10 + 1));
-                    if (var11 < 0 || var11 > 15) {
-                        var11 = 15;
-                    }
+        GL11.glColor4f(red, green, blue, alpha);
+        this.field_2464.clear();
+        GL11.glPushMatrix();
+        GL11.glTranslatef(x, y, 0.0F);
 
-                    this.field_2464.put(this.field_2463 + 256 + var11 + (var5 ? 16 : 0));
-                    if (this.field_2464.remaining() == 0) {
-                        this.field_2464.flip();
-                        GL11.glCallLists(this.field_2464);
-                        this.field_2464.clear();
-                    }
+        String lowerText = text.toLowerCase();
+
+        for (int i = 0; i < text.length(); ++i) {
+            while (text.length() > i + 1 && text.charAt(i) == 167) {
+                int charIndex = "0123456789abcdef".indexOf(lowerText.charAt(i + 1));
+                if (charIndex < 0 || charIndex > 15) {
+                    charIndex = 15;
                 }
 
-                if (var10 < var1.length()) {
-                    var11 = CharacterUtils.validCharacters.indexOf(var1.charAt(var10));
-                    char var12 = var1.charAt(var10);
-                    if (var11 >= 0 && var12 < 176) {
-                        this.field_2464.put(this.field_2463 + var11 + 32);
-                    } else if (var12 < 256) {
-                        this.field_2464.put(this.field_2463 + var12);
-                    }
-                }
-
+                this.field_2464.put(this.field_2463 + 256 + charIndex + (shadow ? 16 : 0));
                 if (this.field_2464.remaining() == 0) {
                     this.field_2464.flip();
                     GL11.glCallLists(this.field_2464);
                     this.field_2464.clear();
                 }
+                i += 2;
             }
 
-            this.field_2464.flip();
-            GL11.glCallLists(this.field_2464);
-            GL11.glPopMatrix();
+            if (i < text.length()) {
+                char c = text.charAt(i);
+                int charIndex = CharacterUtils.validCharacters.indexOf(c);
+                if (charIndex >= 0 && c < 176) {
+                    this.field_2464.put(this.field_2463 + charIndex + 32);
+                } else if (c < 256) {
+                    this.field_2464.put(this.field_2463 + c);
+                }
+            }
+
+            if (this.field_2464.remaining() == 0) {
+                this.field_2464.flip();
+                GL11.glCallLists(this.field_2464);
+                this.field_2464.clear();
+            }
         }
+
+        this.field_2464.flip();
+        GL11.glCallLists(this.field_2464);
+        GL11.glPopMatrix();
     }
 
     @Overwrite
-    public int getTextWidth(String var1) {
-        if (var1 == null) {
+    public int getTextWidth(String text) {
+        if (text == null) {
             return 0;
-        } else {
-            int var2 = 0;
+        }
 
-            for (int var3 = 0; var3 < var1.length(); ++var3) {
-                if (var1.charAt(var3) == 167) {
-                    ++var3;
-                } else {
-                    int var4 = CharacterUtils.validCharacters.indexOf(var1.charAt(var3));
-                    char var5 = var1.charAt(var3);
-                    if (var4 >= 0 && var5 < 176) {
-                        var2 += this.field_2462[var4 + 32];
-                    } else if (var5 < 256) {
-                        var2 += this.field_2462[var5];
-                    }
-                }
+        int width = 0;
+
+        for (int i = 0; i < text.length(); ++i) {
+            char c = text.charAt(i);
+            if (c == 167) {
+                ++i;
+                continue;
             }
 
-            return var2;
+            int index = CharacterUtils.validCharacters.indexOf(c);
+            if (index >= 0 && c < 176) {
+                width += this.field_2462[index + 32];
+            } else if (c < 256) {
+                width += this.field_2462[c];
+            }
+        }
+
+        return width;
+    }
+
+    @Overwrite
+    public void method_1904(String text, int x, int y, int maxWidth, int color) {
+        String[] lines = text.split("\n");
+        if (lines.length > 1) {
+            for (String line : lines) {
+                this.method_1904(line, x, y, maxWidth, color);
+                y += this.method_1902(line, maxWidth);
+            }
+            return;
+        }
+
+        String[] words = text.split(" ");
+        int wordIndex = 0;
+
+        StringBuilder builder = new StringBuilder();
+        while (wordIndex < words.length) {
+            builder.setLength(0);
+            builder.append(words[wordIndex++]).append(" ");
+            while (wordIndex < words.length && this.getTextWidth(builder + words[wordIndex]) < maxWidth) {
+                builder.append(words[wordIndex++]).append(" ");
+            }
+
+            while (this.getTextWidth(builder.toString()) > maxWidth) {
+                int consumed = 0;
+                while (this.getTextWidth(builder.substring(0, consumed + 1)) <= maxWidth) {
+                    ++consumed;
+                }
+
+                if (builder.substring(0, consumed).trim().length() > 0) {
+                    this.drawText(builder.substring(0, consumed), x, y, color);
+                    y += 8;
+                }
+                builder.setLength(0);
+                builder.append(builder.substring(consumed));
+            }
+
+            if (builder.toString().trim().length() > 0) {
+                this.drawText(builder.toString(), x, y, color);
+                y += 8;
+            }
         }
     }
 
     @Overwrite
-    public void method_1904(String var1, int var2, int var3, int var4, int var5) {
-        String[] var6 = var1.split("\n");
-        if (var6.length > 1) {
-            for (String s : var6) {
-                this.method_1904(s, var2, var3, var4, var5);
-                var3 += this.method_1902(s, var4);
+    public int method_1902(String text, int maxWidth) {
+        String[] lines = text.split("\n");
+        if (lines.length > 1) {
+            int y = 0;
+            for (String line : lines) {
+                y += this.method_1902(line, maxWidth);
             }
-        } else {
-            String[] var7 = var1.split(" ");
-            int var8 = 0;
-
-            while (var8 < var7.length) {
-                String var9;
-                var9 = var7[var8++] + " ";
-                while (var8 < var7.length && this.getTextWidth(var9 + var7[var8]) < var4) {
-                    var9 = var9 + var7[var8++] + " ";
-                }
-
-                int var10;
-                for (; this.getTextWidth(var9) > var4; var9 = var9.substring(var10)) {
-                    var10 = 0;
-                    while (this.getTextWidth(var9.substring(0, var10 + 1)) <= var4) {
-                        ++var10;
-                    }
-
-                    if (var9.substring(0, var10).trim().length() > 0) {
-                        this.drawText(var9.substring(0, var10), var2, var3, var5);
-                        var3 += 8;
-                    }
-                }
-
-                if (var9.trim().length() > 0) {
-                    this.drawText(var9, var2, var3, var5);
-                    var3 += 8;
-                }
-            }
-
+            return y;
         }
-    }
 
-    @Overwrite
-    public int method_1902(String var1, int var2) {
-        String[] var3 = var1.split("\n");
-        int var5;
-        if (var3.length > 1) {
-            int var9 = 0;
+        String[] words = text.split(" ");
+        int wordIndex = 0;
+        int y = 0;
 
-            for (var5 = 0; var5 < var3.length; ++var5) {
-                var9 += this.method_1902(var3[var5], var2);
+        StringBuilder builder = new StringBuilder();
+        while (wordIndex < words.length) {
+            builder.setLength(0);
+            builder.append(words[wordIndex++]).append(" ");
+            while (wordIndex < words.length && this.getTextWidth(builder + words[wordIndex]) < maxWidth) {
+                builder.append(words[wordIndex++]).append(" ");
             }
 
-            return var9;
-        } else {
-            String[] var4 = var1.split(" ");
-            var5 = 0;
-            int var6 = 0;
-
-            while (var5 < var4.length) {
-                String var7;
-                var7 = var4[var5++] + " ";
-                while (var5 < var4.length && this.getTextWidth(var7 + var4[var5]) < var2) {
-                    var7 = var7 + var4[var5++] + " ";
+            while (this.getTextWidth(builder.toString()) > maxWidth) {
+                int consumed = 0;
+                while (this.getTextWidth(builder.substring(0, consumed + 1)) <= maxWidth) {
+                    ++consumed;
                 }
 
-                int var8;
-                for (; this.getTextWidth(var7) > var2; var7 = var7.substring(var8)) {
-                    var8 = 0;
-                    while (this.getTextWidth(var7.substring(0, var8 + 1)) <= var2) {
-                        ++var8;
-                    }
-
-                    if (var7.substring(0, var8).trim().length() > 0) {
-                        var6 += 8;
-                    }
+                if (builder.substring(0, consumed).trim().length() > 0) {
+                    y += 8;
                 }
-
-                if (var7.trim().length() > 0) {
-                    var6 += 8;
-                }
+                builder.setLength(0);
+                builder.append(builder.substring(consumed));
             }
 
-            if (var6 < 8) {
-                var6 += 8;
+            if (builder.toString().trim().length() > 0) {
+                y += 8;
             }
-
-            return var6;
         }
+
+        if (y < 8) {
+            y += 8;
+        }
+
+        return y;
     }
 }
