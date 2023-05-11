@@ -80,7 +80,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(TexturePackManager var1, GameOptions var2, CallbackInfo ci) {
-        this.allocateImageData(256);
+        this.allocateImageData(256, 256);
     }
 
     @Overwrite
@@ -182,7 +182,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
             dstColors[i * 4 + 3] = (byte) a;
         }
 
-        this.checkImageDataSize(texW);
+        this.checkImageDataSize(texW, texH);
         this.currentImageBuffer.clear();
         this.currentImageBuffer.put(dstColors);
         this.currentImageBuffer.position(0).limit(dstColors.length);
@@ -430,7 +430,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
 
             int tileW = texSize.x / 16;
             int tileH = texSize.y / 16;
-            this.checkImageDataSize(texSize.x);
+            this.checkImageDataSize(texSize.x, texSize.y);
             this.currentImageBuffer.limit(0);
 
             if (this.currentImageBuffer.limit() <= 0) {
@@ -569,29 +569,29 @@ public abstract class MixinTextureManager implements ExTextureManager {
         return this.textureDimensionsMap.get(var1);
     }
 
-    private void checkImageDataSize(int width) {
+    private void checkImageDataSize(int width, int height) {
         if (this.currentImageBuffer != null) {
-            int var2 = width * width * 4;
-            if (this.currentImageBuffer.capacity() >= var2) {
+            int size = width * height * 4;
+            if (this.currentImageBuffer.capacity() >= size) {
                 return;
             }
         }
 
-        this.allocateImageData(width);
+        this.allocateImageData(width, height);
     }
 
-    private void allocateImageData(int var1) {
-        int var2 = var1 * var1 * 4;
-        this.currentImageBuffer = GLAllocationUtils.allocateByteBuffer(var2);
-        ArrayList<ByteBuffer> var3 = new ArrayList<>();
+    private void allocateImageData(int width, int height) {
+        int size = width * height * 4;
+        this.currentImageBuffer = GLAllocationUtils.allocateByteBuffer(size);
+        ArrayList<ByteBuffer> mipBuffers = new ArrayList<>();
 
-        for (int var4 = var1 / 2; var4 > 0; var4 /= 2) {
-            int var5 = var4 * var4 * 4;
-            ByteBuffer var6 = GLAllocationUtils.allocateByteBuffer(var5);
-            var3.add(var6);
+        for (int level = Math.max(width, height) / 2; level > 0; level /= 2) {
+            int mipSize = level * level * 4;
+            ByteBuffer mipBuffer = GLAllocationUtils.allocateByteBuffer(mipSize);
+            mipBuffers.add(mipBuffer);
         }
 
-        this.mipImageDatas = var3.toArray(new ByteBuffer[0]);
+        this.mipImageDatas = mipBuffers.toArray(new ByteBuffer[0]);
     }
 
     private int getMaxMipmapLevel(int dim) {
