@@ -119,13 +119,21 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
 
     @Overwrite
     public int getTextWidth(String text) {
+        return getTextWidth(text, 0);
+    }
+
+    public int getTextWidth(CharSequence text, int start) {
+        return getTextWidth(text, start, text.length());
+    }
+
+    public int getTextWidth(CharSequence text, int start, int length) {
         if (text == null) {
             return 0;
         }
 
         int width = 0;
 
-        for (int i = 0; i < text.length(); ++i) {
+        for (int i = start; i < length; ++i) {
             char c = text.charAt(i);
             if (c == 167) {
                 ++i;
@@ -161,13 +169,13 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
         while (wordIndex < words.length) {
             builder.setLength(0);
             builder.append(words[wordIndex++]).append(" ");
-            while (wordIndex < words.length && this.getTextWidth(builder + words[wordIndex]) < maxWidth) {
+            while (wordIndex < words.length && (this.getTextWidth(builder, 0) + this.getTextWidth(words[wordIndex])) < maxWidth) {
                 builder.append(words[wordIndex++]).append(" ");
             }
 
-            while (this.getTextWidth(builder.toString()) > maxWidth) {
+            while (this.getTextWidth(builder, 0) > maxWidth) {
                 int consumed = 0;
-                while (this.getTextWidth(builder.substring(0, consumed + 1)) <= maxWidth) {
+                while (this.getTextWidth(builder, 0, consumed + 1) <= maxWidth) {
                     ++consumed;
                 }
 
@@ -175,8 +183,7 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
                     this.drawText(builder.substring(0, consumed), x, y, color);
                     y += 8;
                 }
-                builder.setLength(0);
-                builder.append(builder.substring(consumed));
+                builder.delete(0, consumed);
             }
 
             if (builder.toString().trim().length() > 0) {
@@ -205,21 +212,20 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
         while (wordIndex < words.length) {
             builder.setLength(0);
             builder.append(words[wordIndex++]).append(" ");
-            while (wordIndex < words.length && this.getTextWidth(builder + words[wordIndex]) < maxWidth) {
+            while (wordIndex < words.length && (this.getTextWidth(builder, 0) + this.getTextWidth(words[wordIndex])) < maxWidth) {
                 builder.append(words[wordIndex++]).append(" ");
             }
 
-            while (this.getTextWidth(builder.toString()) > maxWidth) {
+            while (this.getTextWidth(builder, 0) > maxWidth) {
                 int consumed = 0;
-                while (this.getTextWidth(builder.substring(0, consumed + 1)) <= maxWidth) {
+                while (this.getTextWidth(builder, 0, consumed + 1) <= maxWidth) {
                     ++consumed;
                 }
 
                 if (builder.substring(0, consumed).trim().length() > 0) {
                     y += 8;
                 }
-                builder.setLength(0);
-                builder.append(builder.substring(consumed));
+                builder.delete(0, consumed);
             }
 
             if (builder.toString().trim().length() > 0) {
