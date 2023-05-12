@@ -17,8 +17,8 @@ public class AC_GuiMusicSheet extends Screen {
     private AC_MusicScriptEntry songPlayed;
     private long timeToFade;
 
-    public AC_GuiMusicSheet(String var1) {
-        this.instrument = var1;
+    public AC_GuiMusicSheet(String instrument) {
+        this.instrument = instrument;
         this.notesPlayed = new IntArrayList();
         this.notesPlayedString = "";
         this.songPlayed = null;

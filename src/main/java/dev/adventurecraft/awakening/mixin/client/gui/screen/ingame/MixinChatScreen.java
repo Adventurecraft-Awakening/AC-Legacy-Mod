@@ -18,19 +18,29 @@ public abstract class MixinChatScreen {
     @Shadow
     protected String getText;
 
+    @Shadow
+    private int ticksRan;
+
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
-    private void useClipboard(char var1, int var2, CallbackInfo ci) {
+    private void cancelFirstTick(CallbackInfo ci) {
+        if (this.ticksRan < 1) {
+            ci.cancel();
+        }
+    }
+
+    @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
+    private void useClipboard(char character, int key, CallbackInfo ci) {
         if (Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) ||
             Keyboard.isKeyDown(Keyboard.KEY_RCONTROL) ||
             Keyboard.isKeyDown(Keyboard.KEY_LMETA) ||
             Keyboard.isKeyDown(Keyboard.KEY_RMETA)) {
 
-            if (var2 == 47) {
+            if (key == Keyboard.KEY_V) {
                 this.getText = ClipboardHandler.getClipboard();
                 ci.cancel();
             }
 
-            if (var2 == 46) {
+            if (key == Keyboard.KEY_C) {
                 ClipboardHandler.setClipboard(this.getText);
                 ci.cancel();
             }
