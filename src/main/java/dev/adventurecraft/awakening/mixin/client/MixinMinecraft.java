@@ -495,13 +495,13 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
         this.overlay.runTick();
         this.gameRenderer.method_1838(1.0F);
-        int var3;
+
         if (this.player != null) {
-            WorldSource var1 = this.world.getCache();
-            if (var1 instanceof ChunkCache var2) {
-                var3 = MathHelper.floor((float) ((int) this.player.x)) >> 4;
-                int var4 = MathHelper.floor((float) ((int) this.player.z)) >> 4;
-                var2.method_1242(var3, var4);
+            WorldSource worldSource = this.world.getCache();
+            if (worldSource instanceof ChunkCache chunkCache) {
+                int chunkX = MathHelper.floor((float) ((int) this.player.x)) >> 4;
+                int chunkZ = MathHelper.floor((float) ((int) this.player.z)) >> 4;
+                chunkCache.method_1242(chunkX, chunkZ);
             }
         }
 
@@ -526,9 +526,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
         if (this.currentScreen != null && !((ExScreen) this.currentScreen).isDisabledInputGrabbing()) {
             this.mouseTicksProcessed = this.ticksPlayed + 10000;
-        }
 
-        if (this.currentScreen != null && !((ExScreen) this.currentScreen).isDisabledInputGrabbing()) {
             this.currentScreen.method_130();
             if (this.currentScreen != null) {
                 this.currentScreen.smokeRenderer.render();
@@ -640,33 +638,33 @@ public abstract class MixinMinecraft implements ExMinecraft {
                                     }
                                 }
 
-                                int var8 = 0;
+                                int currentSlot = 0;
 
                                 while (true) {
-                                    if (var8 >= 9) {
+                                    if (currentSlot >= 9) {
                                         if (Keyboard.getEventKey() == this.options.fogKey.key) {
                                             this.options.setIntOption(Option.RENDER_DISTANCE, !Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) && !Keyboard.isKeyDown(Keyboard.KEY_RSHIFT) ? 1 : -1);
                                         }
                                         break;
                                     }
 
-                                    if (Keyboard.getEventKey() == Keyboard.KEY_1 + var8) {
+                                    if (Keyboard.getEventKey() == Keyboard.KEY_1 + currentSlot) {
                                         if (!Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) && !Keyboard.isKeyDown(Keyboard.KEY_RCONTROL)) {
-                                            if (var8 == ((ExPlayerInventory) this.player.inventory).getOffhandItem()) {
+                                            if (currentSlot == ((ExPlayerInventory) this.player.inventory).getOffhandItem()) {
                                                 ((ExPlayerInventory) this.player.inventory).setOffhandItem(this.player.inventory.selectedHotBarSlot);
                                             }
 
-                                            this.player.inventory.selectedHotBarSlot = var8;
+                                            this.player.inventory.selectedHotBarSlot = currentSlot;
                                         } else {
-                                            if (var8 == this.player.inventory.selectedHotBarSlot) {
+                                            if (currentSlot == this.player.inventory.selectedHotBarSlot) {
                                                 this.player.inventory.selectedHotBarSlot = ((ExPlayerInventory) this.player.inventory).getOffhandItem();
                                             }
 
-                                            ((ExPlayerInventory) this.player.inventory).setOffhandItem(var8);
+                                            ((ExPlayerInventory) this.player.inventory).setOffhandItem(currentSlot);
                                         }
                                     }
 
-                                    ++var8;
+                                    ++currentSlot;
                                 }
                             }
 
@@ -677,39 +675,38 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
                     } while (var7 > 200L);
 
-                    var3 = Mouse.getEventDWheel();
-                    if (var3 != 0) {
-                        boolean var9 = Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL);
-                        boolean var5 = Keyboard.isKeyDown(Keyboard.KEY_LMENU) || Keyboard.isKeyDown(Keyboard.KEY_RMENU);
-                        if (var3 > 0) {
-                            var3 = 1;
+                    int wheelDelta = Mouse.getEventDWheel();
+                    if (wheelDelta != 0) {
+                        boolean ctrlDown = Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL);
+                        boolean menuDown = Keyboard.isKeyDown(Keyboard.KEY_LMENU) || Keyboard.isKeyDown(Keyboard.KEY_RMENU);
+                        if (wheelDelta > 0) {
+                            wheelDelta = 1;
                         }
 
-                        if (var3 < 0) {
-                            var3 = -1;
+                        if (wheelDelta < 0) {
+                            wheelDelta = -1;
                         }
 
-                        if (AC_DebugMode.active && var5) {
-                            AC_DebugMode.reachDistance += var3;
+                        if (AC_DebugMode.active && menuDown) {
+                            AC_DebugMode.reachDistance += wheelDelta;
                             AC_DebugMode.reachDistance = Math.min(Math.max(AC_DebugMode.reachDistance, 2), 100);
                             this.overlay.addChatMessage(String.format("Reach Changed to %d", AC_DebugMode.reachDistance));
                         } else {
-                            int var6;
-                            if (var9) {
-                                var6 = this.player.inventory.selectedHotBarSlot;
+                            if (ctrlDown) {
+                                int selectedSlot = this.player.inventory.selectedHotBarSlot;
                                 this.player.inventory.selectedHotBarSlot = ((ExPlayerInventory) this.player.inventory).getOffhandItem();
-                                ((ExPlayerInventory) this.player.inventory).setOffhandItem(var6);
+                                ((ExPlayerInventory) this.player.inventory).setOffhandItem(selectedSlot);
                             }
 
-                            this.player.inventory.scrollInHotBar(var3);
-                            if (var9) {
-                                var6 = this.player.inventory.selectedHotBarSlot;
+                            this.player.inventory.scrollInHotBar(wheelDelta);
+                            if (ctrlDown) {
+                                int selectedSlot = this.player.inventory.selectedHotBarSlot;
                                 this.player.inventory.selectedHotBarSlot = ((ExPlayerInventory) this.player.inventory).getOffhandItem();
-                                ((ExPlayerInventory) this.player.inventory).setOffhandItem(var6);
+                                ((ExPlayerInventory) this.player.inventory).setOffhandItem(selectedSlot);
                             }
 
                             if (this.options.field_1445) {
-                                this.options.field_1448 += (float) var3 * 0.25F;
+                                this.options.field_1448 += (float) wheelDelta * 0.25F;
                             }
                         }
                     }
@@ -773,7 +770,10 @@ public abstract class MixinMinecraft implements ExMinecraft {
             }
 
             if (!this.paused && this.world != null) {
-                this.world.method_294(MathHelper.floor(this.player.x), MathHelper.floor(this.player.y), MathHelper.floor(this.player.z));
+                this.world.method_294(
+                    MathHelper.floor(this.player.x),
+                    MathHelper.floor(this.player.y),
+                    MathHelper.floor(this.player.z));
             }
 
             if (!this.paused) {
@@ -792,8 +792,8 @@ public abstract class MixinMinecraft implements ExMinecraft {
     }
 
     @Overwrite
-    private void method_2107(int var1) {
-        if (var1 == 0 && this.attackCooldown > 0) {
+    private void method_2107(int mouseButton) {
+        if (mouseButton == 0 && this.attackCooldown > 0) {
             return;
         }
 
@@ -802,85 +802,85 @@ public abstract class MixinMinecraft implements ExMinecraft {
         }
 
         boolean var4 = false;
-        ItemStack var2 = this.player.inventory.getHeldItem();
+        ItemStack stack = this.player.inventory.getHeldItem();
         if (!AC_DebugMode.active) {
-            if (var1 == 0) {
-                var2 = ((ExPlayerInventory) this.player.inventory).getOffhandItemStack();
+            if (mouseButton == 0) {
+                stack = ((ExPlayerInventory) this.player.inventory).getOffhandItemStack();
                 ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
                 var4 = true;
                 ((ExPlayerEntity) this.player).setSwappedItems(true);
             }
 
             int var5 = 5;
-            if (var2 != null) {
-                var5 = ((ExItem) Item.byId[var2.itemId]).getItemUseDelay();
+            if (stack != null) {
+                var5 = ((ExItem) Item.byId[stack.itemId]).getItemUseDelay();
             }
 
-            if (var1 == 0) {
+            if (mouseButton == 0) {
                 this.mouseTicksProcessed = this.ticksPlayed + var5;
             } else {
                 this.rightMouseTicksRan = this.ticksPlayed + var5;
             }
 
-            if (var2 != null && ((ExItem) Item.byId[var2.itemId]).mainActionLeftClick()) {
-                var1 = 0;
+            if (stack != null && ((ExItem) Item.byId[stack.itemId]).mainActionLeftClick()) {
+                mouseButton = 0;
             } else {
-                var1 = 1;
+                mouseButton = 1;
             }
         } else {
             this.mouseTicksProcessed = this.ticksPlayed + 5;
             this.rightMouseTicksRan = this.ticksPlayed + 5;
         }
 
-        if (var1 == 0) {
+        if (mouseButton == 0) {
             this.player.swingHand();
         }
 
-        boolean var12 = true;
+        boolean useOnBlock = true;
         if (this.hitResult == null) {
-            if (var1 == 0 && !(this.interactionManager instanceof CreativeClientInteractionManager)) {
+            if (mouseButton == 0 && !(this.interactionManager instanceof CreativeClientInteractionManager)) {
                 this.attackCooldown = 10;
             }
         } else if (this.hitResult.type == HitType.field_790) {
-            if (var1 == 0) {
+            if (mouseButton == 0) {
                 this.interactionManager.attack(this.player, this.hitResult.field_1989);
             }
 
-            if (var1 == 1) {
+            if (mouseButton == 1) {
                 this.interactionManager.method_1714(this.player, this.hitResult.field_1989);
             }
         } else if (this.hitResult.type == HitType.field_789) {
-            int var6 = this.hitResult.x;
-            int var7 = this.hitResult.y;
-            int var8 = this.hitResult.z;
-            int var9 = this.hitResult.field_1987;
-            Block var10 = Block.BY_ID[this.world.getBlockId(var6, var7, var8)];
-            if (var10 != null) {
-                if (!AC_DebugMode.active && (var10.id == Block.CHEST.id || var10.id == AC_Blocks.store.id)) {
-                    var1 = 1;
+            int bX = this.hitResult.x;
+            int bY = this.hitResult.y;
+            int bZ = this.hitResult.z;
+            int bSide = this.hitResult.field_1987;
+            Block block = Block.BY_ID[this.world.getBlockId(bX, bY, bZ)];
+            if (block != null) {
+                if (!AC_DebugMode.active && (block.id == Block.CHEST.id || block.id == AC_Blocks.store.id)) {
+                    mouseButton = 1;
                 }
 
                 int var11;
                 if (!AC_DebugMode.active) {
-                    var11 = ((ExBlock) var10).alwaysUseClick(this.world, var6, var7, var8);
+                    var11 = ((ExBlock) block).alwaysUseClick(this.world, bX, bY, bZ);
                     if (var11 != -1) {
-                        var1 = var11;
+                        mouseButton = var11;
                     }
                 }
 
-                if (var1 == 0) {
-                    this.interactionManager.destroyFireAndBreakBlock(var6, var7, var8, this.hitResult.field_1987);
-                    if (var2 != null) {
-                        ((ExItemStack) var2).useItemLeftClick(this.player, this.world, var6, var7, var8, var9);
+                if (mouseButton == 0) {
+                    this.interactionManager.destroyFireAndBreakBlock(bX, bY, bZ, this.hitResult.field_1987);
+                    if (stack != null) {
+                        ((ExItemStack) stack).useItemLeftClick(this.player, this.world, bX, bY, bZ, bSide);
                     }
                 } else {
-                    var11 = var2 == null ? 0 : var2.count;
-                    if (this.interactionManager.useItemOnBlock(this.player, this.world, var2, var6, var7, var8, var9)) {
-                        var12 = false;
+                    var11 = stack == null ? 0 : stack.count;
+                    if (this.interactionManager.useItemOnBlock(this.player, this.world, stack, bX, bY, bZ, bSide)) {
+                        useOnBlock = false;
                         this.player.swingHand();
                     }
 
-                    if (var2 == null) {
+                    if (stack == null) {
                         if (var4) {
                             ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
                             ((ExPlayerEntity) this.player).setSwappedItems(false);
@@ -893,68 +893,67 @@ public abstract class MixinMinecraft implements ExMinecraft {
                         return;
                     }
 
-                    if (var2.count == 0 && var2 == this.player.inventory.main[this.player.inventory.selectedHotBarSlot]) {
+                    if (stack.count == 0 && stack == this.player.inventory.main[this.player.inventory.selectedHotBarSlot]) {
                         this.player.inventory.main[this.player.inventory.selectedHotBarSlot] = null;
-                    } else if (var2.count != var11) {
+                    } else if (stack.count != var11) {
                         this.gameRenderer.heldItemRenderer.method_1863();
                     }
                 }
             }
         }
 
-        if (var12 && var1 == 0 && var2 != null && Item.byId[var2.itemId] != null) {
-            ((ExItem) Item.byId[var2.itemId]).onItemLeftClick(var2, this.world, this.player);
+        if (useOnBlock && mouseButton == 0 && stack != null && Item.byId[stack.itemId] != null) {
+            ((ExItem) Item.byId[stack.itemId]).onItemLeftClick(stack, this.world, this.player);
         }
 
-        if (var12 && var1 == 1 && var2 != null && this.interactionManager.method_1712(this.player, this.world, var2)) {
+        if (useOnBlock && mouseButton == 1 && stack != null && this.interactionManager.method_1712(this.player, this.world, stack)) {
             this.gameRenderer.heldItemRenderer.method_1865();
         }
 
-        if (var2 != null) {
+        if (stack != null) {
             Scriptable globalScope = ((ExWorld) this.world).getScript().globalScope;
 
-            Object var13;
-            if (this.lastItemUsed != var2) {
-                var13 = Context.javaToJS(new ScriptItem(var2), globalScope);
+            if (this.lastItemUsed != stack) {
+                var var13 = Context.javaToJS(new ScriptItem(stack), globalScope);
                 ScriptableObject.putProperty(globalScope, "lastItemUsed", var13);
-                this.lastItemUsed = var2;
+                this.lastItemUsed = stack;
             }
 
             if (this.hitResult == null) {
                 if (this.lastEntityHit != null) {
                     this.lastEntityHit = null;
-                    var13 = Context.javaToJS(null, globalScope);
-                    ScriptableObject.putProperty(globalScope, "hitEntity", var13);
+                    var tmp = Context.javaToJS(null, globalScope);
+                    ScriptableObject.putProperty(globalScope, "hitEntity", tmp);
                 }
 
                 if (this.lastBlockHit != null) {
                     this.lastBlockHit = null;
-                    var13 = Context.javaToJS(null, globalScope);
-                    ScriptableObject.putProperty(globalScope, "hitBlock", var13);
+                    var tmp = Context.javaToJS(null, globalScope);
+                    ScriptableObject.putProperty(globalScope, "hitBlock", tmp);
                 }
             } else if (this.hitResult.type == HitType.field_790) {
                 if (this.lastEntityHit != this.hitResult.field_1989) {
                     this.lastEntityHit = this.hitResult.field_1989;
-                    var13 = Context.javaToJS(ScriptEntity.getEntityClass(this.hitResult.field_1989), globalScope);
-                    ScriptableObject.putProperty(globalScope, "hitEntity", var13);
+                    var tmp = Context.javaToJS(ScriptEntity.getEntityClass(this.hitResult.field_1989), globalScope);
+                    ScriptableObject.putProperty(globalScope, "hitEntity", tmp);
                 }
 
                 if (this.lastBlockHit != null) {
                     this.lastBlockHit = null;
-                    var13 = Context.javaToJS(null, globalScope);
-                    ScriptableObject.putProperty(globalScope, "hitBlock", var13);
+                    var tmp = Context.javaToJS(null, globalScope);
+                    ScriptableObject.putProperty(globalScope, "hitBlock", tmp);
                 }
             } else if (this.hitResult.type != HitType.field_789) {
                 if (this.lastEntityHit != null) {
                     this.lastEntityHit = null;
-                    var13 = Context.javaToJS(null, globalScope);
-                    ScriptableObject.putProperty(globalScope, "hitEntity", var13);
+                    var tmp = Context.javaToJS(null, globalScope);
+                    ScriptableObject.putProperty(globalScope, "hitEntity", tmp);
                 }
 
                 if (this.lastBlockHit != null) {
                     this.lastBlockHit = null;
-                    var13 = Context.javaToJS(null, globalScope);
-                    ScriptableObject.putProperty(globalScope, "hitBlock", var13);
+                    var tmp = Context.javaToJS(null, globalScope);
+                    ScriptableObject.putProperty(globalScope, "hitBlock", tmp);
                 }
             } else {
                 if (this.lastBlockHit == null ||
@@ -963,23 +962,23 @@ public abstract class MixinMinecraft implements ExMinecraft {
                     this.lastBlockHit.z != (double) this.hitResult.z) {
 
                     this.lastBlockHit = new ScriptVec3((float) this.hitResult.x, (float) this.hitResult.y, (float) this.hitResult.z);
-                    var13 = Context.javaToJS(this.lastBlockHit, globalScope);
-                    ScriptableObject.putProperty(globalScope, "hitBlock", var13);
+                    var tmp = Context.javaToJS(this.lastBlockHit, globalScope);
+                    ScriptableObject.putProperty(globalScope, "hitBlock", tmp);
                 }
 
                 if (this.lastEntityHit != null) {
                     this.lastEntityHit = null;
-                    var13 = Context.javaToJS(null, globalScope);
-                    ScriptableObject.putProperty(globalScope, "hitEntity", var13);
+                    var tmp = Context.javaToJS(null, globalScope);
+                    ScriptableObject.putProperty(globalScope, "hitEntity", tmp);
                 }
             }
 
-            if (var2.usesMeta()) {
+            if (stack.usesMeta()) {
                 ((ExWorld) this.world).getScriptHandler().runScript(
-                    String.format("item_%d_%d.js", var2.itemId, var2.getMeta()), ((ExWorld) this.world).getScope(), false);
+                    String.format("item_%d_%d.js", stack.itemId, stack.getMeta()), ((ExWorld) this.world).getScope(), false);
             } else {
                 ((ExWorld) this.world).getScriptHandler().runScript(
-                    String.format("item_%d.js", var2.itemId), ((ExWorld) this.world).getScope(), false);
+                    String.format("item_%d.js", stack.itemId), ((ExWorld) this.world).getScope(), false);
             }
         }
 
@@ -1016,16 +1015,16 @@ public abstract class MixinMinecraft implements ExMinecraft {
             this.switchDimension();
         }
 
-        Vec3i var3 = this.world.getSpawnPosition();
-        WorldSource var4 = this.world.getCache();
-        if (var4 instanceof ChunkCache var5) {
-            var5.method_1242(var3.x >> 4, var3.z >> 4);
+        WorldSource worldSource = this.world.getCache();
+        if (worldSource instanceof ChunkCache chunkCache) {
+            Vec3i spawnPos = this.world.getSpawnPosition();
+            chunkCache.method_1242(spawnPos.x >> 4, spawnPos.z >> 4);
         }
 
         this.world.method_295();
-        int var7 = 0;
+        int playerId = 0;
         if (this.player != null) {
-            var7 = this.player.entityId;
+            playerId = this.player.entityId;
             this.world.removeEntity(this.player);
         } else {
             this.player = (AbstractClientPlayerEntity) this.interactionManager.method_1717(this.world);
@@ -1033,15 +1032,15 @@ public abstract class MixinMinecraft implements ExMinecraft {
         }
 
         ((ExWorldEventRenderer) this.worldRenderer).resetForDeath();
-        Vec3i var6 = this.world.getSpawnPosition();
+        Vec3i spawnPos = this.world.getSpawnPosition();
         this.player.afterSpawn();
-        this.player.setPositionAndAngles((double) var6.x + 0.5D, var6.y, (double) var6.z + 0.5D, 0.0F, 0.0F);
+        this.player.setPositionAndAngles((double) spawnPos.x + 0.5D, spawnPos.y, (double) spawnPos.z + 0.5D, 0.0F, 0.0F);
         this.viewEntity = this.player;
         this.player.afterSpawn();
         this.interactionManager.rotatePlayer(this.player);
         this.world.addPlayer(this.player);
         this.player.playerKeypressManager = new MovementManager(this.options);
-        this.player.entityId = var7;
+        this.player.entityId = playerId;
         this.player.method_494();
         this.player.setRotation(((ExWorld) this.world).getSpawnYaw(), 0.0F);
         this.interactionManager.setDefaultHotbar(this.player);
@@ -1052,93 +1051,92 @@ public abstract class MixinMinecraft implements ExMinecraft {
     }
 
     @Overwrite
-    public void createOrLoadWorld(String var1, String var2, long var3) {
-        String var5 = this.getMapUsed(var1);
-        if (MathHelper.isStringEmpty(var5)) {
+    public void createOrLoadWorld(String var1, String saveName, long seed) {
+        String mapName = this.getMapUsed(var1);
+        if (MathHelper.isStringEmpty(mapName)) {
             this.openScreen(new AC_GuiMapSelect(null, var1));
         } else {
-            this.startWorld(var1, var2, var3, var5);
+            this.startWorld(var1, saveName, seed, mapName);
         }
     }
 
     @Override
-    public World getWorld(String var1, long var2, String var4) {
+    public World getWorld(String saveName, long seed, String mapName) {
         this.setWorld(null);
-        DimensionData var5 = this.getWorldStorage().method_1009(var1, false);
-        World var6 = ExWorld.createWorld(var4, var5, var1, var2);
-        return var6;
+        DimensionData dimData = this.getWorldStorage().method_1009(saveName, false);
+        World world = ExWorld.createWorld(mapName, dimData, saveName, seed);
+        return world;
     }
 
     @Override
-    public void startWorld(String var1, String var2, long var3, String var5) {
+    public void startWorld(String worldName, String saveName, long seed, String mapName) {
         this.setWorld(null);
         System.gc();
-        if (var1 != null && this.getWorldStorage().isOld(var1)) {
-            this.convertWorldFormat(var1, var2);
+        if (worldName != null && this.getWorldStorage().isOld(worldName)) {
+            this.convertWorldFormat(worldName, saveName);
         } else {
+            // TODO: reset global state in consistent matter
             AC_DebugMode.active = false;
             AC_DebugMode.levelEditing = false;
-            DimensionData var6 = null;
-            if (var1 != null) {
-                var6 = this.getWorldStorage().method_1009(var1, false);
+            DimensionData dimData = null;
+            if (worldName != null) {
+                dimData = this.getWorldStorage().method_1009(worldName, false);
             }
 
-            if (var2 == null) {
-                var2 = "Map Editing";
+            if (saveName == null) {
+                saveName = "Map Editing";
             }
 
-            World var7 = ExWorld.createWorld(var5, var6, var2, var3);
-            if (var7.field_215) {
+            World world = ExWorld.createWorld(mapName, dimData, saveName, seed);
+            if (world.field_215) {
                 this.statFileWriter.incrementStat(Stats.createWorld, 1);
                 this.statFileWriter.incrementStat(Stats.startGame, 1);
-                this.notifyStatus(var7, "Generating level");
+                this.notifyStatus(world, "Generating level");
             } else {
                 this.statFileWriter.incrementStat(Stats.loadWorld, 1);
                 this.statFileWriter.incrementStat(Stats.startGame, 1);
-                this.notifyStatus(var7, "Loading level");
+                this.notifyStatus(world, "Loading level");
             }
         }
 
         this.openScreen(null);
     }
 
+    private File getWorldFolder(String worldName) {
+        File gameFolder = getGameDirectory();
+        File savesFolder = new File(gameFolder, "saves");
+        File worldFolder = new File(savesFolder, worldName);
+        return worldFolder;
+    }
+
     @Override
-    public String getMapUsed(String var1) {
-        File var2 = getGameDirectory();
-        File var3 = new File(var2, "saves");
-        File var4 = new File(var3, var1);
-        File var5 = new File(var4, "map.txt");
-        if (var5.exists()) {
+    public String getMapUsed(String worldName) {
+        File worldFolder = getWorldFolder(worldName);
+        File mapNameFile = new File(worldFolder, "map.txt");
+        if (mapNameFile.exists()) {
             try {
-                BufferedReader var7 = new BufferedReader(new FileReader(var5));
-                String var6 = var7.readLine();
-                var7.close();
-                return var6;
+                BufferedReader reader = new BufferedReader(new FileReader(mapNameFile));
+                String mapName = reader.readLine();
+                reader.close();
+                return mapName;
             } catch (FileNotFoundException var8) {
             } catch (IOException var9) {
             }
         }
-
         return null;
     }
 
     @Override
-    public void saveMapUsed(String var1, String var2) {
-        File var3 = getGameDirectory();
-        File var4 = new File(var3, "saves");
-        File var5 = new File(var4, var1);
-        var5.mkdirs();
-        File var6 = new File(var5, "map.txt");
-
+    public void saveMapUsed(String worldName, String mapName) {
+        File worldFolder = getWorldFolder(worldName);
+        worldFolder.mkdirs();
+        File mapNameFile = new File(worldFolder, "map.txt");
         try {
-            if (var6.exists()) {
-                var6.delete();
-            }
-
-            var6.createNewFile();
-            BufferedWriter var7 = new BufferedWriter(new FileWriter(var6));
-            var7.write(var2);
-            var7.close();
+            mapNameFile.delete();
+            mapNameFile.createNewFile();
+            BufferedWriter writer = new BufferedWriter(new FileWriter(mapNameFile));
+            writer.write(mapName);
+            writer.close();
         } catch (FileNotFoundException var8) {
         } catch (IOException var9) {
         }
@@ -1151,10 +1149,10 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
     @Override
     public void updateStoreGUI() {
-        ScreenScaler var1 = new ScreenScaler(this.options, this.actualWidth, this.actualHeight);
-        int var2 = var1.getScaledWidth();
-        int var3 = var1.getScaledHeight();
-        this.storeGUI.init((Minecraft) (Object) this, var2, var3);
+        var scaler = new ScreenScaler(this.options, this.actualWidth, this.actualHeight);
+        int width = scaler.getScaledWidth();
+        int height = scaler.getScaledHeight();
+        this.storeGUI.init((Minecraft) (Object) this, width, height);
     }
 
     @Override

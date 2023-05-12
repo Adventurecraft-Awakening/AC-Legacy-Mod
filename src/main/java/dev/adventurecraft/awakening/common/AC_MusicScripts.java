@@ -25,45 +25,43 @@ public class AC_MusicScripts {
 
     public void loadMusic(File var1) {
         this.musicEntries.clear();
-        File var2 = new File(var1, "musicScripts.txt");
-        if (var2.exists()) {
+        File musicEntryFile = new File(var1, "musicScripts.txt");
+        if (musicEntryFile.exists()) {
             try {
-                BufferedReader var3 = new BufferedReader(new FileReader(var2));
-
+                BufferedReader reader = new BufferedReader(new FileReader(musicEntryFile));
                 try {
-                    while (var3.ready()) {
-                        this.processLine(var3.readLine());
+                    while (reader.ready()) {
+                        this.processLine(reader.readLine());
                     }
-                } catch (IOException var5) {
-                    var5.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-            } catch (FileNotFoundException var6) {
-                var6.printStackTrace();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
             }
         }
     }
 
-    private void processLine(String var1) {
-        String[] var2 = var1.split(",", 3);
-        if (var2.length == 3) {
-            this.musicEntries.add(new AC_MusicScriptEntry(var2[0].trim(), var2[1].trim(), var2[2].trim()));
+    private void processLine(String line) {
+        String[] parts = line.split(",", 3);
+        if (parts.length == 3) {
+            this.musicEntries.add(new AC_MusicScriptEntry(parts[0].trim(), parts[1].trim(), parts[2].trim()));
         }
-
     }
 
-    public String executeMusic(String var1) {
-        Iterator<AC_MusicScriptEntry> var2 = this.musicEntries.iterator();
+    public AC_MusicScriptEntry executeMusic(String musicKey) {
+        Iterator<AC_MusicScriptEntry> iterator = this.musicEntries.iterator();
 
-        AC_MusicScriptEntry var3;
+        AC_MusicScriptEntry entry;
         do {
-            if (!var2.hasNext()) {
+            if (!iterator.hasNext()) {
                 return null;
             }
 
-            var3 = var2.next();
-        } while (!var3.music.equals(var1));
+            entry = iterator.next();
+        } while (!entry.musicKey.equals(musicKey));
 
-        this.handler.runScript(var3.scriptFile, this.scope);
-        return var3.songName;
+        this.handler.runScript(entry.scriptFile, this.scope);
+        return entry;
     }
 }
