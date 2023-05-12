@@ -733,7 +733,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         target = "Lnet/minecraft/client/options/GameOptions;thirdPerson:Z",
         ordinal = 0))
     private boolean noHandWhenCameraActive(boolean value) {
-        return value && !((ExMinecraft) this.client).isCameraActive();
+        return value || ((ExMinecraft) this.client).isCameraActive();
     }
 
     @Redirect(method = "method_1845", at = @At(
