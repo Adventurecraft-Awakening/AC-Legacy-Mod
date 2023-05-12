@@ -60,36 +60,36 @@ public class AC_GuiMusicSheet extends Screen {
         this.spaceTaken += 11;
         this.notesPlayed.add(key);
 
-        if (key == 2) {
+        if (key == Keyboard.KEY_1) {
             MusicPlayer.playNoteFromEntity(this.client.world, this.client.player, this.instrument, 'D', shiftDown, 0.5F, 1.0F);
-            this.notesPlayedString = this.notesPlayedString + character;
-        } else if (key == 3) {
+            this.notesPlayedString = this.notesPlayedString + "1";
+        } else if (key == Keyboard.KEY_2) {
             MusicPlayer.playNoteFromEntity(this.client.world, this.client.player, this.instrument, 'E', false, 0.5F, 1.0F);
             this.notesPlayedString = this.notesPlayedString + "2";
-        } else if (key == 4) {
+        } else if (key == Keyboard.KEY_3) {
             MusicPlayer.playNoteFromEntity(this.client.world, this.client.player, this.instrument, 'F', shiftDown, 0.5F, 1.0F);
-            this.notesPlayedString = this.notesPlayedString + character;
-        } else if (key == 5) {
+            this.notesPlayedString = this.notesPlayedString + "3";
+        } else if (key == Keyboard.KEY_4) {
             MusicPlayer.playNoteFromEntity(this.client.world, this.client.player, this.instrument, 'G', shiftDown, 0.5F, 1.0F);
-            this.notesPlayedString = this.notesPlayedString + character;
-        } else if (key == 6) {
+            this.notesPlayedString = this.notesPlayedString + "4";
+        } else if (key == Keyboard.KEY_5) {
             MusicPlayer.playNoteFromEntity(this.client.world, this.client.player, this.instrument, 'A', shiftDown, 1.0F, 1.0F);
-            this.notesPlayedString = this.notesPlayedString + character;
-        } else if (key == 7) {
+            this.notesPlayedString = this.notesPlayedString + "5";
+        } else if (key == Keyboard.KEY_6) {
             MusicPlayer.playNoteFromEntity(this.client.world, this.client.player, this.instrument, 'B', false, 1.0F, 1.0F);
             this.notesPlayedString = this.notesPlayedString + "6";
-        } else if (key == 8) {
+        } else if (key == Keyboard.KEY_7) {
             MusicPlayer.playNoteFromEntity(this.client.world, this.client.player, this.instrument, 'C', shiftDown, 1.0F, 1.0F);
-            this.notesPlayedString = this.notesPlayedString + character;
-        } else if (key == 9) {
+            this.notesPlayedString = this.notesPlayedString + "7";
+        } else if (key == Keyboard.KEY_8) {
             MusicPlayer.playNoteFromEntity(this.client.world, this.client.player, this.instrument, 'D', shiftDown, 1.0F, 1.0F);
-            this.notesPlayedString = this.notesPlayedString + character;
-        } else if (key == 10) {
+            this.notesPlayedString = this.notesPlayedString + "8";
+        } else if (key == Keyboard.KEY_9) {
             MusicPlayer.playNoteFromEntity(this.client.world, this.client.player, this.instrument, 'E', false, 1.0F, 1.0F);
             this.notesPlayedString = this.notesPlayedString + "9";
-        } else if (key == 11) {
+        } else if (key == Keyboard.KEY_0) {
             MusicPlayer.playNoteFromEntity(this.client.world, this.client.player, this.instrument, 'F', shiftDown, 1.0F, 1.0F);
-            this.notesPlayedString = this.notesPlayedString + character;
+            this.notesPlayedString = this.notesPlayedString + "0";
         }
 
         AC_MusicScriptEntry entry = ((ExWorld) this.client.world).getMusicScripts().executeMusic(this.notesPlayedString);
@@ -104,44 +104,44 @@ public class AC_GuiMusicSheet extends Screen {
 
     @Override
     public void render(int var1, int var2, float var3) {
-        float var4 = 1.0F;
-        int var5 = Integer.MIN_VALUE;
-        int var6 = -16777216;
+        float alpha = 1.0F;
+        int backColor = Integer.MIN_VALUE;
+        int foreColor = -16777216;
         if (this.songPlayed != null) {
-            float var7 = (float) (this.timeToFade - System.currentTimeMillis()) / 1000.0F;
-            if (var7 < 1.0F) {
-                var4 = var7;
-                var5 = (int) (128.0F * var7) << 24;
-                var6 = (int) (255.0F * var7) << 24;
-                if ((double) var7 < 0.004D) {
+            float fade = (float) (this.timeToFade - System.currentTimeMillis()) / 1000.0F;
+            if (fade < 1.0F) {
+                alpha = fade;
+                backColor = (int) (128.0F * fade) << 24;
+                foreColor = (int) (255.0F * fade) << 24;
+                if ((double) fade < 0.004D) {
                     this.client.openScreen(null);
                     return;
                 }
             }
         }
 
-        this.fill((this.width - 215) / 2, this.height - 59 - 4 - 48, (this.width + 215) / 2, this.height - 48, var5);
+        this.fill((this.width - 215) / 2, this.height - 59 - 4 - 48, (this.width + 215) / 2, this.height - 48, backColor);
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GL11.glDisable(GL11.GL_ALPHA_TEST);
         if (this.songPlayed != null) {
-            this.drawTextWithShadowCentred(this.textRenderer, this.songPlayed.songName, this.width / 2, this.height - 59 - 48, 14737632 + var6);
+            this.drawTextWithShadowCentred(this.textRenderer, this.songPlayed.songName, this.width / 2, this.height - 59 - 48, 14737632 + foreColor);
         }
 
-        int var11 = this.client.textureManager.getTextureId("/gui/musicSheet.png");
-        GL11.glColor4f(0.9F, 0.1F, 0.1F, var4);
-        this.client.textureManager.bindTexture(var11);
+        int backTexId = this.client.textureManager.getTextureId("/gui/musicSheet.png");
+        GL11.glColor4f(0.9F, 0.1F, 0.1F, alpha);
+        this.client.textureManager.bindTexture(backTexId);
         this.blit((this.width - 205) / 2, this.height - 59 - 2 - 48, 0, 0, 205, 59);
-        int var8 = 0;
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, var4);
+        int noteX = 0;
+        GL11.glColor4f(1.0F, 1.0F, 1.0F, alpha);
 
-        for (int var10 : this.notesPlayed) {
-            if (var10 > 0) {
-                this.drawNote(var8, var10);
-                var8 += 11;
+        for (int note : this.notesPlayed) {
+            if (note > 0) {
+                this.drawNote(noteX, note);
+                noteX += 11;
             } else {
-                this.drawSharp(var8, -var10);
-                var8 += 14;
+                this.drawSharp(noteX, -note);
+                noteX += 14;
             }
         }
 
@@ -150,12 +150,12 @@ public class AC_GuiMusicSheet extends Screen {
         super.render(var1, var2, var3);
     }
 
-    private void drawNote(int var1, int var2) {
-        this.blit((this.width - 205) / 2 + 36 + var1, this.height - 59 - 2 - 48 + 46 - (var2 - 2) * 4, 0, 64, 9, 7);
+    private void drawNote(int x, int note) {
+        this.blit((this.width - 205) / 2 + 36 + x, this.height - 59 - 2 - 48 + 46 - (note - 2) * 4, 0, 64, 9, 7);
     }
 
-    private void drawSharp(int var1, int var2) {
-        this.blit((this.width - 205) / 2 + 36 + var1, this.height - 59 - 2 - 48 + 46 - (var2 - 2) * 4 - 5, 16, 64, 12, 17);
+    private void drawSharp(int x, int note) {
+        this.blit((this.width - 205) / 2 + 36 + x, this.height - 59 - 2 - 48 + 46 - (note - 2) * 4 - 5, 16, 64, 12, 17);
     }
 
     public static void showUI(String var0) {
