@@ -35,8 +35,6 @@ public abstract class MixinCuboid implements ExCuboid {
         this.tHeight = 32;
     }
 
-    // TODO: Minecraft Dev extension is bugged for NEW
-    @SuppressWarnings({"InvalidInjectorMethodSignature", "InvalidMemberReference", "MixinAnnotationTarget", "UnresolvedMixinReference"})
     @Redirect(
         method = "method_1818",
         at = @At(
