@@ -1006,7 +1006,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         shift = At.Shift.AFTER))
     private void initPlayerOnInit(World var1, String var2, PlayerEntity var3, CallbackInfo ci) {
         this.cutsceneCameraEntity = this.interactionManager.method_1717(var1);
-        ((ExWorld) this.world).getScript().initPlayer();
+        ((ExWorld) this.world).getScript().initPlayer(this.player);
     }
 
     @Overwrite
@@ -1028,7 +1028,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
             this.world.removeEntity(this.player);
         } else {
             this.player = (AbstractClientPlayerEntity) this.interactionManager.method_1717(this.world);
-            ((ExWorld) this.world).getScript().initPlayer();
+            ((ExWorld) this.world).getScript().initPlayer(this.player);
         }
 
         ((ExWorldEventRenderer) this.worldRenderer).resetForDeath();

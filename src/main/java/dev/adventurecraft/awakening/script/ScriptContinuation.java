@@ -8,9 +8,9 @@ class ScriptContinuation {
     long wakeUp;
     Scriptable scope;
 
-    ScriptContinuation(Object var1, long var2, Scriptable var4) {
-        this.contituation = var1;
-        this.wakeUp = var2;
-        this.scope = var4;
+    ScriptContinuation(Object continuation, long wakeUp, Scriptable scope) {
+        this.contituation = continuation;
+        this.wakeUp = wakeUp;
+        this.scope = scope;
     }
 }

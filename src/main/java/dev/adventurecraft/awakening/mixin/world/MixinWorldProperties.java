@@ -512,7 +512,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
 
     @Override
     public String getOnNewSaveScript() {
-        return onNewSaveScript;
+        return this.onNewSaveScript;
     }
 
     @Override
@@ -522,7 +522,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
 
     @Override
     public String getOnLoadScript() {
-        return onLoadScript;
+        return this.onLoadScript;
     }
 
     @Override
@@ -532,7 +532,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
 
     @Override
     public String getOnUpdateScript() {
-        return onUpdateScript;
+        return this.onUpdateScript;
     }
 
     @Override

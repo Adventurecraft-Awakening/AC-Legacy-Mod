@@ -29,62 +29,60 @@ public class AC_JScriptHandler {
     public void loadScripts() {
         this.scripts.clear();
         if (this.scriptDir.exists()) {
-            File[] var1 = this.scriptDir.listFiles();
-            for (File var4 : var1) {
-                String var5 = var4.getName().toLowerCase();
-                if (var5.endsWith(".js")) {
-                    ACMod.LOGGER.info(String.format("Compiling %s", var5));
-                    String var6 = this.readFile(var4);
-                    this.scripts.put(var5, new AC_JScriptInfo(var4.getName(), ((ExWorld) this.world).getScript().compileString(var6, var4.getName())));
+            File[] files = this.scriptDir.listFiles();
+            for (File file : files) {
+                String name = file.getName().toLowerCase();
+                if (name.endsWith(".js")) {
+                    ACMod.LOGGER.info(String.format("Compiling %s", name));
+                    String contents = this.readFile(file);
+                    this.scripts.put(name, new AC_JScriptInfo(
+                        file.getName(),
+                        ((ExWorld) this.world).getScript().compileString(contents, file.getName())));
                 }
             }
         }
-
     }
 
-    public Object runScript(String var1, Scriptable var2) {
-        return this.runScript(var1, var2, true);
+    public Object runScript(String name, Scriptable scope) {
+        return this.runScript(name, scope, true);
     }
 
-    public Object runScript(String var1, Scriptable var2, boolean var3) {
-        AC_JScriptInfo var4 = this.scripts.get(var1.toLowerCase());
-        if (var4 != null) {
-            var1 = var1.toLowerCase();
-            long var5 = System.nanoTime();
-
-            Object var7;
-            try {
-                var7 = ((ExWorld) this.world).getScript().runScript(var4.compiledScript, var2);
-            } finally {
-                var4.addStat(System.nanoTime() - var5);
-            }
-
-            return var7;
-        } else {
-            if (var3) {
-                Minecraft.instance.overlay.addChatMessage(String.format("Missing '%s'", var1));
+    public Object runScript(String name, Scriptable scope, boolean printMissing) {
+        AC_JScriptInfo scriptInfo = this.scripts.get(name.toLowerCase());
+        if (scriptInfo == null) {
+            if (printMissing) {
+                Minecraft.instance.overlay.addChatMessage(String.format("Missing '%s'", name));
             }
 
             return null;
         }
+
+        long time = System.nanoTime();
+        Object result;
+        try {
+            result = ((ExWorld) this.world).getScript().runScript(scriptInfo.compiledScript, scope);
+        } finally {
+            scriptInfo.addStat(System.nanoTime() - time);
+        }
+        return result;
     }
 
     private String readFile(File var1) {
         try {
-            BufferedReader var2 = new BufferedReader(new FileReader(var1));
-            StringBuilder var3 = new StringBuilder();
+            BufferedReader reader = new BufferedReader(new FileReader(var1));
+            StringBuilder builder = new StringBuilder();
 
             try {
-                while (var2.ready()) {
-                    var3.append(var2.readLine()).append("\n");
+                while (reader.ready()) {
+                    builder.append(reader.readLine()).append("\n");
                 }
             } catch (IOException var5) {
                 var5.printStackTrace();
             }
 
-            return var3.toString();
-        } catch (FileNotFoundException var6) {
-            var6.printStackTrace();
+            return builder.toString();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
             return "";
         }
     }
