@@ -58,40 +58,26 @@ public abstract class MixinItem implements ExItem {
     }
 
     @Override
-    public boolean onItemUseLeftClick(ItemStack var1, PlayerEntity var2, World var3, int var4, int var5, int var6, int var7) {
-        return false;
-    }
-
-    @Override
-    public void onItemLeftClick(ItemStack var1, World var2, PlayerEntity var3) {
-    }
-
-    @Override
-    public boolean mainActionLeftClick() {
-        return false;
-    }
-
-    @Override
-    public void onAddToSlot(PlayerEntity var1, int var2, int var3) {
-        ExWorld world = (ExWorld) Minecraft.instance.world;
-        Scriptable var4 = world.getScope();
-        var4.put("slotID", var4, var2);
+    public void onAddToSlot(PlayerEntity player, int slotId, int var3) {
+        var world = (ExWorld) Minecraft.instance.world;
+        Scriptable scope = world.getScope();
+        scope.put("slotID", scope, slotId);
         if (this.usesMeta()) {
-            world.getScriptHandler().runScript(String.format("item_onAddToSlot_%d_%d.js", this.id, var3), var4, false);
+            world.getScriptHandler().runScript(String.format("item_onAddToSlot_%d_%d.js", this.id, var3), scope, false);
         } else {
-            world.getScriptHandler().runScript(String.format("item_onAddToSlot_%d.js", this.id), var4, false);
+            world.getScriptHandler().runScript(String.format("item_onAddToSlot_%d.js", this.id), scope, false);
         }
     }
 
     @Override
-    public void onRemovedFromSlot(PlayerEntity var1, int var2, int var3) {
-        ExWorld world = (ExWorld) Minecraft.instance.world;
-        Scriptable var4 = world.getScope();
-        var4.put("slotID", var4, var2);
+    public void onRemovedFromSlot(PlayerEntity player, int slotId, int var3) {
+        var world = (ExWorld) Minecraft.instance.world;
+        Scriptable scope = world.getScope();
+        scope.put("slotID", scope, slotId);
         if (this.usesMeta()) {
-            world.getScriptHandler().runScript(String.format("item_onRemovedFromSlot_%d_%d.js", this.id, var3), var4, false);
+            world.getScriptHandler().runScript(String.format("item_onRemovedFromSlot_%d_%d.js", this.id, var3), scope, false);
         } else {
-            world.getScriptHandler().runScript(String.format("item_onRemovedFromSlot_%d.js", this.id), var4, false);
+            world.getScriptHandler().runScript(String.format("item_onRemovedFromSlot_%d.js", this.id), scope, false);
         }
     }
 }

@@ -6,7 +6,8 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 
-public class AC_ItemCursor extends Item {
+public class AC_ItemCursor extends Item implements AC_ILeftClickItem {
+
 	public static boolean bothSet = false;
 	public static boolean firstPosition = true;
 	public static int oneX;
@@ -22,12 +23,13 @@ public class AC_ItemCursor extends Item {
 	public static int maxY;
 	public static int maxZ;
 
-	protected AC_ItemCursor(int var1) {
-		super(var1);
+	protected AC_ItemCursor(int id) {
+		super(id);
 	}
 
-	public boolean onItemUseLeftClick(ItemStack var1, PlayerEntity var2, World var3, int var4, int var5, int var6, int var7) {
-		return this.useOnBlock(var1, var2, var3, var4, var5, var6, var7);
+    @Override
+	public boolean onItemUseLeftClick(ItemStack stack, PlayerEntity player, World world, int x, int y, int z, int side) {
+		return this.useOnBlock(stack, player, world, x, y, z, side);
 	}
 
     @Override

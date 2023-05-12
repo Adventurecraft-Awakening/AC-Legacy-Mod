@@ -32,23 +32,23 @@ public abstract class MixinItemStack implements ExItemStack {
     public abstract Item getItem();
 
     @Override
-    public boolean useItemLeftClick(PlayerEntity var1, World var2, int var3, int var4, int var5, int var6) {
-        return ((ExItem) this.getItem()).onItemUseLeftClick((ItemStack) (Object) this, var1, var2, var3, var4, var5, var6);
+    public boolean useItemLeftClick(PlayerEntity player, World world, int x, int y, int z, int side) {
+        return ((ExItem) this.getItem()).onItemUseLeftClick((ItemStack) (Object) this, player, world, x, y, z, side);
     }
 
     @Overwrite
-    public CompoundTag writeNBT(CompoundTag var1) {
-        var1.put("id", (short) this.itemId);
-        var1.put("Count", this.count);
-        var1.put("Damage", (short) this.meta);
-        return var1;
+    public CompoundTag writeNBT(CompoundTag tag) {
+        tag.put("id", (short) this.itemId);
+        tag.put("Count", this.count);
+        tag.put("Damage", (short) this.meta);
+        return tag;
     }
 
     @Overwrite
-    public void readNBT(CompoundTag var1) {
-        this.itemId = var1.getShort("id");
-        this.count = var1.getInt("Count");
-        this.meta = var1.getShort("Damage");
+    public void readNBT(CompoundTag tag) {
+        this.itemId = tag.getShort("id");
+        this.count = tag.getInt("Count");
+        this.meta = tag.getShort("Damage");
 
         if (this.itemId == AC_Items.boomerang.id) {
             this.meta = 0;

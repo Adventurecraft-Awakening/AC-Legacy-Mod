@@ -7,22 +7,25 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 
-public class AC_ItemTriggerStick extends Item {
-    protected AC_ItemTriggerStick(int var1) {
-        super(var1);
+public class AC_ItemTriggerStick extends Item implements AC_ILeftClickItem {
+
+    protected AC_ItemTriggerStick(int id) {
+        super(id);
         this.setTexturePosition(5, 3);
     }
 
-    public boolean onItemUseLeftClick(ItemStack var1, PlayerEntity var2, World var3, int var4, int var5, int var6, int var7) {
-        Minecraft.instance.overlay.addChatMessage(String.format("Triggering (%d, %d, %d)", var4, var5, var6));
-        ((ExWorld) var3).getTriggerManager().addArea(0, -1, 0, new AC_TriggerArea(var4, var5, var6, var4, var5, var6));
-        ((ExWorld) var3).getTriggerManager().removeArea(0, -1, 0);
+    @Override
+    public boolean onItemUseLeftClick(ItemStack stack, PlayerEntity player, World world, int x, int y, int z, int side) {
+        Minecraft.instance.overlay.addChatMessage(String.format("Triggering (%d, %d, %d)", x, y, z));
+        ((ExWorld) world).getTriggerManager().addArea(0, -1, 0, new AC_TriggerArea(x, y, z, x, y, z));
+        ((ExWorld) world).getTriggerManager().removeArea(0, -1, 0);
         return false;
     }
 
-    public boolean useOnBlock(ItemStack var1, PlayerEntity var2, World var3, int var4, int var5, int var6, int var7) {
-        Minecraft.instance.overlay.addChatMessage(String.format("Checking (%d, %d, %d)", var4, var5, var6));
-        ((ExWorld) var3).getTriggerManager().outputTriggerSources(var4, var5, var6);
+    @Override
+    public boolean useOnBlock(ItemStack stack, PlayerEntity player, World world, int x, int y, int z, int side) {
+        Minecraft.instance.overlay.addChatMessage(String.format("Checking (%d, %d, %d)", x, y, z));
+        ((ExWorld) world).getTriggerManager().outputTriggerSources(x, y, z);
         return false;
     }
 }
