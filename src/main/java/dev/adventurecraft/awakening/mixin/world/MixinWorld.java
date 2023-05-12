@@ -895,13 +895,14 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         return -1;
     }
 
+    // This injection will be inverted at the target since the expression only captured the field access
     @ModifyExpressionValue(method = "method_227", at = @At(
         value = "FIELD",
         target = "Lnet/minecraft/entity/Entity;removed:Z",
         ordinal = 2))
-    private boolean fixupRemoveCondition(boolean value, @Local Entity var2) {
+    private boolean fixupRemoveCondition(boolean value, @Local Entity entity) {
         ExMinecraft mc = (ExMinecraft) Minecraft.instance;
-        return value && !var2.removed && (!mc.isCameraActive() || !mc.isCameraPause()) && (!AC_DebugMode.active || var2 instanceof PlayerEntity);
+        return !(!entity.removed && (!mc.isCameraActive() || !mc.isCameraPause()) && (!AC_DebugMode.active || entity instanceof PlayerEntity));
     }
 
     @Inject(method = "method_227", at = @At(
