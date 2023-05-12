@@ -19,6 +19,7 @@ import net.minecraft.world.BlockView;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -66,7 +67,7 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
     public float field_1050;
 
     @Shadow
-    protected int field_1058;
+    public int field_1058;
 
     @Shadow
     protected int despawnCounter;
@@ -90,13 +91,14 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
     protected float movementSpeed;
 
     @Shadow
-    private Entity target;
+    public Entity target;
 
     @Shadow
     protected int field_1034;
 
     public int maxHealth;
-    public ItemStack heldItem;
+    @Unique
+    private ItemStack ac$heldItem;
     private long hurtTick;
     public int timesCanJumpInAir = 0;
     public int jumpsLeft = 0;
@@ -704,7 +706,7 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
     @Environment(EnvType.CLIENT)
     @Overwrite
     public ItemStack getMonsterHeldItem() {
-        return this.heldItem;
+        return this.ac$heldItem;
     }
 
     public boolean protectedByShield() {
@@ -755,12 +757,12 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
 
     @Override
     public ItemStack getHeldItem() {
-        return heldItem;
+        return this.ac$heldItem;
     }
 
     @Override
     public void setHeldItem(ItemStack value) {
-        this.heldItem = value;
+        this.ac$heldItem = value;
     }
 
     @Override

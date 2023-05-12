@@ -28,7 +28,7 @@ public abstract class MixinSkeletonEntity extends MixinMonsterEntity {
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(World var1, CallbackInfo ci) {
-        this.heldItem = new ItemStack(Item.BOW, 1);
+        this.setHeldItem(new ItemStack(Item.BOW, 1));
     }
 
     @ModifyExpressionValue(method = "updateDespawnCounter", at = @At(value = "INVOKE",
@@ -69,6 +69,6 @@ public abstract class MixinSkeletonEntity extends MixinMonsterEntity {
     @Environment(value = EnvType.CLIENT)
     @Overwrite
     public ItemStack getMonsterHeldItem() {
-        return this.heldItem;
+        return this.getHeldItem();
     }
 }

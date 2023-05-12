@@ -17,12 +17,12 @@ public abstract class MixinZombiePigmanEntity extends MixinZombieEntity {
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(World var1, CallbackInfo ci) {
-        this.heldItem = new ItemStack(Item.GOLD_SWORD, 1);
+        this.setHeldItem(new ItemStack(Item.GOLD_SWORD, 1));
     }
 
     @Environment(value = EnvType.CLIENT)
     @Overwrite
     public ItemStack getMonsterHeldItem() {
-        return this.heldItem;
+        return this.getHeldItem();
     }
 }
