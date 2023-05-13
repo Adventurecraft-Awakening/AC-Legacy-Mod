@@ -1,13 +1,18 @@
 package dev.adventurecraft.awakening.mixin.client.render;
 
+import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import net.minecraft.client.render.TextRenderer;
+import net.minecraft.client.texture.TextureManager;
 import net.minecraft.util.CharacterUtils;
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
+import java.io.InputStream;
 import java.nio.IntBuffer;
 
 @Mixin(TextRenderer.class)
@@ -24,6 +29,16 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
 
     @Shadow
     private IntBuffer field_2464;
+
+    @Redirect(
+        method = "<init>",
+        at = @At(
+            value = "INVOKE",
+            target = "Ljava/lang/Class;getResourceAsStream(Ljava/lang/String;)Ljava/io/InputStream;",
+            remap = false))
+    private InputStream redirectLoadToTexturePack(Class<?> instance, String name, @Local TextureManager texMan) {
+        return texMan.texturePackManager.texturePack.getResourceAsStream(name);
+    }
 
     @Overwrite
     public void drawTextWithShadow(String text, int x, int y, int color) {
