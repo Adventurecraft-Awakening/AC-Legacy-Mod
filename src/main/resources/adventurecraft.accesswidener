@@ -71,6 +71,7 @@ accessible field net/minecraft/client/render/block/GrassColor map [I
 accessible field net/minecraft/client/render/block/FoliageColor map [I
 
 accessible field net/minecraft/client/texture/TextureManager textures Ljava/util/HashMap;
+accessible field net/minecraft/client/texture/TextureManager texturePackManager Lnet/minecraft/client/TexturePackManager;
 
 accessible field net/minecraft/client/gui/screen/Screen buttons Ljava/util/List;
 accessible field net/minecraft/client/gui/screen/Screen textRenderer Lnet/minecraft/client/render/TextRenderer;

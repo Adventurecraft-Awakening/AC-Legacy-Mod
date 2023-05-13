@@ -48,6 +48,9 @@ public abstract class MixinTextureManager implements ExTextureManager {
     public static boolean field_1245;
 
     @Shadow
+    public HashMap<String, Integer> textures;
+
+    @Shadow
     private GameOptions gameOptions;
 
     @Shadow
@@ -68,6 +71,9 @@ public abstract class MixinTextureManager implements ExTextureManager {
     @Shadow
     private boolean isBlurTexture;
 
+    @Shadow
+    private BufferedImage missingTexImage;
+
     private Int2ObjectOpenHashMap<Vec2> textureDimensionsMap = new Int2ObjectOpenHashMap<>();
     private Map<String, byte[]> textureDataMap = new HashMap<>();
     private ByteBuffer[] mipImageDatas;
@@ -77,6 +83,12 @@ public abstract class MixinTextureManager implements ExTextureManager {
 
     @Shadow
     protected abstract BufferedImage readImage(InputStream inputStream) throws IOException;
+
+    @Shadow
+    protected abstract int method_1086(int var1, int var2);
+
+    @Shadow
+    protected abstract BufferedImage method_1101(BufferedImage bufferedImage);
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(TexturePackManager var1, GameOptions var2, CallbackInfo ci) {
@@ -414,6 +426,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
         }
     }
 
+    @Overwrite
     public void tick() {
         // TODO:
         //this.terrainTextureId = this.getTextureId("/terrain.png");
@@ -479,19 +492,9 @@ public abstract class MixinTextureManager implements ExTextureManager {
                 this.generateMipMapsSub(0, 0, 16, 16, this.currentImageBuffer, binder.textureSize, false);
             }
         }
+
+        this.updateTextureAnimations();
     }
-
-    @Shadow
-    protected abstract int method_1086(int var1, int var2);
-
-    @Shadow
-    public HashMap<String, Integer> textures;
-
-    @Shadow
-    private BufferedImage missingTexImage;
-
-    @Shadow
-    protected abstract BufferedImage method_1101(BufferedImage bufferedImage);
 
     private int weightedAverageColor(int var1, int var2, int var3, int var4) {
         int var5 = this.method_1098(var1, var2);
@@ -607,7 +610,6 @@ public abstract class MixinTextureManager implements ExTextureManager {
         int var4 = (int) Math.sqrt(var1.length / 4);
         int var5 = var3 / var4;
         byte[] var6 = new byte[4];
-        int var7 = var3 * var3;
         var2.clear();
         if (var5 > 1) {
             for (int var8 = 0; var8 < var4; ++var8) {
@@ -664,15 +666,14 @@ public abstract class MixinTextureManager implements ExTextureManager {
         this.textureAnimations.remove(var1);
     }
 
-    @Override
     public void updateTextureAnimations() {
-        for (AC_TextureAnimated var2 : this.textureAnimations.values()) {
-            var2.onTick();
+        for (AC_TextureAnimated tex : this.textureAnimations.values()) {
+            tex.onTick();
             this.currentImageBuffer.clear();
-            this.currentImageBuffer.put(var2.imageData);
-            this.currentImageBuffer.position(0).limit(var2.imageData.length);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.getTextureId(var2.getTexture()));
-            GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, var2.x, var2.y, var2.width, var2.height, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, this.currentImageBuffer);
+            this.currentImageBuffer.put(tex.imageData);
+            this.currentImageBuffer.position(0).limit(tex.imageData.length);
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.getTextureId(tex.getTexture()));
+            GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, tex.x, tex.y, tex.width, tex.height, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, this.currentImageBuffer);
         }
     }
 

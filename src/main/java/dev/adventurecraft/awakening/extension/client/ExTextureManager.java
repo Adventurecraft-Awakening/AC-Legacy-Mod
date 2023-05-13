@@ -24,8 +24,6 @@ public interface ExTextureManager {
 
     void unregisterTextureAnimation(String var1);
 
-    void updateTextureAnimations();
-
     void replaceTexture(String var1, String var2);
 
     void revertTextures();
