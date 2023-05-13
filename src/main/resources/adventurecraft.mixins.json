@@ -52,6 +52,7 @@
     "client.util.MixinResourceDownloadThread",
     "entity.player.MixinAbstractClientPlayerEntity",
     "entity.player.MixinRemoteClientPlayerEntity",
+    "util.MixinProgressListenerImpl",
     "world.chunk.MixinChunkCache"
   ],
   "injectors": {

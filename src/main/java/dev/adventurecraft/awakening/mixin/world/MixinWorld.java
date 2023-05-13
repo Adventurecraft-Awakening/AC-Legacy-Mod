@@ -263,7 +263,8 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     protected abstract void method_212();
 
     @Override
-    public void initWorld(String mapName, DimensionData dimData, String saveName, long seed, Dimension dimension) {
+    public void initWorld(
+        String mapName, DimensionData dimData, String saveName, long seed, Dimension dimension, ProgressListener progressListener) {
         this.unusedIncrement = 1013904223;
         this.fogColorOverridden = false;
         this.fogDensityOverridden = false;
@@ -368,6 +369,8 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         }
 
         this.scriptHandler = new AC_JScriptHandler((World) (Object) this, var9);
+        this.scriptHandler.loadScripts(progressListener);
+
         this.musicScripts = new AC_MusicScripts(this.script, var9, this.scriptHandler);
         if (props.getMusicScope() != null) {
             ScopeTag.loadScopeFromTag(this.musicScripts.scope, props.getMusicScope());

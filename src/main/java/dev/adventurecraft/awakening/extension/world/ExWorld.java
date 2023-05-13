@@ -5,34 +5,24 @@ import dev.adventurecraft.awakening.common.AC_JScriptHandler;
 import dev.adventurecraft.awakening.common.AC_MusicScripts;
 import dev.adventurecraft.awakening.common.AC_TriggerManager;
 import dev.adventurecraft.awakening.common.AC_UndoStack;
-import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import dev.adventurecraft.awakening.script.Script;
-import net.minecraft.class_366;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.resource.language.TranslationStorage;
 import net.minecraft.entity.BlockEntity;
 import net.minecraft.entity.Entity;
-import net.minecraft.server.PlayerHandler;
+import net.minecraft.util.ProgressListener;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
-import net.minecraft.world.WorldProperties;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.ChunkCache;
-import net.minecraft.world.chunk.ChunkIO;
 import net.minecraft.world.dimension.Dimension;
 import net.minecraft.world.dimension.DimensionData;
-import net.minecraft.world.dimension.McRegionDimensionFile;
 import org.mozilla.javascript.Scriptable;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.Iterator;
-import java.util.List;
 
 public interface ExWorld {
 
-    void initWorld(String mapName, DimensionData dimData, String saveName, long seed, Dimension dimension);
+    void initWorld(
+        String mapName, DimensionData dimData, String saveName, long seed, Dimension dimension, ProgressListener progressListener);
 
     BufferedImage loadMapTexture(String var1);
 
@@ -98,21 +88,22 @@ public interface ExWorld {
 
     Scriptable getScope();
 
-    static World createWorld(String mapName, DimensionData dimData, String saveName, long seed, Dimension dimension) {
+    static World createWorld(
+        String mapName, DimensionData dimData, String saveName, long seed, Dimension dimension, ProgressListener progressListener) {
         try {
             World world = (World) ACMod.UNSAFE.allocateInstance(World.class);
-            ((ExWorld) world).initWorld(mapName, dimData, saveName, seed, dimension);
+            ((ExWorld) world).initWorld(mapName, dimData, saveName, seed, dimension, progressListener);
             return world;
         } catch (InstantiationException e) {
             throw new RuntimeException(e);
         }
     }
 
-    static World createWorld(String mapName, DimensionData dimData, String saveName, long seed) {
-        return createWorld(mapName, dimData, saveName, seed, null);
+    static World createWorld(String mapName, DimensionData dimData, String saveName, long seed, ProgressListener progressListener) {
+        return createWorld(mapName, dimData, saveName, seed, null, progressListener);
     }
 
-    static World createWorld(DimensionData dimData, String saveName, long seed) {
-        return createWorld(null, dimData, saveName, seed, null);
+    static World createWorld(DimensionData dimData, String saveName, long seed, ProgressListener progressListener) {
+        return createWorld(null, dimData, saveName, seed, null, progressListener);
     }
 }

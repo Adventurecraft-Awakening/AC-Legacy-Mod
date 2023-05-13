@@ -10,9 +10,13 @@ public class AC_JScriptInfo implements Comparable<AC_JScriptInfo> {
     public long maxTime;
     public int count;
 
-    public AC_JScriptInfo(String var1, Script var2) {
-        this.name = var1.replace(".js", "");
-        this.compiledScript = var2;
+    public AC_JScriptInfo(String name, Script script) {
+        if (script == null) {
+            throw new IllegalArgumentException("script");
+        }
+
+        this.name = name.replace(".js", "");
+        this.compiledScript = script;
     }
 
     public void addStat(long var1) {

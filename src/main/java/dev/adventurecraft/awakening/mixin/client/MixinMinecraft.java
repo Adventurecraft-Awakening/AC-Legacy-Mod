@@ -46,6 +46,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.stat.Stats;
+import net.minecraft.util.ProgressListenerImpl;
 import net.minecraft.util.Vec3i;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.hit.HitType;
@@ -208,6 +209,8 @@ public abstract class MixinMinecraft implements ExMinecraft {
     @Shadow
     public abstract void notifyStatus(World arg, String string);
 
+    @Shadow
+    public ProgressListenerImpl progressListener;
     private static long[] updateTimes = new long[512];
     private static long updateRendererTime;
 
@@ -1064,7 +1067,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
     public World getWorld(String saveName, long seed, String mapName) {
         this.setWorld(null);
         DimensionData dimData = this.getWorldStorage().method_1009(saveName, false);
-        World world = ExWorld.createWorld(mapName, dimData, saveName, seed);
+        World world = ExWorld.createWorld(mapName, dimData, saveName, seed, this.progressListener);
         return world;
     }
 
@@ -1087,7 +1090,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
                 saveName = "Map Editing";
             }
 
-            World world = ExWorld.createWorld(mapName, dimData, saveName, seed);
+            World world = ExWorld.createWorld(mapName, dimData, saveName, seed, progressListener);
             if (world.field_215) {
                 this.statFileWriter.incrementStat(Stats.createWorld, 1);
                 this.statFileWriter.incrementStat(Stats.startGame, 1);

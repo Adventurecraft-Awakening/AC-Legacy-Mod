@@ -1,17 +1,17 @@
 package dev.adventurecraft.awakening.common;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.HashMap;
-
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.client.Minecraft;
+import net.minecraft.util.ProgressListener;
 import net.minecraft.world.World;
 import org.mozilla.javascript.Scriptable;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.HashMap;
 
 public class AC_JScriptHandler {
 
@@ -23,24 +23,54 @@ public class AC_JScriptHandler {
         this.world = var1;
         this.scriptDir = new File(var2, "scripts");
         this.scripts = new HashMap<>();
-        this.loadScripts();
     }
 
-    public void loadScripts() {
+    public void loadScripts(ProgressListener progressListener) {
         this.scripts.clear();
-        if (this.scriptDir.exists()) {
-            File[] files = this.scriptDir.listFiles();
-            for (File file : files) {
-                String name = file.getName().toLowerCase();
-                if (name.endsWith(".js")) {
-                    ACMod.LOGGER.info(String.format("Compiling %s", name));
-                    String contents = this.readFile(file);
-                    this.scripts.put(name, new AC_JScriptInfo(
-                        file.getName(),
-                        ((ExWorld) this.world).getScript().compileString(contents, file.getName())));
+
+        if (progressListener != null)
+            progressListener.notifyIgnoreGameRunning("Loading scripts");
+
+        File[] files = this.scriptDir.listFiles();
+        if (files == null) {
+            return;
+        }
+
+        long lastNotifyTime = 0;
+
+        for (int i = 0; i < files.length; i++) {
+            File file = files[i];
+            String fileName = file.getName();
+            String name = fileName.toLowerCase();
+
+            if (name.endsWith(".js")) {
+                try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                    var script = ((ExWorld) this.world).getScript().compileReader(reader, fileName);
+                    this.scripts.put(name, new AC_JScriptInfo(fileName, script));
+                } catch (IOException e) {
+                    ACMod.LOGGER.error("Failed to read script file.", e);
+                }
+            }
+
+            if (progressListener != null) {
+                long currTime = System.currentTimeMillis();
+                if (currTime - lastNotifyTime > 25L) {
+                    lastNotifyTime = currTime;
+
+                    progressListener.notifyProgress(String.format("%4d / %4d", i + 1, files.length));
+                    progressListener.progressStagePercentage((int) ((100.0 * (double) i / files.length)));
                 }
             }
         }
+
+        if (progressListener != null) {
+            progressListener.notifyProgress(String.format("%4d / %4d", files.length, files.length));
+            progressListener.progressStagePercentage(100);
+        }
+    }
+
+    public void loadScripts() {
+        this.loadScripts(null);
     }
 
     public Object runScript(String name, Scriptable scope) {
@@ -65,25 +95,5 @@ public class AC_JScriptHandler {
             scriptInfo.addStat(System.nanoTime() - time);
         }
         return result;
-    }
-
-    private String readFile(File var1) {
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(var1));
-            StringBuilder builder = new StringBuilder();
-
-            try {
-                while (reader.ready()) {
-                    builder.append(reader.readLine()).append("\n");
-                }
-            } catch (IOException var5) {
-                var5.printStackTrace();
-            }
-
-            return builder.toString();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return "";
-        }
     }
 }
