@@ -36,13 +36,13 @@ public interface ExWorldProperties {
 
     void setTimeRate(float var1);
 
-    boolean addReplacementTexture(String var1, String var2);
+    boolean addReplacementTexture(String key, String value);
 
     void revertTextures();
 
     CompoundTag getTextureReplacementTags();
 
-    void loadTextureReplacements(World var1);
+    void loadTextureReplacements(World world);
 
     float getSpawnYaw();
 
@@ -50,7 +50,7 @@ public interface ExWorldProperties {
 
     boolean isOverrideFogColor();
 
-    void setOverrideFogColor(boolean overrideFogColor);
+    void setOverrideFogColor(boolean value);
 
     boolean getIceMelts();
 
@@ -66,27 +66,27 @@ public interface ExWorldProperties {
 
     float getFogR();
 
-    void setFogR(float fogR);
+    void setFogR(float value);
 
     float getFogG();
 
-    void setFogG(float fogG);
+    void setFogG(float value);
 
     float getFogB();
 
-    void setFogB(float fogB);
+    void setFogB(float value);
 
     boolean isOverrideFogDensity();
 
-    void setOverrideFogDensity(boolean overrideFogDensity);
+    void setOverrideFogDensity(boolean value);
 
     float getFogStart();
 
-    void setFogStart(float fogStart);
+    void setFogStart(float value);
 
     float getFogEnd();
 
-    void setFogEnd(float fogEnd);
+    void setFogEnd(float value);
 
     String getOverlay();
 
@@ -102,15 +102,15 @@ public interface ExWorldProperties {
 
     String getOnNewSaveScript();
 
-    void setOnNewSaveScript(String onNewSaveScript);
+    void setOnNewSaveScript(String value);
 
     String getOnLoadScript();
 
-    void setOnLoadScript(String onLoadScript);
+    void setOnLoadScript(String value);
 
     String getOnUpdateScript();
 
-    void setOnUpdateScript(String onUpdateScript);
+    void setOnUpdateScript(String value);
 
     CompoundTag getGlobalScope();
 

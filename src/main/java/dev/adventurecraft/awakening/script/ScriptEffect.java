@@ -30,9 +30,9 @@ public class ScriptEffect {
         return AC_BlockEffect.replaceTexture(this.world, var1, var2);
     }
 
-    public String getReplaceTexture(String var1) {
-        String var2 = ((ExWorldProperties) this.world.properties).getReplacementTextures().get(var1);
-        return var2 == null ? var1 : var2;
+    public String getReplaceTexture(String key) {
+        String value = ((ExWorldProperties) this.world.properties).getReplacementTextures().get(key);
+        return value == null ? key : value;
     }
 
     public void revertTextures() {

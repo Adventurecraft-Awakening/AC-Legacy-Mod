@@ -29,12 +29,10 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     @Shadow
     private long time;
 
-    @Shadow
-    private CompoundTag playerData;
     public double tempOffset;
     private WorldGenProperties worldGenProps = new WorldGenProperties();
     public boolean iceMelts = true;
-    public boolean leavesDecay = true;
+    public boolean leavesDecay = false;
     public CompoundTag triggerData = null;
     float timeOfDay;
     float timeRate;
@@ -63,97 +61,101 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     public boolean allowsInventoryCrafting = false;
 
     @Inject(method = "<init>(Lnet/minecraft/util/io/CompoundTag;)V", at = @At("TAIL"))
-    private void init(CompoundTag var1, CallbackInfo ci) {
-        this.tempOffset = var1.getDouble("TemperatureOffset");
-        if (var1.containsKey("IsPrecipitating")) {
-            this.raining = var1.getBoolean("IsPrecipitating");
+    private void init(CompoundTag tag, CallbackInfo ci) {
+        this.tempOffset = tag.getDouble("TemperatureOffset");
+        if (tag.containsKey("IsPrecipitating")) {
+            this.raining = tag.getBoolean("IsPrecipitating");
         }
 
-        Entity.field_1590 = var1.getInt("nextEntityID");
-        if (var1.containsKey("useImages")) {
+        Entity.field_1590 = tag.getInt("nextEntityID");
+        if (tag.containsKey("useImages")) {
             WorldGenProperties wgp = this.worldGenProps;
-            wgp.useImages = var1.getBoolean("useImages");
-            wgp.mapSize = var1.getDouble("mapSize");
-            wgp.waterLevel = var1.getShort("waterLevel");
-            wgp.fractureHorizontal = var1.getDouble("fractureHorizontal");
-            wgp.fractureVertical = var1.getDouble("fractureVertical");
-            wgp.maxAvgDepth = var1.getDouble("maxAvgDepth");
-            wgp.maxAvgHeight = var1.getDouble("maxAvgHeight");
-            wgp.volatility1 = var1.getDouble("volatility1");
-            wgp.volatility2 = var1.getDouble("volatility2");
-            wgp.volatilityWeight1 = var1.getDouble("volatilityWeight1");
-            wgp.volatilityWeight2 = var1.getDouble("volatilityWeight2");
+            wgp.useImages = tag.getBoolean("useImages");
+            wgp.mapSize = tag.getDouble("mapSize");
+            wgp.waterLevel = tag.getShort("waterLevel");
+            wgp.fractureHorizontal = tag.getDouble("fractureHorizontal");
+            wgp.fractureVertical = tag.getDouble("fractureVertical");
+            wgp.maxAvgDepth = tag.getDouble("maxAvgDepth");
+            wgp.maxAvgHeight = tag.getDouble("maxAvgHeight");
+            wgp.volatility1 = tag.getDouble("volatility1");
+            wgp.volatility2 = tag.getDouble("volatility2");
+            wgp.volatilityWeight1 = tag.getDouble("volatilityWeight1");
+            wgp.volatilityWeight2 = tag.getDouble("volatilityWeight2");
         }
 
-        if (var1.containsKey("iceMelts")) {
-            this.iceMelts = var1.getBoolean("iceMelts");
+        if (tag.containsKey("iceMelts")) {
+            this.iceMelts = tag.getBoolean("iceMelts");
         }
 
-        if (var1.containsKey("triggerAreas")) {
-            this.triggerData = var1.getCompoundTag("triggerAreas");
+        if (tag.containsKey("leavesDecay")) {
+            this.leavesDecay = tag.getBoolean("leavesDecay");
         }
 
-        if (var1.containsKey("timeRate")) {
-            this.timeRate = var1.getFloat("timeRate");
+        if (tag.containsKey("triggerAreas")) {
+            this.triggerData = tag.getCompoundTag("triggerAreas");
+        }
+
+        if (tag.containsKey("timeRate")) {
+            this.timeRate = tag.getFloat("timeRate");
         } else {
             this.timeRate = 1.0F;
         }
 
-        if (var1.containsKey("timeOfDay")) {
-            this.timeOfDay = var1.getFloat("timeOfDay");
+        if (tag.containsKey("timeOfDay")) {
+            this.timeOfDay = tag.getFloat("timeOfDay");
         } else {
             this.timeOfDay = (float) this.time;
         }
 
-        this.playingMusic = var1.getString("playingMusic");
-        if (var1.containsKey("mobsBurn")) {
-            this.mobsBurn = var1.getBoolean("mobsBurn");
+        this.playingMusic = tag.getString("playingMusic");
+        if (tag.containsKey("mobsBurn")) {
+            this.mobsBurn = tag.getBoolean("mobsBurn");
         }
 
-        this.overlay = var1.getString("overlay");
-        if (var1.containsKey("textureReplacements")) {
-            this.replacementTag = var1.getCompoundTag("textureReplacements");
+        this.overlay = tag.getString("overlay");
+        if (tag.containsKey("textureReplacements")) {
+            this.replacementTag = tag.getCompoundTag("textureReplacements");
         }
 
-        this.onNewSaveScript = var1.getString("onNewSaveScript");
-        this.onLoadScript = var1.getString("onLoadScript");
-        this.onUpdateScript = var1.getString("onUpdateScript");
-        if (var1.containsKey("playerName")) {
-            this.playerName = var1.getString("playerName");
+        this.onNewSaveScript = tag.getString("onNewSaveScript");
+        this.onLoadScript = tag.getString("onLoadScript");
+        this.onUpdateScript = tag.getString("onUpdateScript");
+        if (tag.containsKey("playerName")) {
+            this.playerName = tag.getString("playerName");
         }
 
         float var2 = 0.05F;
 
         for (int var3 = 0; var3 < 16; ++var3) {
             String var4 = String.format("brightness%d", var3);
-            if (var1.containsKey(var4)) {
-                this.brightness[var3] = var1.getFloat(var4);
+            if (tag.containsKey(var4)) {
+                this.brightness[var3] = tag.getFloat(var4);
             } else {
                 float var5 = 1.0F - (float) var3 / 15.0F;
                 this.brightness[var3] = (1.0F - var5) / (var5 * 3.0F + 1.0F) * (1.0F - var2) + var2;
             }
         }
 
-        if (var1.containsKey("globalScope")) {
-            this.globalScope = var1.getCompoundTag("globalScope");
+        if (tag.containsKey("globalScope")) {
+            this.globalScope = tag.getCompoundTag("globalScope");
         }
 
-        if (var1.containsKey("worldScope")) {
-            this.worldScope = var1.getCompoundTag("worldScope");
+        if (tag.containsKey("worldScope")) {
+            this.worldScope = tag.getCompoundTag("worldScope");
         }
 
-        if (var1.containsKey("musicScope")) {
-            this.musicScope = var1.getCompoundTag("musicScope");
+        if (tag.containsKey("musicScope")) {
+            this.musicScope = tag.getCompoundTag("musicScope");
         }
 
-        if (var1.containsKey("originallyFromAC")) {
-            this.originallyFromAC = var1.getBoolean("originallyFromAC");
+        if (tag.containsKey("originallyFromAC")) {
+            this.originallyFromAC = tag.getBoolean("originallyFromAC");
         } else {
-            this.originallyFromAC = var1.containsKey("TemperatureOffset");
+            this.originallyFromAC = tag.containsKey("TemperatureOffset");
         }
 
-        if (var1.containsKey("allowsInventoryCrafting")) {
-            this.allowsInventoryCrafting = var1.getBoolean("allowsInventoryCrafting");
+        if (tag.containsKey("allowsInventoryCrafting")) {
+            this.allowsInventoryCrafting = tag.getBoolean("allowsInventoryCrafting");
         } else {
             this.allowsInventoryCrafting = true;
         }
@@ -176,76 +178,77 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     }
 
     @Inject(method = "updateProperties", at = @At("TAIL"))
-    private void insertWorldPropsForAC(CompoundTag var1, CompoundTag var2, CallbackInfo ci) {
+    private void insertWorldPropsForAC(CompoundTag tag, CompoundTag playerTag, CallbackInfo ci) {
         WorldGenProperties wgp = this.worldGenProps;
-        var1.put("TemperatureOffset", this.tempOffset);
-        var1.put("nextEntityID", Entity.field_1590);
-        var1.put("useImages", wgp.useImages);
-        var1.put("mapSize", wgp.mapSize);
-        var1.put("waterLevel", (short) wgp.waterLevel);
-        var1.put("fractureHorizontal", wgp.fractureHorizontal);
-        var1.put("fractureVertical", wgp.fractureVertical);
-        var1.put("maxAvgDepth", wgp.maxAvgDepth);
-        var1.put("maxAvgHeight", wgp.maxAvgHeight);
-        var1.put("volatility1", wgp.volatility1);
-        var1.put("volatility2", wgp.volatility2);
-        var1.put("volatilityWeight1", wgp.volatilityWeight1);
-        var1.put("volatilityWeight2", wgp.volatilityWeight2);
-        var1.put("iceMelts", this.iceMelts);
+        tag.put("TemperatureOffset", this.tempOffset);
+        tag.put("nextEntityID", Entity.field_1590);
+        tag.put("useImages", wgp.useImages);
+        tag.put("mapSize", wgp.mapSize);
+        tag.put("waterLevel", (short) wgp.waterLevel);
+        tag.put("fractureHorizontal", wgp.fractureHorizontal);
+        tag.put("fractureVertical", wgp.fractureVertical);
+        tag.put("maxAvgDepth", wgp.maxAvgDepth);
+        tag.put("maxAvgHeight", wgp.maxAvgHeight);
+        tag.put("volatility1", wgp.volatility1);
+        tag.put("volatility2", wgp.volatility2);
+        tag.put("volatilityWeight1", wgp.volatilityWeight1);
+        tag.put("volatilityWeight2", wgp.volatilityWeight2);
+        tag.put("iceMelts", this.iceMelts);
+        tag.put("leavesDecay", this.leavesDecay);
         if (Minecraft.instance.world != null) {
             ExWorld world = (ExWorld) Minecraft.instance.world;
             if (world.getTriggerManager() != null) {
-                var1.put("triggerAreas", (AbstractTag) world.getTriggerManager().getTagCompound());
+                tag.put("triggerAreas", (AbstractTag) world.getTriggerManager().getTagCompound());
             }
         }
 
-        var1.put("timeOfDay", this.timeOfDay);
-        var1.put("timeRate", this.timeRate);
+        tag.put("timeOfDay", this.timeOfDay);
+        tag.put("timeRate", this.timeRate);
         if (!this.playingMusic.equals("")) {
-            var1.put("playingMusic", this.playingMusic);
+            tag.put("playingMusic", this.playingMusic);
         }
 
-        var1.put("mobsBurn", this.mobsBurn);
+        tag.put("mobsBurn", this.mobsBurn);
         if (!this.overlay.equals("")) {
-            var1.put("overlay", this.overlay);
+            tag.put("overlay", this.overlay);
         }
 
-        var1.put("textureReplacements", this.getTextureReplacementTags());
+        tag.put("textureReplacements", this.getTextureReplacementTags());
         if (!this.onNewSaveScript.equals("")) {
-            var1.put("onNewSaveScript", this.onNewSaveScript);
+            tag.put("onNewSaveScript", this.onNewSaveScript);
         }
 
         if (!this.onLoadScript.equals("")) {
-            var1.put("onLoadScript", this.onLoadScript);
+            tag.put("onLoadScript", this.onLoadScript);
         }
 
         if (!this.onUpdateScript.equals("")) {
-            var1.put("onUpdateScript", this.onUpdateScript);
+            tag.put("onUpdateScript", this.onUpdateScript);
         }
 
         if (!this.playerName.equals("")) {
-            var1.put("playerName", this.playerName);
+            tag.put("playerName", this.playerName);
         }
 
         for (int var3 = 0; var3 < 16; ++var3) {
             String var4 = String.format("brightness%d", var3);
-            var1.put(var4, this.brightness[var3]);
+            tag.put(var4, this.brightness[var3]);
         }
 
         if (this.globalScope != null) {
-            var1.put("globalScope", (AbstractTag) this.globalScope);
+            tag.put("globalScope", (AbstractTag) this.globalScope);
         }
 
         if (this.worldScope != null) {
-            var1.put("worldScope", (AbstractTag) this.worldScope);
+            tag.put("worldScope", (AbstractTag) this.worldScope);
         }
 
         if (this.musicScope != null) {
-            var1.put("musicScope", (AbstractTag) this.musicScope);
+            tag.put("musicScope", (AbstractTag) this.musicScope);
         }
 
-        var1.put("originallyFromAC", this.originallyFromAC);
-        var1.put("allowsInventoryCrafting", this.allowsInventoryCrafting);
+        tag.put("originallyFromAC", this.originallyFromAC);
+        tag.put("allowsInventoryCrafting", this.allowsInventoryCrafting);
     }
 
     @Override
@@ -333,12 +336,12 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     }
 
     @Override
-    public boolean addReplacementTexture(String var1, String var2) {
-        String var3 = this.replacementTextures.get(var1);
-        if (var3 != null && var3.equals(var2)) {
+    public boolean addReplacementTexture(String key, String value) {
+        String found = this.replacementTextures.get(key);
+        if (found != null && found.equals(value)) {
             return false;
         } else {
-            this.replacementTextures.put(var1, var2);
+            this.replacementTextures.put(key, value);
             return true;
         }
     }
@@ -350,22 +353,22 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
 
     @Override
     public CompoundTag getTextureReplacementTags() {
-        CompoundTag var2 = new CompoundTag();
+        var tag = new CompoundTag();
 
-        for (Map.Entry<String, String> var4 : this.replacementTextures.entrySet()) {
-            var2.put(var4.getKey(), var4.getValue());
+        for (Map.Entry<String, String> entry : this.replacementTextures.entrySet()) {
+            tag.put(entry.getKey(), entry.getValue());
         }
 
-        return var2;
+        return tag;
     }
 
     @Override
-    public void loadTextureReplacements(World var1) {
+    public void loadTextureReplacements(World world) {
         if (this.replacementTag != null) {
             this.replacementTextures.clear();
 
-            for (String var3 : ((ExCompoundTag) this.replacementTag).getKeys()) {
-                AC_BlockEffect.replaceTexture(var1, var3, this.replacementTag.getString(var3));
+            for (String replacementKey : ((ExCompoundTag) this.replacementTag).getKeys()) {
+                AC_BlockEffect.replaceTexture(world, replacementKey, this.replacementTag.getString(replacementKey));
             }
         }
     }
@@ -386,8 +389,8 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     }
 
     @Override
-    public void setOverrideFogColor(boolean overrideFogColor) {
-        this.overrideFogColor = overrideFogColor;
+    public void setOverrideFogColor(boolean value) {
+        this.overrideFogColor = value;
     }
 
     @Override
@@ -396,8 +399,8 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     }
 
     @Override
-    public void setIceMelts(boolean iceMelts) {
-        this.iceMelts = iceMelts;
+    public void setIceMelts(boolean value) {
+        this.iceMelts = value;
     }
 
     @Override
@@ -416,8 +419,8 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     }
 
     @Override
-    public void setMobsBurn(boolean mobsBurn) {
-        this.mobsBurn = mobsBurn;
+    public void setMobsBurn(boolean value) {
+        this.mobsBurn = value;
     }
 
     @Override
@@ -426,8 +429,8 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     }
 
     @Override
-    public void setFogR(float fogR) {
-        this.fogR = fogR;
+    public void setFogR(float value) {
+        this.fogR = value;
     }
 
     @Override
@@ -436,8 +439,8 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     }
 
     @Override
-    public void setFogG(float fogG) {
-        this.fogG = fogG;
+    public void setFogG(float value) {
+        this.fogG = value;
     }
 
     @Override
@@ -446,8 +449,8 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     }
 
     @Override
-    public void setFogB(float fogB) {
-        this.fogB = fogB;
+    public void setFogB(float value) {
+        this.fogB = value;
     }
 
     @Override
@@ -456,8 +459,8 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     }
 
     @Override
-    public void setOverrideFogDensity(boolean overrideFogDensity) {
-        this.overrideFogDensity = overrideFogDensity;
+    public void setOverrideFogDensity(boolean value) {
+        this.overrideFogDensity = value;
     }
 
     @Override
@@ -466,8 +469,8 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     }
 
     @Override
-    public void setFogStart(float fogStart) {
-        this.fogStart = fogStart;
+    public void setFogStart(float value) {
+        this.fogStart = value;
     }
 
     @Override
@@ -476,8 +479,8 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     }
 
     @Override
-    public void setFogEnd(float fogEnd) {
-        this.fogEnd = fogEnd;
+    public void setFogEnd(float value) {
+        this.fogEnd = value;
     }
 
     @Override
@@ -516,8 +519,8 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     }
 
     @Override
-    public void setOnNewSaveScript(String onNewSaveScript) {
-        this.onNewSaveScript = onNewSaveScript;
+    public void setOnNewSaveScript(String value) {
+        this.onNewSaveScript = value;
     }
 
     @Override
@@ -526,8 +529,8 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     }
 
     @Override
-    public void setOnLoadScript(String onLoadScript) {
-        this.onLoadScript = onLoadScript;
+    public void setOnLoadScript(String value) {
+        this.onLoadScript = value;
     }
 
     @Override
@@ -536,8 +539,8 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     }
 
     @Override
-    public void setOnUpdateScript(String onUpdateScript) {
-        this.onUpdateScript = onUpdateScript;
+    public void setOnUpdateScript(String value) {
+        this.onUpdateScript = value;
     }
 
     @Override

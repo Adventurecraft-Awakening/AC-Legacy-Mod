@@ -14,8 +14,8 @@ import java.util.Random;
 public abstract class MixinLeavesBlock {
 
     @Inject(method = "onScheduledTick", at = @At("HEAD"), cancellable = true)
-    private void disableDecay(World var1, int var2, int var3, int var4, Random var5, CallbackInfo ci) {
-        if (!((ExWorldProperties) var1.properties).getLeavesDecay()) {
+    private void disableDecay(World world, int x, int y, int z, Random rand, CallbackInfo ci) {
+        if (!((ExWorldProperties) world.properties).getLeavesDecay()) {
             ci.cancel();
         }
     }
