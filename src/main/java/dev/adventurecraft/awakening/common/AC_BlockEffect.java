@@ -109,75 +109,77 @@ public class AC_BlockEffect extends BlockWithEntity implements AC_ITriggerBlock 
         ((ExWorldProperties) world.properties).revertTextures();
     }
 
-    public void replaceTextures(World var1, String var2) {
-        boolean var3 = false;
-        File var4 = new File(((ExWorld) var1).getLevelDir(), "textureReplacement/" + var2);
-        if (var4.exists()) {
-            try {
-                BufferedReader var5 = new BufferedReader(new FileReader(var4));
-
-                try {
-                    while (var5.ready()) {
-                        String var6 = var5.readLine();
-                        String[] var7 = var6.split(",", 2);
-                        if (var7.length == 2) {
-                            var3 |= replaceTexture(var1, var7[0], var7[1]);
-                        }
-                    }
-                } catch (IOException var8) {
-                    var8.printStackTrace();
-                }
-            } catch (FileNotFoundException var9) {
-                var9.printStackTrace();
-            }
+    public void replaceTextures(World keyName, String replacementName) {
+        File texFile = new File(((ExWorld) keyName).getLevelDir(), "textureReplacement/" + replacementName);
+        if (!texFile.exists()) {
+            return;
         }
 
-        if (var3) {
+        boolean replaced = false;
+
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(texFile));
+            try {
+                while (reader.ready()) {
+                    String line = reader.readLine();
+                    String[] items = line.split(",", 2);
+                    if (items.length == 2) {
+                        replaced |= replaceTexture(keyName, items[0], items[1]);
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        if (replaced) {
             Minecraft.instance.worldRenderer.method_1148();
         }
     }
 
-    public static boolean replaceTexture(World world, String var1, String var2) {
-        String var3 = var1.toLowerCase();
+    public static boolean replaceTexture(World world, String keyName, String replacementName) {
+        String key = keyName.toLowerCase();
         ExTextureManager texManager = (ExTextureManager) Minecraft.instance.textureManager;
-        if (!((ExWorldProperties) world.properties).addReplacementTexture(var1, var2)) {
+        if (!((ExWorldProperties) world.properties).addReplacementTexture(keyName, replacementName)) {
             return false;
-        } else if (var3.equals("/watermap.png")) {
-            AC_TerrainImage.loadWaterMap(new File(((ExWorld) world).getLevelDir(), var2));
+        } else if (key.equals("/watermap.png")) {
+            AC_TerrainImage.loadWaterMap(new File(((ExWorld) world).getLevelDir(), replacementName));
             needsReloadForRevert = true;
             return true;
-        } else if (var3.equals("/biomemap.png")) {
-            AC_TerrainImage.loadBiomeMap(new File(((ExWorld) world).getLevelDir(), var2));
+        } else if (key.equals("/biomemap.png")) {
+            AC_TerrainImage.loadBiomeMap(new File(((ExWorld) world).getLevelDir(), replacementName));
             needsReloadForRevert = true;
             return true;
-        } else if (var3.equals("/misc/grasscolor.png")) {
-            ExGrassColor.loadGrass(var2);
+        } else if (key.equals("/misc/grasscolor.png")) {
+            ExGrassColor.loadGrass(replacementName);
             needsReloadForRevert = true;
             return true;
-        } else if (var3.equals("/misc/foliagecolor.png")) {
-            ExFoliageColor.loadFoliage(var2);
+        } else if (key.equals("/misc/foliagecolor.png")) {
+            ExFoliageColor.loadFoliage(replacementName);
             needsReloadForRevert = true;
             return true;
-        } else if (var3.equals("/custom_fire.png")) {
-            ((AC_TextureBinder) texManager.getTextureBinder(FireTextureBinder.class)).loadImage(var2);
+        } else if (key.equals("/custom_fire.png")) {
+            ((AC_TextureBinder) texManager.getTextureBinder(FireTextureBinder.class)).loadImage(replacementName);
             return true;
-        } else if (var3.equals("/custom_lava_flowing.png")) {
-            ((AC_TextureBinder) texManager.getTextureBinder(FlowingLavaTextureBinder2.class)).loadImage(var2);
+        } else if (key.equals("/custom_lava_flowing.png")) {
+            ((AC_TextureBinder) texManager.getTextureBinder(FlowingLavaTextureBinder2.class)).loadImage(replacementName);
             return true;
-        } else if (var3.equals("/custom_lava_still.png")) {
-            ((AC_TextureBinder) texManager.getTextureBinder(FlowingLavaTextureBinder.class)).loadImage(var2);
+        } else if (key.equals("/custom_lava_still.png")) {
+            ((AC_TextureBinder) texManager.getTextureBinder(FlowingLavaTextureBinder.class)).loadImage(replacementName);
             return true;
-        } else if (var3.equals("/custom_portal.png")) {
-            ((AC_TextureBinder) texManager.getTextureBinder(PortalTextureBinder.class)).loadImage(var2);
+        } else if (key.equals("/custom_portal.png")) {
+            ((AC_TextureBinder) texManager.getTextureBinder(PortalTextureBinder.class)).loadImage(replacementName);
             return true;
-        } else if (var3.equals("/custom_water_flowing.png")) {
-            ((AC_TextureBinder) texManager.getTextureBinder(FlowingWaterTextureBinder.class)).loadImage(var2);
+        } else if (key.equals("/custom_water_flowing.png")) {
+            ((AC_TextureBinder) texManager.getTextureBinder(FlowingWaterTextureBinder.class)).loadImage(replacementName);
             return true;
-        } else if (var3.equals("/custom_water_still.png")) {
-            ((AC_TextureBinder) texManager.getTextureBinder(FlowingWaterTextureBinder2.class)).loadImage(var2);
+        } else if (key.equals("/custom_water_still.png")) {
+            ((AC_TextureBinder) texManager.getTextureBinder(FlowingWaterTextureBinder2.class)).loadImage(replacementName);
             return true;
         } else {
-            texManager.replaceTexture(var1, var2);
+            texManager.replaceTexture(keyName, replacementName);
             return false;
         }
     }

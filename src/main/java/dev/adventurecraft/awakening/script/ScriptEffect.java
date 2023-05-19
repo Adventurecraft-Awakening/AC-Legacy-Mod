@@ -6,6 +6,7 @@ import dev.adventurecraft.awakening.extension.client.render.ExWorldEventRenderer
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.particle.ParticleEntity;
 import net.minecraft.client.render.WorldEventRenderer;
 import dev.adventurecraft.awakening.common.AC_BlockEffect;
 import dev.adventurecraft.awakening.common.AC_TextureAnimated;
@@ -17,22 +18,23 @@ public class ScriptEffect {
     World world;
     WorldEventRenderer renderGlobal;
 
-    ScriptEffect(World var1, WorldEventRenderer var2) {
-        this.world = var1;
-        this.renderGlobal = var2;
+    ScriptEffect(World world, WorldEventRenderer renderer) {
+        this.world = world;
+        this.renderGlobal = renderer;
     }
 
-    public ScriptEntity spawnParticle(String var1, double var2, double var4, double var6, double var8, double var10, double var12) {
-        return ScriptEntity.getEntityClass(((ExWorldEventRenderer) this.renderGlobal).spawnParticleR(var1, var2, var4, var6, var8, var10, var12));
+    public ScriptEntity spawnParticle(String type, double x, double y, double z, double vX, double vY, double vZ) {
+        ParticleEntity particle = ((ExWorldEventRenderer) this.renderGlobal).spawnParticleR(type, x, y, z, vX, vY, vZ);
+        return ScriptEntity.getEntityClass(particle);
     }
 
-    public boolean replaceTexture(String var1, String var2) {
-        return AC_BlockEffect.replaceTexture(this.world, var1, var2);
+    public boolean replaceTexture(String keyName, String var2) {
+        return AC_BlockEffect.replaceTexture(this.world, keyName, var2);
     }
 
-    public String getReplaceTexture(String key) {
-        String value = ((ExWorldProperties) this.world.properties).getReplacementTextures().get(key);
-        return value == null ? key : value;
+    public String getReplaceTexture(String keyName) {
+        String value = ((ExWorldProperties) this.world.properties).getReplacementTextures().get(keyName);
+        return value == null ? keyName : value;
     }
 
     public void revertTextures() {
@@ -51,11 +53,11 @@ public class ScriptEffect {
         setOverlay("");
     }
 
-    public void setFogColor(float var1, float var2, float var3) {
+    public void setFogColor(float r, float g, float b) {
         var props = (ExWorldProperties) this.world.properties;
-        props.setFogR(var1);
-        props.setFogG(var2);
-        props.setFogB(var3);
+        props.setFogR(r);
+        props.setFogG(g);
+        props.setFogB(b);
         props.setOverrideFogColor(true);
     }
 
@@ -63,10 +65,10 @@ public class ScriptEffect {
         ((ExWorldProperties) this.world.properties).setOverrideFogColor(false);
     }
 
-    public void setFogDensity(float var1, float var2) {
+    public void setFogDensity(float start, float end) {
         var props = (ExWorldProperties) this.world.properties;
-        props.setFogStart(var1);
-        props.setFogEnd(var2);
+        props.setFogStart(start);
+        props.setFogEnd(end);
         props.setOverrideFogDensity(true);
     }
 
@@ -74,12 +76,12 @@ public class ScriptEffect {
         ((ExWorldProperties) this.world.properties).setOverrideFogDensity(false);
     }
 
-    public float getLightRampValue(int var1) {
-        return ((ExWorldProperties) this.world.properties).getBrightness()[var1];
+    public float getLightRampValue(int index) {
+        return ((ExWorldProperties) this.world.properties).getBrightness()[index];
     }
 
-    public void setLightRampValue(int var1, float var2) {
-        ((ExWorldProperties) this.world.properties).getBrightness()[var1] = var2;
+    public void setLightRampValue(int index, float value) {
+        ((ExWorldProperties) this.world.properties).getBrightness()[index] = value;
         ((ExWorld) this.world).loadBrightness();
         ((ExWorldEventRenderer) Minecraft.instance.worldRenderer).updateAllTheRenderers();
     }
@@ -88,25 +90,26 @@ public class ScriptEffect {
         float var1 = 0.05F;
 
         float[] brightness = ((ExWorldProperties) this.world.properties).getBrightness();
-        for (int var2 = 0; var2 < 16; ++var2) {
-            float var3 = 1.0F - (float) var2 / 15.0F;
-            brightness[var2] = (1.0F - var3) / (var3 * 3.0F + 1.0F) * (1.0F - var1) + var1;
+        for (int i = 0; i < 16; ++i) {
+            float v = 1.0F - (float) i / 15.0F;
+            brightness[i] = (1.0F - v) / (v * 3.0F + 1.0F) * (1.0F - var1) + var1;
         }
 
         ((ExWorld) this.world).loadBrightness();
         ((ExWorldEventRenderer) Minecraft.instance.worldRenderer).updateAllTheRenderers();
     }
 
-    public void registerTextureAnimation(String var1, String var2, String var3, int var4, int var5, int var6, int var7) {
-        ((ExTextureManager) Minecraft.instance.textureManager).registerTextureAnimation(var1, new AC_TextureAnimated(var2, var3, var4, var5, var6, var7));
+    public void registerTextureAnimation(String animationName, String texName, String imageName, int x, int y, int width, int height) {
+        var animation = new AC_TextureAnimated(texName, imageName, x, y, width, height);
+        ((ExTextureManager) Minecraft.instance.textureManager).registerTextureAnimation(animationName, animation);
     }
 
     public void unregisterTextureAnimation(String var1) {
         ((ExTextureManager) Minecraft.instance.textureManager).unregisterTextureAnimation(var1);
     }
 
-    public void explode(ScriptEntity var1, double var2, double var4, double var6, float var8, boolean var9) {
-        this.world.createExplosion(var1.entity, var2, var4, var6, var8, var9);
+    public void explode(ScriptEntity entity, double x, double y, double z, float power, boolean causeFires) {
+        this.world.createExplosion(entity.entity, x, y, z, power, causeFires);
     }
 
     public float getFovModifier() {

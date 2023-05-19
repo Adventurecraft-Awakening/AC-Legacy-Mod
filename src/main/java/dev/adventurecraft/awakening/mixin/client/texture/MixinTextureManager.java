@@ -240,30 +240,30 @@ public abstract class MixinTextureManager implements ExTextureManager {
     }
 
     @Override
-    public void loadTexture(int var1, String var2) {
-        String var3 = var2;
+    public void loadTexture(int id, String name) {
+        String originalName = name;
 
         try {
             TexturePack var4 = this.texturePackManager.texturePack;
-            if (var2.startsWith("##")) {
-                var2 = var2.substring(2);
-            } else if (var2.startsWith("%clamp%")) {
+            if (name.startsWith("##")) {
+                name = name.substring(2);
+            } else if (name.startsWith("%clamp%")) {
                 this.isClampTexture = true;
-                var2 = var2.substring(7);
-            } else if (var2.startsWith("%blur%")) {
+                name = name.substring(7);
+            } else if (name.startsWith("%blur%")) {
                 this.isBlurTexture = true;
-                var2 = var2.substring(6);
+                name = name.substring(6);
             }
 
             BufferedImage var5 = null;
             if (Minecraft.instance.world != null) {
-                var5 = ((ExWorld) Minecraft.instance.world).loadMapTexture(var2);
+                var5 = ((ExWorld) Minecraft.instance.world).loadMapTexture(name);
             }
 
             if (var5 == null) {
-                InputStream var6 = var4.getResourceAsStream(var2);
+                InputStream var6 = var4.getResourceAsStream(name);
                 if (var6 == null) {
-                    File var7 = new File(var2);
+                    File var7 = new File(name);
                     if (var7.exists()) {
                         var5 = ImageIO.read(var7);
                     }
@@ -276,20 +276,20 @@ public abstract class MixinTextureManager implements ExTextureManager {
                 }
             }
 
-            if (var3.startsWith("##")) {
+            if (originalName.startsWith("##")) {
                 var5 = this.method_1101(var5);
             }
 
-            this.bindImageToId(var5, var1);
-            if (var3.startsWith("%clamp%")) {
+            this.bindImageToId(var5, id);
+            if (originalName.startsWith("%clamp%")) {
                 this.isClampTexture = false;
-            } else if (var3.startsWith("%blur%")) {
+            } else if (originalName.startsWith("%blur%")) {
                 this.isBlurTexture = false;
             }
 
         } catch (IOException var8) {
             var8.printStackTrace();
-            this.bindImageToId(this.missingTexImage, var1);
+            this.bindImageToId(this.missingTexImage, id);
         }
     }
 
@@ -641,13 +641,13 @@ public abstract class MixinTextureManager implements ExTextureManager {
         var2.position(0).limit(var3 * var3 * 4);
     }
 
-    private boolean scalesWithFastColor(TextureBinder var1) {
-        return !var1.getClass().getName().equals("ModTextureStatic");
+    private boolean scalesWithFastColor(TextureBinder binder) {
+        return !binder.getClass().getName().equals("ModTextureStatic");
     }
 
     @Override
-    public Vec2 getTextureResolution(String var1) {
-        Integer var2 = this.textures.get(var1);
+    public Vec2 getTextureResolution(String name) {
+        Integer var2 = this.textures.get(name);
         return var2 != null ? this.getTextureDimensions(var2) : null;
     }
 
@@ -657,13 +657,13 @@ public abstract class MixinTextureManager implements ExTextureManager {
     }
 
     @Override
-    public void registerTextureAnimation(String var1, AC_TextureAnimated var2) {
-        this.textureAnimations.put(var1, var2);
+    public void registerTextureAnimation(String animationName, AC_TextureAnimated animation) {
+        this.textureAnimations.put(animationName, animation);
     }
 
     @Override
-    public void unregisterTextureAnimation(String var1) {
-        this.textureAnimations.remove(var1);
+    public void unregisterTextureAnimation(String animationName) {
+        this.textureAnimations.remove(animationName);
     }
 
     public void updateTextureAnimations() {
@@ -678,20 +678,20 @@ public abstract class MixinTextureManager implements ExTextureManager {
     }
 
     @Override
-    public void replaceTexture(String var1, String var2) {
-        int var3 = this.getTextureId(var1);
-        this.loadTexture(var3, var2);
-        if (!this.replacedTextures.contains(var1)) {
-            this.replacedTextures.add(var1);
+    public void replaceTexture(String keyName, String replacementName) {
+        int id = this.getTextureId(keyName);
+        this.loadTexture(id, replacementName);
+        if (!this.replacedTextures.contains(keyName)) {
+            this.replacedTextures.add(keyName);
         }
     }
 
     @Override
     public void revertTextures() {
-        for (String var2 : this.replacedTextures) {
-            Integer var3 = this.textures.get(var2);
-            if (var3 != null) {
-                this.loadTexture(var3, var2);
+        for (String key : this.replacedTextures) {
+            Integer id = this.textures.get(key);
+            if (id != null) {
+                this.loadTexture(id, key);
             }
         }
     }

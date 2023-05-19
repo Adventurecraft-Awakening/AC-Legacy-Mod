@@ -1090,50 +1090,49 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     }
 
     @Overwrite
-    public void addParticle(String var1, double var2, double var4, double var6, double var8, double var10, double var12) {
-        this.spawnParticleR(var1, var2, var4, var6, var8, var10, var12);
+    public void addParticle(String type, double x, double y, double z, double vX, double vY, double vZ) {
+        this.spawnParticleR(type, x, y, z, vX, vY, vZ);
     }
 
     @Override
-    public ParticleEntity spawnParticleR(String var1, double var2, double var4, double var6, double var8, double var10, double var12) {
-        if (this.client != null && this.client.viewEntity != null && this.client.particleManager != null) {
-            double var14 = this.client.viewEntity.x - var2;
-            double var16 = this.client.viewEntity.y - var4;
-            double var18 = this.client.viewEntity.z - var6;
-            double var20 = 16384.0D;
-            if (var14 * var14 + var16 * var16 + var18 * var18 > var20 * var20) {
-                return null;
-            } else {
-                ParticleEntity var22 = switch (var1) {
-                    case "bubble" -> new BubbleParticle(this.world, var2, var4, var6, var8, var10, var12);
-                    case "smoke" -> new SmokeParticleEntity(this.world, var2, var4, var6, var8, var10, var12);
-                    case "note" -> new NoteParticleEntity(this.world, var2, var4, var6, var8, var10, var12);
-                    case "portal" -> new PortalParticleEntity(this.world, var2, var4, var6, var8, var10, var12);
-                    case "explode" -> new ExplosionParticle(this.world, var2, var4, var6, var8, var10, var12);
-                    case "flame" -> new FireParticleEntity(this.world, var2, var4, var6, var8, var10, var12);
-                    case "lava" -> new LavaParticle(this.world, var2, var4, var6);
-                    case "footstep" -> new FootstepParticle(this.textureManager, this.world, var2, var4, var6);
-                    case "splash" -> new WaterParticleEntity(this.world, var2, var4, var6, var8, var10, var12);
-                    case "largesmoke" ->
-                        new SmokeParticleEntity(this.world, var2, var4, var6, var8, var10, var12, 2.5F);
-                    case "reddust" ->
-                        new RedstoneParticleEntity(this.world, var2, var4, var6, (float) var8, (float) var10, (float) var12);
-                    case "snowballpoof" -> new PoofParticleEntity(this.world, var2, var4, var6, Item.SNOWBALL);
-                    case "snowshovel" -> new SnowPuffParticle(this.world, var2, var4, var6, var8, var10, var12);
-                    case "slime" -> new PoofParticleEntity(this.world, var2, var4, var6, Item.SLIMEBALL);
-                    case "heart" -> new HeartParticleEntity(this.world, var2, var4, var6, var8, var10, var12);
-                    default -> null;
-                };
-
-                if (var22 != null) {
-                    this.client.particleManager.addParticle(var22);
-                }
-
-                return var22;
-            }
-        } else {
+    public ParticleEntity spawnParticleR(String type, double x, double y, double z, double vX, double vY, double vZ) {
+        if (this.client == null || this.client.viewEntity == null || this.client.particleManager == null) {
             return null;
         }
+
+        double dX = this.client.viewEntity.x - x;
+        double dY = this.client.viewEntity.y - y;
+        double dZ = this.client.viewEntity.z - z;
+        double dMax = 16384.0D;
+        if (dX * dX + dY * dY + dZ * dZ > dMax * dMax) {
+            return null;
+        }
+
+        ParticleEntity particle = switch (type) {
+            case "bubble" -> new BubbleParticle(this.world, x, y, z, vX, vY, vZ);
+            case "smoke" -> new SmokeParticleEntity(this.world, x, y, z, vX, vY, vZ);
+            case "note" -> new NoteParticleEntity(this.world, x, y, z, vX, vY, vZ);
+            case "portal" -> new PortalParticleEntity(this.world, x, y, z, vX, vY, vZ);
+            case "explode" -> new ExplosionParticle(this.world, x, y, z, vX, vY, vZ);
+            case "flame" -> new FireParticleEntity(this.world, x, y, z, vX, vY, vZ);
+            case "lava" -> new LavaParticle(this.world, x, y, z);
+            case "footstep" -> new FootstepParticle(this.textureManager, this.world, x, y, z);
+            case "splash" -> new WaterParticleEntity(this.world, x, y, z, vX, vY, vZ);
+            case "largesmoke" -> new SmokeParticleEntity(this.world, x, y, z, vX, vY, vZ, 2.5F);
+            case "reddust" ->
+                new RedstoneParticleEntity(this.world, x, y, z, (float) vX, (float) vY, (float) vZ);
+            case "snowballpoof" -> new PoofParticleEntity(this.world, x, y, z, Item.SNOWBALL);
+            case "snowshovel" -> new SnowPuffParticle(this.world, x, y, z, vX, vY, vZ);
+            case "slime" -> new PoofParticleEntity(this.world, x, y, z, Item.SLIMEBALL);
+            case "heart" -> new HeartParticleEntity(this.world, x, y, z, vX, vY, vZ);
+            default -> null;
+        };
+
+        if (particle != null) {
+            this.client.particleManager.addParticle(particle);
+        }
+
+        return particle;
     }
 
     public void resetAll() {
@@ -1148,16 +1147,16 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         AC_DebugMode.triggerResetActive = true;
 
         for (class_66 item : this.field_1809) {
-            int var3 = item.field_231;
-            int var4 = item.field_232;
-            int var5 = item.field_233;
-            if (this.world.method_155(var3, var4, var5, var3 + 15, var4 + 15, var5 + 15)) {
-                for (int var6 = 0; var6 < 16; ++var6) {
-                    for (int var7 = 0; var7 < 16; ++var7) {
-                        for (int var8 = 0; var8 < 16; ++var8) {
-                            int var9 = this.world.getBlockId(var3 + var6, var4 + var7, var5 + var8);
-                            if (var9 > 0) {
-                                ((ExBlock) Block.BY_ID[var9]).reset(this.world, var3 + var6, var4 + var7, var5 + var8, var1);
+            int x = item.field_231;
+            int y = item.field_232;
+            int z = item.field_233;
+            if (this.world.method_155(x, y, z, x + 15, y + 15, z + 15)) {
+                for (int bX = 0; bX < 16; ++bX) {
+                    for (int bY = 0; bY < 16; ++bY) {
+                        for (int bZ = 0; bZ < 16; ++bZ) {
+                            int bId = this.world.getBlockId(x + bX, y + bY, z + bZ);
+                            if (bId > 0) {
+                                ((ExBlock) Block.BY_ID[bId]).reset(this.world, x + bX, y + bY, z + bZ, var1);
                             }
                         }
                     }

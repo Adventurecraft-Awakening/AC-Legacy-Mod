@@ -12,19 +12,19 @@ public interface ExTextureManager {
 
     <T extends TextureBinder> T getTextureBinder(Class<T> type);
 
-    BufferedImage getTextureImage(String var1) throws IOException;
+    BufferedImage getTextureImage(String name) throws IOException;
 
-    void loadTexture(int var1, String var2);
+    void loadTexture(int id, String name);
 
-    Vec2 getTextureResolution(String var1);
+    Vec2 getTextureResolution(String name);
 
     void clearTextureAnimations();
 
-    void registerTextureAnimation(String var1, AC_TextureAnimated var2);
+    void registerTextureAnimation(String animationName, AC_TextureAnimated animation);
 
-    void unregisterTextureAnimation(String var1);
+    void unregisterTextureAnimation(String animationName);
 
-    void replaceTexture(String var1, String var2);
+    void replaceTexture(String keyName, String replacementName);
 
     void revertTextures();
 

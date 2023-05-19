@@ -17,26 +17,26 @@ public class AC_TextureAnimated {
     public int[] frameImages;
     public boolean hasImages;
 
-    public AC_TextureAnimated(String var1, String var2, int var3, int var4, int var5, int var6) {
-        this.x = var3;
-        this.y = var4;
-        this.width = var5;
-        this.height = var6;
+    public AC_TextureAnimated(String texName, String imageName, int x, int y, int width, int height) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
         this.imageData = new byte[this.width * this.height * 4];
-        this.texName = var1;
-        this.loadImage(var2);
+        this.texName = texName;
+        this.loadImage(imageName);
     }
 
-    public void loadImage(String var1) {
+    public void loadImage(String name) {
         this.hasImages = false;
         BufferedImage var2 = null;
         if (Minecraft.instance.world != null) {
-            var2 = ((ExWorld) Minecraft.instance.world).loadMapTexture(var1);
+            var2 = ((ExWorld) Minecraft.instance.world).loadMapTexture(name);
         }
 
         this.curFrame = 0;
         if (var2 == null) {
-            Minecraft.instance.overlay.addChatMessage(String.format("Unable to load texture '%s'", var1));
+            Minecraft.instance.overlay.addChatMessage(String.format("Unable to load texture '%s'", name));
         } else if (this.width != var2.getWidth()) {
             Minecraft.instance.overlay.addChatMessage(String.format("Animated texture width of %d didn't match the specified width of %d", var2.getWidth(), this.width));
         } else if (0 != var2.getHeight() % this.height) {

@@ -1,10 +1,5 @@
 package dev.adventurecraft.awakening.script;
 
-import java.nio.FloatBuffer;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-
 import dev.adventurecraft.awakening.extension.client.model.ExCuboid;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.Cuboid;
@@ -15,6 +10,10 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector4f;
+
+import java.nio.FloatBuffer;
+import java.util.HashMap;
+import java.util.LinkedList;
 
 @SuppressWarnings("unused")
 public class ScriptModel {
@@ -150,6 +149,7 @@ public class ScriptModel {
             var3.bindTexture(var3.getTextureId(this.texture));
         }
 
+        // TODO: clean up?
         GL11.glPushMatrix();
         GL11.glLoadIdentity();
         this.transform(var1);
