@@ -58,24 +58,24 @@ public abstract class MixinItem implements ExItem {
     }
 
     @Override
-    public void onAddToSlot(PlayerEntity player, int slotId, int var3) {
+    public void onAddToSlot(PlayerEntity player, int slotId, int itemMeta) {
         var world = (ExWorld) Minecraft.instance.world;
         Scriptable scope = world.getScope();
         scope.put("slotID", scope, slotId);
         if (this.usesMeta()) {
-            world.getScriptHandler().runScript(String.format("item_onAddToSlot_%d_%d.js", this.id, var3), scope, false);
+            world.getScriptHandler().runScript(String.format("item_onAddToSlot_%d_%d.js", this.id, itemMeta), scope, false);
         } else {
             world.getScriptHandler().runScript(String.format("item_onAddToSlot_%d.js", this.id), scope, false);
         }
     }
 
     @Override
-    public void onRemovedFromSlot(PlayerEntity player, int slotId, int var3) {
+    public void onRemovedFromSlot(PlayerEntity player, int slotId, int itemMeta) {
         var world = (ExWorld) Minecraft.instance.world;
         Scriptable scope = world.getScope();
         scope.put("slotID", scope, slotId);
         if (this.usesMeta()) {
-            world.getScriptHandler().runScript(String.format("item_onRemovedFromSlot_%d_%d.js", this.id, var3), scope, false);
+            world.getScriptHandler().runScript(String.format("item_onRemovedFromSlot_%d_%d.js", this.id, itemMeta), scope, false);
         } else {
             world.getScriptHandler().runScript(String.format("item_onRemovedFromSlot_%d.js", this.id), scope, false);
         }

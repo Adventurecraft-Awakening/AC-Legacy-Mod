@@ -13,7 +13,7 @@ public interface ExItem extends AC_ILeftClickItem {
 
     void setItemUseDelay(int value);
 
-    void onAddToSlot(PlayerEntity var1, int var2, int var3);
+    void onAddToSlot(PlayerEntity player, int slotId, int itemMeta);
 
-    void onRemovedFromSlot(PlayerEntity var1, int var2, int var3);
+    void onRemovedFromSlot(PlayerEntity player, int slotId, int itemMeta);
 }

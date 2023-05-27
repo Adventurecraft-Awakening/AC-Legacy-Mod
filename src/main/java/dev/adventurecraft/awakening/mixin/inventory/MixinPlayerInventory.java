@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.mixin.inventory;
 
+import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.common.AC_IItemReload;
 import dev.adventurecraft.awakening.common.AC_Items;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
@@ -17,6 +18,9 @@ import net.minecraft.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(PlayerInventory.class)
 public abstract class MixinPlayerInventory implements ExPlayerInventory {
@@ -38,10 +42,7 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
     public abstract int getSlotWithItem(int i);
 
     @Shadow
-    public abstract int getMaxItemCount();
-
-    @Shadow
-    protected abstract int getIdenticalStackSlot(ItemStack arg);
+    protected abstract int mergeStacks(ItemStack arg);
 
     public int offhandItem = 1;
     public int[] consumeInventory = new int[36];
@@ -61,25 +62,25 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
     }
 
     public void swapOffhandWithMain() {
-        int var1 = this.selectedHotBarSlot;
+        int slot = this.selectedHotBarSlot;
         this.selectedHotBarSlot = this.offhandItem;
-        this.offhandItem = var1;
+        this.offhandItem = slot;
     }
 
     @Environment(EnvType.CLIENT)
     @Overwrite
-    public void scrollInHotBar(int var1) {
-        if (var1 > 0) {
-            var1 = 1;
+    public void scrollInHotBar(int direction) {
+        if (direction > 0) {
+            direction = 1;
         }
 
-        if (var1 < 0) {
-            var1 = -1;
+        if (direction < 0) {
+            direction = -1;
         }
 
-        int var2 = this.selectedHotBarSlot;
+        int slot = this.selectedHotBarSlot;
 
-        this.selectedHotBarSlot -= var1;
+        this.selectedHotBarSlot -= direction;
         while (this.selectedHotBarSlot < 0) {
             this.selectedHotBarSlot += 9;
         }
@@ -89,93 +90,85 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
         }
 
         if (this.selectedHotBarSlot == this.offhandItem) {
-            this.offhandItem = var2;
+            this.offhandItem = slot;
         }
     }
 
-
-    private int mergeStacks(ItemStack var1) {
-        int var2 = var1.itemId;
-        int var3 = var1.count;
-        int var4 = this.getIdenticalStackSlot(var1);
-        if (var4 < 0) {
-            var4 = this.getFirstEmptySlotIndex();
-        }
-        if (var4 < 0) {
-            return var3;
-        }
-
-        if (this.main[var4] == null) {
-            this.main[var4] = new ItemStack(var2, 0, var1.getMeta());
-            ((ExItem) Item.byId[var2]).onAddToSlot(this.player, var4, var1.getMeta());
-        }
-
-        int var5 = Math.min(var3, this.main[var4].getMaxStackSize() - this.main[var4].count);
-        var5 = Math.min(var5, this.getMaxItemCount() - this.main[var4].count);
-
-        if (var5 != 0) {
-            var3 -= var5;
-            this.main[var4].count += var5;
-            this.main[var4].cooldown = 5;
-        }
-        return var3;
+    @Inject(
+        method = "mergeStacks",
+        at = @At(
+            value = "NEW",
+            target = "(III)Lnet/minecraft/item/ItemStack;",
+            shift = At.Shift.AFTER,
+            ordinal = 0))
+    private void onAddOnMerge(
+        ItemStack stack,
+        CallbackInfoReturnable<Integer> cir,
+        @Local(ordinal = 0) int id,
+        @Local(ordinal = 2) int slot) {
+        ((ExItem) Item.byId[id]).onAddToSlot(this.player, slot, stack.getMeta());
     }
 
     @Overwrite
     public void tickInventory() {
-        for (int var1 = 0; var1 < this.main.length; ++var1) {
-            if (this.main[var1] != null) {
-                ItemStack var2 = this.main[var1];
-                var2.tick(this.player.world, this.player, var1, this.selectedHotBarSlot == var1);
+        for (int slot = 0; slot < this.main.length; ++slot) {
+            ItemStack stack = this.main[slot];
+            if (stack == null) {
+                continue;
+            }
+            stack.tick(this.player.world, this.player, slot, this.selectedHotBarSlot == slot);
 
-                ExItemStack exItem = ((ExItemStack) (Object) var2);
-                if (exItem.getTimeLeft() > 0) {
-                    exItem.setTimeLeft(exItem.getTimeLeft() - 1);
-                }
+            ExItemStack exItem = ((ExItemStack) (Object) stack);
+            if (exItem.getTimeLeft() > 0) {
+                exItem.setTimeLeft(exItem.getTimeLeft() - 1);
+            }
 
-                if ((var1 == this.selectedHotBarSlot || var1 == this.offhandItem) && exItem.getTimeLeft() == 0 && exItem.getReloading()) {
-                    AC_IItemReload var3 = (AC_IItemReload) Item.byId[var2.itemId];
-                    var3.reload(var2, this.player.world, this.player);
-                }
+            if ((slot == this.selectedHotBarSlot || slot == this.offhandItem) &&
+                exItem.getTimeLeft() == 0 &&
+                exItem.getReloading()) {
+                var itemReload = (AC_IItemReload) Item.byId[stack.itemId];
+                itemReload.reload(stack, this.player.world, this.player);
+            }
 
-                if (var2.getMeta() > 0 && ((ExItem) Item.byId[var2.itemId]).getDecrementDamage()) {
-                    var2.setMeta(var2.getMeta() - 1);
-                }
+            if (stack.getMeta() > 0 &&
+                ((ExItem) Item.byId[stack.itemId]).getDecrementDamage()) {
+                stack.setMeta(stack.getMeta() - 1);
             }
         }
 
     }
 
     @Overwrite
-    public boolean removeItem(int var1) {
-        int var2 = this.getSlotWithItem(var1);
-        if (var2 < 0) {
+    public boolean removeItem(int itemId) {
+        int slot = this.getSlotWithItem(itemId);
+        if (slot < 0) {
             return false;
-        } else {
-            if (--this.main[var2].count == 0) {
-                int var3 = this.main[var2].getMeta();
-                this.main[var2] = null;
-                ((ExItem) Item.byId[var1]).onRemovedFromSlot(this.player, var2, var3);
-            }
-
-            return true;
         }
+
+        ItemStack stack = this.main[slot];
+        if (--stack.count == 0) {
+            int meta = stack.getMeta();
+            this.main[slot] = null;
+            ((ExItem) Item.byId[itemId]).onRemovedFromSlot(this.player, slot, meta);
+        }
+
+        return true;
     }
 
     @Overwrite
-    public boolean addStack(ItemStack var1) {
+    public boolean addStack(ItemStack stack) {
         ExPlayerEntity exPlayer = (ExPlayerEntity) this.player;
-        if (var1.itemId == AC_Items.heart.id) {
-            var1.count = 0;
+        if (stack.itemId == AC_Items.heart.id) {
+            stack.count = 0;
             this.player.addHealth(4);
             return true;
-        } else if (var1.itemId == AC_Items.heartContainer.id) {
-            var1.count = 0;
+        } else if (stack.itemId == AC_Items.heartContainer.id) {
+            stack.count = 0;
             exPlayer.setMaxHealth(exPlayer.getMaxHealth() + 4);
             this.player.addHealth(exPlayer.getMaxHealth());
             return true;
-        } else if (var1.itemId == AC_Items.heartPiece.id) {
-            var1.count = 0;
+        } else if (stack.itemId == AC_Items.heartPiece.id) {
+            stack.count = 0;
             exPlayer.setHeartPiecesCount(exPlayer.getHeartPiecesCount() + 1);
             if (exPlayer.getHeartPiecesCount() >= 4) {
                 exPlayer.setHeartPiecesCount(0);
@@ -183,72 +176,71 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
                 this.player.addHealth(exPlayer.getMaxHealth());
             }
             return true;
-        } else {
-            if (!var1.isDamaged()) {
-                var1.count = this.mergeStacks(var1);
-                if (var1.count == 0) {
-                    return true;
-                }
-            }
+        }
 
-            int var2 = this.getFirstEmptySlotIndex();
-            if (var2 >= 0) {
-                this.main[var2] = var1.copy();
-                this.main[var2].cooldown = 5;
-                var1.count = 0;
-                ((ExItem) Item.byId[var1.itemId]).onAddToSlot(this.player, var2, var1.getMeta());
+        if (!stack.isDamaged()) {
+            stack.count = this.mergeStacks(stack);
+            if (stack.count == 0) {
                 return true;
-            } else {
-                return false;
             }
+        }
+
+        int emptySlot = this.getFirstEmptySlotIndex();
+        if (emptySlot >= 0) {
+            this.main[emptySlot] = stack.copy();
+            this.main[emptySlot].cooldown = 5;
+            stack.count = 0;
+            ((ExItem) Item.byId[stack.itemId]).onAddToSlot(this.player, emptySlot, stack.getMeta());
+            return true;
+        } else {
+            return false;
         }
     }
 
     @Overwrite
-    public ItemStack takeInventoryItem(int var1, int var2) {
-        int var3 = var1;
-        ItemStack[] var4 = this.main;
-        if (var1 >= this.main.length) {
-            var4 = this.armor;
-            var1 -= this.main.length;
+    public ItemStack takeInventoryItem(int slot, int count) {
+        int originalSlot = slot;
+        ItemStack[] stacks = this.main;
+        if (slot >= this.main.length) {
+            stacks = this.armor;
+            slot -= this.main.length;
         }
 
-        if (var4[var1] != null) {
-            ItemStack var5;
-            if (var4[var1].count <= var2) {
-                var5 = var4[var1];
-                var4[var1] = null;
-                ((ExItem) Item.byId[var5.itemId]).onRemovedFromSlot(this.player, var3, var5.getMeta());
-            } else {
-                var5 = var4[var1].split(var2);
-                if (var4[var1].count == 0) {
-                    var4[var1] = null;
-                    ((ExItem) Item.byId[var5.itemId]).onRemovedFromSlot(this.player, var3, var5.getMeta());
-                }
-            }
-            return var5;
-        } else {
+        ItemStack stack = stacks[slot];
+        if (stack == null) {
             return null;
         }
+
+        if (stack.count <= count) {
+            stacks[slot] = null;
+            ((ExItem) Item.byId[stack.itemId]).onRemovedFromSlot(this.player, originalSlot, stack.getMeta());
+        } else {
+            stack = stack.split(count);
+            if (stack.count == 0) {
+                stacks[slot] = null;
+                ((ExItem) Item.byId[stack.itemId]).onRemovedFromSlot(this.player, originalSlot, stack.getMeta());
+            }
+        }
+        return stack;
     }
 
     @Overwrite
-    public void setInventoryItem(int var1, ItemStack var2) {
-        int var3 = var1;
-        ItemStack[] var4 = this.main;
-        if (var1 >= var4.length) {
-            var1 -= var4.length;
-            var4 = this.armor;
+    public void setInventoryItem(int slot, ItemStack stack) {
+        int originalSlot = slot;
+        ItemStack[] stackArray = this.main;
+        if (slot >= stackArray.length) {
+            slot -= stackArray.length;
+            stackArray = this.armor;
         }
 
-        ItemStack var5 = var4[var1];
-        var4[var1] = var2;
-        if (var5 != null) {
-            ((ExItem) Item.byId[var5.itemId]).onRemovedFromSlot(this.player, var3, var5.getMeta());
+        ItemStack originalStack = stackArray[slot];
+        stackArray[slot] = stack;
+        if (originalStack != null) {
+            ((ExItem) Item.byId[originalStack.itemId]).onRemovedFromSlot(this.player, originalSlot, originalStack.getMeta());
         }
 
-        if (var2 != null) {
-            ((ExItem) Item.byId[var2.itemId]).onAddToSlot(this.player, var3, var2.getMeta());
+        if (stack != null) {
+            ((ExItem) Item.byId[stack.itemId]).onAddToSlot(this.player, originalSlot, stack.getMeta());
         }
     }
 
@@ -277,16 +269,17 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
     }
 
     @Overwrite
-    public void damageArmor(int var1) {
-        for (int var2 = 0; var2 < this.armor.length; ++var2) {
-            if (this.armor[var2] != null && this.armor[var2].getItem() instanceof ArmorItem) {
-                this.armor[var2].applyDamage(var1, this.player);
-                if (this.armor[var2].count == 0) {
-                    int var3 = this.armor[var2].itemId;
-                    int var4 = this.armor[var2].getMeta();
-                    this.armor[var2].unusedEmptyMethod1(this.player);
-                    this.armor[var2] = null;
-                    ((ExItem) Item.byId[var3]).onRemovedFromSlot(this.player, var2 + this.main.length, var4);
+    public void damageArmor(int damage) {
+        for (int slot = 0; slot < this.armor.length; ++slot) {
+            ItemStack item = this.armor[slot];
+            if (item != null && item.getItem() instanceof ArmorItem) {
+                item.applyDamage(damage, this.player);
+                if (item.count == 0) {
+                    int id = item.itemId;
+                    int meta = item.getMeta();
+                    item.unusedEmptyMethod1(this.player);
+                    this.armor[slot] = null;
+                    ((ExItem) Item.byId[id]).onRemovedFromSlot(this.player, slot + this.main.length, meta);
                 }
             }
         }
@@ -294,59 +287,60 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
 
     @Overwrite
     public void dropInventory() {
-        int var1;
-        ItemStack var2;
-        for (var1 = 0; var1 < this.main.length; ++var1) {
-            if (this.main[var1] != null) {
-                var2 = this.main[var1];
-                this.player.dropItem(this.main[var1], true);
-                this.main[var1] = null;
-                ((ExItem) Item.byId[var2.itemId]).onRemovedFromSlot(this.player, var1, var2.getMeta());
+        for (int slot = 0; slot < this.main.length; ++slot) {
+            ItemStack stack = this.main[slot];
+            if (stack != null) {
+                this.player.dropItem(stack, true);
+                this.main[slot] = null;
+                ((ExItem) Item.byId[stack.itemId]).onRemovedFromSlot(this.player, slot, stack.getMeta());
             }
         }
 
-        for (var1 = 0; var1 < this.armor.length; ++var1) {
-            if (this.armor[var1] != null) {
-                var2 = this.armor[var1];
-                this.player.dropItem(this.armor[var1], true);
-                this.armor[var1] = null;
-                ((ExItem) Item.byId[var2.itemId]).onRemovedFromSlot(this.player, var1 + this.main.length, var2.getMeta());
+        for (int slot = 0; slot < this.armor.length; ++slot) {
+            ItemStack stack = this.armor[slot];
+            if (stack != null) {
+                this.player.dropItem(stack, true);
+                this.armor[slot] = null;
+                ((ExItem) Item.byId[stack.itemId]).onRemovedFromSlot(this.player, slot + this.main.length, stack.getMeta());
             }
         }
     }
 
     @Override
-    public boolean consumeItemAmount(int var1, int var2, int var3) {
-        int var4 = 0;
-        int var5 = var3;
+    public boolean consumeItemAmount(int id, int meta, int count) {
+        int searchedSlots = 0;
+        int remaining = count;
 
-        int var6;
-        for (var6 = 0; var6 < 36; ++var6) {
-            if (this.main[var6] != null && this.main[var6].itemId == var1 && this.main[var6].getMeta() == var2) {
-                this.consumeInventory[var4++] = var6;
-                var5 -= this.main[var6].count;
-                if (var5 <= 0) {
+        for (int slot = 0; slot < 36; ++slot) {
+            ItemStack stack = this.main[slot];
+            if (stack != null &&
+                stack.itemId == id &&
+                stack.getMeta() == meta) {
+                this.consumeInventory[searchedSlots++] = slot;
+                remaining -= stack.count;
+                if (remaining <= 0) {
                     break;
                 }
             }
         }
 
-        if (var5 > 0) {
+        if (remaining > 0) {
             return false;
-        } else {
-            for (var6 = 0; var6 < var4; ++var6) {
-                int var7 = this.consumeInventory[var6];
-                if (this.main[var7].count > var3) {
-                    this.main[var7].count -= var3;
-                } else {
-                    var3 -= this.main[var7].count;
-                    this.main[var7].count = 0;
-                    this.main[var7] = null;
-                    ((ExItem) Item.byId[var1]).onRemovedFromSlot(this.player, var7, var2);
-                }
-            }
-
-            return true;
         }
+
+        for (int slot = 0; slot < searchedSlots; ++slot) {
+            int cSlot = this.consumeInventory[slot];
+            ItemStack stack = this.main[cSlot];
+            if (stack.count > count) {
+                stack.count -= count;
+            } else {
+                count -= stack.count;
+                stack.count = 0;
+                this.main[cSlot] = null;
+                ((ExItem) Item.byId[id]).onRemovedFromSlot(this.player, cSlot, meta);
+            }
+        }
+
+        return true;
     }
 }
