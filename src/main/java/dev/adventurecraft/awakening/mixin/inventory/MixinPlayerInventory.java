@@ -158,24 +158,35 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
     @Overwrite
     public boolean addStack(ItemStack stack) {
         ExPlayerEntity exPlayer = (ExPlayerEntity) this.player;
-        if (stack.itemId == AC_Items.heart.id) {
-            stack.count = 0;
-            this.player.addHealth(4);
-            return true;
-        } else if (stack.itemId == AC_Items.heartContainer.id) {
-            stack.count = 0;
-            exPlayer.setMaxHealth(exPlayer.getMaxHealth() + 4);
-            this.player.addHealth(exPlayer.getMaxHealth());
-            return true;
-        } else if (stack.itemId == AC_Items.heartPiece.id) {
-            stack.count = 0;
-            exPlayer.setHeartPiecesCount(exPlayer.getHeartPiecesCount() + 1);
-            if (exPlayer.getHeartPiecesCount() >= 4) {
-                exPlayer.setHeartPiecesCount(0);
-                exPlayer.setMaxHealth(exPlayer.getMaxHealth() + 4);
-                this.player.addHealth(exPlayer.getMaxHealth());
+        if (stack.count > 0) {
+            if (stack.itemId == AC_Items.heart.id) {
+                int heal = stack.count * 4;
+                stack.count = 0;
+
+                this.player.addHealth(heal);
+                return true;
             }
-            return true;
+            if (stack.itemId == AC_Items.heartContainer.id) {
+                int extraHealth = stack.count * 4;
+                stack.count = 0;
+
+                exPlayer.setMaxHealth(exPlayer.getMaxHealth() + extraHealth);
+                this.player.addHealth(exPlayer.getMaxHealth());
+                return true;
+            }
+            if (stack.itemId == AC_Items.heartPiece.id) {
+                int pieces = exPlayer.getHeartPiecesCount() + stack.count;
+                stack.count = 0;
+
+                int extraHearts = pieces / 4;
+                exPlayer.setHeartPiecesCount(pieces % 4);
+
+                if (extraHearts > 0) {
+                    exPlayer.setMaxHealth(exPlayer.getMaxHealth() + extraHearts * 4);
+                    this.player.addHealth(exPlayer.getMaxHealth());
+                }
+                return true;
+            }
         }
 
         if (!stack.isDamaged()) {
