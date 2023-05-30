@@ -3,7 +3,7 @@
   "id": "adventurecraft",
   "version": "${version}",
 
-  "name": "Adventurecraft Mod",
+  "name": "Adventurecraft",
   "description": "",
   "authors": [
     "TechPizza"
@@ -13,7 +13,7 @@
     "sources": "https://github.com/Adventurecraft-Awakening/AC-Legacy"
   },
 
-  "license": "CC0-1.0",
+  "license": "MIT",
   "icon": "assets/adventurecraft/icon.png",
 
   "environment": "*",
@@ -35,8 +35,5 @@
   "depends": {
     "fabricloader": ">=0.13.3",
     "minecraft": "1.0.0-beta.7.3"
-  },
-  "suggests": {
-    "another-mod": "*"
   }
 }
