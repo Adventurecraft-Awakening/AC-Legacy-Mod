@@ -43,7 +43,7 @@ repositories {
 
 import org.gradle.internal.os.OperatingSystem
 
-project.ext.lwjglVersion = "3.3.2-SNAPSHOT"
+project.ext.lwjglVersion = "3.3.2"
 switch (OperatingSystem.current()) {
     case OperatingSystem.LINUX:
         project.ext.lwjglNatives = "natives-linux"
@@ -61,7 +61,7 @@ switch (OperatingSystem.current()) {
 
 dependencies {
     // Adds LWJGL3 wrapper
-    include(implementation("com.github.Adventurecraft-Awakening:AC-LWJGL3-Injector:d271621"))
+    implementation("com.github.Adventurecraft-Awakening:AC-LWJGL3-Injector:a287957")
 
     implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
 
@@ -73,9 +73,8 @@ dependencies {
     // Compiles rhino, our javascript dependency, releases can be found here: https://github.com/mozilla/rhino/releases
     // There are more archived versions on this website: https://www-archive.mozilla.org/rhino/rhino16r2
     implementation 'rhino:js:1.7R2'
-    include 'rhino:js:1.7R2'
 
-    include(implementation(annotationProcessor("com.github.llamalad7.mixinextras:mixinextras-fabric:0.2.0-beta.6")))
+    implementation(annotationProcessor("com.github.llamalad7.mixinextras:mixinextras-fabric:0.2.0-beta.6"))
 
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings "net.legacyfabric:beta-yarn:${project.yarn_version}"
@@ -84,12 +83,12 @@ dependencies {
     implementation "org.slf4j:slf4j-api:1.8.0-beta4"
     implementation "org.apache.logging.log4j:log4j-slf4j18-impl:2.18.0"
 
-    include(implementation('com.github.Chocohead:Fabric-ASM:v2.3'))
+    implementation('com.github.Chocohead:Fabric-ASM:v2.3')
 
     implementation 'com.google.guava:guava:31+'
     implementation 'org.apache.commons:commons-lang3:3.12.0'
 
-    include(implementation('it.unimi.dsi:fastutil-core:8.5.12'))
+    implementation('it.unimi.dsi:fastutil-core:8.5.12')
 }
 
 configurations.configureEach {
