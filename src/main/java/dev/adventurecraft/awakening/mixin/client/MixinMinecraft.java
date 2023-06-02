@@ -269,9 +269,10 @@ public abstract class MixinMinecraft implements ExMinecraft {
             acThread.setIpPort(host, Integer.parseInt(port));
         }
 
-        Thread thread = new Thread(acThread, "Minecraft main thread");
+        Thread thread = Thread.currentThread();
+        thread.setName("Minecraft main thread");
         thread.setPriority(10);
-        thread.start();
+        acThread.run();
     }
 
     @ModifyConstant(method = "init", constant = @Constant(stringValue = "Minecraft Minecraft Beta 1.7.3"))
