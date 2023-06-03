@@ -54,7 +54,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
     private GameOptions gameOptions;
 
     @Shadow
-    private TexturePackManager texturePackManager;
+    public TexturePackManager texturePackManager;
 
     @Shadow
     private IntBuffer field_1249;
@@ -267,13 +267,13 @@ public abstract class MixinTextureManager implements ExTextureManager {
                     if (var7.exists()) {
                         var5 = ImageIO.read(var7);
                     }
-
-                    if (var5 == null) {
-                        var5 = this.missingTexImage;
-                    }
                 } else {
                     var5 = this.readImage(var6);
                 }
+            }
+
+            if (var5 == null) {
+                var5 = this.missingTexImage;
             }
 
             if (originalName.startsWith("##")) {
