@@ -17,13 +17,13 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.Iterator;
 import java.util.List;
 
 @Mixin(AbstractClientPlayerEntity.class)
@@ -97,12 +97,14 @@ public abstract class MixinAbstractClientPlayerEntity extends PlayerEntity imple
         return instance.sneak;
     }
 
+    @Override
     public void displayGUIPalette() {
         InventoryDebug var1 = new InventoryDebug("Palette", 54);
         var1.fillInventory(1);
         this.client.openScreen(new AC_GuiPalette(this.inventory, var1));
     }
 
+    @Overwrite
     public void sendChatMessage(String var1) {
         ExWorldProperties worldProps;
         AC_CutsceneCamera activeCamera;
