@@ -40,7 +40,8 @@ public abstract class MixinSoundHelper implements ExSoundHelper {
         at = @At(
             value = "INVOKE",
             target = "Lpaulscode/sound/SoundSystem;setListenerOrientation(FFFFFF)V",
-            shift = At.Shift.AFTER))
+            shift = At.Shift.AFTER,
+            remap = false))
     private void setBgMusicPosition(
         LivingEntity var1,
         float var2,

@@ -286,19 +286,23 @@ public abstract class MixinMinecraft implements ExMinecraft {
         Display.setResizable(true);
     }
 
-    @Redirect(method = "init", at = @At(
-        value = "INVOKE",
-        target = "Lorg/lwjgl/opengl/Display;create()V",
-        remap = false,
-        ordinal = 0))
+    @Redirect(
+        method = "init",
+        at = @At(
+            value = "INVOKE",
+            target = "Lorg/lwjgl/opengl/Display;create()V",
+            remap = false,
+            ordinal = 0))
     private void init_disableOriginalDisplay() {
     }
 
-    @Inject(method = "init", at = @At(
-        value = "FIELD",
-        target = "Lnet/minecraft/client/Minecraft;options:Lnet/minecraft/client/options/GameOptions;",
-        shift = At.Shift.AFTER,
-        ordinal = 0))
+    @Inject(
+        method = "init",
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/client/Minecraft;options:Lnet/minecraft/client/options/GameOptions;",
+            shift = At.Shift.AFTER,
+            ordinal = 0))
     private void init_createDisplay(CallbackInfo ci) throws LWJGLException {
         int sampleCount = Config.getAntialiasingLevel();
         ACMod.LOGGER.info("MSAA Samples: " + sampleCount);
@@ -350,29 +354,35 @@ public abstract class MixinMinecraft implements ExMinecraft {
         Display.create(pixelFormat.withDepthBits(0));
     }
 
-    @Inject(method = "init", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/client/TexturePackManager;<init>(Lnet/minecraft/client/Minecraft;Ljava/io/File;)V",
-        shift = At.Shift.AFTER))
+    @Inject(
+        method = "init",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/TexturePackManager;<init>(Lnet/minecraft/client/Minecraft;Ljava/io/File;)V",
+            shift = At.Shift.AFTER))
     private void init_createMapList(CallbackInfo ci) {
         this.mapList = new AC_MapList(this.gameDir);
     }
 
-    @Inject(method = "init", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/client/texture/TextureManager;addTextureBinder(Lnet/minecraft/client/render/TextureBinder;)V",
-        ordinal = 0))
+    @Inject(
+        method = "init",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/texture/TextureManager;addTextureBinder(Lnet/minecraft/client/render/TextureBinder;)V",
+            ordinal = 0))
     private void init_addFanTextureBinder(CallbackInfo ci) {
         this.textureManager.addTextureBinder(new AC_TextureFanFX());
     }
 
-    @Inject(method = "run", at = @At(
-        value = "INVOKE",
-        target = "Ljava/lang/System;currentTimeMillis()J",
-        shift = At.Shift.BEFORE,
-        ordinal = 0,
-        remap = false),
-        remap = false)
+    @Inject(
+        method = "run",
+        remap = false,
+        at = @At(
+            value = "INVOKE",
+            target = "Ljava/lang/System;currentTimeMillis()J",
+            shift = At.Shift.BEFORE,
+            ordinal = 0,
+            remap = false))
     private void run_setup(CallbackInfo ci) {
         this.textureManager.getTextureId("/terrain.png");
         this.textureManager.getTextureId("/terrain2.png");
@@ -380,9 +390,11 @@ public abstract class MixinMinecraft implements ExMinecraft {
         ContextFactory.initGlobal(new ContextFactory());
     }
 
-    @Redirect(method = "run", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/client/sound/SoundHelper;setSoundPosition(Lnet/minecraft/entity/LivingEntity;F)V"))
+    @Redirect(
+        method = "run",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/sound/SoundHelper;setSoundPosition(Lnet/minecraft/entity/LivingEntity;F)V"))
     private void run_setSoundListenerPos(SoundHelper instance, LivingEntity f, float v) {
         if (this.cameraActive) {
             instance.setSoundPosition(this.cutsceneCameraEntity, v);
@@ -391,30 +403,36 @@ public abstract class MixinMinecraft implements ExMinecraft {
         }
     }
 
-    @Inject(method = "run", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/client/Minecraft;printOpenGLError(Ljava/lang/String;)V",
-        shift = At.Shift.AFTER,
-        ordinal = 1))
+    @Inject(
+        method = "run",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/Minecraft;printOpenGLError(Ljava/lang/String;)V",
+            shift = At.Shift.AFTER,
+            ordinal = 1))
     private void run_updateFrameTimes(CallbackInfo ci) {
         this.prevFrameTimeForAvg = System.nanoTime();
         this.tFrameTimes[this.nextFrameTime] = this.prevFrameTimeForAvg;
         this.nextFrameTime = (this.nextFrameTime + 1) % 60;
     }
 
-    @Inject(method = "run", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/client/Minecraft;stop()V",
-        shift = At.Shift.BEFORE))
+    @Inject(
+        method = "run",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/Minecraft;stop()V",
+            shift = At.Shift.BEFORE))
     private void run_stop(CallbackInfo ci) {
         ContextFactory.getGlobal().enterContext();
         Context.exit();
     }
 
-    @Inject(method = "run", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/client/Minecraft;checkTakingScreenshot()V",
-        shift = At.Shift.AFTER))
+    @Inject(
+        method = "run",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/Minecraft;checkTakingScreenshot()V",
+            shift = At.Shift.AFTER))
     private void fix_resize(CallbackInfo ci) {
         if (!this.isFullscreen && (Display.getWidth() != this.actualWidth || Display.getHeight() != this.actualHeight)) {
             this.actualWidth = Display.getWidth();
@@ -431,28 +449,45 @@ public abstract class MixinMinecraft implements ExMinecraft {
         }
     }
 
-    @Redirect(method = "run", remap = false, at = @At(
-        value = "INVOKE",
-        target = "Lorg/lwjgl/opengl/Display;isActive()Z",
-        remap = false))
+    @Redirect(
+        method = "run",
+        remap = false,
+        at = @At(
+            value = "INVOKE",
+            target = "Ljava/lang/Thread;yield()V",
+            remap = false))
+    private void removeYield() {
+    }
+
+    @Redirect(
+        method = "run",
+        remap = false,
+        at = @At(
+            value = "INVOKE",
+            target = "Lorg/lwjgl/opengl/Display;isActive()Z",
+            remap = false))
     private boolean disableDoubleToggle() {
         return true;
     }
 
-    @Inject(method = "method_2111", at = @At(
-        value = "FIELD",
-        target = "Lnet/minecraft/client/Minecraft;lastFrameRenderTime:J",
-        shift = At.Shift.BEFORE,
-        ordinal = 2))
+    @Inject(
+        method = "method_2111",
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/client/Minecraft;lastFrameRenderTime:J",
+            shift = At.Shift.BEFORE,
+            ordinal = 2))
     private void setUpdateTime(long var1, CallbackInfo ci) {
         updateTimes[frameRenderTimesAmount & updateTimes.length - 1] = updateRendererTime;
     }
 
-    @Inject(method = "method_2111", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/client/render/Tessellator;addVertex(DDD)V",
-        shift = At.Shift.BEFORE,
-        ordinal = 12),
+    @Inject(
+        method = "method_2111",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/render/Tessellator;addVertex(DDD)V",
+            shift = At.Shift.BEFORE,
+            ordinal = 12),
         locals = LocalCapture.CAPTURE_FAILHARD)
     private void renderUpdateTime(long var1, CallbackInfo ci, long var3, long var5, Tessellator var7, int var8, long var9, int var11, int var12, int var13, int var14, int var15, long var16, long var18) {
         long updateTime = updateTimes[var12] / 200000L;
@@ -461,25 +496,31 @@ public abstract class MixinMinecraft implements ExMinecraft {
         var7.addVertex((float) var12 + 0.5F, (float) ((long) this.actualHeight - (var16 - var18 - updateTime)) + 0.5F, 0.0D);
     }
 
-    @Redirect(method = "toggleFullscreen", at = @At(
-        value = "FIELD",
-        target = "Lnet/minecraft/client/Minecraft;width:I"))
+    @Redirect(
+        method = "toggleFullscreen",
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/client/Minecraft;width:I"))
     private int fix_getWidthAfterFullscreen(Minecraft instance) {
         return Display.getWidth();
     }
 
-    @Redirect(method = "toggleFullscreen", at = @At(
-        value = "FIELD",
-        target = "Lnet/minecraft/client/Minecraft;height:I"))
+    @Redirect(
+        method = "toggleFullscreen",
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/client/Minecraft;height:I"))
     private int fix_getHeightAfterFullscreen(Minecraft instance) {
         return Display.getHeight();
     }
 
-    @Inject(method = "toggleFullscreen", at = @At(
-        value = "INVOKE",
-        target = "Lorg/lwjgl/opengl/Display;setFullscreen(Z)V",
-        remap = false,
-        shift = At.Shift.AFTER))
+    @Inject(
+        method = "toggleFullscreen",
+        at = @At(
+            value = "INVOKE",
+            target = "Lorg/lwjgl/opengl/Display;setFullscreen(Z)V",
+            remap = false,
+            shift = At.Shift.AFTER))
     private void fix_restoreSizeAfterFullscreen(CallbackInfo ci) throws LWJGLException {
         if (!this.isFullscreen && !Display.isMaximized()) {
             Display.setDisplayMode(new DisplayMode(this.width, this.height));
@@ -788,10 +829,12 @@ public abstract class MixinMinecraft implements ExMinecraft {
         this.lastTickTime = System.currentTimeMillis();
     }
 
-    @Redirect(method = {"method_2110", "lockCursor"}, at = @At(
-        value = "FIELD",
-        target = "Lnet/minecraft/client/Minecraft;attackCooldown:I",
-        ordinal = 0))
+    @Redirect(
+        method = {"method_2110", "lockCursor"},
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/client/Minecraft;attackCooldown:I",
+            ordinal = 0))
     private void keepAttackCooldown(Minecraft instance, int value) {
     }
 
@@ -996,18 +1039,22 @@ public abstract class MixinMinecraft implements ExMinecraft {
         }
     }
 
-    @Inject(method = "initWorld", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/client/ClientInteractionManager;onInitWorld(Lnet/minecraft/world/World;)V",
-        shift = At.Shift.BEFORE))
+    @Inject(
+        method = "initWorld",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/ClientInteractionManager;onInitWorld(Lnet/minecraft/world/World;)V",
+            shift = At.Shift.BEFORE))
     private void loadMapTexOnInit(World var1, String var2, PlayerEntity var3, CallbackInfo ci) {
         ((ExWorld) this.world).loadMapTextures();
     }
 
-    @Inject(method = "initWorld", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/client/ClientInteractionManager;rotatePlayer(Lnet/minecraft/entity/player/PlayerEntity;)V",
-        shift = At.Shift.AFTER))
+    @Inject(
+        method = "initWorld",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/ClientInteractionManager;rotatePlayer(Lnet/minecraft/entity/player/PlayerEntity;)V",
+            shift = At.Shift.AFTER))
     private void initPlayerOnInit(World var1, String var2, PlayerEntity var3, CallbackInfo ci) {
         this.cutsceneCameraEntity = this.interactionManager.method_1717(var1);
         ((ExWorld) this.world).getScript().initPlayer(this.player);
