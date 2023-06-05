@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.mixin.entity;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import dev.adventurecraft.awakening.common.AC_Blocks;
+import dev.adventurecraft.awakening.common.AC_Items;
 import dev.adventurecraft.awakening.extension.block.ExLadderBlock;
 import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
 import net.fabricmc.api.EnvType;
@@ -9,6 +10,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockSounds;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -700,6 +702,20 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         boolean var4 = this.method_1335();
         if (var6 || var4) {
             this.jumping = this.rand.nextFloat() < 0.8F;
+        }
+    }
+
+    @Inject(
+        method = "onKilledBy",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/entity/LivingEntity;getDrops()V"))
+    private void dropHeartsOnDeath(Entity killer, CallbackInfo ci) {
+        if (killer instanceof LivingEntity livingKiller) {
+            if (livingKiller.health < ((ExLivingEntity) livingKiller).getMaxHealth() && this.rand.nextInt(3) != 0) {
+                var item = new ItemEntity(this.world, this.x, this.y, this.z, new ItemStack(AC_Items.heart.id, 1, 0));
+                this.world.spawnEntity(item);
+            }
         }
     }
 
