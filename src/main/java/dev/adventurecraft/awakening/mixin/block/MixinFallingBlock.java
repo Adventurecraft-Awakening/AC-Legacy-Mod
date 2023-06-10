@@ -32,7 +32,7 @@ public abstract class MixinFallingBlock extends Block implements AC_IBlockColor 
         @Local FallingBlockEntity entity) {
 
         int meta = world.getBlockMeta(x, y, z);
-        ((ExFallingBlockEntity) entity).setBlockMeta(meta);
+        ((ExFallingBlockEntity) entity).setMetadata(meta);
     }
 
     @Override

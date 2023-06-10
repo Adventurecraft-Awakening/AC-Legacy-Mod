@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.mixin.client.render.entity;
 
+import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.entity.ExFallingBlockEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
@@ -40,7 +41,9 @@ public abstract class MixinFallingBlockRenderer extends EntityRenderer {
         GL11.glDisable(GL11.GL_LIGHTING);
         int id = world.getBlockId(bX, bY, bZ);
         int meta = world.getBlockMeta(bX, bY, bZ);
-        ((ExWorld) world).setBlockAndMetadataTemp(bX, bY, bZ, entity.blockId, ((ExFallingBlockEntity) entity).getBlockMeta());
+        int entityMeta = ((ExFallingBlockEntity) entity).getMetadata();
+        ACMod.LOGGER.info("sand meta: " + entityMeta);
+        ((ExWorld) world).setBlockAndMetadataTemp(bX, bY, bZ, entity.blockId, entityMeta);
         this.field_857.method_53(block, world, bX, bY, bZ);
         ((ExWorld) world).setBlockAndMetadataTemp(bX, bY, bZ, id, meta);
         GL11.glEnable(GL11.GL_LIGHTING);

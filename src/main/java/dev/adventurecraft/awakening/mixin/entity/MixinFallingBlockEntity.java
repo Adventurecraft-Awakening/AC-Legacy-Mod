@@ -20,6 +20,7 @@ public abstract class MixinFallingBlockEntity extends MixinEntity implements ExF
 
     @Shadow
     public int blockMeta;
+
     public int metadata;
     public double startX;
     public double startZ;
@@ -64,8 +65,11 @@ public abstract class MixinFallingBlockEntity extends MixinEntity implements ExF
                 this.yVelocity *= -0.5D;
                 if (!FallingBlock.method_435(this.world, var1, var2 - 1, var3)) {
                     this.remove();
-                    if ((!this.world.canPlaceBlock(this.blockId, var1, var2, var3, true, 1) || !this.world.placeBlockWithMetaData(var1, var2, var3, this.blockId, this.metadata)) && !this.world.isClient) {
-                        this.dropItem(this.blockId, 1);
+                    if (!this.world.isClient) {
+                        if (!this.world.canPlaceBlock(this.blockId, var1, var2, var3, true, 1) ||
+                            !this.world.placeBlockWithMetaData(var1, var2, var3, this.blockId, this.metadata)) {
+                            this.dropItem(this.blockId, 1);
+                        }
                     }
                 } else {
                     this.setPosition((double) var1 + 0.5D, this.y, (double) var3 + 0.5D);
@@ -102,12 +106,12 @@ public abstract class MixinFallingBlockEntity extends MixinEntity implements ExF
     }
 
     @Override
-    public int getBlockMeta() {
-        return this.blockMeta;
+    public int getMetadata() {
+        return this.metadata;
     }
 
     @Override
-    public void setBlockMeta(int value) {
-        this.blockMeta = value;
+    public void setMetadata(int value) {
+        this.metadata = value;
     }
 }

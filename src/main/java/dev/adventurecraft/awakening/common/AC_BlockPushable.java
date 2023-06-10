@@ -10,8 +10,8 @@ import net.minecraft.world.World;
 
 public class AC_BlockPushable extends AC_BlockColor {
 
-    public AC_BlockPushable(int var1, int var2, Material var3) {
-        super(var1, var2, var3);
+    public AC_BlockPushable(int id, int texture, Material material) {
+        super(id, texture, material);
     }
 
     @Override
@@ -25,15 +25,15 @@ public class AC_BlockPushable extends AC_BlockColor {
     }
 
     @Override
-    public void onScheduledTick(World var1, int var2, int var3, int var4, Random var5) {
-        this.tryToFall(var1, var2, var3, var4);
+    public void onScheduledTick(World world, int x, int y, int z, Random rng) {
+        this.tryToFall(world, x, y, z);
     }
 
-    private void tryToFall(World var1, int var2, int var3, int var4) {
-        if (canFallBelow(var1, var2, var3 - 1, var4) && var3 >= 0) {
-            FallingBlockEntity var5 = new FallingBlockEntity(var1, (float) var2 + 0.5F, (float) var3 + 0.5F, (float) var4 + 0.5F, this.id);
-            ((ExFallingBlockEntity) var5).setBlockMeta(var1.getBlockMeta(var2, var3, var4));
-            var1.spawnEntity(var5);
+    private void tryToFall(World world, int x, int y, int z) {
+        if (canFallBelow(world, x, y - 1, z) && y >= 0) {
+            FallingBlockEntity var5 = new FallingBlockEntity(world, (float) x + 0.5F, (float) y + 0.5F, (float) z + 0.5F, this.id);
+            ((ExFallingBlockEntity) var5).setMetadata(world.getBlockMeta(x, y, z));
+            world.spawnEntity(var5);
         }
     }
 
@@ -42,14 +42,14 @@ public class AC_BlockPushable extends AC_BlockColor {
         return 3;
     }
 
-    public static boolean canFallBelow(World var0, int var1, int var2, int var3) {
-        int var4 = var0.getBlockId(var1, var2, var3);
-        if (var4 == 0) {
+    public static boolean canFallBelow(World world, int x, int y, int z) {
+        int id = world.getBlockId(x, y, z);
+        if (id == 0) {
             return true;
-        } else if (var4 == Block.FIRE.id) {
+        } else if (id == Block.FIRE.id) {
             return true;
         } else {
-            Material var5 = Block.BY_ID[var4].material;
+            Material var5 = Block.BY_ID[id].material;
             if (var5 == Material.WATER) {
                 return true;
             }

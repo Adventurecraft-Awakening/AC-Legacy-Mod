@@ -2,7 +2,7 @@ package dev.adventurecraft.awakening.extension.entity;
 
 public interface ExFallingBlockEntity {
 
-    int getBlockMeta();
+    int getMetadata();
 
-    void setBlockMeta(int value);
+    void setMetadata(int value);
 }

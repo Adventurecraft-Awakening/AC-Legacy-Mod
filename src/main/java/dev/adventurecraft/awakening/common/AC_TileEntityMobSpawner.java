@@ -1,7 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
@@ -15,7 +14,6 @@ import net.minecraft.entity.EntityRegistry;
 import net.minecraft.entity.FallingBlockEntity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.pathing.EntityPath;
 import net.minecraft.entity.animal.WolfEntity;
 import net.minecraft.entity.monster.SkeletonEntity;
 import net.minecraft.entity.monster.SlimeEntity;
@@ -146,7 +144,7 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
                         }
 
                         ((FallingBlockEntity) var3).blockId = this.spawnID;
-                        ((ExFallingBlockEntity) var3).setBlockMeta(this.spawnMeta);
+                        ((ExFallingBlockEntity) var3).setMetadata(this.spawnMeta);
                     } else if (var2.equalsIgnoreCase("Item")) {
                         if (Item.byId[this.spawnID] == null) {
                             return;

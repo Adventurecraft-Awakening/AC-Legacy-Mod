@@ -4,23 +4,23 @@ import net.minecraft.entity.BlockEntity;
 
 public interface ExChunk {
 
-    boolean setBlockIDWithMetadataTemp(int var1, int var2, int var3, int var4, int var5);
+    boolean setBlockIDWithMetadataTemp(int x, int y, int z, int id, int meta);
 
-    BlockEntity getChunkBlockTileEntityDontCreate(int var1, int var2, int var3);
+    BlockEntity getChunkBlockTileEntityDontCreate(int x, int y, int z);
 
-    double getTemperatureValue(int var1, int var2);
+    double getTemperatureValue(int x, int z);
 
-    void setTemperatureValue(int var1, int var2, double var3);
+    void setTemperatureValue(int x, int z, double value);
 
     long getLastUpdated();
 
     void setLastUpdated(long value);
 
-    static int translate128(int var0) {
-        return var0 > 127 ? -129 + (var0 - 127) : var0;
+    static int translate128(int id) {
+        return id > 127 ? -129 + (id - 127) : id;
     }
 
-    static int translate256(int var0) {
-        return var0 < 0 ? var0 + 256 : var0;
+    static int translate256(int id) {
+        return id < 0 ? id + 256 : id;
     }
 }

@@ -333,32 +333,32 @@ public abstract class MixinChunk implements ExChunk {
     }
 
     @Override
-    public boolean setBlockIDWithMetadataTemp(int var1, int var2, int var3, int var4, int var5) {
-        int var6 = ExChunk.translate256(var4);
-        this.blocks[var1 << 11 | var3 << 7 | var2] = (byte) ExChunk.translate128(var6);
-        this.field_957.method_1704(var1, var2, var3, var5);
+    public boolean setBlockIDWithMetadataTemp(int x, int y, int z, int id, int meta) {
+        int var6 = ExChunk.translate256(id);
+        this.blocks[x << 11 | z << 7 | y] = (byte) ExChunk.translate128(var6);
+        this.field_957.method_1704(x, y, z, meta);
         return true;
     }
 
     @Override
-    public BlockEntity getChunkBlockTileEntityDontCreate(int var1, int var2, int var3) {
-        BlockPos var4 = new BlockPos(var1, var2, var3);
+    public BlockEntity getChunkBlockTileEntityDontCreate(int x, int y, int z) {
+        BlockPos var4 = new BlockPos(x, y, z);
         BlockEntity var5 = this.field_964.get(var4);
         return var5;
     }
 
     @Override
-    public double getTemperatureValue(int var1, int var2) {
+    public double getTemperatureValue(int x, int z) {
         if (this.temperatures == null) {
             this.initTempMap();
         }
 
-        return this.temperatures[var2 << 4 | var1];
+        return this.temperatures[z << 4 | x];
     }
 
     @Override
-    public void setTemperatureValue(int var1, int var2, double var3) {
-        this.temperatures[var2 << 4 | var1] = var3;
+    public void setTemperatureValue(int x, int z, double value) {
+        this.temperatures[z << 4 | x] = value;
     }
 
     @Override
