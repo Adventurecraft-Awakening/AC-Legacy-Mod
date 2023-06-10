@@ -115,7 +115,7 @@ public abstract class MixinAbstractClientPlayerEntity extends PlayerEntity imple
                 break;
 
             case "/night":
-                ((ExWorld) this.world).setTimeOfDay(12000L);
+                ((ExWorld) this.world).setTimeOfDay(14000L);
                 break;
 
             case "/fly":
