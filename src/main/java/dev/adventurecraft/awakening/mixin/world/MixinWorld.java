@@ -110,7 +110,13 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     public int autoSaveInterval;
 
     @Shadow
+    protected float prevRainGradient;
+
+    @Shadow
     protected float rainGradient;
+
+    @Shadow
+    protected float prevThunderGradient;
 
     @Shadow
     protected float thunderGradient;
@@ -228,9 +234,6 @@ public abstract class MixinWorld implements ExWorld, BlockView {
 
     @Shadow
     public abstract void removeBlockEntity(int i, int j, int k);
-
-    @Shadow
-    protected abstract void method_245();
 
     @Shadow
     public abstract int method_151(float f);
@@ -1115,6 +1118,47 @@ public abstract class MixinWorld implements ExWorld, BlockView {
             if (this.properties.isThundering()) {
                 this.thunderGradient = 1.0F;
             }
+        }
+    }
+
+    @Overwrite
+    protected void method_245() {
+        if (this.dimension.halvesMapping) {
+            return;
+        }
+
+        if (this.field_209 > 0) {
+            --this.field_209;
+        }
+
+        this.prevRainGradient = this.rainGradient;
+        if (this.properties.isRaining()) {
+            this.rainGradient = (float) ((double) this.rainGradient + 0.01D);
+        } else {
+            this.rainGradient = (float) ((double) this.rainGradient - 0.01D);
+        }
+
+        if (this.rainGradient < 0.0F) {
+            this.rainGradient = 0.0F;
+        }
+
+        if (this.rainGradient > 1.0F) {
+            this.rainGradient = 1.0F;
+        }
+
+        this.prevThunderGradient = this.thunderGradient;
+        if (this.properties.isThundering()) {
+            this.thunderGradient = (float) ((double) this.thunderGradient + 0.01D);
+        } else {
+            this.thunderGradient = (float) ((double) this.thunderGradient - 0.01D);
+        }
+
+        if (this.thunderGradient < 0.0F) {
+            this.thunderGradient = 0.0F;
+        }
+
+        if (this.thunderGradient > 1.0F) {
+            this.thunderGradient = 1.0F;
         }
     }
 

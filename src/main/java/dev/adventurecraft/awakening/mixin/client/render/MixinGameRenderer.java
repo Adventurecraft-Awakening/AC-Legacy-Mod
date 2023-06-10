@@ -529,61 +529,63 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
 
         boolean var17 = false;
 
-        int var18;
-        int var19;
+        int x;
+        int z;
         int var20;
         int var21;
         int var22;
         float var24;
-        for (var18 = var5 - var16; var18 <= var5 + var16; ++var18) {
-            for (var19 = var7 - var16; var19 <= var7 + var16; ++var19) {
-                if (((ExWorld) var4).getTemperatureValue(var18, var19) < 0.5D) {
-                    var20 = var4.method_228(var18, var19);
-                    if (var20 < 0) {
-                        var20 = 0;
-                    }
-
-                    var21 = var20;
-                    if (var20 < var15) {
-                        var21 = var15;
-                    }
-
-                    var22 = var6 - var16;
-                    int var23 = var6 + var16;
-                    if (var22 < var20) {
-                        var22 = var20;
-                    }
-
-                    if (var23 < var20) {
-                        var23 = var20;
-                    }
-
-                    var24 = 1.0F;
-                    if (var22 != var23) {
-                        this.field_2336.setSeed(var18 * var18 * 3121 + var18 * 45238971 + var19 * var19 * 418711 + var19 * 13761);
-                        float var25 = (float) this.field_2351 + var1;
-                        float var26 = ((float) (this.field_2351 & 511) + var1) / 512.0F;
-                        float var27 = this.field_2336.nextFloat() + var25 * 0.01F * (float) this.field_2336.nextGaussian();
-                        float var28 = this.field_2336.nextFloat() + var25 * (float) this.field_2336.nextGaussian() * 0.001F;
-                        double var29 = (double) ((float) var18 + 0.5F) - var3.x;
-                        double var31 = (double) ((float) var19 + 0.5F) - var3.z;
-                        float var33 = MathHelper.sqrt(var29 * var29 + var31 * var31) / (float) var16;
-                        var8.start();
-                        float var34 = var4.method_1782(var18, var21, var19);
-                        GL11.glColor4f(var34, var34, var34, ((1.0F - var33 * var33) * 0.3F + 0.5F) * var2);
-                        var8.setOffset(-var9 * 1.0D, -var11 * 1.0D, -var13 * 1.0D);
-                        var8.vertex(var18 + 0, var22, (double) var19 + 0.5D, 0.0F * var24 + var27, (float) var22 * var24 / 4.0F + var26 * var24 + var28);
-                        var8.vertex(var18 + 1, var22, (double) var19 + 0.5D, 1.0F * var24 + var27, (float) var22 * var24 / 4.0F + var26 * var24 + var28);
-                        var8.vertex(var18 + 1, var23, (double) var19 + 0.5D, 1.0F * var24 + var27, (float) var23 * var24 / 4.0F + var26 * var24 + var28);
-                        var8.vertex(var18 + 0, var23, (double) var19 + 0.5D, 0.0F * var24 + var27, (float) var23 * var24 / 4.0F + var26 * var24 + var28);
-                        var8.vertex((double) var18 + 0.5D, var22, var19 + 0, 0.0F * var24 + var27, (float) var22 * var24 / 4.0F + var26 * var24 + var28);
-                        var8.vertex((double) var18 + 0.5D, var22, var19 + 1, 1.0F * var24 + var27, (float) var22 * var24 / 4.0F + var26 * var24 + var28);
-                        var8.vertex((double) var18 + 0.5D, var23, var19 + 1, 1.0F * var24 + var27, (float) var23 * var24 / 4.0F + var26 * var24 + var28);
-                        var8.vertex((double) var18 + 0.5D, var23, var19 + 0, 0.0F * var24 + var27, (float) var23 * var24 / 4.0F + var26 * var24 + var28);
-                        var8.setOffset(0.0D, 0.0D, 0.0D);
-                        var8.tessellate();
-                    }
+        for (x = var5 - var16; x <= var5 + var16; ++x) {
+            for (z = var7 - var16; z <= var7 + var16; ++z) {
+                if (!(((ExWorld) var4).getTemperatureValue(x, z) < 0.5D)) {
+                    continue;
                 }
+                var20 = var4.method_228(x, z);
+                if (var20 < 0) {
+                    var20 = 0;
+                }
+
+                var21 = var20;
+                if (var20 < var15) {
+                    var21 = var15;
+                }
+
+                var22 = var6 - var16;
+                int var23 = var6 + var16;
+                if (var22 < var20) {
+                    var22 = var20;
+                }
+
+                if (var23 < var20) {
+                    var23 = var20;
+                }
+
+                var24 = 1.0F;
+                if (var22 == var23) {
+                    continue;
+                }
+                this.field_2336.setSeed(x * x * 3121 + x * 45238971 + z * z * 418711 + z * 13761);
+                float var25 = (float) this.field_2351 + var1;
+                float var26 = ((float) (this.field_2351 & 511) + var1) / 512.0F;
+                float var27 = this.field_2336.nextFloat() + var25 * 0.01F * (float) this.field_2336.nextGaussian();
+                float var28 = this.field_2336.nextFloat() + var25 * (float) this.field_2336.nextGaussian() * 0.001F;
+                double var29 = (double) ((float) x + 0.5F) - var3.x;
+                double var31 = (double) ((float) z + 0.5F) - var3.z;
+                float var33 = MathHelper.sqrt(var29 * var29 + var31 * var31) / (float) var16;
+                var8.start();
+                float var34 = var4.method_1782(x, var21, z);
+                GL11.glColor4f(var34, var34, var34, ((1.0F - var33 * var33) * 0.3F + 0.5F) * var2);
+                var8.setOffset(-var9 * 1.0D, -var11 * 1.0D, -var13 * 1.0D);
+                var8.vertex(x + 0, var22, (double) z + 0.5D, 0.0F * var24 + var27, (float) var22 * var24 / 4.0F + var26 * var24 + var28);
+                var8.vertex(x + 1, var22, (double) z + 0.5D, 1.0F * var24 + var27, (float) var22 * var24 / 4.0F + var26 * var24 + var28);
+                var8.vertex(x + 1, var23, (double) z + 0.5D, 1.0F * var24 + var27, (float) var23 * var24 / 4.0F + var26 * var24 + var28);
+                var8.vertex(x + 0, var23, (double) z + 0.5D, 0.0F * var24 + var27, (float) var23 * var24 / 4.0F + var26 * var24 + var28);
+                var8.vertex((double) x + 0.5D, var22, z + 0, 0.0F * var24 + var27, (float) var22 * var24 / 4.0F + var26 * var24 + var28);
+                var8.vertex((double) x + 0.5D, var22, z + 1, 1.0F * var24 + var27, (float) var22 * var24 / 4.0F + var26 * var24 + var28);
+                var8.vertex((double) x + 0.5D, var23, z + 1, 1.0F * var24 + var27, (float) var23 * var24 / 4.0F + var26 * var24 + var28);
+                var8.vertex((double) x + 0.5D, var23, z + 0, 0.0F * var24 + var27, (float) var23 * var24 / 4.0F + var26 * var24 + var28);
+                var8.setOffset(0.0D, 0.0D, 0.0D);
+                var8.tessellate();
             }
         }
 
@@ -594,43 +596,45 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
 
         var17 = false;
 
-        for (var18 = var5 - var16; var18 <= var5 + var16; ++var18) {
-            for (var19 = var7 - var16; var19 <= var7 + var16; ++var19) {
-                if (((ExWorld) var4).getTemperatureValue(var18, var19) >= 0.5D) {
-                    var20 = var4.method_228(var18, var19);
-                    var21 = var6 - var16;
-                    var22 = var6 + var16;
-                    if (var21 < var20) {
-                        var21 = var20;
-                    }
-
-                    if (var22 < var20) {
-                        var22 = var20;
-                    }
-
-                    float var35 = 1.0F;
-                    if (var21 != var22) {
-                        this.field_2336.setSeed(var18 * var18 * 3121 + var18 * 45238971 + var19 * var19 * 418711 + var19 * 13761);
-                        var24 = ((float) (this.field_2351 + var18 * var18 * 3121 + var18 * 45238971 + var19 * var19 * 418711 + var19 * 13761 & 31) + var1) / 32.0F * (3.0F + this.field_2336.nextFloat());
-                        double var36 = (double) ((float) var18 + 0.5F) - var3.x;
-                        double var37 = (double) ((float) var19 + 0.5F) - var3.z;
-                        float var38 = MathHelper.sqrt(var36 * var36 + var37 * var37) / (float) var16;
-                        var8.start();
-                        float var30 = var4.method_1782(var18, 128, var19) * 0.85F + 0.15F;
-                        GL11.glColor4f(var30, var30, var30, ((1.0F - var38 * var38) * 0.5F + 0.5F) * var2);
-                        var8.setOffset(-var9 * 1.0D, -var11 * 1.0D, -var13 * 1.0D);
-                        var8.vertex(var18 + 0, var21, (double) var19 + 0.5D, 0.0F * var35, (float) var21 * var35 / 4.0F + var24 * var35);
-                        var8.vertex(var18 + 1, var21, (double) var19 + 0.5D, 1.0F * var35, (float) var21 * var35 / 4.0F + var24 * var35);
-                        var8.vertex(var18 + 1, var22, (double) var19 + 0.5D, 1.0F * var35, (float) var22 * var35 / 4.0F + var24 * var35);
-                        var8.vertex(var18 + 0, var22, (double) var19 + 0.5D, 0.0F * var35, (float) var22 * var35 / 4.0F + var24 * var35);
-                        var8.vertex((double) var18 + 0.5D, var21, var19 + 0, 0.0F * var35, (float) var21 * var35 / 4.0F + var24 * var35);
-                        var8.vertex((double) var18 + 0.5D, var21, var19 + 1, 1.0F * var35, (float) var21 * var35 / 4.0F + var24 * var35);
-                        var8.vertex((double) var18 + 0.5D, var22, var19 + 1, 1.0F * var35, (float) var22 * var35 / 4.0F + var24 * var35);
-                        var8.vertex((double) var18 + 0.5D, var22, var19 + 0, 0.0F * var35, (float) var22 * var35 / 4.0F + var24 * var35);
-                        var8.setOffset(0.0D, 0.0D, 0.0D);
-                        var8.tessellate();
-                    }
+        for (x = var5 - var16; x <= var5 + var16; ++x) {
+            for (z = var7 - var16; z <= var7 + var16; ++z) {
+                if (!(((ExWorld) var4).getTemperatureValue(x, z) >= 0.5D)) {
+                    continue;
                 }
+                var20 = var4.method_228(x, z);
+                var21 = var6 - var16;
+                var22 = var6 + var16;
+                if (var21 < var20) {
+                    var21 = var20;
+                }
+
+                if (var22 < var20) {
+                    var22 = var20;
+                }
+
+                float var35 = 1.0F;
+                if (var21 == var22) {
+                    continue;
+                }
+                this.field_2336.setSeed(x * x * 3121 + x * 45238971 + z * z * 418711 + z * 13761);
+                var24 = ((float) (this.field_2351 + x * x * 3121 + x * 45238971 + z * z * 418711 + z * 13761 & 31) + var1) / 32.0F * (3.0F + this.field_2336.nextFloat());
+                double var36 = (double) ((float) x + 0.5F) - var3.x;
+                double var37 = (double) ((float) z + 0.5F) - var3.z;
+                float var38 = MathHelper.sqrt(var36 * var36 + var37 * var37) / (float) var16;
+                var8.start();
+                float var30 = var4.method_1782(x, 128, z) * 0.85F + 0.15F;
+                GL11.glColor4f(var30, var30, var30, ((1.0F - var38 * var38) * 0.5F + 0.5F) * var2);
+                var8.setOffset(-var9 * 1.0D, -var11 * 1.0D, -var13 * 1.0D);
+                var8.vertex(x + 0, var21, (double) z + 0.5D, 0.0F * var35, (float) var21 * var35 / 4.0F + var24 * var35);
+                var8.vertex(x + 1, var21, (double) z + 0.5D, 1.0F * var35, (float) var21 * var35 / 4.0F + var24 * var35);
+                var8.vertex(x + 1, var22, (double) z + 0.5D, 1.0F * var35, (float) var22 * var35 / 4.0F + var24 * var35);
+                var8.vertex(x + 0, var22, (double) z + 0.5D, 0.0F * var35, (float) var22 * var35 / 4.0F + var24 * var35);
+                var8.vertex((double) x + 0.5D, var21, z + 0, 0.0F * var35, (float) var21 * var35 / 4.0F + var24 * var35);
+                var8.vertex((double) x + 0.5D, var21, z + 1, 1.0F * var35, (float) var21 * var35 / 4.0F + var24 * var35);
+                var8.vertex((double) x + 0.5D, var22, z + 1, 1.0F * var35, (float) var22 * var35 / 4.0F + var24 * var35);
+                var8.vertex((double) x + 0.5D, var22, z + 0, 0.0F * var35, (float) var22 * var35 / 4.0F + var24 * var35);
+                var8.setOffset(0.0D, 0.0D, 0.0D);
+                var8.tessellate();
             }
         }
 
