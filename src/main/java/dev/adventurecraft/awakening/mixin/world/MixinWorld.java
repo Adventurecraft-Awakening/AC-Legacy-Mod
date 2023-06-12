@@ -1122,7 +1122,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     }
 
     @Overwrite
-    protected void method_245() {
+    public void method_245() {
         if (this.dimension.halvesMapping) {
             return;
         }

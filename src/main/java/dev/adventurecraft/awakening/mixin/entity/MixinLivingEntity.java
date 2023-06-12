@@ -709,7 +709,8 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         method = "onKilledBy",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/LivingEntity;getDrops()V"))
+            target = "Lnet/minecraft/entity/LivingEntity;getDrops()V",
+            shift = At.Shift.AFTER))
     private void dropHeartsOnDeath(Entity killer, CallbackInfo ci) {
         if (killer instanceof LivingEntity livingKiller) {
             if (livingKiller.health < ((ExLivingEntity) livingKiller).getMaxHealth() && this.rand.nextInt(3) != 0) {
