@@ -448,12 +448,15 @@ public abstract class MixinTextureManager implements ExTextureManager {
             this.currentImageBuffer.limit(0);
 
             if (this.currentImageBuffer.limit() <= 0) {
+                int gridIndex = tileW * tileH * 4;
+                if (binder.grid != null && binder.grid.length < gridIndex) {
+                    binder.grid = new byte[gridIndex];
+                }
                 ((AC_TextureBinder) binder).onTick(texSize);
                 if (binder.grid == null) {
                     continue;
                 }
 
-                int gridIndex = tileW * tileH * 4;
                 if (binder.grid.length == gridIndex) {
                     this.currentImageBuffer.clear();
                     this.currentImageBuffer.put(binder.grid);
