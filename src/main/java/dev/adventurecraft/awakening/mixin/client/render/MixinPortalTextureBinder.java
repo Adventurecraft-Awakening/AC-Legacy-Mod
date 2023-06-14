@@ -85,7 +85,6 @@ public abstract class MixinPortalTextureBinder extends TextureBinder implements 
                 }
             }
         }
-
     }
 
     @Override
