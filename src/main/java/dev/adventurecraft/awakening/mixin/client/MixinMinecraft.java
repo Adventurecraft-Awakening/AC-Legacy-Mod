@@ -654,8 +654,10 @@ public abstract class MixinMinecraft implements ExMinecraft {
                                     }
 
                                     if (Keyboard.getEventKey() == Keyboard.KEY_F6) {
-                                        ((ExWorldEventRenderer) this.worldRenderer).resetAll();
-                                        this.overlay.addChatMessage("Resetting all blocks in loaded chunks");
+                                        if (AC_DebugMode.active) {
+                                            ((ExWorldEventRenderer) this.worldRenderer).resetAll();
+                                            this.overlay.addChatMessage("Resetting all blocks in loaded chunks");
+                                        }
                                     }
 
                                     if (Keyboard.getEventKey() == Keyboard.KEY_F7) {
