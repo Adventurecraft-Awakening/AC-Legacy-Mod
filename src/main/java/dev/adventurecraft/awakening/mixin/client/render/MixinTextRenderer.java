@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.mixin.client.render;
 
 import dev.adventurecraft.awakening.client.options.Config;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.render.QuadPoint;
 import net.minecraft.client.render.TextRenderer;
@@ -58,8 +59,8 @@ public abstract class MixinTextRenderer implements ExTextRenderer {
         BufferedImage var1;
         try {
             InputStream var2;
-            if (Config.getMinecraft() != null) {
-                TexturePack texturePack = Config.getMinecraft().texturePackManager.texturePack;
+            if (Minecraft.instance != null) {
+                TexturePack texturePack = Minecraft.instance.texturePackManager.texturePack;
                 var1 = ImageIO.read(texturePack.getResourceAsStream(this.textureName));
                 var2 = texturePack.getResourceAsStream("/font/glyph_sizes.bin");
             } else {
@@ -174,8 +175,8 @@ public abstract class MixinTextRenderer implements ExTextRenderer {
 
         BufferedImage var3;
         try {
-            if (Config.getMinecraft() != null) {
-                var3 = ImageIO.read(Config.getMinecraft().texturePackManager.texturePack.getResourceAsStream(var2.toString()));
+            if (Minecraft.instance != null) {
+                var3 = ImageIO.read(Minecraft.instance.texturePackManager.texturePack.getResourceAsStream(var2.toString()));
             } else {
                 var3 = ImageIO.read(QuadPoint.class.getResourceAsStream(var2.toString()));
             }

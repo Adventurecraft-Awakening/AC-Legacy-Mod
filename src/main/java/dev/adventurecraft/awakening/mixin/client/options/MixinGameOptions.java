@@ -6,6 +6,7 @@ import dev.adventurecraft.awakening.client.options.Config;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.render.ExGameRenderer;
 import dev.adventurecraft.awakening.extension.client.render.ExWorldEventRenderer;
+import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.options.GameOptions;
@@ -16,6 +17,8 @@ import net.minecraft.client.resource.language.TranslationStorage;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.source.WorldSource;
 import org.lwjgl.opengl.Display;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GLContext;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -149,8 +152,6 @@ public abstract class MixinGameOptions implements ExGameOptions {
         sharedInit();
         this.keyBindings.add(this.fogKey);
         this.keyBindings.add(this.ofKeyBindZoom);
-
-        Config.setGameSettings((GameOptions) (Object) this);
     }
 
     @Inject(method = "<init>()V", at = @At("TAIL"))
@@ -192,12 +193,9 @@ public abstract class MixinGameOptions implements ExGameOptions {
     }
 
     private void updateWorldLightLevels() {
-        if (this.client.gameRenderer != null) {
-            ((ExGameRenderer) this.client.gameRenderer).updateWorldLightLevels();
-        }
-
-        if (this.client.worldRenderer != null) {
-            this.client.worldRenderer.method_1537();
+        if (this.client.world != null) {
+            ((ExWorld) this.client.world).loadBrightness();
+            ((ExWorldEventRenderer) this.client.worldRenderer).updateAllTheRenderers();
         }
     }
 
@@ -241,7 +239,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
         shift = At.Shift.BEFORE),
         cancellable = true)
     private void setIntOptionOF_ADVANCED_OPENGL(Option var1, int var2, CallbackInfo ci) {
-        if (!Config.isOcclusionAvailable()) {
+        if (!GLContext.getCapabilities().GL_ARB_occlusion_query) {
             this.ofOcclusionFancy = false;
             this.advancedOpengl = false;
         } else if (!this.advancedOpengl) {
@@ -278,7 +276,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
         shift = At.Shift.BEFORE))
     private void setIntOptionOF(Option var1, int var2, CallbackInfo ci) {
         if (var1 == OptionOF.FOG_FANCY) {
-            if (!Config.isFancyFogAvailable()) {
+            if (!GLContext.getCapabilities().GL_NV_fog_distance) {
                 this.ofFogFancy = false;
             } else {
                 this.ofFogFancy = !this.ofFogFancy;
@@ -1001,6 +999,13 @@ public abstract class MixinGameOptions implements ExGameOptions {
     }
 
     @Override
+    public int getMipmapType() {
+        if (ofMipmapLinear())
+            return GL11.GL_NEAREST_MIPMAP_LINEAR;
+        return GL11.GL_NEAREST_MIPMAP_NEAREST;
+    }
+
+    @Override
     public boolean ofLoadFar() {
         return ofLoadFar;
     }
@@ -1013,6 +1018,18 @@ public abstract class MixinGameOptions implements ExGameOptions {
     @Override
     public boolean ofOcclusionFancy() {
         return ofOcclusionFancy;
+    }
+
+    @Override
+    public boolean isOcclusionEnabled() {
+        return advancedOpengl;
+    }
+
+    @Override
+    public boolean isOcclusionFancy() {
+        if (!isOcclusionEnabled())
+            return false;
+        return ofOcclusionFancy();
     }
 
     @Override
@@ -1051,6 +1068,18 @@ public abstract class MixinGameOptions implements ExGameOptions {
     }
 
     @Override
+    public boolean isCloudsOff() {
+        return ofClouds() == 3;
+    }
+
+    @Override
+    public boolean isCloudsFancy() {
+        if (ofClouds() == 0)
+            return fancyGraphics;
+        return ofClouds() == 2;
+    }
+
+    @Override
     public float ofCloudsHeight() {
         return ofCloudsHeight;
     }
@@ -1061,8 +1090,22 @@ public abstract class MixinGameOptions implements ExGameOptions {
     }
 
     @Override
+    public boolean isLeavesFancy() {
+        if (ofLeaves() == 0)
+            return fancyGraphics;
+        return ofLeaves() == 2;
+    }
+
+    @Override
     public int ofGrass() {
         return ofGrass;
+    }
+
+    @Override
+    public boolean isGrassFancy() {
+        if (ofGrass() == 0)
+            return fancyGraphics;
+        return ofGrass() == 2;
     }
 
     @Override
@@ -1071,8 +1114,27 @@ public abstract class MixinGameOptions implements ExGameOptions {
     }
 
     @Override
+    public boolean isRainOff() {
+        return ofRain() == 3;
+    }
+
+    @Override
+    public boolean isRainFancy() {
+        if (ofRain() == 0)
+            return fancyGraphics;
+        return ofRain() == 2;
+    }
+
+    @Override
     public int ofWater() {
         return ofWater;
+    }
+
+    @Override
+    public boolean isWaterFancy() {
+        if (ofWater() == 0)
+            return fancyGraphics;
+        return ofWater() == 2;
     }
 
     @Override
@@ -1123,6 +1185,16 @@ public abstract class MixinGameOptions implements ExGameOptions {
     @Override
     public int ofTime() {
         return ofTime;
+    }
+
+    @Override
+    public boolean isTimeDayOnly() {
+        return ofTime() == 1;
+    }
+
+    @Override
+    public boolean isTimeNightOnly() {
+        return ofTime() == 2;
     }
 
     @Override

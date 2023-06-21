@@ -43,7 +43,7 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
     }
 
     private long getSideTexture(BlockView view, int x, int y, int z, int side) {
-        ConnectedGrassOption option = Config.getConnectedGrassOption();
+        ConnectedGrassOption option = ((ExGameOptions) Minecraft.instance.options).ofConnectedGrass();
 
         Material material = view.getMaterial(x, y + 1, z);
         if (material == Material.SNOW || material == Material.SNOW_BLOCK) {

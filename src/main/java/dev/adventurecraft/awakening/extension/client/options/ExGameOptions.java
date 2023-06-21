@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.extension.client.options;
 
 import dev.adventurecraft.awakening.client.options.ConnectedGrassOption;
 import net.minecraft.client.options.KeyBinding;
+import org.lwjgl.opengl.GL11;
 
 public interface ExGameOptions {
 
@@ -13,11 +14,17 @@ public interface ExGameOptions {
 
     boolean ofMipmapLinear();
 
+    int getMipmapType();
+
     boolean ofLoadFar();
 
     int ofPreloadedChunks();
 
     boolean ofOcclusionFancy();
+
+    boolean isOcclusionEnabled();
+
+    boolean isOcclusionFancy();
 
     boolean ofSmoothFps();
 
@@ -33,15 +40,29 @@ public interface ExGameOptions {
 
     int ofClouds();
 
+    boolean isCloudsOff();
+
+    boolean isCloudsFancy();
+
     float ofCloudsHeight();
 
     int ofLeaves();
 
+    boolean isLeavesFancy();
+
     int ofGrass();
+
+    boolean isGrassFancy();
 
     int ofRain();
 
+    boolean isRainOff();
+
+    boolean isRainFancy();
+
     int ofWater();
+
+    boolean isWaterFancy();
 
     ConnectedGrassOption ofConnectedGrass();
 
@@ -62,6 +83,10 @@ public interface ExGameOptions {
     boolean ofFarView();
 
     int ofTime();
+
+    boolean isTimeDayOnly();
+
+    boolean isTimeNightOnly();
 
     boolean ofClearWater();
 

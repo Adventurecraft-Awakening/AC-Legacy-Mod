@@ -2,7 +2,6 @@ package dev.adventurecraft.awakening.mixin.client.render;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
-import dev.adventurecraft.awakening.client.options.Config;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.extension.ExClass_66;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
@@ -145,21 +144,22 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
 
     @Overwrite
     public void method_1537() {
-        Block.LEAVES.updateTexture(Config.isLeavesFancy());
+        var options = (ExGameOptions) this.client.options;
+        Block.LEAVES.updateTexture(options.isLeavesFancy());
+
         this.field_1782 = this.client.options.viewDistance;
-        int renderDist;
         if (this.field_1809 != null) {
-            for (renderDist = 0; renderDist < this.field_1809.length; ++renderDist) {
-                this.field_1809[renderDist].method_302();
+            for (class_66 viz : this.field_1809) {
+                viz.method_302();
             }
         }
 
-        renderDist = 64 << 3 - this.field_1782;
-        if (Config.isLoadChunksFar()) {
+        int renderDist = 64 << 3 - this.field_1782;
+        if (options.ofLoadFar()) {
             renderDist = 512;
         }
 
-        if (Config.isFarView()) {
+        if (options.ofFarView()) {
             if (renderDist < 512) {
                 renderDist *= 3;
             } else {
@@ -167,8 +167,8 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             }
         }
 
-        renderDist += Config.getPreloadedChunks() * 2 * 16;
-        if (!Config.isFarView() && renderDist > 400) {
+        renderDist += options.ofPreloadedChunks() * 2 * 16;
+        if (!options.ofFarView() && renderDist > 400) {
             renderDist = 400;
         }
 
@@ -249,7 +249,8 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             }
         }
 
-        if (this.client.options.viewDistance != this.field_1782 && !Config.isLoadChunksFar()) {
+        var options = (ExGameOptions) this.client.options;
+        if (this.client.options.viewDistance != this.field_1782 && !options.ofLoadFar()) {
             ((ExChunkCache) this.world.worldSource).updateVeryFar();
             this.method_1537();
         }
@@ -273,7 +274,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             this.field_1800 = entity.x;
             this.field_1801 = entity.y;
             this.field_1802 = entity.z;
-            int preloadCount = Config.getPreloadedChunks() * 64;
+            int preloadCount = options.ofPreloadedChunks() * 64;
             double eprX = entity.x - this.prevReposX;
             double eprY = entity.y - this.prevReposY;
             double eprZ = entity.z - this.prevReposZ;
@@ -288,12 +289,18 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             Arrays.sort(this.field_1808, new EntityOppositeComparator(entity));
         }
 
-        if (((ExGameOptions) this.client.options).ofSmoothFps() && renderPass == 0) {
-            GL11.glFinish();
-        }
+        if (renderPass == 0) {
+            if (options.ofSmoothFps()) {
+                GL11.glFinish();
+            }
 
-        if (((ExGameOptions) this.client.options).ofSmoothInput() && renderPass == 0) {
-            Config.sleep(1L);
+            if (options.ofSmoothInput()) {
+                try {
+                    Thread.sleep(1L);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         if (renderPass != 0 || !this.field_1817 || !this.client.options.advancedOpengl || this.client.options.anaglyph3d) {
@@ -344,6 +351,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             float xOffset = 0.0F;
             float yOffset = 0.0F;
             float zOffset = 0.0F;
+            boolean isOcclusionFancy = options.isOcclusionFancy();
 
             for (int vizIndex = vizStart; vizIndex < vizEnd; ++vizIndex) {
                 class_66 viz = this.field_1808[vizIndex];
@@ -355,7 +363,8 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
                     continue;
                 }
 
-                if (Config.isOcclusionFancy() && !((ExClass_66) viz).isInFrustrumFully()) {
+                var exViz = (ExClass_66) viz;
+                if (isOcclusionFancy && !exViz.isInFrustrumFully()) {
                     viz.field_252 = true;
                     continue;
                 }
@@ -363,16 +372,16 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
                     continue;
                 }
 
-                if (((ExClass_66) viz).isVisibleFromPosition()) {
-                    float dX = Math.abs((float) (((ExClass_66) viz).visibleFromX() - entity.x));
-                    float dY = Math.abs((float) (((ExClass_66) viz).visibleFromY() - entity.y));
-                    float dZ = Math.abs((float) (((ExClass_66) viz).visibleFromZ() - entity.z));
+                if (exViz.isVisibleFromPosition()) {
+                    float dX = Math.abs((float) (exViz.visibleFromX() - entity.x));
+                    float dY = Math.abs((float) (exViz.visibleFromY() - entity.y));
+                    float dZ = Math.abs((float) (exViz.visibleFromZ() - entity.z));
                     float len = dX + dY + dZ;
                     if ((double) len < 10.0D + (double) vizIndex / 1000.0D) {
                         viz.field_252 = true;
                         continue;
                     }
-                    ((ExClass_66) viz).isVisibleFromPosition(false);
+                    exViz.isVisibleFromPosition(false);
                 }
 
                 float dX = (float) (viz.field_237 - peX);
@@ -483,7 +492,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         remap = false,
         ordinal = 0))
     private void configurableSky1(int list) {
-        if (Config.isSkyEnabled()) {
+        if (((ExGameOptions) this.client.options).ofSky()) {
             GL11.glCallList(list);
         }
     }
@@ -494,7 +503,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         remap = false,
         ordinal = 2))
     private void configurableSky2(int list) {
-        if (Config.isSkyEnabled()) {
+        if (((ExGameOptions) this.client.options).ofSky()) {
             GL11.glCallList(list);
         }
     }
@@ -505,14 +514,14 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         remap = false,
         ordinal = 1))
     private void configurableStars(int list) {
-        if (Config.isStarsEnabled()) {
+        if (((ExGameOptions) this.client.options).ofStars()) {
             GL11.glCallList(list);
         }
     }
 
     @Inject(method = "method_1552", at = @At("HEAD"), cancellable = true)
     private void configurableClouds(float var1, CallbackInfo ci) {
-        if (((ExGameOptions) this.client.options).ofClouds() == 3) {
+        if (((ExGameOptions) this.client.options).isCloudsOff()) {
             ci.cancel();
         }
     }
@@ -521,7 +530,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         value = "FIELD",
         target = "Lnet/minecraft/client/options/GameOptions;fancyGraphics:Z"))
     private boolean fancyClouds(GameOptions instance) {
-        return Config.isCloudsFancy();
+        return ((ExGameOptions) instance).isCloudsFancy();
     }
 
     @Redirect(method = "method_1552", at = @At(
@@ -702,13 +711,14 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             return false;
         }
 
-        int var3 = 0;
-        int var4 = Config.getUpdatesPerFrame();
-        if (Config.isDynamicUpdates() && !this.isMoving(var1)) {
+        var options = (ExGameOptions) this.client.options;
+        int frameUpdates = 0;
+        int targetFrameUpdates = options.ofChunkUpdates();
+        if (options.ofChunkUpdatesDynamic() && !this.isMoving(var1)) {
             if (((ExMinecraft) this.client).isCameraActive()) {
-                var4 *= 2;
+                targetFrameUpdates *= 2;
             } else {
-                var4 *= 3;
+                targetFrameUpdates *= 3;
             }
         }
 
@@ -720,7 +730,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
 
         long avgFrameTime = 0L;
         if (AC_PlayerTorch.isTorchActive()) {
-            avgFrameTime = ((ExMinecraft) Minecraft.instance).getAvgFrameTime();
+            avgFrameTime = ((ExMinecraft) this.client).getAvgFrameTime();
         }
 
         for (int var10 = 0; var10 < this.field_1807.size(); ++var10) {
@@ -738,9 +748,9 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
                     viz.method_296();
                     viz.field_249 = false;
                     this.field_1807.set(var10, null);
-                    ++var3;
+                    ++frameUpdates;
                 } else {
-                    if (var12 > 256.0F && var3 >= var4) {
+                    if (var12 > 256.0F && frameUpdates >= targetFrameUpdates) {
                         break;
                     }
 
@@ -770,10 +780,10 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             var7.method_296();
             var7.field_249 = false;
             this.field_1807.set(var9, null);
-            ++var3;
+            ++frameUpdates;
             float var15 = var8 / 5.0F;
 
-            for (int var16 = 0; var16 < this.field_1807.size() && var3 < var4; ++var16) {
+            for (int var16 = 0; var16 < this.field_1807.size() && frameUpdates < targetFrameUpdates; ++var16) {
                 class_66 viz = this.field_1807.get(var16);
                 if (viz != null) {
                     float var13 = viz.method_299(var1);
@@ -786,7 +796,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
                         viz.method_296();
                         viz.field_249 = false;
                         this.field_1807.set(var16, null);
-                        ++var3;
+                        ++frameUpdates;
                     }
                 }
             }
@@ -879,7 +889,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         target = "Lnet/minecraft/client/render/entity/EntityRenderDispatcher;render(Lnet/minecraft/entity/Entity;F)V",
         ordinal = 1))
     private void renderEntityBasedOnCamera(EntityRenderDispatcher instance, Entity var7, float var3) {
-        ExMinecraft exClient = (ExMinecraft) this.client;
+        var exClient = (ExMinecraft) this.client;
         if ((!exClient.isCameraActive() || !exClient.isCameraPause()) && (!AC_DebugMode.active || var7 instanceof PlayerEntity) && ((ExEntity) var7).getStunned() <= 0) {
             instance.render(var7, var3);
         } else {
@@ -959,81 +969,91 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     }
 
     @Override
-    public void drawCursorSelection(LivingEntity var1, ItemStack var2, float var3) {
-        if (AC_ItemCursor.bothSet && var2 != null && var2.itemId >= AC_Items.cursor.id && var2.itemId <= AC_Items.cursor.id + 20) {
-            GL11.glEnable(GL11.GL_BLEND);
-            GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-            GL11.glColor4f(1.0F, 0.6F, 0.0F, 0.4F);
-            GL11.glLineWidth(3.0F);
-            GL11.glDisable(GL11.GL_TEXTURE_2D);
-            int var4 = Math.min(AC_ItemCursor.oneX, AC_ItemCursor.twoX);
-            int var5 = Math.max(AC_ItemCursor.oneX, AC_ItemCursor.twoX) + 1;
-            int var6 = Math.min(AC_ItemCursor.oneY, AC_ItemCursor.twoY);
-            int var7 = Math.max(AC_ItemCursor.oneY, AC_ItemCursor.twoY) + 1;
-            int var8 = Math.min(AC_ItemCursor.oneZ, AC_ItemCursor.twoZ);
-            int var9 = Math.max(AC_ItemCursor.oneZ, AC_ItemCursor.twoZ) + 1;
-            double var10 = var1.prevRenderX + (var1.x - var1.prevRenderX) * (double) var3;
-            double var12 = var1.prevRenderY + (var1.y - var1.prevRenderY) * (double) var3;
-            double var14 = var1.prevRenderZ + (var1.z - var1.prevRenderZ) * (double) var3;
-            Tessellator var16 = Tessellator.INSTANCE;
-
-            int var17;
-            for (var17 = var4; var17 <= var5; ++var17) {
-                var16.start(3);
-                var16.addVertex((double) var17 - var10, (double) var6 - var12, (double) var8 - var14);
-                var16.addVertex((double) var17 - var10, (double) var7 - var12, (double) var8 - var14);
-                var16.addVertex((double) var17 - var10, (double) var7 - var12, (double) var9 - var14);
-                var16.addVertex((double) var17 - var10, (double) var6 - var12, (double) var9 - var14);
-                var16.addVertex((double) var17 - var10, (double) var6 - var12, (double) var8 - var14);
-                var16.tessellate();
-            }
-
-            for (var17 = var6; var17 <= var7; ++var17) {
-                var16.start(3);
-                var16.addVertex((double) var4 - var10, (double) var17 - var12, (double) var8 - var14);
-                var16.addVertex((double) var5 - var10, (double) var17 - var12, (double) var8 - var14);
-                var16.addVertex((double) var5 - var10, (double) var17 - var12, (double) var9 - var14);
-                var16.addVertex((double) var4 - var10, (double) var17 - var12, (double) var9 - var14);
-                var16.addVertex((double) var4 - var10, (double) var17 - var12, (double) var8 - var14);
-                var16.tessellate();
-            }
-
-            for (var17 = var8; var17 <= var9; ++var17) {
-                var16.start(3);
-                var16.addVertex((double) var4 - var10, (double) var6 - var12, (double) var17 - var14);
-                var16.addVertex((double) var5 - var10, (double) var6 - var12, (double) var17 - var14);
-                var16.addVertex((double) var5 - var10, (double) var7 - var12, (double) var17 - var14);
-                var16.addVertex((double) var4 - var10, (double) var7 - var12, (double) var17 - var14);
-                var16.addVertex((double) var4 - var10, (double) var6 - var12, (double) var17 - var14);
-                var16.tessellate();
-            }
-
-            GL11.glLineWidth(1.0F);
-            GL11.glEnable(GL11.GL_TEXTURE_2D);
-            GL11.glDisable(GL11.GL_BLEND);
+    public void drawCursorSelection(LivingEntity entity, ItemStack item, float deltaTime) {
+        if (!AC_ItemCursor.bothSet || item == null || item.itemId < AC_Items.cursor.id || item.itemId > AC_Items.cursor.id + 20) {
+            return;
         }
 
+        GL11.glEnable(GL11.GL_BLEND);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GL11.glColor4f(1.0F, 0.6F, 0.0F, 0.4F);
+        GL11.glLineWidth(3.0F);
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        int x1 = Math.min(AC_ItemCursor.oneX, AC_ItemCursor.twoX);
+        int x2 = Math.max(AC_ItemCursor.oneX, AC_ItemCursor.twoX) + 1;
+        int y1 = Math.min(AC_ItemCursor.oneY, AC_ItemCursor.twoY);
+        int y2 = Math.max(AC_ItemCursor.oneY, AC_ItemCursor.twoY) + 1;
+        int z1 = Math.min(AC_ItemCursor.oneZ, AC_ItemCursor.twoZ);
+        int z2 = Math.max(AC_ItemCursor.oneZ, AC_ItemCursor.twoZ) + 1;
+        double dX = entity.prevRenderX + (entity.x - entity.prevRenderX) * (double) deltaTime;
+        double dY = entity.prevRenderY + (entity.y - entity.prevRenderY) * (double) deltaTime;
+        double dZ = entity.prevRenderZ + (entity.z - entity.prevRenderZ) * (double) deltaTime;
+        Tessellator ts = Tessellator.INSTANCE;
+
+        double pX1 = (double) x1 - dY;
+        double pX2 = (double) x2 - dY;
+        double pY1 = (double) y1 - dY;
+        double pY2 = (double) y2 - dY;
+        double pZ1 = (double) z1 - dY;
+        double pZ2 = (double) z2 - dY;
+
+        for (int x = x1; x <= x2; ++x) {
+            ts.start(3);
+            double pX = (double) x - dX;
+            ts.addVertex(pX, pY1, pZ1);
+            ts.addVertex(pX, pY2, pZ1);
+            ts.addVertex(pX, pY2, pZ2);
+            ts.addVertex(pX, pY1, pZ2);
+            ts.addVertex(pX, pY1, pZ1);
+            ts.tessellate();
+        }
+
+        for (int y = y1; y <= y2; ++y) {
+            ts.start(3);
+            double pY = (double) y - dY;
+            ts.addVertex(pX1, pY, pZ1);
+            ts.addVertex(pX2, pY, pZ1);
+            ts.addVertex(pX2, pY, pZ2);
+            ts.addVertex(pX1, pY, pZ2);
+            ts.addVertex(pX1, pY, pZ1);
+            ts.tessellate();
+        }
+
+        for (int z = z1; z <= z2; ++z) {
+            ts.start(3);
+            double pZ = (double) z - dZ;
+            ts.addVertex(pX1, pY1, pZ);
+            ts.addVertex(pX2, pY1, pZ);
+            ts.addVertex(pX2, pY2, pZ);
+            ts.addVertex(pX1, pY2, pZ);
+            ts.addVertex(pX1, pY1, pZ);
+            ts.tessellate();
+        }
+
+        GL11.glLineWidth(1.0F);
+        GL11.glEnable(GL11.GL_TEXTURE_2D);
+        GL11.glDisable(GL11.GL_BLEND);
     }
 
     @Override
-    public void drawEntityPath(Entity var1, LivingEntity var2, float var3) {
-        if (!(var1 instanceof IEntityPather var4)) {
+    public void drawEntityPath(Entity entity, LivingEntity viewEntity, float deltaTime) {
+        if (!(entity instanceof IEntityPather pather)) {
             return;
         }
 
-        EntityPath var5 = var4.getCurrentPath();
-        if (var5 == null) {
+        EntityPath path = pather.getCurrentPath();
+        if (path == null) {
             return;
         }
 
-        double var6 = var2.prevRenderX + (var2.x - var2.prevRenderX) * (double) var3;
-        double var8 = var2.prevRenderY + (var2.y - var2.prevRenderY) * (double) var3;
-        double var10 = var2.prevRenderZ + (var2.z - var2.prevRenderZ) * (double) var3;
-        Tessellator var12 = Tessellator.INSTANCE;
-        var12.start(3);
+        double var6 = viewEntity.prevRenderX + (viewEntity.x - viewEntity.prevRenderX) * (double) deltaTime;
+        double var8 = viewEntity.prevRenderY + (viewEntity.y - viewEntity.prevRenderY) * (double) deltaTime;
+        double var10 = viewEntity.prevRenderZ + (viewEntity.z - viewEntity.prevRenderZ) * (double) deltaTime;
+        Tessellator ts = Tessellator.INSTANCE;
+        ts.start(3);
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        if (var1 instanceof MobEntity mob && mob.method_634() != null) {
+        if (entity instanceof MobEntity mob && mob.method_634() != null) {
             GL11.glColor4f(1.0F, 0.0F, 0.0F, 0.4F);
         } else {
             GL11.glColor4f(1.0F, 1.0F, 0.0F, 0.4F);
@@ -1041,33 +1061,33 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
 
         GL11.glLineWidth(5.0F);
         GL11.glDisable(GL11.GL_TEXTURE_2D);
-        var12.addVertex(var1.x - var6, var1.y - var8, var1.z - var10);
+        ts.addVertex(entity.x - var6, entity.y - var8, entity.z - var10);
 
-        for (int var13 = var5.field_2692; var13 < var5.field_2690; ++var13) {
-            PathNode var14 = var5.field_2691[var13];
-            var12.addVertex((double) var14.x - var6 + 0.5D, (double) var14.y - var8 + 0.5D, (double) var14.z - var10 + 0.5D);
+        for (int i = path.field_2692; i < path.field_2690; ++i) {
+            PathNode node = path.field_2691[i];
+            ts.addVertex((double) node.x - var6 + 0.5D, (double) node.y - var8 + 0.5D, (double) node.z - var10 + 0.5D);
         }
 
-        var12.tessellate();
+        ts.tessellate();
         GL11.glLineWidth(1.0F);
         GL11.glEnable(GL11.GL_TEXTURE_2D);
         GL11.glDisable(GL11.GL_BLEND);
     }
 
     @Override
-    public void drawEntityFOV(LivingEntity var1, LivingEntity var2, float var3) {
-        if (var1 == var2) {
+    public void drawEntityFOV(LivingEntity entity, LivingEntity viewEntity, float deltaTime) {
+        if (entity == viewEntity) {
             return;
         }
 
-        double var4 = var2.prevRenderX + (var2.x - var2.prevRenderX) * (double) var3;
-        double var6 = var2.prevRenderY + (var2.y - var2.prevRenderY) * (double) var3;
-        double var8 = var2.prevRenderZ + (var2.z - var2.prevRenderZ) * (double) var3;
-        Tessellator var10 = Tessellator.INSTANCE;
-        var10.start(3);
+        double dX = viewEntity.prevRenderX + (viewEntity.x - viewEntity.prevRenderX) * (double) deltaTime;
+        double dY = viewEntity.prevRenderY + (viewEntity.y - viewEntity.prevRenderY) * (double) deltaTime;
+        double dZ = viewEntity.prevRenderZ + (viewEntity.z - viewEntity.prevRenderZ) * (double) deltaTime;
+        Tessellator ts = Tessellator.INSTANCE;
+        ts.start(3);
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        if (((ExLivingEntity) var1).getExtraFov() > 0.0F) {
+        if (((ExLivingEntity) entity).getExtraFov() > 0.0F) {
             GL11.glColor4f(1.0F, 0.5F, 0.0F, 0.4F);
         } else {
             GL11.glColor4f(0.0F, 1.0F, 0.0F, 0.4F);
@@ -1075,15 +1095,16 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
 
         GL11.glLineWidth(5.0F);
         GL11.glDisable(GL11.GL_TEXTURE_2D);
-        float var11 = Math.min(((ExLivingEntity) var1).getFov() / 2.0F + ((ExLivingEntity) var1).getExtraFov(), 180.0F);
-        double var12 = 5.0D * Math.sin(-Math.PI * (double) (var1.yaw - var11) / 180.0D) + var1.x;
-        double var14 = 5.0D * Math.cos(-Math.PI * (double) (var1.yaw - var11) / 180.0D) + var1.z;
-        var10.addVertex(var12 - var4, var1.y - var6 + (double) var1.getStandingEyeHeight(), var14 - var8);
-        var10.addVertex(var1.x - var4, var1.y - var6 + (double) var1.getStandingEyeHeight(), var1.z - var8);
-        var12 = 5.0D * Math.sin(-Math.PI * (double) (var1.yaw + var11) / 180.0D) + var1.x;
-        var14 = 5.0D * Math.cos(-Math.PI * (double) (var1.yaw + var11) / 180.0D) + var1.z;
-        var10.addVertex(var12 - var4, var1.y - var6 + (double) var1.getStandingEyeHeight(), var14 - var8);
-        var10.tessellate();
+        float fov = Math.min(((ExLivingEntity) entity).getFov() / 2.0F + ((ExLivingEntity) entity).getExtraFov(), 180.0F);
+        double rX = 5.0D * Math.sin(-Math.PI * (double) (entity.yaw - fov) / 180.0D) + entity.x;
+        double rZ = 5.0D * Math.cos(-Math.PI * (double) (entity.yaw - fov) / 180.0D) + entity.z;
+        double rdY = entity.y - dY + (double) entity.getStandingEyeHeight();
+        ts.addVertex(rX - dX, rdY, rZ - dZ);
+        ts.addVertex(entity.x - dX, rdY, entity.z - dZ);
+        rX = 5.0D * Math.sin(-Math.PI * (double) (entity.yaw + fov) / 180.0D) + entity.x;
+        rZ = 5.0D * Math.cos(-Math.PI * (double) (entity.yaw + fov) / 180.0D) + entity.z;
+        ts.addVertex(rX - dX, rdY, rZ - dZ);
+        ts.tessellate();
         GL11.glLineWidth(1.0F);
         GL11.glEnable(GL11.GL_TEXTURE_2D);
         GL11.glDisable(GL11.GL_BLEND);
@@ -1095,7 +1116,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     }
 
     @Override
-    public ParticleEntity spawnParticleR(String type, double x, double y, double z, double vX, double vY, double vZ) {
+    public ParticleEntity spawnParticleR(String name, double x, double y, double z, double vX, double vY, double vZ) {
         if (this.client == null || this.client.viewEntity == null || this.client.particleManager == null) {
             return null;
         }
@@ -1108,7 +1129,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             return null;
         }
 
-        ParticleEntity particle = switch (type) {
+        ParticleEntity particle = switch (name) {
             case "bubble" -> new BubbleParticle(this.world, x, y, z, vX, vY, vZ);
             case "smoke" -> new SmokeParticleEntity(this.world, x, y, z, vX, vY, vZ);
             case "note" -> new NoteParticleEntity(this.world, x, y, z, vX, vY, vZ);
@@ -1119,8 +1140,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             case "footstep" -> new FootstepParticle(this.textureManager, this.world, x, y, z);
             case "splash" -> new WaterParticleEntity(this.world, x, y, z, vX, vY, vZ);
             case "largesmoke" -> new SmokeParticleEntity(this.world, x, y, z, vX, vY, vZ, 2.5F);
-            case "reddust" ->
-                new RedstoneParticleEntity(this.world, x, y, z, (float) vX, (float) vY, (float) vZ);
+            case "reddust" -> new RedstoneParticleEntity(this.world, x, y, z, (float) vX, (float) vY, (float) vZ);
             case "snowballpoof" -> new PoofParticleEntity(this.world, x, y, z, Item.SNOWBALL);
             case "snowshovel" -> new SnowPuffParticle(this.world, x, y, z, vX, vY, vZ);
             case "slime" -> new PoofParticleEntity(this.world, x, y, z, Item.SLIMEBALL);

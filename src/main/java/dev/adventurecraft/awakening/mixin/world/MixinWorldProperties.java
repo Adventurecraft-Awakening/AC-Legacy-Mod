@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.mixin.world;
 
 import dev.adventurecraft.awakening.common.AC_BlockEffect;
+import dev.adventurecraft.awakening.common.LightHelper;
 import dev.adventurecraft.awakening.common.WorldGenProperties;
 import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
@@ -124,15 +125,12 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
             this.playerName = tag.getString("playerName");
         }
 
-        float var2 = 0.05F;
-
-        for (int var3 = 0; var3 < 16; ++var3) {
-            String var4 = String.format("brightness%d", var3);
-            if (tag.containsKey(var4)) {
-                this.brightness[var3] = tag.getFloat(var4);
+        for (int i = 0; i < 16; ++i) {
+            String id = String.format("brightness%d", i);
+            if (tag.containsKey(id)) {
+                this.brightness[i] = tag.getFloat(id);
             } else {
-                float var5 = 1.0F - (float) var3 / 15.0F;
-                this.brightness[var3] = (1.0F - var5) / (var5 * 3.0F + 1.0F) * (1.0F - var2) + var2;
+                this.brightness[i] = LightHelper.getDefaultLightAtIndex(i);
             }
         }
 
@@ -164,11 +162,9 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     @Inject(method = "<init>(JLjava/lang/String;)V", at = @At("TAIL"))
     private void init(long var1, String var2, CallbackInfo ci) {
         this.timeRate = 1.0F;
-        float var4 = 0.05F;
 
-        for (int var5 = 0; var5 < 16; ++var5) {
-            float var6 = 1.0F - (float) var5 / 15.0F;
-            this.brightness[var5] = (1.0F - var6) / (var6 * 3.0F + 1.0F) * (1.0F - var4) + var4;
+        for (int i = 0; i < 16; ++i) {
+            this.brightness[i] = LightHelper.getDefaultLightAtIndex(i);
         }
     }
 

@@ -8,6 +8,7 @@ import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.entity.player.ExAbstractClientPlayerEntity;
 import dev.adventurecraft.awakening.extension.client.gui.screen.ExScreen;
+import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.render.ExWorldEventRenderer;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
@@ -304,7 +305,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
             shift = At.Shift.AFTER,
             ordinal = 0))
     private void init_createDisplay(CallbackInfo ci) throws LWJGLException {
-        int sampleCount = Config.getAntialiasingLevel();
+        int sampleCount = ((ExGameOptions)options).ofAaLevel();
         ACMod.LOGGER.info("MSAA Samples: " + sampleCount);
 
         try {
@@ -643,7 +644,6 @@ public abstract class MixinMinecraft implements ExMinecraft {
                                             this.overlay.addChatMessage("Debug Mode Active");
                                         } else {
                                             this.overlay.addChatMessage("Debug Mode Deactivated");
-                                            ((ExWorld) this.world).loadBrightness();
                                         }
 
                                         ((ExWorldEventRenderer) this.worldRenderer).updateAllTheRenderers();

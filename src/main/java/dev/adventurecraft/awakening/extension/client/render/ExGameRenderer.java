@@ -4,7 +4,5 @@ import net.minecraft.client.render.HeldItemRenderer;
 
 public interface ExGameRenderer {
 
-    void updateWorldLightLevels();
-
     HeldItemRenderer getOffHandItemRenderer();
 }

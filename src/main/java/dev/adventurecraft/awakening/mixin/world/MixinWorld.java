@@ -9,6 +9,7 @@ import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.block.ExLadderBlock;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.ExTextureManager;
+import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.render.block.ExFoliageColor;
 import dev.adventurecraft.awakening.extension.client.render.block.ExGrassColor;
 import dev.adventurecraft.awakening.extension.client.resource.language.ExTranslationStorage;
@@ -1435,7 +1436,20 @@ public abstract class MixinWorld implements ExWorld, BlockView {
 
     @Override
     public void loadBrightness() {
+        // TODO: add brightness control per dimension
         float[] brightness = ((ExWorldProperties) this.properties).getBrightness();
+        float baseValue = 0.05F; // TODO: based on dimension
+
+        float ofBrightness = ((ExGameOptions) Minecraft.instance.options).ofBrightness();
+        float factor = 3.0F * (1.0F - ofBrightness);
+
+        for (int i = 0; i < 16; ++i) {
+            float original = LightHelper.solveLightValue(brightness[i], 3.0F, 0.05F);
+            brightness[i] = LightHelper.calculateLight(original, factor, baseValue);
+        }
+
+        AoHelper.setLightLevels(brightness[0], brightness[1]);
+
         System.arraycopy(brightness, 0, this.dimension.lightTable, 0, 16);
     }
 

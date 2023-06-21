@@ -218,11 +218,8 @@ public class AC_GuiWorldConfig extends Screen {
     }
 
     private void restoreLightInputs() {
-        float baseValue = 0.05F;
-
         for (int i = 0; i < 16; ++i) {
-            float v = 1.0F - (float) i / 15.0F;
-            float lightValue = (1.0F - v) / (v * 3.0F + 1.0F) * (1.0F - baseValue) + baseValue;
+            float lightValue = LightHelper.getDefaultLightAtIndex(i);
             this.lightLevelInputs[i].setText(this.numFormat.format(lightValue));
         }
     }

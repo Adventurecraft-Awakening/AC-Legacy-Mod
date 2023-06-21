@@ -7,13 +7,13 @@ import net.minecraft.item.ItemStack;
 
 public interface ExWorldEventRenderer {
 
-    void drawCursorSelection(LivingEntity var1, ItemStack var2, float var3);
+    void drawCursorSelection(LivingEntity entity, ItemStack item, float deltaTime);
 
-    void drawEntityPath(Entity var1, LivingEntity var2, float var3);
+    void drawEntityPath(Entity entity, LivingEntity viewEntity, float deltaTime);
 
-    void drawEntityFOV(LivingEntity var1, LivingEntity var2, float var3);
+    void drawEntityFOV(LivingEntity entity, LivingEntity viewEntity, float deltaTime);
 
-    ParticleEntity spawnParticleR(String var1, double var2, double var4, double var6, double var8, double var10, double var12);
+    ParticleEntity spawnParticleR(String name, double x, double y, double z, double vX, double vY, double vZ);
 
     void setAllRenderersVisible();
 

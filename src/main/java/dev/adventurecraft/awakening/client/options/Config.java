@@ -10,17 +10,14 @@ import org.lwjgl.opengl.GLContext;
 import org.slf4j.Logger;
 
 public class Config {
-    private static GameOptions gameSettings = null;
-    private static Minecraft minecraft = null;
-    private static float lightLevel0 = 0;
-    private static float lightLevel1 = 0;
+
     private static boolean fontRendererUpdated = false;
     public static final boolean DEF_FOG_FANCY = true;
     public static final float DEF_FOG_START = 0.2F;
     public static final boolean DEF_OPTIMIZE_RENDER_DISTANCE = false;
     public static final boolean DEF_OCCLUSION_ENABLED = false;
     public static final int DEF_MIPMAP_LEVEL = 0;
-    public static final int DEF_MIPMAP_TYPE = 9984;
+    public static final int DEF_MIPMAP_TYPE = GL11.GL_NEAREST_MIPMAP_NEAREST;
     public static final float DEF_ALPHA_FUNC_LEVEL = 0.1F;
     public static final boolean DEF_LOAD_CHUNKS_FAR = false;
     public static final int DEF_PRELOADED_CHUNKS = 0;
@@ -55,46 +52,34 @@ public class Config {
         }
     }
 
-    public static boolean isFancyFogAvailable() {
-        return GLContext.getCapabilities().GL_NV_fog_distance;
-    }
-
-    public static boolean isOcclusionAvailable() {
-        return GLContext.getCapabilities().GL_ARB_occlusion_query;
-    }
-
     private static int getOpenGlVersion() {
-        if (!GLContext.getCapabilities().OpenGL11) return 10;
-        if (!GLContext.getCapabilities().OpenGL12) return 11;
-        if (!GLContext.getCapabilities().OpenGL13) return 12;
-        if (!GLContext.getCapabilities().OpenGL14) return 13;
-        if (!GLContext.getCapabilities().OpenGL15) return 14;
-        if (!GLContext.getCapabilities().OpenGL20) return 15;
-        if (!GLContext.getCapabilities().OpenGL21) return 20;
-        if (!GLContext.getCapabilities().OpenGL30) return 21;
-        if (!GLContext.getCapabilities().OpenGL31) return 30;
-        if (!GLContext.getCapabilities().OpenGL32) return 31;
-        if (!GLContext.getCapabilities().OpenGL33) return 32;
-        return !GLContext.getCapabilities().OpenGL40 ? 33 : 40;
+        var caps = GLContext.getCapabilities();
+        if (caps.OpenGL11) return 11;
+        if (caps.OpenGL12) return 12;
+        if (caps.OpenGL13) return 13;
+        if (caps.OpenGL14) return 14;
+        if (caps.OpenGL15) return 15;
+        if (caps.OpenGL20) return 20;
+        if (caps.OpenGL21) return 21;
+        if (caps.OpenGL30) return 30;
+        if (caps.OpenGL31) return 31;
+        if (caps.OpenGL32) return 32;
+        if (caps.OpenGL33) return 33;
+        if (caps.OpenGL40) return 40;
+        if (caps.OpenGL41) return 41;
+        if (caps.OpenGL42) return 42;
+        if (caps.OpenGL43) return 43;
+        if (caps.OpenGL44) return 44;
+        if (caps.OpenGL45) return 45;
+        return 10;
     }
 
-    public static void setGameSettings(GameOptions var0) {
-        gameSettings = var0;
-    }
-
-    public static boolean isUseMipmaps() {
-        int var0 = getMipmapLevel();
-        return var0 > 0;
-    }
-
-    public static int getMipmapLevel() {
-        return gameSettings == null ? DEF_MIPMAP_LEVEL : ((ExGameOptions) gameSettings).ofMipmapLevel();
-    }
-
-    public static int getMipmapType() {
-        if (gameSettings == null)
-            return DEF_MIPMAP_TYPE;
-        return ((ExGameOptions) gameSettings).ofMipmapLinear() ? 9986 : 9984;
+    private static GameOptions getOptions() {
+        var instance = Minecraft.instance;
+        if (instance == null) {
+            return null;
+        }
+        return instance.options;
     }
 
     public static boolean isUseAlphaFunc() {
@@ -106,84 +91,6 @@ public class Config {
         return DEF_ALPHA_FUNC_LEVEL;
     }
 
-    public static boolean isFogFancy() {
-        if (!GLContext.getCapabilities().GL_NV_fog_distance)
-            return false;
-        return gameSettings != null && ((ExGameOptions) gameSettings).ofFogFancy();
-    }
-
-    public static float getFogStart() {
-        return gameSettings == null ? DEF_FOG_START : ((ExGameOptions) gameSettings).ofFogStart();
-    }
-
-    public static boolean isOcclusionEnabled() {
-        return gameSettings == null ? DEF_OCCLUSION_ENABLED : gameSettings.advancedOpengl;
-    }
-
-    public static boolean isOcclusionFancy() {
-        if (!isOcclusionEnabled())
-            return false;
-        return gameSettings != null && ((ExGameOptions) gameSettings).ofOcclusionFancy();
-    }
-
-    public static boolean isLoadChunksFar() {
-        return gameSettings == null ? DEF_LOAD_CHUNKS_FAR : ((ExGameOptions) gameSettings).ofLoadFar();
-    }
-
-    public static int getPreloadedChunks() {
-        return gameSettings == null ? DEF_PRELOADED_CHUNKS : ((ExGameOptions) gameSettings).ofPreloadedChunks();
-    }
-
-    public static int getUpdatesPerFrame() {
-        return gameSettings != null ? ((ExGameOptions) gameSettings).ofChunkUpdates() : 1;
-    }
-
-    public static boolean isDynamicUpdates() {
-        return gameSettings == null || ((ExGameOptions) gameSettings).ofChunkUpdatesDynamic();
-    }
-
-    public static boolean isRainFancy() {
-        if (((ExGameOptions) gameSettings).ofRain() == 0)
-            return gameSettings.fancyGraphics;
-        return ((ExGameOptions) gameSettings).ofRain() == 2;
-    }
-
-    public static boolean isWaterFancy() {
-        if (((ExGameOptions) gameSettings).ofWater() == 0)
-            return gameSettings.fancyGraphics;
-        return ((ExGameOptions) gameSettings).ofWater() == 2;
-    }
-
-    public static boolean isRainOff() {
-        return ((ExGameOptions) gameSettings).ofRain() == 3;
-    }
-
-    public static boolean isCloudsFancy() {
-        if (((ExGameOptions) gameSettings).ofClouds() == 0)
-            return gameSettings.fancyGraphics;
-        return ((ExGameOptions) gameSettings).ofClouds() == 2;
-    }
-
-    public static boolean isCloudsOff() {
-        return ((ExGameOptions) gameSettings).ofClouds() == 3;
-    }
-
-    public static boolean isLeavesFancy() {
-        if (gameSettings == null)
-            return false;
-        if (((ExGameOptions) gameSettings).ofLeaves() == 0)
-            return gameSettings.fancyGraphics;
-        return ((ExGameOptions) gameSettings).ofLeaves() == 2;
-    }
-
-    public static boolean isGrassFancy() {
-        if (gameSettings == null)
-            return false;
-        if (((ExGameOptions) gameSettings).ofGrass() == 0)
-            return gameSettings.fancyGraphics;
-        return ((ExGameOptions) gameSettings).ofGrass() == 2;
-    }
-
     public static int limit(int var0, int var1, int var2) {
         return var0 < var1 ? var1 : Math.min(var0, var2);
     }
@@ -193,78 +100,53 @@ public class Config {
     }
 
     public static boolean isAnimatedWater() {
+        var gameSettings = getOptions();
         return gameSettings == null || ((ExGameOptions) gameSettings).ofAnimatedWater() != 2;
     }
 
     public static boolean isGeneratedWater() {
+        var gameSettings = getOptions();
         return gameSettings == null || ((ExGameOptions) gameSettings).ofAnimatedWater() == 1;
     }
 
     public static boolean isAnimatedPortal() {
+        var gameSettings = getOptions();
         return gameSettings == null || ((ExGameOptions) gameSettings).ofAnimatedPortal();
     }
 
     public static boolean isAnimatedLava() {
+        var gameSettings = getOptions();
         return gameSettings == null || ((ExGameOptions) gameSettings).ofAnimatedLava() != 2;
     }
 
     public static boolean isGeneratedLava() {
+        var gameSettings = getOptions();
         return gameSettings == null || ((ExGameOptions) gameSettings).ofAnimatedLava() == 1;
     }
 
     public static boolean isAnimatedFire() {
+        var gameSettings = getOptions();
         return gameSettings == null || ((ExGameOptions) gameSettings).ofAnimatedFire();
     }
 
     public static boolean isAnimatedRedstone() {
+        var gameSettings = getOptions();
         return gameSettings == null || ((ExGameOptions) gameSettings).ofAnimatedRedstone();
     }
 
     public static boolean isAnimatedExplosion() {
+        var gameSettings = getOptions();
         return gameSettings == null || ((ExGameOptions) gameSettings).ofAnimatedExplosion();
     }
 
     public static boolean isAnimatedFlame() {
+        var gameSettings = getOptions();
         return gameSettings == null || ((ExGameOptions) gameSettings).ofAnimatedFlame();
     }
 
     public static boolean isAnimatedSmoke() {
+        var gameSettings = getOptions();
         return gameSettings == null || ((ExGameOptions) gameSettings).ofAnimatedSmoke();
-    }
-
-    public static float getAmbientOcclusionLevel() {
-        return gameSettings != null ? ((ExGameOptions) gameSettings).ofAoLevel() : 0.0F;
-    }
-
-    public static float fixAoLight(float var0, float var1) {
-        if (var0 > lightLevel0) {
-            return var0;
-        } else if (var1 <= lightLevel1) {
-            return var0;
-        } else {
-            float var4 = 1.0F - getAmbientOcclusionLevel();
-            return var0 + (var1 - var0) * var4;
-        }
-    }
-
-    public static void setLightLevels(float[] var0) {
-        lightLevel0 = var0[0];
-        lightLevel1 = var0[1];
-    }
-
-    public static void setMinecraft(Minecraft var0) {
-        minecraft = var0;
-    }
-
-    public static Minecraft getMinecraft() {
-        return minecraft;
-    }
-
-    public static ConnectedGrassOption getConnectedGrassOption() {
-        if (gameSettings != null) {
-            return ((ExGameOptions) gameSettings).ofConnectedGrass();
-        }
-        return ConnectedGrassOption.OFF;
     }
 
     public static boolean isFontRendererUpdated() {
@@ -273,50 +155,5 @@ public class Config {
 
     public static void setFontRendererUpdated(boolean var0) {
         fontRendererUpdated = var0;
-    }
-
-    public static boolean isWeatherEnabled() {
-        return gameSettings == null || ((ExGameOptions) gameSettings).ofWeather();
-    }
-
-    public static boolean isSkyEnabled() {
-        return gameSettings == null || ((ExGameOptions) gameSettings).ofSky();
-    }
-
-    public static boolean isStarsEnabled() {
-        return gameSettings == null || ((ExGameOptions) gameSettings).ofStars();
-    }
-
-    public static boolean isFarView() {
-        return gameSettings != null && ((ExGameOptions) gameSettings).ofFarView();
-    }
-
-    public static void sleep(long var0) {
-        try {
-            Thread.currentThread();
-            Thread.sleep(var0);
-        } catch (InterruptedException var3) {
-            var3.printStackTrace();
-        }
-    }
-
-    public static boolean isTimeDayOnly() {
-        return gameSettings != null && ((ExGameOptions) gameSettings).ofTime() == 1;
-    }
-
-    public static boolean isTimeNightOnly() {
-        return gameSettings != null && ((ExGameOptions) gameSettings).ofTime() == 2;
-    }
-
-    public static boolean isClearWater() {
-        return gameSettings != null && ((ExGameOptions) gameSettings).ofClearWater();
-    }
-
-    public static int getAnisotropicFilterLevel() {
-        return gameSettings == null ? 1 : ((ExGameOptions) gameSettings).ofAfLevel();
-    }
-
-    public static int getAntialiasingLevel() {
-        return gameSettings == null ? 0 : ((ExGameOptions) gameSettings).ofAaLevel();
     }
 }

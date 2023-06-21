@@ -1,10 +1,10 @@
 package dev.adventurecraft.awakening.mixin;
 
-import dev.adventurecraft.awakening.client.options.Config;
 import dev.adventurecraft.awakening.common.AC_CoordBlock;
 import dev.adventurecraft.awakening.common.AC_LightCache;
 import dev.adventurecraft.awakening.extension.ExClass_66;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
+import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.util.ExCameraView;
 import net.minecraft.block.Block;
 import net.minecraft.class_66;
@@ -240,7 +240,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
 
     @Inject(method = "method_300", at = @At("TAIL"))
     private void fancyOcclusionCulling(CameraView var1, CallbackInfo ci) {
-        if (this.field_243 && Config.isOcclusionFancy()) {
+        if (this.field_243 && ((ExGameOptions) Minecraft.instance.options).isOcclusionFancy()) {
             this.isInFrustrumFully = ((ExCameraView) var1).isBoundingBoxInFrustumFully(this.field_250);
         } else {
             this.isInFrustrumFully = false;

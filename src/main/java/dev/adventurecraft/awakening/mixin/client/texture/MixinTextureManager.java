@@ -6,6 +6,7 @@ import dev.adventurecraft.awakening.client.render.AC_TextureBinder;
 import dev.adventurecraft.awakening.common.AC_TextureAnimated;
 import dev.adventurecraft.awakening.common.Vec2;
 import dev.adventurecraft.awakening.extension.client.ExTextureManager;
+import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
@@ -96,15 +97,16 @@ public abstract class MixinTextureManager implements ExTextureManager {
 
     @Overwrite
     public void bindImageToId(BufferedImage image, int texId) {
+        var options = (ExGameOptions)this.gameOptions;
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, texId);
-        field_1245 = Config.isUseMipmaps();
+        int mipLevel = options.ofMipmapLevel();
+        field_1245 = mipLevel > 0;
         if (field_1245 /* TODO && texId != this.guiItemsTextureId*/) {
-            int mipType = Config.getMipmapType();
+            int mipType = options.getMipmapType();
             GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, mipType);
             GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
             if (GLContext.getCapabilities().OpenGL12) {
                 GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_BASE_LEVEL, 0);
-                int mipLevel = Config.getMipmapLevel();
                 if (mipLevel >= 4) {
                     int minDim = Math.min(image.getWidth(), image.getHeight());
                     mipLevel = this.getMaxMipmapLevel(minDim);
@@ -121,7 +123,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
                 var18.rewind();
                 GL11.glGetFloat(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, var18);
                 float anisoLimit = var18.get(0);
-                float anisoLevel = Math.min(Config.getAnisotropicFilterLevel(), anisoLimit);
+                float anisoLevel = Math.min(((ExGameOptions) gameOptions).ofAfLevel(), anisoLimit);
                 GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisoLevel);
             }
         } else {
@@ -605,7 +607,6 @@ public abstract class MixinTextureManager implements ExTextureManager {
         for (size = 0; dim > 0; ++size) {
             dim /= 2;
         }
-
         return size - 1;
     }
 

@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.script;
 
+import dev.adventurecraft.awakening.common.LightHelper;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.ExTextureManager;
 import dev.adventurecraft.awakening.extension.client.render.ExWorldEventRenderer;
@@ -77,22 +78,23 @@ public class ScriptEffect {
     }
 
     public float getLightRampValue(int index) {
-        return ((ExWorldProperties) this.world.properties).getBrightness()[index];
+        float[] brightness = ((ExWorldProperties) this.world.properties).getBrightness();
+        return brightness[index];
     }
 
     public void setLightRampValue(int index, float value) {
-        ((ExWorldProperties) this.world.properties).getBrightness()[index] = value;
-        ((ExWorld) this.world).loadBrightness();
-        ((ExWorldEventRenderer) Minecraft.instance.worldRenderer).updateAllTheRenderers();
+        float[] brightness = ((ExWorldProperties) this.world.properties).getBrightness();
+        if (brightness[index] != value) {
+            brightness[index] = value;
+            ((ExWorld) this.world).loadBrightness();
+            ((ExWorldEventRenderer) Minecraft.instance.worldRenderer).updateAllTheRenderers();
+        }
     }
 
     public void resetLightRampValues() {
-        float var1 = 0.05F;
-
         float[] brightness = ((ExWorldProperties) this.world.properties).getBrightness();
         for (int i = 0; i < 16; ++i) {
-            float v = 1.0F - (float) i / 15.0F;
-            brightness[i] = (1.0F - v) / (v * 3.0F + 1.0F) * (1.0F - var1) + var1;
+            brightness[i] = LightHelper.getDefaultLightAtIndex(i);
         }
 
         ((ExWorld) this.world).loadBrightness();

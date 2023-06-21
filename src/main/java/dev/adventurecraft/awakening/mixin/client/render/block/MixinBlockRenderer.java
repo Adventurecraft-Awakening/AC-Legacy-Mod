@@ -2,13 +2,14 @@ package dev.adventurecraft.awakening.mixin.client.render.block;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.client.options.Config;
-import dev.adventurecraft.awakening.client.options.ConnectedGrassOption;
 import dev.adventurecraft.awakening.common.AC_BlockOverlay;
 import dev.adventurecraft.awakening.common.AC_Blocks;
 import dev.adventurecraft.awakening.common.AC_TileEntityTree;
+import dev.adventurecraft.awakening.common.AoHelper;
 import dev.adventurecraft.awakening.extension.block.AC_TexturedBlock;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.block.ExGrassBlock;
+import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.render.block.ExBlockRenderer;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.block.*;
@@ -258,7 +259,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     @Overwrite
     public boolean method_50(Block var1, int var2, int var3, int var4, float var5, float var6, float var7) {
         this.field_92 = true;
-        boolean var8 = Config.getAmbientOcclusionLevel() > 0.0F;
+        float aoLevel = ((ExGameOptions) Minecraft.instance.options).ofAoLevel();
         boolean var10 = false;
         boolean var15 = true;
         boolean var16 = true;
@@ -320,34 +321,34 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         }
 
         if (renderBottom) {
-            var10 |= this.renderBottomSide(var1, var2, var3, var4, var5, var6, var7, var8, var15);
+            var10 |= this.renderBottomSide(var1, var2, var3, var4, var5, var6, var7, aoLevel, var15);
         }
 
         if (renderTop) {
-            var10 |= this.renderTopSide(var1, var2, var3, var4, var5, var6, var7, var8, var16);
+            var10 |= this.renderTopSide(var1, var2, var3, var4, var5, var6, var7, aoLevel, var16);
         }
 
         if (renderEast) {
-            var10 |= this.renderEastSide(var1, var2, var3, var4, var5, var6, var7, var8, var17, doGrassEdges);
+            var10 |= this.renderEastSide(var1, var2, var3, var4, var5, var6, var7, aoLevel, var17, doGrassEdges);
         }
 
         if (renderWest) {
-            var10 |= this.renderWestSide(var1, var2, var3, var4, var5, var6, var7, var8, var18, doGrassEdges);
+            var10 |= this.renderWestSide(var1, var2, var3, var4, var5, var6, var7, aoLevel, var18, doGrassEdges);
         }
 
         if (renderNorth) {
-            var10 |= this.renderNorthSide(var1, var2, var3, var4, var5, var6, var7, var8, var19, doGrassEdges);
+            var10 |= this.renderNorthSide(var1, var2, var3, var4, var5, var6, var7, aoLevel, var19, doGrassEdges);
         }
 
         if (renderSouth) {
-            var10 |= this.renderSouthSide(var1, var2, var3, var4, var5, var6, var7, var8, var20, doGrassEdges);
+            var10 |= this.renderSouthSide(var1, var2, var3, var4, var5, var6, var7, aoLevel, var20, doGrassEdges);
         }
 
         this.field_92 = false;
         return var10;
     }
 
-    private boolean renderBottomSide(Block var1, int var2, int var3, int var4, float var5, float var6, float var7, boolean var8, boolean var15) {
+    private boolean renderBottomSide(Block var1, int var2, int var3, int var4, float var5, float var6, float var7, float aoLevel, boolean var15) {
         this.field_95 = var1.getBrightness(this.blockView, var2, var3 - 1, var4);
 
         float var21;
@@ -390,21 +391,25 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             }
 
             ++var3;
-            if (var8) {
-                this.field_102 = Config.fixAoLight(this.field_102, this.field_95);
-                this.field_101 = Config.fixAoLight(this.field_101, this.field_95);
-                this.field_104 = Config.fixAoLight(this.field_104, this.field_95);
-                this.field_42 = Config.fixAoLight(this.field_42, this.field_95);
-                this.field_41 = Config.fixAoLight(this.field_41, this.field_95);
-                this.field_103 = Config.fixAoLight(this.field_103, this.field_95);
-                this.field_105 = Config.fixAoLight(this.field_105, this.field_95);
-                this.field_100 = Config.fixAoLight(this.field_100, this.field_95);
+            if (aoLevel > 0.0f) {
+                float min = AoHelper.lightLevel0;
+                float max = AoHelper.lightLevel1;
+                float aoB = this.field_95;
+                float aoF = 1.0F - aoLevel;
+                this.field_102 = AoHelper.fixAoLight(min, max, this.field_102, aoB, aoF);
+                this.field_101 = AoHelper.fixAoLight(min, max, this.field_101, aoB, aoF);
+                this.field_104 = AoHelper.fixAoLight(min, max, this.field_104, aoB, aoF);
+                this.field_42 =  AoHelper.fixAoLight(min, max, this.field_42, aoB, aoF);
+                this.field_41 =  AoHelper.fixAoLight(min, max, this.field_41, aoB, aoF);
+                this.field_103 = AoHelper.fixAoLight(min, max, this.field_103, aoB, aoF);
+                this.field_105 = AoHelper.fixAoLight(min, max, this.field_105, aoB, aoF);
+                this.field_100 = AoHelper.fixAoLight(min, max, this.field_100, aoB, aoF);
             }
 
-            var21 = (this.field_102 + this.field_101 + this.field_104 + this.field_95) / 4.0F;
-            var24 = (this.field_104 + this.field_95 + this.field_42 + this.field_41) / 4.0F;
-            var23 = (this.field_95 + this.field_103 + this.field_41 + this.field_105) / 4.0F;
-            var22 = (this.field_101 + this.field_100 + this.field_95 + this.field_103) / 4.0F;
+            var21 = (this.field_102 + this.field_101 + this.field_104 + this.field_95) * (1 / 4F);
+            var24 = (this.field_104 + this.field_95 + this.field_42 + this.field_41) * (1 / 4F);
+            var23 = (this.field_95 + this.field_103 + this.field_41 + this.field_105) * (1 / 4F);
+            var22 = (this.field_101 + this.field_100 + this.field_95 + this.field_103) * (1 / 4F);
         }
 
         this.field_56 = this.field_57 = this.field_58 = this.field_59 = (var15 ? var5 : 1.0F) * 0.5F;
@@ -426,7 +431,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         return true;
     }
 
-    private boolean renderTopSide(Block var1, int var2, int var3, int var4, float var5, float var6, float var7, boolean var8, boolean var16) {
+    private boolean renderTopSide(Block var1, int var2, int var3, int var4, float var5, float var6, float var7, float aoLevel, boolean var16) {
         this.field_98 = var1.getBrightness(this.blockView, var2, var3 + 1, var4);
 
         float var21;
@@ -469,21 +474,25 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             }
 
             --var3;
-            if (var8) {
-                this.field_45 = Config.fixAoLight(this.field_45, this.field_98);
-                this.field_44 = Config.fixAoLight(this.field_44, this.field_98);
-                this.field_49 = Config.fixAoLight(this.field_49, this.field_98);
-                this.field_50 = Config.fixAoLight(this.field_50, this.field_98);
-                this.field_48 = Config.fixAoLight(this.field_48, this.field_98);
-                this.field_46 = Config.fixAoLight(this.field_46, this.field_98);
-                this.field_47 = Config.fixAoLight(this.field_47, this.field_98);
-                this.field_43 = Config.fixAoLight(this.field_43, this.field_98);
+            if (aoLevel > 0.0f) {
+                float min = AoHelper.lightLevel0;
+                float max = AoHelper.lightLevel1;
+                float aoB = this.field_98;
+                float aoF = 1.0F - aoLevel;
+                this.field_45 = AoHelper.fixAoLight(min, max, this.field_45, aoB, aoF);
+                this.field_44 = AoHelper.fixAoLight(min, max, this.field_44, aoB, aoF);
+                this.field_49 = AoHelper.fixAoLight(min, max, this.field_49, aoB, aoF);
+                this.field_50 = AoHelper.fixAoLight(min, max, this.field_50, aoB, aoF);
+                this.field_48 = AoHelper.fixAoLight(min, max, this.field_48, aoB, aoF);
+                this.field_46 = AoHelper.fixAoLight(min, max, this.field_46, aoB, aoF);
+                this.field_47 = AoHelper.fixAoLight(min, max, this.field_47, aoB, aoF);
+                this.field_43 = AoHelper.fixAoLight(min, max, this.field_43, aoB, aoF);
             }
 
-            var24 = (this.field_45 + this.field_44 + this.field_49 + this.field_98) / 4.0F;
-            var21 = (this.field_49 + this.field_98 + this.field_50 + this.field_48) / 4.0F;
-            var22 = (this.field_98 + this.field_46 + this.field_48 + this.field_47) / 4.0F;
-            var23 = (this.field_44 + this.field_43 + this.field_98 + this.field_46) / 4.0F;
+            var24 = (this.field_45 + this.field_44 + this.field_49 + this.field_98) * (1 / 4F);
+            var21 = (this.field_49 + this.field_98 + this.field_50 + this.field_48) * (1 / 4F);
+            var22 = (this.field_98 + this.field_46 + this.field_48 + this.field_47) * (1 / 4F);
+            var23 = (this.field_44 + this.field_43 + this.field_98 + this.field_46) * (1 / 4F);
         }
 
         this.field_56 = this.field_57 = this.field_58 = this.field_59 = var16 ? var5 : 1.0F;
@@ -505,7 +514,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         return true;
     }
 
-    private boolean renderEastSide(Block var1, int var2, int var3, int var4, float var5, float var6, float var7, boolean var8, boolean var17, boolean doGrassEdges) {
+    private boolean renderEastSide(Block var1, int var2, int var3, int var4, float var5, float var6, float var7, float aoLevel, boolean var17, boolean doGrassEdges) {
         this.field_96 = var1.getBrightness(this.blockView, var2, var3, var4 - 1);
 
         float var21;
@@ -548,21 +557,25 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             }
 
             ++var4;
-            if (var8) {
-                this.field_51 = Config.fixAoLight(this.field_51, this.field_96);
-                this.field_43 = Config.fixAoLight(this.field_43, this.field_96);
-                this.field_46 = Config.fixAoLight(this.field_46, this.field_96);
-                this.field_52 = Config.fixAoLight(this.field_52, this.field_96);
-                this.field_47 = Config.fixAoLight(this.field_47, this.field_96);
-                this.field_103 = Config.fixAoLight(this.field_103, this.field_96);
-                this.field_105 = Config.fixAoLight(this.field_105, this.field_96);
-                this.field_100 = Config.fixAoLight(this.field_100, this.field_96);
+            if (aoLevel > 0.0f) {
+                float min = AoHelper.lightLevel0;
+                float max = AoHelper.lightLevel1;
+                float aoB = this.field_96;
+                float aoF = 1.0F - aoLevel;
+                this.field_51 = AoHelper.fixAoLight(min, max, this.field_51, aoB, aoF);
+                this.field_43 = AoHelper.fixAoLight(min, max, this.field_43, aoB, aoF);
+                this.field_46 = AoHelper.fixAoLight(min, max, this.field_46, aoB, aoF);
+                this.field_52 = AoHelper.fixAoLight(min, max, this.field_52, aoB, aoF);
+                this.field_47 = AoHelper.fixAoLight(min, max, this.field_47, aoB, aoF);
+                this.field_103 = AoHelper.fixAoLight(min, max, this.field_103, aoB, aoF);
+                this.field_105 = AoHelper.fixAoLight(min, max, this.field_105, aoB, aoF);
+                this.field_100 = AoHelper.fixAoLight(min, max, this.field_100, aoB, aoF);
             }
 
-            var21 = (this.field_51 + this.field_43 + this.field_96 + this.field_46) / 4.0F;
-            var22 = (this.field_96 + this.field_46 + this.field_52 + this.field_47) / 4.0F;
-            var23 = (this.field_103 + this.field_96 + this.field_105 + this.field_52) / 4.0F;
-            var24 = (this.field_100 + this.field_51 + this.field_103 + this.field_96) / 4.0F;
+            var21 = (this.field_51 + this.field_43 + this.field_96 + this.field_46) * (1 / 4F);
+            var22 = (this.field_96 + this.field_46 + this.field_52 + this.field_47) * (1 / 4F);
+            var23 = (this.field_103 + this.field_96 + this.field_105 + this.field_52) * (1 / 4F);
+            var24 = (this.field_100 + this.field_51 + this.field_103 + this.field_96) * (1 / 4F);
         }
 
         this.field_56 = this.field_57 = this.field_58 = this.field_59 = (var17 ? var5 : 1.0F) * 0.8F;
@@ -616,7 +629,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         return true;
     }
 
-    private boolean renderWestSide(Block var1, int var2, int var3, int var4, float var5, float var6, float var7, boolean var8, boolean var18, boolean doGrassEdges) {
+    private boolean renderWestSide(Block var1, int var2, int var3, int var4, float var5, float var6, float var7, float aoLevel, boolean var18, boolean doGrassEdges) {
         this.field_99 = var1.getBrightness(this.blockView, var2, var3, var4 + 1);
 
         float var21;
@@ -659,21 +672,25 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             }
 
             --var4;
-            if (var8) {
-                this.field_53 = Config.fixAoLight(this.field_53, this.field_99);
-                this.field_45 = Config.fixAoLight(this.field_45, this.field_99);
-                this.field_49 = Config.fixAoLight(this.field_49, this.field_99);
-                this.field_54 = Config.fixAoLight(this.field_54, this.field_99);
-                this.field_50 = Config.fixAoLight(this.field_50, this.field_99);
-                this.field_104 = Config.fixAoLight(this.field_104, this.field_99);
-                this.field_42 = Config.fixAoLight(this.field_42, this.field_99);
-                this.field_102 = Config.fixAoLight(this.field_102, this.field_99);
+            if (aoLevel > 0.0f) {
+                float min = AoHelper.lightLevel0;
+                float max = AoHelper.lightLevel1;
+                float aoB = this.field_99;
+                float aoF = 1.0F - aoLevel;
+                this.field_53 = AoHelper.fixAoLight(min, max, this.field_53, aoB, aoF);
+                this.field_45 = AoHelper.fixAoLight(min, max, this.field_45, aoB, aoF);
+                this.field_49 = AoHelper.fixAoLight(min, max, this.field_49, aoB, aoF);
+                this.field_54 = AoHelper.fixAoLight(min, max, this.field_54, aoB, aoF);
+                this.field_50 = AoHelper.fixAoLight(min, max, this.field_50, aoB, aoF);
+                this.field_104 = AoHelper.fixAoLight(min, max, this.field_104, aoB, aoF);
+                this.field_42 = AoHelper.fixAoLight(min, max, this.field_42, aoB, aoF);
+                this.field_102 = AoHelper.fixAoLight(min, max, this.field_102, aoB, aoF);
             }
 
-            var21 = (this.field_53 + this.field_45 + this.field_99 + this.field_49) / 4.0F;
-            var24 = (this.field_99 + this.field_49 + this.field_54 + this.field_50) / 4.0F;
-            var23 = (this.field_104 + this.field_99 + this.field_42 + this.field_54) / 4.0F;
-            var22 = (this.field_102 + this.field_53 + this.field_104 + this.field_99) / 4.0F;
+            var21 = (this.field_53 + this.field_45 + this.field_99 + this.field_49) * (1 / 4F);
+            var24 = (this.field_99 + this.field_49 + this.field_54 + this.field_50) * (1 / 4F);
+            var23 = (this.field_104 + this.field_99 + this.field_42 + this.field_54) * (1 / 4F);
+            var22 = (this.field_102 + this.field_53 + this.field_104 + this.field_99) * (1 / 4F);
         }
 
         this.field_56 = this.field_57 = this.field_58 = this.field_59 = (var18 ? var5 : 1.0F) * 0.8F;
@@ -727,7 +744,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         return true;
     }
 
-    private boolean renderNorthSide(Block var1, int var2, int var3, int var4, float var5, float var6, float var7, boolean var8, boolean var19, boolean doGrassEdges) {
+    private boolean renderNorthSide(Block var1, int var2, int var3, int var4, float var5, float var6, float var7, float aoLevel, boolean var19, boolean doGrassEdges) {
         this.field_94 = var1.getBrightness(this.blockView, var2 - 1, var3, var4);
 
         float var21;
@@ -770,21 +787,25 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             }
 
             ++var2;
-            if (var8) {
-                this.field_101 = Config.fixAoLight(this.field_101, this.field_94);
-                this.field_102 = Config.fixAoLight(this.field_102, this.field_94);
-                this.field_53 = Config.fixAoLight(this.field_53, this.field_94);
-                this.field_44 = Config.fixAoLight(this.field_44, this.field_94);
-                this.field_45 = Config.fixAoLight(this.field_45, this.field_94);
-                this.field_51 = Config.fixAoLight(this.field_51, this.field_94);
-                this.field_43 = Config.fixAoLight(this.field_43, this.field_94);
-                this.field_100 = Config.fixAoLight(this.field_100, this.field_94);
+            if (aoLevel > 0.0f) {
+                float min = AoHelper.lightLevel0;
+                float max = AoHelper.lightLevel1;
+                float aoB = this.field_94;
+                float aoF = 1.0F - aoLevel;
+                this.field_101 = AoHelper.fixAoLight(min, max, this.field_101, aoB, aoF);
+                this.field_102 = AoHelper.fixAoLight(min, max, this.field_102, aoB, aoF);
+                this.field_53 = AoHelper.fixAoLight(min, max, this.field_53, aoB, aoF);
+                this.field_44 = AoHelper.fixAoLight(min, max, this.field_44, aoB, aoF);
+                this.field_45 = AoHelper.fixAoLight(min, max, this.field_45, aoB, aoF);
+                this.field_51 = AoHelper.fixAoLight(min, max, this.field_51, aoB, aoF);
+                this.field_43 = AoHelper.fixAoLight(min, max, this.field_43, aoB, aoF);
+                this.field_100 = AoHelper.fixAoLight(min, max, this.field_100, aoB, aoF);
             }
 
-            var24 = (this.field_101 + this.field_102 + this.field_94 + this.field_53) / 4.0F;
-            var21 = (this.field_94 + this.field_53 + this.field_44 + this.field_45) / 4.0F;
-            var22 = (this.field_51 + this.field_94 + this.field_43 + this.field_44) / 4.0F;
-            var23 = (this.field_100 + this.field_101 + this.field_51 + this.field_94) / 4.0F;
+            var24 = (this.field_101 + this.field_102 + this.field_94 + this.field_53) * (1 / 4F);
+            var21 = (this.field_94 + this.field_53 + this.field_44 + this.field_45) * (1 / 4F);
+            var22 = (this.field_51 + this.field_94 + this.field_43 + this.field_44) * (1 / 4F);
+            var23 = (this.field_100 + this.field_101 + this.field_51 + this.field_94) * (1 / 4F);
         }
 
         this.field_56 = this.field_57 = this.field_58 = this.field_59 = (var19 ? var5 : 1.0F) * 0.6F;
@@ -838,7 +859,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         return true;
     }
 
-    private boolean renderSouthSide(Block var1, int var2, int var3, int var4, float var5, float var6, float var7, boolean var8, boolean var20, boolean doGrassEdges) {
+    private boolean renderSouthSide(Block var1, int var2, int var3, int var4, float var5, float var6, float var7, float aoLevel, boolean var20, boolean doGrassEdges) {
         this.field_97 = var1.getBrightness(this.blockView, var2 + 1, var3, var4);
 
         float var21;
@@ -881,21 +902,25 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             }
 
             --var2;
-            if (var8) {
-                this.field_41 = Config.fixAoLight(this.field_41, this.field_97);
-                this.field_42 = Config.fixAoLight(this.field_42, this.field_97);
-                this.field_54 = Config.fixAoLight(this.field_54, this.field_97);
-                this.field_48 = Config.fixAoLight(this.field_48, this.field_97);
-                this.field_50 = Config.fixAoLight(this.field_50, this.field_97);
-                this.field_52 = Config.fixAoLight(this.field_52, this.field_97);
-                this.field_47 = Config.fixAoLight(this.field_47, this.field_97);
-                this.field_105 = Config.fixAoLight(this.field_105, this.field_97);
+            if (aoLevel > 0.0f) {
+                float min = AoHelper.lightLevel0;
+                float max = AoHelper.lightLevel1;
+                float aoB = this.field_97;
+                float aoF = 1.0F - aoLevel;
+                this.field_41 = AoHelper.fixAoLight(min, max, this.field_41, aoB, aoF);
+                this.field_42 = AoHelper.fixAoLight(min, max, this.field_42, aoB, aoF);
+                this.field_54 = AoHelper.fixAoLight(min, max, this.field_54, aoB, aoF);
+                this.field_48 = AoHelper.fixAoLight(min, max, this.field_48, aoB, aoF);
+                this.field_50 = AoHelper.fixAoLight(min, max, this.field_50, aoB, aoF);
+                this.field_52 = AoHelper.fixAoLight(min, max, this.field_52, aoB, aoF);
+                this.field_47 = AoHelper.fixAoLight(min, max, this.field_47, aoB, aoF);
+                this.field_105 = AoHelper.fixAoLight(min, max, this.field_105, aoB, aoF);
             }
 
-            var21 = (this.field_41 + this.field_42 + this.field_97 + this.field_54) / 4.0F;
-            var24 = (this.field_97 + this.field_54 + this.field_48 + this.field_50) / 4.0F;
-            var23 = (this.field_52 + this.field_97 + this.field_47 + this.field_48) / 4.0F;
-            var22 = (this.field_105 + this.field_41 + this.field_52 + this.field_97) / 4.0F;
+            var21 = (this.field_41 + this.field_42 + this.field_97 + this.field_54) * (1 / 4F);
+            var24 = (this.field_97 + this.field_54 + this.field_48 + this.field_50) * (1 / 4F);
+            var23 = (this.field_52 + this.field_97 + this.field_47 + this.field_48) * (1 / 4F);
+            var22 = (this.field_105 + this.field_41 + this.field_52 + this.field_97) * (1 / 4F);
         }
 
         this.field_56 = this.field_57 = this.field_58 = this.field_59 = (var20 ? var5 : 1.0F) * 0.6F;
