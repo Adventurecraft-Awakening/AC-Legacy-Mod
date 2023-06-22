@@ -54,23 +54,23 @@ public class Config {
 
     private static int getOpenGlVersion() {
         var caps = GLContext.getCapabilities();
-        if (caps.OpenGL11) return 11;
-        if (caps.OpenGL12) return 12;
-        if (caps.OpenGL13) return 13;
-        if (caps.OpenGL14) return 14;
-        if (caps.OpenGL15) return 15;
-        if (caps.OpenGL20) return 20;
-        if (caps.OpenGL21) return 21;
-        if (caps.OpenGL30) return 30;
-        if (caps.OpenGL31) return 31;
-        if (caps.OpenGL32) return 32;
-        if (caps.OpenGL33) return 33;
-        if (caps.OpenGL40) return 40;
-        if (caps.OpenGL41) return 41;
-        if (caps.OpenGL42) return 42;
-        if (caps.OpenGL43) return 43;
-        if (caps.OpenGL44) return 44;
         if (caps.OpenGL45) return 45;
+        if (caps.OpenGL44) return 44;
+        if (caps.OpenGL43) return 43;
+        if (caps.OpenGL42) return 42;
+        if (caps.OpenGL41) return 41;
+        if (caps.OpenGL40) return 40;
+        if (caps.OpenGL33) return 33;
+        if (caps.OpenGL32) return 32;
+        if (caps.OpenGL31) return 31;
+        if (caps.OpenGL30) return 30;
+        if (caps.OpenGL21) return 21;
+        if (caps.OpenGL20) return 20;
+        if (caps.OpenGL15) return 15;
+        if (caps.OpenGL14) return 14;
+        if (caps.OpenGL13) return 13;
+        if (caps.OpenGL12) return 12;
+        if (caps.OpenGL11) return 11;
         return 10;
     }
 
