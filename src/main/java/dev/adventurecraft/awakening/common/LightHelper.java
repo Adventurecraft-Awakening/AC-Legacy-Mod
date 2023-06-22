@@ -11,11 +11,12 @@ public class LightHelper {
     }
 
     public static float solveLightValue(float value, float factor, float baseValue) {
-        float s0 = (1.0F - value) / (value * factor + 1.0F) * (1.0F - baseValue) + baseValue;
-        float s1 = s0 - baseValue; // = (1.0F - value) / (value * factor + 1.0F) * (1.0F - baseValue)
-        float s2 = s1 / (1.0F - baseValue); // = (1.0F - value) / (value * factor + 1.0F)
-        float s3 = s2 * (value * factor + 1.0F); // = (1.0F - value)
-        return 1.0F - s3;
+        // s1: value = (1.0F - original) / (original * factor + 1.0F) * (1.0F - baseValue) + baseValue;
+        // s2: (value - baseValue) = (1.0F - original) / (original * factor + 1.0F) * (1.0F - baseValue);
+        // s3: (value - baseValue) / (1.0F - baseValue) = (1.0F - original) / (original * factor + 1.0F);
+        float s3Left = (value - baseValue) / (1.0F - baseValue);
+        float s3Right = (1.0F - s3Left) / (s3Left * factor + 1.0F);
+        return s3Right;
     }
 
     public static float getDefaultLightAtIndex(int index) {

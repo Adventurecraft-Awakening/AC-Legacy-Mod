@@ -1437,20 +1437,21 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     @Override
     public void loadBrightness() {
         // TODO: add brightness control per dimension
-        float[] brightness = ((ExWorldProperties) this.properties).getBrightness();
+        float[] dimBrightness = ((ExWorldProperties) this.properties).getBrightness().clone();
+        float[] lightTable = new float[dimBrightness.length];
         float baseValue = 0.05F; // TODO: based on dimension
 
         float ofBrightness = ((ExGameOptions) Minecraft.instance.options).ofBrightness();
         float factor = 3.0F * (1.0F - ofBrightness);
 
-        for (int i = 0; i < 16; ++i) {
-            float original = LightHelper.solveLightValue(brightness[i], 3.0F, 0.05F);
-            brightness[i] = LightHelper.calculateLight(original, factor, baseValue);
+        for (int i = 0; i < lightTable.length; ++i) {
+            float original = LightHelper.solveLightValue(dimBrightness[i], 3.0F, 0.05F);
+            lightTable[i] = LightHelper.calculateLight(original, factor, baseValue);
         }
 
-        AoHelper.setLightLevels(brightness[0], brightness[1]);
+        AoHelper.setLightLevels(lightTable[0], lightTable[1]);
 
-        System.arraycopy(brightness, 0, this.dimension.lightTable, 0, 16);
+        System.arraycopy(lightTable, 0, this.dimension.lightTable, 0, lightTable.length);
     }
 
     @Override
