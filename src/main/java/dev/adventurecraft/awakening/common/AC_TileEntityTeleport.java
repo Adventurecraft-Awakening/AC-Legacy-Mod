@@ -4,21 +4,26 @@ import net.minecraft.entity.BlockEntity;
 import net.minecraft.util.io.CompoundTag;
 
 public class AC_TileEntityTeleport extends BlockEntity {
-	public int x;
-	public int y;
-	public int z;
 
-	public void readNBT(CompoundTag var1) {
-		super.readNBT(var1);
-		this.x = var1.getInt("teleportX");
-		this.y = var1.getInt("teleportY");
-		this.z = var1.getInt("teleportZ");
-	}
+    public int x;
+    public int y;
+    public int z;
+    public boolean hasPosition;
 
-	public void writeNBT(CompoundTag var1) {
-		super.writeNBT(var1);
-		var1.put("teleportX", this.x);
-		var1.put("teleportY", this.y);
-		var1.put("teleportZ", this.z);
-	}
+    public void readNBT(CompoundTag tag) {
+        super.readNBT(tag);
+        this.x = tag.getInt("teleportX");
+        this.y = tag.getInt("teleportY");
+        this.z = tag.getInt("teleportZ");
+        this.hasPosition = tag.containsKey("teleportX");
+    }
+
+    public void writeNBT(CompoundTag tag) {
+        super.writeNBT(tag);
+        if (this.hasPosition) {
+            tag.put("teleportX", this.x);
+            tag.put("teleportY", this.y);
+            tag.put("teleportZ", this.z);
+        }
+    }
 }

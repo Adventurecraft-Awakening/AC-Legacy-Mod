@@ -5,6 +5,7 @@ import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.BlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.AxixAlignedBoundingBox;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
@@ -45,6 +46,9 @@ public class AC_BlockTeleport extends BlockWithEntity implements AC_ITriggerBloc
     @Override
     public void onTriggerActivated(World world, int x, int y, int z) {
         var tileEntity = (AC_TileEntityTeleport) world.getBlockEntity(x, y, z);
+        if (!tileEntity.hasPosition) {
+            return;
+        }
 
         int targetY = tileEntity.y;
         while (targetY < 128 && world.getMaterial(tileEntity.x, targetY, tileEntity.z) != Material.AIR) {
@@ -54,7 +58,6 @@ public class AC_BlockTeleport extends BlockWithEntity implements AC_ITriggerBloc
         for (PlayerEntity player : (List<PlayerEntity>) world.players) {
             player.setPosition((double) tileEntity.x + 0.5D, targetY, (double) tileEntity.z + 0.5D);
         }
-
     }
 
     @Override
@@ -68,15 +71,18 @@ public class AC_BlockTeleport extends BlockWithEntity implements AC_ITriggerBloc
 
     @Override
     public boolean canUse(World world, int x, int y, int z, PlayerEntity player) {
-        if (AC_DebugMode.active && player.getHeldItem() != null && player.getHeldItem().itemId == AC_Items.cursor.id) {
-            var entity = (AC_TileEntityTeleport) world.getBlockEntity(x, y, z);
-            entity.x = AC_ItemCursor.minX;
-            entity.y = AC_ItemCursor.minY;
-            entity.z = AC_ItemCursor.minZ;
-            Minecraft.instance.overlay.addChatMessage(String.format("Setting Teleport (%d, %d, %d)", entity.x, entity.y, entity.z));
-            return true;
-        } else {
-            return false;
+        if (AC_DebugMode.active) {
+            ItemStack heldItem = player.getHeldItem();
+            if (heldItem != null && heldItem.itemId == AC_Items.cursor.id) {
+                var entity = (AC_TileEntityTeleport) world.getBlockEntity(x, y, z);
+                entity.x = AC_ItemCursor.minX;
+                entity.y = AC_ItemCursor.minY;
+                entity.z = AC_ItemCursor.minZ;
+                entity.hasPosition = true;
+                Minecraft.instance.overlay.addChatMessage(String.format("Setting Teleport (%d, %d, %d)", entity.x, entity.y, entity.z));
+                return true;
+            }
         }
+        return false;
     }
 }
