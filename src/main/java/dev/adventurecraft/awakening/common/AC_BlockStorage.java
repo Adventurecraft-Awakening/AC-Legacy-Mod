@@ -10,8 +10,8 @@ import net.minecraft.world.World;
 
 public class AC_BlockStorage extends BlockWithEntity implements AC_ITriggerBlock {
 
-    protected AC_BlockStorage(int var1, int var2) {
-        super(var1, var2, Material.AIR);
+    protected AC_BlockStorage(int id, int texture) {
+        super(id, texture, Material.AIR);
     }
 
     @Override

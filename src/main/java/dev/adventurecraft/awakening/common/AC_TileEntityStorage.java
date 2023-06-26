@@ -7,10 +7,10 @@ import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.BlockEntity;
-import net.minecraft.util.io.AbstractTag;
 import net.minecraft.util.io.CompoundTag;
 
 public class AC_TileEntityStorage extends AC_TileEntityMinMax {
+
     byte[] blockIDs = null;
     byte[] metadatas = null;
     ArrayList<CompoundTag> tileEntities = new ArrayList<>();
@@ -22,16 +22,20 @@ public class AC_TileEntityStorage extends AC_TileEntityMinMax {
         this.maxX = AC_ItemCursor.maxX;
         this.maxY = AC_ItemCursor.maxY;
         this.maxZ = AC_ItemCursor.maxZ;
-        int var1 = this.maxX - this.minX + 1;
-        int var2 = this.maxY - this.minY + 1;
-        int var3 = this.maxZ - this.minZ + 1;
-        int var4 = var1 * var2 * var3;
-        this.blockIDs = new byte[var4];
-        this.metadatas = new byte[var4];
+        int width = this.maxX - this.minX + 1;
+        int height = this.maxY - this.minY + 1;
+        int depth = this.maxZ - this.minZ + 1;
+        int volume = width * height * depth;
+        this.blockIDs = new byte[volume];
+        this.metadatas = new byte[volume];
         this.saveCurrentArea();
     }
 
     public void saveCurrentArea() {
+        if (this.blockIDs == null) {
+            return;
+        }
+
         int blockIndex = 0;
         this.tileEntities.clear();
 
@@ -44,7 +48,7 @@ public class AC_TileEntityStorage extends AC_TileEntityMinMax {
                     this.metadatas[blockIndex] = (byte) meta;
                     BlockEntity tileEntity = this.world.getBlockEntity(x, y, z);
                     if (tileEntity != null) {
-                        CompoundTag tag = new CompoundTag();
+                        var tag = new CompoundTag();
                         tileEntity.writeNBT(tag);
                         this.tileEntities.add(tag);
                     }
@@ -58,27 +62,29 @@ public class AC_TileEntityStorage extends AC_TileEntityMinMax {
     }
 
     public void loadCurrentArea() {
-        if (this.blockIDs != null) {
-            int blockIndex = 0;
+        if (this.blockIDs == null) {
+            return;
+        }
 
-            for (int x = this.minX; x <= this.maxX; ++x) {
-                for (int z = this.minZ; z <= this.maxZ; ++z) {
-                    for (int y = this.minY; y <= this.maxY; ++y) {
-                        int id = this.world.getBlockId(x, y, z);
-                        ((ExWorld) this.world).cancelBlockUpdate(x, y, z, id);
-                        int id256 = ExChunk.translate256(this.blockIDs[blockIndex]);
-                        byte meta = this.metadatas[blockIndex];
-                        this.world.placeBlockWithMetaData(x, y, z, id256, meta);
-                        this.world.removeBlockEntity(x, y, z);
-                        ++blockIndex;
-                    }
+        int blockIndex = 0;
+
+        for (int x = this.minX; x <= this.maxX; ++x) {
+            for (int z = this.minZ; z <= this.maxZ; ++z) {
+                for (int y = this.minY; y <= this.maxY; ++y) {
+                    int id = this.world.getBlockId(x, y, z);
+                    ((ExWorld) this.world).cancelBlockUpdate(x, y, z, id);
+                    int id256 = ExChunk.translate256(this.blockIDs[blockIndex]);
+                    byte meta = this.metadatas[blockIndex];
+                    this.world.placeBlockWithMetaData(x, y, z, id256, meta);
+                    this.world.removeBlockEntity(x, y, z);
+                    ++blockIndex;
                 }
             }
+        }
 
-            for (CompoundTag tag : this.tileEntities) {
-                BlockEntity tileEntity = ofNBT(tag);
-                this.world.setBlockEntity(tileEntity.x, tileEntity.y, tileEntity.z, tileEntity);
-            }
+        for (CompoundTag tag : this.tileEntities) {
+            BlockEntity tileEntity = ofNBT(tag);
+            this.world.setBlockEntity(tileEntity.x, tileEntity.y, tileEntity.z, tileEntity);
         }
     }
 
@@ -106,27 +112,27 @@ public class AC_TileEntityStorage extends AC_TileEntityMinMax {
         }
     }
 
-    public void writeNBT(CompoundTag var1) {
-        super.writeNBT(var1);
+    public void writeNBT(CompoundTag tag) {
+        super.writeNBT(tag);
         if (this.blockIDs != null) {
-            var1.put("blockIDs", this.blockIDs);
+            tag.put("blockIDs", this.blockIDs);
         }
 
         if (this.metadatas != null) {
-            var1.put("metadatas", this.metadatas);
+            tag.put("metadatas", this.metadatas);
         }
 
         if (!this.tileEntities.isEmpty()) {
             int tileIndex = 0;
 
-            for (CompoundTag tag : this.tileEntities) {
-                var1.put(String.format("tile%d", tileIndex), (AbstractTag) tag);
+            for (CompoundTag tileTag : this.tileEntities) {
+                tag.put(String.format("tile%d", tileIndex), tileTag);
                 ++tileIndex;
             }
 
-            var1.put("numTiles", tileIndex);
+            tag.put("numTiles", tileIndex);
         }
 
-        var1.put("acVersion", 0);
+        tag.put("acVersion", 0);
     }
 }
