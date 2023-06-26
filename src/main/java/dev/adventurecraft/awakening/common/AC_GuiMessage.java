@@ -8,14 +8,14 @@ import net.minecraft.util.CharacterUtils;
 import net.minecraft.world.World;
 
 public class AC_GuiMessage extends Screen {
+
     private AC_TileEntityMessage msg;
-    private AC_TileEntityMessage soundFile;
     private World world;
     private int page;
 
-    public AC_GuiMessage(World var1, AC_TileEntityMessage var2) {
-        this.world = var1;
-        this.msg = var2;
+    public AC_GuiMessage(World world, AC_TileEntityMessage msg) {
+        this.world = world;
+        this.msg = msg;
     }
 
     public void initVanillaScreen() {
@@ -44,14 +44,15 @@ public class AC_GuiMessage extends Screen {
 
     }
 
-    protected void buttonClicked(ButtonWidget var1) {
-        if (var1.id == 0 && this.page == 0) {
+    @Override
+    protected void buttonClicked(ButtonWidget button) {
+        if (button.id == 0 && this.page == 0) {
             this.msg.sound = "";
-        } else if (var1.id < 100) {
+        } else if (button.id < 100) {
             int var2 = 3 * ((this.height - 60) / 20);
-            this.msg.sound = ((ExWorld) this.world).getSoundList()[var1.id - 1 + var2 * this.page];
+            this.msg.sound = ((ExWorld) this.world).getSoundList()[button.id - 1 + var2 * this.page];
         } else {
-            this.page = var1.id - 100;
+            this.page = button.id - 100;
             this.buttons.clear();
             this.initVanillaScreen();
         }
@@ -59,6 +60,7 @@ public class AC_GuiMessage extends Screen {
         this.world.getChunk(this.msg.x, this.msg.z).method_885();
     }
 
+    @Override
     protected void keyPressed(char var1, int var2) {
         super.keyPressed(var1, var2);
         if (var2 == 14 && this.msg.message.length() > 0) {
@@ -68,19 +70,18 @@ public class AC_GuiMessage extends Screen {
         if (CharacterUtils.validCharacters.indexOf(var1) >= 0 && this.msg.message.length() < 30) {
             this.msg.message = this.msg.message + var1;
         }
-
     }
 
-    public void render(int var1, int var2, float var3) {
+    public void render(int mouseX, int mouseY, float deltaTime) {
         this.renderBackground();
-        this.drawTextWithShadow(this.textRenderer, String.format("Message: \'%s\'", this.msg.message), 4, 4, 14737632);
-        if (this.msg.sound != "") {
+        this.drawTextWithShadow(this.textRenderer, String.format("Message: '%s'", this.msg.message), 4, 4, 14737632);
+        if (!this.msg.sound.equals("")) {
             this.drawTextWithShadow(this.textRenderer, String.format("Sound: %s", this.msg.sound), 4, 24, 14737632);
         } else {
             this.drawTextWithShadow(this.textRenderer, String.format("Sound: None"), 4, 24, 14737632);
         }
 
-        super.render(var1, var2, var3);
+        super.render(mouseX, mouseY, deltaTime);
     }
 
     public static void showUI(World var0, AC_TileEntityMessage var1) {

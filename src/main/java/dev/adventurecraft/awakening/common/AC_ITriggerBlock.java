@@ -19,9 +19,9 @@ public interface AC_ITriggerBlock {
 
     default void addTriggerActivation(World world, int x, int y, int z) {
         if (this.canBeTriggered()) {
-            int var5 = Math.min(world.getBlockMeta(x, y, z) + 1, 15);
-            world.method_223(x, y, z, var5);
-            if (var5 == 1) {
+            int meta = Math.min(world.getBlockMeta(x, y, z) + 1, 15);
+            world.method_223(x, y, z, meta);
+            if (meta == 1) {
                 this.onTriggerActivated(world, x, y, z);
             }
         }
@@ -29,9 +29,9 @@ public interface AC_ITriggerBlock {
 
     default void removeTriggerActivation(World world, int x, int y, int z) {
         if (this.canBeTriggered()) {
-            int var5 = world.getBlockMeta(x, y, z) - 1;
-            world.method_223(x, y, z, Math.max(var5, 0));
-            if (var5 == 0) {
+            int meta = world.getBlockMeta(x, y, z) - 1;
+            world.method_223(x, y, z, Math.max(meta, 0));
+            if (meta == 0) {
                 this.onTriggerDeactivated(world, x, y, z);
             }
         }

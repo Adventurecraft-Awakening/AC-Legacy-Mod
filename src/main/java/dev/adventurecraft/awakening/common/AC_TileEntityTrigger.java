@@ -5,6 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.util.io.CompoundTag;
 
 public class AC_TileEntityTrigger extends AC_TileEntityMinMax {
+
     public int activated = 0;
     public boolean visited;
     public boolean resetOnTrigger;
@@ -18,13 +19,13 @@ public class AC_TileEntityTrigger extends AC_TileEntityMinMax {
         }
     }
 
-    public void readNBT(CompoundTag var1) {
-        super.readNBT(var1);
-        this.resetOnTrigger = var1.getBoolean("ResetOnTrigger");
+    public void readNBT(CompoundTag tag) {
+        super.readNBT(tag);
+        this.resetOnTrigger = tag.getBoolean("ResetOnTrigger");
     }
 
-    public void writeNBT(CompoundTag var1) {
-        super.writeNBT(var1);
-        var1.put("ResetOnTrigger", this.resetOnTrigger);
+    public void writeNBT(CompoundTag tag) {
+        super.writeNBT(tag);
+        tag.put("ResetOnTrigger", this.resetOnTrigger);
     }
 }

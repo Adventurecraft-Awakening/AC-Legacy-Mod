@@ -1389,41 +1389,27 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     }
 
     public void loadMapSounds() {
-        File var1 = new File(this.levelDir, "sound");
-        if (var1.exists() && var1.isDirectory()) {
-            int var2 = 0;
-            File[] var3 = var1.listFiles();
-            File[] var4 = var3;
-            int var5 = var3.length;
-
-            int var6;
-            File var7;
-            String var8;
-            for (var6 = 0; var6 < var5; ++var6) {
-                var7 = var4[var6];
-                if (var7.isFile() && var7.getName().endsWith(".ogg")) {
-                    var8 = String.format("sound/%s", var7.getName().toLowerCase());
-                    Minecraft.instance.soundHelper.addSound(var8, var7);
-                    ++var2;
-                }
-            }
-
-            this.soundList = new String[var2];
-            var2 = 0;
-            var4 = var3;
-            var5 = var3.length;
-
-            for (var6 = 0; var6 < var5; ++var6) {
-                var7 = var4[var6];
-                if (var7.isFile() && var7.getName().endsWith(".ogg")) {
-                    var8 = String.format("sound.%s", var7.getName().toLowerCase().replace(".ogg", ""));
-                    this.soundList[var2] = var8;
-                    ++var2;
-                }
-            }
-        } else {
+        File soundDir = new File(this.levelDir, "sound");
+        File[] files = soundDir.listFiles();
+        if (!soundDir.exists() || !soundDir.isDirectory() || files == null) {
             this.soundList = new String[0];
+            return;
         }
+
+        ArrayList<String> sounds = new ArrayList<>();
+
+        for (File file : files) {
+            if (file.isFile() && file.getName().endsWith(".ogg")) {
+                String fileName = file.getName().toLowerCase();
+                String name = String.format("sound/%s", fileName);
+                Minecraft.instance.soundHelper.addSound(name, file);
+
+                String soundName = String.format("sound.%s", fileName.replace(".ogg", ""));
+                sounds.add(soundName);
+            }
+        }
+
+        this.soundList = sounds.toArray(new String[0]);
     }
 
     public void loadSoundOverrides() {

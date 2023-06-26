@@ -4,6 +4,7 @@ import net.minecraft.entity.BlockEntity;
 import net.minecraft.util.io.CompoundTag;
 
 public class AC_TileEntityMinMax extends BlockEntity {
+
 	public int minX;
 	public int minY;
 	public int minZ;
@@ -11,24 +12,24 @@ public class AC_TileEntityMinMax extends BlockEntity {
 	public int maxY;
 	public int maxZ;
 
-	public void readNBT(CompoundTag var1) {
-		super.readNBT(var1);
-		this.minX = var1.getInt("minX");
-		this.minY = var1.getInt("minY");
-		this.minZ = var1.getInt("minZ");
-		this.maxX = var1.getInt("maxX");
-		this.maxY = var1.getInt("maxY");
-		this.maxZ = var1.getInt("maxZ");
+	public void readNBT(CompoundTag tag) {
+		super.readNBT(tag);
+		this.minX = tag.getInt("minX");
+		this.minY = tag.getInt("minY");
+		this.minZ = tag.getInt("minZ");
+		this.maxX = tag.getInt("maxX");
+		this.maxY = tag.getInt("maxY");
+		this.maxZ = tag.getInt("maxZ");
 	}
 
-	public void writeNBT(CompoundTag var1) {
-		super.writeNBT(var1);
-		var1.put("minX", this.minX);
-		var1.put("minY", this.minY);
-		var1.put("minZ", this.minZ);
-		var1.put("maxX", this.maxX);
-		var1.put("maxY", this.maxY);
-		var1.put("maxZ", this.maxZ);
+	public void writeNBT(CompoundTag tag) {
+		super.writeNBT(tag);
+		tag.put("minX", this.minX);
+		tag.put("minY", this.minY);
+		tag.put("minZ", this.minZ);
+		tag.put("maxX", this.maxX);
+		tag.put("maxY", this.maxY);
+		tag.put("maxZ", this.maxZ);
 	}
 
 	public boolean isSet() {

@@ -3,6 +3,7 @@ package dev.adventurecraft.awakening.common;
 import net.minecraft.util.io.CompoundTag;
 
 public class AC_TileEntityTriggerMemory extends AC_TileEntityMinMax {
+
     public boolean isActivated;
     public boolean activateOnDetrigger;
     public boolean resetOnDeath;
@@ -23,17 +24,17 @@ public class AC_TileEntityTriggerMemory extends AC_TileEntityMinMax {
         }
     }
 
-    public void readNBT(CompoundTag var1) {
-        super.readNBT(var1);
-        this.isActivated = var1.getBoolean("IsActivated");
-        this.activateOnDetrigger = var1.getBoolean("ActivateOnDetrigger");
-        this.resetOnDeath = var1.getBoolean("ResetOnDeath");
+    public void readNBT(CompoundTag tag) {
+        super.readNBT(tag);
+        this.isActivated = tag.getBoolean("IsActivated");
+        this.activateOnDetrigger = tag.getBoolean("ActivateOnDetrigger");
+        this.resetOnDeath = tag.getBoolean("ResetOnDeath");
     }
 
-    public void writeNBT(CompoundTag var1) {
-        super.writeNBT(var1);
-        var1.put("IsActivated", this.isActivated);
-        var1.put("ActivateOnDetrigger", this.activateOnDetrigger);
-        var1.put("ResetOnDeath", this.resetOnDeath);
+    public void writeNBT(CompoundTag tag) {
+        super.writeNBT(tag);
+        tag.put("IsActivated", this.isActivated);
+        tag.put("ActivateOnDetrigger", this.activateOnDetrigger);
+        tag.put("ResetOnDeath", this.resetOnDeath);
     }
 }

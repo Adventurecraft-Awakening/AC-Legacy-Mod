@@ -5,6 +5,7 @@ import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.util.io.CompoundTag;
 
 public class AC_TileEntityTimer extends AC_TileEntityMinMax {
+
     public int ticks;
     public int timeActive;
     public int timeDeactive;
@@ -48,30 +49,29 @@ public class AC_TileEntityTimer extends AC_TileEntityMinMax {
         } else {
             --this.ticks;
         }
-
     }
 
-    public void readNBT(CompoundTag var1) {
-        super.readNBT(var1);
-        this.resetOnTrigger = var1.getBoolean("resetOnTrigger");
-        this.timeActive = var1.getInt("timeActive");
-        this.timeDeactive = var1.getInt("timeDeactive");
-        this.timeDelay = var1.getInt("timeDelay");
-        this.ticks = var1.getInt("ticks");
-        this.ticksDelay = var1.getInt("ticksDelay");
-        this.active = var1.getBoolean("active");
-        this.canActivate = var1.getBoolean("canActivate");
+    public void readNBT(CompoundTag tag) {
+        super.readNBT(tag);
+        this.resetOnTrigger = tag.getBoolean("resetOnTrigger");
+        this.timeActive = tag.getInt("timeActive");
+        this.timeDeactive = tag.getInt("timeDeactive");
+        this.timeDelay = tag.getInt("timeDelay");
+        this.ticks = tag.getInt("ticks");
+        this.ticksDelay = tag.getInt("ticksDelay");
+        this.active = tag.getBoolean("active");
+        this.canActivate = tag.getBoolean("canActivate");
     }
 
-    public void writeNBT(CompoundTag var1) {
-        super.writeNBT(var1);
-        var1.put("resetOnTrigger", this.resetOnTrigger);
-        var1.put("timeActive", this.timeActive);
-        var1.put("timeDeactive", this.timeDeactive);
-        var1.put("timeDelay", this.timeDelay);
-        var1.put("ticks", this.ticks);
-        var1.put("ticksDelay", this.ticksDelay);
-        var1.put("active", this.active);
-        var1.put("canActivate", this.canActivate);
+    public void writeNBT(CompoundTag tag) {
+        super.writeNBT(tag);
+        tag.put("resetOnTrigger", this.resetOnTrigger);
+        tag.put("timeActive", this.timeActive);
+        tag.put("timeDeactive", this.timeDeactive);
+        tag.put("timeDelay", this.timeDelay);
+        tag.put("ticks", this.ticks);
+        tag.put("ticksDelay", this.ticksDelay);
+        tag.put("active", this.active);
+        tag.put("canActivate", this.canActivate);
     }
 }

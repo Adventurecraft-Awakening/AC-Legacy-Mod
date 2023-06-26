@@ -11,31 +11,31 @@ public class AC_TileEntityNpcPath extends AC_TileEntityMinMax {
     public static AC_EntityNPC lastEntity = null;
 
     @Override
-    public void readNBT(CompoundTag var1) {
-        super.readNBT(var1);
-        this.entityID = var1.getInt("entityID");
+    public void readNBT(CompoundTag tag) {
+        super.readNBT(tag);
+        this.entityID = tag.getInt("entityID");
     }
 
     @Override
-    public void writeNBT(CompoundTag var1) {
-        super.writeNBT(var1);
-        var1.put("entityID", this.entityID);
+    public void writeNBT(CompoundTag tag) {
+        super.writeNBT(tag);
+        tag.put("entityID", this.entityID);
     }
 
     public AC_EntityNPC getNPC() {
         if (this.npc != null && this.npc.entityId == this.entityID) {
             return this.npc;
-        } else {
-            if (this.world != null) {
-                Entity var1 = ((ExWorld) this.world).getEntityByID(this.entityID);
-                if (var1 instanceof AC_EntityNPC foundNpc) {
-                    this.npc = foundNpc;
-                    return this.npc;
-                }
-            }
-
-            return null;
         }
+
+        if (this.world != null) {
+            Entity entity = ((ExWorld) this.world).getEntityByID(this.entityID);
+            if (entity instanceof AC_EntityNPC foundNpc) {
+                this.npc = foundNpc;
+                return this.npc;
+            }
+        }
+
+        return null;
     }
 
     public void setEntityToLastSelected() {
@@ -46,8 +46,8 @@ public class AC_TileEntityNpcPath extends AC_TileEntityMinMax {
     }
 
     void pathEntity() {
-        AC_EntityNPC var1 = this.getNPC();
-        if (var1 != null) {
+        AC_EntityNPC npc = this.getNPC();
+        if (npc != null) {
             this.npc.pathToPosition(this.x, this.y, this.z);
             if (this.isSet()) {
                 this.npc.triggerOnPath = this;
