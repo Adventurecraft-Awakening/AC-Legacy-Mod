@@ -1,7 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import net.minecraft.client.Minecraft;
@@ -13,133 +12,135 @@ import net.minecraft.util.math.Vec3d;
 import org.lwjgl.opengl.GL11;
 
 public class AC_CutsceneCamera {
+
     public long startTime;
-    public AC_CutsceneCameraPoint curPoint = new AC_CutsceneCameraPoint(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0);
+    public AC_CutsceneCameraPoint curPoint = new AC_CutsceneCameraPoint(
+        0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, AC_CutsceneCameraBlendType.NONE);
     public AC_CutsceneCameraPoint prevPrevPoint;
     public AC_CutsceneCameraPoint prevPoint;
-    public List<AC_CutsceneCameraPoint> cameraPoints = new ArrayList<>();
-    public List<Vec3d> lineVecs = new ArrayList<>();
-    public int startType = 2;
+    public ArrayList<AC_CutsceneCameraPoint> cameraPoints = new ArrayList<>();
+    public ArrayList<Vec3d> linePoints = new ArrayList<>();
+    public AC_CutsceneCameraBlendType startType = AC_CutsceneCameraBlendType.QUADRATIC;
 
-    public void addCameraPoint(float var1, float var2, float var3, float var4, float var5, float var6, int var7) {
-        int var8 = 0;
+    public void addCameraPoint(
+        float time, float x, float y, float z, float yaw, float pitch, AC_CutsceneCameraBlendType type) {
+        int pointCount = 0;
 
         for (AC_CutsceneCameraPoint var10 : this.cameraPoints) {
-            if (var1 < var10.time) {
+            if (time < var10.time) {
                 break;
             }
-            ++var8;
+            ++pointCount;
         }
 
-        this.cameraPoints.add(var8, new AC_CutsceneCameraPoint(var1, var2, var3, var4, var5, var6, var7));
+        this.cameraPoints.add(pointCount, new AC_CutsceneCameraPoint(time, x, y, z, yaw, pitch, type));
         this.fixYawPitch(0.0F, 0.0F);
     }
 
     public void loadCameraEntities() {
 
-        for (Entity var2 : (List<Entity>) Minecraft.instance.world.entities) {
-            if (var2 instanceof AC_EntityCamera) {
-                var2.remove();
+        for (Entity entity : (List<Entity>) Minecraft.instance.world.entities) {
+            if (entity instanceof AC_EntityCamera) {
+                entity.remove();
             }
         }
 
-        for (AC_CutsceneCameraPoint var11 : this.cameraPoints) {
-            AC_EntityCamera var3 = new AC_EntityCamera(Minecraft.instance.world, var11.time, var11.cameraBlendType, var11.cameraID);
-            var3.method_1338(var11.posX, var11.posY, var11.posZ, var11.rotYaw, var11.rotPitch);
-            Minecraft.instance.world.spawnEntity(var3);
+        for (AC_CutsceneCameraPoint point : this.cameraPoints) {
+            var camera = new AC_EntityCamera(Minecraft.instance.world, point.time, point.blendType, point.cameraID);
+            camera.method_1338(point.posX, point.posY, point.posZ, point.rotYaw, point.rotPitch);
+            Minecraft.instance.world.spawnEntity(camera);
         }
 
-        AC_CutsceneCamera var10 = new AC_CutsceneCamera();
+        var camera = new AC_CutsceneCamera();
 
-        for (AC_CutsceneCameraPoint var13 : this.cameraPoints) {
-            var10.addCameraPoint(var13.time, var13.posX, var13.posY, var13.posZ, var13.rotYaw, var13.rotPitch, var13.cameraBlendType);
+        for (AC_CutsceneCameraPoint point : this.cameraPoints) {
+            camera.addCameraPoint(
+                point.time, point.posX, point.posY, point.posZ, point.rotYaw, point.rotPitch, point.blendType);
         }
 
-        AC_CutsceneCameraPoint var11 = null;
-        this.lineVecs.clear();
+        AC_CutsceneCameraPoint prevPoint = null;
+        this.linePoints.clear();
 
-        for (AC_CutsceneCameraPoint var4 : this.cameraPoints) {
-            if (var11 != null) {
-                for (int var6 = 0; var6 < 25; ++var6) {
-                    float var5 = (float) (var6 + 1) / 25.0F;
-                    float var7 = this.lerp(var5, var11.time, var4.time);
-                    AC_CutsceneCameraPoint var8 = var10.getPoint(var7);
-                    Vec3d var9 = Vec3d.create(var8.posX, var8.posY, var8.posZ);
-                    this.lineVecs.add(var9);
+        for (AC_CutsceneCameraPoint point : this.cameraPoints) {
+            if (prevPoint != null) {
+                for (int i = 0; i < 25; ++i) {
+                    float currTime = (float) (i + 1) / 25.0F;
+                    float nextTime = this.lerp(currTime, prevPoint.time, point.time);
+                    AC_CutsceneCameraPoint nextPoint = camera.getPoint(nextTime);
+                    Vec3d linePoint = Vec3d.create(nextPoint.posX, nextPoint.posY, nextPoint.posZ);
+                    this.linePoints.add(linePoint);
                 }
             } else {
-                this.lineVecs.add(Vec3d.create(var4.posX, var4.posY, var4.posZ));
+                this.linePoints.add(Vec3d.create(point.posX, point.posY, point.posZ));
             }
-            var11 = var4;
+            prevPoint = point;
         }
     }
 
-    public void drawLines(LivingEntity var1, float var2) {
-        double var3 = var1.prevRenderX + (var1.x - var1.prevRenderX) * (double) var2;
-        double var5 = var1.prevRenderY + (var1.y - var1.prevRenderY) * (double) var2;
-        double var7 = var1.prevRenderZ + (var1.z - var1.prevRenderZ) * (double) var2;
+    public void drawLines(LivingEntity entity, float time) {
+        double prX = entity.prevRenderX + (entity.x - entity.prevRenderX) * (double) time;
+        double prY = entity.prevRenderY + (entity.y - entity.prevRenderY) * (double) time;
+        double prZ = entity.prevRenderZ + (entity.z - entity.prevRenderZ) * (double) time;
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GL11.glColor4f(1.0F, 0.2F, 0.0F, 1.0F);
         GL11.glLineWidth(5.0F);
         GL11.glDisable(GL11.GL_TEXTURE_2D);
-        Tessellator var9 = Tessellator.INSTANCE;
-        var9.start(3);
+        Tessellator ts = Tessellator.INSTANCE;
+        ts.start(3);
 
-        for (Vec3d var11 : this.lineVecs) {
-            var9.addVertex(var11.x - var3, var11.y - var5, var11.z - var7);
+        for (Vec3d linePoint : this.linePoints) {
+            ts.addVertex(linePoint.x - prX, linePoint.y - prY, linePoint.z - prZ);
         }
 
-        var9.tessellate();
+        ts.tessellate();
         GL11.glLineWidth(1.0F);
         GL11.glEnable(GL11.GL_TEXTURE_2D);
         GL11.glDisable(GL11.GL_BLEND);
     }
 
-    private void fixYawPitch(float var1, float var2) {
-        float var3 = 0.0F;
-        float var4 = 0.0F;
-        AC_CutsceneCameraPoint var5 = new AC_CutsceneCameraPoint(0.0F, 0.0F, 0.0F, 0.0F, var1, var2, 0);
+    private void fixYawPitch(float yaw, float pitch) {
+        float yawSum = 0.0F;
+        float pitchSum = 0.0F;
+        var prevPoint = new AC_CutsceneCameraPoint(
+            0.0F, 0.0F, 0.0F, 0.0F, yaw, pitch, AC_CutsceneCameraBlendType.NONE);
 
-        for (AC_CutsceneCameraPoint var7 : this.cameraPoints) {
-            if (var5 != null) {
-                var7.rotYaw += var3;
-                boolean var9 = true;
-
-                float var8;
-                do {
-                    var8 = var7.rotYaw - var5.rotYaw;
-                    if (var8 > 180.0F) {
-                        var3 -= 360.0F;
-                        var7.rotYaw -= 360.0F;
-                    } else if (var8 < -180.0F) {
-                        var3 += 360.0F;
-                        var7.rotYaw += 360.0F;
-                    } else {
-                        var9 = false;
-                    }
-                } while (var9);
-
-                var7.rotPitch += var4;
-                var9 = true;
+        for (AC_CutsceneCameraPoint point : this.cameraPoints) {
+            if (prevPoint != null) {
+                point.rotYaw += yawSum;
+                boolean unfixed = true;
 
                 do {
-                    var8 = var7.rotPitch - var5.rotPitch;
-                    if (var8 > 180.0F) {
-                        var4 -= 360.0F;
-                        var7.rotPitch -= 360.0F;
-                    } else if (var8 < -180.0F) {
-                        var4 += 360.0F;
-                        var7.rotPitch += 360.0F;
+                    float yawDiff = point.rotYaw - prevPoint.rotYaw;
+                    if (yawDiff > 180.0F) {
+                        yawSum -= 360.0F;
+                        point.rotYaw -= 360.0F;
+                    } else if (yawDiff < -180.0F) {
+                        yawSum += 360.0F;
+                        point.rotYaw += 360.0F;
                     } else {
-                        var9 = false;
+                        unfixed = false;
                     }
+                } while (unfixed);
 
-                } while (var9);
+                point.rotPitch += pitchSum;
+                unfixed = true;
+
+                do {
+                    float pitchDiff = point.rotPitch - prevPoint.rotPitch;
+                    if (pitchDiff > 180.0F) {
+                        pitchSum -= 360.0F;
+                        point.rotPitch -= 360.0F;
+                    } else if (pitchDiff < -180.0F) {
+                        pitchSum += 360.0F;
+                        point.rotPitch += 360.0F;
+                    } else {
+                        unfixed = false;
+                    }
+                } while (unfixed);
             }
-            var5 = var7;
+            prevPoint = point;
         }
-
     }
 
     public void clearPoints() {
@@ -154,16 +155,16 @@ public class AC_CutsceneCamera {
         this.startTime = Minecraft.instance.world.getWorldTime();
     }
 
-    private float cubicInterpolation(float var1, float var2, float var3, float var4, float var5) {
-        float var6 = var1 * var1;
-        float var7 = -0.5F * var2 + 1.5F * var3 - 1.5F * var4 + 0.5F * var5;
-        float var8 = var2 - 2.5F * var3 + 2.0F * var4 - 0.5F * var5;
-        float var9 = -0.5F * var2 + 0.5F * var4;
-        return var7 * var1 * var6 + var8 * var6 + var9 * var1 + var3;
+    private float cubicInterpolation(float mu, float y0, float y1, float y2, float y3) {
+        float mu2 = mu * mu;
+        float a0 = -0.5F * y0 + 1.5F * y1 - 1.5F * y2 + 0.5F * y3;
+        float a1 = y0 - 2.5F * y1 + 2.0F * y2 - 0.5F * y3;
+        float a2 = -0.5F * y0 + 0.5F * y2;
+        return a0 * mu * mu2 + a1 * mu2 + a2 * mu + y1;
     }
 
-    private float lerp(float var1, float var2, float var3) {
-        return (1.0F - var1) * var2 + var1 * var3;
+    private float lerp(float amount, float start, float end) {
+        return (1.0F - amount) * start + amount * end;
     }
 
     public boolean isEmpty() {
@@ -174,154 +175,177 @@ public class AC_CutsceneCamera {
         return this.cameraPoints.get(this.cameraPoints.size() - 1).time;
     }
 
-    public AC_CutsceneCameraPoint getCurrentPoint(float var1) {
-        float var2 = ((float) (Minecraft.instance.world.getWorldTime() - this.startTime) + var1) / 20.0F;
-        return this.getPoint(var2);
+    public AC_CutsceneCameraPoint getCurrentPoint(float time) {
+        float normalizedTime = ((float) (Minecraft.instance.world.getWorldTime() - this.startTime) + time) / 20.0F;
+        return this.getPoint(normalizedTime);
     }
 
-    public AC_CutsceneCameraPoint getPoint(float var1) {
-        AC_CutsceneCameraPoint var7;
+    public AC_CutsceneCameraPoint getPoint(float time) {
         if (this.prevPoint == null) {
             if (this.cameraPoints.isEmpty()) {
                 return this.curPoint;
             }
 
-            if (this.startType != 0) {
-                AbstractClientPlayerEntity var2 = Minecraft.instance.player;
-                this.prevPoint = new AC_CutsceneCameraPoint(0.0F, (float) var2.x, (float) var2.y, (float) var2.z, var2.yaw, var2.pitch, this.startType);
-                this.fixYawPitch(var2.yaw, var2.pitch);
+            if (this.startType != AC_CutsceneCameraBlendType.NONE) {
+                AbstractClientPlayerEntity entity = Minecraft.instance.player;
+                this.prevPoint = new AC_CutsceneCameraPoint(
+                    0.0F, (float) entity.x, (float) entity.y, (float) entity.z, entity.yaw, entity.pitch, this.startType);
+                this.fixYawPitch(entity.yaw, entity.pitch);
             } else {
-                var7 = this.cameraPoints.get(0);
-                this.prevPoint = new AC_CutsceneCameraPoint(0.0F, var7.posX, var7.posY, var7.posZ, var7.rotYaw, var7.rotPitch, this.startType);
+                AC_CutsceneCameraPoint point = this.cameraPoints.get(0);
+                this.prevPoint = new AC_CutsceneCameraPoint(
+                    0.0F, point.posX, point.posY, point.posZ, point.rotYaw, point.rotPitch, this.startType);
             }
         }
 
-        if (this.prevPoint.time <= var1 && !this.cameraPoints.isEmpty()) {
-            var7 = this.cameraPoints.get(0);
-
-            float var4;
-            float var5;
-            while (var7 != null && var7.time < var1 && !this.cameraPoints.isEmpty()) {
-                this.prevPrevPoint = this.prevPoint;
-                this.prevPoint = this.cameraPoints.remove(0);
-                var7 = null;
-                if (!this.cameraPoints.isEmpty()) {
-                    var7 = this.cameraPoints.get(0);
-                    if (this.prevPrevPoint != null) {
-                        float var3 = var7.time - this.prevPoint.time;
-                        var4 = this.prevPoint.time - this.prevPrevPoint.time;
-                        if (var4 > 0.0F) {
-                            var5 = var3 / var4;
-                            this.prevPrevPoint = new AC_CutsceneCameraPoint(0.0F, this.prevPoint.posX - var5 * (this.prevPoint.posX - this.prevPrevPoint.posX), this.prevPoint.posY - var5 * (this.prevPoint.posY - this.prevPrevPoint.posY), this.prevPoint.posZ - var5 * (this.prevPoint.posZ - this.prevPrevPoint.posZ), this.prevPoint.rotYaw - var5 * (this.prevPoint.rotYaw - this.prevPrevPoint.rotYaw), this.prevPoint.rotPitch - var5 * (this.prevPoint.rotPitch - this.prevPrevPoint.rotPitch), 0);
-                        } else {
-                            this.prevPrevPoint = new AC_CutsceneCameraPoint(0.0F, this.prevPoint.posX, this.prevPoint.posY, this.prevPoint.posZ, this.prevPoint.rotYaw, this.prevPoint.rotPitch, 0);
-                        }
-                    }
-                }
-            }
-
-            if (var7 == null) {
-                return this.prevPoint;
-            } else {
-                if (this.prevPrevPoint == null) {
-                    this.prevPrevPoint = new AC_CutsceneCameraPoint(0.0F, 2.0F * this.prevPoint.posX - var7.posX, 2.0F * this.prevPoint.posY - var7.posY, 2.0F * this.prevPoint.posZ - var7.posZ, 2.0F * this.prevPoint.rotYaw - var7.rotYaw, 2.0F * this.prevPoint.rotPitch - var7.rotPitch, 0);
-                }
-
-                AC_CutsceneCameraPoint var8;
-                if (this.cameraPoints.size() > 1) {
-                    var8 = this.cameraPoints.get(1);
-                    var4 = var7.time - this.prevPoint.time;
-                    var5 = var8.time - var7.time;
-                    if (var5 > 0.0F) {
-                        float var6 = var4 / var5;
-                        var8 = new AC_CutsceneCameraPoint(0.0F, var7.posX + var6 * (var8.posX - var7.posX), var7.posY + var6 * (var8.posY - var7.posY), var7.posZ + var6 * (var8.posZ - var7.posZ), var7.rotYaw + var6 * (var8.rotYaw - var7.rotYaw), var7.rotPitch + var6 * (var8.rotPitch - var7.rotPitch), 0);
-                    } else {
-                        var8 = new AC_CutsceneCameraPoint(0.0F, var7.posX, var7.posY, var7.posZ, var7.rotYaw, var7.rotPitch, 0);
-                    }
-                } else {
-                    var8 = new AC_CutsceneCameraPoint(0.0F, 2.0F * var7.posX - this.prevPoint.posX, 2.0F * var7.posY - this.prevPoint.posY, 2.0F * var7.posZ - this.prevPoint.posZ, 2.0F * var7.rotYaw - this.prevPoint.rotYaw, 2.0F * var7.rotPitch - this.prevPoint.rotPitch, 0);
-                }
-
-                var4 = (var1 - this.prevPoint.time) / (var7.time - this.prevPoint.time);
-                this.curPoint.time = var1;
-                switch (this.prevPoint.cameraBlendType) {
-                    case 1:
-                        this.curPoint.posX = this.lerp(var4, this.prevPoint.posX, var7.posX);
-                        this.curPoint.posY = this.lerp(var4, this.prevPoint.posY, var7.posY);
-                        this.curPoint.posZ = this.lerp(var4, this.prevPoint.posZ, var7.posZ);
-                        this.curPoint.rotYaw = this.lerp(var4, this.prevPoint.rotYaw, var7.rotYaw);
-                        this.curPoint.rotPitch = this.lerp(var4, this.prevPoint.rotPitch, var7.rotPitch);
-                        break;
-
-                    case 2:
-                        this.curPoint.posX = this.cubicInterpolation(var4, this.prevPrevPoint.posX, this.prevPoint.posX, var7.posX, var8.posX);
-                        this.curPoint.posY = this.cubicInterpolation(var4, this.prevPrevPoint.posY, this.prevPoint.posY, var7.posY, var8.posY);
-                        this.curPoint.posZ = this.cubicInterpolation(var4, this.prevPrevPoint.posZ, this.prevPoint.posZ, var7.posZ, var8.posZ);
-                        this.curPoint.rotYaw = this.cubicInterpolation(var4, this.prevPrevPoint.rotYaw, this.prevPoint.rotYaw, var7.rotYaw, var8.rotYaw);
-                        this.curPoint.rotPitch = this.cubicInterpolation(var4, this.prevPrevPoint.rotPitch, this.prevPoint.rotPitch, var7.rotPitch, var8.rotPitch);
-                        break;
-
-                    default:
-                        this.curPoint.posX = this.prevPoint.posX;
-                        this.curPoint.posY = this.prevPoint.posY;
-                        this.curPoint.posZ = this.prevPoint.posZ;
-                        this.curPoint.rotYaw = this.prevPoint.rotYaw;
-                        this.curPoint.rotPitch = this.prevPoint.rotPitch;
-                        break;
-                }
-
-                return this.curPoint;
-            }
-        } else {
+        if (!(this.prevPoint.time <= time) || this.cameraPoints.isEmpty()) {
             return this.prevPoint;
         }
+
+        AC_CutsceneCameraPoint point = this.cameraPoints.get(0);
+
+        while (point != null && point.time < time && !this.cameraPoints.isEmpty()) {
+            this.prevPrevPoint = this.prevPoint;
+            this.prevPoint = this.cameraPoints.remove(0);
+            point = null;
+            if (this.cameraPoints.isEmpty()) {
+                continue;
+            }
+            point = this.cameraPoints.get(0);
+            if (this.prevPrevPoint == null) {
+                continue;
+            }
+
+            float timeSincePrev = point.time - this.prevPoint.time;
+            float prevTimeSincePrev = this.prevPoint.time - this.prevPrevPoint.time;
+            if (prevTimeSincePrev > 0.0F) {
+                float factor = timeSincePrev / prevTimeSincePrev;
+                this.prevPrevPoint = new AC_CutsceneCameraPoint(
+                    0.0F,
+                    this.prevPoint.posX - factor * (this.prevPoint.posX - this.prevPrevPoint.posX),
+                    this.prevPoint.posY - factor * (this.prevPoint.posY - this.prevPrevPoint.posY),
+                    this.prevPoint.posZ - factor * (this.prevPoint.posZ - this.prevPrevPoint.posZ),
+                    this.prevPoint.rotYaw - factor * (this.prevPoint.rotYaw - this.prevPrevPoint.rotYaw),
+                    this.prevPoint.rotPitch - factor * (this.prevPoint.rotPitch - this.prevPrevPoint.rotPitch),
+                    AC_CutsceneCameraBlendType.NONE);
+            } else {
+                this.prevPrevPoint = new AC_CutsceneCameraPoint(
+                    0.0F,
+                    this.prevPoint.posX,
+                    this.prevPoint.posY,
+                    this.prevPoint.posZ,
+                    this.prevPoint.rotYaw,
+                    this.prevPoint.rotPitch,
+                    AC_CutsceneCameraBlendType.NONE);
+            }
+        }
+
+        if (point == null) {
+            return this.prevPoint;
+        }
+
+        if (this.prevPrevPoint == null) {
+            this.prevPrevPoint = new AC_CutsceneCameraPoint(
+                0.0F,
+                2.0F * this.prevPoint.posX - point.posX,
+                2.0F * this.prevPoint.posY - point.posY,
+                2.0F * this.prevPoint.posZ - point.posZ,
+                2.0F * this.prevPoint.rotYaw - point.rotYaw,
+                2.0F * this.prevPoint.rotPitch - point.rotPitch,
+                AC_CutsceneCameraBlendType.NONE);
+        }
+
+        AC_CutsceneCameraPoint nextPoint;
+        if (this.cameraPoints.size() > 1) {
+            nextPoint = this.cameraPoints.get(1);
+            float timeSincePrev = point.time - this.prevPoint.time;
+            float timeToNext = nextPoint.time - point.time;
+            if (timeToNext > 0.0F) {
+                float factor = timeSincePrev / timeToNext;
+                nextPoint = new AC_CutsceneCameraPoint(
+                    0.0F,
+                    point.posX + factor * (nextPoint.posX - point.posX),
+                    point.posY + factor * (nextPoint.posY - point.posY),
+                    point.posZ + factor * (nextPoint.posZ - point.posZ),
+                    point.rotYaw + factor * (nextPoint.rotYaw - point.rotYaw),
+                    point.rotPitch + factor * (nextPoint.rotPitch - point.rotPitch),
+                    AC_CutsceneCameraBlendType.NONE);
+            } else {
+                nextPoint = new AC_CutsceneCameraPoint(
+                    0.0F, point.posX, point.posY, point.posZ, point.rotYaw, point.rotPitch, AC_CutsceneCameraBlendType.NONE);
+            }
+        } else {
+            nextPoint = new AC_CutsceneCameraPoint(
+                0.0F,
+                2.0F * point.posX - this.prevPoint.posX,
+                2.0F * point.posY - this.prevPoint.posY,
+                2.0F * point.posZ - this.prevPoint.posZ,
+                2.0F * point.rotYaw - this.prevPoint.rotYaw,
+                2.0F * point.rotPitch - this.prevPoint.rotPitch,
+                AC_CutsceneCameraBlendType.NONE);
+        }
+
+        float amount = (time - this.prevPoint.time) / (point.time - this.prevPoint.time);
+        this.curPoint.time = time;
+
+        switch (this.prevPoint.blendType) {
+            case LINEAR:
+                this.curPoint.posX = this.lerp(amount, this.prevPoint.posX, point.posX);
+                this.curPoint.posY = this.lerp(amount, this.prevPoint.posY, point.posY);
+                this.curPoint.posZ = this.lerp(amount, this.prevPoint.posZ, point.posZ);
+                this.curPoint.rotYaw = this.lerp(amount, this.prevPoint.rotYaw, point.rotYaw);
+                this.curPoint.rotPitch = this.lerp(amount, this.prevPoint.rotPitch, point.rotPitch);
+                break;
+
+            case QUADRATIC:
+                //noinspection SuspiciousNameCombination
+                this.curPoint.posX = this.cubicInterpolation(amount, this.prevPrevPoint.posX, this.prevPoint.posX, point.posX, nextPoint.posX);
+                this.curPoint.posY = this.cubicInterpolation(amount, this.prevPrevPoint.posY, this.prevPoint.posY, point.posY, nextPoint.posY);
+                this.curPoint.posZ = this.cubicInterpolation(amount, this.prevPrevPoint.posZ, this.prevPoint.posZ, point.posZ, nextPoint.posZ);
+                this.curPoint.rotYaw = this.cubicInterpolation(amount, this.prevPrevPoint.rotYaw, this.prevPoint.rotYaw, point.rotYaw, nextPoint.rotYaw);
+                this.curPoint.rotPitch = this.cubicInterpolation(amount, this.prevPrevPoint.rotPitch, this.prevPoint.rotPitch, point.rotPitch, nextPoint.rotPitch);
+                break;
+
+            case NONE:
+                this.curPoint.posX = this.prevPoint.posX;
+                this.curPoint.posY = this.prevPoint.posY;
+                this.curPoint.posZ = this.prevPoint.posZ;
+                this.curPoint.rotYaw = this.prevPoint.rotYaw;
+                this.curPoint.rotPitch = this.prevPoint.rotPitch;
+                break;
+        }
+
+        return this.curPoint;
     }
 
-    public void deletePoint(int var1) {
-        AC_CutsceneCameraPoint var2 = null;
-
-        for (AC_CutsceneCameraPoint var4 : this.cameraPoints) {
-            if (var4.cameraID == var1) {
-                var2 = var4;
+    public void deletePoint(int id) {
+        ArrayList<AC_CutsceneCameraPoint> points = this.cameraPoints;
+        for (int i = 0; i < points.size(); i++) {
+            AC_CutsceneCameraPoint point = points.get(i);
+            if (point.cameraID == id) {
+                this.cameraPoints.remove(i);
                 break;
             }
         }
+    }
 
-        if (var2 != null) {
-            this.cameraPoints.remove(var2);
+    public void setPointType(int id, AC_CutsceneCameraBlendType type) {
+        for (AC_CutsceneCameraPoint point : this.cameraPoints) {
+            if (point.cameraID == id) {
+                point.blendType = type;
+                this.loadCameraEntities();
+                break;
+            }
         }
     }
 
-    public void setPointType(int var1, int var2) {
-        Iterator<AC_CutsceneCameraPoint> var3 = this.cameraPoints.iterator();
-
-        AC_CutsceneCameraPoint var4;
-        do {
-            if (!var3.hasNext()) {
-                return;
+    public void setPointTime(int id, float time) {
+        for (AC_CutsceneCameraPoint point : this.cameraPoints) {
+            if (point.cameraID == id) {
+                point.time = time;
+                this.loadCameraEntities();
+                break;
             }
-
-            var4 = var3.next();
-        } while (var4.cameraID != var1);
-
-        var4.cameraBlendType = var2;
-        this.loadCameraEntities();
-    }
-
-    public void setTime(int var1, float var2) {
-        Iterator<AC_CutsceneCameraPoint> var3 = this.cameraPoints.iterator();
-
-
-        AC_CutsceneCameraPoint var4;
-        do {
-            if (!var3.hasNext()) {
-                return;
-            }
-
-            var4 = var3.next();
-        } while (var4.cameraID != var1);
-
-        var4.time = var2;
-        this.loadCameraEntities();
+        }
     }
 }

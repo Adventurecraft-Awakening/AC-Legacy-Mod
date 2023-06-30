@@ -8,17 +8,19 @@ import net.minecraft.util.io.CompoundTag;
 import net.minecraft.world.World;
 
 public class AC_EntityCamera extends LivingEntity {
+
     float time;
-    int type;
+    AC_CutsceneCameraBlendType type;
     int cameraID;
 
-    public AC_EntityCamera(World var1, float var2, int var3, int var4) {
-        super(var1);
-        this.time = var2;
-        this.cameraID = var4;
-        this.type = var3;
+    public AC_EntityCamera(World world, float time, AC_CutsceneCameraBlendType type, int id) {
+        super(world);
+        this.time = time;
+        this.cameraID = id;
+        this.type = type;
     }
 
+    @Override
     protected void initDataTracker() {
     }
 
@@ -28,29 +30,37 @@ public class AC_EntityCamera extends LivingEntity {
         activeCamera.loadCameraEntities();
     }
 
+    @Override
     public void readAdditional(CompoundTag var1) {
     }
 
+    @Override
     public void writeAdditional(CompoundTag var1) {
     }
 
+    @Override
     public void baseTick() {
     }
 
+    @Override
     public void updateDespawnCounter() {
     }
 
+    @Override
     public void tick() {
     }
 
+    @Override
     public boolean method_1356() {
         return true;
     }
 
+    @Override
     public boolean method_1380() {
         return false;
     }
 
+    @Override
     public boolean interact(PlayerEntity var1) {
         AC_GuiCamera.showUI(this);
         return true;

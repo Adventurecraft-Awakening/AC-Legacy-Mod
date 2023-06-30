@@ -498,8 +498,8 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     @Redirect(method = "method_212", at = @At(
         value = "INVOKE",
         target = "Lnet/minecraft/world/WorldProperties;setSpawnPosition(III)V"))
-    private void spawnAtUncoveredBlock(WorldProperties instance, int var1, int var2, int var3) {
-        this.properties.setSpawnPosition(var1, this.getFirstUncoveredBlockY(var1, var3), var3);
+    private void spawnAtUncoveredBlock(WorldProperties instance, int x, int y, int z) {
+        this.properties.setSpawnPosition(x, this.getFirstUncoveredBlockY(x, z), z);
     }
 
     @Inject(method = "initSpawnPoint", at = @At(
@@ -507,26 +507,22 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         target = "Lnet/minecraft/world/WorldProperties;setSpawnZ(I)V",
         shift = At.Shift.AFTER),
         locals = LocalCapture.CAPTURE_FAILHARD)
-    private void spawnAtUncoveredBlock(CallbackInfo ci, int var1, int var2) {
-        this.properties.setSpawnY(this.getFirstUncoveredBlockY(var1, var2));
+    private void spawnAtUncoveredBlock(CallbackInfo ci, int x, int z) {
+        this.properties.setSpawnY(this.getFirstUncoveredBlockY(x, z));
     }
 
-    public int getFirstUncoveredBlockY(int var1, int var2) {
-        int var3;
-        var3 = 127;
-        while (this.isAir(var1, var3, var2) && var3 > 0) {
-            --var3;
+    public int getFirstUncoveredBlockY(int x, int z) {
+        int y = 127;
+        while (this.isAir(x, y, z) && y > 0) {
+            --y;
         }
-        return var3;
+        return y;
     }
 
     @Overwrite
-    public int getSurfaceBlockId(int var1, int var2) {
-        int var3 = 127;
-        while (this.isAir(var1, var3, var2) && var3 > 0) {
-            --var3;
-        }
-        return this.getBlockId(var1, var3, var2);
+    public int getSurfaceBlockId(int x, int z) {
+        int y = this.getFirstUncoveredBlockY(x, z);
+        return this.getBlockId(x, y, z);
     }
 
     @Redirect(method = "method_271", at = @At(
@@ -548,95 +544,95 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     }
 
     @Override
-    public boolean setBlockAndMetadataTemp(int var1, int var2, int var3, int var4, int var5) {
-        if (var1 >= -32000000 && var3 >= -32000000 && var1 < 32000000 && var3 <= 32000000) {
-            if (var2 < 0) {
-                return false;
-            } else if (var2 >= 128) {
-                return false;
-            } else {
-                Chunk var6 = this.getChunkFromCache(var1 >> 4, var3 >> 4);
-                return ((ExChunk) var6).setBlockIDWithMetadataTemp(var1 & 15, var2, var3 & 15, var4, var5);
-            }
-        } else {
+    public boolean setBlockAndMetadataTemp(int x, int y, int z, int id, int meta) {
+        if (x < -32000000 || z < -32000000 || x >= 32000000 || z > 32000000) {
             return false;
         }
-    }
-
-    @Overwrite
-    public int placeBlock(int var1, int var2, int var3, boolean var4) {
-        if (var1 >= -32000000 && var3 >= -32000000 && var1 < 32000000 && var3 <= 32000000) {
-            if (var4) {
-                int var5 = this.getBlockId(var1, var2, var3);
-                if (var5 != 0 && (var5 == Block.STONE_SLAB.id || var5 == Block.FARMLAND.id || var5 == Block.COBBLESTONE_STAIRS.id || var5 == Block.WOOD_STAIRS.id || Block.BY_ID[var5] instanceof AC_BlockStairMulti)) {
-                    int var6 = this.placeBlock(var1, var2 + 1, var3, false);
-                    int var7 = this.placeBlock(var1 + 1, var2, var3, false);
-                    int var8 = this.placeBlock(var1 - 1, var2, var3, false);
-                    int var9 = this.placeBlock(var1, var2, var3 + 1, false);
-                    int var10 = this.placeBlock(var1, var2, var3 - 1, false);
-                    if (var7 > var6) {
-                        var6 = var7;
-                    }
-
-                    if (var8 > var6) {
-                        var6 = var8;
-                    }
-
-                    if (var9 > var6) {
-                        var6 = var9;
-                    }
-
-                    if (var10 > var6) {
-                        var6 = var10;
-                    }
-
-                    return var6;
-                }
-            }
-
-            if (var2 < 0) {
-                return 0;
-            } else {
-                if (var2 >= 128) {
-                    var2 = 127;
-                }
-
-                Chunk var11 = this.getChunkFromCache(var1 >> 4, var3 >> 4);
-                var1 &= 15;
-                var3 &= 15;
-                return var11.method_880(var1, var2, var3, this.field_202);
-            }
+        if (y < 0) {
+            return false;
+        } else if (y >= 128) {
+            return false;
         } else {
-            return 15;
+            Chunk chunk = this.getChunkFromCache(x >> 4, z >> 4);
+            return ((ExChunk) chunk).setBlockIDWithMetadataTemp(x & 15, y, z & 15, id, meta);
         }
     }
 
     @Overwrite
-    public void method_165(LightType var1, int var2, int var3, int var4, int var5) {
-        if (!this.dimension.halvesMapping || var1 != LightType.field_2757) {
-            if (this.isBlockLoaded(var2, var3, var4)) {
-                if (var1 == LightType.field_2757) {
-                    if (this.isAboveGround(var2, var3, var4)) {
-                        var5 = 15;
-                    }
-                } else if (var1 == LightType.field_2758) {
-                    int var6 = this.getBlockId(var2, var3, var4);
-                    if (Block.BY_ID[var6] != null && ((ExBlock) Block.BY_ID[var6]).getBlockLightValue(this, var2, var3, var4) < var5) {
-                        var5 = ((ExBlock) Block.BY_ID[var6]).getBlockLightValue(this, var2, var3, var4);
-                    }
+    public int placeBlock(int x, int y, int z, boolean var4) {
+        if (x < -32000000 || z < -32000000 || x >= 32000000 || z > 32000000) {
+            return 15;
+        }
+
+        if (var4) {
+            int id = this.getBlockId(x, y, z);
+            if (id != 0 && (id == Block.STONE_SLAB.id || id == Block.FARMLAND.id || id == Block.COBBLESTONE_STAIRS.id || id == Block.WOOD_STAIRS.id || Block.BY_ID[id] instanceof AC_BlockStairMulti)) {
+                int topId = this.placeBlock(x, y + 1, z, false);
+                int rightId = this.placeBlock(x + 1, y, z, false);
+                int leftId = this.placeBlock(x - 1, y, z, false);
+                int frontId = this.placeBlock(x, y, z + 1, false);
+                int backId = this.placeBlock(x, y, z - 1, false);
+                if (rightId > topId) {
+                    topId = rightId;
                 }
 
-                if (this.method_164(var1, var2, var3, var4) != var5) {
-                    this.method_166(var1, var2, var3, var4, var2, var3, var4);
+                if (leftId > topId) {
+                    topId = leftId;
                 }
+
+                if (frontId > topId) {
+                    topId = frontId;
+                }
+
+                if (backId > topId) {
+                    topId = backId;
+                }
+
+                return topId;
+            }
+        }
+
+        if (y < 0) {
+            return 0;
+        }
+
+        if (y >= 128) {
+            y = 127;
+        }
+
+        Chunk chunk = this.getChunkFromCache(x >> 4, z >> 4);
+        x &= 15;
+        z &= 15;
+        return chunk.method_880(x, y, z, this.field_202);
+    }
+
+    @Overwrite
+    public void method_165(LightType lightType, int x, int y, int z, int value) {
+        if (this.dimension.halvesMapping && lightType == LightType.field_2757) {
+            return;
+        }
+        if (this.isBlockLoaded(x, y, z)) {
+            if (lightType == LightType.field_2757) {
+                if (this.isAboveGround(x, y, z)) {
+                    value = 15;
+                }
+            } else if (lightType == LightType.field_2758) {
+                int var6 = this.getBlockId(x, y, z);
+                if (Block.BY_ID[var6] != null && ((ExBlock) Block.BY_ID[var6]).getBlockLightValue(this, x, y, z) < value) {
+                    value = ((ExBlock) Block.BY_ID[var6]).getBlockLightValue(this, x, y, z);
+                }
+            }
+
+            if (this.method_164(lightType, x, y, z) != value) {
+                this.method_166(lightType, x, y, z, x, y, z);
             }
         }
     }
 
     @Override
-    public float getLightValue(int var1, int var2, int var3) {
-        int var4 = this.placeBlock(var1, var2, var3);
-        float var5 = AC_PlayerTorch.getTorchLight((World) (Object) this, var1, var2, var3);
+    public float getLightValue(int x, int y, int z) {
+        int var4 = this.placeBlock(x, y, z);
+        float var5 = AC_PlayerTorch.getTorchLight((World) (Object) this, x, y, z);
         return (float) var4 < var5 ? Math.min(var5, 15.0F) : (float) var4;
     }
 
@@ -653,8 +649,8 @@ public abstract class MixinWorld implements ExWorld, BlockView {
 
     @Environment(EnvType.CLIENT)
     @Overwrite
-    public float getNaturalBrightness(int var1, int var2, int var3, int var4) {
-        float var5 = this.getLightValue(var1, var2, var3);
+    public float getNaturalBrightness(int x, int y, int z, int var4) {
+        float var5 = this.getLightValue(x, y, z);
         if (var5 < (float) var4) {
             var5 = (float) var4;
         }
@@ -663,8 +659,8 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     }
 
     @Overwrite
-    public float method_1782(int var1, int var2, int var3) {
-        float var4 = this.getLightValue(var1, var2, var3);
+    public float method_1782(int x, int y, int z) {
+        float var4 = this.getLightValue(x, y, z);
         return this.getBrightnessLevel(var4);
     }
 
@@ -674,157 +670,154 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     }
 
     @Overwrite
-    public HitResult method_162(Vec3d var1, Vec3d var2, boolean var3, boolean var4) {
-        return this.rayTraceBlocks2(var1, var2, var3, var4, true);
+    public HitResult method_162(Vec3d pointA, Vec3d pointB, boolean var3, boolean var4) {
+        return this.rayTraceBlocks2(pointA, pointB, var3, var4, true);
     }
 
     @Override
-    public HitResult rayTraceBlocks2(Vec3d var1, Vec3d var2, boolean var3, boolean var4, boolean var5) {
-        if (!Double.isNaN(var1.x) && !Double.isNaN(var1.y) && !Double.isNaN(var1.z)) {
-            if (!Double.isNaN(var2.x) && !Double.isNaN(var2.y) && !Double.isNaN(var2.z)) {
-                int var6 = MathHelper.floor(var2.x);
-                int var7 = MathHelper.floor(var2.y);
-                int var8 = MathHelper.floor(var2.z);
-                int var9 = MathHelper.floor(var1.x);
-                int var10 = MathHelper.floor(var1.y);
-                int var11 = MathHelper.floor(var1.z);
-                int var12 = this.getBlockId(var9, var10, var11);
-                int var13 = this.getBlockMeta(var9, var10, var11);
-                Block var14 = Block.BY_ID[var12];
-                if ((!var4 || var14 == null || var14.getCollisionShape((World) (Object) this, var9, var10, var11) != null) && var12 > 0 && var14.isCollidable(var13, var3) && (var5 || var12 != AC_Blocks.clipBlock.id && !ExLadderBlock.isLadderID(var12))) {
-                    HitResult var15 = var14.method_1564((World) (Object) this, var9, var10, var11, var1, var2);
-                    if (var15 != null) {
-                        return var15;
-                    }
-                }
+    public HitResult rayTraceBlocks2(Vec3d pointA, Vec3d pointB, boolean var3, boolean var4, boolean collideWithClip) {
+        if (Double.isNaN(pointA.x) || Double.isNaN(pointA.y) || Double.isNaN(pointA.z)) {
+            return null;
+        }
+        if (Double.isNaN(pointB.x) || Double.isNaN(pointB.y) || Double.isNaN(pointB.z)) {
+            return null;
+        }
 
-                int var43 = 200;
-
-                while (var43-- >= 0) {
-                    if (!Double.isNaN(var1.x) && !Double.isNaN(var1.y) && !Double.isNaN(var1.z)) {
-                        if (var9 == var6 && var10 == var7 && var11 == var8) {
-                            return null;
-                        }
-
-                        boolean var16 = true;
-                        boolean var17 = true;
-                        boolean var18 = true;
-                        double var19 = 999.0D;
-                        double var21 = 999.0D;
-                        double var23 = 999.0D;
-                        if (var6 > var9) {
-                            var19 = (double) var9 + 1.0D;
-                        } else if (var6 < var9) {
-                            var19 = (double) var9 + 0.0D;
-                        } else {
-                            var16 = false;
-                        }
-
-                        if (var7 > var10) {
-                            var21 = (double) var10 + 1.0D;
-                        } else if (var7 < var10) {
-                            var21 = (double) var10 + 0.0D;
-                        } else {
-                            var17 = false;
-                        }
-
-                        if (var8 > var11) {
-                            var23 = (double) var11 + 1.0D;
-                        } else if (var8 < var11) {
-                            var23 = (double) var11 + 0.0D;
-                        } else {
-                            var18 = false;
-                        }
-
-                        double var25 = 999.0D;
-                        double var27 = 999.0D;
-                        double var29 = 999.0D;
-                        double var31 = var2.x - var1.x;
-                        double var33 = var2.y - var1.y;
-                        double var35 = var2.z - var1.z;
-                        if (var16) {
-                            var25 = (var19 - var1.x) / var31;
-                        }
-
-                        if (var17) {
-                            var27 = (var21 - var1.y) / var33;
-                        }
-
-                        if (var18) {
-                            var29 = (var23 - var1.z) / var35;
-                        }
-
-                        boolean var37 = false;
-                        byte var44;
-                        if (var25 < var27 && var25 < var29) {
-                            if (var6 > var9) {
-                                var44 = 4;
-                            } else {
-                                var44 = 5;
-                            }
-
-                            var1.x = var19;
-                            var1.y += var33 * var25;
-                            var1.z += var35 * var25;
-                        } else if (var27 < var29) {
-                            if (var7 > var10) {
-                                var44 = 0;
-                            } else {
-                                var44 = 1;
-                            }
-
-                            var1.x += var31 * var27;
-                            var1.y = var21;
-                            var1.z += var35 * var27;
-                        } else {
-                            if (var8 > var11) {
-                                var44 = 2;
-                            } else {
-                                var44 = 3;
-                            }
-
-                            var1.x += var31 * var29;
-                            var1.y += var33 * var29;
-                            var1.z = var23;
-                        }
-
-                        Vec3d var38 = Vec3d.from(var1.x, var1.y, var1.z);
-                        var9 = (int) (var38.x = MathHelper.floor(var1.x));
-                        if (var44 == 5) {
-                            --var9;
-                            ++var38.x;
-                        }
-
-                        var10 = (int) (var38.y = MathHelper.floor(var1.y));
-                        if (var44 == 1) {
-                            --var10;
-                            ++var38.y;
-                        }
-
-                        var11 = (int) (var38.z = MathHelper.floor(var1.z));
-                        if (var44 == 3) {
-                            --var11;
-                            ++var38.z;
-                        }
-
-                        int var39 = this.getBlockId(var9, var10, var11);
-                        int var40 = this.getBlockMeta(var9, var10, var11);
-                        Block var41 = Block.BY_ID[var39];
-                        if (var4 && var41 != null && var41.getCollisionShape((World) (Object) this, var9, var10, var11) == null || var39 <= 0 || !var41.isCollidable(var40, var3) || !((ExBlock) var41).shouldRender(this, var9, var10, var11)) {
-                            continue;
-                        }
-
-                        HitResult var42 = var41.method_1564((World) (Object) this, var9, var10, var11, var1, var2);
-                        if (var42 == null || !var5 && (var41.id == AC_Blocks.clipBlock.id || ExLadderBlock.isLadderID(var41.id))) {
-                            continue;
-                        }
-
-                        return var42;
-                    }
-
-                    return null;
-                }
+        int bX = MathHelper.floor(pointB.x);
+        int bY = MathHelper.floor(pointB.y);
+        int bZ = MathHelper.floor(pointB.z);
+        int aX = MathHelper.floor(pointA.x);
+        int aY = MathHelper.floor(pointA.y);
+        int aZ = MathHelper.floor(pointA.z);
+        int aId = this.getBlockId(aX, aY, aZ);
+        int aMeta = this.getBlockMeta(aX, aY, aZ);
+        Block aBlock = Block.BY_ID[aId];
+        if ((!var4 || aBlock == null || aBlock.getCollisionShape((World) (Object) this, aX, aY, aZ) != null) && aId > 0 && aBlock.isCollidable(aMeta, var3) && (collideWithClip || aId != AC_Blocks.clipBlock.id && !ExLadderBlock.isLadderID(aId))) {
+            HitResult hit = aBlock.method_1564((World) (Object) this, aX, aY, aZ, pointA, pointB);
+            if (hit != null) {
+                return hit;
             }
+        }
+
+        int stepsLeft = 200;
+
+        while (stepsLeft-- >= 0) {
+            if (Double.isNaN(pointA.x) || Double.isNaN(pointA.y) || Double.isNaN(pointA.z)) {
+                return null;
+            }
+            if (aX == bX && aY == bY && aZ == bZ) {
+                return null;
+            }
+
+            boolean moveX = true;
+            boolean moveY = true;
+            boolean moveZ = true;
+            double startX = 999.0D;
+            double startY = 999.0D;
+            double startZ = 999.0D;
+            if (bX > aX) {
+                startX = (double) aX + 1.0D;
+            } else if (bX < aX) {
+                startX = (double) aX + 0.0D;
+            } else {
+                moveX = false;
+            }
+
+            if (bY > aY) {
+                startY = (double) aY + 1.0D;
+            } else if (bY < aY) {
+                startY = (double) aY + 0.0D;
+            } else {
+                moveY = false;
+            }
+
+            if (bZ > aZ) {
+                startZ = (double) aZ + 1.0D;
+            } else if (bZ < aZ) {
+                startZ = (double) aZ + 0.0D;
+            } else {
+                moveZ = false;
+            }
+
+            double distX = 999.0D;
+            double distY = 999.0D;
+            double distZ = 999.0D;
+            double deltaX = pointB.x - pointA.x;
+            double deltaY = pointB.y - pointA.y;
+            double deltaZ = pointB.z - pointA.z;
+            if (moveX) {
+                distX = (startX - pointA.x) / deltaX;
+            }
+
+            if (moveY) {
+                distY = (startY - pointA.y) / deltaY;
+            }
+
+            if (moveZ) {
+                distZ = (startZ - pointA.z) / deltaZ;
+            }
+
+            int side;
+            if (distX < distY && distX < distZ) {
+                if (bX > aX) {
+                    side = 4;
+                } else {
+                    side = 5;
+                }
+
+                pointA.x = startX;
+                pointA.y += deltaY * distX;
+                pointA.z += deltaZ * distX;
+            } else if (distY < distZ) {
+                if (bY > aY) {
+                    side = 0;
+                } else {
+                    side = 1;
+                }
+
+                pointA.x += deltaX * distY;
+                pointA.y = startY;
+                pointA.z += deltaZ * distY;
+            } else {
+                if (bZ > aZ) {
+                    side = 2;
+                } else {
+                    side = 3;
+                }
+
+                pointA.x += deltaX * distZ;
+                pointA.y += deltaY * distZ;
+                pointA.z = startZ;
+            }
+
+            aX = MathHelper.floor(pointA.x);
+            if (side == 5) {
+                --aX;
+            }
+
+            aY = MathHelper.floor(pointA.y);
+            if (side == 1) {
+                --aY;
+            }
+
+            aZ = MathHelper.floor(pointA.z);
+            if (side == 3) {
+                --aZ;
+            }
+
+            int id = this.getBlockId(aX, aY, aZ);
+            int meta = this.getBlockMeta(aX, aY, aZ);
+            Block block = Block.BY_ID[id];
+            if (var4 && block != null && block.getCollisionShape((World) (Object) this, aX, aY, aZ) == null || id == 0 || !block.isCollidable(meta, var3) || !((ExBlock) block).shouldRender(this, aX, aY, aZ)) {
+                continue;
+            }
+
+            HitResult hit = block.method_1564((World) (Object) this, aX, aY, aZ, pointA, pointB);
+            if (hit == null || !collideWithClip && (block.id == AC_Blocks.clipBlock.id || ExLadderBlock.isLadderID(block.id))) {
+                continue;
+            }
+
+            return hit;
         }
         return null;
     }
@@ -881,22 +874,24 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     }
 
     @Overwrite
-    public int method_228(int var1, int var2) {
-        Chunk var3 = this.getChunk(var1, var2);
+    public int method_228(int x, int z) {
+        Chunk chunk = this.getChunk(x, z);
 
-        int var4 = 127;
-        while (this.getMaterial(var1, var4, var2).blocksMovement() && var4 > 0) {
-            --var4;
+        int y = 127;
+        while (this.getMaterial(x, y, z).blocksMovement() && y > 0) {
+            --y;
         }
 
-        var1 &= 15;
+        x &= 15;
+        z &= 15;
 
-        for (var2 &= 15; var4 > 0; --var4) {
-            int var5 = var3.getBlockId(var1, var4, var2);
-            Material var6 = var5 != 0 ? Block.BY_ID[var5].material : Material.AIR;
-            if (var6.blocksMovement() || var6.isLiquid()) {
-                return var4 + 1;
+        while (y > 0) {
+            int id = chunk.getBlockId(x, y, z);
+            Material mat = id != 0 ? Block.BY_ID[id].material : Material.AIR;
+            if (mat.blocksMovement() || mat.isLiquid()) {
+                return y + 1;
             }
+            --y;
         }
 
         return -1;
@@ -927,74 +922,74 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         if (((ExBlockEntity) var5).isKilledFromSaving()) {
             return null;
         }
-        Chunk var7 = this.getChunkFromCache(var5.x >> 4, var5.z >> 4);
-        return var7;
+        Chunk chunk = this.getChunkFromCache(var5.x >> 4, var5.z >> 4);
+        return chunk;
     }
 
     @Overwrite
-    public void method_193(Entity var1, boolean var2) {
-        int var3 = MathHelper.floor(var1.x);
-        int var4 = MathHelper.floor(var1.z);
-        byte var5 = 32;
-        if (!var2 || this.method_155(var3 - var5, 0, var4 - var5, var3 + var5, 128, var4 + var5)) {
-            var1.prevRenderX = var1.x;
-            var1.prevRenderY = var1.y;
-            var1.prevRenderZ = var1.z;
-            var1.prevYaw = var1.yaw;
-            var1.prevPitch = var1.pitch;
-            if (var2 && var1.field_1618) {
-                int stunned = ((ExEntity) var1).getStunned();
+    public void method_193(Entity entity, boolean var2) {
+        int eX = MathHelper.floor(entity.x);
+        int eZ = MathHelper.floor(entity.z);
+        int var5 = 32;
+        if (!var2 || this.method_155(eX - var5, 0, eZ - var5, eX + var5, 128, eZ + var5)) {
+            entity.prevRenderX = entity.x;
+            entity.prevRenderY = entity.y;
+            entity.prevRenderZ = entity.z;
+            entity.prevYaw = entity.yaw;
+            entity.prevPitch = entity.pitch;
+            if (var2 && entity.field_1618) {
+                int stunned = ((ExEntity) entity).getStunned();
                 if (stunned > 0) {
-                    ((ExEntity) var1).setStunned(stunned - 1);
-                } else if (var1.vehicle != null) {
-                    var1.tickRiding();
+                    ((ExEntity) entity).setStunned(stunned - 1);
+                } else if (entity.vehicle != null) {
+                    entity.tickRiding();
                 } else {
-                    var1.tick();
+                    entity.tick();
                 }
             }
 
-            if (Double.isNaN(var1.x) || Double.isInfinite(var1.x)) {
-                var1.x = var1.prevRenderX;
+            if (Double.isNaN(entity.x) || Double.isInfinite(entity.x)) {
+                entity.x = entity.prevRenderX;
             }
 
-            if (Double.isNaN(var1.y) || Double.isInfinite(var1.y)) {
-                var1.y = var1.prevRenderY;
+            if (Double.isNaN(entity.y) || Double.isInfinite(entity.y)) {
+                entity.y = entity.prevRenderY;
             }
 
-            if (Double.isNaN(var1.z) || Double.isInfinite(var1.z)) {
-                var1.z = var1.prevRenderZ;
+            if (Double.isNaN(entity.z) || Double.isInfinite(entity.z)) {
+                entity.z = entity.prevRenderZ;
             }
 
-            if (Double.isNaN(var1.pitch) || Double.isInfinite(var1.pitch)) {
-                var1.pitch = var1.prevPitch;
+            if (Double.isNaN(entity.pitch) || Double.isInfinite(entity.pitch)) {
+                entity.pitch = entity.prevPitch;
             }
 
-            if (Double.isNaN(var1.yaw) || Double.isInfinite(var1.yaw)) {
-                var1.yaw = var1.prevYaw;
+            if (Double.isNaN(entity.yaw) || Double.isInfinite(entity.yaw)) {
+                entity.yaw = entity.prevYaw;
             }
 
-            int var6 = MathHelper.floor(var1.x / 16.0D);
-            int var7 = MathHelper.floor(var1.y / 16.0D);
-            int var8 = MathHelper.floor(var1.z / 16.0D);
-            if (!var1.field_1618 || var1.chunkX != var6 || var1.chunkIndex != var7 || var1.chunkZ != var8) {
-                if (var1.field_1618 && this.isChunkLoaded(var1.chunkX, var1.chunkZ)) {
-                    this.getChunkFromCache(var1.chunkX, var1.chunkZ).removeEntity(var1, var1.chunkIndex);
+            int ecX = MathHelper.floor(entity.x / 16.0D);
+            int ecY = MathHelper.floor(entity.y / 16.0D);
+            int ecZ = MathHelper.floor(entity.z / 16.0D);
+            if (!entity.field_1618 || entity.chunkX != ecX || entity.chunkIndex != ecY || entity.chunkZ != ecZ) {
+                if (entity.field_1618 && this.isChunkLoaded(entity.chunkX, entity.chunkZ)) {
+                    this.getChunkFromCache(entity.chunkX, entity.chunkZ).removeEntity(entity, entity.chunkIndex);
                 }
 
-                if (this.isChunkLoaded(var6, var8)) {
-                    var1.field_1618 = true;
-                    this.getChunkFromCache(var6, var8).addEntity(var1);
+                if (this.isChunkLoaded(ecX, ecZ)) {
+                    entity.field_1618 = true;
+                    this.getChunkFromCache(ecX, ecZ).addEntity(entity);
                 } else {
-                    var1.field_1618 = false;
+                    entity.field_1618 = false;
                 }
             }
 
-            if (var2 && var1.field_1618 && var1.passenger != null) {
-                if (!var1.passenger.removed && var1.passenger.vehicle == var1) {
-                    this.method_241(var1.passenger);
+            if (var2 && entity.field_1618 && entity.passenger != null) {
+                if (!entity.passenger.removed && entity.passenger.vehicle == entity) {
+                    this.method_241(entity.passenger);
                 } else {
-                    var1.passenger.vehicle = null;
-                    var1.passenger = null;
+                    entity.passenger.vehicle = null;
+                    entity.passenger = null;
                 }
             }
         }
@@ -1004,62 +999,58 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         value = "FIELD",
         target = "Lnet/minecraft/world/World;field_190:Z",
         shift = At.Shift.BEFORE))
-    private void removeBlockEntityOnSet(int var1, int var2, int var3, BlockEntity var4, CallbackInfo ci) {
-        this.removeBlockEntity(var1, var2, var3);
+    private void removeBlockEntityOnSet(int x, int y, int z, BlockEntity var4, CallbackInfo ci) {
+        this.removeBlockEntity(x, y, z);
     }
 
     @Redirect(method = "removeBlockEntity", at = @At(
         value = "INVOKE",
         target = "Lnet/minecraft/world/World;getBlockEntity(III)Lnet/minecraft/entity/BlockEntity;"))
-    private BlockEntity removeBlockEntityDontCreate(World instance, int var1, int var2, int var3) {
-        return this.getBlockTileEntityDontCreate(var1, var2, var3);
+    private BlockEntity removeBlockEntityDontCreate(World instance, int x, int y, int z) {
+        return this.getBlockTileEntityDontCreate(x, y, z);
     }
 
     @Overwrite
-    public void method_167(LightType var1, int var2, int var3, int var4, int var5, int var6, int var7, boolean var8) {
-        if (!this.dimension.halvesMapping || var1 != LightType.field_2757) {
-            ++field_179;
+    public void method_167(LightType lightType, int var2, int var3, int var4, int var5, int var6, int var7, boolean var8) {
+        if (this.dimension.halvesMapping && lightType == LightType.field_2757) {
+            return;
+        }
+        ++field_179;
 
-            try {
-                if (field_179 == 50) {
-                    return;
-                }
-
-                int var9 = (var5 + var2) / 2;
-                int var10 = (var7 + var4) / 2;
-                if (!this.isBlockLoaded(var9, 64, var10)) {
-                    return;
-                }
-
-                if (this.getChunk(var9, var10).method_886()) {
-                    return;
-                }
-
-                int var11 = this.lightingUpdates.size();
-                int var12;
-                if (var8) {
-                    var12 = 5;
-                    if (var12 > var11) {
-                        var12 = var11;
-                    }
-
-                    for (int var13 = 0; var13 < var12; ++var13) {
-                        class_417 var14 = this.lightingUpdates.get(this.lightingUpdates.size() - var13 - 1);
-                        if (var14.field_1673 == var1 && var14.method_1401(var2, var3, var4, var5, var6, var7)) {
-                            return;
-                        }
-                    }
-                }
-
-                this.lightingUpdates.add(new class_417(var1, var2, var3, var4, var5, var6, var7));
-                var12 = 1000000;
-                if (this.lightingUpdates.size() > 1000000) {
-                    System.out.println("More than " + var12 + " updates, aborting lighting updates");
-                    this.lightingUpdates.clear();
-                }
-            } finally {
-                --field_179;
+        try {
+            if (field_179 == 50) {
+                return;
             }
+
+            int x = (var5 + var2) / 2;
+            int z = (var7 + var4) / 2;
+            if (!this.isBlockLoaded(x, 64, z)) {
+                return;
+            }
+
+            if (this.getChunk(x, z).method_886()) {
+                return;
+            }
+
+            if (var8) {
+                int count = Math.min(this.lightingUpdates.size(), 5);
+                for (int i = 0; i < count; ++i) {
+                    class_417 var14 = this.lightingUpdates.get(this.lightingUpdates.size() - i - 1);
+                    if (var14.field_1673 == lightType && var14.method_1401(var2, var3, var4, var5, var6, var7)) {
+                        return;
+                    }
+                }
+            }
+
+            this.lightingUpdates.add(new class_417(lightType, var2, var3, var4, var5, var6, var7));
+
+            final int maxUpdates = 1000000;
+            if (this.lightingUpdates.size() > maxUpdates) {
+                System.out.println("More than " + maxUpdates + " updates, aborting lighting updates");
+                this.lightingUpdates.clear();
+            }
+        } finally {
+            --field_179;
         }
     }
 

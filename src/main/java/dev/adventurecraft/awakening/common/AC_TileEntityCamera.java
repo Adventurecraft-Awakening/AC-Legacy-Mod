@@ -1,17 +1,16 @@
 package dev.adventurecraft.awakening.common;
 
-import java.util.Iterator;
-
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.BlockEntity;
 import net.minecraft.util.io.CompoundTag;
 
 public class AC_TileEntityCamera extends BlockEntity {
+
     public String message;
     public String sound;
     public AC_CutsceneCamera camera = new AC_CutsceneCamera();
-    int type = 2;
+    AC_CutsceneCameraBlendType type = AC_CutsceneCameraBlendType.QUADRATIC;
     public boolean pauseGame = true;
 
     public void loadCamera() {
@@ -27,66 +26,67 @@ public class AC_TileEntityCamera extends BlockEntity {
         var2.clearPoints();
 
         for (AC_CutsceneCameraPoint var4 : var1.cameraPoints) {
-            var2.addCameraPoint(var4.time, var4.posX, var4.posY, var4.posZ, var4.rotYaw, var4.rotPitch, var4.cameraBlendType);
+            var2.addCameraPoint(var4.time, var4.posX, var4.posY, var4.posZ, var4.rotYaw, var4.rotPitch, var4.blendType);
         }
     }
 
-    public void readNBT(CompoundTag var1) {
-        super.readNBT(var1);
-        int var2 = var1.getInt("numPoints");
+    @Override
+    public void readNBT(CompoundTag tag) {
+        super.readNBT(tag);
+        int pointCount = tag.getInt("numPoints");
 
-        for (int var3 = 0; var3 < var2; ++var3) {
-            this.readPointTag(var1.getCompoundTag(String.format("point%d", var3)));
+        for (int i = 0; i < pointCount; ++i) {
+            this.readPointTag(tag.getCompoundTag(String.format("point%d", i)));
         }
 
-        if (var1.containsKey("type")) {
-            this.type = var1.getByte("type");
+        if (tag.containsKey("type")) {
+            this.type = AC_CutsceneCameraBlendType.get(tag.getByte("type"));
         }
 
-        if (var1.containsKey("pauseGame")) {
-            this.pauseGame = var1.getBoolean("pauseGame");
+        if (tag.containsKey("pauseGame")) {
+            this.pauseGame = tag.getBoolean("pauseGame");
         }
-
     }
 
-    public void writeNBT(CompoundTag var1) {
-        super.writeNBT(var1);
-        int var2 = 0;
+    @Override
+    public void writeNBT(CompoundTag tag) {
+        super.writeNBT(tag);
 
-        for (AC_CutsceneCameraPoint var4 : this.camera.cameraPoints) {
-            var1.put(String.format("point%d", var2), this.getPointTag(var4));
-            ++var2;
+        int pointCount = 0;
+        for (AC_CutsceneCameraPoint point : this.camera.cameraPoints) {
+            tag.put(String.format("point%d", pointCount), this.getPointTag(point));
+            ++pointCount;
         }
 
-        var1.put("numPoints", var2);
-        var1.put("type", (byte) this.type);
-        var1.put("pauseGame", this.pauseGame);
+        tag.put("numPoints", pointCount);
+        tag.put("type", (byte) this.type.value);
+        tag.put("pauseGame", this.pauseGame);
     }
 
-    private CompoundTag getPointTag(AC_CutsceneCameraPoint var1) {
-        CompoundTag var2 = new CompoundTag();
-        var2.put("time", var1.time);
-        var2.put("posX", var1.posX);
-        var2.put("posY", var1.posY);
-        var2.put("posZ", var1.posZ);
-        var2.put("yaw", var1.rotYaw);
-        var2.put("pitch", var1.rotPitch);
-        var2.put("type", (byte) var1.cameraBlendType);
-        return var2;
+    private CompoundTag getPointTag(AC_CutsceneCameraPoint point) {
+        var tag = new CompoundTag();
+        tag.put("time", point.time);
+        tag.put("posX", point.posX);
+        tag.put("posY", point.posY);
+        tag.put("posZ", point.posZ);
+        tag.put("yaw", point.rotYaw);
+        tag.put("pitch", point.rotPitch);
+        tag.put("type", (byte) point.blendType.value);
+        return tag;
     }
 
-    private void readPointTag(CompoundTag var1) {
-        float var5 = var1.getFloat("time");
-        float var2 = var1.getFloat("posX");
-        float var3 = var1.getFloat("posY");
-        float var4 = var1.getFloat("posZ");
-        float var6 = var1.getFloat("yaw");
-        float var7 = var1.getFloat("pitch");
-        byte var8 = 2;
-        if (var1.containsKey("type")) {
-            var8 = var1.getByte("type");
+    private void readPointTag(CompoundTag tag) {
+        float time = tag.getFloat("time");
+        float x = tag.getFloat("posX");
+        float y = tag.getFloat("posY");
+        float z = tag.getFloat("posZ");
+        float yaw = tag.getFloat("yaw");
+        float pitch = tag.getFloat("pitch");
+        AC_CutsceneCameraBlendType type = AC_CutsceneCameraBlendType.QUADRATIC;
+        if (tag.containsKey("type")) {
+            type = AC_CutsceneCameraBlendType.get(tag.getByte("type"));
         }
 
-        this.camera.addCameraPoint(var5, var2, var3, var4, var6, var7, var8);
+        this.camera.addCameraPoint(time, x, y, z, yaw, pitch, type);
     }
 }

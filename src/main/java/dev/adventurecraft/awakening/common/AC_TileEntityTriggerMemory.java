@@ -8,17 +8,17 @@ public class AC_TileEntityTriggerMemory extends AC_TileEntityMinMax {
     public boolean activateOnDetrigger;
     public boolean resetOnDeath;
 
-    public void set(int var1, int var2, int var3, int var4, int var5, int var6) {
+    public void set(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
         if (this.isSet() && this.isActivated) {
             AC_Blocks.triggerMemory.triggerDeactivate(this.world, this.x, this.y, this.z);
         }
 
-        this.minX = var1;
-        this.minY = var2;
-        this.minZ = var3;
-        this.maxX = var4;
-        this.maxY = var5;
-        this.maxZ = var6;
+        this.minX = minX;
+        this.minY = minY;
+        this.minZ = minZ;
+        this.maxX = maxX;
+        this.maxY = maxY;
+        this.maxZ = maxZ;
         if (this.isActivated) {
             AC_Blocks.triggerMemory.triggerActivate(this.world, this.x, this.y, this.z);
         }

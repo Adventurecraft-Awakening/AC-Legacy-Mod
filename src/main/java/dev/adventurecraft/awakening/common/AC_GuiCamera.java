@@ -8,8 +8,10 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextboxWidget;
 import net.minecraft.entity.Entity;
+import org.lwjgl.input.Keyboard;
 
 public class AC_GuiCamera extends Screen {
+
     private AC_EntityCamera cam;
     private TextboxWidget timerText;
 
@@ -17,80 +19,87 @@ public class AC_GuiCamera extends Screen {
         this.cam = var1;
     }
 
+    @Override
     public void initVanillaScreen() {
-        ButtonWidget var1 = new ButtonWidget(0, 4, 4, 160, 18, "Delete Camera Point");
-        this.buttons.add(var1);
-        var1 = new ButtonWidget(1, 4, 24, 160, 18, "No Interpolation");
-        if (this.cam.type == 1) {
-            var1.text = "Linear Interpolation";
-        } else if (this.cam.type == 2) {
-            var1.text = "Quadratic Interpolation";
-        }
+        ButtonWidget button = new ButtonWidget(0, 4, 4, 160, 18, "Delete Camera Point");
+        this.buttons.add(button);
 
-        this.buttons.add(var1);
+        button = new ButtonWidget(1, 4, 24, 160, 18, "No Interpolation");
+        if (this.cam.type == AC_CutsceneCameraBlendType.LINEAR) {
+            button.text = "Linear Interpolation";
+        } else if (this.cam.type == AC_CutsceneCameraBlendType.QUADRATIC) {
+            button.text = "Quadratic Interpolation";
+        }
+        this.buttons.add(button);
+
         this.timerText = new TextboxWidget(this, this.textRenderer, 80, 46, 70, 16, String.format("%.2f", this.cam.time));
     }
 
+    @Override
     public void tick() {
         this.timerText.tick();
     }
 
-    protected void keyPressed(char var1, int var2) {
-        if (this.timerText.selected && (var2 == 14 || var1 >= 48 && var1 <= 57 || var1 == 46 || var1 == 9)) {
-            this.timerText.keyPressed(var1, var2);
+    @Override
+    protected void keyPressed(char character, int key) {
+        if (this.timerText.selected && (key == Keyboard.KEY_BACK || character >= 48 && character <= 57 || character == 46 || character == 9)) {
+            this.timerText.keyPressed(character, key);
         }
 
-        super.keyPressed(var1, var2);
+        super.keyPressed(character, key);
     }
 
-    protected void mouseClicked(int var1, int var2, int var3) {
-        this.timerText.mouseClicked(var1, var2, var3);
-        super.mouseClicked(var1, var2, var3);
+    @Override
+    protected void mouseClicked(int mouseX, int mouseY, int mouseButton) {
+        this.timerText.mouseClicked(mouseX, mouseY, mouseButton);
+        super.mouseClicked(mouseX, mouseY, mouseButton);
     }
 
-    protected void buttonClicked(ButtonWidget var1) {
-        if (var1.id == 0) {
+    @Override
+    protected void buttonClicked(ButtonWidget button) {
+        if (button.id == 0) {
             this.cam.deleteCameraPoint();
             Minecraft.instance.openScreen(null);
-        } else if (var1.id == 1) {
-            this.cam.type = (this.cam.type + 1) % 3;
+        } else if (button.id == 1) {
+            this.cam.type = AC_CutsceneCameraBlendType.get((this.cam.type.value + 1) % AC_CutsceneCameraBlendType.MAX.value);
             ((ExMinecraft) this.client).getActiveCutsceneCamera().setPointType(this.cam.cameraID, this.cam.type);
 
-            for (Entity var3 : (List<Entity>) this.client.world.entities) {
-                if (var3 instanceof AC_EntityCamera var4) {
-                    if (var4.isAlive() && var4.cameraID == this.cam.cameraID) {
-                        this.cam = var4;
+            for (Entity entity : (List<Entity>) this.client.world.entities) {
+                if (entity instanceof AC_EntityCamera camera) {
+                    if (camera.isAlive() && camera.cameraID == this.cam.cameraID) {
+                        this.cam = camera;
                         break;
                     }
                 }
             }
 
-            if (this.cam.type == 1) {
-                var1.text = "Linear Interpolation";
-            } else if (this.cam.type == 2) {
-                var1.text = "Quadratic Interpolation";
+            if (this.cam.type == AC_CutsceneCameraBlendType.LINEAR) {
+                button.text = "Linear Interpolation";
+            } else if (this.cam.type == AC_CutsceneCameraBlendType.QUADRATIC) {
+                button.text = "Quadratic Interpolation";
             } else {
-                var1.text = "No Interpolation";
+                button.text = "No Interpolation";
             }
         }
     }
 
-    public void render(int var1, int var2, float var3) {
+    @Override
+    public void render(int mouseX, int mouseY, float deltaTime) {
         this.renderBackground();
 
         try {
-            float var4 = Float.parseFloat(this.timerText.getText());
-            this.cam.time = var4;
-            ((ExMinecraft) this.client).getActiveCutsceneCamera().setTime(this.cam.cameraID, (float) var4);
+            float timerValue = Float.parseFloat(this.timerText.getText());
+            this.cam.time = timerValue;
+            ((ExMinecraft) this.client).getActiveCutsceneCamera().setPointTime(this.cam.cameraID, timerValue);
         } catch (NumberFormatException var5) {
         }
 
-        this.drawTextWithShadow(this.textRenderer, "Active At:", 4, 49, 14737632);
+        this.drawTextWithShadow(this.textRenderer, "Active At:", 4, 49, 0xe0e0e0);
         this.timerText.draw();
-        super.render(var1, var2, var3);
+        super.render(mouseX, mouseY, deltaTime);
     }
 
-    public static void showUI(AC_EntityCamera var0) {
-        Minecraft.instance.openScreen(new AC_GuiCamera(var0));
+    public static void showUI(AC_EntityCamera entity) {
+        Minecraft.instance.openScreen(new AC_GuiCamera(entity));
     }
 }

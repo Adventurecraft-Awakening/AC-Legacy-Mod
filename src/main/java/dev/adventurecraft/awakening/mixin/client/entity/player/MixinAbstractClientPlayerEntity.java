@@ -105,10 +105,10 @@ public abstract class MixinAbstractClientPlayerEntity extends PlayerEntity imple
     }
 
     @Overwrite
-    public void sendChatMessage(String var1) {
+    public void sendChatMessage(String message) {
         ExWorldProperties worldProps;
         AC_CutsceneCamera activeCamera;
-        String var2 = var1.toLowerCase();
+        String var2 = message.toLowerCase();
         switch (var2) {
             case "/day":
                 ((ExWorld) this.world).setTimeOfDay(0L);
@@ -134,9 +134,9 @@ public abstract class MixinAbstractClientPlayerEntity extends PlayerEntity imple
                 break;
 
             case "/removemobs":
-                for (Entity var5 : (List<Entity>) this.world.entities) {
-                    if (var5 instanceof LivingEntity && !(var5 instanceof PlayerEntity)) {
-                        var5.removed = true;
+                for (Entity entity : (List<Entity>) this.world.entities) {
+                    if (entity instanceof LivingEntity && !(entity instanceof PlayerEntity)) {
+                        entity.removed = true;
                     }
                 }
                 break;
@@ -164,18 +164,18 @@ public abstract class MixinAbstractClientPlayerEntity extends PlayerEntity imple
             case "/cameraadd":
                 activeCamera = ((ExMinecraft) this.client).getActiveCutsceneCamera();
                 if (activeCamera != null) {
-                    float var8;
+                    float time;
                     try {
-                        var8 = Float.parseFloat(var1.substring(11));
+                        time = Float.parseFloat(message.substring(11));
                     } catch (StringIndexOutOfBoundsException var6) {
                         this.client.overlay.addChatMessage("/cameraadd must have a time specified for the point");
                         return;
                     } catch (NumberFormatException var7) {
-                        this.client.overlay.addChatMessage("'" + var1.substring(11) + "' is not a valid number");
+                        this.client.overlay.addChatMessage("'" + message.substring(11) + "' is not a valid number");
                         return;
                     }
 
-                    activeCamera.addCameraPoint(var8, (float) this.x, (float) (this.y - (double) this.standingEyeHeight + (double) 1.62F), (float) this.z, this.yaw, this.pitch, 2);
+                    activeCamera.addCameraPoint(time, (float) this.x, (float) (this.y - (double) this.standingEyeHeight + 1.62D), (float) this.z, this.yaw, this.pitch, AC_CutsceneCameraBlendType.QUADRATIC);
                     activeCamera.loadCameraEntities();
                     this.client.overlay.addChatMessage("Point Added");
                 } else {
@@ -242,10 +242,10 @@ public abstract class MixinAbstractClientPlayerEntity extends PlayerEntity imple
                 break;
 
             case "/scriptstatreset":
-                for (AC_JScriptInfo var10 : ((ExWorld) this.world).getScriptHandler().scripts.values()) {
-                    var10.maxTime = 0L;
-                    var10.count = 0;
-                    var10.totalTime = 0L;
+                for (AC_JScriptInfo info : ((ExWorld) this.world).getScriptHandler().scripts.values()) {
+                    info.maxTime = 0L;
+                    info.count = 0;
+                    info.totalTime = 0L;
                 }
                 break;
 
@@ -265,9 +265,9 @@ public abstract class MixinAbstractClientPlayerEntity extends PlayerEntity imple
                 break;
 
             default:
-                String var11 = ((ExWorld) this.world).getScript().runString(var1);
-                if (var11 != null) {
-                    this.client.overlay.addChatMessage(var11);
+                String result = ((ExWorld) this.world).getScript().runString(message);
+                if (result != null) {
+                    this.client.overlay.addChatMessage(result);
                 }
                 break;
         }
