@@ -8,8 +8,8 @@ import net.minecraft.world.World;
 
 public class AC_BlockDarkness extends Block implements AC_ITriggerBlock {
 
-    protected AC_BlockDarkness(int var1, int var2) {
-        super(var1, var2, Material.AIR);
+    protected AC_BlockDarkness(int id, int texture) {
+        super(id, texture, Material.AIR);
         this.setLightOpacity(2);
     }
 
