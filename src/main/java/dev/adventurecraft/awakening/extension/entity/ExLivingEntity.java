@@ -4,6 +4,8 @@ import net.minecraft.item.ItemStack;
 
 public interface ExLivingEntity extends ExEntity {
 
+    boolean protectedByShield();
+
     boolean protectedByShield(double x, double y, double z);
 
     float getFov();

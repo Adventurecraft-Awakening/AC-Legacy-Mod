@@ -167,6 +167,7 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         throw new AssertionError();
     }
 
+    @Overwrite
     public boolean method_928(Entity var1) {
         double var2 = -180.0D * Math.atan2(var1.x - this.x, var1.z - this.z) / Math.PI;
 
@@ -285,6 +286,7 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         return true;
     }
 
+    @Override
     public boolean attackEntityFromMulti(Entity var1, int var2) {
         if (this.world.isClient) {
             return false;
@@ -726,6 +728,7 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         return this.ac$heldItem;
     }
 
+    @Override
     public boolean protectedByShield() {
         return false;
     }
