@@ -3,7 +3,6 @@ package dev.adventurecraft.awakening.mixin.entity.player;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
-import dev.adventurecraft.awakening.extension.item.ExItem;
 import dev.adventurecraft.awakening.mixin.entity.MixinLivingEntity;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
