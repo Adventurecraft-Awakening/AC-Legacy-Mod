@@ -10,5 +10,5 @@ public class AC_DebugMode {
 	public static boolean renderFov = false;
 
 	public static boolean triggerResetActive = false;
-	public static boolean isFluidHittable = false;
+	public static boolean isFluidHittable = true;
 }
