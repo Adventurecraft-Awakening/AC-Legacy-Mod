@@ -1048,7 +1048,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         double var8 = viewEntity.prevRenderY + (viewEntity.y - viewEntity.prevRenderY) * (double) deltaTime;
         double var10 = viewEntity.prevRenderZ + (viewEntity.z - viewEntity.prevRenderZ) * (double) deltaTime;
         Tessellator ts = Tessellator.INSTANCE;
-        ts.start(3);
+        ts.start(GL11.GL_LINE_STRIP);
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         if (entity instanceof MobEntity mob && mob.method_634() != null) {
@@ -1082,7 +1082,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         double dY = viewEntity.prevRenderY + (viewEntity.y - viewEntity.prevRenderY) * (double) deltaTime;
         double dZ = viewEntity.prevRenderZ + (viewEntity.z - viewEntity.prevRenderZ) * (double) deltaTime;
         Tessellator ts = Tessellator.INSTANCE;
-        ts.start(3);
+        ts.start(GL11.GL_LINE_STRIP);
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         if (((ExLivingEntity) entity).getExtraFov() > 0.0F) {

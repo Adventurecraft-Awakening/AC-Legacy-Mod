@@ -87,7 +87,7 @@ public class AC_CutsceneCamera {
         GL11.glLineWidth(5.0F);
         GL11.glDisable(GL11.GL_TEXTURE_2D);
         Tessellator ts = Tessellator.INSTANCE;
-        ts.start(3);
+        ts.start(GL11.GL_LINE_STRIP);
 
         for (Vec3d linePoint : this.linePoints) {
             ts.addVertex(linePoint.x - prX, linePoint.y - prY, linePoint.z - prZ);

@@ -15,110 +15,106 @@ public class AC_RenderBoomerang extends EntityRenderer {
         this.field_2679 = 12.0F / 16.0F;
     }
 
-    public void doRenderItem(AC_EntityBoomerang var1, double var2, double var4, double var6, float var8, float var9) {
-        float var10 = var1.prevPitch + (var1.pitch - var1.prevPitch) * var9;
-        float var10000 = var1.prevBoomerangRotation + (var1.boomerangRotation - var1.prevBoomerangRotation) * var9;
+    public void doRenderItem(AC_EntityBoomerang entity, double x, double y, double z, float angle, float deltaTime) {
+        float pitch = entity.prevPitch + (entity.pitch - entity.prevPitch) * deltaTime;
+        float rotation = entity.prevBoomerangRotation + (entity.boomerangRotation - entity.prevBoomerangRotation) * deltaTime;
         GL11.glPushMatrix();
-        GL11.glTranslatef((float) var2, (float) var4, (float) var6);
-        GL11.glRotatef(-var8, 0.0F, 1.0F, 0.0F);
-        GL11.glRotatef(var10, 1.0F, 0.0F, 0.0F);
-        GL11.glRotatef(var1.boomerangRotation, 0.0F, 1.0F, 0.0F);
+        GL11.glTranslated(x, y, z);
+        GL11.glRotatef(-angle, 0.0F, 1.0F, 0.0F);
+        GL11.glRotatef(pitch, 1.0F, 0.0F, 0.0F);
+        GL11.glRotatef(rotation, 0.0F, 1.0F, 0.0F);
         this.bindTexture("/gui/items.png");
-        Vec2 var12 = ((ExTextureManager) this.dispatcher.textureManager).getTextureResolution("/gui/items.png");
-        int var13 = var12.x / 16;
-        int var14 = var12.y / 16;
-        float var15 = 0.5F / (float) var12.x;
-        float var16 = 0.5F / (float) var12.x;
-        Tessellator var17 = Tessellator.INSTANCE;
-        int var18 = AC_Items.boomerang.getTexturePosition(null);
-        float var19 = ((float) (var18 % 16 * 16) + 0.0F) / 256.0F;
-        float var20 = ((float) (var18 % 16 * 16) + 15.99F) / 256.0F;
-        float var21 = ((float) (var18 / 16 * 16) + 0.0F) / 256.0F;
-        float var22 = ((float) (var18 / 16 * 16) + 15.99F) / 256.0F;
-        float var23 = 1.0F;
+        Vec2 texSize = ((ExTextureManager) this.dispatcher.textureManager).getTextureResolution("/gui/items.png");
+        int texCols = texSize.x / 16;
+        int texRows = texSize.y / 16;
+        float tReciX = 0.5F / (float) texSize.x;
+        float tReciY = 0.5F / (float) texSize.y;
+        Tessellator ts = Tessellator.INSTANCE;
+        int texPos = AC_Items.boomerang.getTexturePosition(null);
+        float tX1 = ((float) (texPos % 16 * 16) + 0.0F) / 256.0F;
+        float tX2 = ((float) (texPos % 16 * 16) + 15.99F) / 256.0F;
+        float tY1 = ((float) (texPos / 16 * 16) + 0.0F) / 256.0F;
+        float tY2 = ((float) (texPos / 16 * 16) + 15.99F) / 256.0F;
+        float vX = 1.0F;
         GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-        float var24 = 1.0F / 16.0F;
+        float vY = 1.0F / 16.0F;
         GL11.glTranslatef(-0.5F, 0.0F, -0.5F);
-        var17.start();
-        var17.setNormal(0.0F, 0.0F, 1.0F);
-        var17.vertex(0.0D, 0.0D - (double) var24, 0.0D, var20, var22);
-        var17.vertex(var23, 0.0D - (double) var24, 0.0D, var19, var22);
-        var17.vertex(var23, 0.0D - (double) var24, 1.0D, var19, var21);
-        var17.vertex(0.0D, 0.0D - (double) var24, 1.0D, var20, var21);
-        var17.tessellate();
-        var17.start();
-        var17.setNormal(0.0F, 0.0F, -1.0F);
-        var17.vertex(0.0D, 0.0D, 1.0D, var20, var21);
-        var17.vertex(var23, 0.0D, 1.0D, var19, var21);
-        var17.vertex(var23, 0.0D, 0.0D, var19, var22);
-        var17.vertex(0.0D, 0.0D, 0.0D, var20, var22);
-        var17.tessellate();
-        var17.start();
-        var17.setNormal(-1.0F, 0.0F, 0.0F);
+        ts.start();
+        ts.setNormal(0.0F, 0.0F, 1.0F);
+        ts.vertex(0.0D, 0.0D - vY, 0.0D, tX2, tY2);
+        ts.vertex(vX, 0.0D - vY, 0.0D, tX1, tY2);
+        ts.vertex(vX, 0.0D - vY, 1.0D, tX1, tY1);
+        ts.vertex(0.0D, 0.0D - vY, 1.0D, tX2, tY1);
+        ts.tessellate();
+        ts.start();
+        ts.setNormal(0.0F, 0.0F, -1.0F);
+        ts.vertex(0.0D, 0.0D, 1.0D, tX2, tY1);
+        ts.vertex(vX, 0.0D, 1.0D, tX1, tY1);
+        ts.vertex(vX, 0.0D, 0.0D, tX1, tY2);
+        ts.vertex(0.0D, 0.0D, 0.0D, tX2, tY2);
+        ts.tessellate();
+        ts.start();
+        ts.setNormal(-1.0F, 0.0F, 0.0F);
 
-        int var25;
-        float var26;
-        float var27;
-        float var28;
-        for (var25 = 0; var25 < var13; ++var25) {
-            var26 = (float) var25 / (float) var13;
-            var27 = var20 + (var19 - var20) * var26 - var15;
-            var28 = var23 * var26;
-            var17.vertex(var28, 0.0F - var24, 1.0D, var27, var21);
-            var17.vertex(var28, 0.0D, 1.0D, var27, var21);
-            var17.vertex(var28, 0.0D, 0.0D, var27, var22);
-            var17.vertex(var28, 0.0F - var24, 0.0D, var27, var22);
+        for (int col = 0; col < texCols; ++col) {
+            float d = (float) col / (float) texCols;
+            float tX = tX2 + (tX1 - tX2) * d - tReciX;
+            float pX = vX * d;
+            ts.vertex(pX, 0.0F - vY, 1.0D, tX, tY1);
+            ts.vertex(pX, 0.0D, 1.0D, tX, tY1);
+            ts.vertex(pX, 0.0D, 0.0D, tX, tY2);
+            ts.vertex(pX, 0.0F - vY, 0.0D, tX, tY2);
         }
 
-        var17.tessellate();
-        var17.start();
-        var17.setNormal(1.0F, 0.0F, 0.0F);
+        ts.tessellate();
+        ts.start();
+        ts.setNormal(1.0F, 0.0F, 0.0F);
 
-        for (var25 = 0; var25 < var13; ++var25) {
-            var26 = (float) var25 / (float) var13;
-            var27 = var20 + (var19 - var20) * var26 - var15;
-            var28 = var23 * var26 + 1.0F / (float) var13;
-            var17.vertex(var28, 0.0F - var24, 0.0D, var27, var22);
-            var17.vertex(var28, 0.0D, 0.0D, var27, var22);
-            var17.vertex(var28, 0.0D, 1.0D, var27, var21);
-            var17.vertex(var28, 0.0F - var24, 1.0D, var27, var21);
+        for (int col = 0; col < texCols; ++col) {
+            float d = (float) col / (float) texCols;
+            float tX = tX2 + (tX1 - tX2) * d - tReciX;
+            float pX = vX * d + 1.0F / (float) texCols;
+            ts.vertex(pX, 0.0F - vY, 0.0D, tX, tY2);
+            ts.vertex(pX, 0.0D, 0.0D, tX, tY2);
+            ts.vertex(pX, 0.0D, 1.0D, tX, tY1);
+            ts.vertex(pX, 0.0F - vY, 1.0D, tX, tY1);
         }
 
-        var17.tessellate();
-        var17.start();
-        var17.setNormal(0.0F, 1.0F, 0.0F);
+        ts.tessellate();
+        ts.start();
+        ts.setNormal(0.0F, 1.0F, 0.0F);
 
-        for (var25 = 0; var25 < var14; ++var25) {
-            var26 = (float) var25 / (float) var14;
-            var27 = var22 + (var21 - var22) * var26 - var16;
-            var28 = var23 * var26 + 1.0F / (float) var14;
-            var17.vertex(0.0D, 0.0F - var24, var28, var20, var27);
-            var17.vertex(var23, 0.0F - var24, var28, var19, var27);
-            var17.vertex(var23, 0.0D, var28, var19, var27);
-            var17.vertex(0.0D, 0.0D, var28, var20, var27);
+        for (int row = 0; row < texRows; ++row) {
+            float d = (float) row / (float) texRows;
+            float tY = tY2 + (tY1 - tY2) * d - tReciY;
+            float pZ = vX * d + 1.0F / (float) texRows;
+            ts.vertex(0.0D, 0.0F - vY, pZ, tX2, tY);
+            ts.vertex(vX, 0.0F - vY, pZ, tX1, tY);
+            ts.vertex(vX, 0.0D, pZ, tX1, tY);
+            ts.vertex(0.0D, 0.0D, pZ, tX2, tY);
         }
 
-        var17.tessellate();
-        var17.start();
-        var17.setNormal(0.0F, -1.0F, 0.0F);
+        ts.tessellate();
+        ts.start();
+        ts.setNormal(0.0F, -1.0F, 0.0F);
 
-        for (var25 = 0; var25 < var14; ++var25) {
-            var26 = (float) var25 / (float) var14;
-            var27 = var22 + (var21 - var22) * var26 - var16;
-            var28 = var23 * var26;
-            var17.vertex(var23, 0.0F - var24, var28, var19, var27);
-            var17.vertex(0.0D, 0.0F - var24, var28, var20, var27);
-            var17.vertex(0.0D, 0.0D, var28, var20, var27);
-            var17.vertex(var23, 0.0D, var28, var19, var27);
+        for (int row = 0; row < texRows; ++row) {
+            float d = (float) row / (float) texRows;
+            float tY = tY2 + (tY1 - tY2) * d - tReciY;
+            float pZ = vX * d;
+            ts.vertex(vX, 0.0F - vY, pZ, tX1, tY);
+            ts.vertex(0.0D, 0.0F - vY, pZ, tX2, tY);
+            ts.vertex(0.0D, 0.0D, pZ, tX2, tY);
+            ts.vertex(vX, 0.0D, pZ, tX1, tY);
         }
 
-        var17.tessellate();
+        ts.tessellate();
         GL11.glDisable(GL12.GL_RESCALE_NORMAL);
         GL11.glPopMatrix();
     }
 
     @Override
-    public void render(Entity var1, double var2, double var4, double var6, float var8, float var9) {
-        this.doRenderItem((AC_EntityBoomerang) var1, var2, var4, var6, var8, var9);
+    public void render(Entity entity, double x, double y, double z, float angle, float deltaTime) {
+        this.doRenderItem((AC_EntityBoomerang) entity, x, y, z, angle, deltaTime);
     }
 }
