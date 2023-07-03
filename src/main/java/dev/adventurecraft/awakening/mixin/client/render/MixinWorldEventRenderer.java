@@ -990,45 +990,43 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         double dZ = entity.prevRenderZ + (entity.z - entity.prevRenderZ) * (double) deltaTime;
         Tessellator ts = Tessellator.INSTANCE;
 
-        double pX1 = (double) x1 - dY;
-        double pX2 = (double) x2 - dY;
+        double pX1 = (double) x1 - dX;
+        double pX2 = (double) x2 - dX;
         double pY1 = (double) y1 - dY;
         double pY2 = (double) y2 - dY;
-        double pZ1 = (double) z1 - dY;
-        double pZ2 = (double) z2 - dY;
+        double pZ1 = (double) z1 - dZ;
+        double pZ2 = (double) z2 - dZ;
+
+        ts.start(GL11.GL_LINE_STRIP);
 
         for (int x = x1; x <= x2; ++x) {
-            ts.start(3);
             double pX = (double) x - dX;
             ts.addVertex(pX, pY1, pZ1);
             ts.addVertex(pX, pY2, pZ1);
             ts.addVertex(pX, pY2, pZ2);
             ts.addVertex(pX, pY1, pZ2);
             ts.addVertex(pX, pY1, pZ1);
-            ts.tessellate();
         }
 
         for (int y = y1; y <= y2; ++y) {
-            ts.start(3);
             double pY = (double) y - dY;
             ts.addVertex(pX1, pY, pZ1);
             ts.addVertex(pX2, pY, pZ1);
             ts.addVertex(pX2, pY, pZ2);
             ts.addVertex(pX1, pY, pZ2);
             ts.addVertex(pX1, pY, pZ1);
-            ts.tessellate();
         }
 
         for (int z = z1; z <= z2; ++z) {
-            ts.start(3);
             double pZ = (double) z - dZ;
             ts.addVertex(pX1, pY1, pZ);
             ts.addVertex(pX2, pY1, pZ);
             ts.addVertex(pX2, pY2, pZ);
             ts.addVertex(pX1, pY2, pZ);
             ts.addVertex(pX1, pY1, pZ);
-            ts.tessellate();
         }
+
+        ts.tessellate();
 
         GL11.glLineWidth(1.0F);
         GL11.glEnable(GL11.GL_TEXTURE_2D);
