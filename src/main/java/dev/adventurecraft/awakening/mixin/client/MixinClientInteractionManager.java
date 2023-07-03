@@ -23,18 +23,22 @@ public abstract class MixinClientInteractionManager implements ExInteractionMana
         throw new AssertionError();
     }
 
+    @Override
     public int getDestroyExtraWidth() {
         return this.destroyExtraWidth;
     }
 
+    @Override
     public void setDestroyExtraWidth(int value) {
         this.destroyExtraWidth = value;
     }
 
+    @Override
     public int getDestroyExtraDepth() {
         return this.destroyExtraDepth;
     }
 
+    @Override
     public void setDestroyExtraDepth(int value) {
         this.destroyExtraDepth = value;
     }

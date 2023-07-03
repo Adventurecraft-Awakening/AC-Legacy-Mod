@@ -9,74 +9,78 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 public class AC_ItemPaste extends Item {
-    public AC_ItemPaste(int var1) {
-        super(var1);
+
+    public AC_ItemPaste(int id) {
+        super(id);
     }
 
-    public ItemStack use(ItemStack var1, World var2, PlayerEntity var3) {
-        if (AC_ItemCursor.bothSet) {
-            LivingEntity var4 = Minecraft.instance.viewEntity;
-            Vec3d var5 = var4.getRotation();
-            int var6 = AC_ItemCursor.maxX - AC_ItemCursor.minX + 1;
-            int var7 = AC_ItemCursor.maxY - AC_ItemCursor.minY + 1;
-            int var8 = AC_ItemCursor.maxZ - AC_ItemCursor.minZ + 1;
-            int[] var9 = new int[var6 * var7 * var8];
-            int[] var10 = new int[var6 * var7 * var8];
+    @Override
+    public ItemStack use(ItemStack item, World world, PlayerEntity player) {
+        if (!AC_ItemCursor.bothSet) {
+            return item;
+        }
 
-            int var11;
-            int var12;
-            int var13;
-            int var14;
-            int var15;
-            for (var11 = 0; var11 < var6; ++var11) {
-                for (var12 = 0; var12 < var7; ++var12) {
-                    for (var13 = 0; var13 < var8; ++var13) {
-                        var14 = var2.getBlockId(var11 + AC_ItemCursor.minX, var12 + AC_ItemCursor.minY, var13 + AC_ItemCursor.minZ);
-                        var15 = var2.getBlockMeta(var11 + AC_ItemCursor.minX, var12 + AC_ItemCursor.minY, var13 + AC_ItemCursor.minZ);
-                        int i = var8 * (var7 * var11 + var12) + var13;
-                        var9[i] = var14;
-                        var10[i] = var15;
-                    }
-                }
-            }
+        int minX = AC_ItemCursor.minX;
+        int minY = AC_ItemCursor.minY;
+        int minZ = AC_ItemCursor.minZ;
+        int maxX = AC_ItemCursor.maxX;
+        int maxY = AC_ItemCursor.maxY;
+        int maxZ = AC_ItemCursor.maxZ;
+        LivingEntity entity = Minecraft.instance.viewEntity;
+        Vec3d rot = entity.getRotation();
+        int width = maxX - minX + 1;
+        int height = maxY - minY + 1;
+        int depth = maxZ - minZ + 1;
+        int[] idArray = new int[width * height * depth];
+        int[] metaArray = new int[width * height * depth];
 
-            var11 = (int) (var4.x + (double) AC_DebugMode.reachDistance * var5.x);
-            var12 = (int) (var4.y + (double) AC_DebugMode.reachDistance * var5.y);
-            var13 = (int) (var4.z + (double) AC_DebugMode.reachDistance * var5.z);
-
-            int var16;
-            int var17;
-            int var18;
-            for (var14 = 0; var14 < var6; ++var14) {
-                for (var15 = 0; var15 < var7; ++var15) {
-                    for (var16 = 0; var16 < var8; ++var16) {
-                        var17 = var9[var8 * (var7 * var14 + var15) + var16];
-                        var18 = var10[var8 * (var7 * var14 + var15) + var16];
-                        var2.setBlockWithMetadata(var11 + var14, var12 + var15, var13 + var16, var17, var18);
-                    }
-                }
-            }
-
-            for (var14 = 0; var14 < var6; ++var14) {
-                for (var15 = 0; var15 < var7; ++var15) {
-                    for (var16 = 0; var16 < var8; ++var16) {
-                        var17 = var9[var8 * (var7 * var14 + var15) + var16];
-                        var18 = var10[var8 * (var7 * var14 + var15) + var16];
-                        var2.setBlockWithMetadata(var11 + var14, var12 + var15, var13 + var16, var17, var18);
-                    }
-                }
-            }
-
-            for (var14 = 0; var14 < var6; ++var14) {
-                for (var15 = 0; var15 < var7; ++var15) {
-                    for (var16 = 0; var16 < var8; ++var16) {
-                        var17 = var9[var8 * (var7 * var14 + var15) + var16];
-                        var2.notifyOfNeighborChange(var11 + var14, var12 + var15, var13 + var16, var17);
-                    }
+        for (int x = 0; x < width; ++x) {
+            for (int y = 0; y < height; ++y) {
+                for (int z = 0; z < depth; ++z) {
+                    int id = world.getBlockId(x + minX, y + minY, z + minZ);
+                    int meta = world.getBlockMeta(x + minX, y + minY, z + minZ);
+                    int i = depth * (height * x + y) + z;
+                    idArray[i] = id;
+                    metaArray[i] = meta;
                 }
             }
         }
 
-        return var1;
+        int baseX = (int) (entity.x + (double) AC_DebugMode.reachDistance * rot.x);
+        int baseY = (int) (entity.y + (double) AC_DebugMode.reachDistance * rot.y);
+        int baseZ = (int) (entity.z + (double) AC_DebugMode.reachDistance * rot.z);
+
+        for (int x = 0; x < width; ++x) {
+            for (int y = 0; y < height; ++y) {
+                for (int z = 0; z < depth; ++z) {
+                    int i = depth * (height * x + y) + z;
+                    int id = idArray[i];
+                    int meta = metaArray[i];
+                    world.setBlockWithMetadata(baseX + x, baseY + y, baseZ + z, id, meta);
+                }
+            }
+        }
+
+        for (int x = 0; x < width; ++x) {
+            for (int y = 0; y < height; ++y) {
+                for (int z = 0; z < depth; ++z) {
+                    int i = depth * (height * x + y) + z;
+                    int id = idArray[i];
+                    int meta = metaArray[i];
+                    world.setBlockWithMetadata(baseX + x, baseY + y, baseZ + z, id, meta);
+                }
+            }
+        }
+
+        for (int x = 0; x < width; ++x) {
+            for (int y = 0; y < height; ++y) {
+                for (int z = 0; z < depth; ++z) {
+                    int id = idArray[depth * (height * x + y) + z];
+                    world.notifyOfNeighborChange(baseX + x, baseY + y, baseZ + z, id);
+                }
+            }
+        }
+
+        return item;
     }
 }

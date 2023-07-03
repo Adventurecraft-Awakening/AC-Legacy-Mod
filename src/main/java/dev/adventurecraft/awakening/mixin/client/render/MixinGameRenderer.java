@@ -361,20 +361,20 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         target = "Lorg/lwjgl/opengl/GL11;glDepthMask(Z)V",
         shift = At.Shift.BEFORE,
         remap = false))
-    private void renderWorldEditing(float var1, long var2, CallbackInfo ci) {
+    private void renderWorldEditing(float deltaTime, long var2, CallbackInfo ci) {
         if (AC_DebugMode.editMode && AC_DebugMode.mapEditing != null) {
-            AC_DebugMode.mapEditing.render(var1);
+            AC_DebugMode.mapEditing.render(deltaTime);
         }
 
-        ItemStack var27 = this.client.player.inventory.getHeldItem();
-        if (var27 != null && var27.itemId == AC_Items.paste.id) {
+        ItemStack heldItem = this.client.player.inventory.getHeldItem();
+        if (heldItem != null && heldItem.itemId == AC_Items.paste.id) {
             if (AC_DebugMode.mapEditing == null) {
                 AC_DebugMode.mapEditing = new AC_MapEditing(this.client, this.client.world);
             } else {
                 AC_DebugMode.mapEditing.updateWorld(this.client.world);
             }
 
-            AC_DebugMode.mapEditing.renderSelection(var1);
+            AC_DebugMode.mapEditing.renderSelection(deltaTime);
         }
     }
 

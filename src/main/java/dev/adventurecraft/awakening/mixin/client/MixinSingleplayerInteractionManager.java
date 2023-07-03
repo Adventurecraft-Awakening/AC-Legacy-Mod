@@ -23,8 +23,8 @@ public abstract class MixinSingleplayerInteractionManager extends MixinClientInt
         undoStack.startRecording();
         boolean broken = false;
 
-        int destroyWidth = getDestroyExtraWidth();
-        int destroyDepth = getDestroyExtraDepth();
+        int destroyWidth = this.getDestroyExtraWidth();
+        int destroyDepth = this.getDestroyExtraDepth();
 
         for (int w = -destroyWidth; w <= destroyWidth; ++w) {
             for (int h = -destroyWidth; h <= destroyWidth; ++h) {
@@ -50,14 +50,14 @@ public abstract class MixinSingleplayerInteractionManager extends MixinClientInt
         return broken;
     }
 
-    private boolean _sendBlockRemoved(int x, int y, int z, int var4) {
+    private boolean _sendBlockRemoved(int x, int y, int z, int side) {
         int id = this.client.world.getBlockId(x, y, z);
         if (id == 0) {
             return false;
         }
 
         int meta = this.client.world.getBlockMeta(x, y, z);
-        boolean broken = super.breakBlock(x, y, z, var4);
+        boolean broken = super.breakBlock(x, y, z, side);
         ItemStack heldItem = this.client.player.getHeldItem();
         boolean canBreak = this.client.player.canRemoveBlock(Block.BY_ID[id]);
         if (heldItem != null) {
@@ -93,7 +93,8 @@ public abstract class MixinSingleplayerInteractionManager extends MixinClientInt
 
     @Overwrite
     public float getBlockReachDistance() {
-        if (this.client.player.getHeldItem() != null && this.client.player.getHeldItem().itemId == AC_Items.quill.id) {
+        ItemStack heldItem = this.client.player.getHeldItem();
+        if (heldItem != null && heldItem.itemId == AC_Items.quill.id) {
             return 500.0F;
         }
         if (AC_DebugMode.active) {
