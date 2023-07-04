@@ -77,6 +77,24 @@ public abstract class MixinBlock implements ExBlock {
     public int id;
 
     @Shadow
+    public double minX;
+
+    @Shadow
+    public double minY;
+
+    @Shadow
+    public double minZ;
+
+    @Shadow
+    public double maxX;
+
+    @Shadow
+    public double maxY;
+
+    @Shadow
+    public double maxZ;
+
+    @Shadow
     public abstract int getTextureForSide(int j, int l);
 
     @Shadow
@@ -132,6 +150,16 @@ public abstract class MixinBlock implements ExBlock {
     @Override
     public int getBlockLightValue(BlockView view, int x, int y, int z) {
         return EMITTANCE[this.id];
+    }
+
+    @Override
+    public void setBoundingBox(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+        this.minX = minX;
+        this.minY = minY;
+        this.minZ = minZ;
+        this.maxX = maxX;
+        this.maxY = maxY;
+        this.maxZ = maxZ;
     }
 
     @Override

@@ -9,6 +9,8 @@ public interface ExBlock extends AC_TexturedBlock, AC_ITriggerBlock {
 
     int[] subTypes = new int[256];
 
+    void setBoundingBox(double minX, double minY, double minZ, double maxX, double maxY, double maxZ);
+
     Block setSubTypes(int var1);
 
     int getTextureNum();

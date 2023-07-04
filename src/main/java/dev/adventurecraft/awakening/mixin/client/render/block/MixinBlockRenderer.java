@@ -1,7 +1,6 @@
 package dev.adventurecraft.awakening.mixin.client.render.block;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import dev.adventurecraft.awakening.client.options.Config;
 import dev.adventurecraft.awakening.common.AC_BlockOverlay;
 import dev.adventurecraft.awakening.common.AC_Blocks;
 import dev.adventurecraft.awakening.common.AC_TileEntityTree;
