@@ -42,7 +42,6 @@ public abstract class MixinFallingBlockRenderer extends EntityRenderer {
         int id = world.getBlockId(bX, bY, bZ);
         int meta = world.getBlockMeta(bX, bY, bZ);
         int entityMeta = ((ExFallingBlockEntity) entity).getMetadata();
-        ACMod.LOGGER.info("sand meta: " + entityMeta);
         ((ExWorld) world).setBlockAndMetadataTemp(bX, bY, bZ, entity.blockId, entityMeta);
         this.field_857.method_53(block, world, bX, bY, bZ);
         ((ExWorld) world).setBlockAndMetadataTemp(bX, bY, bZ, id, meta);
