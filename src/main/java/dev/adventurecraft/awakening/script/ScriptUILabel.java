@@ -18,11 +18,11 @@ public class ScriptUILabel extends UIElement {
     public float blue;
     public float alpha;
 
-    public ScriptUILabel(String var1, float var2, float var3) {
-        this(var1, var2, var3, ((ExInGameHud) Minecraft.instance.overlay).getScriptUI());
+    public ScriptUILabel(String text, float x, float y) {
+        this(text, x, y, ((ExInGameHud) Minecraft.instance.overlay).getScriptUI());
     }
 
-    public ScriptUILabel(String var1, float var2, float var3, ScriptUIContainer var4) {
+    public ScriptUILabel(String text, float x, float y, ScriptUIContainer container) {
         this.text = "";
         this.shadow = true;
         this.centered = false;
@@ -30,42 +30,38 @@ public class ScriptUILabel extends UIElement {
         this.green = 1.0F;
         this.blue = 1.0F;
         this.alpha = 1.0F;
-        this.text = var1;
-        this.textLines = var1.split("\n");
-        this.prevX = this.curX = var2;
-        this.prevY = this.curY = var3;
-        if (var4 != null) {
-            var4.add(this);
+        this.text = text;
+        this.textLines = text.split("\n");
+        this.prevX = this.curX = x;
+        this.prevY = this.curY = y;
+        if (container != null) {
+            container.add(this);
         }
     }
 
     @Override
-    public void render(TextRenderer var1, TextureManager var2, float var3) {
-        int var4 = Math.max(Math.min((int) (this.alpha * 255.0F), 255), 0);
-        if (var4 == 0) {
+    public void render(TextRenderer textRenderer, TextureManager textureManager, float deltaTime) {
+        int color = Math.max(Math.min((int) (this.alpha * 255.0F), 255), 0);
+        if (color == 0) {
             return;
         }
 
-        var4 = (var4 << 8) + Math.max(Math.min((int) (this.red * 255.0F), 255), 0);
-        var4 = (var4 << 8) + Math.max(Math.min((int) (this.green * 255.0F), 255), 0);
-        var4 = (var4 << 8) + Math.max(Math.min((int) (this.blue * 255.0F), 255), 0);
-        float var5 = this.getXAtTime(var3);
-        float var6 = this.getYAtTime(var3);
-        String[] var7 = this.textLines;
+        color = (color << 8) + Math.max(Math.min((int) (this.red * 255.0F), 255), 0);
+        color = (color << 8) + Math.max(Math.min((int) (this.green * 255.0F), 255), 0);
+        color = (color << 8) + Math.max(Math.min((int) (this.blue * 255.0F), 255), 0);
+        float x = this.getXAtTime(deltaTime);
+        float y = this.getYAtTime(deltaTime);
+        String[] lines = this.textLines;
 
-        for (String var10 : var7) {
-            float var11 = var5;
+        for (String line : lines) {
+            float lineX = x;
             if (this.centered) {
-                var11 = var5 - (float) (var1.getTextWidth(var10) / 2);
+                lineX = x - (float) (textRenderer.getTextWidth(line) / 2);
             }
 
-            if (this.shadow) {
-                ((ExTextRenderer) var1).drawStringWithShadow(var10, var11, var6, var4);
-            } else {
-                ((ExTextRenderer) var1).drawString(var10, var11, var6, var4);
-            }
+            ((ExTextRenderer) textRenderer).drawString(line, lineX, y, color, this.shadow);
 
-            var6 += 9.0F;
+            y += 9.0F;
         }
     }
 
@@ -73,8 +69,8 @@ public class ScriptUILabel extends UIElement {
         return this.text;
     }
 
-    public void setText(String var1) {
-        this.text = var1;
-        this.textLines = var1.split("\n");
+    public void setText(String text) {
+        this.text = text;
+        this.textLines = text.split("\n");
     }
 }

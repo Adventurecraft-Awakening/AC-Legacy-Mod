@@ -2,17 +2,23 @@ package dev.adventurecraft.awakening.mixin.client.render;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
+import net.minecraft.client.options.GameOptions;
+import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.TextRenderer;
 import net.minecraft.client.texture.TextureManager;
+import net.minecraft.client.util.GLAllocationUtils;
 import net.minecraft.util.CharacterUtils;
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.io.InputStream;
+import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
 @Mixin(TextRenderer.class)
@@ -30,6 +36,8 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
     @Shadow
     private IntBuffer field_2464;
 
+    private FloatBuffer colorBuffer;
+
     @Redirect(
         method = "<init>",
         at = @At(
@@ -40,96 +48,159 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
         return texMan.texturePackManager.texturePack.getResourceAsStream(name);
     }
 
+    @Inject(method = "<init>", at = @At("TAIL"))
+    private void initialize(GameOptions arg, String string, TextureManager arg2, CallbackInfo ci) {
+        this.colorBuffer = GLAllocationUtils.allocateFloatBuffer(32 * 3);
+        for (int i = 0; i < 32; ++i) {
+            int n4 = (i >> 3 & 1) * 85;
+            int r = (i >> 2 & 1) * 170 + n4;
+            int g = (i >> 1 & 1) * 170 + n4;
+            int b = (i >> 0 & 1) * 170 + n4;
+            if (i == 6) {
+                r += 85;
+            }
+            boolean bl = i >= 16;
+            if (arg.anaglyph3d) {
+                int newR = (r * 30 + g * 59 + b * 11) / 100;
+                int newG = (r * 30 + g * 70) / 100;
+                int newB = (r * 30 + b * 70) / 100;
+                r = newR;
+                g = newG;
+                b = newB;
+            }
+            if (bl) {
+                r /= 4;
+                g /= 4;
+                b /= 4;
+            }
+
+            this.colorBuffer.put(i * 3 + 0, (float) r / 255.0f);
+            this.colorBuffer.put(i * 3 + 1, (float) g / 255.0f);
+            this.colorBuffer.put(i * 3 + 2, (float) b / 255.0f);
+        }
+    }
+
+    public int getShadowColor(int color) {
+        int tmp = color & -16777216;
+        int shadowColor = (color & 16579836) >> 2;
+        return shadowColor + tmp;
+    }
+
     @Overwrite
     public void drawTextWithShadow(String text, int x, int y, int color) {
-        this.drawText(text, x + 1, y + 1, color, true);
-        this.drawText(text, x, y, color);
+        this.drawText(text, x, y, color, true, x + 1, y + 1, this.getShadowColor(color));
     }
 
     @Override
-    public void drawStringWithShadow(String text, float x, float y, int color) {
-        this.renderString(text, x + 1.0F, y + 1.0F, color, true);
-        this.drawString(text, x, y, color);
+    public void drawString(String text, float x, float y, int color, boolean shadow) {
+        this.drawText(text, x, y, color, shadow, x + 1.0F, y + 1.0F, this.getShadowColor(color));
     }
 
     @Overwrite
     public void drawText(String text, int x, int y, int color) {
-        this.drawText(text, x, y, color, false);
-    }
-
-    @Override
-    public void drawString(String text, float x, float y, int color) {
-        this.renderString(text, x, y, color, false);
+        this.drawText(text, (float) x, (float) y, color, false, 0, 0, 0);
     }
 
     @Overwrite
     public void drawText(String text, int x, int y, int color, boolean shadow) {
-        this.renderString(text, (float) x, (float) y, color, shadow);
+        if (shadow) {
+            color = this.getShadowColor(color);
+        }
+        this.drawText(text, (float) x, (float) y, color, false, 0, 0, 0);
     }
 
-    private void renderString(String text, float x, float y, int color, boolean shadow) {
+    private void drawChar(Tessellator ts, int character, float x, float y) {
+        int n4 = character % 16 * 8;
+        int n3 = character / 16 * 8;
+        float f = 7.99f;
+        float f2 = 0.0f;
+        float f3 = 0.0f;
+        ts.vertex(x, y + f, 0.0, (float) n4 / 128.0f + f2, ((float) n3 + f) / 128.0f + f3);
+        ts.vertex(x + f, y + f, 0.0, ((float) n4 + f) / 128.0f + f2, ((float) n3 + f) / 128.0f + f3);
+        ts.vertex(x + f, y, 0.0, ((float) n4 + f) / 128.0f + f2, (float) n3 / 128.0f + f3);
+        ts.vertex(x, y, 0.0, (float) n4 / 128.0f + f2, (float) n3 / 128.0f + f3);
+    }
+
+    private void drawText(
+        String text, float x, float y, int color, boolean shadow, float sX, float sY, int sColor) {
         if (text == null) {
             return;
         }
 
-        if (shadow) {
-            int tmp = color & -16777216;
-            color = (color & 16579836) >> 2;
-            color += tmp;
-        }
-
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.field_2461);
-        float red = (float) (color >> 16 & 255) / 255.0F;
-        float green = (float) (color >> 8 & 255) / 255.0F;
-        float blue = (float) (color & 255) / 255.0F;
-        float alpha = (float) (color >> 24 & 255) / 255.0F;
-        if (alpha == 0.0F) {
-            alpha = 1.0F;
+
+        float r = (float) (color >> 16 & 255) / 255.0F;
+        float g = (float) (color >> 8 & 255) / 255.0F;
+        float b = (float) (color & 255) / 255.0F;
+        float a = (float) (color >> 24 & 255) / 255.0F;
+        if (a == 0.0F) {
+            a = 1.0F;
         }
 
-        GL11.glColor4f(red, green, blue, alpha);
-        this.field_2464.clear();
-        GL11.glPushMatrix();
-        GL11.glTranslatef(x, y, 0.0F);
+        float sR = (float) (sColor >> 16 & 255) / 255.0F;
+        float sG = (float) (sColor >> 8 & 255) / 255.0F;
+        float sB = (float) (sColor & 255) / 255.0F;
+        float sA = (float) (sColor >> 24 & 255) / 255.0F;
+        if (sA == 0.0F) {
+            sA = 1.0F;
+        }
 
         String lowerText = text.toLowerCase();
+        Tessellator ts = Tessellator.INSTANCE;
+        ts.start();
+        ts.color(r, g, b, a);
+
+        float xOff = 0;
 
         for (int i = 0; i < text.length(); ++i) {
-            while (text.length() > i + 1 && text.charAt(i) == 167) {
+            while (text.length() > i + 1 && text.charAt(i) == '§') {
                 int charIndex = "0123456789abcdef".indexOf(lowerText.charAt(i + 1));
                 if (charIndex < 0 || charIndex > 15) {
                     charIndex = 15;
                 }
 
-                this.field_2464.put(this.field_2463 + 256 + charIndex + (shadow ? 16 : 0));
-                if (this.field_2464.remaining() == 0) {
-                    this.field_2464.flip();
-                    GL11.glCallLists(this.field_2464);
-                    this.field_2464.clear();
+                int colorIndex = charIndex * 3;
+                r = this.colorBuffer.get(colorIndex + 0);
+                g = this.colorBuffer.get(colorIndex + 1);
+                b = this.colorBuffer.get(colorIndex + 2);
+
+                if (shadow) {
+                    int sColorIndex = (charIndex + 16) * 3;
+                    sR = this.colorBuffer.get(sColorIndex + 0);
+                    sG = this.colorBuffer.get(sColorIndex + 1);
+                    sB = this.colorBuffer.get(sColorIndex + 2);
+                } else {
+                    ts.color(r, g, b, a);
                 }
+
                 i += 2;
             }
 
-            if (i < text.length()) {
-                char c = text.charAt(i);
-                int charIndex = CharacterUtils.validCharacters.indexOf(c);
-                if (charIndex >= 0 && c < 176) {
-                    this.field_2464.put(this.field_2463 + charIndex + 32);
-                } else if (c < 256) {
-                    this.field_2464.put(this.field_2463 + c);
-                }
+            if (i >= text.length()) {
+                continue;
             }
 
-            if (this.field_2464.remaining() == 0) {
-                this.field_2464.flip();
-                GL11.glCallLists(this.field_2464);
-                this.field_2464.clear();
+            char c = text.charAt(i);
+            int charIndex = CharacterUtils.validCharacters.indexOf(c);
+            int ch;
+            if (charIndex >= 0 && c < 176) {
+                ch = charIndex + 32;
+            } else if (c < 256) {
+                ch = c;
+            } else {
+                continue;
             }
+
+            if (shadow) {
+                ts.color(sR, sG, sB, sA);
+                this.drawChar(ts, ch, xOff + sX, sY);
+                ts.color(r, g, b, a);
+            }
+            this.drawChar(ts, ch, xOff + x, y);
+            xOff += this.field_2462[ch];
         }
 
-        this.field_2464.flip();
-        GL11.glCallLists(this.field_2464);
-        GL11.glPopMatrix();
+        ts.tessellate();
     }
 
     @Overwrite

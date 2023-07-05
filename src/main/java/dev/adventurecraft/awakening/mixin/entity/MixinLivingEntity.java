@@ -98,7 +98,7 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
     @Shadow
     protected int field_1034;
 
-    public int maxHealth = 10;
+    protected int maxHealth = 10;
     @Unique
     private ItemStack ac$heldItem;
     private long hurtTick;
