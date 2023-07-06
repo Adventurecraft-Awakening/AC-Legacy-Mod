@@ -19,7 +19,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.io.InputStream;
 import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 
 @Mixin(TextRenderer.class)
 public abstract class MixinTextRenderer2 implements ExTextRenderer {
@@ -29,12 +28,6 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
 
     @Shadow
     public int field_2461;
-
-    @Shadow
-    private int field_2463;
-
-    @Shadow
-    private IntBuffer field_2464;
 
     private FloatBuffer colorBuffer;
 
@@ -81,8 +74,8 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
     }
 
     public int getShadowColor(int color) {
-        int tmp = color & -16777216;
-        int shadowColor = (color & 16579836) >> 2;
+        int tmp = color & 0xff000000;
+        int shadowColor = (color & 0xfcfcfc) >> 2;
         return shadowColor + tmp;
     }
 

@@ -192,7 +192,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
                                 int blockRenderPass = block.getRenderPass();
                                 if (blockRenderPass != renderPass) {
                                     var12 = true;
-                                } else if (blockRenderPass == renderPass) {
+                                } else {
                                     var13 |= blockRenderer.render(block, x, y, z);
                                 }
                             }
@@ -247,6 +247,13 @@ public abstract class MixinClass_66 implements ExClass_66 {
         }
     }
 
+    @Override
+    public void setVisibleFromPosition(double x, double y, double z, boolean value) {
+        this.visibleFromX = x;
+        this.visibleFromY = y;
+        this.visibleFromZ = z;
+        this.isVisibleFromPosition = value;
+    }
 
     @Override
     public boolean isVisibleFromPosition() {

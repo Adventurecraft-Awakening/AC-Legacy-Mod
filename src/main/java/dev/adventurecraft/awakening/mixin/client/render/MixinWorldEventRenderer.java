@@ -42,6 +42,7 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.ARBOcclusionQuery;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
+import org.lwjgl.opengl.GLContext;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -56,6 +57,8 @@ import java.util.List;
 
 @Mixin(WorldEventRenderer.class)
 public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
+
+    private static final int GL_QUERY_RESULT_NO_WAIT = 0x9194;
 
     @Shadow
     public List blockEntities;
@@ -417,28 +420,41 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     }
 
     private void checkOcclusionQueryResult(int vizStart, int vizEnd, double x, double y, double z) {
+        var glCaps = GLContext.getCapabilities();
+        boolean noWait = glCaps.GL_ARB_query_buffer_object || glCaps.OpenGL44;
+        IntBuffer buffer = this.field_1797;
+        buffer.clear();
+
         for (int vizIndex = vizStart; vizIndex < vizEnd; ++vizIndex) {
             class_66 viz = this.field_1808[vizIndex];
             if (!viz.field_253) {
                 continue;
             }
 
-            this.field_1797.clear();
-            ARBOcclusionQuery.glGetQueryObjectuivARB(viz.field_254, GL15.GL_QUERY_RESULT_AVAILABLE, this.field_1797);
-            if (this.field_1797.get(0) == 0) {
-                continue;
-            }
-            viz.field_253 = false;
+            int queryResult;
+            if (noWait) {
+                buffer.put(0, -1);
+                ARBOcclusionQuery.glGetQueryObjectuivARB(viz.field_254, GL_QUERY_RESULT_NO_WAIT, buffer);
+                queryResult = buffer.get(0);
+                if (queryResult == -1) {
+                    continue;
+                }
+                viz.field_253 = false;
+            } else {
+                ARBOcclusionQuery.glGetQueryObjectuivARB(viz.field_254, GL15.GL_QUERY_RESULT_AVAILABLE, buffer);
+                if (buffer.get(0) == 0) {
+                    continue;
+                }
+                viz.field_253 = false;
 
-            this.field_1797.clear();
-            ARBOcclusionQuery.glGetQueryObjectuivARB(viz.field_254, GL15.GL_QUERY_RESULT, this.field_1797);
+                ARBOcclusionQuery.glGetQueryObjectuivARB(viz.field_254, GL15.GL_QUERY_RESULT, buffer);
+                queryResult = buffer.get(0);
+            }
+
             boolean wasVisible = viz.field_252;
-            viz.field_252 = this.field_1797.get(0) > 0;
+            viz.field_252 = queryResult > 0;
             if (wasVisible && viz.field_252) {
-                ((ExClass_66) viz).isVisibleFromPosition(true);
-                ((ExClass_66) viz).setVisibleFromX(x);
-                ((ExClass_66) viz).setVisibleFromY(y);
-                ((ExClass_66) viz).setVisibleFromZ(z);
+                ((ExClass_66) viz).setVisibleFromPosition(x, y, z, true);
             }
         }
     }

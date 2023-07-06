@@ -2,6 +2,8 @@ package dev.adventurecraft.awakening.extension;
 
 public interface ExClass_66 {
 
+    void setVisibleFromPosition(double x, double y, double z, boolean value);
+
     boolean isVisibleFromPosition();
 
     void isVisibleFromPosition(boolean value);
