@@ -598,7 +598,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         int patchWidth = 8;
         int patchBound = 3;
         double xOffset = 0; //1.0 / 1024.0; TODO this offset seemed to make things worse
-        GL11.glScaled(tileWidth, 1.0F, tileWidth);
+        GL11.glScaled(tileWidth, 1.0, tileWidth);
 
         for (int renderPass = 0; renderPass < 2; ++renderPass) {
             if (renderPass == 0) {
@@ -669,7 +669,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
 
                         for (int pZ = 0; pZ < patchWidth; ++pZ) {
                             double vZ = z0 + pZ;
-                            double vV = (startV + pZ + 0.5F) * uvScale + baseV;
+                            double vV = (startV + pZ + 0.5) * uvScale + baseV;
                             ts.vertex(x0, y1, vZ, u0, vV);
                             ts.vertex(x1, (y1), vZ, u1, vV);
                             ts.vertex(x1, y0, vZ, u1, vV);
@@ -690,7 +690,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
                         }
                     }
 
-                    if (y0 > -tileHeight - 1.0F) {
+                    if (y0 > -tileHeight - 1) {
                         ts.color(red * 0.7F, green * 0.7F, blue * 0.7F, 0.8F);
                         ts.setNormal(0.0F, -1.0F, 0.0F);
 
@@ -700,7 +700,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
                         ts.vertex(x0, y0, z0, u0, v0);
                     }
 
-                    if (y0 <= tileHeight + 1.0F) {
+                    if (y0 <= tileHeight + 1) {
                         ts.color(red, green, blue, 0.8F);
                         ts.setNormal(0.0F, 1.0F, 0.0F);
 
@@ -723,7 +723,8 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
 
     @Overwrite
     public boolean method_1549(LivingEntity var1, boolean var2) {
-        if (this.field_1807.size() <= 0) {
+        List<class_66> vizList = this.field_1807;
+        if (vizList.size() <= 0) {
             return false;
         }
 
@@ -738,103 +739,91 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             }
         }
 
-        byte var5 = 4;
-        int var6 = 0;
-        class_66 var7 = null;
-        float var8 = Float.MAX_VALUE;
-        int var9 = -1;
+        int distFactor = 4;
+        int vizCount = 0;
+        class_66 prevViz = null;
+        float prevDist = Float.MAX_VALUE;
+        int prevIndex = -1;
 
-        long avgFrameTime = 0L;
-        if (AC_PlayerTorch.isTorchActive()) {
-            avgFrameTime = ((ExMinecraft) this.client).getAvgFrameTime();
-        }
-
-        for (int var10 = 0; var10 < this.field_1807.size(); ++var10) {
-            class_66 viz = this.field_1807.get(var10);
+        for (int i = 0; i < vizList.size(); ++i) {
+            class_66 viz = vizList.get(i);
             if (viz == null) {
                 continue;
             }
 
-            ++var6;
+            ++vizCount;
             if (!viz.field_249) {
-                this.field_1807.set(var10, null);
-            } else {
-                float var12 = viz.method_299(var1);
-                if (var12 <= 256.0F && this.isActingNow()) {
-                    viz.method_296();
-                    viz.field_249 = false;
-                    this.field_1807.set(var10, null);
-                    ++frameUpdates;
-                } else {
-                    if (var12 > 256.0F && frameUpdates >= targetFrameUpdates) {
-                        break;
-                    }
-
-                    if (!viz.field_243) {
-                        var12 *= var5;
-                    }
-
-                    if (var7 == null) {
-                        var7 = viz;
-                        var8 = var12;
-                        var9 = var10;
-                    } else if (var12 < var8) {
-                        var7 = viz;
-                        var8 = var12;
-                        var9 = var10;
-                    }
-                }
+                vizList.set(i, null);
+                continue;
             }
 
-            // TODO: investigate if this should be here. Optifine messed with this method a lot.
-            //if (AC_PlayerTorch.isTorchActive() && (var6 >= 3 || avgFrameTime > 40000000L || var6 >= 2 && avgFrameTime > 16666666L)) {
-            //    break;
-            //}
+            float dist = viz.method_299(var1);
+            if (dist <= 256.0F && this.isActingNow()) {
+                viz.method_296();
+                viz.field_249 = false;
+                vizList.set(i, null);
+                ++frameUpdates;
+                continue;
+            }
+
+            if (dist > 256.0F && frameUpdates >= targetFrameUpdates) {
+                break;
+            }
+
+            if (!viz.field_243) {
+                dist *= distFactor;
+            }
+
+            if (prevViz == null || dist < prevDist) {
+                prevViz = viz;
+                prevDist = dist;
+                prevIndex = i;
+            }
         }
 
-        if (var7 != null) {
-            var7.method_296();
-            var7.field_249 = false;
-            this.field_1807.set(var9, null);
+        if (prevViz != null) {
+            prevViz.method_296();
+            prevViz.field_249 = false;
+            vizList.set(prevIndex, null);
             ++frameUpdates;
-            float var15 = var8 / 5.0F;
+            float normDist = prevDist / 5.0F;
 
-            for (int var16 = 0; var16 < this.field_1807.size() && frameUpdates < targetFrameUpdates; ++var16) {
-                class_66 viz = this.field_1807.get(var16);
+            for (int i = 0; i < vizList.size() && frameUpdates < targetFrameUpdates; ++i) {
+                class_66 viz = vizList.get(i);
                 if (viz != null) {
-                    float var13 = viz.method_299(var1);
+                    float dist = viz.method_299(var1);
                     if (!viz.field_243) {
-                        var13 *= var5;
+                        dist *= distFactor;
                     }
 
-                    float var14 = Math.abs(var13 - var8);
-                    if (var14 < var15) {
+                    float absDist = Math.abs(dist - prevDist);
+                    if (absDist < normDist) {
                         viz.method_296();
                         viz.field_249 = false;
-                        this.field_1807.set(var16, null);
+                        vizList.set(i, null);
                         ++frameUpdates;
                     }
                 }
             }
         }
 
-        if (var6 == 0) {
-            this.field_1807.clear();
+        if (vizCount == 0) {
+            vizList.clear();
         }
 
-        if (this.field_1807.size() > 100 && var6 < this.field_1807.size() * 4 / 5) {
+        if (vizList.size() > 100 && vizCount < vizList.size() * 4 / 5) {
             int offset = 0;
 
-            for (int i = 0; i < this.field_1807.size(); ++i) {
-                class_66 viz = this.field_1807.get(i);
+            for (int i = 0; i < vizList.size(); ++i) {
+                class_66 viz = vizList.get(i);
                 if (viz != null && i != offset) {
-                    this.field_1807.set(offset, viz);
+                    vizList.set(offset, viz);
                     ++offset;
                 }
             }
 
-            if (this.field_1807.size() > offset) {
-                this.field_1807.subList(offset, this.field_1807.size()).clear();
+            if (vizList.size() > offset) {
+                vizList.subList(offset, vizList.size()).clear();
             }
         }
 
@@ -950,10 +939,10 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         target = "Lnet/minecraft/entity/LivingEntity;prevRenderY:D",
         ordinal = 0))
     private double changeCameraY(double value, @Local(ordinal = 0, argsOnly = true) float var1) {
-        ExMinecraft exClient = (ExMinecraft) this.client;
+        var exClient = (ExMinecraft) this.client;
         if (exClient.isCameraActive()) {
-            AC_CutsceneCameraPoint var7 = exClient.getCutsceneCamera().getCurrentPoint(var1);
-            return var7.posY;
+            AC_CutsceneCameraPoint point = exClient.getCutsceneCamera().getCurrentPoint(var1);
+            return point.posY;
         }
         return value;
     }
@@ -963,10 +952,10 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         target = "Lnet/minecraft/entity/LivingEntity;prevX:D",
         ordinal = 0))
     private double changeCameraX(double value, @Local(ordinal = 0, argsOnly = true) float var1) {
-        ExMinecraft exClient = (ExMinecraft) this.client;
+        var exClient = (ExMinecraft) this.client;
         if (exClient.isCameraActive()) {
-            AC_CutsceneCameraPoint var7 = exClient.getCutsceneCamera().getCurrentPoint(var1);
-            return (double) var7.posX + (double) (((float) this.field_1818 + var1) * 0.03F);
+            AC_CutsceneCameraPoint point = exClient.getCutsceneCamera().getCurrentPoint(var1);
+            return (double) point.posX + (double) (((float) this.field_1818 + var1) * 0.03F);
         }
         return value;
     }
@@ -976,10 +965,10 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         target = "Lnet/minecraft/entity/LivingEntity;prevX:D",
         ordinal = 0))
     private double changeCameraZ(double value, @Local(ordinal = 0, argsOnly = true) float var1) {
-        ExMinecraft exClient = (ExMinecraft) this.client;
+        var exClient = (ExMinecraft) this.client;
         if (exClient.isCameraActive()) {
-            AC_CutsceneCameraPoint var7 = exClient.getCutsceneCamera().getCurrentPoint(var1);
-            return var7.posZ;
+            AC_CutsceneCameraPoint point = exClient.getCutsceneCamera().getCurrentPoint(var1);
+            return point.posZ;
         }
         return value;
     }
