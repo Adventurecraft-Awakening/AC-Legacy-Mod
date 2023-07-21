@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.mixin.client.resource.language;
 
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.client.resource.language.ExTranslationStorage;
@@ -8,7 +9,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.io.File;
@@ -32,14 +33,26 @@ public abstract class MixinTranslationStorage implements ExTranslationStorage {
         this.loadAcTranslations();
     }
 
-    @ModifyArg(
+    @Redirect(
         method = "translateNameOrEmpty",
         at = @At(
             value = "INVOKE",
-            target = "Ljava/util/Properties;getProperty(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;"),
-        index = 1)
-    private String returnKeyOnEmpty(String value, @Local(argsOnly = true) String key) {
-        return key;
+            target = "Ljava/util/Properties;getProperty(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;"
+        ))
+    private String returnKeyNameOnEmpty(
+        Properties instance,
+        String key,
+        String defaultValue,
+        @Local(argsOnly = true) String originalKey) {
+        // TODO: remove behavior of returning key when it's missing from translation files?
+        String value = instance.getProperty(key, defaultValue);
+        if (originalKey != null && value.equals("")) {
+            String[] parts = originalKey.split("\\.");
+            value = parts[parts.length - 1];
+            instance.setProperty(key, value);
+            ACMod.LOGGER.warn("Missing language entry for key \"{}\", falling back with value \"{}\".", key, value);
+        }
+        return value;
     }
 
     private void loadAcTranslations(String name) {
