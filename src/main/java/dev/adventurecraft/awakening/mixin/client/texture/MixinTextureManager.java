@@ -97,7 +97,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
 
     @Overwrite
     public void bindImageToId(BufferedImage image, int texId) {
-        var options = (ExGameOptions)this.gameOptions;
+        var options = (ExGameOptions) this.gameOptions;
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, texId);
         int mipLevel = options.ofMipmapLevel();
         field_1245 = mipLevel > 0;
@@ -366,7 +366,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
             if (b.renderMode == binder.renderMode && b.index == binder.index) {
                 this.textureBinders.remove(i);
                 --i;
-                ACMod.LOGGER.info("Texture removed: " + b + ", image: " + b.renderMode + ", index: " + b.index);
+                ACMod.LOGGER.info("Texture removed: {}, image: {}, index: {}", b, b.renderMode, b.index);
             }
         }
 
@@ -379,7 +379,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
 
         this.textureBinders.add(binder);
         ((AC_TextureBinder) binder).onTick(res);
-        ACMod.LOGGER.info("Texture registered: " + binder + ", image: " + binder.renderMode + ", index: " + binder.index);
+        ACMod.LOGGER.info("Texture registered: {}, image: {}, index: {}", binder, binder.renderMode, binder.index);
     }
 
     private void generateMipMapsSub(int subX, int subY, int tileW, int tileH, ByteBuffer image, int texSize, boolean fastColor) {

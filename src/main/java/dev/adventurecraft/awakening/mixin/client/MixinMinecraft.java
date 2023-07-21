@@ -305,15 +305,15 @@ public abstract class MixinMinecraft implements ExMinecraft {
             shift = At.Shift.AFTER,
             ordinal = 0))
     private void init_createDisplay(CallbackInfo ci) throws LWJGLException {
-        int sampleCount = ((ExGameOptions)options).ofAaLevel();
-        ACMod.LOGGER.info("MSAA Samples: " + sampleCount);
+        int sampleCount = ((ExGameOptions) options).ofAaLevel();
+        ACMod.LOGGER.info("MSAA Samples: {}x", sampleCount);
 
         try {
             createDisplay(new PixelFormat().withSamples(sampleCount), true);
             Config.logOpenGlCaps();
             return;
         } catch (LWJGLException ex) {
-            ACMod.LOGGER.warn("Error setting MSAA: " + sampleCount + "x: ", ex);
+            ACMod.LOGGER.warn("Error setting MSAA {}x: ", sampleCount, ex);
         }
 
         createDisplay(new PixelFormat(), false);

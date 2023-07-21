@@ -47,7 +47,7 @@ public class AC_Profiler {
         if (elapsedTime > 100000000L) {
 
             for (Object2LongMap.Entry<String> entry : times.object2LongEntrySet()) {
-                ACMod.LOGGER.info(String.format("%s\t\t%d", entry.getKey(), entry.getLongValue()));
+                ACMod.LOGGER.info("{}\t\t{}", entry.getKey(), entry.getLongValue());
             }
         }
 

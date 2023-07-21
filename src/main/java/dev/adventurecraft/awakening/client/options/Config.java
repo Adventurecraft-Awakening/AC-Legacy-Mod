@@ -5,6 +5,7 @@ import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.options.GameOptions;
 import org.lwjgl.Sys;
+import org.lwjgl.opengl.ContextCapabilities;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GLContext;
 import org.slf4j.Logger;
@@ -28,32 +29,23 @@ public class Config {
     public static void logOpenGlCaps() {
         Logger logger = ACMod.LOGGER;
 
-        logger.info("OS: " + System.getProperty("os.name") + " (" + System.getProperty("os.arch") + ") version " + System.getProperty("os.version"));
-        logger.info("Java: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor"));
-        logger.info("VM: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor"));
-        logger.info("LWJGL: " + Sys.getVersion());
-        logger.info("OpenGL GL_RENDERER: " + GL11.glGetString(GL11.GL_RENDERER));
-        logger.info("OpenGL GL_VERSION: " + GL11.glGetString(GL11.GL_VERSION));
-        logger.info("OpenGL GL_VENDOR: " + GL11.glGetString(GL11.GL_VENDOR));
+        logger.info("OS: {} ({}) version {}", System.getProperty("os.name"), System.getProperty("os.arch"), System.getProperty("os.version"));
+        logger.info("Java: {}, {}", System.getProperty("java.version"), System.getProperty("java.vendor"));
+        logger.info("VM: {} ({}), {}", System.getProperty("java.vm.name"), System.getProperty("java.vm.info"), System.getProperty("java.vm.vendor"));
+        logger.info("LWJGL: {}", Sys.getVersion());
+        logger.info("OpenGL GL_RENDERER: {}", GL11.glGetString(GL11.GL_RENDERER));
+        logger.info("OpenGL GL_VERSION: {}", GL11.glGetString(GL11.GL_VERSION));
+        logger.info("OpenGL GL_VENDOR: {}", GL11.glGetString(GL11.GL_VENDOR));
 
-        int var0 = getOpenGlVersion();
-        String var1 = var0 / 10 + "." + var0 % 10;
-        logger.info("OpenGL Version: " + var1);
-        if (!GLContext.getCapabilities().OpenGL12) {
-            logger.info("OpenGL Mipmap levels: Not available (GL12.GL_TEXTURE_MAX_LEVEL)");
-        }
-
-        if (!GLContext.getCapabilities().GL_NV_fog_distance) {
-            logger.info("OpenGL Fancy fog: Not available (GL_NV_fog_distance)");
-        }
-
-        if (!GLContext.getCapabilities().GL_ARB_occlusion_query) {
-            logger.info("OpenGL Occlussion culling: Not available (GL_ARB_occlusion_query)");
-        }
+        var caps = GLContext.getCapabilities();
+        int glVersion = getOpenGlVersion(caps);
+        logger.info("OpenGL Version: {}.{}", glVersion / 10, glVersion % 10);
+        logger.info("OpenGL Mipmap levels (GL12.GL_TEXTURE_MAX_LEVEL): {}", caps.OpenGL12);
+        logger.info("OpenGL Fancy fog (GL_NV_fog_distance): {}", caps.GL_NV_fog_distance);
+        logger.info("OpenGL Occlussion culling (GL_ARB_occlusion_query): {}", caps.GL_ARB_occlusion_query);
     }
 
-    private static int getOpenGlVersion() {
-        var caps = GLContext.getCapabilities();
+    private static int getOpenGlVersion(ContextCapabilities caps) {
         if (caps.OpenGL45) return 45;
         if (caps.OpenGL44) return 44;
         if (caps.OpenGL43) return 43;
