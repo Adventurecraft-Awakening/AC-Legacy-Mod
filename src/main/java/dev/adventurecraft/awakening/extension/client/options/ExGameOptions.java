@@ -111,4 +111,6 @@ public interface ExGameOptions {
     boolean isGrass3d();
 
     boolean isAutoFarClip();
+
+    int getChatMessageBufferLimit();
 }

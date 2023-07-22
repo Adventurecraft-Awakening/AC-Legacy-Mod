@@ -18,6 +18,7 @@ public class EnumInitializer implements Runnable {
     private void addAdventurecraftOptions(String type) {
         addOptionEnum(type, "AUTO_FAR_CLIP", "options.of.other.adjustFarClip", false, true);
         addOptionEnum(type, "GRASS_3D", "options.of.detail.grass3d", false, true);
+        addOptionEnum(type, "CHAT_MESSAGE_BUFFER_LIMIT", "options.ac.chatMessageBufferLimit", true, false);
     }
 
     private void addOptifineOptions(String type) {
