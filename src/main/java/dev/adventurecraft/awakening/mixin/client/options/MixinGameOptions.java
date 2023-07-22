@@ -45,6 +45,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
     private static final int ANIM_ON = 0;
     private static final int ANIM_GENERATED = 1;
     private static final int ANIM_OFF = 2;
+    private static final int MAX_CHAT_BUFFER_LIMIT = 10000;
 
     @Final
     @Shadow
@@ -175,20 +176,17 @@ public abstract class MixinGameOptions implements ExGameOptions {
 
     @Inject(method = "setFloatOption", at = @At("TAIL"))
     private void setFloatOptionOF(Option option, float value, CallbackInfo ci) {
-
         if (option == OptionOF.BRIGHTNESS) {
             this.ofBrightness = value;
             this.updateWorldLightLevels();
-        }
-
-        if (option == OptionOF.CLOUD_HEIGHT) {
+        } else if (option == OptionOF.CLOUD_HEIGHT) {
             this.ofCloudsHeight = value;
-        }
-
-        if (option == OptionOF.AO_LEVEL) {
+        } else if (option == OptionOF.AO_LEVEL) {
             this.ofAoLevel = value;
             this.ao = this.ofAoLevel > 0.0F;
             this.client.worldRenderer.method_1537();
+        } else if (option == OptionOF.CHAT_MESSAGE_BUFFER_LIMIT) {
+            this.chatMessageBufferLimit = (int) (value * (MAX_CHAT_BUFFER_LIMIT - 1)) + 1;
         }
     }
 
@@ -510,6 +508,8 @@ public abstract class MixinGameOptions implements ExGameOptions {
             cir.setReturnValue(this.ofCloudsHeight);
         } else if (option == OptionOF.AO_LEVEL) {
             cir.setReturnValue(this.ofAoLevel);
+        } else if (option == OptionOF.CHAT_MESSAGE_BUFFER_LIMIT) {
+            cir.setReturnValue((float) ((double) this.chatMessageBufferLimit / (MAX_CHAT_BUFFER_LIMIT - 1)));
         }
     }
 
@@ -533,6 +533,9 @@ public abstract class MixinGameOptions implements ExGameOptions {
         String prefix = name + ": ";
         if (option.isSlider()) {
             float value = this.getFloatValue(option);
+            if (option == OptionOF.CHAT_MESSAGE_BUFFER_LIMIT) {
+                return prefix + (int) (value * (double) (MAX_CHAT_BUFFER_LIMIT - 1));
+            }
             if (option == Option.SENSITIVITY) {
                 if (value == 0.0F)
                     return prefix + ts.translate("options.sensitivity.min");
@@ -864,7 +867,10 @@ public abstract class MixinGameOptions implements ExGameOptions {
             }
             case "autoFarClip" -> this.autoFarClip = Boolean.parseBoolean(value);
             case "grass3d" -> this.grass3d = Boolean.parseBoolean(value);
-            case "chatMessageBufferLimit" -> this.chatMessageBufferLimit = Integer.parseInt(value);
+            case "chatMessageBufferLimit" -> {
+                this.chatMessageBufferLimit = Integer.parseInt(value);
+                this.chatMessageBufferLimit = Config.limit(this.chatMessageBufferLimit, 1, MAX_CHAT_BUFFER_LIMIT);
+            }
         }
     }
 

@@ -67,13 +67,6 @@ public abstract class GuiBaseSettingsOF extends Screen implements OptionTooltipP
             this.client.options.saveOptions();
             this.client.openScreen(this.prevScreen);
         }
-
-        if (button.id != OptionOF.CLOUD_HEIGHT.ordinal()) {
-            ScreenScaler scaler = new ScreenScaler(this.client.options, this.client.actualWidth, this.client.actualHeight);
-            int width = scaler.getScaledWidth();
-            int hight = scaler.getScaledHeight();
-            this.init(this.client, width, hight);
-        }
     }
 
     @Override

@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.mixin.client.render;
 
 import com.llamalad7.mixinextras.sugar.Local;
+import dev.adventurecraft.awakening.common.TextRect;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.render.Tessellator;
@@ -73,33 +74,28 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
         }
     }
 
-    public int getShadowColor(int color) {
-        int tmp = color & 0xff000000;
-        int shadowColor = (color & 0xfcfcfc) >> 2;
-        return shadowColor + tmp;
-    }
-
     @Overwrite
     public void drawTextWithShadow(String text, int x, int y, int color) {
-        this.drawText(text, x, y, color, true, x + 1, y + 1, this.getShadowColor(color));
-    }
-
-    @Override
-    public void drawString(String text, float x, float y, int color, boolean shadow) {
-        this.drawText(text, x, y, color, shadow, x + 1.0F, y + 1.0F, this.getShadowColor(color));
+        this.drawText(
+            text, 0, text.length(),
+            x, y, color, true, x + 1, y + 1, ExTextRenderer.getShadowColor(color));
     }
 
     @Overwrite
     public void drawText(String text, int x, int y, int color) {
-        this.drawText(text, (float) x, (float) y, color, false, 0, 0, 0);
+        this.drawText(
+            text, 0, text.length(),
+            (float) x, (float) y, color, false, 0, 0, 0);
     }
 
     @Overwrite
     public void drawText(String text, int x, int y, int color, boolean shadow) {
         if (shadow) {
-            color = this.getShadowColor(color);
+            color = ExTextRenderer.getShadowColor(color);
         }
-        this.drawText(text, (float) x, (float) y, color, false, 0, 0, 0);
+        this.drawText(
+            text, 0, text.length(),
+            (float) x, (float) y, color, false, 0, 0, 0);
     }
 
     private void drawChar(Tessellator ts, int character, float x, float y) {
@@ -114,11 +110,14 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
         ts.vertex(x, y, 0.0, (float) n4 / 128.0f + f2, (float) n3 / 128.0f + f3);
     }
 
-    private void drawText(
-        String text, float x, float y, int color, boolean shadow, float sX, float sY, int sColor) {
+    @Override
+    public void drawText(
+        CharSequence text, int start, int end,
+        float x, float y, int color, boolean shadow, float sX, float sY, int sColor) {
         if (text == null) {
             return;
         }
+        validateCharSequence(text, start, end);
 
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.field_2461);
 
@@ -138,16 +137,15 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
             sA = 1.0F;
         }
 
-        String lowerText = text.toLowerCase();
         Tessellator ts = Tessellator.INSTANCE;
         ts.start();
         ts.color(r, g, b, a);
 
         float xOff = 0;
 
-        for (int i = 0; i < text.length(); ++i) {
+        for (int i = start; i < end; ++i) {
             while (text.length() > i + 1 && text.charAt(i) == '§') {
-                int charIndex = "0123456789abcdef".indexOf(lowerText.charAt(i + 1));
+                int charIndex = "0123456789abcdef".indexOf(Character.toLowerCase(text.charAt(i + 1)));
                 if (charIndex < 0 || charIndex > 15) {
                     charIndex = 15;
                 }
@@ -198,23 +196,21 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
 
     @Overwrite
     public int getTextWidth(String text) {
-        return getTextWidth(text, 0);
+        return this.getTextWidth(text, 0).width();
     }
 
-    public int getTextWidth(CharSequence text, int start) {
-        return getTextWidth(text, start, text.length());
-    }
-
-    public int getTextWidth(CharSequence text, int start, int length) {
+    @Override
+    public TextRect getTextWidth(CharSequence text, int start, int end, long maxWidth) {
         if (text == null) {
-            return 0;
+            return null;
         }
+        validateCharSequence(text, start, end);
 
         int width = 0;
-
-        for (int i = start; i < length; ++i) {
+        int i;
+        for (i = start; i < end; ++i) {
             char c = text.charAt(i);
-            if (c == 167) {
+            if (c == '§') {
                 ++i;
                 continue;
             }
@@ -225,9 +221,28 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
             } else if (c < 256) {
                 width += this.field_2462[c];
             }
+
+            if (width > maxWidth) {
+                break;
+            }
         }
 
-        return width;
+        return new TextRect(i - start, width);
+    }
+
+    private static void validateCharSequence(CharSequence text, int start, int end) {
+        if (start > text.length()) {
+            throw new IllegalArgumentException(
+                String.format("start (%d) exceeds text length (%d).", start, text.length()));
+        }
+        if (end > text.length()) {
+            throw new IllegalArgumentException(
+                String.format("end (%d) exceeds text length (%d).", end, text.length()));
+        }
+        if ((end - start) > text.length()) {
+            throw new IllegalArgumentException(
+                String.format("(end (%d) - start (%d)) exceeds text length (%d).", end, start, text.length()));
+        }
     }
 
     @Overwrite
@@ -248,13 +263,13 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
         while (wordIndex < words.length) {
             builder.setLength(0);
             builder.append(words[wordIndex++]).append(" ");
-            while (wordIndex < words.length && (this.getTextWidth(builder, 0) + this.getTextWidth(words[wordIndex])) < maxWidth) {
+            while (wordIndex < words.length && (this.getTextWidth(builder, 0).width() + this.getTextWidth(words[wordIndex])) < maxWidth) {
                 builder.append(words[wordIndex++]).append(" ");
             }
 
-            while (this.getTextWidth(builder, 0) > maxWidth) {
+            while (this.getTextWidth(builder, 0).width() > maxWidth) {
                 int consumed = 0;
-                while (this.getTextWidth(builder, 0, consumed + 1) <= maxWidth) {
+                while (this.getTextWidth(builder, 0, consumed + 1).width() <= maxWidth) {
                     ++consumed;
                 }
 
@@ -291,13 +306,14 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
         while (wordIndex < words.length) {
             builder.setLength(0);
             builder.append(words[wordIndex++]).append(" ");
-            while (wordIndex < words.length && (this.getTextWidth(builder, 0) + this.getTextWidth(words[wordIndex])) < maxWidth) {
+            while (wordIndex < words.length && (this.getTextWidth(builder, 0).width() + this.getTextWidth(words[wordIndex])) < maxWidth) {
                 builder.append(words[wordIndex++]).append(" ");
             }
 
-            while (this.getTextWidth(builder, 0) > maxWidth) {
+            while (this.getTextWidth(builder, 0).width() > maxWidth) {
                 int consumed = 0;
-                while (this.getTextWidth(builder, 0, consumed + 1) <= maxWidth) {
+                // TODO: replace with getTextWidth(maxWidth) overload
+                while (this.getTextWidth(builder, 0, consumed + 1).width() <= maxWidth) {
                     ++consumed;
                 }
 

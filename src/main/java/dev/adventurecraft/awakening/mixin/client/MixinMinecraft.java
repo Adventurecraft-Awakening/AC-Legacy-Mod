@@ -846,29 +846,30 @@ public abstract class MixinMinecraft implements ExMinecraft {
             return;
         }
 
+        var exWorld = (ExWorld) this.world;
         if (AC_DebugMode.active) {
-            ((ExWorld) this.world).getUndoStack().startRecording();
+            exWorld.getUndoStack().startRecording();
         }
 
-        boolean var4 = false;
+        boolean swapOffhand = false;
         ItemStack stack = this.player.inventory.getHeldItem();
         if (!AC_DebugMode.active) {
             if (mouseButton == 0) {
                 stack = ((ExPlayerInventory) this.player.inventory).getOffhandItemStack();
                 ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
-                var4 = true;
+                swapOffhand = true;
                 ((ExPlayerEntity) this.player).setSwappedItems(true);
             }
 
-            int var5 = 5;
+            int useDelay = 5;
             if (stack != null) {
-                var5 = ((ExItem) Item.byId[stack.itemId]).getItemUseDelay();
+                useDelay = ((ExItem) Item.byId[stack.itemId]).getItemUseDelay();
             }
 
             if (mouseButton == 0) {
-                this.mouseTicksProcessed = this.ticksPlayed + var5;
+                this.mouseTicksProcessed = this.ticksPlayed + useDelay;
             } else {
-                this.rightMouseTicksRan = this.ticksPlayed + var5;
+                this.rightMouseTicksRan = this.ticksPlayed + useDelay;
             }
 
             if (stack != null && ((ExItem) Item.byId[stack.itemId]).mainActionLeftClick()) {
@@ -909,9 +910,8 @@ public abstract class MixinMinecraft implements ExMinecraft {
                     mouseButton = 1;
                 }
 
-                int var11;
                 if (!AC_DebugMode.active) {
-                    var11 = ((ExBlock) block).alwaysUseClick(this.world, bX, bY, bZ);
+                    int var11 = ((ExBlock) block).alwaysUseClick(this.world, bX, bY, bZ);
                     if (var11 != -1) {
                         mouseButton = var11;
                     }
@@ -923,20 +923,20 @@ public abstract class MixinMinecraft implements ExMinecraft {
                         ((ExItemStack) stack).useItemLeftClick(this.player, this.world, bX, bY, bZ, bSide);
                     }
                 } else {
-                    var11 = stack == null ? 0 : stack.count;
+                    int var11 = stack == null ? 0 : stack.count;
                     if (this.interactionManager.useItemOnBlock(this.player, this.world, stack, bX, bY, bZ, bSide)) {
                         useOnBlock = false;
                         this.player.swingHand();
                     }
 
                     if (stack == null) {
-                        if (var4) {
+                        if (swapOffhand) {
                             ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
                             ((ExPlayerEntity) this.player).setSwappedItems(false);
                         }
 
                         if (AC_DebugMode.active) {
-                            ((ExWorld) this.world).getUndoStack().stopRecording();
+                            exWorld.getUndoStack().stopRecording();
                         }
 
                         return;
@@ -960,7 +960,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         }
 
         if (stack != null) {
-            Scriptable globalScope = ((ExWorld) this.world).getScript().globalScope;
+            Scriptable globalScope = exWorld.getScript().globalScope;
 
             if (this.lastItemUsed != stack) {
                 var var13 = Context.javaToJS(new ScriptItem(stack), globalScope);
@@ -1022,22 +1022,19 @@ public abstract class MixinMinecraft implements ExMinecraft {
                 }
             }
 
-            if (stack.usesMeta()) {
-                ((ExWorld) this.world).getScriptHandler().runScript(
-                    String.format("item_%d_%d.js", stack.itemId, stack.getMeta()), ((ExWorld) this.world).getScope(), false);
-            } else {
-                ((ExWorld) this.world).getScriptHandler().runScript(
-                    String.format("item_%d.js", stack.itemId), ((ExWorld) this.world).getScope(), false);
-            }
+            String scriptName = stack.usesMeta()
+                ? String.format("item_%d_%d.js", stack.itemId, stack.getMeta())
+                : String.format("item_%d.js", stack.itemId);
+            exWorld.getScriptHandler().runScript(scriptName, exWorld.getScope(), false);
         }
 
-        if (var4) {
+        if (swapOffhand) {
             ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
             ((ExPlayerEntity) this.player).setSwappedItems(false);
         }
 
         if (AC_DebugMode.active) {
-            ((ExWorld) this.world).getUndoStack().stopRecording();
+            exWorld.getUndoStack().stopRecording();
         }
     }
 

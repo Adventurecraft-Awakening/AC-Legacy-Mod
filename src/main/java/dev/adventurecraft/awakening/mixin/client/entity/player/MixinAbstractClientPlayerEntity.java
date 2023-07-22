@@ -267,7 +267,7 @@ public abstract class MixinAbstractClientPlayerEntity extends PlayerEntity imple
             default:
                 String result = ((ExWorld) this.world).getScript().runString(message);
                 if (result != null) {
-                    this.client.overlay.addChatMessage(result);
+                    this.client.overlay.addChatMessage("JS: " + result);
                 }
                 break;
         }

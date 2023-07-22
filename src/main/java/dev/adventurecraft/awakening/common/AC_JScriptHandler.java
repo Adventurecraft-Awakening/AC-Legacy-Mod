@@ -48,6 +48,7 @@ public class AC_JScriptHandler {
                     var script = ((ExWorld) this.world).getScript().compileReader(reader, fileName);
                     this.scripts.put(name, new AC_JScriptInfo(fileName, script));
                 } catch (IOException e) {
+                    Minecraft.instance.overlay.addChatMessage("JS: " + e.getMessage());
                     ACMod.LOGGER.error("Failed to read script file \"{}\".", fileName, e);
                 }
             }

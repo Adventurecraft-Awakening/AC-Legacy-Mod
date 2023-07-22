@@ -118,7 +118,7 @@ public class Script {
         try {
             return this.cx.compileString(sourceCode, sourceName, 1, null);
         } catch (Exception e) {
-            Minecraft.instance.overlay.addChatMessage("Javascript Error: " + e.getMessage());
+            Minecraft.instance.overlay.addChatMessage("JS: " + e.getMessage());
             return null;
         }
     }
@@ -145,7 +145,7 @@ public class Script {
             return result;
         } catch (ContinuationPending e) {
         } catch (Exception e) {
-            Minecraft.instance.overlay.addChatMessage("Javascript Error: " + e.getMessage());
+            Minecraft.instance.overlay.addChatMessage("JS: " + e.getMessage());
         } finally {
             this.curScope = null;
         }
@@ -173,7 +173,7 @@ public class Script {
                 this.cx.resumeContinuation(continuation.contituation, continuation.scope, null);
             } catch (ContinuationPending e) {
             } catch (Exception e) {
-                Minecraft.instance.overlay.addChatMessage("Javascript Error: " + e.getMessage());
+                Minecraft.instance.overlay.addChatMessage("JS: " + e.getMessage());
             } finally {
                 this.curScope = null;
             }
