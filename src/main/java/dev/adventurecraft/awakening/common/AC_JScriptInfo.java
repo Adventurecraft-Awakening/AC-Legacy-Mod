@@ -2,6 +2,8 @@ package dev.adventurecraft.awakening.common;
 
 import org.mozilla.javascript.Script;
 
+import java.util.Objects;
+
 public class AC_JScriptInfo implements Comparable<AC_JScriptInfo> {
 
     public String name;
@@ -11,12 +13,8 @@ public class AC_JScriptInfo implements Comparable<AC_JScriptInfo> {
     public int count;
 
     public AC_JScriptInfo(String name, Script script) {
-        if (script == null) {
-            throw new IllegalArgumentException("script");
-        }
-
         this.name = name.replace(".js", "");
-        this.compiledScript = script;
+        this.compiledScript = Objects.requireNonNull(script);
     }
 
     public void addStat(long var1) {

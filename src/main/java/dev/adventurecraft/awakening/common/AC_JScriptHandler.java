@@ -48,7 +48,7 @@ public class AC_JScriptHandler {
                     var script = ((ExWorld) this.world).getScript().compileReader(reader, fileName);
                     this.scripts.put(name, new AC_JScriptInfo(fileName, script));
                 } catch (IOException e) {
-                    ACMod.LOGGER.error("Failed to read script file.", e);
+                    ACMod.LOGGER.error("Failed to read script file \"{}\".", fileName, e);
                 }
             }
 

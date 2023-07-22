@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.script;
 
+import java.io.IOException;
 import java.io.Reader;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -122,13 +123,9 @@ public class Script {
         }
     }
 
-    public org.mozilla.javascript.Script compileReader(Reader sourceReader, String sourceName) {
-        try {
-            return this.cx.compileReader(sourceReader, sourceName, 1, null);
-        } catch (Exception e) {
-            Minecraft.instance.overlay.addChatMessage("Javascript Error: " + e.getMessage());
-            return null;
-        }
+    public org.mozilla.javascript.Script compileReader(Reader sourceReader, String sourceName)
+        throws IOException {
+        return this.cx.compileReader(sourceReader, sourceName, 1, null);
     }
 
     public Scriptable getNewScope() {
