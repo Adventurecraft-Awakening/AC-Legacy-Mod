@@ -34,25 +34,26 @@ public interface ExWorld {
 
     void loadMapMusic();
 
-    HitResult rayTraceBlocks2(Vec3d var1, Vec3d var2, boolean var3, boolean var4, boolean var5);
+    HitResult rayTraceBlocks2(
+        Vec3d pointA, Vec3d pointB, boolean blockCollidableFlag, boolean useCollisionShapes, boolean collideWithClip);
 
-    boolean setBlockAndMetadataTemp(int var1, int var2, int var3, int var4, int var5);
+    boolean setBlockAndMetadataTemp(int x, int y, int z, int id, int meta);
 
-    float getLightValue(int var1, int var2, int var3);
+    float getLightValue(int x, int y, int z);
 
-    void cancelBlockUpdate(int var1, int var2, int var3, int var4);
+    void cancelBlockUpdate(int x, int y, int z, int var4);
 
-    Entity getEntityByID(int var1);
+    Entity getEntityByID(int id);
 
     float getFogStart(float var1, float var2);
 
     float getFogEnd(float var1, float var2);
 
-    BlockEntity getBlockTileEntityDontCreate(int var1, int var2, int var3);
+    BlockEntity getBlockTileEntityDontCreate(int x, int y, int z);
 
-    double getTemperatureValue(int var1, int var2);
+    double getTemperatureValue(int x, int z);
 
-    void setTemperatureValue(int var1, int var2, double var3);
+    void setTemperatureValue(int x, int z, double value);
 
     void undo();
 
@@ -66,11 +67,11 @@ public interface ExWorld {
 
     float getTimeOfDay();
 
-    void setTimeOfDay(long var1);
+    void setTimeOfDay(long value);
 
     float getSpawnYaw();
 
-    void setSpawnYaw(float var1);
+    void setSpawnYaw(float value);
 
     AC_UndoStack getUndoStack();
 

@@ -58,8 +58,8 @@ public abstract class GuiBaseSettingsOF extends Screen implements OptionTooltipP
             return;
         }
 
-        if (button.id < 100 && button instanceof OptionButtonWidget) {
-            this.options.setIntOption(((OptionButtonWidget) button).getOption(), 1);
+        if (button.id < 100 && button instanceof OptionButtonWidget opButton) {
+            this.options.setIntOption(opButton.getOption(), 1);
             button.text = this.options.getTranslatedValue(Option.getById(button.id));
         }
 

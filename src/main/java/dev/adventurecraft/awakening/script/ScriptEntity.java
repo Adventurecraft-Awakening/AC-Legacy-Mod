@@ -1,8 +1,8 @@
 package dev.adventurecraft.awakening.script;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import dev.adventurecraft.awakening.common.AC_EntityLivingScript;
+import dev.adventurecraft.awakening.common.AC_EntityNPC;
+import dev.adventurecraft.awakening.common.AC_UtilBullet;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.extension.entity.ExEntityRegistry;
 import net.minecraft.block.material.Material;
@@ -15,36 +15,36 @@ import net.minecraft.entity.monster.MonsterEntity;
 import net.minecraft.entity.monster.SlimeEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.ArrowEntity;
-import dev.adventurecraft.awakening.common.AC_EntityLivingScript;
-import dev.adventurecraft.awakening.common.AC_EntityNPC;
-import dev.adventurecraft.awakening.common.AC_UtilBullet;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.hit.HitType;
 import net.minecraft.util.math.AxixAlignedBoundingBox;
 import net.minecraft.util.math.Vec3d;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @SuppressWarnings("unused")
 public class ScriptEntity {
 
     Entity entity;
 
-    ScriptEntity(Entity var1) {
-        this.entity = var1;
+    ScriptEntity(Entity entity) {
+        this.entity = entity;
     }
 
-    public static ScriptEntity getEntityClass(Entity var0) {
-        if (var0 == null) return null;
-        if (var0 instanceof PlayerEntity) return new ScriptEntityPlayer((PlayerEntity) var0);
-        if (var0 instanceof MonsterEntity) return new ScriptEntityMob((MonsterEntity) var0);
-        if (var0 instanceof WolfEntity) return new ScriptEntityWolf((WolfEntity) var0);
-        if (var0 instanceof MobEntity) return new ScriptEntityCreature((MobEntity) var0);
-        if (var0 instanceof FlyingEntity) return new ScriptEntityFlying((FlyingEntity) var0);
-        if (var0 instanceof AC_EntityNPC) return new ScriptEntityNPC((AC_EntityNPC) var0);
-        if (var0 instanceof AC_EntityLivingScript) return new ScriptEntityLivingScript((AC_EntityLivingScript) var0);
-        if (var0 instanceof SlimeEntity) return new ScriptEntitySlime((SlimeEntity) var0);
-        if (var0 instanceof LivingEntity) return new ScriptEntityLiving((LivingEntity) var0);
-        if (var0 instanceof ArrowEntity) return new ScriptEntityArrow((ArrowEntity) var0);
-        return new ScriptEntity(var0);
+    public static ScriptEntity getEntityClass(Entity entity) {
+        if (entity == null) return null;
+        if (entity instanceof PlayerEntity e) return new ScriptEntityPlayer(e);
+        if (entity instanceof MonsterEntity e) return new ScriptEntityMob(e);
+        if (entity instanceof WolfEntity e) return new ScriptEntityWolf(e);
+        if (entity instanceof MobEntity e) return new ScriptEntityCreature(e);
+        if (entity instanceof FlyingEntity e) return new ScriptEntityFlying(e);
+        if (entity instanceof AC_EntityNPC e) return new ScriptEntityNPC(e);
+        if (entity instanceof AC_EntityLivingScript e) return new ScriptEntityLivingScript(e);
+        if (entity instanceof SlimeEntity e) return new ScriptEntitySlime(e);
+        if (entity instanceof LivingEntity e) return new ScriptEntityLiving(e);
+        if (entity instanceof ArrowEntity e) return new ScriptEntityArrow(e);
+        return new ScriptEntity(entity);
     }
 
     public int getEntityID() {
@@ -55,9 +55,14 @@ public class ScriptEntity {
         return new ScriptVec3(this.entity.x, this.entity.y, this.entity.z);
     }
 
-    ScriptVec3 getPosition(float var1) {
-        float var2 = 1.0F - var1;
-        return new ScriptVec3((double) var2 * this.entity.prevX + (double) var1 * this.entity.x, (double) var2 * this.entity.prevY + (double) var1 * this.entity.y, (double) var2 * this.entity.prevZ + (double) var1 * this.entity.z);
+    @SuppressWarnings("UnnecessaryLocalVariable")
+    ScriptVec3 getPosition(float deltaTime) {
+        double dt = deltaTime;
+        double dtSub = 1.0 - dt;
+        return new ScriptVec3(
+            dtSub * this.entity.prevX + dt * this.entity.x,
+            dtSub * this.entity.prevY + dt * this.entity.y,
+            dtSub * this.entity.prevZ + dt * this.entity.z);
     }
 
     public void setPosition(ScriptVec3 var1) {
@@ -77,8 +82,8 @@ public class ScriptEntity {
         return new ScriptVecRot(var2 * this.entity.prevYaw + var1 * this.entity.yaw, var2 * this.entity.prevPitch + var1 * this.entity.pitch);
     }
 
-    public void setRotation(float var1, float var2) {
-        this.entity.setRotation(var1, var2);
+    public void setRotation(float yaw, float pitch) {
+        this.entity.setRotation(yaw, pitch);
     }
 
     public ScriptVec3 getVelocity() {
@@ -134,26 +139,21 @@ public class ScriptEntity {
         return this.entity.method_1373();
     }
 
-    public ScriptEntity[] getEntitiesWithinRange(double var1) {
-        AxixAlignedBoundingBox var3 = AxixAlignedBoundingBox.createAndAddToList(this.entity.x - var1, this.entity.y - var1, this.entity.z - var1, this.entity.x + var1, this.entity.y + var1, this.entity.z + var1);
-        var var4 = (List<Entity>) this.entity.world.getEntities(this.entity, var3);
-        ArrayList<ScriptEntity> var5 = new ArrayList<>();
-        double var6 = var1 * var1;
+    public ScriptEntity[] getEntitiesWithinRange(double range) {
+        var aabb = AxixAlignedBoundingBox.createAndAddToList(
+            this.entity.x - range, this.entity.y - range, this.entity.z - range,
+            this.entity.x + range, this.entity.y + range, this.entity.z + range);
+        var entities = (List<Entity>) this.entity.world.getEntities(this.entity, aabb);
+        ArrayList<ScriptEntity> list = new ArrayList<>();
+        double rangeSqr = range * range;
 
-        for (Entity var10 : var4) {
-            if (var10.method_1352(this.entity) < var6) {
-                var5.add(getEntityClass(var10));
+        for (Entity entity : entities) {
+            if (entity.method_1352(this.entity) < rangeSqr) {
+                list.add(getEntityClass(entity));
             }
         }
 
-        int var13 = 0;
-        ScriptEntity[] var14 = new ScriptEntity[var5.size()];
-
-        for (ScriptEntity var11 : var5) {
-            var14[var13++] = var11;
-        }
-
-        return var14;
+        return list.toArray(new ScriptEntity[0]);
     }
 
     public ScriptEntity dropItem(ScriptItem var1) {
@@ -263,23 +263,22 @@ public class ScriptEntity {
         return this.entity.onGround;
     }
 
-    public Object[] rayTrace(ScriptVec3 var1, ScriptVec3 var2) {
-        return this.rayTrace(var1.x, var1.y, var1.z, var2.x, var2.y, var2.z);
+    public Object[] rayTrace(ScriptVec3 pointA, ScriptVec3 pointB) {
+        return this.rayTrace(pointA.x, pointA.y, pointA.z, pointB.x, pointB.y, pointB.z);
     }
 
-    public Object[] rayTrace(double var1, double var3, double var5, double var7, double var9, double var11) {
-        Object[] var13 = new Object[3];
-        HitResult var14 = AC_UtilBullet.rayTrace(this.entity.world, this.entity, Vec3d.from(var1, var3, var5), Vec3d.from(var7, var9, var11));
-        if (var14 != null) {
-            var13[0] = new ScriptVec3(var14.field_1988.x, var14.field_1988.y, var14.field_1988.z);
-            if (var14.type == HitType.field_789) {
-                var13[1] = new ScriptVec3((float) var14.x, (float) var14.y, (float) var14.z);
+    public Object[] rayTrace(double aX, double aY, double aZ, double bX, double bY, double bZ) {
+        Object[] result = new Object[3];
+        HitResult hit = AC_UtilBullet.rayTrace(this.entity.world, this.entity, Vec3d.from(aX, aY, aZ), Vec3d.from(bX, bY, bZ));
+        if (hit != null) {
+            result[0] = new ScriptVec3(hit.field_1988.x, hit.field_1988.y, hit.field_1988.z);
+            if (hit.type == HitType.field_789) {
+                result[1] = new ScriptVec3(hit.x, hit.y, hit.z);
             } else {
-                var13[2] = getEntityClass(var14.field_1989);
+                result[2] = getEntityClass(hit.field_1989);
             }
         }
-
-        return var13;
+        return result;
     }
 
     public float getyOffset() {

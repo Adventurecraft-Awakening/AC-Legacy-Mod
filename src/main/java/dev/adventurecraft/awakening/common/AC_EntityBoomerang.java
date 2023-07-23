@@ -16,6 +16,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 
 public class AC_EntityBoomerang extends Entity {
+
     double bounceFactor;
     float prevBoomerangRotation;
     float boomerangRotation;
@@ -61,37 +62,36 @@ public class AC_EntityBoomerang extends Entity {
         this.chunkZ = (int) Math.floor(this.z);
     }
 
+    @Override
     public void tick() {
         this.prevX = this.x;
         this.prevY = this.y;
         this.prevZ = this.z;
         this.prevYaw = this.yaw;
         this.prevPitch = this.pitch;
-        double var1;
-        double var3;
-        double var5;
         if (!this.turningAround) {
-            var1 = this.xVelocity;
-            var3 = this.yVelocity;
-            var5 = this.zVelocity;
+            double velX = this.xVelocity;
+            double velY = this.yVelocity;
+            double velZ = this.zVelocity;
             this.move(this.xVelocity, this.yVelocity, this.zVelocity);
-            boolean var7 = false;
-            if (this.xVelocity != var1) {
-                this.xVelocity = -var1;
-                var7 = true;
+
+            boolean bounced = false;
+            if (this.xVelocity != velX) {
+                this.xVelocity = -velX;
+                bounced = true;
             }
 
-            if (this.yVelocity != var3) {
-                this.yVelocity = -var3;
-                var7 = true;
+            if (this.yVelocity != velY) {
+                this.yVelocity = -velY;
+                bounced = true;
             }
 
-            if (this.zVelocity != var5) {
-                this.zVelocity = -var5;
-                var7 = true;
+            if (this.zVelocity != velZ) {
+                this.zVelocity = -velZ;
+                bounced = true;
             }
 
-            if (var7) {
+            if (bounced) {
                 this.xVelocity *= this.bounceFactor;
                 this.yVelocity *= this.bounceFactor;
                 this.zVelocity *= this.bounceFactor;
@@ -101,17 +101,17 @@ public class AC_EntityBoomerang extends Entity {
                 this.turningAround = true;
             }
         } else if (this.returnsTo != null) {
-            var1 = this.returnsTo.x - this.x;
-            var3 = this.returnsTo.y - this.y;
-            var5 = this.returnsTo.z - this.z;
-            double var14 = Math.sqrt(var1 * var1 + var3 * var3 + var5 * var5);
-            if (var14 < 1.5D) {
+            double rX = this.returnsTo.x - this.x;
+            double rY = this.returnsTo.y - this.y;
+            double rZ = this.returnsTo.z - this.z;
+            double dist = Math.sqrt(rX * rX + rY * rY + rZ * rZ);
+            if (dist < 1.5D) {
                 this.remove();
             }
 
-            this.xVelocity = 0.5D * var1 / var14;
-            this.yVelocity = 0.5D * var3 / var14;
-            this.zVelocity = 0.5D * var5 / var14;
+            this.xVelocity = 0.5D * rX / dist;
+            this.yVelocity = 0.5D * rY / dist;
+            this.zVelocity = 0.5D * rZ / dist;
             this.setPosition(this.x + this.xVelocity, this.y + this.yVelocity, this.z + this.zVelocity);
         } else {
             this.remove();
@@ -125,26 +125,23 @@ public class AC_EntityBoomerang extends Entity {
             this.boomerangRotation -= 360.0F;
         }
 
-        List<Entity> var9 = this.world.getEntities(this, this.boundingBox.expand(0.5D, 0.5D, 0.5D));
-
-        int var2;
-        for (var2 = 0; var2 < var9.size(); ++var2) {
-            Entity var11 = var9.get(var2);
-            if (var11 instanceof ItemEntity ie) {
+        List<Entity> entities = this.world.getEntities(this, this.boundingBox.expand(0.5D, 0.5D, 0.5D));
+        for (Entity entity : entities) {
+            if (entity instanceof ItemEntity ie) {
                 this.itemsPickedUp.add(ie);
-            } else if (var11 instanceof LivingEntity && var11 != this.returnsTo) {
-                ((ExEntity) var11).setStunned(20);
-                var11.prevX = var11.x;
-                var11.prevY = var11.y;
-                var11.prevZ = var11.z;
-                var11.prevYaw = var11.yaw;
-                var11.prevPitch = var11.pitch;
+            } else if (entity instanceof LivingEntity && entity != this.returnsTo) {
+                ((ExEntity) entity).setStunned(20);
+                entity.prevX = entity.x;
+                entity.prevY = entity.y;
+                entity.prevZ = entity.z;
+                entity.prevYaw = entity.yaw;
+                entity.prevPitch = entity.pitch;
             }
         }
 
-        for (Entity var11 : this.itemsPickedUp) {
-            if (!var11.removed) {
-                var11.setPosition(this.x, this.y, this.z);
+        for (Entity entity : this.itemsPickedUp) {
+            if (!entity.removed) {
+                entity.setPosition(this.x, this.y, this.z);
             }
         }
 
@@ -155,20 +152,19 @@ public class AC_EntityBoomerang extends Entity {
             this.chunkX = cX;
             this.chunkY = cY;
             this.chunkZ = cZ;
-            int var13 = this.world.getBlockId(this.chunkX, this.chunkY, this.chunkZ);
-            if (var13 == Block.LEVER.id && this.returnsTo instanceof PlayerEntity) {
-                Block.LEVER.canUse(this.world, this.chunkX, this.chunkY, this.chunkZ, (PlayerEntity) this.returnsTo);
+            int id = this.world.getBlockId(this.chunkX, this.chunkY, this.chunkZ);
+            if (id == Block.LEVER.id && this.returnsTo instanceof PlayerEntity player) {
+                Block.LEVER.canUse(this.world, this.chunkX, this.chunkY, this.chunkZ, player);
             }
         }
-
     }
 
+    @Override
     public void remove() {
         super.remove();
         if (this.item != null) {
             this.item.setMeta(0);
         }
-
     }
 
     public void determineRotation() {
@@ -180,17 +176,21 @@ public class AC_EntityBoomerang extends Entity {
     protected void writeAdditional(CompoundTag var1) {
     }
 
+    @Override
     public void readAdditional(CompoundTag var1) {
         this.remove();
     }
 
+    @Override
     public void onPlayerCollision(PlayerEntity var1) {
     }
 
+    @Override
     public boolean damage(Entity var1, int var2) {
         return false;
     }
 
+    @Override
     protected void initDataTracker() {
     }
 }

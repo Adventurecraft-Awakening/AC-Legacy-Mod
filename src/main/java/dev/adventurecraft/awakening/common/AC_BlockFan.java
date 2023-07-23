@@ -60,85 +60,94 @@ public class AC_BlockFan extends Block {
         }
 
         int meta = world.getBlockMeta(x, y, z);
-        int var7 = 0;
-        int var8 = 0;
-        int var9 = 0;
-        int var10;
+        int oX = 0;
+        int oY = 0;
+        int oZ = 0;
         if (meta == 0) {
-            for (var8 = -1; var8 >= -4; --var8) {
-                var10 = world.getBlockId(x, y + var8, z);
-                if (this.canGoThroughBlock(var10)) {
-                    ++var8;
+            for (oY = -1; oY >= -4; --oY) {
+                int id = world.getBlockId(x, y + oY, z);
+                if (this.canGoThroughBlock(id)) {
+                    ++oY;
                     break;
                 }
             }
         } else if (meta == 1) {
-            for (var8 = 1; var8 <= 4; ++var8) {
-                var10 = world.getBlockId(x, y + var8, z);
-                if (this.canGoThroughBlock(var10)) {
-                    --var8;
+            for (oY = 1; oY <= 4; ++oY) {
+                int id = world.getBlockId(x, y + oY, z);
+                if (this.canGoThroughBlock(id)) {
+                    --oY;
                     break;
                 }
             }
         } else if (meta == 2) {
-            for (var9 = -1; var9 >= -4; --var9) {
-                var10 = world.getBlockId(x, y, z + var9);
-                if (this.canGoThroughBlock(var10)) {
-                    ++var9;
+            for (oZ = -1; oZ >= -4; --oZ) {
+                int id = world.getBlockId(x, y, z + oZ);
+                if (this.canGoThroughBlock(id)) {
+                    ++oZ;
                     break;
                 }
             }
         } else if (meta == 3) {
-            for (var9 = 1; var9 <= 4; ++var9) {
-                var10 = world.getBlockId(x, y, z + var9);
-                if (this.canGoThroughBlock(var10)) {
-                    --var9;
+            for (oZ = 1; oZ <= 4; ++oZ) {
+                int id = world.getBlockId(x, y, z + oZ);
+                if (this.canGoThroughBlock(id)) {
+                    --oZ;
                     break;
                 }
             }
         } else if (meta == 4) {
-            for (var7 = -1; var7 >= -4; --var7) {
-                var10 = world.getBlockId(x + var7, y, z);
-                if (this.canGoThroughBlock(var10)) {
-                    ++var7;
+            for (oX = -1; oX >= -4; --oX) {
+                int id = world.getBlockId(x + oX, y, z);
+                if (this.canGoThroughBlock(id)) {
+                    ++oX;
                     break;
                 }
             }
         } else if (meta == 5) {
-            for (var7 = 1; var7 <= 4; ++var7) {
-                var10 = world.getBlockId(x + var7, y, z);
-                if (this.canGoThroughBlock(var10)) {
-                    --var7;
+            for (oX = 1; oX <= 4; ++oX) {
+                int id = world.getBlockId(x + oX, y, z);
+                if (this.canGoThroughBlock(id)) {
+                    --oX;
                     break;
                 }
             }
         }
 
-        AxixAlignedBoundingBox var17 = this.getCollisionShape(world, x, y, z).duplicateAndExpand(var7, var8, var9);
-        var var11 = (List<Entity>) world.getEntities(Entity.class, var17);
+        AxixAlignedBoundingBox aabb = this.getCollisionShape(world, x, y, z).duplicateAndExpand(oX, oY, oZ);
+        var entities = (List<Entity>) world.getEntities(Entity.class, aabb);
+        double doX = (double) x + 0.5D;
+        double doY = (double) y + 0.5D;
+        double doZ = (double) z + 0.5D;
+        double doF = (double) Math.abs(oX + oY + oZ) / 4.0D;
 
-        double var15;
-        for (Entity var14 : var11) {
-            if (!(var14 instanceof FallingBlockEntity)) {
-                var15 = var14.distanceTo((double) x + 0.5D, (double) y + 0.5D, (double) z + 0.5D) * (double) Math.abs(var7 + var8 + var9) / 4.0D;
-                var14.accelerate(0.07D * (double) var7 / var15, 0.07D * (double) var8 / var15, 0.07D * (double) var9 / var15);
-                if (var14 instanceof PlayerEntity && ((ExPlayerEntity) var14).isUsingUmbrella()) {
-                    var14.accelerate(0.07D * (double) var7 / var15, 0.07D * (double) var8 / var15, 0.07D * (double) var9 / var15);
-                }
+        for (Entity entity : entities) {
+            if (entity instanceof FallingBlockEntity) {
+                continue;
             }
+            double dist = entity.distanceTo(doX, doY, doZ) * doF;
+            double speed = entity instanceof ExPlayerEntity exPlayer && exPlayer.isUsingUmbrella()
+                ? 0.14D / dist
+                : 0.07D / dist;
+            entity.accelerate(speed * (double) oX, speed * (double) oY, speed * (double) oZ);
         }
 
-        var11.clear();
-        ((ExParticleManager) Minecraft.instance.particleManager).getEffectsWithinAABB(var17, var11);
+        entities.clear();
+        ((ExParticleManager) Minecraft.instance.particleManager).getEffectsWithinAABB(aabb, entities);
 
-        for (Entity var14 : var11) {
-            if (!(var14 instanceof FallingBlockEntity)) {
-                var15 = var14.distanceTo((double) x + 0.5D, (double) y + 0.5D, (double) z + 0.5D) * (double) Math.abs(var7 + var8 + var9) / 4.0D;
-                var14.accelerate(0.03D * (double) var7 / var15, 0.03D * (double) var8 / var15, 0.03D * (double) var9 / var15);
+        for (Entity entity : entities) {
+            if (entity instanceof FallingBlockEntity) {
+                continue;
             }
+            double dist = entity.distanceTo(doX, doY, doZ) * doF;
+            double speed = 0.03D / dist;
+            entity.accelerate(speed * (double) oX, speed * (double) oY, speed * (double) oZ);
         }
 
-        Minecraft.instance.particleManager.addParticle(new AC_EntityAirFX(world, (double) x + rand.nextDouble(), (double) y + rand.nextDouble(), (double) z + rand.nextDouble()));
+        Minecraft.instance.particleManager.addParticle(new AC_EntityAirFX(
+            world,
+            (double) x + rand.nextDouble(),
+            (double) y + rand.nextDouble(),
+            (double) z + rand.nextDouble()));
     }
 
     @Override
@@ -161,20 +170,21 @@ public class AC_BlockFan extends Block {
 
     @Override
     public void onAdjacentBlockUpdate(World world, int x, int y, int z, int id) {
-        if (!world.isClient) {
-            int var6;
-            if (world.hasRedstonePower(x, y, z)) {
-                if (this.fanOn) {
-                    var6 = world.getBlockMeta(x, y, z);
-                    world.placeBlockWithMetaData(x, y, z, AC_Blocks.fanOff.id, var6);
-                }
-            } else if (!this.fanOn) {
-                var6 = world.getBlockMeta(x, y, z);
-                world.placeBlockWithMetaData(x, y, z, AC_Blocks.fan.id, var6);
-                world.method_216(x, y, z, AC_Blocks.fan.id, this.getTickrate());
-            }
-
-            super.onAdjacentBlockUpdate(world, x, y, z, id);
+        if (world.isClient) {
+            return;
         }
+
+        if (world.hasRedstonePower(x, y, z)) {
+            if (this.fanOn) {
+                int meta = world.getBlockMeta(x, y, z);
+                world.placeBlockWithMetaData(x, y, z, AC_Blocks.fanOff.id, meta);
+            }
+        } else if (!this.fanOn) {
+            int meta = world.getBlockMeta(x, y, z);
+            world.placeBlockWithMetaData(x, y, z, AC_Blocks.fan.id, meta);
+            world.method_216(x, y, z, AC_Blocks.fan.id, this.getTickrate());
+        }
+
+        super.onAdjacentBlockUpdate(world, x, y, z, id);
     }
 }

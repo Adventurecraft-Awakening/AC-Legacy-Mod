@@ -675,7 +675,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     }
 
     @Override
-    public HitResult rayTraceBlocks2(Vec3d pointA, Vec3d pointB, boolean var3, boolean var4, boolean collideWithClip) {
+    public HitResult rayTraceBlocks2(Vec3d pointA, Vec3d pointB, boolean blockCollidableFlag, boolean useCollisionShapes, boolean collideWithClip) {
         if (Double.isNaN(pointA.x) || Double.isNaN(pointA.y) || Double.isNaN(pointA.z)) {
             return null;
         }
@@ -692,7 +692,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         int aId = this.getBlockId(aX, aY, aZ);
         int aMeta = this.getBlockMeta(aX, aY, aZ);
         Block aBlock = Block.BY_ID[aId];
-        if ((!var4 || aBlock == null || aBlock.getCollisionShape((World) (Object) this, aX, aY, aZ) != null) && aId > 0 && aBlock.isCollidable(aMeta, var3) && (collideWithClip || aId != AC_Blocks.clipBlock.id && !ExLadderBlock.isLadderID(aId))) {
+        if ((!useCollisionShapes || aBlock == null || aBlock.getCollisionShape((World) (Object) this, aX, aY, aZ) != null) && aId > 0 && aBlock.isCollidable(aMeta, blockCollidableFlag) && (collideWithClip || aId != AC_Blocks.clipBlock.id && !ExLadderBlock.isLadderID(aId))) {
             HitResult hit = aBlock.method_1564((World) (Object) this, aX, aY, aZ, pointA, pointB);
             if (hit != null) {
                 return hit;
@@ -808,7 +808,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
             int id = this.getBlockId(aX, aY, aZ);
             int meta = this.getBlockMeta(aX, aY, aZ);
             Block block = Block.BY_ID[id];
-            if (var4 && block != null && block.getCollisionShape((World) (Object) this, aX, aY, aZ) == null || id == 0 || !block.isCollidable(meta, var3) || !((ExBlock) block).shouldRender(this, aX, aY, aZ)) {
+            if (useCollisionShapes && block != null && block.getCollisionShape((World) (Object) this, aX, aY, aZ) == null || id == 0 || !block.isCollidable(meta, blockCollidableFlag) || !((ExBlock) block).shouldRender(this, aX, aY, aZ)) {
                 continue;
             }
 
@@ -1330,9 +1330,9 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     }
 
     @Override
-    public void cancelBlockUpdate(int var1, int var2, int var3, int var4) {
-        class_366 var5 = new class_366(var1, var2, var3, var4);
-        this.field_184.remove(var5);
+    public void cancelBlockUpdate(int x, int y, int z, int id) {
+        class_366 entry = new class_366(x, y, z, id);
+        this.field_184.remove(entry);
     }
 
     @Override
@@ -1442,7 +1442,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     }
 
     @Override
-    public Entity getEntityByID(int var1) {
+    public Entity getEntityByID(int id) {
         Iterator<Entity> var2 = this.entities.iterator();
 
         Entity var3;
@@ -1452,49 +1452,49 @@ public abstract class MixinWorld implements ExWorld, BlockView {
             }
 
             var3 = var2.next();
-        } while (var3.entityId != var1);
+        } while (var3.entityId != id);
 
         return var3;
     }
 
     @Override
-    public float getFogStart(float var1, float var2) {
+    public float getFogStart(float start, float deltaTime) {
         ExWorldProperties props = (ExWorldProperties) this.properties;
         if (props.isOverrideFogDensity()) {
             if (this.fogDensityOverridden) {
                 return props.getFogStart();
             }
-            return var2 * props.getFogStart() + (1.0F - var2) * var1;
+            return deltaTime * props.getFogStart() + (1.0F - deltaTime) * start;
         }
-        return var1;
+        return start;
     }
 
     @Override
-    public float getFogEnd(float var1, float var2) {
+    public float getFogEnd(float end, float deltaTime) {
         ExWorldProperties props = (ExWorldProperties) this.properties;
         if (props.isOverrideFogDensity()) {
             if (this.fogDensityOverridden) {
                 return props.getFogEnd();
             }
-            return var2 * props.getFogEnd() + (1.0F - var2) * var1;
+            return deltaTime * props.getFogEnd() + (1.0F - deltaTime) * end;
         }
-        return var1;
+        return end;
     }
 
     @Override
-    public BlockEntity getBlockTileEntityDontCreate(int var1, int var2, int var3) {
-        Chunk var4 = this.getChunkFromCache(var1 >> 4, var3 >> 4);
+    public BlockEntity getBlockTileEntityDontCreate(int x, int y, int z) {
+        Chunk var4 = this.getChunkFromCache(x >> 4, z >> 4);
         if (var4 != null) {
-            return ((ExChunk) var4).getChunkBlockTileEntityDontCreate(var1 & 15, var2, var3 & 15);
+            return ((ExChunk) var4).getChunkBlockTileEntityDontCreate(x & 15, y, z & 15);
         }
         return null;
     }
 
     @Override
-    public double getTemperatureValue(int var1, int var2) {
-        if (var1 >= -32000000 && var2 >= -32000000 && var1 < 32000000 && var2 <= 32000000) {
-            ExChunk chunk = (ExChunk) this.getChunkFromCache(var1 >> 4, var2 >> 4);
-            double tempValue = chunk.getTemperatureValue(var1 & 15, var2 & 15);
+    public double getTemperatureValue(int x, int z) {
+        if (x >= -32000000 && z >= -32000000 && x < 32000000 && z <= 32000000) {
+            ExChunk chunk = (ExChunk) this.getChunkFromCache(x >> 4, z >> 4);
+            double tempValue = chunk.getTemperatureValue(x & 15, z & 15);
             double tempOffset = ((ExWorldProperties) this.properties).getTempOffset();
             return tempValue + tempOffset;
         }
@@ -1502,11 +1502,11 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     }
 
     @Override
-    public void setTemperatureValue(int var1, int var2, double var3) {
-        if (var1 >= -32000000 && var2 >= -32000000 && var1 < 32000000 && var2 <= 32000000) {
-            ExChunk var5 = (ExChunk) this.getChunkFromCache(var1 >> 4, var2 >> 4);
-            if (var5.getTemperatureValue(var1 & 15, var2 & 15) != var3) {
-                var5.setTemperatureValue(var1 & 15, var2 & 15, var3);
+    public void setTemperatureValue(int x, int z, double value) {
+        if (x >= -32000000 && z >= -32000000 && x < 32000000 && z <= 32000000) {
+            ExChunk var5 = (ExChunk) this.getChunkFromCache(x >> 4, z >> 4);
+            if (var5.getTemperatureValue(x & 15, z & 15) != value) {
+                var5.setTemperatureValue(x & 15, z & 15, value);
             }
         }
     }
@@ -1560,8 +1560,8 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     }
 
     @Override
-    public void setTimeOfDay(long var1) {
-        ((ExWorldProperties) this.properties).setTimeOfDay((float) var1);
+    public void setTimeOfDay(long value) {
+        ((ExWorldProperties) this.properties).setTimeOfDay((float) value);
     }
 
     @Override
@@ -1570,8 +1570,8 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     }
 
     @Override
-    public void setSpawnYaw(float var1) {
-        ((ExWorldProperties) this.properties).setSpawnYaw(var1);
+    public void setSpawnYaw(float value) {
+        ((ExWorldProperties) this.properties).setSpawnYaw(value);
     }
 
     @Override

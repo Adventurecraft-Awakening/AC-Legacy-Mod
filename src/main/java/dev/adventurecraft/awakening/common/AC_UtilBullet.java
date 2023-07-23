@@ -18,79 +18,87 @@ public class AC_UtilBullet {
 
     static Random rand = new Random();
 
-    public static void fireBullet(World var0, LivingEntity var1, float var2, int var3) {
-        HitResult var4 = findHit(var0, var1, var2);
-        if (var4 != null) {
-            Vec3d var5 = var4.field_1988;
-            Minecraft.instance.worldRenderer.addParticle("smoke", var5.x, var5.y, var5.z, 0.0D, 0.0D, 0.0D);
-            if (var4.type == HitType.field_790) {
-                Entity var6 = var4.field_1989;
-                ((ExEntity) var6).attackEntityFromMulti(var1, var3);
+    public static void fireBullet(World world, LivingEntity caster, float spread, int damage) {
+        HitResult hit = findHit(world, caster, spread);
+        if (hit == null) {
+            return;
+        }
+        Vec3d pos = hit.field_1988;
+        Minecraft.instance.worldRenderer.addParticle("smoke", pos.x, pos.y, pos.z, 0.0D, 0.0D, 0.0D);
+        if (hit.type == HitType.field_790) {
+            Entity target = hit.field_1989;
+            ((ExEntity) target).attackEntityFromMulti(caster, damage);
+        }
+    }
+
+    public static HitResult rayTraceBlocks(World world, Vec3d pointA, Vec3d pointB) {
+        return ((ExWorld) world).rayTraceBlocks2(pointA, pointB, false, false, false);
+    }
+
+    static HitResult findHit(World world, LivingEntity caster, float spread) {
+        double dist = 256.0D;
+        Vec3d pointA = caster.getPosition(1.0F);
+        Vec3d dir = caster.getRotation(1.0F);
+        dir.x += (double) spread * (2.0D * rand.nextDouble() - 1.0D);
+        dir.y += (double) spread * (2.0D * rand.nextDouble() - 1.0D);
+        dir.z += (double) spread * (2.0D * rand.nextDouble() - 1.0D);
+        Vec3d pointB = pointA.translate(dir.x * dist, dir.y * dist, dir.z * dist);
+        if (caster.standingEyeHeight == 0.0F) {
+            pointA.y += caster.height / 2.0F;
+        }
+
+        return rayTrace(world, caster, pointA, pointB);
+    }
+
+    public static HitResult rayTrace(World world, Entity ignore, Vec3d pointA, Vec3d pointB) {
+        Vec3d end = pointB;
+        HitResult blockHit = rayTraceBlocks(world, pointA, pointB);
+        if (blockHit != null) {
+            end = blockHit.field_1988;
+        }
+
+        double distToEnd = end.distanceTo(pointA);
+        Entity hitEntity = null;
+
+        float extraSize = 1.0F;
+        var aabb = AxixAlignedBoundingBox.createAndAddToList(
+            Math.min(pointA.x, end.x), Math.min(pointA.y, end.y), Math.min(pointA.z, end.z),
+            Math.max(pointA.x, end.x), Math.max(pointA.y, end.y), Math.max(pointA.z, end.z))
+            .expand(extraSize, extraSize, extraSize);
+
+        var entities = (List<Entity>) world.getEntities(ignore, aabb);
+        double closestDist = distToEnd;
+
+        for (Entity entity : entities) {
+            if (!entity.method_1356()) {
+                continue;
             }
-        }
-    }
 
-    public static HitResult rayTraceBlocks(World var0, Vec3d var1, Vec3d var2) {
-        return ((ExWorld) var0).rayTraceBlocks2(var1, var2, false, false, false);
-    }
-
-    static HitResult findHit(World var0, LivingEntity var1, float var2) {
-        double var3 = 256.0D;
-        Vec3d var5 = var1.getPosition(1.0F);
-        Vec3d var6 = var1.getRotation(1.0F);
-        var6.x += (double) var2 * (2.0D * rand.nextDouble() - 1.0D);
-        var6.y += (double) var2 * (2.0D * rand.nextDouble() - 1.0D);
-        var6.z += (double) var2 * (2.0D * rand.nextDouble() - 1.0D);
-        Vec3d var7 = var5.translate(var6.x * var3, var6.y * var3, var6.z * var3);
-        if (var1.standingEyeHeight == 0.0F) {
-            var5.y += var1.height / 2.0F;
-        }
-
-        return rayTrace(var0, var1, var5, var7);
-    }
-
-    public static HitResult rayTrace(World var0, Entity var1, Vec3d var2, Vec3d var3) {
-        Vec3d var4 = var3;
-        Vec3d var7 = Vec3d.from(var2.x, var2.y, var2.z);
-        HitResult var8 = rayTraceBlocks(var0, var7, var3);
-        if (var8 != null) {
-            var4 = var8.field_1988;
-        }
-
-        double var5 = var4.distanceTo(var2);
-        Entity var9 = null;
-        float var10 = 1.0F;
-        AxixAlignedBoundingBox var11 = AxixAlignedBoundingBox.createAndAddToList(Math.min(var2.x, var4.x), Math.min(var2.y, var4.y), Math.min(var2.z, var4.z), Math.max(var2.x, var4.x), Math.max(var2.y, var4.y), Math.max(var2.z, var4.z)).expand(var10, var10, var10);
-        var var12 = (List<Entity>) var0.getEntities(var1, var11);
-        double var13 = var5;
-
-        for (Entity var16 : var12) {
-            if (var16.method_1356()) {
-                float var17 = var16.method_1369();
-                AxixAlignedBoundingBox var18 = var16.boundingBox.expand(var17, var17, var17);
-                HitResult var19 = var18.method_89(var2, var4);
-                if (var18.contains(var2)) {
-                    if (0.0D < var13) {
-                        var9 = var16;
-                        var4 = var2;
-                        var13 = 0.0D;
-                    }
-                } else if (var19 != null) {
-                    double var20 = var2.distanceTo(var19.field_1988);
-                    if (var20 < var13) {
-                        var9 = var16;
-                        var4 = var19.field_1988;
-                        var13 = var20;
-                    }
+            double size = entity.method_1369();
+            AxixAlignedBoundingBox entityAabb = entity.boundingBox.expand(size, size, size);
+            HitResult hit = entityAabb.method_89(pointA, end);
+            if (entityAabb.contains(pointA)) {
+                if (0.0D < closestDist) {
+                    hitEntity = entity;
+                    end = pointA;
+                    closestDist = 0.0D;
+                }
+            } else if (hit != null) {
+                double dist = pointA.distanceTo(hit.field_1988);
+                if (dist < closestDist) {
+                    hitEntity = entity;
+                    end = hit.field_1988;
+                    closestDist = dist;
                 }
             }
         }
 
-        if (var9 != null) {
-            var8 = new HitResult(var9);
-            var8.field_1988 = var4;
+        if (hitEntity == null) {
+            return blockHit;
         }
 
-        return var8;
+        HitResult entityHit = new HitResult(hitEntity);
+        entityHit.field_1988 = end;
+        return entityHit;
     }
 }
