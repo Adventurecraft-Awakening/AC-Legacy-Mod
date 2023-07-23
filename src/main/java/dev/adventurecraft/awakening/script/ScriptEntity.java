@@ -86,6 +86,19 @@ public class ScriptEntity {
         this.entity.setRotation(yaw, pitch);
     }
 
+    public ScriptVec3 getLookVec() {
+        Vec3d vec = this.entity.getRotation();
+        return new ScriptVec3(vec.x, vec.y, vec.z);
+    }
+
+    public void setLookVec(double x, double y, double z) {
+        ((ExEntity) this.entity).setRotation(x, y, z);
+    }
+
+    public void setLookVec(ScriptVec3 vec) {
+        this.setLookVec(vec.x, vec.y, vec.z);
+    }
+
     public ScriptVec3 getVelocity() {
         return new ScriptVec3(this.entity.xVelocity, this.entity.yVelocity, this.entity.zVelocity);
     }

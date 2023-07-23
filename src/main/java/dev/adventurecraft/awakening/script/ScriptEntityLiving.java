@@ -40,11 +40,6 @@ public class ScriptEntityLiving extends ScriptEntity {
         this.entityLiving.target = var1.entity;
     }
 
-    public ScriptVec3 getLookVec() {
-        Vec3d var1 = this.entityLiving.getRotation();
-        return new ScriptVec3(var1.x, var1.y, var1.z);
-    }
-
     public int getHealth() {
         return this.entityLiving.health;
     }

@@ -728,6 +728,11 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         return this.ac$heldItem;
     }
 
+    @Overwrite
+    public Vec3d getRotation(float deltaTime) {
+        return super.getRotation(deltaTime);
+    }
+
     @Override
     public boolean protectedByShield() {
         return false;

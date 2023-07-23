@@ -7,6 +7,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.util.math.AxixAlignedBoundingBox;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Final;
@@ -249,6 +250,48 @@ public abstract class MixinEntity implements ExEntity {
         target = "Lnet/minecraft/world/World;canSuffocate(III)Z"))
     private boolean preventSuffocate(World instance, int x, int y, int z) {
         return instance.canSuffocate(x, y, z) && instance.method_1783(x, y, z);
+    }
+
+    @Overwrite
+    public Vec3d getRotation() {
+        return this.getRotation(1.0f);
+    }
+
+    @Override
+    public Vec3d getRotation(float deltaTime) {
+        double pitch = this.prevPitch + (this.pitch - this.prevPitch) * deltaTime;
+        double yaw = this.prevYaw + (this.yaw - this.prevYaw) * deltaTime;
+        double yCos = Math.cos(-yaw * (Math.PI / 180) - Math.PI);
+        double ySin = Math.sin(-yaw * (Math.PI / 180) - Math.PI);
+        double pCos = -Math.cos(-pitch * (Math.PI / 180));
+        double pSin = Math.sin(-pitch * (Math.PI / 180));
+        return Vec3d.from(ySin * pCos, pSin, yCos * pCos);
+    }
+
+    @Override
+    public void setRotation(double x, double y, double z) {
+        double root = Math.sqrt(x * x + z * z);
+        double yDeg = (Math.atan2(z, x) * 180.0 / Math.PI) - 90.0;
+        double pDeg = -(Math.atan2(y, root) * 180.0 / Math.PI);
+        this.pitch = this.rotate(this.pitch, (float) pDeg, 40);
+        this.yaw = this.rotate(this.yaw, (float) yDeg, 10.0F);
+    }
+
+    private float rotate(float a, float b, float speed) {
+        float f = b - a;
+        while (f < -180.0f) {
+            f += 360.0f;
+        }
+        while (f >= 180.0f) {
+            f -= 360.0f;
+        }
+        if (f > speed) {
+            f = speed;
+        }
+        if (f < -speed) {
+            f = -speed;
+        }
+        return a + f;
     }
 
     @Override
