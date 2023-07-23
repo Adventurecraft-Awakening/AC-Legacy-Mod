@@ -377,7 +377,7 @@ public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
         GL11.glEnable(GL11.GL_BLEND);
 
         int x = 2;
-        int yOffset = -(screenHeight - 48);
+        int yOffset = 0;
 
         for (AC_ChatMessage message : messages) {
             if (message.age >= 200 && !isChatOpen) {
@@ -392,7 +392,7 @@ public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
             int color = 16777215 + (alpha << 24);
             for (int i = message.lines.size() - 1; i >= 0; i--) {
                 AC_ChatMessage.Line line = message.lines.get(i);
-                int y = -yOffset;
+                int y = (screenHeight - 48) - yOffset;
 
                 this.fill(x, y - 1, x + CHAT_WIDTH, y + 8, alpha / 2 << 24);
                 GL11.glEnable(GL11.GL_BLEND);
