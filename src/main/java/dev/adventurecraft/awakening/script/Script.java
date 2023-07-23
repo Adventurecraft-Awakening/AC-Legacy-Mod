@@ -35,6 +35,7 @@ public class Script {
     static boolean shutterSet = false;
 
     public Script(World var1) {
+        this.cx.setLanguageVersion(Context.VERSION_ES6);
         this.cx.setOptimizationLevel(-1);
         if (!shutterSet) {
             this.cx.setClassShutter(fullClassName -> fullClassName.startsWith(SCRIPT_PACKAGE) ||
