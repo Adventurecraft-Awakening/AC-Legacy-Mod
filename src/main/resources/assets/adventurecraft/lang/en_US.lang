@@ -29,6 +29,7 @@ options.of.detail.clearWater=Clear Water
 options.of.detail.grass3d=3D Grass
 options.of.detail.grass=Grass
 options.of.detail.connectedGrass=Connected Grass
+options.ac.chatMessageBufferLimit=Chat Buffer Limit
 
 ## Texture Settings names
 options.of.texture.animated.water=Animated Water
@@ -81,6 +82,7 @@ options.of.world.autosaveInterval.tooltip="Autosave interval", "Default autosave
 options.of.world.time.tooltip="Time", " Default - normal day/night cycles", " Day Only - day only", " Night Only - night only"
 options.of.world.weather.tooltip="Weather", "  ON - weather is active, slower", "  OFF  - weather is not active, faster", "The weather controls rain, snow and thunderstorms."
 options.of.world.farView.tooltip="Far View", " OFF - (default) standard view distance", " ON - 3x view distance", "Far View is very resource demanding!", "3x view distance => 9x chunks to be loaded => FPS / 9", "Standard view distances: 32, 64, 128, 256", "Far view distances: 96, 192, 384, 512"
+options.ac.chatMessageBufferLimit.tooltip="The maximum amount of messages to store in the", "chat history."
 
 ## Detail Settings tooltips
 options.of.detail.clouds.tooltip="Clouds", "  Default - as set by setting Graphics", "  Fast - lower quality, faster", "  Fancy - higher quality, slower", "  OFF - no clouds, fastest", "Fast clouds are rendered 2D.", "Fancy clouds are rendered 3D."
