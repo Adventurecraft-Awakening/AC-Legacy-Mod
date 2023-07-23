@@ -1,19 +1,15 @@
 package dev.adventurecraft.awakening.script;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.util.Iterator;
-import java.util.LinkedList;
-
+import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
 import net.minecraft.world.World;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextFactory;
-import org.mozilla.javascript.ContinuationPending;
-import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.*;
+
+import java.io.*;
+import java.util.Iterator;
+import java.util.LinkedList;
 
 @SuppressWarnings("unused")
 public class Script {
@@ -118,7 +114,7 @@ public class Script {
         try {
             return this.cx.compileString(sourceCode, sourceName, 1, null);
         } catch (Exception e) {
-            Minecraft.instance.overlay.addChatMessage("JS: " + e.getMessage());
+            Minecraft.instance.overlay.addChatMessage("JS Compile: " + e.getMessage());
             return null;
         }
     }
@@ -144,8 +140,8 @@ public class Script {
             Object result = this.cx.executeScriptWithContinuations(script, scope);
             return result;
         } catch (ContinuationPending e) {
-        } catch (Exception e) {
-            Minecraft.instance.overlay.addChatMessage("JS: " + e.getMessage());
+        } catch (RhinoException e) {
+            this.printRhinoException(e);
         } finally {
             this.curScope = null;
         }
@@ -172,8 +168,8 @@ public class Script {
                 this.curScope = continuation.scope;
                 this.cx.resumeContinuation(continuation.contituation, continuation.scope, null);
             } catch (ContinuationPending e) {
-            } catch (Exception e) {
-                Minecraft.instance.overlay.addChatMessage("JS: " + e.getMessage());
+            } catch (RhinoException e) {
+                this.printRhinoException(e);
             } finally {
                 this.curScope = null;
             }
@@ -190,5 +186,10 @@ public class Script {
             this.time.getTickCount() + (long) ticks,
             this.curScope));
         throw continuation;
+    }
+
+    private void printRhinoException(RhinoException ex) {
+        Minecraft.instance.overlay.addChatMessage("JS: " + ex.getMessage());
+        ACMod.LOGGER.warn("(JS Exception) {}\n{}", ex.getMessage(), ex.getScriptStackTrace());
     }
 }

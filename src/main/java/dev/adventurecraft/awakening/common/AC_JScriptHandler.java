@@ -82,9 +82,8 @@ public class AC_JScriptHandler {
         AC_JScriptInfo scriptInfo = this.scripts.get(name.toLowerCase());
         if (scriptInfo == null) {
             if (printMissing) {
-                Minecraft.instance.overlay.addChatMessage(String.format("Missing '%s'", name));
+                Minecraft.instance.overlay.addChatMessage(String.format("(JS) Missing '%s'", name));
             }
-
             return null;
         }
 
