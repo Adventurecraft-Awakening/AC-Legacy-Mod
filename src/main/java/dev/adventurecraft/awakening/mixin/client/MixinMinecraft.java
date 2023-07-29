@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.mixin.client;
 
+import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.ACMainThread;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.client.options.Config;
@@ -469,6 +470,18 @@ public abstract class MixinMinecraft implements ExMinecraft {
             remap = false))
     private boolean disableDoubleToggle() {
         return true;
+    }
+
+    @Inject(
+        method = "run",
+        remap = false,
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/Minecraft;method_2131()V",
+            shift = At.Shift.AFTER,
+            ordinal = 0))
+    private void printStackOnOutOfMem(CallbackInfo ci, @Local OutOfMemoryError error) {
+        error.printStackTrace();
     }
 
     @Inject(
