@@ -65,21 +65,23 @@ public class ScriptEntity {
             dtSub * this.entity.prevZ + dt * this.entity.z);
     }
 
-    public void setPosition(ScriptVec3 var1) {
-        this.setPosition(var1.x, var1.y, var1.z);
+    public void setPosition(ScriptVec3 vec) {
+        this.setPosition(vec.x, vec.y, vec.z);
     }
 
-    public void setPosition(double var1, double var3, double var5) {
-        this.entity.setPosition(var1, var3, var5);
+    public void setPosition(double x, double y, double z) {
+        this.entity.setPosition(x, y, z);
     }
 
     public ScriptVecRot getRotation() {
         return new ScriptVecRot(this.entity.yaw, this.entity.pitch);
     }
 
-    ScriptVecRot getRotation(float var1) {
-        float var2 = 1.0F - var1;
-        return new ScriptVecRot(var2 * this.entity.prevYaw + var1 * this.entity.yaw, var2 * this.entity.prevPitch + var1 * this.entity.pitch);
+    ScriptVecRot getRotation(float deltaTime) {
+        float dtSub = 1.0F - deltaTime;
+        return new ScriptVecRot(
+            dtSub * this.entity.prevYaw + deltaTime * this.entity.yaw,
+            dtSub * this.entity.prevPitch + deltaTime * this.entity.pitch);
     }
 
     public void setRotation(float yaw, float pitch) {
@@ -103,29 +105,29 @@ public class ScriptEntity {
         return new ScriptVec3(this.entity.xVelocity, this.entity.yVelocity, this.entity.zVelocity);
     }
 
-    public void setVelocity(ScriptVec3 var1) {
-        this.setVelocity(var1.x, var1.y, var1.z);
+    public void setVelocity(ScriptVec3 vec) {
+        this.setVelocity(vec.x, vec.y, vec.z);
     }
 
-    public void setVelocity(double var1, double var3, double var5) {
-        this.entity.setVelocity(var1, var3, var5);
+    public void setVelocity(double x, double y, double z) {
+        this.entity.setVelocity(x, y, z);
     }
 
-    public void addVelocity(ScriptVec3 var1) {
-        this.addVelocity(var1.x, var1.y, var1.z);
+    public void addVelocity(ScriptVec3 vec) {
+        this.addVelocity(vec.x, vec.y, vec.z);
     }
 
-    public void addVelocity(double var1, double var3, double var5) {
-        this.entity.accelerate(var1, var3, var5);
+    public void addVelocity(double x, double y, double z) {
+        this.entity.accelerate(x, y, z);
     }
 
     public void setDead() {
         this.entity.remove();
     }
 
-    public void mountEntity(ScriptEntity var1) {
-        if (var1 != null) {
-            this.entity.startRiding(var1.entity);
+    public void mountEntity(ScriptEntity entity) {
+        if (entity != null) {
+            this.entity.startRiding(entity.entity);
         } else {
             this.entity.startRiding(null);
         }
@@ -169,8 +171,8 @@ public class ScriptEntity {
         return list.toArray(new ScriptEntity[0]);
     }
 
-    public ScriptEntity dropItem(ScriptItem var1) {
-        return getEntityClass(this.entity.dropItem(var1.item, 0.0F));
+    public ScriptEntity dropItem(ScriptItem item) {
+        return getEntityClass(this.entity.dropItem(item.item, 0.0F));
     }
 
     public boolean isInsideOfWater() {
@@ -185,52 +187,52 @@ public class ScriptEntity {
         return this.entity.immuneToFire;
     }
 
-    public void setImmuneToFire(boolean var1) {
-        this.entity.immuneToFire = var1;
+    public void setImmuneToFire(boolean value) {
+        this.entity.immuneToFire = value;
     }
 
     public int getFireLevel() {
         return this.entity.fireTicks;
     }
 
-    public void setFireLevel(int var1) {
-        this.entity.fireTicks = var1;
+    public void setFireLevel(int value) {
+        this.entity.fireTicks = value;
     }
 
     public int getFireResistance() {
         return this.entity.field_1646;
     }
 
-    public void setFireResistance(int var1) {
-        this.entity.field_1646 = var1;
+    public void setFireResistance(int value) {
+        this.entity.field_1646 = value;
     }
 
     public int getAir() {
         return this.entity.air;
     }
 
-    public void setAir(int var1) {
-        this.entity.air = var1;
+    public void setAir(int value) {
+        this.entity.air = value;
     }
 
     public int getMaxAir() {
         return this.entity.field_1648;
     }
 
-    public void setMaxAir(int var1) {
-        this.entity.field_1648 = var1;
+    public void setMaxAir(int value) {
+        this.entity.field_1648 = value;
     }
 
     public int getStunned() {
         return ((ExEntity) this.entity).getStunned();
     }
 
-    public void setStunned(int var1) {
-        ((ExEntity) this.entity).setStunned(var1);
+    public void setStunned(int value) {
+        ((ExEntity) this.entity).setStunned(value);
     }
 
-    public boolean attackEntityFrom(ScriptEntity var1, int var2) {
-        return this.entity.damage(var1.entity, var2);
+    public boolean attackEntityFrom(ScriptEntity entity, int damage) {
+        return this.entity.damage(entity.entity, damage);
     }
 
     public String getClassType() {
@@ -242,16 +244,16 @@ public class ScriptEntity {
         return ((ExEntity) this.entity).getCollidesWithClipBlocks();
     }
 
-    public void setCollidesWithClipBlocks(boolean var1) {
-        ((ExEntity) this.entity).setCollidesWithClipBlocks(var1);
+    public void setCollidesWithClipBlocks(boolean value) {
+        ((ExEntity) this.entity).setCollidesWithClipBlocks(value);
     }
 
     public float getHeight() {
         return this.entity.height;
     }
 
-    public void setHeight(float var1) {
-        this.entity.height = var1;
+    public void setHeight(float value) {
+        this.entity.height = value;
         this.entity.setPosition(this.entity.x, this.entity.y, this.entity.z);
     }
 
@@ -259,13 +261,13 @@ public class ScriptEntity {
         return this.entity.width;
     }
 
-    public void setWidth(float var1) {
-        this.entity.width = var1;
+    public void setWidth(float value) {
+        this.entity.width = value;
         this.entity.setPosition(this.entity.x, this.entity.y, this.entity.z);
     }
 
-    public void setIsFlying(boolean var1) {
-        ((ExEntity) this.entity).setIsFlying(var1);
+    public void setIsFlying(boolean value) {
+        ((ExEntity) this.entity).setIsFlying(value);
     }
 
     public boolean getIsFlying() {
@@ -298,7 +300,7 @@ public class ScriptEntity {
         return this.entity.standingEyeHeight;
     }
 
-    public void setyOffset(float var1) {
-        this.entity.standingEyeHeight = var1;
+    public void setyOffset(float value) {
+        this.entity.standingEyeHeight = value;
     }
 }

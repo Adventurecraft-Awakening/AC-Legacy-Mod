@@ -8,9 +8,9 @@ public class ScriptEntityPlayer extends ScriptEntityLiving {
 
     PlayerEntity entityPlayer;
 
-    ScriptEntityPlayer(PlayerEntity var1) {
-        super(var1);
-        this.entityPlayer = var1;
+    ScriptEntityPlayer(PlayerEntity entity) {
+        super(entity);
+        this.entityPlayer = entity;
     }
 
     public ScriptInventoryPlayer getInventory() {
@@ -21,8 +21,8 @@ public class ScriptEntityPlayer extends ScriptEntityLiving {
         return ((ExPlayerEntity) this.entityPlayer).getCloakTexture();
     }
 
-    public void setCloak(String var1) {
-        ((ExPlayerEntity) this.entityPlayer).setCloakTexture(var1);
+    public void setCloak(String name) {
+        ((ExPlayerEntity) this.entityPlayer).setCloakTexture(name);
     }
 
     public void removeCloak() {

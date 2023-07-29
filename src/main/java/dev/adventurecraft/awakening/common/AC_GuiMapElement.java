@@ -3,7 +3,6 @@ package dev.adventurecraft.awakening.common;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import javax.swing.SwingUtilities;
 
@@ -158,8 +157,8 @@ public class AC_GuiMapElement extends ScriptUIContainer {
         });
     }
 
-    void getLines(String var1, List<String> var2) {
-        String[] var3 = var1.split(" ");
+    void getLines(String text, List<String> output) {
+        String[] var3 = text.split(" ");
         String var4 = "";
         String[] var5 = var3;
         int var6 = var3.length;
@@ -171,7 +170,7 @@ public class AC_GuiMapElement extends ScriptUIContainer {
             } else {
                 String var9 = var4 + " " + var8;
                 if (Minecraft.instance.textRenderer.getTextWidth(var9) > 100) {
-                    var2.add(var4);
+                    output.add(var4);
                     var4 = var8;
                 } else {
                     var4 = var9;
@@ -180,7 +179,7 @@ public class AC_GuiMapElement extends ScriptUIContainer {
         }
 
         if (!var4.equals("")) {
-            var2.add(var4);
+            output.add(var4);
         }
     }
 
@@ -197,7 +196,7 @@ public class AC_GuiMapElement extends ScriptUIContainer {
     }
 
     @Override
-    public void render(TextRenderer var1, TextureManager var2, float var3) {
+    public void render(TextRenderer textRenderer, TextureManager texManager, float deltaTime) {
         if (this.fadeIn || this.fadeOut) {
             long var4 = System.nanoTime();
             long var6 = var4 - this.fadeTimePrev;
@@ -251,7 +250,7 @@ public class AC_GuiMapElement extends ScriptUIContainer {
             }
         }
 
-        super.render(var1, var2, var3);
+        super.render(textRenderer, texManager, deltaTime);
     }
 
     public void setAsDownloaded() {

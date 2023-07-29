@@ -2,11 +2,11 @@ package dev.adventurecraft.awakening.script;
 
 public class ScriptVecRot {
 
-    public final double yaw;
-    public final double pitch;
+    public double yaw;
+    public double pitch;
 
-    ScriptVecRot(float var1, float var2) {
-        this.yaw = var1;
-        this.pitch = var2;
+    public ScriptVecRot(float yaw, float pitch) {
+        this.yaw = yaw;
+        this.pitch = pitch;
     }
 }

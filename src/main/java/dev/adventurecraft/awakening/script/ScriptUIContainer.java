@@ -13,61 +13,62 @@ import org.lwjgl.opengl.GL11;
 public class ScriptUIContainer extends UIElement {
 
     public String text;
-    private List<UIElement> uiElements;
 
-    public ScriptUIContainer(float var1, float var2) {
-        this(var1, var2, ((ExInGameHud) Minecraft.instance.overlay).getScriptUI());
+    private final LinkedList<UIElement> uiElements;
+
+    public ScriptUIContainer(float x, float y) {
+        this(x, y, ((ExInGameHud) Minecraft.instance.overlay).getScriptUI());
     }
 
-    public ScriptUIContainer(float var1, float var2, ScriptUIContainer var3) {
+    public ScriptUIContainer(float x, float y, ScriptUIContainer parent) {
         this.text = "";
-        this.prevX = this.curX = var1;
-        this.prevY = this.curY = var2;
+        this.prevX = this.curX = x;
+        this.prevY = this.curY = y;
         this.uiElements = new LinkedList<>();
-        if (var3 != null) {
-            var3.add(this);
+        if (parent != null) {
+            parent.add(this);
         }
     }
 
     @Override
-    public void render(TextRenderer var1, TextureManager var2, float var3) {
-        float var4 = this.getXAtTime(var3);
-        float var5 = this.getYAtTime(var3);
-        if (var4 != 0.0F || var5 != 0.0F) {
+    public void render(TextRenderer textRenderer, TextureManager texManager, float deltaTime) {
+        float x = this.getXAtTime(deltaTime);
+        float y = this.getYAtTime(deltaTime);
+        if (x != 0.0F || y != 0.0F) {
             GL11.glPushMatrix();
-            GL11.glTranslated(var4, var5, 0.0D);
+            GL11.glTranslated(x, y, 0.0D);
         }
 
-        for (UIElement var7 : this.uiElements) {
-            var7.render(var1, var2, var3);
+        for (UIElement element : this.uiElements) {
+            element.render(textRenderer, texManager, deltaTime);
         }
 
-        if (var4 != 0.0F || var5 != 0.0F) {
+        if (x != 0.0F || y != 0.0F) {
             GL11.glPopMatrix();
         }
     }
 
-    public void add(UIElement var1) {
-        if (var1.parent != null) {
-            var1.parent.remove(var1);
+    public void add(UIElement element) {
+        if (element.parent != null) {
+            element.parent.remove(element);
         }
 
-        this.uiElements.add(var1);
-        var1.parent = this;
+        this.uiElements.add(element);
+        element.parent = this;
     }
 
-    public void addToBack(UIElement var1) {
-        if (var1.parent != null) {
-            var1.parent.remove(var1);
+    public void addToBack(UIElement element) {
+        if (element.parent != null) {
+            element.parent.remove(element);
         }
 
-        this.uiElements.add(0, var1);
-        var1.parent = this;
+        this.uiElements.add(0, element);
+        element.parent = this;
     }
 
-    public void remove(UIElement var1) {
-        this.uiElements.remove(var1);
-        var1.parent = null;
+    public void remove(UIElement element) {
+        this.uiElements.remove(element);
+        element.parent = null;
     }
 
     public void clear() {
@@ -79,8 +80,8 @@ public class ScriptUIContainer extends UIElement {
         this.prevX = this.curX;
         this.prevY = this.curY;
 
-        for (UIElement var2 : this.uiElements) {
-            var2.onUpdate();
+        for (UIElement element : this.uiElements) {
+            element.onUpdate();
         }
     }
 }
