@@ -1,19 +1,25 @@
 package dev.adventurecraft.awakening.mixin.container;
 
-import com.llamalad7.mixinextras.injector.WrapWithCondition;
-import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
-import net.minecraft.client.Minecraft;
+import dev.adventurecraft.awakening.extension.container.ExPlayerContainer;
+import dev.adventurecraft.awakening.extension.container.slot.ExSlot;
+import net.minecraft.container.Container;
 import net.minecraft.container.PlayerContainer;
 import net.minecraft.container.slot.Slot;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.Slice;
 
-@Mixin(PlayerContainer.class)
-public abstract class MixinPlayerContainer {
+import java.util.ArrayList;
 
-    @WrapWithCondition(
+@Mixin(PlayerContainer.class)
+public abstract class MixinPlayerContainer extends Container implements ExPlayerContainer {
+
+    private boolean allowsCrafting = true;
+    private final ArrayList<Slot> craftingSlots = new ArrayList<>();
+
+    @Redirect(
         method = "<init>(Lnet/minecraft/inventory/PlayerInventory;Z)V",
         at = @At(
             value = "INVOKE",
@@ -23,8 +29,9 @@ public abstract class MixinPlayerContainer {
                 value = "INVOKE",
                 target = "Lnet/minecraft/container/PlayerContainer;addSlot(Lnet/minecraft/container/slot/Slot;)V",
                 ordinal = 1)))
-    private boolean conditionalCraftingSlots(PlayerContainer instance, Slot slot) {
-        return ((ExWorldProperties) Minecraft.instance.world.properties).getAllowsInventoryCrafting();
+    private void recordCraftingSlots(PlayerContainer instance, Slot slot) {
+        instance.addSlot(slot);
+        this.craftingSlots.add(slot);
     }
 
     @ModifyArg(
@@ -47,5 +54,21 @@ public abstract class MixinPlayerContainer {
         index = 3)
     private int modifyCraftingSlotY(int y) {
         return y + 16;
+    }
+
+    @Override
+    public boolean getAllowsCrafting() {
+        return this.allowsCrafting;
+    }
+
+    @Override
+    public void setAllowsCrafting(boolean value) {
+        if (this.allowsCrafting != value) {
+            this.allowsCrafting = value;
+
+            for (Slot slot : this.craftingSlots) {
+                ((ExSlot) slot).setEnabled(this.allowsCrafting);
+            }
+        }
     }
 }

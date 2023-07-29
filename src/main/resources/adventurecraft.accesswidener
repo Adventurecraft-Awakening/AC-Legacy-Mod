@@ -57,6 +57,8 @@ accessible method net/minecraft/entity/animal/WolfEntity spawnBoneParticles (Z)V
 
 accessible method net/minecraft/inventory/PlayerInventory getSlotWithItem (I)I
 
+accessible method net/minecraft/container/Container addSlot (Lnet/minecraft/container/slot/Slot;)V
+
 accessible field net/minecraft/entity/projectile/ArrowEntity blockX I
 accessible field net/minecraft/entity/projectile/ArrowEntity blockY I
 accessible field net/minecraft/entity/projectile/ArrowEntity blockZ I

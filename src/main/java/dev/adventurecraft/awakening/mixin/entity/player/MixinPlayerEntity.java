@@ -1,10 +1,14 @@
 package dev.adventurecraft.awakening.mixin.entity.player;
 
 import dev.adventurecraft.awakening.common.*;
+import dev.adventurecraft.awakening.extension.container.ExPlayerContainer;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
+import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.mixin.entity.MixinLivingEntity;
 import net.minecraft.block.Block;
+import net.minecraft.client.Minecraft;
+import net.minecraft.container.Container;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.monster.MonsterEntity;
@@ -30,6 +34,9 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
     public PlayerInventory inventory;
 
     @Shadow
+    public Container playerContainer;
+
+    @Shadow
     public int handSwingTicks;
 
     @Shadow
@@ -42,6 +49,7 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
     private boolean swappedItems;
     private int numHeartPieces;
     public String cloakTexture;
+    private boolean allowsCrafting;
 
     @Shadow
     public abstract ItemStack getHeldItem();
@@ -65,6 +73,7 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
     private void init(World var1, CallbackInfo ci) {
         this.health = 12;
         this.maxHealth = 12;
+        this.updateContainer();
     }
 
     @ModifyConstant(method = "afterSpawn", constant = @Constant(intValue = 20))
@@ -106,8 +115,16 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
 
     @Override
     public void baseTick() {
+        this.updateContainer();
         this.prevSwingProgressOffhand = this.swingProgressOffhand;
         super.baseTick();
+    }
+
+    private void updateContainer() {
+        if (playerContainer instanceof ExPlayerContainer exContainer) {
+            boolean allowsCrafting = ((ExWorldProperties) Minecraft.instance.world.properties).getAllowsInventoryCrafting();
+            exContainer.setAllowsCrafting(allowsCrafting);
+        }
     }
 
     @ModifyConstant(
