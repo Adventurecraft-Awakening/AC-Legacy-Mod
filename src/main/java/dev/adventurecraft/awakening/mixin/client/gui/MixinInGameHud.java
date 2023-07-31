@@ -451,7 +451,7 @@ public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
 
     @Overwrite
     public void addChatMessage(String message) {
-        ACMod.LOGGER.info("(Chat) {}", message);
+        ACMod.CHAT_LOGGER.info(message);
 
         var entry = new AC_ChatMessage(message);
         entry.rebuild((ExTextRenderer) this.client.textRenderer, CHAT_WIDTH);

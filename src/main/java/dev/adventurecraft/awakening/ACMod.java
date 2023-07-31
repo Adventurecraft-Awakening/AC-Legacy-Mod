@@ -1,9 +1,9 @@
 package dev.adventurecraft.awakening;
 
-import sun.misc.Unsafe;
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;
 
@@ -17,6 +17,8 @@ public class ACMod implements ModInitializer {
     // It is considered best practice to use your mod id as the logger's name.
     // That way, it's clear which mod wrote info, warnings, and errors.
     public static final Logger LOGGER = LoggerFactory.getLogger("AC");
+    public static final Logger CHAT_LOGGER = LoggerFactory.getLogger("Chat");
+    public static final Logger JS_LOGGER = LoggerFactory.getLogger("JS");
 
     @Override
     public void onInitialize() {

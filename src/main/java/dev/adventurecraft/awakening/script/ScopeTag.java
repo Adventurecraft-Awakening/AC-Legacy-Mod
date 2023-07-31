@@ -45,7 +45,7 @@ public class ScopeTag {
                 tag.put("Short_" + name, shortValue);
             }
         } else {
-            ACMod.LOGGER.debug("Unsupported type of property value: {} = {}", name, value);
+            ACMod.LOGGER.debug("Unsupported type of property value: {} = {} ({})", name, value, value.getClass());
         }
     }
 
@@ -56,7 +56,7 @@ public class ScopeTag {
                 ACMod.LOGGER.warn("Unknown key in tag: {} {}", key, elements.length);
                 continue;
             }
-            
+
             String type = elements[0];
             String name = elements[1];
             switch (type) {
