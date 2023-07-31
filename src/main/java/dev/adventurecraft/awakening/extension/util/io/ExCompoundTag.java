@@ -5,4 +5,6 @@ import java.util.Set;
 public interface ExCompoundTag {
 
     Set<String> getKeys();
+
+    Object getValue(String key);
 }

@@ -4,6 +4,7 @@ import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
 import net.minecraft.util.io.CompoundTag;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.Undefined;
 
 public class ScopeTag {
 
@@ -12,7 +13,8 @@ public class ScopeTag {
         Object[] ids = scriptable.getIds();
 
         for (Object id : ids) {
-            if (id instanceof String name) {
+            if (id instanceof CharSequence key) {
+                String name = key.toString();
                 Object value = scriptable.get(name, scriptable);
                 saveProperty(tag, name, value);
             }
@@ -21,9 +23,14 @@ public class ScopeTag {
         return tag;
     }
 
+    @SuppressWarnings("StatementWithEmptyBody")
     private static void saveProperty(CompoundTag tag, String name, Object value) {
-        if (value instanceof String string) {
-            tag.put("String_" + name, string);
+        if (value == null) {
+            return;
+        }
+
+        if (value instanceof CharSequence string) {
+            tag.put("String_" + name, string.toString());
         } else if (value instanceof Boolean bool) {
             tag.put("Boolean_" + name, bool);
         } else if (value instanceof Number number) {
@@ -44,8 +51,12 @@ public class ScopeTag {
             } else {
                 tag.put("Short_" + name, shortValue);
             }
+        } else if (Undefined.isUndefined(value)) {
+            // Ignore
+        } else if (value instanceof Scriptable) {
+            // Ignore
         } else {
-            ACMod.LOGGER.debug("Unsupported type of property value: {} = {} ({})", name, value, value.getClass());
+            logUnsupportedProp("write", name, value);
         }
     }
 
@@ -53,7 +64,7 @@ public class ScopeTag {
         for (String key : ((ExCompoundTag) tag).getKeys()) {
             String[] elements = key.split("_", 2);
             if (elements.length != 2) {
-                ACMod.LOGGER.warn("Unknown key in tag: {} {}", key, elements.length);
+                logUnsupportedProp("decode", key, ((ExCompoundTag) tag).getValue(key));
                 continue;
             }
 
@@ -88,8 +99,15 @@ public class ScopeTag {
                     short value = tag.getShort(key);
                     scriptable.put(name, scriptable, value);
                 }
-                default -> ACMod.LOGGER.warn("Unknown type: {}", type);
+                default -> {
+                    logUnsupportedProp("read", key, ((ExCompoundTag) tag).getValue(key));
+                }
             }
         }
+    }
+
+    private static void logUnsupportedProp(String op, String name, Object value) {
+        Class<?> type = value != null ? value.getClass() : null;
+        ACMod.LOGGER.warn("Unsupported ({}}) type of property: {} = {} ({})", op, name, value, type);
     }
 }

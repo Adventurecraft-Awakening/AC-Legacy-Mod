@@ -93,7 +93,13 @@ public abstract class MixinCompoundTag implements ExCompoundTag {
         }
     }
 
+    @Override
     public Set<String> getKeys() {
         return this.data.keySet();
+    }
+
+    @Override
+    public Object getValue(String key) {
+        return this.data.get(key);
     }
 }
