@@ -191,6 +191,10 @@ public class Script {
 
     private void printRhinoException(RhinoException ex) {
         Minecraft.instance.overlay.addChatMessage("JS: " + ex.getMessage());
-        ACMod.LOGGER.warn("(JS Exception) {}\n{}", ex.getMessage(), ex.getScriptStackTrace());
+        if (ACMod.JS_LOGGER.isTraceEnabled()) {
+            ACMod.JS_LOGGER.warn("{}\n{}", ex.getMessage(), ex.getScriptStackTrace(), ex);
+        } else {
+            ACMod.JS_LOGGER.warn("{}\n{}", ex.getMessage(), ex.getScriptStackTrace());
+        }
     }
 }
