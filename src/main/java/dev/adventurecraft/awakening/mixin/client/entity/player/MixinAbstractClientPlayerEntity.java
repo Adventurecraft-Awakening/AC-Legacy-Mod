@@ -218,6 +218,11 @@ public abstract class MixinAbstractClientPlayerEntity extends PlayerEntity imple
                 this.client.overlay.addChatMessage(String.format("Render FOV: %b", AC_DebugMode.renderFov));
                 break;
 
+            case "/rendercollisions":
+                AC_DebugMode.renderCollisions = !AC_DebugMode.renderCollisions;
+                this.client.overlay.addChatMessage(String.format("Render Collisions: %b", AC_DebugMode.renderCollisions));
+                break;
+
             case "/fullbright":
                 for (int var9 = 0; var9 < 16; ++var9) {
                     this.world.dimension.lightTable[var9] = 1.0F;

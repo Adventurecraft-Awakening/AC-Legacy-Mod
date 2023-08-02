@@ -192,6 +192,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     boolean firstTick = true;
     boolean newSave;
     public AC_UndoStack undoStack = new AC_UndoStack();
+    private ArrayList<CollisionList> collisionLists = new ArrayList<>();
     public Script script = new Script((World) (Object) this);
     public AC_JScriptHandler scriptHandler;
     public AC_MusicScripts musicScripts;
@@ -276,6 +277,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         this.newSave = false;
         this.triggerManager = new AC_TriggerManager((World) (Object) this);
         this.undoStack = new AC_UndoStack();
+        this.collisionLists = new ArrayList<>();
         File var7 = Minecraft.getGameDirectory();
         File var8 = new File(var7, "../maps");
         File var9 = new File(var8, mapName);
@@ -826,28 +828,45 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         value = "INVOKE",
         target = "Ljava/util/List;add(Ljava/lang/Object;)Z",
         ordinal = 1))
-    private <E> boolean spawnIfNotExisting(List<E> instance, E var1) {
-        if (!instance.contains(var1)) {
-            return instance.add(var1);
+    private <E> boolean spawnIfNotExisting(List<E> instance, E entity) {
+        if (!instance.contains(entity)) {
+            return instance.add(entity);
         }
         return false;
     }
 
-    @Inject(method = "method_190", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/block/Block;doesBoxCollide(Lnet/minecraft/world/World;IIILnet/minecraft/util/math/AxixAlignedBoundingBox;Ljava/util/ArrayList;)V",
-        shift = At.Shift.BEFORE),
-        locals = LocalCapture.CAPTURE_FAILHARD)
-    private void addBoxCollide(Entity var1, AxixAlignedBoundingBox var2, CallbackInfoReturnable<List<AxixAlignedBoundingBox>> cir, int var3, int var4, int var5, int var6, int var7, int var8, int var9, int var10, int var11, Block var12) {
-        if ((((ExEntity) var1).getCollidesWithClipBlocks() || var12.id != AC_Blocks.clipBlock.id && !ExLadderBlock.isLadderID(var12.id))) {
-            var12.doesBoxCollide((World) (Object) this, var9, var11, var10, var2, this.field_189);
+    @Redirect(
+        method = "method_190",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/block/Block;doesBoxCollide(Lnet/minecraft/world/World;IIILnet/minecraft/util/math/AxixAlignedBoundingBox;Ljava/util/ArrayList;)V"))
+    private void guardBoxCollide(Block block, World world, int x, int y, int z, AxixAlignedBoundingBox aabb, ArrayList<AxixAlignedBoundingBox> output, @Local(argsOnly = true) Entity entity) {
+        if ((((ExEntity) entity).getCollidesWithClipBlocks() || block.id != AC_Blocks.clipBlock.id && !ExLadderBlock.isLadderID(block.id))) {
+            block.doesBoxCollide(world, x, y, z, aabb, output);
         }
     }
 
-    @Redirect(method = "method_190", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/block/Block;doesBoxCollide(Lnet/minecraft/world/World;IIILnet/minecraft/util/math/AxixAlignedBoundingBox;Ljava/util/ArrayList;)V"))
-    private void redirectBoxCollide(Block instance, World var1, int var2, int var3, int var4, AxixAlignedBoundingBox var5, ArrayList<AxixAlignedBoundingBox> var6) {
+    @Inject(
+        method = "method_190",
+        at = @At("RETURN"))
+    private void recordCollision(Entity entity, AxixAlignedBoundingBox aabb, CallbackInfoReturnable<List> cir) {
+        if (!AC_DebugMode.renderCollisions) {
+            return;
+        }
+
+        var boxList = (List<AxixAlignedBoundingBox>) cir.getReturnValue();
+        int size = boxList.size();
+        var boxArray = new double[size * 6];
+        for (int i = 0; i < size; i++) {
+            AxixAlignedBoundingBox box = boxList.get(i);
+            boxArray[i * 6 + 0] = box.minX;
+            boxArray[i * 6 + 1] = box.minY;
+            boxArray[i * 6 + 2] = box.minZ;
+            boxArray[i * 6 + 3] = box.maxX;
+            boxArray[i * 6 + 4] = box.maxY;
+            boxArray[i * 6 + 5] = box.maxZ;
+        }
+        this.collisionLists.add(new CollisionList(entity, aabb, boxArray));
     }
 
     @Overwrite
@@ -898,32 +917,45 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     }
 
     // This injection will be inverted at the target since the expression only captured the field access
-    @ModifyExpressionValue(method = "method_227", at = @At(
-        value = "FIELD",
-        target = "Lnet/minecraft/entity/Entity;removed:Z",
-        ordinal = 2))
+    @ModifyExpressionValue(
+        method = "method_227",
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/entity/Entity;removed:Z",
+            ordinal = 2))
     private boolean fixupRemoveCondition(boolean value, @Local Entity entity) {
         ExMinecraft mc = (ExMinecraft) Minecraft.instance;
         return !(!entity.removed && (!mc.isCameraActive() || !mc.isCameraPause()) && (!AC_DebugMode.active || entity instanceof PlayerEntity));
     }
 
-    @Inject(method = "method_227", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/world/World;method_241(Lnet/minecraft/entity/Entity;)V",
-        shift = At.Shift.AFTER))
+    @Inject(
+        method = "method_227",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/World;method_241(Lnet/minecraft/entity/Entity;)V",
+            shift = At.Shift.AFTER))
     private void fixupBoundingBox(CallbackInfo ci) {
         AxixAlignedBoundingBox.method_85();
     }
 
-    @Redirect(method = "method_227", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/world/World;getChunkFromCache(II)Lnet/minecraft/world/chunk/Chunk;"))
+    @Redirect(
+        method = "method_227",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/World;getChunkFromCache(II)Lnet/minecraft/world/chunk/Chunk;"))
     private Chunk ignoreIfKilledOnSave(World instance, int j, int i, @Local BlockEntity var5) {
         if (((ExBlockEntity) var5).isKilledFromSaving()) {
             return null;
         }
         Chunk chunk = this.getChunkFromCache(var5.x >> 4, var5.z >> 4);
         return chunk;
+    }
+
+    @Inject(
+        method = "method_227",
+        at = @At("HEAD"))
+    private void clearCollisionList(CallbackInfo ci) {
+        this.collisionLists.clear();
     }
 
     @Overwrite
@@ -1612,5 +1644,10 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     @Override
     public Scriptable getScope() {
         return this.scope;
+    }
+
+    @Override
+    public ArrayList<CollisionList> getCollisionLists() {
+        return this.collisionLists;
     }
 }

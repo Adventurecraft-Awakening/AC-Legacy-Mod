@@ -7,7 +7,8 @@ public class AC_DebugMode {
 	public static AC_MapEditing mapEditing = null;
 	public static boolean renderPaths = false;
 	public static int reachDistance = 4;
-	public static boolean renderFov = false;
+    public static boolean renderFov = false;
+    public static boolean renderCollisions = false;
 
 	public static boolean triggerResetActive = false;
 	public static boolean isFluidHittable = true;

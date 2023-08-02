@@ -17,9 +17,9 @@ import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.particle.ParticleEntity;
 import net.minecraft.client.entity.particle.RainParticleEntity;
 import net.minecraft.client.entity.particle.SmokeParticleEntity;
-import net.minecraft.client.gui.InGameHud;
 import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.HeldItemRenderer;
@@ -27,6 +27,7 @@ import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.WorldEventRenderer;
 import net.minecraft.client.render.block.BlockRenderer;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -34,7 +35,6 @@ import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.hit.HitType;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
-import net.minecraft.world.dimension.Dimension;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GLContext;
@@ -47,6 +47,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.nio.FloatBuffer;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -370,37 +371,140 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         ordinal = 0))
     private void renderDebugModeDecorations(
         GameRenderer instance,
-        float var1,
+        float deltaTime,
         @Local WorldEventRenderer worldRenderer,
         @Local LivingEntity viewEntity) {
 
         var wer = (ExWorldEventRenderer) worldRenderer;
 
         GL11.glDisable(GL11.GL_ALPHA_TEST);
-        wer.drawCursorSelection(viewEntity, ((PlayerEntity) viewEntity).inventory.getHeldItem(), var1);
+        wer.drawCursorSelection(viewEntity, ((PlayerEntity) viewEntity).inventory.getHeldItem(), deltaTime);
 
         if (AC_DebugMode.active) {
             AC_CutsceneCamera activeCamera = ((ExMinecraft) this.client).getActiveCutsceneCamera();
             if (activeCamera != null) {
-                activeCamera.drawLines(viewEntity, var1);
+                activeCamera.drawLines(viewEntity, deltaTime);
             }
 
             if (AC_DebugMode.renderPaths) {
                 for (Entity entity : (List<Entity>) this.client.world.entities) {
-                    wer.drawEntityPath(entity, viewEntity, var1);
+                    wer.drawEntityPath(entity, viewEntity, deltaTime);
                 }
             }
 
             if (AC_DebugMode.renderFov) {
                 for (Entity entity : (List<Entity>) this.client.world.entities) {
                     if (entity instanceof LivingEntity) {
-                        wer.drawEntityFOV((LivingEntity) entity, viewEntity, var1);
+                        wer.drawEntityFOV((LivingEntity) entity, viewEntity, deltaTime);
                     }
                 }
             }
         }
 
+        if (AC_DebugMode.renderCollisions) {
+            ArrayList<CollisionList> collisionLists = ((ExWorld) this.client.world).getCollisionLists();
+            this.drawCollisionLists(collisionLists, viewEntity, deltaTime);
+        }
+
         GL11.glEnable(GL11.GL_ALPHA_TEST);
+    }
+
+    private void drawCollisionLists(ArrayList<CollisionList> lists, Entity entity, double deltaTime) {
+        double dX = entity.prevRenderX + (entity.x - entity.prevRenderX) * deltaTime;
+        double dY = entity.prevRenderY + (entity.y - entity.prevRenderY) * deltaTime;
+        double dZ = entity.prevRenderZ + (entity.z - entity.prevRenderZ) * deltaTime;
+
+        double off = 1.0 / 1024.0;
+        double x1 = dX + off;
+        double y1 = dY + off;
+        double z1 = dZ + off;
+        double x2 = dX - off;
+        double y2 = dY - off;
+        double z2 = dZ - off;
+
+        GL11.glEnable(GL11.GL_BLEND);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        GL11.glLineWidth(2.0f);
+
+        Tessellator ts = Tessellator.INSTANCE;
+        ts.start(GL11.GL_LINES);
+
+        for (CollisionList list : lists) {
+            float alpha;
+            if (list.entity instanceof ParticleEntity) {
+                alpha = 0.25f;
+            } else if (list.entity instanceof ItemEntity) {
+                alpha = 0.5f;
+            } else {
+                alpha = 1f;
+            }
+
+            ts.color(0.7f, 0.5f, 0.7f, alpha);
+            drawBox(
+                ts,
+                list.minX - x1, list.minY - y1, list.minZ - z1,
+                list.maxX - x2, list.maxY - y2, list.maxZ - z2);
+
+            double[] collisions = list.collisions;
+            for (int i = 0; i < collisions.length; i += 6) {
+                double minX = collisions[i + 0] - x1;
+                double minY = collisions[i + 1] - y1;
+                double minZ = collisions[i + 2] - z1;
+                double maxX = collisions[i + 3] - x2;
+                double maxY = collisions[i + 4] - y2;
+                double maxZ = collisions[i + 5] - z2;
+
+                ts.color(0.5f, 0.7f, 0.5f, alpha);
+                drawBox(ts, minX, minY, minZ, maxX, maxY, maxZ);
+            }
+        }
+
+        ts.tessellate();
+
+        GL11.glLineWidth(1.0f);
+        GL11.glEnable(GL11.GL_TEXTURE_2D);
+        GL11.glDisable(GL11.GL_BLEND);
+    }
+
+    private static void drawBox(
+        Tessellator ts, double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+
+        ts.addVertex(minX, minY, minZ);
+        ts.addVertex(maxX, minY, minZ);
+
+        ts.addVertex(maxX, minY, minZ);
+        ts.addVertex(maxX, minY, maxZ);
+
+        ts.addVertex(maxX, minY, maxZ);
+        ts.addVertex(minX, minY, maxZ);
+
+        ts.addVertex(minX, minY, maxZ);
+        ts.addVertex(minX, minY, minZ);
+
+        ts.addVertex(minX, maxY, minZ);
+        ts.addVertex(maxX, maxY, minZ);
+
+        ts.addVertex(maxX, maxY, minZ);
+        ts.addVertex(maxX, maxY, maxZ);
+
+        ts.addVertex(maxX, maxY, maxZ);
+        ts.addVertex(minX, maxY, maxZ);
+
+        ts.addVertex(minX, maxY, maxZ);
+        ts.addVertex(minX, maxY, minZ);
+
+        ts.addVertex(minX, minY, minZ);
+        ts.addVertex(minX, maxY, minZ);
+
+        ts.addVertex(maxX, minY, minZ);
+        ts.addVertex(maxX, maxY, minZ);
+
+        ts.addVertex(maxX, minY, maxZ);
+        ts.addVertex(maxX, maxY, maxZ);
+
+        ts.addVertex(minX, minY, maxZ);
+        ts.addVertex(minX, maxY, maxZ);
     }
 
     @Inject(method = "method_1841", at = @At(

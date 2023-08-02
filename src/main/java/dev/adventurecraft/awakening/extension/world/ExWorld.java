@@ -1,10 +1,7 @@
 package dev.adventurecraft.awakening.extension.world;
 
 import dev.adventurecraft.awakening.ACMod;
-import dev.adventurecraft.awakening.common.AC_JScriptHandler;
-import dev.adventurecraft.awakening.common.AC_MusicScripts;
-import dev.adventurecraft.awakening.common.AC_TriggerManager;
-import dev.adventurecraft.awakening.common.AC_UndoStack;
+import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.script.Script;
 import net.minecraft.entity.BlockEntity;
 import net.minecraft.entity.Entity;
@@ -18,6 +15,7 @@ import org.mozilla.javascript.Scriptable;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.ArrayList;
 
 public interface ExWorld {
 
@@ -88,6 +86,8 @@ public interface ExWorld {
     AC_MusicScripts getMusicScripts();
 
     Scriptable getScope();
+
+    ArrayList<CollisionList> getCollisionLists();
 
     static World createWorld(
         String mapName, DimensionData dimData, String saveName, long seed, Dimension dimension, ProgressListener progressListener) {
