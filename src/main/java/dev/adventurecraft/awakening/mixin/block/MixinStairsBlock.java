@@ -44,7 +44,7 @@ public abstract class MixinStairsBlock extends Block implements AC_IBlockColor {
         super.doesBoxCollide(world, x, y, z, box, hits);
         if (coreMeta == 0) {
             Block blockNX = Block.BY_ID[world.getBlockId(x - 1, y, z)];
-            if (blockNX != null && blockNX.getRenderType() == 10) {
+            if (blockNX != null && blockNX.getRenderType() == this.getRenderType()) {
                 int meta = world.getBlockMeta(x - 1, y, z) & 3;
                 if (meta == 2) {
                     this.setBoundingBox(0.0F, 0.5F, 0.5F, 0.5F, 1.0F, 1.0F);
@@ -56,7 +56,7 @@ public abstract class MixinStairsBlock extends Block implements AC_IBlockColor {
             }
 
             Block blockPX = Block.BY_ID[world.getBlockId(x + 1, y, z)];
-            if (blockPX != null && blockPX.getRenderType() == 10) {
+            if (blockPX != null && blockPX.getRenderType() == this.getRenderType()) {
                 int meta = world.getBlockMeta(x + 1, y, z) & 3;
                 if (meta == 2) {
                     this.setBoundingBox(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
@@ -71,7 +71,7 @@ public abstract class MixinStairsBlock extends Block implements AC_IBlockColor {
             }
         } else if (coreMeta == 1) {
             Block blockNX = Block.BY_ID[world.getBlockId(x - 1, y, z)];
-            if (blockNX != null && blockNX.getRenderType() == 10) {
+            if (blockNX != null && blockNX.getRenderType() == this.getRenderType()) {
                 int meta = world.getBlockMeta(x - 1, y, z) & 3;
                 if (meta == 3) {
                     this.setBoundingBox(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 0.5F);
@@ -86,7 +86,7 @@ public abstract class MixinStairsBlock extends Block implements AC_IBlockColor {
             }
 
             Block blockPX = Block.BY_ID[world.getBlockId(x + 1, y, z)];
-            if (blockPX != null && blockPX.getRenderType() == 10) {
+            if (blockPX != null && blockPX.getRenderType() == this.getRenderType()){
                 int meta = world.getBlockMeta(x + 1, y, z) & 3;
                 if (meta == 2) {
                     this.setBoundingBox(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
@@ -98,7 +98,7 @@ public abstract class MixinStairsBlock extends Block implements AC_IBlockColor {
             }
         } else if (coreMeta == 2) {
             Block blockNZ = Block.BY_ID[world.getBlockId(x, y, z - 1)];
-            if (blockNZ != null && blockNZ.getRenderType() == 10) {
+            if (blockNZ != null && blockNZ.getRenderType() == this.getRenderType()) {
                 int meta = world.getBlockMeta(x, y, z - 1) & 3;
                 if (meta == 1) {
                     this.setBoundingBox(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 0.5F);
@@ -110,7 +110,7 @@ public abstract class MixinStairsBlock extends Block implements AC_IBlockColor {
             }
 
             Block blockPZ = Block.BY_ID[world.getBlockId(x, y, z + 1)];
-            if (blockPZ != null && blockPZ.getRenderType() == 10) {
+            if (blockPZ != null && blockPZ.getRenderType() == this.getRenderType()) {
                 int meta = world.getBlockMeta(x, y, z + 1) & 3;
                 if (meta == 0) {
                     this.setBoundingBox(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
@@ -125,7 +125,7 @@ public abstract class MixinStairsBlock extends Block implements AC_IBlockColor {
             }
         } else if (coreMeta == 3) {
             Block blockPZ = Block.BY_ID[world.getBlockId(x, y, z + 1)];
-            if (blockPZ != null && blockPZ.getRenderType() == 10) {
+            if (blockPZ != null && blockPZ.getRenderType() == this.getRenderType()) {
                 int meta = world.getBlockMeta(x, y, z + 1) & 3;
                 if (meta == 1) {
                     this.setBoundingBox(0.0F, 0.5F, 0.5F, 0.5F, 1.0F, 1.0F);
@@ -137,7 +137,7 @@ public abstract class MixinStairsBlock extends Block implements AC_IBlockColor {
             }
 
             Block blockNZ = Block.BY_ID[world.getBlockId(x, y, z - 1)];
-            if (blockNZ != null && blockNZ.getRenderType() == 10) {
+            if (blockNZ != null && blockNZ.getRenderType() == this.getRenderType()) {
                 int meta = world.getBlockMeta(x, y, z - 1) & 3;
                 if (meta == 0) {
                     this.setBoundingBox(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
