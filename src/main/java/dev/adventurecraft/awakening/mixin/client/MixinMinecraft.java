@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.mixin.client;
 
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.ACMainThread;
 import dev.adventurecraft.awakening.ACMod;
@@ -470,6 +471,16 @@ public abstract class MixinMinecraft implements ExMinecraft {
             remap = false))
     private boolean disableDoubleToggle() {
         return true;
+    }
+
+    @ModifyExpressionValue(
+        method = "run",
+        remap = false,
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/client/options/GameOptions;debugHud:Z"))
+    private boolean renderFrameTimeGraph(boolean value) {
+        return value && !((ExGameOptions) this.options).ofFastDebugInfo();
     }
 
     @Inject(

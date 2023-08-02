@@ -6,6 +6,7 @@ import net.minecraft.entity.LivingEntity;
 import org.lwjgl.opengl.GL11;
 
 public class AC_RenderBipedScaledScripted extends BipedEntityRenderer {
+
 	public AC_RenderBipedScaledScripted(BipedEntityModel var1) {
 		super(var1, 0.5F);
 	}

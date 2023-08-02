@@ -70,7 +70,6 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
     @Shadow
     private float field_2350;
 
-    private boolean showDebugInfo = false;
     private boolean zoomMode = false;
 
     private HeldItemRenderer offHandItemRenderer;
@@ -215,27 +214,6 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
                     world.setWorldTime(worldTime - dayTime + 24000L + 14001L);
                 }
             }
-        }
-    }
-
-    @Redirect(method = "tick", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/client/gui/InGameHud;render(FZII)V"))
-    private void injectFastDebugInfo(InGameHud instance, float deltaTime, boolean hasScreen, int mouseX, int mouseY) {
-        if (((ExGameOptions) this.client.options).ofFastDebugInfo()) {
-            if (Minecraft.isDebugHudEnabled()) {
-                this.showDebugInfo = !this.showDebugInfo;
-            }
-
-            if (this.showDebugInfo) {
-                this.client.options.debugHud = true;
-            }
-        }
-
-        this.client.overlay.render(deltaTime, hasScreen, mouseX, mouseY);
-
-        if (((ExGameOptions) this.client.options).ofFastDebugInfo()) {
-            this.client.options.debugHud = false;
         }
     }
 
