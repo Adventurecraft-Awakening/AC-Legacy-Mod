@@ -284,6 +284,13 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
     private void noDamageToArmor(PlayerInventory instance, int i) {
     }
 
+    @Inject(method = "dropSelectedItem", at = @At("HEAD"), cancellable = true)
+    private void noThrownBoomerangDrop(CallbackInfo ci) {
+        if (this.inventory.getHeldItem() != null && this.inventory.getHeldItem().itemId == AC_Items.boomerang.id && this.inventory.getHeldItem().getMeta() == 1) {
+            ci.cancel();
+        }
+    }
+
     @Overwrite
     public void interactWith(Entity entity) {
         if (entity.interact((PlayerEntity) (Object) this)) {
