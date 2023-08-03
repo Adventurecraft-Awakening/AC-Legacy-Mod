@@ -273,25 +273,10 @@ public abstract class MixinEntity implements ExEntity {
         double root = Math.sqrt(x * x + z * z);
         double yDeg = (Math.atan2(z, x) * 180.0 / Math.PI) - 90.0;
         double pDeg = -(Math.atan2(y, root) * 180.0 / Math.PI);
-        this.pitch = this.rotate(this.pitch, (float) pDeg, 40);
-        this.yaw = this.rotate(this.yaw, (float) yDeg, 10.0F);
-    }
-
-    private float rotate(float a, float b, float speed) {
-        float f = b - a;
-        while (f < -180.0f) {
-            f += 360.0f;
-        }
-        while (f >= 180.0f) {
-            f -= 360.0f;
-        }
-        if (f > speed) {
-            f = speed;
-        }
-        if (f < -speed) {
-            f = -speed;
-        }
-        return a + f;
+        this.prevPitch = this.pitch;
+        this.prevYaw = this.yaw;
+        this.pitch = (float) pDeg;
+        this.yaw = (float) yDeg;
     }
 
     @Override
