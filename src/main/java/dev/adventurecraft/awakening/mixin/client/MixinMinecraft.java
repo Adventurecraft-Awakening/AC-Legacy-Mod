@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.mixin.client;
 
-import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.WrapWithCondition;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.ACMainThread;
 import dev.adventurecraft.awakening.ACMod;
@@ -473,14 +473,14 @@ public abstract class MixinMinecraft implements ExMinecraft {
         return true;
     }
 
-    @ModifyExpressionValue(
+    @WrapWithCondition(
         method = "run",
         remap = false,
         at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/client/options/GameOptions;debugHud:Z"))
-    private boolean renderFrameTimeGraph(boolean value) {
-        return value && !((ExGameOptions) this.options).ofFastDebugInfo();
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/Minecraft;method_2111(J)V"))
+    private boolean renderFrameTimeGraph(Minecraft instance, long time) {
+        return !((ExGameOptions) this.options).ofFastDebugInfo();
     }
 
     @Inject(
