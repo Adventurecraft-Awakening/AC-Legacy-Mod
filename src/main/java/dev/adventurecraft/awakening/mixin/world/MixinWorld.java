@@ -689,18 +689,33 @@ public abstract class MixinWorld implements ExWorld, BlockView {
             return null;
         }
 
-        HitResult hitResult = this.rayTraceBlocksCore(
+        // Copy coords because pointA is mutated by method.
+        double paX = pointA.x;
+        double paY = pointA.y;
+        double paZ = pointA.z;
+
+        HitResult hit = this.rayTraceBlocksCore(
             pointA, pointB, blockCollidableFlag, useCollisionShapes, collideWithClip);
 
         if (AC_DebugMode.renderRays) {
-            var blocksCollisionsArray = saveAsDoubleArray(this.rayCheckedBlocks);
-            this.rayCheckedBlocks.clear();
-            this.rayDebugLists.add(new RayDebugList(pointA, pointB, blocksCollisionsArray, hitResult));
+            this.recordRayDebugList(paX, paY, paZ, pointB.x, pointB.y, pointB.z, hit);
         }
-        return hitResult;
+        return hit;
     }
 
-    private HitResult rayTraceBlocksCore(Vec3d pointA, Vec3d pointB, boolean blockCollidableFlag, boolean useCollisionShapes, boolean collideWithClip) {
+    @Override
+    public void recordRayDebugList(
+        double aX, double aY, double aZ, double bX, double bY, double bZ, HitResult hit) {
+
+        var blocksCollisionsArray = saveAsDoubleArray(this.rayCheckedBlocks);
+        this.rayCheckedBlocks.clear();
+
+        var list = new RayDebugList(aX, aY, aZ, bX, bY, bZ, blocksCollisionsArray, hit);
+        this.rayDebugLists.add(list);
+    }
+
+    @Override
+    public HitResult rayTraceBlocksCore(Vec3d pointA, Vec3d pointB, boolean blockCollidableFlag, boolean useCollisionShapes, boolean collideWithClip) {
         int bX = MathHelper.floor(pointB.x);
         int bY = MathHelper.floor(pointB.y);
         int bZ = MathHelper.floor(pointB.z);
@@ -1573,12 +1588,6 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     @Override
     public void resetCoordOrder() {
         this.coordOrder = null;
-    }
-
-    @Override
-    public void clearDebugLists() {
-        this.collisionLists.clear();
-        this.rayDebugLists.clear();
     }
 
     private void initCoordOrder() {

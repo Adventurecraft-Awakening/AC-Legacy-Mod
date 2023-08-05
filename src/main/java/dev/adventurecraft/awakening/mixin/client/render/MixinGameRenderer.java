@@ -420,11 +420,13 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         if (AC_DebugMode.renderCollisions) {
             var collisionLists = ((ExWorld) this.client.world).getCollisionLists();
             this.drawCollisionLists(collisionLists, viewEntity, deltaTime);
+            collisionLists.clear();
         }
 
         if (AC_DebugMode.renderRays) {
             var rayDebugLists = ((ExWorld) this.client.world).getRayDebugLists();
             this.drawRayDebugLists(rayDebugLists, viewEntity, deltaTime);
+            rayDebugLists.clear();
         }
 
         GL11.glEnable(GL11.GL_ALPHA_TEST);

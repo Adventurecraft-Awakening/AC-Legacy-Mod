@@ -51,8 +51,30 @@ public class AC_UtilBullet {
     }
 
     public static HitResult rayTrace(World world, Entity ignore, Vec3d pointA, Vec3d pointB) {
+        if (Double.isNaN(pointA.x) || Double.isNaN(pointA.y) || Double.isNaN(pointA.z)) {
+            return null;
+        }
+        if (Double.isNaN(pointB.x) || Double.isNaN(pointB.y) || Double.isNaN(pointB.z)) {
+            return null;
+        }
+
+        // Copy coords because pointA is mutated.
+        double paX = pointA.x;
+        double paY = pointA.y;
+        double paZ = pointA.z;
+
+        HitResult hit = rayTraceCore(world, ignore, pointA, pointB);
+
+        if (AC_DebugMode.renderRays) {
+            ((ExWorld) world).recordRayDebugList(paX, paY, paZ, pointB.x, pointB.y, pointB.z, hit);
+        }
+        return hit;
+    }
+
+    private static HitResult rayTraceCore(World world, Entity ignore, Vec3d pointA, Vec3d pointB) {
         Vec3d end = pointB;
-        HitResult blockHit = rayTraceBlocks(world, pointA, pointB);
+        Vec3d pointACopy = Vec3d.from(pointA.x, pointA.y, pointA.z);
+        HitResult blockHit = rayTraceBlocks(world, pointACopy, pointB);
         if (blockHit != null) {
             end = blockHit.field_1988;
         }
@@ -62,8 +84,8 @@ public class AC_UtilBullet {
 
         float extraSize = 1.0F;
         var aabb = AxixAlignedBoundingBox.createAndAddToList(
-            Math.min(pointA.x, end.x), Math.min(pointA.y, end.y), Math.min(pointA.z, end.z),
-            Math.max(pointA.x, end.x), Math.max(pointA.y, end.y), Math.max(pointA.z, end.z))
+                Math.min(pointA.x, end.x), Math.min(pointA.y, end.y), Math.min(pointA.z, end.z),
+                Math.max(pointA.x, end.x), Math.max(pointA.y, end.y), Math.max(pointA.z, end.z))
             .expand(extraSize, extraSize, extraSize);
 
         var entities = (List<Entity>) world.getEntities(ignore, aabb);
@@ -97,7 +119,7 @@ public class AC_UtilBullet {
             return blockHit;
         }
 
-        HitResult entityHit = new HitResult(hitEntity);
+        var entityHit = new HitResult(hitEntity);
         entityHit.field_1988 = end;
         return entityHit;
     }

@@ -14,13 +14,17 @@ public class RayDebugList {
     public final double[] blockCollisions;
     public final HitResult hit;
 
-    public RayDebugList(Vec3d pointA, Vec3d pointB, double[] blockCollisions, HitResult hit) {
-        this.aX = pointA.x;
-        this.aY = pointA.y;
-        this.aZ = pointA.z;
-        this.bX = pointB.x;
-        this.bY = pointB.y;
-        this.bZ = pointB.z;
+    public RayDebugList(
+        double aX, double aY, double aZ,
+        double bX, double bY, double bZ,
+        double[] blockCollisions,
+        HitResult hit) {
+        this.aX = aX;
+        this.aY = aY;
+        this.aZ = aZ;
+        this.bX = bX;
+        this.bY = bY;
+        this.bZ = bZ;
         this.blockCollisions = blockCollisions;
         if (hit != null) {
             this.hit = switch (hit.type) {

@@ -33,7 +33,15 @@ public interface ExWorld {
     void loadMapMusic();
 
     HitResult rayTraceBlocks2(
-        Vec3d pointA, Vec3d pointB, boolean blockCollidableFlag, boolean useCollisionShapes, boolean collideWithClip);
+        Vec3d pointA, Vec3d pointB,
+        boolean blockCollidableFlag, boolean useCollisionShapes, boolean collideWithClip);
+
+    HitResult rayTraceBlocksCore(
+        Vec3d pointA, Vec3d pointB,
+        boolean blockCollidableFlag, boolean useCollisionShapes, boolean collideWithClip);
+
+    void recordRayDebugList(
+        double aX, double aY, double aZ, double bX, double bY, double bZ, HitResult hit);
 
     boolean setBlockAndMetadataTemp(int x, int y, int z, int id, int meta);
 
@@ -58,8 +66,6 @@ public interface ExWorld {
     void redo();
 
     void resetCoordOrder();
-
-    void clearDebugLists();
 
     File getLevelDir();
 
