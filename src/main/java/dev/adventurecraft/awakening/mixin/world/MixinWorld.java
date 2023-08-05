@@ -692,9 +692,10 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         int aY = MathHelper.floor(pointA.y);
         int aZ = MathHelper.floor(pointA.z);
         int aId = this.getBlockId(aX, aY, aZ);
-        int aMeta = this.getBlockMeta(aX, aY, aZ);
         Block aBlock = Block.BY_ID[aId];
-        if ((!useCollisionShapes || aBlock == null || aBlock.getCollisionShape((World) (Object) this, aX, aY, aZ) != null) && aId > 0 && aBlock.isCollidable(aMeta, blockCollidableFlag) && (collideWithClip || aId != AC_Blocks.clipBlock.id && !ExLadderBlock.isLadderID(aId))) {
+        if (aBlock != null &&
+            (!useCollisionShapes || aBlock.getCollisionShape((World) (Object) this, aX, aY, aZ) != null) &&
+            (aId > 0 && (collideWithClip || aId != AC_Blocks.clipBlock.id && !ExLadderBlock.isLadderID(aId)) && aBlock.isCollidable(this.getBlockMeta(aX, aY, aZ), blockCollidableFlag))) {
             HitResult hit = aBlock.method_1564((World) (Object) this, aX, aY, aZ, pointA, pointB);
             if (hit != null) {
                 return hit;
@@ -808,18 +809,15 @@ public abstract class MixinWorld implements ExWorld, BlockView {
             }
 
             int id = this.getBlockId(aX, aY, aZ);
-            int meta = this.getBlockMeta(aX, aY, aZ);
             Block block = Block.BY_ID[id];
-            if (useCollisionShapes && block != null && block.getCollisionShape((World) (Object) this, aX, aY, aZ) == null || id == 0 || !block.isCollidable(meta, blockCollidableFlag) || !((ExBlock) block).shouldRender(this, aX, aY, aZ)) {
-                continue;
+            if (block != null &&
+                (!useCollisionShapes || block.getCollisionShape((World) (Object) this, aX, aY, aZ) != null) &&
+                id != 0 && block.isCollidable(this.getBlockMeta(aX, aY, aZ), blockCollidableFlag) && ((ExBlock) block).shouldRender(this, aX, aY, aZ)) {
+                HitResult hit = block.method_1564((World) (Object) this, aX, aY, aZ, pointA, pointB);
+                if (hit != null && (collideWithClip || (block.id != AC_Blocks.clipBlock.id && !ExLadderBlock.isLadderID(block.id)))) {
+                    return hit;
+                }
             }
-
-            HitResult hit = block.method_1564((World) (Object) this, aX, aY, aZ, pointA, pointB);
-            if (hit == null || !collideWithClip && (block.id == AC_Blocks.clipBlock.id || ExLadderBlock.isLadderID(block.id))) {
-                continue;
-            }
-
-            return hit;
         }
         return null;
     }
