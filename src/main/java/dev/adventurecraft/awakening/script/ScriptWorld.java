@@ -15,104 +15,102 @@ public class ScriptWorld {
 
     World world;
 
-    ScriptWorld(World var1) {
-        this.world = var1;
+    ScriptWorld(World world) {
+        this.world = world;
     }
 
-    public int getBlockID(int var1, int var2, int var3) {
-        return this.world.getBlockId(var1, var2, var3);
+    public int getBlockID(int x, int y, int z) {
+        return this.world.getBlockId(x, y, z);
     }
 
-    public void setBlockID(int var1, int var2, int var3, int var4) {
-        this.world.setBlock(var1, var2, var3, var4);
+    public void setBlockID(int x, int y, int z, int id) {
+        this.world.setBlock(x, y, z, id);
     }
 
-    public int getMetadata(int var1, int var2, int var3) {
-        return this.world.getBlockMeta(var1, var2, var3);
+    public int getMetadata(int x, int y, int z) {
+        return this.world.getBlockMeta(x, y, z);
     }
 
-    public void setMetadata(int var1, int var2, int var3, int var4) {
-        this.world.setBlockMeta(var1, var2, var3, var4);
+    public void setMetadata(int x, int y, int z, int meta) {
+        this.world.setBlockMeta(x, y, z, meta);
     }
 
-    public void setBlockIDAndMetadata(int var1, int var2, int var3, int var4, int var5) {
-        this.world.placeBlockWithMetaData(var1, var2, var3, var4, var5);
+    public void setBlockIDAndMetadata(int x, int y, int z, int id, int meta) {
+        this.world.placeBlockWithMetaData(x, y, z, id, meta);
     }
 
-    public float getLightValue(int var1, int var2, int var3) {
-        return ((ExWorld) this.world).getLightValue(var1, var2, var3);
+    public float getLightValue(int x, int y, int z) {
+        return ((ExWorld) this.world).getLightValue(x, y, z);
     }
 
-    public void triggerBlock(int var1, int var2, int var3) {
-        this.triggerArea(var1, var2, var3, var1, var2, var3);
+    public void triggerBlock(int x, int y, int z) {
+        this.triggerArea(x, y, z, x, y, z);
     }
 
-    public void triggerArea(int var1, int var2, int var3, int var4, int var5, int var6) {
-        ((ExWorld) this.world).getTriggerManager().addArea(0, -1, 0, new AC_TriggerArea(var1, var2, var3, var4, var5, var6));
+    public void triggerArea(int aX, int aY, int aZ, int bX, int bY, int bZ) {
+        ((ExWorld) this.world).getTriggerManager().addArea(0, -1, 0, new AC_TriggerArea(aX, aY, aZ, bX, bY, bZ));
         ((ExWorld) this.world).getTriggerManager().removeArea(0, -1, 0);
     }
 
-    public void setTriggerArea(int var1, int var2, int var3, int var4, int var5, int var6, int var7, int var8, int var9) {
-        ((ExWorld) this.world).getTriggerManager().addArea(var1, var2, var3, new AC_TriggerArea(var4, var5, var6, var7, var8, var9));
+    public void setTriggerArea(int x, int y, int z, int aX, int aY, int aZ, int bX, int bY, int bZ) {
+        ((ExWorld) this.world).getTriggerManager().addArea(x, y, z, new AC_TriggerArea(aX, aY, aZ, bX, bY, bZ));
     }
 
-    public void setTriggerArea(int var1, int var2, int var3, int var4, int var5, int var6, int var7, int var8, int var9, int var10) {
-        ((ExWorld) this.world).getTriggerManager().addArea(var1, var2, var3, var4, new AC_TriggerArea(var5, var6, var7, var8, var9, var10));
+    public void setTriggerArea(int x, int y, int z, int id, int aX, int aY, int aZ, int bX, int bY, int bZ) {
+        ((ExWorld) this.world).getTriggerManager().addArea(x, y, z, id, new AC_TriggerArea(aX, aY, aZ, bX, bY, bZ));
     }
 
-    public void removeTriggerArea(int var1, int var2, int var3, int var4) {
-        ((ExWorld) this.world).getTriggerManager().removeArea(var1, var2, var3, var4);
+    public void removeTriggerArea(int x, int y, int z, int id) {
+        ((ExWorld) this.world).getTriggerManager().removeArea(x, y, z, id);
     }
 
-    public void removeTriggerAreas(int var1, int var2, int var3) {
-        ((ExWorld) this.world).getTriggerManager().removeArea(var1, var2, var3);
+    public void removeTriggerAreas(int x, int y, int z) {
+        ((ExWorld) this.world).getTriggerManager().removeArea(x, y, z);
     }
 
-    public ScriptEntity spawnEntity(String var1, double var2, double var4, double var6) {
-        Entity var8 = EntityRegistry.create(var1, this.world);
-        if (var8 != null) {
-            var8.setPosition(var2, var4, var6);
-            this.world.method_287(var8);
+    public ScriptEntity spawnEntity(String entityType, double x, double y, double z) {
+        Entity entity = EntityRegistry.create(entityType, this.world);
+        if (entity != null) {
+            entity.setPosition(x, y, z);
+            this.world.method_287(entity);
         }
 
-        return ScriptEntity.getEntityClass(var8);
+        return ScriptEntity.getEntityClass(entity);
     }
 
-    public ScriptEntity getEntityByID(int var1) {
-        return ScriptEntity.getEntityClass(((ExWorld) this.world).getEntityByID(var1));
+    public ScriptEntity getEntityByID(int id) {
+        return ScriptEntity.getEntityClass(((ExWorld) this.world).getEntityByID(id));
     }
 
-    public Object[] rayTraceBlocks(ScriptVec3 var1, ScriptVec3 var2) {
-        return this.rayTraceBlocks(var1.x, var1.y, var1.z, var2.x, var2.y, var2.z);
+    public Object[] rayTraceBlocks(ScriptVec3 pointA, ScriptVec3 pointB) {
+        return this.rayTraceBlocks(pointA.x, pointA.y, pointA.z, pointB.x, pointB.y, pointB.z);
     }
 
-    public Object[] rayTraceBlocks(double var1, double var3, double var5, double var7, double var9, double var11) {
-        Object[] var13 = new Object[2];
-        HitResult var14 = AC_UtilBullet.rayTraceBlocks(this.world, Vec3d.from(var1, var3, var5), Vec3d.from(var7, var9, var11));
-        if (var14 != null) {
-            var13[0] = new ScriptVec3(var14.field_1988.x, var14.field_1988.y, var14.field_1988.z);
-            var13[1] = new ScriptVec3((float) var14.x, (float) var14.y, (float) var14.z);
+    public Object[] rayTraceBlocks(double aX, double aY, double aZ, double bX, double bY, double bZ) {
+        var result = new Object[2];
+        HitResult hit = AC_UtilBullet.rayTraceBlocks(this.world, Vec3d.from(aX, aY, aZ), Vec3d.from(bX, bY, bZ));
+        if (hit != null) {
+            result[0] = new ScriptVec3(hit.field_1988.x, hit.field_1988.y, hit.field_1988.z);
+            result[1] = new ScriptVec3(hit.x, hit.y, hit.z);
         }
-
-        return var13;
+        return result;
     }
 
-    public Object[] rayTrace(ScriptVec3 var1, ScriptVec3 var2) {
-        return this.rayTrace(var1.x, var1.y, var1.z, var2.x, var2.y, var2.z);
+    public Object[] rayTrace(ScriptVec3 pointA, ScriptVec3 pointB) {
+        return this.rayTrace(pointA.x, pointA.y, pointA.z, pointB.x, pointB.y, pointB.z);
     }
 
-    public Object[] rayTrace(double var1, double var3, double var5, double var7, double var9, double var11) {
-        Object[] var13 = new Object[3];
-        HitResult var14 = AC_UtilBullet.rayTrace(this.world, null, Vec3d.from(var1, var3, var5), Vec3d.from(var7, var9, var11));
-        if (var14 != null) {
-            var13[0] = new ScriptVec3(var14.field_1988.x, var14.field_1988.y, var14.field_1988.z);
-            if (var14.type == HitType.field_789) {
-                var13[1] = new ScriptVec3((float) var14.x, (float) var14.y, (float) var14.z);
+    public Object[] rayTrace(double aX, double aY, double aZ, double bX, double bY, double bZ) {
+        var result = new Object[3];
+        HitResult hit = AC_UtilBullet.rayTrace(this.world, null, Vec3d.from(aX, aY, aZ), Vec3d.from(bX, bY, bZ));
+        if (hit != null) {
+            result[0] = new ScriptVec3(hit.field_1988.x, hit.field_1988.y, hit.field_1988.z);
+            if (hit.type == HitType.field_789) {
+                result[1] = new ScriptVec3(hit.x, hit.y, hit.z);
             } else {
-                var13[2] = ScriptEntity.getEntityClass(var14.field_1989);
+                result[2] = ScriptEntity.getEntityClass(hit.field_1989);
             }
         }
-
-        return var13;
+        return result;
     }
 }

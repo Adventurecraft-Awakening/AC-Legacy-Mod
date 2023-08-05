@@ -283,7 +283,7 @@ public class ScriptEntity {
     }
 
     public Object[] rayTrace(double aX, double aY, double aZ, double bX, double bY, double bZ) {
-        Object[] result = new Object[3];
+       var result = new Object[3];
         HitResult hit = AC_UtilBullet.rayTrace(this.entity.world, this.entity, Vec3d.from(aX, aY, aZ), Vec3d.from(bX, bY, bZ));
         if (hit != null) {
             result[0] = new ScriptVec3(hit.field_1988.x, hit.field_1988.y, hit.field_1988.z);
