@@ -418,9 +418,8 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         }
 
         if (AC_DebugMode.renderCollisions) {
-            var collisionLists = ((ExWorld) this.client.world).getCollisionLists();
+            var collisionLists = ((ExWorld) this.client.world).getCollisionDebugLists();
             this.drawCollisionLists(collisionLists, viewEntity, deltaTime);
-            collisionLists.clear();
         }
 
         if (AC_DebugMode.renderRays) {

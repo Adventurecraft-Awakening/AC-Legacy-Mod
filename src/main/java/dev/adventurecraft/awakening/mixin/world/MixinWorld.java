@@ -192,7 +192,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     boolean firstTick = true;
     boolean newSave;
     public AC_UndoStack undoStack = new AC_UndoStack();
-    private ArrayList<CollisionList> collisionLists = new ArrayList<>();
+    private ArrayList<CollisionList> collisionDebugLists = new ArrayList<>();
     private ArrayList<AxixAlignedBoundingBox> rayCheckedBlocks = new ArrayList<>();
     private ArrayList<RayDebugList> rayDebugLists = new ArrayList<>();
     public Script script = new Script((World) (Object) this);
@@ -279,7 +279,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         this.newSave = false;
         this.triggerManager = new AC_TriggerManager((World) (Object) this);
         this.undoStack = new AC_UndoStack();
-        this.collisionLists = new ArrayList<>();
+        this.collisionDebugLists = new ArrayList<>();
         this.rayCheckedBlocks = new ArrayList<>();
         this.rayDebugLists = new ArrayList<>();
         File var7 = Minecraft.getGameDirectory();
@@ -896,7 +896,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         }
 
         var collisionsArray = saveAsDoubleArray((List<AxixAlignedBoundingBox>) cir.getReturnValue());
-        this.collisionLists.add(new CollisionList(entity, aabb, collisionsArray));
+        this.collisionDebugLists.add(new CollisionList(entity, aabb, collisionsArray));
     }
 
     private static double[] saveAsDoubleArray(List<AxixAlignedBoundingBox> boxList) {
@@ -963,6 +963,13 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         }
 
         return -1;
+    }
+
+    @Inject(
+        method = "method_227",
+        at = @At("HEAD"))
+    private void clearCollisionList(CallbackInfo ci) {
+        this.collisionDebugLists.clear();
     }
 
     // This injection will be inverted at the target since the expression only captured the field access
@@ -1689,8 +1696,8 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     }
 
     @Override
-    public ArrayList<CollisionList> getCollisionLists() {
-        return this.collisionLists;
+    public ArrayList<CollisionList> getCollisionDebugLists() {
+        return this.collisionDebugLists;
     }
 
     @Override

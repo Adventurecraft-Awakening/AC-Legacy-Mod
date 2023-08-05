@@ -95,7 +95,7 @@ public interface ExWorld {
 
     Scriptable getScope();
 
-    ArrayList<CollisionList> getCollisionLists();
+    ArrayList<CollisionList> getCollisionDebugLists();
 
     ArrayList<RayDebugList> getRayDebugLists();
 
