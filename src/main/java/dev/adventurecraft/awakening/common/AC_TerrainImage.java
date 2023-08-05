@@ -1,5 +1,7 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.ACMod;
+
 import java.awt.image.BufferedImage;
 import java.io.File;
 import javax.imageio.ImageIO;
@@ -125,7 +127,7 @@ public class AC_TerrainImage {
 
         try {
             File var1 = new File(var0, "terrainMap.png");
-            System.out.printf("Exists: %b Path: %s\n", var1.exists(), var1.getCanonicalPath());
+            ACMod.LOGGER.info("Exists: {}, Path: {}", var1.exists(), var1.getCanonicalPath());
             BufferedImage var2 = ImageIO.read(var1);
             imageWidth = var2.getWidth();
             imageHeight = var2.getHeight();
