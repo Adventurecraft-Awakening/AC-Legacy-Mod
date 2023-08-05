@@ -193,6 +193,8 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     boolean newSave;
     public AC_UndoStack undoStack = new AC_UndoStack();
     private ArrayList<CollisionList> collisionLists = new ArrayList<>();
+    private ArrayList<AxixAlignedBoundingBox> rayCheckedBlocks = new ArrayList<>();
+    private ArrayList<RayDebugList> rayDebugLists = new ArrayList<>();
     public Script script = new Script((World) (Object) this);
     public AC_JScriptHandler scriptHandler;
     public AC_MusicScripts musicScripts;
@@ -278,6 +280,8 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         this.triggerManager = new AC_TriggerManager((World) (Object) this);
         this.undoStack = new AC_UndoStack();
         this.collisionLists = new ArrayList<>();
+        this.rayCheckedBlocks = new ArrayList<>();
+        this.rayDebugLists = new ArrayList<>();
         File var7 = Minecraft.getGameDirectory();
         File var8 = new File(var7, "../maps");
         File var9 = new File(var8, mapName);
@@ -685,6 +689,18 @@ public abstract class MixinWorld implements ExWorld, BlockView {
             return null;
         }
 
+        HitResult hitResult = this.rayTraceBlocksCore(
+            pointA, pointB, blockCollidableFlag, useCollisionShapes, collideWithClip);
+
+        if (AC_DebugMode.renderRays) {
+            var blocksCollisionsArray = saveAsDoubleArray(this.rayCheckedBlocks);
+            this.rayCheckedBlocks.clear();
+            this.rayDebugLists.add(new RayDebugList(pointA, pointB, blocksCollisionsArray, hitResult));
+        }
+        return hitResult;
+    }
+
+    private HitResult rayTraceBlocksCore(Vec3d pointA, Vec3d pointB, boolean blockCollidableFlag, boolean useCollisionShapes, boolean collideWithClip) {
         int bX = MathHelper.floor(pointB.x);
         int bY = MathHelper.floor(pointB.y);
         int bZ = MathHelper.floor(pointB.z);
@@ -693,9 +709,15 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         int aZ = MathHelper.floor(pointA.z);
         int aId = this.getBlockId(aX, aY, aZ);
         Block aBlock = Block.BY_ID[aId];
+        AxixAlignedBoundingBox aAabb = null;
         if (aBlock != null &&
-            (!useCollisionShapes || aBlock.getCollisionShape((World) (Object) this, aX, aY, aZ) != null) &&
+            (!useCollisionShapes || (aAabb = aBlock.getCollisionShape((World) (Object) this, aX, aY, aZ)) != null) &&
             (aId > 0 && (collideWithClip || aId != AC_Blocks.clipBlock.id && !ExLadderBlock.isLadderID(aId)) && aBlock.isCollidable(this.getBlockMeta(aX, aY, aZ), blockCollidableFlag))) {
+
+            if (aAabb != null && AC_DebugMode.renderRays) {
+                this.rayCheckedBlocks.add(aAabb);
+            }
+
             HitResult hit = aBlock.method_1564((World) (Object) this, aX, aY, aZ, pointA, pointB);
             if (hit != null) {
                 return hit;
@@ -810,9 +832,15 @@ public abstract class MixinWorld implements ExWorld, BlockView {
 
             int id = this.getBlockId(aX, aY, aZ);
             Block block = Block.BY_ID[id];
+            AxixAlignedBoundingBox aabb = null;
             if (block != null &&
-                (!useCollisionShapes || block.getCollisionShape((World) (Object) this, aX, aY, aZ) != null) &&
+                (!useCollisionShapes || (aabb = block.getCollisionShape((World) (Object) this, aX, aY, aZ)) != null) &&
                 id != 0 && block.isCollidable(this.getBlockMeta(aX, aY, aZ), blockCollidableFlag) && ((ExBlock) block).shouldRender(this, aX, aY, aZ)) {
+
+                if (aabb != null && AC_DebugMode.renderRays) {
+                    this.rayCheckedBlocks.add(aabb);
+                }
+
                 HitResult hit = block.method_1564((World) (Object) this, aX, aY, aZ, pointA, pointB);
                 if (hit != null && (collideWithClip || (block.id != AC_Blocks.clipBlock.id && !ExLadderBlock.isLadderID(block.id)))) {
                     return hit;
@@ -852,8 +880,16 @@ public abstract class MixinWorld implements ExWorld, BlockView {
             return;
         }
 
-        var boxList = (List<AxixAlignedBoundingBox>) cir.getReturnValue();
+        var collisionsArray = saveAsDoubleArray((List<AxixAlignedBoundingBox>) cir.getReturnValue());
+        this.collisionLists.add(new CollisionList(entity, aabb, collisionsArray));
+    }
+
+    private static double[] saveAsDoubleArray(List<AxixAlignedBoundingBox> boxList) {
         int size = boxList.size();
+        if (size == 0) {
+            return null;
+        }
+
         var boxArray = new double[size * 6];
         for (int i = 0; i < size; i++) {
             AxixAlignedBoundingBox box = boxList.get(i);
@@ -864,7 +900,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
             boxArray[i * 6 + 4] = box.maxY;
             boxArray[i * 6 + 5] = box.maxZ;
         }
-        this.collisionLists.add(new CollisionList(entity, aabb, boxArray));
+        return boxArray;
     }
 
     @Overwrite
@@ -947,13 +983,6 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         }
         Chunk chunk = this.getChunkFromCache(var5.x >> 4, var5.z >> 4);
         return chunk;
-    }
-
-    @Inject(
-        method = "method_227",
-        at = @At("HEAD"))
-    private void clearCollisionList(CallbackInfo ci) {
-        this.collisionLists.clear();
     }
 
     @Overwrite
@@ -1546,6 +1575,12 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         this.coordOrder = null;
     }
 
+    @Override
+    public void clearDebugLists() {
+        this.collisionLists.clear();
+        this.rayDebugLists.clear();
+    }
+
     private void initCoordOrder() {
         Random var1 = new Random();
         var1.setSeed(this.getWorldTime());
@@ -1647,5 +1682,10 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     @Override
     public ArrayList<CollisionList> getCollisionLists() {
         return this.collisionLists;
+    }
+
+    @Override
+    public ArrayList<RayDebugList> getRayDebugLists() {
+        return this.rayDebugLists;
     }
 }

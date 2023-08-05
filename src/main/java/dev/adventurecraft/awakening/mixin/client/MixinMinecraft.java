@@ -827,6 +827,8 @@ public abstract class MixinMinecraft implements ExMinecraft {
                 this.worldRenderer.method_1557();
             }
 
+            ((ExWorld) this.world).clearDebugLists();
+            
             if (!this.paused) {
                 if (this.world.field_210 > 0) {
                     --this.world.field_210;

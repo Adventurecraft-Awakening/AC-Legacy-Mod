@@ -39,9 +39,10 @@ public abstract class MixinStairsBlock extends Block implements AC_IBlockColor {
 
     @Overwrite
     public void doesBoxCollide(World world, int x, int y, int z, AxixAlignedBoundingBox box, ArrayList hits) {
-        int coreMeta = world.getBlockMeta(x, y, z) & 3;
         this.setBoundingBox(0.0F, 0.0F, 0.0F, 1.0F, 0.5F, 1.0F);
         super.doesBoxCollide(world, x, y, z, box, hits);
+
+        int coreMeta = world.getBlockMeta(x, y, z) & 3;
         if (coreMeta == 0) {
             Block blockNX = Block.BY_ID[world.getBlockId(x - 1, y, z)];
             if (blockNX != null && blockNX.getRenderType() == this.getRenderType()) {

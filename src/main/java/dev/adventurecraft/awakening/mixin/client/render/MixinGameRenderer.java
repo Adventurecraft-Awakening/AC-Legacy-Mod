@@ -33,6 +33,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.hit.HitType;
+import net.minecraft.util.math.AxixAlignedBoundingBox;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import org.lwjgl.input.Keyboard;
@@ -402,8 +403,13 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         }
 
         if (AC_DebugMode.renderCollisions) {
-            ArrayList<CollisionList> collisionLists = ((ExWorld) this.client.world).getCollisionLists();
+            var collisionLists = ((ExWorld) this.client.world).getCollisionLists();
             this.drawCollisionLists(collisionLists, viewEntity, deltaTime);
+        }
+
+        if (AC_DebugMode.renderRays) {
+            var rayDebugLists = ((ExWorld) this.client.world).getRayDebugLists();
+            this.drawRayDebugLists(rayDebugLists, viewEntity, deltaTime);
         }
 
         GL11.glEnable(GL11.GL_ALPHA_TEST);
@@ -433,11 +439,11 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         for (CollisionList list : lists) {
             float alpha;
             if (list.entity instanceof ParticleEntity) {
-                alpha = 0.25f;
+                alpha = 0.05f;
             } else if (list.entity instanceof ItemEntity) {
-                alpha = 0.5f;
+                alpha = 0.2f;
             } else {
-                alpha = 1f;
+                alpha = 0.5f;
             }
 
             ts.color(0.7f, 0.5f, 0.7f, alpha);
@@ -446,17 +452,9 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
                 list.minX - x1, list.minY - y1, list.minZ - z1,
                 list.maxX - x2, list.maxY - y2, list.maxZ - z2);
 
-            double[] collisions = list.collisions;
-            for (int i = 0; i < collisions.length; i += 6) {
-                double minX = collisions[i + 0] - x1;
-                double minY = collisions[i + 1] - y1;
-                double minZ = collisions[i + 2] - z1;
-                double maxX = collisions[i + 3] - x2;
-                double maxY = collisions[i + 4] - y2;
-                double maxZ = collisions[i + 5] - z2;
-
+            if (list.collisions != null) {
                 ts.color(0.5f, 0.7f, 0.5f, alpha);
-                drawBox(ts, minX, minY, minZ, maxX, maxY, maxZ);
+                drawBoxes(ts, list.collisions, x1, y1, z1, x2, y2, z2);
             }
         }
 
@@ -465,6 +463,87 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         GL11.glLineWidth(1.0f);
         GL11.glEnable(GL11.GL_TEXTURE_2D);
         GL11.glDisable(GL11.GL_BLEND);
+    }
+
+    private void drawRayDebugLists(ArrayList<RayDebugList> lists, Entity entity, double deltaTime) {
+        double dX = entity.prevRenderX + (entity.x - entity.prevRenderX) * deltaTime;
+        double dY = entity.prevRenderY + (entity.y - entity.prevRenderY) * deltaTime;
+        double dZ = entity.prevRenderZ + (entity.z - entity.prevRenderZ) * deltaTime;
+
+        double off = 1.0 / 1024.0;
+        double x1 = dX + off;
+        double y1 = dY + off;
+        double z1 = dZ + off;
+        double x2 = dX - off;
+        double y2 = dY - off;
+        double z2 = dZ - off;
+
+        Tessellator ts = Tessellator.INSTANCE;
+        GL11.glEnable(GL11.GL_BLEND);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+
+        GL11.glLineWidth(2.0f);
+        ts.start(GL11.GL_LINES);
+        for (RayDebugList list : lists) {
+            HitResult hit = list.hit;
+            if (hit != null) {
+                AxixAlignedBoundingBox aabb = null;
+                if (hit.type == HitType.field_789) {
+                    Block block = Block.BY_ID[hit.field_1987];
+                    if (block != null) {
+                        aabb = block.getCollisionShape(this.client.world, hit.x, hit.y, hit.z);
+                    }
+                } else if (hit.type == HitType.field_790) {
+                    aabb = hit.field_1989.boundingBox;
+                }
+
+                if (aabb != null) {
+                    ts.color(0.0f, 0.9f, 0.2f, 0.5f);
+                    drawBox(ts,
+                        aabb.minX - x1, aabb.minY - y1, aabb.minZ - z1,
+                        aabb.maxX - x2, aabb.maxY - y2, aabb.maxZ - z2);
+                }
+            }
+
+            if (list.blockCollisions != null) {
+                ts.color(0.3f, 0.5f, 0.3f, 0.333f);
+                drawBoxes(ts, list.blockCollisions, x1, y1, z1, x2, y2, z2);
+            }
+        }
+        ts.tessellate();
+
+        GL11.glLineWidth(4.0f);
+        ts.start(GL11.GL_LINES);
+        for (RayDebugList list : lists) {
+            if (list.hit != null) {
+                ts.color(0.0f, 0.9f, 0.2f, 0.5f);
+            } else {
+                ts.color(0.9f, 0.2f, 0.2f, 0.5f);
+            }
+            ts.addVertex(list.aX - dX, list.aY - dY, list.aZ - dZ);
+            ts.addVertex(list.bX - dX, list.bY - dY, list.bZ - dZ);
+        }
+        ts.tessellate();
+
+        GL11.glLineWidth(1.0f);
+        GL11.glEnable(GL11.GL_TEXTURE_2D);
+        GL11.glDisable(GL11.GL_BLEND);
+    }
+
+    private static void drawBoxes(
+        Tessellator ts, double[] collisions, double x1, double y1, double z1, double x2, double y2, double z2) {
+
+        for (int i = 0; i < collisions.length; i += 6) {
+            double minX = collisions[i + 0] - x1;
+            double minY = collisions[i + 1] - y1;
+            double minZ = collisions[i + 2] - z1;
+            double maxX = collisions[i + 3] - x2;
+            double maxY = collisions[i + 4] - y2;
+            double maxZ = collisions[i + 5] - z2;
+
+            drawBox(ts, minX, minY, minZ, maxX, maxY, maxZ);
+        }
     }
 
     private static void drawBox(

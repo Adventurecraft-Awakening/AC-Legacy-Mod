@@ -59,6 +59,8 @@ public interface ExWorld {
 
     void resetCoordOrder();
 
+    void clearDebugLists();
+
     File getLevelDir();
 
     String[] getScriptFiles();
@@ -88,6 +90,8 @@ public interface ExWorld {
     Scriptable getScope();
 
     ArrayList<CollisionList> getCollisionLists();
+
+    ArrayList<RayDebugList> getRayDebugLists();
 
     static World createWorld(
         String mapName, DimensionData dimData, String saveName, long seed, Dimension dimension, ProgressListener progressListener) {
