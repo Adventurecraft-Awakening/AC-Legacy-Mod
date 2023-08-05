@@ -19,12 +19,14 @@ import net.minecraft.world.source.WorldSource;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GLContext;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -253,20 +255,24 @@ public abstract class MixinGameOptions implements ExGameOptions {
         ((ExWorldEventRenderer) this.client.worldRenderer).setAllRenderersVisible();
     }
 
-    @Inject(method = "setIntOption", at = @At(
-        value = "FIELD",
-        target = "Lnet/minecraft/client/options/GameOptions;fpsLimit:I",
-        ordinal = 0,
-        shift = At.Shift.BEFORE))
-    private void setIntOptionOF_LIMIT_FRAMERATE(Option option, int value, CallbackInfo ci) {
-        this.fpsLimit = (this.fpsLimit + value) % 4;
+    @Redirect(
+        method = "setIntOption",
+        at = @At(
+            value = "FIELD",
+            opcode = Opcodes.PUTFIELD,
+            target = "Lnet/minecraft/client/options/GameOptions;fpsLimit:I",
+            ordinal = 0))
+    private void setIntOptionPutFpsLimit(GameOptions instance, int value, @Local(argsOnly = true) int i) {
+        this.fpsLimit = (this.fpsLimit + i) % 4;
         Display.setVSyncEnabled(this.fpsLimit == 3);
     }
 
-    @Inject(method = "setIntOption", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/client/options/GameOptions;saveOptions()V",
-        shift = At.Shift.BEFORE))
+    @Inject(
+        method = "setIntOption",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/options/GameOptions;saveOptions()V",
+            shift = At.Shift.BEFORE))
     private void setIntOptionOF(Option option, int value, CallbackInfo ci) {
         if (option == OptionOF.FOG_FANCY) {
             if (!GLContext.getCapabilities().GL_NV_fog_distance) {

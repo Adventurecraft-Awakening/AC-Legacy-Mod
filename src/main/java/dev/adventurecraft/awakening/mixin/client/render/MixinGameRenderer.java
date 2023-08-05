@@ -219,11 +219,26 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         }
     }
 
-    @Inject(method = "tick", at = @At(
-        value = "FIELD",
-        target = "Lnet/minecraft/client/Minecraft;currentScreen:Lnet/minecraft/client/gui/screen/Screen;",
-        ordinal = 2,
-        shift = At.Shift.BEFORE))
+    @ModifyExpressionValue(
+        method = "tick",
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/client/options/GameOptions;fpsLimit:I",
+            ordinal = 4))
+    private int applyFpsLimitOutsideWorld(int value) {
+        if (this.client.options.fpsLimit == 0 || this.client.options.fpsLimit == 3) {
+            return 0;
+        }
+        return 2;
+    }
+
+    @Inject(
+        method = "tick",
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/client/Minecraft;currentScreen:Lnet/minecraft/client/gui/screen/Screen;",
+            ordinal = 2,
+            shift = At.Shift.BEFORE))
     private void injectStoreRender(
         float var1,
         CallbackInfo ci,
