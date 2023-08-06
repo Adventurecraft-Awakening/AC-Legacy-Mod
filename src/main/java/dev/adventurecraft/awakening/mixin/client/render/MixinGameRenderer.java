@@ -182,7 +182,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         var options = (ExGameOptions) this.client.options;
 
         Minecraft.isPremiumCheckTime = 0L;
-        BlockRenderer.field_67 = options.isGrassFancy() || options.ofConnectedGrass() == ConnectedGrassOption.FANCY;
+        BlockRenderer.field_67 = options.isGrassFancy();
 
         Block.LEAVES.updateTexture(options.isLeavesFancy());
 

@@ -260,12 +260,12 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         this.field_92 = true;
         float aoLevel = ((ExGameOptions) Minecraft.instance.options).ofAoLevel();
         boolean var10 = false;
-        boolean var15 = true;
-        boolean var16 = true;
-        boolean var17 = true;
-        boolean var18 = true;
-        boolean var19 = true;
-        boolean var20 = true;
+        boolean useBottomColor = true;
+        boolean useTopColor = true;
+        boolean useEastColor = true;
+        boolean useWestColor = true;
+        boolean useNorthColor = true;
+        boolean useSouthColor = true;
 
         boolean renderBottom = this.renderAllSides || block.isSideRendered(this.blockView, x, y - 1, z, 0);
         boolean renderTop = this.renderAllSides || block.isSideRendered(this.blockView, x, y + 1, z, 1);
@@ -311,36 +311,36 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             this.field_77 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(x, y - 1, z - 1)];
 
         boolean doGrassEdges = field_67 && block.id == Block.GRASS.id;
-        if (doGrassEdges || this.textureOverride >= 0) {
-            var20 = false;
-            var19 = false;
-            var18 = false;
-            var17 = false;
-            var15 = false;
+        if (block.id == Block.GRASS.id || this.textureOverride >= 0) {
+            useSouthColor = false;
+            useNorthColor = false;
+            useWestColor = false;
+            useEastColor = false;
+            useBottomColor = false;
         }
 
         if (renderBottom) {
-            var10 |= this.renderBottomSide(block, x, y, z, r, g, b, aoLevel, var15);
+            var10 |= this.renderBottomSide(block, x, y, z, r, g, b, aoLevel, useBottomColor);
         }
 
         if (renderTop) {
-            var10 |= this.renderTopSide(block, x, y, z, r, g, b, aoLevel, var16);
+            var10 |= this.renderTopSide(block, x, y, z, r, g, b, aoLevel, useTopColor);
         }
 
         if (renderEast) {
-            var10 |= this.renderEastSide(block, x, y, z, r, g, b, aoLevel, var17, doGrassEdges);
+            var10 |= this.renderEastSide(block, x, y, z, r, g, b, aoLevel, useEastColor, doGrassEdges);
         }
 
         if (renderWest) {
-            var10 |= this.renderWestSide(block, x, y, z, r, g, b, aoLevel, var18, doGrassEdges);
+            var10 |= this.renderWestSide(block, x, y, z, r, g, b, aoLevel, useWestColor, doGrassEdges);
         }
 
         if (renderNorth) {
-            var10 |= this.renderNorthSide(block, x, y, z, r, g, b, aoLevel, var19, doGrassEdges);
+            var10 |= this.renderNorthSide(block, x, y, z, r, g, b, aoLevel, useNorthColor, doGrassEdges);
         }
 
         if (renderSouth) {
-            var10 |= this.renderSouthSide(block, x, y, z, r, g, b, aoLevel, var20, doGrassEdges);
+            var10 |= this.renderSouthSide(block, x, y, z, r, g, b, aoLevel, useSouthColor, doGrassEdges);
         }
 
         this.field_92 = false;
@@ -1048,13 +1048,14 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                 brightness = block.getBrightness(this.blockView, x, y, z - 1);
             }
 
-            ts.color(var19 * brightness, var22 * brightness, var25 * brightness);
             long bTexture = ((AC_TexturedBlock) block).getTextureForSideEx(this.blockView, x, y, z, 2);
             if (hasColorBit(bTexture)) {
                 ts.color(var19 * brightness * r, var22 * brightness * g, var25 * brightness * b);
+            } else {
+                ts.color(var19 * brightness, var22 * brightness, var25 * brightness);
             }
-
             this.renderEastFace(block, x, y, z, (int) bTexture);
+
             if (doGrassEdges && bTexture == 3 && this.textureOverride < 0) {
                 ts.color(var19 * brightness * r, var22 * brightness * g, var25 * brightness * b);
                 this.renderEastFace(block, x, y, z, 38);
@@ -1071,13 +1072,14 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                 brightness = block.getBrightness(this.blockView, x, y, z + 1);
             }
 
-            ts.color(var19 * brightness, var22 * brightness, var25 * brightness);
             long bTexture = ((AC_TexturedBlock) block).getTextureForSideEx(this.blockView, x, y, z, 3);
             if (hasColorBit(bTexture)) {
                 ts.color(var19 * brightness * r, var22 * brightness * g, var25 * brightness * b);
+            } else {
+                ts.color(var19 * brightness, var22 * brightness, var25 * brightness);
             }
-
             this.renderWestFace(block, x, y, z, (int) bTexture);
+
             if (doGrassEdges && bTexture == 3 && this.textureOverride < 0) {
                 ts.color(var19 * brightness * r, var22 * brightness * g, var25 * brightness * b);
                 this.renderWestFace(block, x, y, z, 38);
@@ -1094,13 +1096,14 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                 brightness = block.getBrightness(this.blockView, x - 1, y, z);
             }
 
-            ts.color(var20 * brightness, var23 * brightness, var26 * brightness);
             long bTexture = ((AC_TexturedBlock) block).getTextureForSideEx(this.blockView, x, y, z, 4);
             if (hasColorBit(bTexture)) {
                 ts.color(var20 * brightness * r, var23 * brightness * g, var26 * brightness * b);
+            } else {
+                ts.color(var20 * brightness, var23 * brightness, var26 * brightness);
             }
-
             this.renderNorthFace(block, x, y, z, (int) bTexture);
+
             if (doGrassEdges && bTexture == 3 && this.textureOverride < 0) {
                 ts.color(var20 * brightness * r, var23 * brightness * g, var26 * brightness * b);
                 this.renderNorthFace(block, x, y, z, 38);
@@ -1117,13 +1120,14 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                 brightness = block.getBrightness(this.blockView, x + 1, y, z);
             }
 
-            ts.color(var20 * brightness, var23 * brightness, var26 * brightness);
             long bTexture = ((AC_TexturedBlock) block).getTextureForSideEx(this.blockView, x, y, z, 5);
             if (hasColorBit(bTexture)) {
                 ts.color(var20 * brightness * r, var23 * brightness * g, var26 * brightness * b);
+            } else {
+                ts.color(var20 * brightness, var23 * brightness, var26 * brightness);
             }
-
             this.renderSouthFace(block, x, y, z, (int) bTexture);
+
             if (doGrassEdges && bTexture == 3 && this.textureOverride < 0) {
                 ts.color(var20 * brightness * r, var23 * brightness * g, var26 * brightness * b);
                 this.renderSouthFace(block, x, y, z, 38);
