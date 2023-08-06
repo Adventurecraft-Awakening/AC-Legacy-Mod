@@ -2,7 +2,6 @@ package dev.adventurecraft.awakening.mixin.block;
 
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.client.options.ConnectedGrassOption;
-import dev.adventurecraft.awakening.client.options.Config;
 import dev.adventurecraft.awakening.common.AC_IBlockColor;
 import dev.adventurecraft.awakening.extension.block.AC_TexturedBlock;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
@@ -117,8 +116,8 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
     }
 
     @Override
-    public float grassMultiplier(int var1) {
-        return switch (var1) {
+    public float getGrassMultiplier(int meta) {
+        return switch (meta) {
             case 2 -> 0.62F;
             case 3 -> 0.85F;
             case 4 -> -1.0F;
