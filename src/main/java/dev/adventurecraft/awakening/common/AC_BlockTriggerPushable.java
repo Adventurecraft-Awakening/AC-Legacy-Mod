@@ -2,13 +2,12 @@ package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import net.minecraft.block.BlockWithEntity;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.BlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.world.World;
 
-public class AC_BlockTriggerPushable extends BlockWithEntity implements AC_IBlockColor {
+public class AC_BlockTriggerPushable extends AC_BlockColorWithEntity {
 
     protected AC_BlockTriggerPushable(int var1, int var2) {
         super(var1, var2, Material.STONE);
@@ -46,7 +45,6 @@ public class AC_BlockTriggerPushable extends BlockWithEntity implements AC_IBloc
                 ExBlock.resetArea(world, entity.minX, entity.minY, entity.minZ, entity.maxX, entity.maxY, entity.maxZ);
             }
         }
-
     }
 
     public void setTriggerToSelection(World world, int x, int y, int z) {
@@ -71,8 +69,8 @@ public class AC_BlockTriggerPushable extends BlockWithEntity implements AC_IBloc
     }
 
     @Override
-    public void incrementColor(World world, int x, int y, int z) {
-        AC_IBlockColor.super.incrementColor(world, x, y, z);
+    public void incrementColor(World world, int x, int y, int z, int amount) {
+        super.incrementColor(world, x, y, z, amount);
         this.onAdjacentBlockUpdate(world, x, y, z, 0);
     }
 }

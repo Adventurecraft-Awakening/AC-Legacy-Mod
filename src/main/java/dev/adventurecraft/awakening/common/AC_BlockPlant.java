@@ -40,8 +40,7 @@ public class AC_BlockPlant extends Block implements AC_IBlockColor {
     }
 
     @Override
-    public void incrementColor(World world, int x, int y, int z) {
-        int var5 = world.getBlockMeta(x, y, z);
-        world.setBlockMeta(x, y, z, (var5 + 1) % ExBlock.subTypes[this.id]);
+    public int getMaxColorMeta() {
+        return ExBlock.subTypes[this.id];
     }
 }

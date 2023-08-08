@@ -17,7 +17,8 @@ public class AC_ItemBrush extends Item {
     public boolean useOnBlock(ItemStack stack, PlayerEntity player, World world, int x, int y, int z, int side) {
         Block block = Block.BY_ID[world.getBlockId(x, y, z)];
         if (block instanceof AC_IBlockColor) {
-            ((AC_IBlockColor) block).incrementColor(world, x, y, z);
+            int amount = player.method_1373() ? -1 : 1;
+            ((AC_IBlockColor) block).incrementColor(world, x, y, z, amount);
             world.notifyListeners(x, y, z);
         } else {
             Minecraft.instance.overlay.addChatMessage("Doesn't implement Color :(");

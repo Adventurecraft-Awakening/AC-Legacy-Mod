@@ -1,13 +1,13 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.block.Block;
+import net.minecraft.block.BlockWithEntity;
 import net.minecraft.block.material.Material;
 import net.minecraft.world.BlockView;
 
-public class AC_BlockColor extends Block implements AC_IBlockColor {
+public abstract class AC_BlockColorWithEntity extends BlockWithEntity implements AC_IBlockColor {
 
-    public AC_BlockColor(int var1, int var2, Material var3) {
-        super(var1, var2, var3);
+    protected AC_BlockColorWithEntity(int i, int j, Material arg) {
+        super(i, j, arg);
     }
 
     @Override

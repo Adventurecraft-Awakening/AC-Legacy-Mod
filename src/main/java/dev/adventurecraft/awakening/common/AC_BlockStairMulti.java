@@ -61,23 +61,22 @@ public class AC_BlockStairMulti extends StairsBlock implements AC_IBlockColor {
     }
 
     @Override
+    public int getMaxColorMeta() {
+        return 16;
+    }
+
+    @Override
     public int getColorMultiplier(BlockView view, int x, int y, int z) {
         return 0xFFFFFF;
     }
 
     @Override
-    public int getColorMetaData(BlockView view, int x, int y, int z) {
+    public int getColorMeta(BlockView view, int x, int y, int z) {
         return view.getBlockMeta(x, y, z) >> 2;
     }
 
     @Override
-    public void setColorMetaData(World world, int x, int y, int z, int meta) {
+    public void setColorMeta(World world, int x, int y, int z, int meta) {
         world.setBlockMeta(x, y, z, world.getBlockMeta(x, y, z) & 3 | meta << 2);
-    }
-
-    @Override
-    public void incrementColor(World world, int x, int y, int z) {
-        int meta = (this.getColorMetaData(world, x, y, z) + 1) % 16;
-        this.setColorMetaData(world, x, y, z, meta);
     }
 }

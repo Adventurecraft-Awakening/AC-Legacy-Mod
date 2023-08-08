@@ -110,9 +110,8 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
     }
 
     @Override
-    public void incrementColor(World world, int x, int y, int z) {
-        int meta = world.getBlockMeta(x, y, z);
-        world.setBlockMeta(x, y, z, (meta + 1) % ExBlock.subTypes[this.id]);
+    public int getMaxColorMeta() {
+        return ExBlock.subTypes[this.id];
     }
 
     @Override

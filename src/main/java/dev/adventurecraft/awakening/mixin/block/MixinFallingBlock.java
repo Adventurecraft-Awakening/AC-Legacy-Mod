@@ -36,15 +36,12 @@ public abstract class MixinFallingBlock extends Block implements AC_IBlockColor 
     }
 
     @Override
-    public int getTextureForSide(int var1, int var2) {
-        return var2 == 0 ? this.texture : 228 + var2 - 1;
+    public int getTextureForSide(int var1, int meta) {
+        return meta == 0 ? this.texture : 228 + meta - 1;
     }
 
     @Override
-    public void incrementColor(World world, int x, int y, int z) {
-        if (ExBlock.subTypes[this.id] > 0) {
-            int var5 = world.getBlockMeta(x, y, z);
-            world.setBlockMeta(x, y, z, (var5 + 1) % ExBlock.subTypes[this.id]);
-        }
+    public int getMaxColorMeta() {
+        return ExBlock.subTypes[this.id];
     }
 }

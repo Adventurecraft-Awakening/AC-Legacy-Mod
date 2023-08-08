@@ -12,13 +12,12 @@ public class AC_BlockPillar extends Block implements AC_IBlockColor {
     }
 
     @Override
-    public int getTextureForSide(int var1, int var2) {
-        return var1 == 1 ? this.texture - 16 + var2 : (var1 == 0 ? this.texture + 16 + var2 : this.texture + var2);
+    public int getTextureForSide(int var1, int meta) {
+        return var1 == 1 ? this.texture - 16 + meta : (var1 == 0 ? this.texture + 16 + meta : this.texture + meta);
     }
 
     @Override
-    public void incrementColor(World world, int x, int y, int z) {
-        int var5 = world.getBlockMeta(x, y, z);
-        world.setBlockMeta(x, y, z, (var5 + 1) % ExBlock.subTypes[this.id]);
+    public int getMaxColorMeta() {
+        return ExBlock.subTypes[this.id];
     }
 }

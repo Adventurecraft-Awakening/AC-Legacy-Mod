@@ -161,7 +161,7 @@ public abstract class MixinStairsBlock extends Block implements AC_IBlockColor {
 
     @Override
     public int getColorMultiplier(BlockView view, int x, int y, int z) {
-        int meta = this.getColorMetaData(view, x, y, z);
+        int meta = this.getColorMeta(view, x, y, z);
         if (meta == 1) {
             meta = 16775065;
         } else if (meta == 2) {
@@ -181,12 +181,12 @@ public abstract class MixinStairsBlock extends Block implements AC_IBlockColor {
     }
 
     @Override
-    public int getColorMetaData(BlockView view, int x, int y, int z) {
+    public int getColorMeta(BlockView view, int x, int y, int z) {
         return view.getBlockMeta(x, y, z) >> 2;
     }
 
     @Override
-    public void setColorMetaData(World world, int x, int y, int z, int meta) {
+    public void setColorMeta(World world, int x, int y, int z, int meta) {
         world.setBlockMeta(x, y, z, world.getBlockMeta(x, y, z) & 3 | meta << 2);
     }
 }
