@@ -22,12 +22,12 @@ public abstract class MixinMonsterEntity extends MixinMobEntity implements ExMon
     }
 
     @Override
-    public boolean attackEntityFromMulti(Entity var1, int var2) {
+    public boolean attackEntityFromMulti(Entity entity, int damage) {
         this.timeBeforeForget = 40;
-        if (super.attackEntityFromMulti(var1, var2)) {
-            if (this.passenger != var1 && this.vehicle != var1) {
-                if (var1 != (Object) this) {
-                    this.entity = var1;
+        if (super.attackEntityFromMulti(entity, damage)) {
+            if (this.passenger != entity && this.vehicle != entity) {
+                if (entity != (Object) this) {
+                    this.entity = entity;
                 }
             }
             return true;

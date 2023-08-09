@@ -8,11 +8,11 @@ import net.minecraft.world.World;
 
 public class AC_ItemPaintBucket extends Item {
 
-    protected AC_ItemPaintBucket(int var1) {
-        super(var1);
+    protected AC_ItemPaintBucket(int id) {
+        super(id);
     }
 
-    public boolean useOnBlock(ItemStack item, PlayerEntity player, World world, int x, int y, int z, int meta) {
+    public boolean useOnBlock(ItemStack stack, PlayerEntity player, World world, int x, int y, int z, int meta) {
         // TODO: use on singular block?
         if (!AC_ItemCursor.bothSet) {
             return false;

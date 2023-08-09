@@ -987,8 +987,8 @@ public abstract class MixinMinecraft implements ExMinecraft {
             Scriptable globalScope = exWorld.getScript().globalScope;
 
             if (this.lastItemUsed != stack) {
-                var var13 = Context.javaToJS(new ScriptItem(stack), globalScope);
-                ScriptableObject.putProperty(globalScope, "lastItemUsed", var13);
+                var tmp = Context.javaToJS(new ScriptItem(stack), globalScope);
+                ScriptableObject.putProperty(globalScope, "lastItemUsed", tmp);
                 this.lastItemUsed = stack;
             }
 

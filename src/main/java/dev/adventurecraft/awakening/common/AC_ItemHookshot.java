@@ -7,6 +7,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 
 public class AC_ItemHookshot extends Item {
+
     public AC_EntityHookshot mainHookshot = null;
     public AC_EntityHookshot offHookshot = null;
     public ItemStack mainActiveHookshot = null;
@@ -27,51 +28,52 @@ public class AC_ItemHookshot extends Item {
         return var1 == 1 ? this.texturePosition + 1 : this.texturePosition;
     }
 
-    public ItemStack use(ItemStack var1, World var2, PlayerEntity var3) {
-        boolean var4 = true;
-        AC_EntityHookshot var5;
-        AC_EntityHookshot var6;
-        if (!((ExPlayerEntity) var3).areSwappedItems()) {
-            var5 = this.mainHookshot;
-            var6 = this.offHookshot;
+    public ItemStack use(ItemStack stack, World world, PlayerEntity player) {
+        boolean swapped;
+        AC_EntityHookshot mainHook;
+        AC_EntityHookshot offHook;
+        if (!((ExPlayerEntity) player).areSwappedItems()) {
+            mainHook = this.mainHookshot;
+            offHook = this.offHookshot;
+            swapped = true;
         } else {
-            var5 = this.offHookshot;
-            var6 = this.mainHookshot;
-            var4 = false;
+            mainHook = this.offHookshot;
+            offHook = this.mainHookshot;
+            swapped = false;
         }
 
-        if ((var5 == null || var5.removed) && (var6 != null && var6.attachedToSurface || var3.onGround || var3.method_1335() || var3.method_1393())) {
-            var5 = new AC_EntityHookshot(var2, var3, var4, var1);
-            var2.spawnEntity(var5);
-            var3.swingHand();
-            if (var4) {
-                this.mainActiveHookshot = var1;
+        if ((mainHook == null || mainHook.removed) && (offHook != null && offHook.attachedToSurface || player.onGround || player.method_1335() || player.method_1393())) {
+            mainHook = new AC_EntityHookshot(world, player, swapped, stack);
+            world.spawnEntity(mainHook);
+            player.swingHand();
+            if (swapped) {
+                this.mainActiveHookshot = stack;
                 this.mainActiveHookshot.setMeta(1);
             } else {
-                this.offActiveHookshot = var1;
+                this.offActiveHookshot = stack;
                 this.offActiveHookshot.setMeta(1);
             }
 
-            this.player = var3;
+            this.player = player;
         } else {
-            this.releaseHookshot(var5);
+            this.releaseHookshot(mainHook);
         }
 
-        if (var4) {
-            this.mainHookshot = var5;
+        if (swapped) {
+            this.mainHookshot = mainHook;
         } else {
-            this.offHookshot = var5;
+            this.offHookshot = mainHook;
         }
 
-        return var1;
+        return stack;
     }
 
-    public void releaseHookshot(AC_EntityHookshot var1) {
-        if (var1 != null) {
-            var1.turningAround = true;
-            var1.attachedToSurface = false;
-            var1.entityGrabbed = null;
-            if (var1 == this.mainHookshot && this.mainActiveHookshot != null) {
+    public void releaseHookshot(AC_EntityHookshot entity) {
+        if (entity != null) {
+            entity.turningAround = true;
+            entity.attachedToSurface = false;
+            entity.entityGrabbed = null;
+            if (entity == this.mainHookshot && this.mainActiveHookshot != null) {
                 this.mainActiveHookshot.setMeta(0);
                 this.mainActiveHookshot = null;
             } else if (this.offActiveHookshot != null) {

@@ -974,8 +974,8 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     }
 
     @Override
-    public void drawCursorSelection(LivingEntity entity, ItemStack item, float deltaTime) {
-        if (!AC_ItemCursor.bothSet || item == null || item.itemId < AC_Items.cursor.id || item.itemId > AC_Items.cursor.id + 20) {
+    public void drawCursorSelection(LivingEntity entity, ItemStack stack, float deltaTime) {
+        if (!AC_ItemCursor.bothSet || stack == null || stack.itemId < AC_Items.cursor.id || stack.itemId > AC_Items.cursor.id + 20) {
             return;
         }
 

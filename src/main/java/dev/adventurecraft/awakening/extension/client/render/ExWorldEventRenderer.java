@@ -7,7 +7,7 @@ import net.minecraft.item.ItemStack;
 
 public interface ExWorldEventRenderer {
 
-    void drawCursorSelection(LivingEntity entity, ItemStack item, float deltaTime);
+    void drawCursorSelection(LivingEntity entity, ItemStack stack, float deltaTime);
 
     void drawEntityPath(Entity entity, LivingEntity viewEntity, float deltaTime);
 

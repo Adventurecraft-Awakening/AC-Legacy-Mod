@@ -151,7 +151,7 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
     protected abstract String getHurtSound();
 
     @Shadow
-    public abstract void onKilledBy(Entity arg);
+    public abstract void onKilledBy(Entity killer);
 
     @Shadow
     protected abstract void tryDespawn();
@@ -168,24 +168,24 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
     }
 
     @Overwrite
-    public boolean method_928(Entity var1) {
-        double var2 = -180.0D * Math.atan2(var1.x - this.x, var1.z - this.z) / Math.PI;
+    public boolean method_928(Entity entity) {
+        double entityYaw = -180.0D * Math.atan2(entity.x - this.x, entity.z - this.z) / Math.PI;
 
-        double var4 = var2 - this.yaw;
-        while (var4 < -180.0D) {
-            var4 += 360.0D;
+        double viewYaw = entityYaw - this.yaw;
+        while (viewYaw < -180.0D) {
+            viewYaw += 360.0D;
         }
 
-        while (var4 > 180.0D) {
-            var4 -= 360.0D;
+        while (viewYaw > 180.0D) {
+            viewYaw -= 360.0D;
         }
 
-        if (Math.abs(var4) > (this.fov / 2.0F + this.extraFov)) {
+        if (Math.abs(viewYaw) > (this.fov / 2.0F + this.extraFov)) {
             return false;
         }
 
         Vec3d start = Vec3d.from(this.x, this.y + this.getStandingEyeHeight(), this.z);
-        Vec3d end = Vec3d.from(var1.x, var1.y + var1.getStandingEyeHeight(), var1.z);
+        Vec3d end = Vec3d.from(entity.x, entity.y + entity.getStandingEyeHeight(), entity.z);
         return this.world.method_160(start, end) == null;
     }
 
@@ -219,12 +219,12 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
             value = "FIELD",
             target = "Lnet/minecraft/entity/LivingEntity;hurtTime:I",
             shift = At.Shift.AFTER))
-    private void setHurtTickOnDamage(Entity var1, int var2, CallbackInfoReturnable<Boolean> cir) {
+    private void setHurtTickOnDamage(Entity entity, int damage, CallbackInfoReturnable<Boolean> cir) {
         this.hurtTick = this.world.getWorldTime();
     }
 
     @Overwrite
-    public boolean damage(Entity var1, int var2) {
+    public boolean damage(Entity entity, int damage) {
         if (this.world.isClient) {
             return false;
         }
@@ -236,50 +236,50 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
 
         this.extraFov = 180.0F;
         this.limbDistance = 1.5F;
-        boolean var3 = true;
+        boolean attacked = true;
         if ((float) this.field_1613 > (float) this.field_1009 / 2.0F && this.hurtTime > 0) {
-            if (var2 <= this.field_1058) {
+            if (damage <= this.field_1058) {
                 return false;
             }
 
-            this.applyDamage(var2 - this.field_1058);
-            this.field_1058 = var2;
-            var3 = false;
+            this.applyDamage(damage - this.field_1058);
+            this.field_1058 = damage;
+            attacked = false;
         } else {
-            this.field_1058 = var2;
+            this.field_1058 = damage;
             this.prevHealth = this.health;
             this.field_1613 = this.field_1009;
-            this.applyDamage(var2);
+            this.applyDamage(damage);
             this.hurtTime = this.field_1039 = 10;
             this.hurtTick = this.world.getWorldTime();
         }
 
         this.field_1040 = 0.0F;
-        if (var3) {
+        if (attacked) {
             this.world.method_185((Entity) (Object) this, (byte) 2);
             this.setAttacked();
-            if (var1 != null) {
-                double var4 = var1.x - this.x;
-
-                double var6;
-                for (var6 = var1.z - this.z; var4 * var4 + var6 * var6 < 1.0E-4D; var6 = (Math.random() - Math.random()) * 0.01D) {
-                    var4 = (Math.random() - Math.random()) * 0.01D;
+            if (entity != null) {
+                double dX = entity.x - this.x;
+                double dZ = entity.z - this.z;
+                while (dX * dX + dZ * dZ < 1.0E-4D) {
+                    dX = (Math.random() - Math.random()) * 0.01D;
+                    dZ = (Math.random() - Math.random()) * 0.01D;
                 }
 
-                this.field_1040 = (float) (Math.atan2(var6, var4) * 180.0D / (double) ((float) Math.PI)) - this.yaw;
-                this.method_925(var1, var2, var4, var6);
+                this.field_1040 = (float) (Math.atan2(dZ, dX) * 180.0D / Math.PI) - this.yaw;
+                this.method_925(entity, damage, dX, dZ);
             } else {
                 this.field_1040 = (float) ((int) (Math.random() * 2.0D) * 180);
             }
         }
 
         if (this.health <= 0) {
-            if (var3) {
+            if (attacked) {
                 this.world.playSound((Entity) (Object) this, this.getDeathSound(), this.getSoundVolume(), (this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F + 1.0F);
             }
 
-            this.onKilledBy(var1);
-        } else if (var3) {
+            this.onKilledBy(entity);
+        } else if (attacked) {
             this.world.playSound((Entity) (Object) this, this.getHurtSound(), this.getSoundVolume(), (this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F + 1.0F);
         }
 
@@ -287,7 +287,7 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
     }
 
     @Override
-    public boolean attackEntityFromMulti(Entity var1, int var2) {
+    public boolean attackEntityFromMulti(Entity entity, int damage) {
         if (this.world.isClient) {
             return false;
         }
@@ -299,50 +299,50 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
 
         this.extraFov = 180.0F;
         this.limbDistance = 1.5F;
-        boolean var3 = true;
+        boolean attacked = true;
         if ((float) this.field_1613 > (float) this.field_1009 / 2.0F && this.hurtTick != this.world.getWorldTime()) {
-            if (var2 <= this.field_1058) {
+            if (damage <= this.field_1058) {
                 return false;
             }
 
-            this.applyDamage(var2 - this.field_1058);
-            this.field_1058 = var2;
-            var3 = false;
+            this.applyDamage(damage - this.field_1058);
+            this.field_1058 = damage;
+            attacked = false;
         } else {
-            this.field_1058 = var2;
+            this.field_1058 = damage;
             this.prevHealth = this.health;
             this.field_1613 = this.field_1009;
-            this.applyDamage(var2);
+            this.applyDamage(damage);
             this.hurtTime = this.field_1039 = 10;
             this.hurtTick = this.world.getWorldTime();
         }
 
         this.field_1040 = 0.0F;
-        if (var3) {
+        if (attacked) {
             this.world.method_185((Entity) (Object) this, (byte) 2);
             this.setAttacked();
-            if (var1 != null) {
-                double var4 = var1.x - this.x;
-
-                double var6;
-                for (var6 = var1.z - this.z; var4 * var4 + var6 * var6 < 1.0E-4D; var6 = (Math.random() - Math.random()) * 0.01D) {
-                    var4 = (Math.random() - Math.random()) * 0.01D;
+            if (entity != null) {
+                double dX = entity.x - this.x;
+                double dZ = entity.z - this.z;
+                while (dX * dX + dZ * dZ < 1.0E-4D) {
+                    dX = (Math.random() - Math.random()) * 0.01D;
+                    dZ = (Math.random() - Math.random()) * 0.01D;
                 }
 
-                this.field_1040 = (float) (Math.atan2(var6, var4) * 180.0D / (double) ((float) Math.PI)) - this.yaw;
-                this.method_925(var1, var2, var4, var6);
+                this.field_1040 = (float) (Math.atan2(dZ, dX) * 180.0D / Math.PI) - this.yaw;
+                this.method_925(entity, damage, dX, dZ);
             } else {
                 this.field_1040 = (float) ((int) (Math.random() * 2.0D) * 180);
             }
         }
 
         if (this.health <= 0) {
-            if (var3) {
+            if (attacked) {
                 this.world.playSound((Entity) (Object) this, this.getDeathSound(), this.getSoundVolume(), (this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F + 1.0F);
             }
 
-            this.onKilledBy(var1);
-        } else if (var3) {
+            this.onKilledBy(entity);
+        } else if (attacked) {
             this.world.playSound((Entity) (Object) this, this.getHurtSound(), this.getSoundVolume(), (this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F + 1.0F);
         }
 
@@ -373,20 +373,17 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
     }
 
     @Overwrite
-    public void travel(float var1, float var2) {
-        double var3;
-        double var5;
-        float var7;
+    public void travel(float xInput, float zInput) {
         if (this.handleFlying()) {
-            var3 = Math.sqrt(var1 * var1 + var2 * var2);
-            var5 = (double) (-0.1F * var2) * Math.sin(this.pitch * Math.PI / 180.0);
-            if (var3 < 1.0D) {
-                var5 *= var3;
+            double speed = Math.sqrt(xInput * xInput + zInput * zInput);
+            double yVel = (double) (-0.1F * zInput) * Math.sin(this.pitch * Math.PI / 180.0);
+            if (speed < 1.0D) {
+                yVel *= speed;
             }
 
-            this.yVelocity += var5;
-            var7 = (float) (0.1 * (Math.abs(var2 * Math.cos(this.pitch * Math.PI / 180.0)) + Math.abs(var1)));
-            this.movementInputToVelocity(var1, var2, var7);
+            this.yVelocity += yVel;
+            float inputSpeed = (float) (0.1 * (Math.abs(zInput * Math.cos(this.pitch * Math.PI / 180.0)) + Math.abs(xInput)));
+            this.movementInputToVelocity(xInput, zInput, inputSpeed);
             this.move(this.xVelocity, this.yVelocity, this.zVelocity);
             this.fallDistance = 0.0F;
             this.xVelocity *= 0.8D;
@@ -408,14 +405,14 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
                 this.yVelocity *= 0.8D;
             }
 
-            var3 = this.y;
-            this.movementInputToVelocity(var1, var2, 0.02F);
+            double lastY = this.y;
+            this.movementInputToVelocity(xInput, zInput, 0.02F);
             this.move(this.xVelocity, this.yVelocity, this.zVelocity);
             this.xVelocity *= 0.8F;
             this.yVelocity *= 0.8F;
             this.zVelocity *= 0.8F;
             this.yVelocity -= 0.25D * this.getGravity();
-            if (this.field_1624 && this.method_1344(this.xVelocity, this.yVelocity + (double) 0.6F - this.y + var3, this.zVelocity)) {
+            if (this.field_1624 && this.method_1344(this.xVelocity, this.yVelocity + (double) 0.6F - this.y + lastY, this.zVelocity)) {
                 this.yVelocity = 0.3F;
             }
         } else if (this.method_1335()) {
@@ -423,53 +420,53 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
                 this.yVelocity *= 0.5D;
             }
 
-            var3 = this.y;
-            this.movementInputToVelocity(var1, var2, 0.02F);
+            double lastY = this.y;
+            this.movementInputToVelocity(xInput, zInput, 0.02F);
             this.move(this.xVelocity, this.yVelocity, this.zVelocity);
             this.xVelocity *= 0.5D;
             this.yVelocity *= 0.5D;
             this.zVelocity *= 0.5D;
             this.yVelocity -= 0.25D * this.getGravity();
-            if (this.field_1624 && this.method_1344(this.xVelocity, this.yVelocity + (double) 0.6F - this.y + var3, this.zVelocity)) {
+            if (this.field_1624 && this.method_1344(this.xVelocity, this.yVelocity + (double) 0.6F - this.y + lastY, this.zVelocity)) {
                 this.yVelocity = 0.3F;
             }
         } else {
-            float var8 = 0.91F;
+            float slipperiness = 0.91F;
             if (this.onGround) {
-                var8 = 0.5460001F;
-                int var4 = this.world.getBlockId(MathHelper.floor(this.x), MathHelper.floor(this.boundingBox.minY) - 1, MathHelper.floor(this.z));
-                if (var4 > 0) {
-                    var8 = Block.BY_ID[var4].slipperiness * 0.91F;
+                slipperiness = 0.5460001F;
+                int id = this.world.getBlockId(MathHelper.floor(this.x), MathHelper.floor(this.boundingBox.minY) - 1, MathHelper.floor(this.z));
+                if (id > 0) {
+                    slipperiness = Block.BY_ID[id].slipperiness * 0.91F;
                 }
             }
 
-            float var9 = 0.1627714F / (var8 * var8 * var8);
-            this.movementInputToVelocity(var1, var2, this.onGround ? 0.1F * var9 : 0.1F * this.airControl * var9);
-            var8 = 0.91F;
+            float inputFactor = 0.1627714F / (slipperiness * slipperiness * slipperiness);
+            this.movementInputToVelocity(xInput, zInput, this.onGround ? 0.1F * inputFactor : 0.1F * this.airControl * inputFactor);
+            slipperiness = 0.91F;
             if (this.onGround) {
-                var8 = 0.5460001F;
-                int var10 = this.world.getBlockId(MathHelper.floor(this.x), MathHelper.floor(this.boundingBox.minY) - 1, MathHelper.floor(this.z));
-                if (var10 > 0) {
-                    var8 = Block.BY_ID[var10].slipperiness * 0.91F;
+                slipperiness = 0.5460001F;
+                int id = this.world.getBlockId(MathHelper.floor(this.x), MathHelper.floor(this.boundingBox.minY) - 1, MathHelper.floor(this.z));
+                if (id > 0) {
+                    slipperiness = Block.BY_ID[id].slipperiness * 0.91F;
                 }
             }
 
             if (this.method_932()) {
-                float var11 = 0.15F;
-                if (this.xVelocity < (double) (-var11)) {
-                    this.xVelocity = -var11;
+                double deceleration = 0.15F;
+                if (this.xVelocity < -deceleration) {
+                    this.xVelocity = -deceleration;
                 }
 
-                if (this.xVelocity > (double) var11) {
-                    this.xVelocity = var11;
+                if (this.xVelocity > deceleration) {
+                    this.xVelocity = deceleration;
                 }
 
-                if (this.zVelocity < (double) (-var11)) {
-                    this.zVelocity = -var11;
+                if (this.zVelocity < -deceleration) {
+                    this.zVelocity = -deceleration;
                 }
 
-                if (this.zVelocity > (double) var11) {
-                    this.zVelocity = var11;
+                if (this.zVelocity > deceleration) {
+                    this.zVelocity = deceleration;
                 }
 
                 this.fallDistance = 0.0F;
@@ -489,19 +486,15 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
 
             this.yVelocity -= this.getGravity();
             this.yVelocity *= 0.98F;
-            this.xVelocity *= var8;
-            this.zVelocity *= var8;
+            this.xVelocity *= slipperiness;
+            this.zVelocity *= slipperiness;
         }
 
         this.field_1048 = this.limbDistance;
-        var3 = this.x - this.prevX;
-        var5 = this.z - this.prevZ;
-        var7 = MathHelper.sqrt(var3 * var3 + var5 * var5) * 4.0F;
-        if (var7 > 1.0F) {
-            var7 = 1.0F;
-        }
-
-        this.limbDistance += (var7 - this.limbDistance) * 0.4F;
+        double dX = this.x - this.prevX;
+        double dZ = this.z - this.prevZ;
+        float limbChange = (float) Math.min(Math.sqrt(dX * dX + dZ * dZ) * 4.0D, 1.0D);
+        this.limbDistance += (limbChange - this.limbDistance) * 0.4F;
         this.field_1050 += this.limbDistance;
     }
 
@@ -538,51 +531,51 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
     }
 
     @Inject(method = "writeAdditional", at = @At("TAIL"))
-    private void writeAdditionalAC(CompoundTag var1, CallbackInfo ci) {
-        var1.put("MaxHealth", (short) this.maxHealth);
-        var1.put("EntityID", this.entityId);
-        var1.put("timesCanJumpInAir", this.timesCanJumpInAir);
-        var1.put("canWallJump", this.canWallJump);
-        var1.put("fov", this.fov);
-        var1.put("canLookRandomly", this.canLookRandomly);
-        var1.put("randomLookVelocity", this.randomLookVelocity);
-        var1.put("randomLookRate", this.randomLookRate);
-        var1.put("randomLookRateVariation", this.randomLookRateVariation);
+    private void writeAdditionalAC(CompoundTag tag, CallbackInfo ci) {
+        tag.put("MaxHealth", (short) this.maxHealth);
+        tag.put("EntityID", this.entityId);
+        tag.put("timesCanJumpInAir", this.timesCanJumpInAir);
+        tag.put("canWallJump", this.canWallJump);
+        tag.put("fov", this.fov);
+        tag.put("canLookRandomly", this.canLookRandomly);
+        tag.put("randomLookVelocity", this.randomLookVelocity);
+        tag.put("randomLookRate", this.randomLookRate);
+        tag.put("randomLookRateVariation", this.randomLookRateVariation);
     }
 
     @Inject(method = "readAdditional", at = @At("TAIL"))
-    private void readAdditionalAC(CompoundTag var1, CallbackInfo ci) {
-        if (!var1.containsKey("MaxHealth")) {
+    private void readAdditionalAC(CompoundTag tag, CallbackInfo ci) {
+        if (!tag.containsKey("MaxHealth")) {
             this.maxHealth = 10;
         } else {
-            this.maxHealth = var1.getShort("MaxHealth");
+            this.maxHealth = tag.getShort("MaxHealth");
         }
 
         //noinspection ConstantValue
-        if (var1.containsKey("EntityID") && !(((Object) this instanceof PlayerEntity))) {
-            this.entityId = var1.getInt("EntityID");
+        if (tag.containsKey("EntityID") && !(((Object) this instanceof PlayerEntity))) {
+            this.entityId = tag.getInt("EntityID");
         }
 
-        this.timesCanJumpInAir = var1.getInt("timesCanJumpInAir");
-        this.canWallJump = var1.getBoolean("canWallJump");
-        if (var1.containsKey("fov")) {
-            this.fov = var1.getFloat("fov");
+        this.timesCanJumpInAir = tag.getInt("timesCanJumpInAir");
+        this.canWallJump = tag.getBoolean("canWallJump");
+        if (tag.containsKey("fov")) {
+            this.fov = tag.getFloat("fov");
         }
 
-        if (var1.containsKey("canLookRandomly")) {
-            this.canLookRandomly = var1.getBoolean("canLookRandomly");
+        if (tag.containsKey("canLookRandomly")) {
+            this.canLookRandomly = tag.getBoolean("canLookRandomly");
         }
 
-        if (var1.containsKey("randomLookVelocity")) {
-            this.randomLookVelocity = var1.getFloat("randomLookVelocity");
+        if (tag.containsKey("randomLookVelocity")) {
+            this.randomLookVelocity = tag.getFloat("randomLookVelocity");
         }
 
-        if (var1.containsKey("randomLookRate")) {
-            this.randomLookRate = var1.getInt("randomLookRate");
+        if (tag.containsKey("randomLookRate")) {
+            this.randomLookRate = tag.getInt("randomLookRate");
         }
 
-        if (var1.containsKey("randomLookRateVariation")) {
-            this.randomLookRateVariation = var1.getInt("randomLookRateVariation");
+        if (tag.containsKey("randomLookRateVariation")) {
+            this.randomLookRateVariation = tag.getInt("randomLookRateVariation");
         }
     }
 
@@ -666,27 +659,27 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         this.tryDespawn();
         this.horizontalVelocity = 0.0F;
         this.forwardVelocity = 0.0F;
-        float var2 = 8.0F;
+        double searchDist = 8.0F;
         if (this.rand.nextFloat() < 0.02F) {
-            PlayerEntity var3 = this.world.getClosestPlayerTo((Entity) (Object) this, var2);
-            if (var3 != null && this.method_928(var3)) {
-                this.target = var3;
+            PlayerEntity player = this.world.getClosestPlayerTo((Entity) (Object) this, searchDist);
+            if (player != null && this.method_928(player)) {
+                this.target = player;
                 this.field_1034 = 10 + this.rand.nextInt(20);
             }
         }
 
         if (this.target != null) {
             this.lookAt(this.target, 10.0F, (float) this.getLookPitchSpeed());
-            if (this.field_1034-- <= 0 || this.target.removed || this.target.method_1352((Entity) (Object) this) > (double) (var2 * var2)) {
+            if (this.field_1034-- <= 0 || this.target.removed || this.target.method_1352((Entity) (Object) this) > (searchDist * searchDist)) {
                 this.target = null;
             }
         } else if (this.canLookRandomly) {
             if (this.randomLookNext-- <= 0) {
-                float var5 = this.rand.nextFloat();
-                if ((double) var5 < 0.5D) {
-                    this.field_1030 = -this.randomLookVelocity * (var5 + 0.5F);
+                float rngLook = this.rand.nextFloat();
+                if (rngLook < 0.5F) {
+                    this.field_1030 = -this.randomLookVelocity * (rngLook + 0.5F);
                 } else {
-                    this.field_1030 = this.randomLookVelocity * var5;
+                    this.field_1030 = this.randomLookVelocity * rngLook;
                 }
 
                 this.randomLookNext = this.randomLookRate + this.rand.nextInt(this.randomLookRateVariation);
@@ -744,20 +737,20 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
             return false;
         }
 
-        double var7 = this.x - x;
-        double var9 = this.z - z;
-        float var11 = -57.29578F * (float) Math.atan2(var7, var9) + 180.0F;
+        double dX = this.x - x;
+        double dZ = this.z - z;
+        float shieldYaw = (float) (-57.29578D * Math.atan2(dX, dZ) + 180.0D);
 
-        float var12 = Math.abs(var11 - this.yaw);
-        while (var12 > 180.0F) {
-            var12 -= 360.0F;
+        float protectYaw = Math.abs(shieldYaw - this.yaw);
+        while (protectYaw > 180.0F) {
+            protectYaw -= 360.0F;
         }
 
-        while (var12 < -180.0F) {
-            var12 += 360.0F;
+        while (protectYaw < -180.0F) {
+            protectYaw += 360.0F;
         }
 
-        return var12 < 50.0F;
+        return protectYaw < 50.0F;
     }
 
     @Override

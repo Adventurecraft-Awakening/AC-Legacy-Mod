@@ -6,7 +6,6 @@ import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.util.math.AxixAlignedBoundingBox;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.objectweb.asm.Opcodes;
@@ -200,11 +199,13 @@ public abstract class MixinEntity implements ExEntity {
         }
     }
 
-    @Redirect(method = "move", at = @At(
-        value = "FIELD",
-        target = "Lnet/minecraft/entity/Entity;field_1611:I",
-        opcode = Opcodes.PUTFIELD,
-        ordinal = 0))
+    @Redirect(
+        method = "move",
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/entity/Entity;field_1611:I",
+            opcode = Opcodes.PUTFIELD,
+            ordinal = 0))
     private void moveCeil(Entity instance, int value) {
         instance.field_1611 = (int) ((double) this.field_1611 + Math.ceil((this.field_1635 - (float) this.field_1611)));
     }
@@ -221,15 +222,15 @@ public abstract class MixinEntity implements ExEntity {
     }
 
     @Overwrite
-    public void movementInputToVelocity(float var1, float var2, float var3) {
-        float var4 = var1 * var1 + var2 * var2;
-        if (var4 >= 1.0E-4F) {
-            var1 *= var3;
-            var2 *= var3;
-            float var5 = MathHelper.sin((this.yaw + this.moveYawOffset) * (float) Math.PI / 180.0F);
-            float var6 = MathHelper.cos((this.yaw + this.moveYawOffset) * (float) Math.PI / 180.0F);
-            this.xVelocity += var1 * var6 - var2 * var5;
-            this.zVelocity += var2 * var6 + var1 * var5;
+    public void movementInputToVelocity(float x, float z, float speed) {
+        float inputSqr = x * x + z * z;
+        if (inputSqr >= 1.0E-4F) {
+            x *= speed;
+            z *= speed;
+            double sin = Math.sin((this.yaw + this.moveYawOffset) * Math.PI / 180.0D);
+            double cos = Math.cos((this.yaw + this.moveYawOffset) * Math.PI / 180.0D);
+            this.xVelocity += x * cos - z * sin;
+            this.zVelocity += z * cos + x * sin;
         }
     }
 
@@ -280,8 +281,8 @@ public abstract class MixinEntity implements ExEntity {
     }
 
     @Override
-    public boolean attackEntityFromMulti(Entity var1, int var2) {
-        return this.damage(var1, var2);
+    public boolean attackEntityFromMulti(Entity entity, int damage) {
+        return this.damage(entity, damage);
     }
 
     @Override
