@@ -18,13 +18,11 @@ public class AC_EntityNPC extends AC_EntityLivingScript {
     public boolean pathToHome = true;
     public boolean trackPlayer = true;
     public boolean isAttackable = false;
-    int ticksTillNewPath = 0;
-    EntityPath pathToPoint = null;
     Entity entityToTrack;
     private boolean ranOnCreate = false;
 
-    public AC_EntityNPC(World var1) {
-        super(var1);
+    public AC_EntityNPC(World world) {
+        super(world);
         this.texture = "/mob/char.png";
         this.npcName = "New NPC";
         this.chatMsg = "Hello!";
@@ -59,22 +57,21 @@ public class AC_EntityNPC extends AC_EntityLivingScript {
         }
 
         if (this.entityToTrack != null) {
-            double var1 = this.entityToTrack.x - this.x;
-            double var3 = this.entityToTrack.z - this.z;
-            float var5 = (float) (Math.atan2(var3, var1) * 180.0D / (double) ((float) Math.PI)) - 90.0F;
+            double dX = this.entityToTrack.x - this.x;
+            double dZ = this.entityToTrack.z - this.z;
+            float newYaw = (float) (Math.atan2(dZ, dX) * 180.0D / (double) ((float) Math.PI)) - 90.0F;
 
-            float var6;
-            var6 = var5 - this.yaw;
-            while (var6 < -180.0F) {
-                var6 += 360.0F;
+            float extraYaw = newYaw - this.yaw;
+            while (extraYaw < -180.0F) {
+                extraYaw += 360.0F;
             }
 
-            while (var6 > 180.0F) {
-                var6 -= 360.0F;
+            while (extraYaw > 180.0F) {
+                extraYaw -= 360.0F;
             }
 
-            var6 = Math.max(Math.min(var6, 10.0F), -10.0F);
-            this.yaw += var6;
+            extraYaw = Math.max(Math.min(extraYaw, 10.0F), -10.0F);
+            this.yaw += extraYaw;
         }
 
     }
@@ -101,7 +98,7 @@ public class AC_EntityNPC extends AC_EntityLivingScript {
     }
 
     @Override
-    public void method_1353(Entity var1) {
+    public void method_1353(Entity entity) {
         //System.out.println("collision"); TODO ???
     }
 
@@ -110,47 +107,47 @@ public class AC_EntityNPC extends AC_EntityLivingScript {
     }
 
     @Override
-    public void writeAdditional(CompoundTag var1) {
-        super.writeAdditional(var1);
-        var1.put("npcName", this.npcName);
-        var1.put("chatMsg", this.chatMsg);
-        var1.put("texture", this.texture);
-        var1.put("spawnX", this.spawnX);
-        var1.put("spawnY", this.spawnY);
-        var1.put("spawnZ", this.spawnZ);
-        var1.put("pathToHome", this.pathToHome);
-        var1.put("trackPlayer", this.trackPlayer);
-        var1.put("isAttackable", this.isAttackable);
+    public void writeAdditional(CompoundTag tag) {
+        super.writeAdditional(tag);
+        tag.put("npcName", this.npcName);
+        tag.put("chatMsg", this.chatMsg);
+        tag.put("texture", this.texture);
+        tag.put("spawnX", this.spawnX);
+        tag.put("spawnY", this.spawnY);
+        tag.put("spawnZ", this.spawnZ);
+        tag.put("pathToHome", this.pathToHome);
+        tag.put("trackPlayer", this.trackPlayer);
+        tag.put("isAttackable", this.isAttackable);
     }
 
     @Override
-    public void readAdditional(CompoundTag var1) {
-        super.readAdditional(var1);
-        this.npcName = var1.getString("npcName");
-        this.chatMsg = var1.getString("chatMsg");
-        this.texture = var1.getString("texture");
-        if (var1.containsKey("spawnX")) {
-            this.spawnX = var1.getDouble("spawnX");
-            this.spawnY = var1.getDouble("spawnY");
-            this.spawnZ = var1.getDouble("spawnZ");
+    public void readAdditional(CompoundTag tag) {
+        super.readAdditional(tag);
+        this.npcName = tag.getString("npcName");
+        this.chatMsg = tag.getString("chatMsg");
+        this.texture = tag.getString("texture");
+        if (tag.containsKey("spawnX")) {
+            this.spawnX = tag.getDouble("spawnX");
+            this.spawnY = tag.getDouble("spawnY");
+            this.spawnZ = tag.getDouble("spawnZ");
         }
 
-        if (var1.containsKey("pathToHome")) {
-            this.pathToHome = var1.getBoolean("pathToHome");
+        if (tag.containsKey("pathToHome")) {
+            this.pathToHome = tag.getBoolean("pathToHome");
         }
 
-        if (var1.containsKey("trackPlayer")) {
-            this.trackPlayer = var1.getBoolean("trackPlayer");
+        if (tag.containsKey("trackPlayer")) {
+            this.trackPlayer = tag.getBoolean("trackPlayer");
         }
 
-        if (var1.containsKey("isAttackable")) {
-            this.isAttackable = var1.getBoolean("isAttackable");
+        if (tag.containsKey("isAttackable")) {
+            this.isAttackable = tag.getBoolean("isAttackable");
         }
     }
 
     @Override
-    public boolean interact(PlayerEntity var1) {
-        if (super.interact(var1)) {
+    public boolean interact(PlayerEntity entity) {
+        if (super.interact(entity)) {
             if (this.chatMsg != null && !this.chatMsg.equals("")) {
                 Minecraft.instance.overlay.addChatMessage(String.format("<%s> %s", this.npcName, this.chatMsg));
             }
@@ -162,12 +159,12 @@ public class AC_EntityNPC extends AC_EntityLivingScript {
     }
 
     @Override
-    public boolean damage(Entity var1, int var2) {
-        return this.isAttackable && super.damage(var1, var2);
+    public boolean damage(Entity entity, int damage) {
+        return this.isAttackable && super.damage(entity, damage);
     }
 
     @Override
-    public boolean attackEntityFromMulti(Entity var1, int var2) {
-        return this.isAttackable && super.attackEntityFromMulti(var1, var2);
+    public boolean attackEntityFromMulti(Entity entity, int damage) {
+        return this.isAttackable && super.attackEntityFromMulti(entity, damage);
     }
 }
