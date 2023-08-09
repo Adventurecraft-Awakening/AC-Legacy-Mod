@@ -99,6 +99,11 @@ public abstract class MixinBlock implements ExBlock {
 
     @Shadow
     public abstract int getTextureForSide(BlockView arg, int i, int j, int k, int l);
+    
+    @Shadow
+    public int getBaseColor(int meta) {
+        throw new AssertionError();
+    }
 
     @Shadow
     public int getRenderType() {

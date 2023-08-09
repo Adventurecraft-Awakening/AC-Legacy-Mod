@@ -23,10 +23,11 @@ import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 public abstract class MixinItemRenderer extends EntityRenderer implements ExItemRenderer {
 
     @Shadow
-    protected abstract void method_1485(Tessellator arg, int i, int j, int k, int l, int m);
+    protected abstract void method_1485(Tessellator ts, int x, int y, int w, int h, int color);
 
     @Shadow
-    public abstract void renderItemOnGui(TextRenderer arg, TextureManager arg2, int i, int j, int k, int l, int m);
+    public abstract void renderItemOnGui(
+        TextRenderer textRenderer, TextureManager texManager, int itemId, int meta, int texture, int x, int y);
 
     public float scale = 1.0F;
 
@@ -56,13 +57,13 @@ public abstract class MixinItemRenderer extends EntityRenderer implements ExItem
     private void useTerrainTexture0(
         ItemRenderer instance,
         String s,
-        @Local ItemStack var10) {
+        @Local ItemStack stack) {
 
-        int var14 = ((ExBlock) Block.BY_ID[var10.itemId]).getTextureNum();
-        if (var14 == 0) {
+        int texture = ((ExBlock) Block.BY_ID[stack.itemId]).getTextureNum();
+        if (texture == 0) {
             this.bindTexture("/terrain.png");
         } else {
-            this.bindTexture(String.format("/terrain%d.png", var14));
+            this.bindTexture(String.format("/terrain%d.png", texture));
         }
     }
 
@@ -79,61 +80,71 @@ public abstract class MixinItemRenderer extends EntityRenderer implements ExItem
     private int useTerrainTexture1(
         TextureManager instance,
         String s,
-        @Local(index = 3, argsOnly = true) int var3) {
+        @Local(index = 3, argsOnly = true) int id) {
 
-        int var8 = ((ExBlock) Block.BY_ID[var3]).getTextureNum();
-        if (var8 == 0) {
+        int texture = ((ExBlock) Block.BY_ID[id]).getTextureNum();
+        if (texture == 0) {
             return instance.getTextureId("/terrain.png");
         } else {
-            return instance.getTextureId(String.format("/terrain%d.png", var8));
+            return instance.getTextureId(String.format("/terrain%d.png", texture));
         }
     }
 
     @Overwrite
-    public void method_1487(TextRenderer var1, TextureManager var2, ItemStack var3, int var4, int var5) {
-        if (var3 != null && Item.byId[var3.itemId] != null) {
-            this.renderItemOnGui(var1, var2, var3.itemId, var3.getMeta(), var3.getItemTexture(), var4, var5);
+    public void method_1487(TextRenderer textRenderer, TextureManager texManager, ItemStack stack, int x, int y) {
+        if (stack != null && Item.byId[stack.itemId] != null) {
+            this.renderItemOnGui(textRenderer, texManager, stack.itemId, stack.getMeta(), stack.getItemTexture(), x, y);
         }
     }
 
     @Overwrite
-    public void method_1488(TextRenderer var1, TextureManager var2, ItemStack var3, int var4, int var5) {
-        if (var3 != null && Item.byId[var3.itemId] != null) {
-            String var6;
-            if (var3.count > 1) {
-                var6 = String.valueOf(var3.count);
-                GL11.glDisable(GL11.GL_LIGHTING);
-                GL11.glDisable(GL11.GL_DEPTH_TEST);
-                var1.drawTextWithShadow(var6, var4 + 19 - 2 - var1.getTextWidth(var6), var5 + 6 + 3, 16777215);
-                GL11.glEnable(GL11.GL_LIGHTING);
-                GL11.glEnable(GL11.GL_DEPTH_TEST);
-            } else if (var3.count < 0) {
-                var6 = "\u00ec";
-                GL11.glDisable(GL11.GL_LIGHTING);
-                GL11.glDisable(GL11.GL_DEPTH_TEST);
-                var1.drawTextWithShadow(var6, var4 + 19 - 2 - var1.getTextWidth(var6), var5 + 6 + 3, 16777215);
-                GL11.glEnable(GL11.GL_LIGHTING);
-                GL11.glEnable(GL11.GL_DEPTH_TEST);
-            }
-
-            if (var3.isDamaged() || Item.byId[var3.itemId] instanceof AC_IItemReload) {
-                int var11 = (int) Math.round(13.0D - (double) var3.getDamage() * 13.0D / (double) var3.getDurability());
-                int var7 = (int) Math.round(255.0D - (double) var3.getDamage() * 255.0D / (double) var3.getDurability());
-                GL11.glDisable(GL11.GL_LIGHTING);
-                GL11.glDisable(GL11.GL_DEPTH_TEST);
-                GL11.glDisable(GL11.GL_TEXTURE_2D);
-                Tessellator var8 = Tessellator.INSTANCE;
-                int var9 = 255 - var7 << 16 | var7 << 8;
-                int var10 = (255 - var7) / 4 << 16 | 16128;
-                this.method_1485(var8, var4 + 2, var5 + 13, 13, 2, 0);
-                this.method_1485(var8, var4 + 2, var5 + 13, 12, 1, var10);
-                this.method_1485(var8, var4 + 2, var5 + 13, var11, 1, var9);
-                GL11.glEnable(GL11.GL_TEXTURE_2D);
-                GL11.glEnable(GL11.GL_LIGHTING);
-                GL11.glEnable(GL11.GL_DEPTH_TEST);
-                GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-            }
+    public void method_1488(TextRenderer textRenderer, TextureManager texManager, ItemStack stack, int x, int y) {
+        if (stack == null) {
+            return;
         }
+        Item item = Item.byId[stack.itemId];
+        if (item == null) {
+            return;
+        }
+
+        boolean drawDurability = stack.isDamaged() || item instanceof AC_IItemReload;
+        if (stack.count == 0 && !drawDurability) {
+            return;
+        }
+
+        GL11.glDisable(GL11.GL_LIGHTING);
+        GL11.glDisable(GL11.GL_DEPTH_TEST);
+
+        String countText;
+        if (stack.count > 1) {
+            countText = String.valueOf(stack.count);
+        } else if (stack.count < 0) {
+            countText = "\u00ec"; // infinity
+        } else {
+            countText = null;
+        }
+        if (countText != null) {
+            textRenderer.drawTextWithShadow(countText, x + 19 - 2 - textRenderer.getTextWidth(countText), y + 6 + 3, 16777215);
+        }
+
+        if (drawDurability) {
+            double damage = stack.getDamage();
+            double durability = stack.getDurability();
+            int width = (int) Math.round(13.0D - damage * 13.0D / durability);
+            int color = (int) Math.round(255.0D - damage * 255.0D / durability);
+            GL11.glDisable(GL11.GL_TEXTURE_2D);
+            Tessellator ts = Tessellator.INSTANCE;
+            int barColor = 255 - color << 16 | color << 8;
+            int backColor = (255 - color) / 4 << 16 | 0x3f00;
+            this.method_1485(ts, x + 2, y + 13, 13, 2, 0);
+            this.method_1485(ts, x + 2, y + 13, 12, 1, backColor);
+            this.method_1485(ts, x + 2, y + 13, width, 1, barColor);
+            GL11.glEnable(GL11.GL_TEXTURE_2D);
+            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+        }
+
+        GL11.glEnable(GL11.GL_LIGHTING);
+        GL11.glEnable(GL11.GL_DEPTH_TEST);
     }
 
     @Override

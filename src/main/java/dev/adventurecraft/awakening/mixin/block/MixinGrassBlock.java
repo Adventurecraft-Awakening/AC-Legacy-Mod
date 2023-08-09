@@ -7,6 +7,7 @@ import dev.adventurecraft.awakening.extension.block.AC_TexturedBlock;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.block.ExGrassBlock;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
+import dev.adventurecraft.awakening.extension.client.render.block.ExGrassColor;
 import net.minecraft.block.Block;
 import net.minecraft.block.GrassBlock;
 import net.minecraft.block.material.Material;
@@ -34,6 +35,11 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
         } else {
             return getSideTexture(view, x, y, z, side);
         }
+    }
+
+    @Override
+    public int getBaseColor(int meta) {
+        return ExGrassColor.getBaseColor(meta);
     }
 
     private int getTopTexture(BlockView view, int x, int y, int z) {

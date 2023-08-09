@@ -10,6 +10,10 @@ import java.awt.image.BufferedImage;
 
 public interface ExGrassColor {
 
+    static int getBaseColor(int meta) {
+        return GrassColor.map[0];
+    }
+
     static void loadGrass(String var0) {
         BufferedImage var1 = ((ExWorld) Minecraft.instance.world).loadMapTexture(var0);
         if (var1 == null) {
