@@ -6,8 +6,8 @@ import net.minecraft.world.BlockView;
 
 public class AC_BlockColor extends Block implements AC_IBlockColor {
 
-    public AC_BlockColor(int var1, int var2, Material var3) {
-        super(var1, var2, var3);
+    public AC_BlockColor(int id, int texture, Material material) {
+        super(id, texture, material);
     }
 
     @Override
