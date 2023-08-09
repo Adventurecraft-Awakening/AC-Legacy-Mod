@@ -1,8 +1,7 @@
 package dev.adventurecraft.awakening.mixin.item;
 
-import dev.adventurecraft.awakening.extension.item.ExItem;
+import dev.adventurecraft.awakening.common.AC_ISlotCallbackItem;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -14,10 +13,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(Item.class)
-public abstract class MixinItem implements ExItem {
-
-    public boolean decrementDamage;
-    public int itemUseDelay = 5;
+public abstract class MixinItem implements AC_ISlotCallbackItem {
 
     @Shadow
     @Final
@@ -37,44 +33,24 @@ public abstract class MixinItem implements ExItem {
     }
 
     @Override
-    public boolean getDecrementDamage() {
-        return this.decrementDamage;
-    }
-
-    @Override
-    public void setDecrementDamage(boolean value) {
-        this.decrementDamage = value;
-    }
-
-    @Override
-    public int getItemUseDelay() {
-        return this.itemUseDelay;
-    }
-
-    @Override
-    public void setItemUseDelay(int value) {
-        this.itemUseDelay = value;
-    }
-
-    @Override
-    public void onAddToSlot(PlayerEntity player, int slotId, int itemMeta) {
-        var world = (ExWorld) Minecraft.instance.world;
+    public void onAddToSlot(PlayerEntity player, int slotId, ItemStack stack) {
+        var world = (ExWorld) player.world;
         Scriptable scope = world.getScope();
         scope.put("slotID", scope, slotId);
         if (this.usesMeta()) {
-            world.getScriptHandler().runScript(String.format("item_onAddToSlot_%d_%d.js", this.id, itemMeta), scope, false);
+            world.getScriptHandler().runScript(String.format("item_onAddToSlot_%d_%d.js", this.id, stack.getMeta()), scope, false);
         } else {
             world.getScriptHandler().runScript(String.format("item_onAddToSlot_%d.js", this.id), scope, false);
         }
     }
 
     @Override
-    public void onRemovedFromSlot(PlayerEntity player, int slotId, int itemMeta) {
-        var world = (ExWorld) Minecraft.instance.world;
+    public void onRemovedFromSlot(PlayerEntity player, int slotId, ItemStack stack) {
+        var world = (ExWorld) player.world;
         Scriptable scope = world.getScope();
         scope.put("slotID", scope, slotId);
         if (this.usesMeta()) {
-            world.getScriptHandler().runScript(String.format("item_onRemovedFromSlot_%d_%d.js", this.id, itemMeta), scope, false);
+            world.getScriptHandler().runScript(String.format("item_onRemovedFromSlot_%d_%d.js", this.id, stack.getMeta()), scope, false);
         } else {
             world.getScriptHandler().runScript(String.format("item_onRemovedFromSlot_%d.js", this.id), scope, false);
         }

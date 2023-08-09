@@ -2,7 +2,6 @@ package dev.adventurecraft.awakening.common;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.ai.pathing.EntityPath;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.io.CompoundTag;
 import net.minecraft.world.World;
@@ -151,7 +150,6 @@ public class AC_EntityNPC extends AC_EntityLivingScript {
             if (this.chatMsg != null && !this.chatMsg.equals("")) {
                 Minecraft.instance.overlay.addChatMessage(String.format("<%s> %s", this.npcName, this.chatMsg));
             }
-
             return true;
         } else {
             return false;
@@ -161,10 +159,5 @@ public class AC_EntityNPC extends AC_EntityLivingScript {
     @Override
     public boolean damage(Entity entity, int damage) {
         return this.isAttackable && super.damage(entity, damage);
-    }
-
-    @Override
-    public boolean attackEntityFromMulti(Entity entity, int damage) {
-        return this.isAttackable && super.attackEntityFromMulti(entity, damage);
     }
 }

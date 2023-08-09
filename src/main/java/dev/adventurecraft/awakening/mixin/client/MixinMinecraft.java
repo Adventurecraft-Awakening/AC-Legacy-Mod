@@ -14,8 +14,6 @@ import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.render.ExWorldEventRenderer;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
-import dev.adventurecraft.awakening.extension.item.ExItem;
-import dev.adventurecraft.awakening.extension.item.ExItemStack;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.script.ScriptEntity;
 import dev.adventurecraft.awakening.script.ScriptItem;
@@ -886,8 +884,8 @@ public abstract class MixinMinecraft implements ExMinecraft {
             }
 
             int useDelay = 5;
-            if (stack != null) {
-                useDelay = ((ExItem) Item.byId[stack.itemId]).getItemUseDelay();
+            if (stack != null && Item.byId[stack.itemId] instanceof AC_IUseDelayItem useDelayItem) {
+                useDelay = useDelayItem.getItemUseDelay();
             }
 
             if (mouseButton == 0) {
@@ -896,7 +894,9 @@ public abstract class MixinMinecraft implements ExMinecraft {
                 this.rightMouseTicksRan = this.ticksPlayed + useDelay;
             }
 
-            if (stack != null && ((ExItem) Item.byId[stack.itemId]).mainActionLeftClick()) {
+            if (stack != null &&
+                (Item.byId[stack.itemId] instanceof AC_ILeftClickItem leftClickItem) &&
+                leftClickItem.mainActionLeftClick()) {
                 mouseButton = 0;
             } else {
                 mouseButton = 1;
@@ -943,11 +943,11 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
                 if (mouseButton == 0) {
                     this.interactionManager.destroyFireAndBreakBlock(bX, bY, bZ, this.hitResult.field_1987);
-                    if (stack != null) {
-                        ((ExItemStack) stack).useItemLeftClick(this.player, this.world, bX, bY, bZ, bSide);
+                    if (stack != null && Item.byId[stack.itemId] instanceof AC_ILeftClickItem leftClickItem) {
+                        leftClickItem.onItemUseLeftClick(stack, this.player, this.world, bX, bY, bZ, bSide);
                     }
                 } else {
-                    int var11 = stack == null ? 0 : stack.count;
+                    int count = stack == null ? 0 : stack.count;
                     if (this.interactionManager.useItemOnBlock(this.player, this.world, stack, bX, bY, bZ, bSide)) {
                         useOnBlock = false;
                         this.player.swingHand();
@@ -962,21 +962,22 @@ public abstract class MixinMinecraft implements ExMinecraft {
                         if (AC_DebugMode.active) {
                             exWorld.getUndoStack().stopRecording();
                         }
-
                         return;
                     }
 
                     if (stack.count == 0 && stack == this.player.inventory.main[this.player.inventory.selectedHotBarSlot]) {
                         this.player.inventory.main[this.player.inventory.selectedHotBarSlot] = null;
-                    } else if (stack.count != var11) {
+                    } else if (stack.count != count) {
                         this.gameRenderer.heldItemRenderer.method_1863();
                     }
                 }
             }
         }
 
-        if (useOnBlock && mouseButton == 0 && stack != null && Item.byId[stack.itemId] != null) {
-            ((ExItem) Item.byId[stack.itemId]).onItemLeftClick(stack, this.world, this.player);
+        if (useOnBlock && mouseButton == 0 && stack != null) {
+            if (Item.byId[stack.itemId] instanceof AC_ILeftClickItem leftClickItem) {
+                leftClickItem.onItemLeftClick(stack, this.world, this.player);
+            }
         }
 
         if (useOnBlock && mouseButton == 1 && stack != null && this.interactionManager.method_1712(this.player, this.world, stack)) {

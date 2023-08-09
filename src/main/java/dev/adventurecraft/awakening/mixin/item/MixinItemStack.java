@@ -1,13 +1,10 @@
 package dev.adventurecraft.awakening.mixin.item;
 
 import dev.adventurecraft.awakening.common.AC_Items;
-import dev.adventurecraft.awakening.extension.item.ExItem;
 import dev.adventurecraft.awakening.extension.item.ExItemStack;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.io.CompoundTag;
-import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -30,11 +27,6 @@ public abstract class MixinItemStack implements ExItemStack {
 
     @Shadow
     public abstract Item getItem();
-
-    @Override
-    public boolean useItemLeftClick(PlayerEntity player, World world, int x, int y, int z, int side) {
-        return ((ExItem) this.getItem()).onItemUseLeftClick((ItemStack) (Object) this, player, world, x, y, z, side);
-    }
 
     @Overwrite
     public CompoundTag writeNBT(CompoundTag tag) {

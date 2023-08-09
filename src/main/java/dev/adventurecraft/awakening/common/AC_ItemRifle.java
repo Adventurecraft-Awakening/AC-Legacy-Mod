@@ -1,17 +1,19 @@
 package dev.adventurecraft.awakening.common;
 
-import dev.adventurecraft.awakening.extension.item.ExItem;
 import dev.adventurecraft.awakening.extension.item.ExItemStack;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 
-class AC_ItemRifle extends Item implements AC_IItemReload, AC_IItemLight {
-    public AC_ItemRifle(int var1) {
-        super(var1);
+class AC_ItemRifle extends Item implements AC_IItemReload, AC_IItemLight, AC_IUseDelayItem {
+
+    private int itemUseDelay;
+
+    public AC_ItemRifle(int id) {
+        super(id);
         this.maxStackSize = 1;
-        ((ExItem) this).setItemUseDelay(1);
+        this.itemUseDelay = 1;
     }
 
     @Override
@@ -73,5 +75,10 @@ class AC_ItemRifle extends Item implements AC_IItemReload, AC_IItemLight {
 
         exStack.setReloading(false);
         exStack.setJustReloaded(true);
+    }
+
+    @Override
+    public int getItemUseDelay() {
+        return this.itemUseDelay;
     }
 }

@@ -20,7 +20,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
-public class AC_EntityLivingScript extends LivingEntity implements IEntityPather, AC_IMultiAttackEntity {
+public class AC_EntityLivingScript extends LivingEntity implements IEntityPather {
 
     String initDescTo;
     String descriptionName;
@@ -105,14 +105,6 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
         Object jsDamage = Context.javaToJS(damage, this.scope);
         ScriptableObject.putProperty(this.scope, "attackingDamage", jsDamage);
         return this.runOnAttackedScript() && super.damage(entity, damage);
-    }
-
-    public boolean attackEntityFromMulti(Entity entity, int damage) {
-        Object jsEntity = Context.javaToJS(ScriptEntity.getEntityClass(entity), this.scope);
-        ScriptableObject.putProperty(this.scope, "attackingEntity", jsEntity);
-        Object jsDamage = Context.javaToJS(damage, this.scope);
-        ScriptableObject.putProperty(this.scope, "attackingDamage", jsDamage);
-        return this.runOnAttackedScript() && AC_IMultiAttackEntity.super.attackEntityFromMulti(entity, damage);
     }
 
     @Override

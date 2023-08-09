@@ -4,7 +4,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import dev.adventurecraft.awakening.extension.client.particle.ExParticleManager;
-import dev.adventurecraft.awakening.extension.item.ExItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.FallingBlockEntity;
@@ -16,25 +15,32 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 class AC_ItemUmbrella extends Item {
-    public AC_ItemUmbrella(int var1) {
-        super(var1);
+
+    public AC_ItemUmbrella(int id) {
+        super(id);
         this.maxStackSize = 1;
-        ((ExItem) this).setDecrementDamage(true);
+    }
+
+    @Override
+    public void inventoryTick(ItemStack stack, World world, Entity entity, int i, boolean bl) {
+        if (stack.getMeta() > 0) {
+            stack.setMeta(stack.getMeta() - 1);
+        }
     }
 
     public int getTexturePosition(int var1) {
         return var1 > 0 ? this.texturePosition - 1 : this.texturePosition;
     }
 
-    public ItemStack use(ItemStack var1, World var2, PlayerEntity var3) {
-        if (!var3.onGround || var1.getMeta() > 0) {
-            return var1;
+    public ItemStack use(ItemStack stack, World world, PlayerEntity player) {
+        if (!player.onGround || stack.getMeta() > 0) {
+            return stack;
         }
 
-        Vec3d var4 = var3.getRotation();
+        Vec3d var4 = player.getRotation();
         var4.method_1296();
-        AxixAlignedBoundingBox var5 = AxixAlignedBoundingBox.createAndAddToList(var3.x, var3.y, var3.z, var3.x, var3.y, var3.z).expand(6.0D, 6.0D, 6.0D);
-        List<Entity> var6 = (List<Entity>) var2.getEntities(var3, var5);
+        AxixAlignedBoundingBox var5 = AxixAlignedBoundingBox.createAndAddToList(player.x, player.y, player.z, player.x, player.y, player.z).expand(6.0D, 6.0D, 6.0D);
+        List<Entity> var6 = (List<Entity>) world.getEntities(player, var5);
         Iterator<Entity> var7 = var6.iterator();
 
         double var10;
@@ -44,11 +50,11 @@ class AC_ItemUmbrella extends Item {
         double var18;
         while (var7.hasNext()) {
             Entity var9 = var7.next();
-            var10 = var9.method_1352(var3);
+            var10 = var9.method_1352(player);
             if (var10 < 36.0D && !(var9 instanceof FallingBlockEntity)) {
-                var12 = var9.x - var3.x;
-                var14 = var9.y - var3.y;
-                var16 = var9.z - var3.z;
+                var12 = var9.x - player.x;
+                var14 = var9.y - player.y;
+                var16 = var9.z - player.z;
                 var10 = Math.sqrt(var10);
                 var12 /= var10;
                 var14 /= var10;
@@ -67,11 +73,11 @@ class AC_ItemUmbrella extends Item {
 
         while (var7.hasNext()) {
             Entity var9 = var7.next();
-            var10 = var9.method_1352(var3);
+            var10 = var9.method_1352(player);
             if (var10 < 36.0D) {
-                var12 = var9.x - var3.x;
-                var14 = var9.y - var3.y;
-                var16 = var9.z - var3.z;
+                var12 = var9.x - player.x;
+                var14 = var9.y - player.y;
+                var16 = var9.z - player.z;
                 var10 = Math.sqrt(var10);
                 var12 /= var10;
                 var14 /= var10;
@@ -84,15 +90,15 @@ class AC_ItemUmbrella extends Item {
         }
 
         for (int var20 = 0; var20 < 25; ++var20) {
-            AC_EntityAirFX var21 = new AC_EntityAirFX(var2, var3.x, var3.y, var3.z);
-            var21.xVelocity = var4.x * (1.0D + 0.05D * var2.rand.nextGaussian()) + 0.2D * var2.rand.nextGaussian();
-            var21.yVelocity = var4.y * (1.0D + 0.05D * var2.rand.nextGaussian()) + 0.2D * var2.rand.nextGaussian();
-            var21.zVelocity = var4.z * (1.0D + 0.05D * var2.rand.nextGaussian()) + 0.2D * var2.rand.nextGaussian();
+            AC_EntityAirFX var21 = new AC_EntityAirFX(world, player.x, player.y, player.z);
+            var21.xVelocity = var4.x * (1.0D + 0.05D * world.rand.nextGaussian()) + 0.2D * world.rand.nextGaussian();
+            var21.yVelocity = var4.y * (1.0D + 0.05D * world.rand.nextGaussian()) + 0.2D * world.rand.nextGaussian();
+            var21.zVelocity = var4.z * (1.0D + 0.05D * world.rand.nextGaussian()) + 0.2D * world.rand.nextGaussian();
             Minecraft.instance.particleManager.addParticle(var21);
         }
 
-        var3.swingHand();
-        var1.setMeta(10);
-        return var1;
+        player.swingHand();
+        stack.setMeta(10);
+        return stack;
     }
 }

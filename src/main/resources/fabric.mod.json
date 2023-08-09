@@ -29,7 +29,8 @@
     ]
   },
   "mixins": [
-    "adventurecraft.mixins.json"
+    "adventurecraft.mixins.json",
+    "adventurecraft.common.mixins.json"
   ],
   "accessWidener": "adventurecraft.accesswidener",
   "depends": {

@@ -8,52 +8,52 @@ import net.minecraft.world.World;
 
 public class AC_ItemCursor extends Item implements AC_ILeftClickItem {
 
-	public static boolean bothSet = false;
-	public static boolean firstPosition = true;
-	public static int oneX;
-	public static int oneY;
-	public static int oneZ;
-	public static int twoX;
-	public static int twoY;
-	public static int twoZ;
-	public static int minX;
-	public static int minY;
-	public static int minZ;
-	public static int maxX;
-	public static int maxY;
-	public static int maxZ;
+    public static boolean bothSet = false;
+    public static boolean firstPosition = true;
+    public static int oneX;
+    public static int oneY;
+    public static int oneZ;
+    public static int twoX;
+    public static int twoY;
+    public static int twoZ;
+    public static int minX;
+    public static int minY;
+    public static int minZ;
+    public static int maxX;
+    public static int maxY;
+    public static int maxZ;
 
-	protected AC_ItemCursor(int id) {
-		super(id);
-	}
-
-    @Override
-	public boolean onItemUseLeftClick(ItemStack stack, PlayerEntity player, World world, int x, int y, int z, int side) {
-		return this.useOnBlock(stack, player, world, x, y, z, side);
-	}
+    protected AC_ItemCursor(int id) {
+        super(id);
+    }
 
     @Override
-	public boolean useOnBlock(ItemStack var1, PlayerEntity var2, World var3, int var4, int var5, int var6, int var7) {
-		if(firstPosition) {
-			Minecraft.instance.overlay.addChatMessage(String.format("Setting Cursor Position 1 (%d, %d, %d)", var4, var5, var6));
-			oneX = var4;
-			oneY = var5;
-			oneZ = var6;
-		} else {
-			Minecraft.instance.overlay.addChatMessage(String.format("Setting Cursor Position 2 (%d, %d, %d)", var4, var5, var6));
-			twoX = var4;
-			twoY = var5;
-			twoZ = var6;
-			bothSet = true;
-		}
+    public boolean onItemUseLeftClick(ItemStack stack, PlayerEntity player, World world, int x, int y, int z, int side) {
+        return this.useOnBlock(stack, player, world, x, y, z, side);
+    }
 
-		minX = Math.min(oneX, twoX);
-		minY = Math.min(oneY, twoY);
-		minZ = Math.min(oneZ, twoZ);
-		maxX = Math.max(oneX, twoX);
-		maxY = Math.max(oneY, twoY);
-		maxZ = Math.max(oneZ, twoZ);
-		firstPosition = !firstPosition;
-		return false;
-	}
+    @Override
+    public boolean useOnBlock(ItemStack stack, PlayerEntity player, World world, int x, int y, int z, int side) {
+        if (firstPosition) {
+            Minecraft.instance.overlay.addChatMessage(String.format("Setting Cursor Position 1 (%d, %d, %d)", x, y, z));
+            oneX = x;
+            oneY = y;
+            oneZ = z;
+        } else {
+            Minecraft.instance.overlay.addChatMessage(String.format("Setting Cursor Position 2 (%d, %d, %d)", x, y, z));
+            twoX = x;
+            twoY = y;
+            twoZ = z;
+            bothSet = true;
+        }
+
+        minX = Math.min(oneX, twoX);
+        minY = Math.min(oneY, twoY);
+        minZ = Math.min(oneZ, twoZ);
+        maxX = Math.max(oneX, twoX);
+        maxY = Math.max(oneY, twoY);
+        maxZ = Math.max(oneZ, twoZ);
+        firstPosition = !firstPosition;
+        return false;
+    }
 }

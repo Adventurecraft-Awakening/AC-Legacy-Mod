@@ -4,7 +4,7 @@ import net.minecraft.entity.Entity;
 
 public interface AC_IMultiAttackEntity {
 
-    default boolean attackEntityFromMulti(Entity var1, int var2) {
+    default boolean attackEntityFromMulti(Entity entity, int damage) {
         return false;
     }
 }

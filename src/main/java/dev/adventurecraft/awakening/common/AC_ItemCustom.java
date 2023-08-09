@@ -1,97 +1,95 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.extension.world.ExWorld;
+import dev.adventurecraft.awakening.script.ScriptItem;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import net.minecraft.client.Minecraft;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.world.World;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Properties;
 
-import dev.adventurecraft.awakening.extension.item.ExItem;
-import dev.adventurecraft.awakening.extension.world.ExWorld;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import dev.adventurecraft.awakening.script.ScriptItem;
-import net.minecraft.world.World;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
-
-public class AC_ItemCustom extends Item {
+public class AC_ItemCustom extends Item implements AC_IUseDelayItem {
 
     static IntArrayList loadedItemIDs = new IntArrayList();
 
     public String fileName;
     public String onItemUsedScript;
+    private int itemUseDelay;
 
-    private static AC_ItemCustom loadScript(File var0) {
-        Properties var1 = new Properties();
-
+    private static AC_ItemCustom loadScript(File file) {
+        var properties = new Properties();
         try {
-            var1.load(new FileInputStream(var0));
-            int var2 = Integer.parseInt(var1.getProperty("itemID", "-1"));
-            if (var2 == -1) {
-                Minecraft.instance.overlay.addChatMessage(String.format("ItemID for %s is unspecified", var0.getName()));
-            } else if (var2 <= 0) {
-                Minecraft.instance.overlay.addChatMessage(String.format("ItemID for %s specifies a negative itemID", var0.getName()));
+            properties.load(new FileInputStream(file));
+            int id = Integer.parseInt(properties.getProperty("itemID", "-1"));
+            if (id == -1) {
+                Minecraft.instance.overlay.addChatMessage(String.format("ItemID for %s is unspecified", file.getName()));
+            } else if (id <= 0) {
+                Minecraft.instance.overlay.addChatMessage(String.format("ItemID for %s specifies a negative itemID", file.getName()));
             } else {
-                if (Item.byId[var2] == null) {
-                    return new AC_ItemCustom(var2, var0.getName(), var1);
+                if (Item.byId[id] == null) {
+                    return new AC_ItemCustom(id, file.getName(), properties);
                 }
-
-                Minecraft.instance.overlay.addChatMessage(String.format("ItemID (%d) for %s is already in use by %s", var2, var0.getName(), Item.byId[var2].toString()));
+                Minecraft.instance.overlay.addChatMessage(String.format("ItemID (%d) for %s is already in use by %s", id, file.getName(), Item.byId[id].toString()));
             }
-        } catch (FileNotFoundException var3) {
-            var3.printStackTrace();
-        } catch (IOException var4) {
-            var4.printStackTrace();
+        } catch (FileNotFoundException ex) {
+            ex.printStackTrace();
+        } catch (IOException ex) {
+            ex.printStackTrace();
         } catch (NumberFormatException var5) {
-            Minecraft.instance.overlay.addChatMessage(String.format("ItemID for %s is specified invalidly '%s'", var0.getName(), var1.getProperty("itemID")));
+            Minecraft.instance.overlay.addChatMessage(String.format("ItemID for %s is specified invalidly '%s'", file.getName(), properties.getProperty("itemID")));
         }
-
         return null;
     }
 
-    public AC_ItemCustom(int var1, String var2, Properties var3) {
-        super(var1 - 256);
-        this.fileName = var2;
-        String var4 = var3.getProperty("iconIndex");
-        if (var4 != null) {
-            Integer var5 = this.loadPropertyInt("iconIndex", var4);
-            if (var5 != null) {
-                this.setTexturePosition(var5);
+    public AC_ItemCustom(int id, String fileName, Properties properties) {
+        super(id - 256);
+        this.fileName = fileName;
+
+        String sIconIndex = properties.getProperty("iconIndex");
+        if (sIconIndex != null) {
+            Integer value = this.loadPropertyInt("iconIndex", sIconIndex);
+            if (value != null) {
+                this.setTexturePosition(value);
             }
         }
 
-        String var8 = var3.getProperty("maxItemDamage");
-        if (var8 != null) {
-            Integer var6 = this.loadPropertyInt("maxItemDamage", var8);
-            if (var6 != null) {
-                this.setDurability(var6);
+        String sMaxItemDamage = properties.getProperty("maxItemDamage");
+        if (sMaxItemDamage != null) {
+            Integer value = this.loadPropertyInt("maxItemDamage", sMaxItemDamage);
+            if (value != null) {
+                this.setDurability(value);
             }
         }
 
-        String var9 = var3.getProperty("maxStackSize");
-        if (var9 != null) {
-            Integer var7 = this.loadPropertyInt("maxStackSize", var9);
-            if (var7 != null) {
-                this.maxStackSize = var7;
+        String sMaxStackSize = properties.getProperty("maxStackSize");
+        if (sMaxStackSize != null) {
+            Integer value = this.loadPropertyInt("maxStackSize", sMaxStackSize);
+            if (value != null) {
+                this.maxStackSize = value;
             }
         }
 
-        this.setTranslationKey(var3.getProperty("name", "Unnamed"));
-        this.onItemUsedScript = var3.getProperty("onItemUsedScript", "");
-        ((ExItem) this).setItemUseDelay(1);
+        this.setTranslationKey(properties.getProperty("name", "Unnamed"));
+        this.onItemUsedScript = properties.getProperty("onItemUsedScript", "");
+        this.itemUseDelay = 1;
     }
 
-    private Integer loadPropertyInt(String var1, String var2) {
+    private Integer loadPropertyInt(String name, String value) {
         try {
-            Integer var3 = Integer.parseInt(var2);
-            return var3;
-        } catch (NumberFormatException var4) {
-            Minecraft.instance.overlay.addChatMessage(String.format("Item File '%s' Property '%s' is specified invalidly '%s'", this.fileName, var1, var2));
+            Integer parsed = Integer.parseInt(value);
+            return parsed;
+        } catch (NumberFormatException ex) {
+            Minecraft.instance.overlay.addChatMessage(String.format("Item File '%s' Property '%s' is specified invalidly '%s'", this.fileName, name, value));
             return null;
         }
     }
@@ -109,23 +107,27 @@ public class AC_ItemCustom extends Item {
         return stack;
     }
 
-    public static void loadItems(File var0) {
+    public static void loadItems(File directory) {
         for (int loadedItemID : loadedItemIDs) {
             Item.byId[loadedItemID] = null;
         }
-
         loadedItemIDs.clear();
 
-        if (var0.exists()) {
-            File[] var6 = var0.listFiles();
-            for (File var4 : var6) {
-                if (var4.isFile()) {
-                    AC_ItemCustom var5 = loadScript(var4);
-                    if (var5 != null) {
-                        loadedItemIDs.add(var5.id);
+        if (directory.exists()) {
+            File[] files = directory.listFiles();
+            for (File file : files) {
+                if (file.isFile()) {
+                    AC_ItemCustom item = loadScript(file);
+                    if (item != null) {
+                        loadedItemIDs.add(item.id);
                     }
                 }
             }
         }
+    }
+
+    @Override
+    public int getItemUseDelay() {
+        return this.itemUseDelay;
     }
 }

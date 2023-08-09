@@ -1,18 +1,19 @@
 package dev.adventurecraft.awakening.common;
 
-import dev.adventurecraft.awakening.extension.item.ExItem;
 import dev.adventurecraft.awakening.extension.item.ExItemStack;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 
-class AC_ItemPistol extends Item implements AC_IItemReload, AC_IItemLight {
+class AC_ItemPistol extends Item implements AC_IItemReload, AC_IItemLight, AC_IUseDelayItem {
 
-    public AC_ItemPistol(int var1) {
-        super(var1);
+    private int itemUseDelay;
+
+    public AC_ItemPistol(int id) {
+        super(id);
         this.maxStackSize = 1;
-        ((ExItem) this).setItemUseDelay(1);
+        this.itemUseDelay = 1;
     }
 
     @Override
@@ -70,5 +71,10 @@ class AC_ItemPistol extends Item implements AC_IItemReload, AC_IItemLight {
 
         exStack.setJustReloaded(true);
         exStack.setReloading(false);
+    }
+
+    @Override
+    public int getItemUseDelay() {
+        return this.itemUseDelay;
     }
 }
