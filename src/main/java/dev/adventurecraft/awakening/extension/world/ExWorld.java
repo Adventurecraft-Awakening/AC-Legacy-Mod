@@ -61,10 +61,6 @@ public interface ExWorld {
 
     void setTemperatureValue(int x, int z, double value);
 
-    void undo();
-
-    void redo();
-
     void resetCoordOrder();
 
     File getLevelDir();
@@ -102,7 +98,7 @@ public interface ExWorld {
     static World createWorld(
         String mapName, DimensionData dimData, String saveName, long seed, Dimension dimension, ProgressListener progressListener) {
         try {
-            World world = (World) ACMod.UNSAFE.allocateInstance(World.class);
+            var world = (World) ACMod.UNSAFE.allocateInstance(World.class);
             ((ExWorld) world).initWorld(mapName, dimData, saveName, seed, dimension, progressListener);
             return world;
         } catch (InstantiationException e) {

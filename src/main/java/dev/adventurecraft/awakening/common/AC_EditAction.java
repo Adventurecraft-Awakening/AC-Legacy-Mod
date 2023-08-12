@@ -5,6 +5,7 @@ import net.minecraft.util.io.CompoundTag;
 import net.minecraft.world.World;
 
 public class AC_EditAction {
+    
     public AC_EditAction nextAction;
     public int x;
     public int y;
@@ -16,40 +17,43 @@ public class AC_EditAction {
     public int newMetadata;
     public CompoundTag newNBT;
 
-    public AC_EditAction(int var1, int var2, int var3, int var4, int var5, CompoundTag var6, int var7, int var8, CompoundTag var9) {
-        this.x = var1;
-        this.y = var2;
-        this.z = var3;
-        this.prevBlockID = var4;
-        this.prevMetadata = var5;
-        this.prevNBT = var6;
-        this.newBlockID = var7;
-        this.newMetadata = var8;
-        this.newNBT = var9;
+    public AC_EditAction(
+        int x, int y, int z,
+        int prevBlockId, int prevBlockMeta, CompoundTag prevNbt,
+        int newBlockId, int newBlockMeta, CompoundTag newNbt) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.prevBlockID = prevBlockId;
+        this.prevMetadata = prevBlockMeta;
+        this.prevNBT = prevNbt;
+        this.newBlockID = newBlockId;
+        this.newMetadata = newBlockMeta;
+        this.newNBT = newNbt;
         this.nextAction = null;
     }
 
-    public void undo(World var1) {
-        var1.placeBlockWithMetaData(this.x, this.y, this.z, this.prevBlockID, this.prevMetadata);
+    public void undo(World world) {
+        world.placeBlockWithMetaData(this.x, this.y, this.z, this.prevBlockID, this.prevMetadata);
         if (this.prevNBT != null) {
-            BlockEntity var2 = BlockEntity.ofNBT(this.prevNBT);
-            var1.setBlockEntity(var2.x, var2.y, var2.z, var2);
+            BlockEntity entity = BlockEntity.ofNBT(this.prevNBT);
+            world.setBlockEntity(entity.x, entity.y, entity.z, entity);
         }
 
         if (this.nextAction != null) {
-            this.nextAction.undo(var1);
+            this.nextAction.undo(world);
         }
     }
 
-    public void redo(World var1) {
-        var1.placeBlockWithMetaData(this.x, this.y, this.z, this.newBlockID, this.newMetadata);
+    public void redo(World world) {
+        world.placeBlockWithMetaData(this.x, this.y, this.z, this.newBlockID, this.newMetadata);
         if (this.newNBT != null) {
-            BlockEntity var2 = BlockEntity.ofNBT(this.newNBT);
-            var1.setBlockEntity(var2.x, var2.y, var2.z, var2);
+            BlockEntity entity = BlockEntity.ofNBT(this.newNBT);
+            world.setBlockEntity(entity.x, entity.y, entity.z, entity);
         }
 
         if (this.nextAction != null) {
-            this.nextAction.redo(var1);
+            this.nextAction.redo(world);
         }
     }
 }

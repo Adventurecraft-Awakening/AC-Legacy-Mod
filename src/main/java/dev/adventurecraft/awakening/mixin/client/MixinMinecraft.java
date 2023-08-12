@@ -700,9 +700,11 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
                                     if (AC_DebugMode.active && (Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL))) {
                                         if (Keyboard.getEventKey() == Keyboard.KEY_Z) {
-                                            ((ExWorld) this.world).undo();
+                                            ServerCommands.cmdUndo(new ServerCommandSource(
+                                                (Minecraft) (Object) this, this.world, this.player), null);
                                         } else if (Keyboard.getEventKey() == Keyboard.KEY_Y) {
-                                            ((ExWorld) this.world).redo();
+                                            ServerCommands.cmdRedo(new ServerCommandSource(
+                                                (Minecraft) (Object) this, this.world, this.player), null);
                                         }
                                     }
                                 }

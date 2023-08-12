@@ -17,17 +17,23 @@ public class AC_JScriptInfo implements Comparable<AC_JScriptInfo> {
         this.compiledScript = Objects.requireNonNull(script);
     }
 
-    public void addStat(long var1) {
-        this.totalTime += var1;
-        if (var1 > this.maxTime) {
-            this.maxTime = var1;
+    public void addTime(long time) {
+        this.totalTime += time;
+        if (time > this.maxTime) {
+            this.maxTime = time;
         }
 
         ++this.count;
     }
 
+    public void clear() {
+        this.totalTime = 0L;
+        this.maxTime = 0L;
+        this.count = 0;
+    }
+
     @Override
-    public int compareTo(AC_JScriptInfo var1) {
-        return Long.compare(var1.totalTime, this.totalTime);
+    public int compareTo(AC_JScriptInfo info) {
+        return Long.compare(info.totalTime, this.totalTime);
     }
 }

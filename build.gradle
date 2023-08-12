@@ -89,6 +89,8 @@ dependencies {
     implementation 'org.apache.commons:commons-lang3:3.12.0'
 
     implementation('it.unimi.dsi:fastutil-core:8.5.12')
+
+    implementation('com.mojang:brigadier:1.1.8')
 }
 
 configurations.configureEach {

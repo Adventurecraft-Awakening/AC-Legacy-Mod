@@ -1513,16 +1513,6 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     }
 
     @Override
-    public void undo() {
-        this.undoStack.undo((World) (Object) this);
-    }
-
-    @Override
-    public void redo() {
-        this.undoStack.redo((World) (Object) this);
-    }
-
-    @Override
     public Entity getEntityByID(int id) {
         Iterator<Entity> var2 = this.entities.iterator();
 

@@ -92,7 +92,7 @@ public class AC_JScriptHandler {
         try {
             result = ((ExWorld) this.world).getScript().runScript(scriptInfo.compiledScript, scope);
         } finally {
-            scriptInfo.addStat(System.nanoTime() - time);
+            scriptInfo.addTime(System.nanoTime() - time);
         }
         return result;
     }
