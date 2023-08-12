@@ -110,6 +110,8 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
         ts.vertex(x, y, 0.0, (float) n4 / 128.0f + f2, (float) n3 / 128.0f + f3);
     }
 
+    // TextRendererState with start/end
+
     @Override
     public void drawText(
         CharSequence text, int start, int end,
@@ -144,34 +146,31 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
         float xOff = 0;
 
         for (int i = start; i < end; ++i) {
-            while (text.length() > i + 1 && text.charAt(i) == '§') {
-                int charIndex = "0123456789abcdef".indexOf(Character.toLowerCase(text.charAt(i + 1)));
-                if (charIndex < 0 || charIndex > 15) {
-                    charIndex = 15;
+            char c = text.charAt(i);
+            if (end > i + 1 && c == '§') {
+                int colorIndex = "0123456789abcdef".indexOf(Character.toLowerCase(text.charAt(i + 1)));
+                if (colorIndex < 0 || colorIndex > 15) {
+                    colorIndex = 15;
                 }
 
-                int colorIndex = charIndex * 3;
-                r = this.colorBuffer.get(colorIndex + 0);
-                g = this.colorBuffer.get(colorIndex + 1);
-                b = this.colorBuffer.get(colorIndex + 2);
+                int rgbIndex = colorIndex * 3;
+                r = this.colorBuffer.get(rgbIndex + 0);
+                g = this.colorBuffer.get(rgbIndex + 1);
+                b = this.colorBuffer.get(rgbIndex + 2);
 
                 if (shadow) {
-                    int sColorIndex = (charIndex + 16) * 3;
-                    sR = this.colorBuffer.get(sColorIndex + 0);
-                    sG = this.colorBuffer.get(sColorIndex + 1);
-                    sB = this.colorBuffer.get(sColorIndex + 2);
+                    int shadowRgbIndex = (colorIndex + 16) * 3;
+                    sR = this.colorBuffer.get(shadowRgbIndex + 0);
+                    sG = this.colorBuffer.get(shadowRgbIndex + 1);
+                    sB = this.colorBuffer.get(shadowRgbIndex + 2);
                 } else {
                     ts.color(r, g, b, a);
                 }
 
-                i += 2;
-            }
-
-            if (i >= text.length()) {
+                i++;
                 continue;
             }
 
-            char c = text.charAt(i);
             int charIndex = CharacterUtils.validCharacters.indexOf(c);
             int ch;
             if (charIndex >= 0 && c < 176) {
@@ -210,8 +209,8 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
         int i;
         for (i = start; i < end; ++i) {
             char c = text.charAt(i);
-            if (c == '§') {
-                ++i;
+            if (end > i + 1 && c == '§') {
+                i++;
                 continue;
             }
 
