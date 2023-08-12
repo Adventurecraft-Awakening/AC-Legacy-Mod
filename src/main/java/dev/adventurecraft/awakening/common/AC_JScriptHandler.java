@@ -36,15 +36,13 @@ public class AC_JScriptHandler {
             return;
         }
 
-        long lastNotifyTime = 0;
-
         for (int i = 0; i < files.length; i++) {
             File file = files[i];
             String fileName = file.getName();
             String name = fileName.toLowerCase();
 
             if (name.endsWith(".js")) {
-                try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                try (var reader = new BufferedReader(new FileReader(file))) {
                     var script = ((ExWorld) this.world).getScript().compileReader(reader, fileName);
                     this.scripts.put(name, new AC_JScriptInfo(fileName, script));
                 } catch (IOException e) {
@@ -54,13 +52,8 @@ public class AC_JScriptHandler {
             }
 
             if (progressListener != null) {
-                long currTime = System.currentTimeMillis();
-                if (currTime - lastNotifyTime > 25L) {
-                    lastNotifyTime = currTime;
-
-                    progressListener.notifyProgress(String.format("%4d / %4d", i + 1, files.length));
-                    progressListener.progressStagePercentage((int) ((100.0 * (double) i / files.length)));
-                }
+                progressListener.notifyProgress(String.format("%4d / %4d", i + 1, files.length));
+                progressListener.progressStagePercentage((int) ((100.0 * (double) i / files.length)));
             }
         }
 

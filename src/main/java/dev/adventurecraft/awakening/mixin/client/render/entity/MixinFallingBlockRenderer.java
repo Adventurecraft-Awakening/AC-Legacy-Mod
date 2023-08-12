@@ -1,6 +1,5 @@
 package dev.adventurecraft.awakening.mixin.client.render.entity;
 
-import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.entity.ExFallingBlockEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;

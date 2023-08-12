@@ -77,9 +77,9 @@ public interface ExWorld {
 
     AC_UndoStack getUndoStack();
 
-    String[] getMusicList();
+    ArrayList<String> getMusicList();
 
-    String[] getSoundList();
+    ArrayList<String> getSoundList();
 
     AC_TriggerManager getTriggerManager();
 

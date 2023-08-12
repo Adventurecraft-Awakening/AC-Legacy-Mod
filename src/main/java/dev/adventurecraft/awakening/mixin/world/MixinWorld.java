@@ -183,8 +183,8 @@ public abstract class MixinWorld implements ExWorld, BlockView {
 
     public File levelDir;
     private int[] coordOrder;
-    public String[] musicList;
-    public String[] soundList;
+    public ArrayList<String> musicList = new ArrayList<>();
+    public ArrayList<String> soundList = new ArrayList<>();
     private DimensionData mapHandler;
     public AC_TriggerManager triggerManager = new AC_TriggerManager((World) (Object) this);
     public boolean fogColorOverridden;
@@ -277,6 +277,8 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         this.fogDensityOverridden = false;
         this.firstTick = true;
         this.newSave = false;
+        this.musicList = new ArrayList<>();
+        this.soundList = new ArrayList<>();
         this.triggerManager = new AC_TriggerManager((World) (Object) this);
         this.undoStack = new AC_UndoStack();
         this.collisionDebugLists = new ArrayList<>();
@@ -1418,40 +1420,21 @@ public abstract class MixinWorld implements ExWorld, BlockView {
 
     @Override
     public void loadMapMusic() {
-        File var1 = new File(this.levelDir, "music");
-        if (var1.exists() && var1.isDirectory()) {
-            int var2 = 0;
-            File[] var3 = var1.listFiles();
-            File[] var4 = var3;
-            int var5 = var3.length;
+        this.musicList.clear();
 
-            int var6;
-            File var7;
-            String var8;
-            for (var6 = 0; var6 < var5; ++var6) {
-                var7 = var4[var6];
-                if (var7.isFile() && var7.getName().endsWith(".ogg")) {
-                    var8 = String.format("music/%s", var7.getName().toLowerCase());
-                    Minecraft.instance.soundHelper.addStreaming(var8, var7);
-                    ++var2;
+        File musicDir = new File(this.levelDir, "music");
+        File[] files = musicDir.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isFile() && file.getName().endsWith(".ogg")) {
+                    String fileName = file.getName().toLowerCase();
+                    String name = String.format("music/%s", fileName);
+                    Minecraft.instance.soundHelper.addStreaming(name, file);
+
+                    String musicName = String.format("music.%s", fileName.replace(".ogg", ""));
+                    this.musicList.add(musicName);
                 }
             }
-
-            this.musicList = new String[var2];
-            var2 = 0;
-            var4 = var3;
-            var5 = var3.length;
-
-            for (var6 = 0; var6 < var5; ++var6) {
-                var7 = var4[var6];
-                if (var7.isFile() && var7.getName().endsWith(".ogg")) {
-                    var8 = String.format("music.%s", var7.getName().toLowerCase().replace(".ogg", ""));
-                    this.musicList[var2] = var8;
-                    ++var2;
-                }
-            }
-        } else {
-            this.musicList = new String[0];
         }
 
         String playingMusic = ((ExWorldProperties) this.properties).getPlayingMusic();
@@ -1461,14 +1444,13 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     }
 
     public void loadMapSounds() {
+        this.soundList.clear();
+
         File soundDir = new File(this.levelDir, "sound");
         File[] files = soundDir.listFiles();
-        if (!soundDir.exists() || !soundDir.isDirectory() || files == null) {
-            this.soundList = new String[0];
+        if (files == null) {
             return;
         }
-
-        ArrayList<String> sounds = new ArrayList<>();
 
         for (File file : files) {
             if (file.isFile() && file.getName().endsWith(".ogg")) {
@@ -1477,11 +1459,9 @@ public abstract class MixinWorld implements ExWorld, BlockView {
                 Minecraft.instance.soundHelper.addSound(name, file);
 
                 String soundName = String.format("sound.%s", fileName.replace(".ogg", ""));
-                sounds.add(soundName);
+                this.soundList.add(soundName);
             }
         }
-
-        this.soundList = sounds.toArray(new String[0]);
     }
 
     public void loadSoundOverrides() {
@@ -1514,23 +1494,17 @@ public abstract class MixinWorld implements ExWorld, BlockView {
 
     @Override
     public Entity getEntityByID(int id) {
-        Iterator<Entity> var2 = this.entities.iterator();
-
-        Entity var3;
-        do {
-            if (!var2.hasNext()) {
-                return null;
+        for (Entity entity : this.entities) {
+            if (entity.entityId == id) {
+                return entity;
             }
-
-            var3 = var2.next();
-        } while (var3.entityId != id);
-
-        return var3;
+        }
+        return null;
     }
 
     @Override
     public float getFogStart(float start, float deltaTime) {
-        ExWorldProperties props = (ExWorldProperties) this.properties;
+        var props = (ExWorldProperties) this.properties;
         if (props.isOverrideFogDensity()) {
             if (this.fogDensityOverridden) {
                 return props.getFogStart();
@@ -1542,7 +1516,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
 
     @Override
     public float getFogEnd(float end, float deltaTime) {
-        ExWorldProperties props = (ExWorldProperties) this.properties;
+        var props = (ExWorldProperties) this.properties;
         if (props.isOverrideFogDensity()) {
             if (this.fogDensityOverridden) {
                 return props.getFogEnd();
@@ -1554,9 +1528,9 @@ public abstract class MixinWorld implements ExWorld, BlockView {
 
     @Override
     public BlockEntity getBlockTileEntityDontCreate(int x, int y, int z) {
-        Chunk var4 = this.getChunkFromCache(x >> 4, z >> 4);
-        if (var4 != null) {
-            return ((ExChunk) var4).getChunkBlockTileEntityDontCreate(x & 15, y, z & 15);
+        Chunk chunk = this.getChunkFromCache(x >> 4, z >> 4);
+        if (chunk != null) {
+            return ((ExChunk) chunk).getChunkBlockTileEntityDontCreate(x & 15, y, z & 15);
         }
         return null;
     }
@@ -1564,7 +1538,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     @Override
     public double getTemperatureValue(int x, int z) {
         if (x >= -32000000 && z >= -32000000 && x < 32000000 && z <= 32000000) {
-            ExChunk chunk = (ExChunk) this.getChunkFromCache(x >> 4, z >> 4);
+            var chunk = (ExChunk) this.getChunkFromCache(x >> 4, z >> 4);
             double tempValue = chunk.getTemperatureValue(x & 15, z & 15);
             double tempOffset = ((ExWorldProperties) this.properties).getTempOffset();
             return tempValue + tempOffset;
@@ -1575,9 +1549,9 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     @Override
     public void setTemperatureValue(int x, int z, double value) {
         if (x >= -32000000 && z >= -32000000 && x < 32000000 && z <= 32000000) {
-            ExChunk var5 = (ExChunk) this.getChunkFromCache(x >> 4, z >> 4);
-            if (var5.getTemperatureValue(x & 15, z & 15) != value) {
-                var5.setTemperatureValue(x & 15, z & 15, value);
+            var chunk = (ExChunk) this.getChunkFromCache(x >> 4, z >> 4);
+            if (chunk.getTemperatureValue(x & 15, z & 15) != value) {
+                chunk.setTemperatureValue(x & 15, z & 15, value);
             }
         }
     }
@@ -1651,12 +1625,12 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     }
 
     @Override
-    public String[] getMusicList() {
+    public ArrayList<String> getMusicList() {
         return this.musicList;
     }
 
     @Override
-    public String[] getSoundList() {
+    public ArrayList<String> getSoundList() {
         return this.soundList;
     }
 

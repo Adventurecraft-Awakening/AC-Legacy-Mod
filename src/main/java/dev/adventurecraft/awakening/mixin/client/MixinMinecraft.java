@@ -204,6 +204,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
     @Shadow
     public static int frameRenderTimesAmount;
+
     @Shadow
     public StatsFileWriter statFileWriter;
 
@@ -212,6 +213,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
     @Shadow
     public ProgressListenerImpl progressListener;
+
     private static long[] updateTimes = new long[512];
     private static long updateRendererTime;
 
@@ -1164,7 +1166,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
                 saveName = "Map Editing";
             }
 
-            World world = ExWorld.createWorld(mapName, dimData, saveName, seed, progressListener);
+            World world = ExWorld.createWorld(mapName, dimData, saveName, seed, this.progressListener);
             if (world.field_215) {
                 this.statFileWriter.incrementStat(Stats.createWorld, 1);
                 this.statFileWriter.incrementStat(Stats.startGame, 1);
