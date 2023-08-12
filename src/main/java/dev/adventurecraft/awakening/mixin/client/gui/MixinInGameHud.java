@@ -43,6 +43,28 @@ import java.util.Random;
 @Mixin(InGameHud.class)
 public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
 
+    private static final String[] CODE_TO_ANSI_SEQUENCE = new String[]{
+        // Regular
+        "\033[0;30m", // BLACK
+        "\033[0;34m", // BLUE
+        "\033[0;32m", // GREEN
+        "\033[0;36m", // CYAN
+        "\033[0;31m", // RED
+        "\033[0;35m", // PURPLE
+        "\033[0;33m", // YELLOW
+        "\033[0;37m", // WHITE
+
+        // High Intensity
+        "\033[0;90m", // BLACK
+        "\033[0;94m", // BLUE
+        "\033[0;92m", // GREEN
+        "\033[0;96m", // CYAN
+        "\033[0;91m", // RED
+        "\033[0;95m", // PURPLE
+        "\033[0;93m", // YELLOW
+        "\033[0;97m", // WHITE
+    };
+
     private static final int CHAT_WIDTH = 320;
 
     @Shadow
@@ -451,7 +473,7 @@ public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
 
     @Overwrite
     public void addChatMessage(String message) {
-        ACMod.CHAT_LOGGER.info(message);
+        ACMod.CHAT_LOGGER.info(colorCodesToAnsi(message, 0, message.length()).toString());
 
         var entry = new AC_ChatMessage(message);
         entry.rebuild((ExTextRenderer) this.client.textRenderer, CHAT_WIDTH);
@@ -461,6 +483,26 @@ public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
         while (this.chatMessages.size() > bufferLimit) {
             this.chatMessages.removeLast();
         }
+    }
+
+    private static StringBuilder colorCodesToAnsi(CharSequence text, int start, int end) {
+        var builder = new StringBuilder((int) ((end - start) * 1.1));
+        for (int i = start; i < end; ++i) {
+            char c = text.charAt(i);
+            if (end > i + 1 && c == '§') {
+                int colorIndex = "0123456789abcdef".indexOf(Character.toLowerCase(text.charAt(i + 1)));
+                if (colorIndex < 0 || colorIndex > 15) {
+                    colorIndex = 15;
+                }
+
+                String sequence = CODE_TO_ANSI_SEQUENCE[colorIndex];
+                builder.append(sequence);
+                i++;
+                continue;
+            }
+            builder.append(c);
+        }
+        return builder;
     }
 
     private void renderOverlay(int x, int y, String name) {
