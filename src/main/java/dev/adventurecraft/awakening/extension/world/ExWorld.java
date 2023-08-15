@@ -22,7 +22,7 @@ public interface ExWorld {
     void initWorld(
         String mapName, DimensionData dimData, String saveName, long seed, Dimension dimension, ProgressListener progressListener);
 
-    BufferedImage loadMapTexture(String var1);
+    BufferedImage loadMapTexture(String name);
 
     void updateChunkProvider();
 

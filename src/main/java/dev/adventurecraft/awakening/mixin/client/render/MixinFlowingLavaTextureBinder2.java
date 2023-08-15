@@ -195,10 +195,10 @@ public abstract class MixinFlowingLavaTextureBinder2 extends TextureBinder imple
         loadImage("/custom_lava_flowing.png");
     }
 
-    public void loadImage(String var0) {
+    public void loadImage(String name) {
         BufferedImage var1 = null;
         if (Minecraft.instance.world != null) {
-            var1 = ((ExWorld) Minecraft.instance.world).loadMapTexture(var0);
+            var1 = ((ExWorld) Minecraft.instance.world).loadMapTexture(name);
         }
 
         curFrame = 0;

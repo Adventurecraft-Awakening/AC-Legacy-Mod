@@ -3,32 +3,47 @@ package dev.adventurecraft.awakening.common;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
+import dev.adventurecraft.awakening.client.render.AC_TextureBinder;
 import dev.adventurecraft.awakening.extension.client.ExTextureManager;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.render.TextureBinder;
 
-public class AC_TextureFanFX extends TextureBinder {
-    static int numFrames;
+public class AC_TextureFanFX extends TextureBinder implements AC_TextureBinder {
+
+    int numFrames;
     int curFrame = 0;
-    private static int[] fanImage;
-    private static int width;
-    private static int height;
+    int[] fanImage;
+    int width;
+    int height;
 
     public AC_TextureFanFX() {
         super(AC_Blocks.fan.texture);
-        loadImage();
     }
 
-    public static void loadImage() {
+    @Override
+    public String getTexture() {
+        // TODO: fix texture management (see MixinTextureManager)
+        if (this.renderMode == 0) return "/terrain.png";
+        //if (this.renderMode == 1) return "/gui/items.png";
+        return "/gui/items.png";
+    }
+
+    @Override
+    public void loadImage() {
+        this.loadImage("/misc/fan.png");
+    }
+
+    @Override
+    public void loadImage(String name) {
         try {
             BufferedImage var0 = null;
             if (Minecraft.instance.world != null) {
-                var0 = ((ExWorld) Minecraft.instance.world).loadMapTexture("/misc/fan.png");
+                var0 = ((ExWorld) Minecraft.instance.world).loadMapTexture(name);
             }
 
             if (var0 == null) {
-                var0 = ((ExTextureManager) Minecraft.instance.textureManager).getTextureImage("/misc/fan.png");
+                var0 = ((ExTextureManager) Minecraft.instance.textureManager).getTextureImage(name);
             }
 
             width = var0.getWidth();
@@ -43,16 +58,20 @@ public class AC_TextureFanFX extends TextureBinder {
             width = 16;
             height = 16;
         }
-
     }
 
+    @Override
     public void onTick(Vec2 var1) {
+        if (this.fanImage == null) {
+            return;
+        }
+
         int var2 = this.curFrame * height;
         int var3 = 0;
 
         for (int var4 = 0; var4 < height; ++var4) {
             for (int var5 = 0; var5 < height; ++var5) {
-                int var6 = fanImage[var4 + var5 * width + var2];
+                int var6 = this.fanImage[var4 + var5 * width + var2];
                 this.grid[var3 * 4 + 0] = (byte) (var6 >> 16 & 255);
                 this.grid[var3 * 4 + 1] = (byte) (var6 >> 8 & 255);
                 this.grid[var3 * 4 + 2] = (byte) (var6 & 255);
@@ -61,6 +80,6 @@ public class AC_TextureFanFX extends TextureBinder {
             }
         }
 
-        this.curFrame = (this.curFrame + 1) % numFrames;
+        this.curFrame = (this.curFrame + 1) % this.numFrames;
     }
 }

@@ -141,7 +141,7 @@ public class AC_BlockEffect extends BlockWithEntity implements AC_ITriggerBlock 
 
     public static boolean replaceTexture(World world, String keyName, String replacementName) {
         String key = keyName.toLowerCase();
-        ExTextureManager texManager = (ExTextureManager) Minecraft.instance.textureManager;
+        var texManager = (ExTextureManager) Minecraft.instance.textureManager;
         if (!((ExWorldProperties) world.properties).addReplacementTexture(keyName, replacementName)) {
             return false;
         } else if (key.equals("/watermap.png")) {
@@ -161,22 +161,22 @@ public class AC_BlockEffect extends BlockWithEntity implements AC_ITriggerBlock 
             needsReloadForRevert = true;
             return true;
         } else if (key.equals("/custom_fire.png")) {
-            ((AC_TextureBinder) texManager.getTextureBinder(FireTextureBinder.class)).loadImage(replacementName);
+            AC_TextureBinder.loadImages(texManager, FireTextureBinder.class, replacementName);
             return true;
         } else if (key.equals("/custom_lava_flowing.png")) {
-            ((AC_TextureBinder) texManager.getTextureBinder(FlowingLavaTextureBinder2.class)).loadImage(replacementName);
+            AC_TextureBinder.loadImages(texManager, FlowingLavaTextureBinder2.class, replacementName);
             return true;
         } else if (key.equals("/custom_lava_still.png")) {
-            ((AC_TextureBinder) texManager.getTextureBinder(FlowingLavaTextureBinder.class)).loadImage(replacementName);
+            AC_TextureBinder.loadImages(texManager, FlowingLavaTextureBinder.class, replacementName);
             return true;
         } else if (key.equals("/custom_portal.png")) {
-            ((AC_TextureBinder) texManager.getTextureBinder(PortalTextureBinder.class)).loadImage(replacementName);
+            AC_TextureBinder.loadImages(texManager, PortalTextureBinder.class, replacementName);
             return true;
         } else if (key.equals("/custom_water_flowing.png")) {
-            ((AC_TextureBinder) texManager.getTextureBinder(FlowingWaterTextureBinder.class)).loadImage(replacementName);
+            AC_TextureBinder.loadImages(texManager, FlowingWaterTextureBinder.class, replacementName);
             return true;
         } else if (key.equals("/custom_water_still.png")) {
-            ((AC_TextureBinder) texManager.getTextureBinder(FlowingWaterTextureBinder2.class)).loadImage(replacementName);
+            AC_TextureBinder.loadImages(texManager, FlowingWaterTextureBinder2.class, replacementName);
             return true;
         } else {
             texManager.replaceTexture(keyName, replacementName);

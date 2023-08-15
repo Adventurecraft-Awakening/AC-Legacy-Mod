@@ -38,6 +38,10 @@ import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.*;
+import java.util.stream.Stream;
+
+// TODO: improve texture management and lookups.
+//       do to not use strings and IDs at random
 
 @Mixin(TextureManager.class)
 public abstract class MixinTextureManager implements ExTextureManager {
@@ -207,13 +211,10 @@ public abstract class MixinTextureManager implements ExTextureManager {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T extends TextureBinder> T getTextureBinder(Class<T> type) {
-        for (TextureBinder binder : this.textureBinders) {
-            if (type.isInstance(binder)) {
-                return (T) binder;
-            }
-        }
-        return null;
+    public <T extends TextureBinder> Stream<T> getTextureBinders(Class<T> type) {
+        return this.textureBinders.stream()
+            .filter(type::isInstance)
+            .map(binder -> (T) binder);
     }
 
     @Override

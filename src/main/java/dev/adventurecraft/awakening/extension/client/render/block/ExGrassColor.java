@@ -14,11 +14,11 @@ public interface ExGrassColor {
         return GrassColor.map[0];
     }
 
-    static void loadGrass(String var0) {
-        BufferedImage var1 = ((ExWorld) Minecraft.instance.world).loadMapTexture(var0);
+    static void loadGrass(String fileName) {
+        BufferedImage var1 = ((ExWorld) Minecraft.instance.world).loadMapTexture(fileName);
         if (var1 == null) {
             try {
-                var1 = ImageIO.read(FoliageColor.class.getResource(var0));
+                var1 = ImageIO.read(FoliageColor.class.getResource(fileName));
             } catch (Exception var3) {
                 var3.printStackTrace();
             }

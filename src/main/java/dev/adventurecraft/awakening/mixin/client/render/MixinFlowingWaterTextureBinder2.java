@@ -201,10 +201,10 @@ public abstract class MixinFlowingWaterTextureBinder2 extends TextureBinder impl
         loadImage("/custom_water_still.png");
     }
 
-    public void loadImage(String var0) {
+    public void loadImage(String name) {
         BufferedImage var1 = null;
         if (Minecraft.instance.world != null) {
-            var1 = ((ExWorld) Minecraft.instance.world).loadMapTexture(var0);
+            var1 = ((ExWorld) Minecraft.instance.world).loadMapTexture(name);
         }
 
         curFrame = 0;

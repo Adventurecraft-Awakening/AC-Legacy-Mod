@@ -7,10 +7,11 @@ import net.minecraft.client.render.TextureBinder;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.stream.Stream;
 
 public interface ExTextureManager {
 
-    <T extends TextureBinder> T getTextureBinder(Class<T> type);
+    <T extends TextureBinder> Stream<T> getTextureBinders(Class<T> type);
 
     BufferedImage getTextureImage(String name) throws IOException;
 

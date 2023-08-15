@@ -401,7 +401,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
 
     @Override
     public void loadMapTextures() {
-        ExTextureManager texManager = ((ExTextureManager) Minecraft.instance.textureManager);
+        var texManager = ((ExTextureManager) Minecraft.instance.textureManager);
         Minecraft.instance.textureManager.reloadTexturesFromTexturePack();
 
         for (Object entry : Minecraft.instance.textureManager.textures.entrySet()) {
@@ -416,61 +416,64 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         }
 
         this.loadTextureAnimations();
-        AC_TextureFanFX.loadImage();
-        ((AC_TextureBinder) texManager.getTextureBinder(FireTextureBinder.class)).loadImage();
-        ((AC_TextureBinder) texManager.getTextureBinder(FlowingLavaTextureBinder.class)).loadImage();
-        ((AC_TextureBinder) texManager.getTextureBinder(FlowingLavaTextureBinder2.class)).loadImage();
-        ((AC_TextureBinder) texManager.getTextureBinder(PortalTextureBinder.class)).loadImage();
-        ((AC_TextureBinder) texManager.getTextureBinder(FlowingWaterTextureBinder2.class)).loadImage();
-        ((AC_TextureBinder) texManager.getTextureBinder(FlowingWaterTextureBinder.class)).loadImage();
+        AC_TextureBinder.loadImages(texManager, AC_TextureFanFX.class);
+        AC_TextureBinder.loadImages(texManager, FireTextureBinder.class);
+        AC_TextureBinder.loadImages(texManager, FlowingLavaTextureBinder.class);
+        AC_TextureBinder.loadImages(texManager, FlowingLavaTextureBinder2.class);
+        AC_TextureBinder.loadImages(texManager, PortalTextureBinder.class);
+        AC_TextureBinder.loadImages(texManager, FlowingWaterTextureBinder2.class);
+        AC_TextureBinder.loadImages(texManager, FlowingWaterTextureBinder.class);
         ExGrassColor.loadGrass("/misc/grasscolor.png");
         ExFoliageColor.loadFoliage("/misc/foliagecolor.png");
         ((ExWorldProperties) this.properties).loadTextureReplacements((World) (Object) this);
     }
 
     private void loadTextureAnimations() {
-        ExTextureManager texManager = ((ExTextureManager) Minecraft.instance.textureManager);
+        var texManager = ((ExTextureManager) Minecraft.instance.textureManager);
         texManager.clearTextureAnimations();
-        File var1 = new File(this.levelDir, "animations.txt");
-        if (var1.exists()) {
-            try {
-                BufferedReader var2 = new BufferedReader(new FileReader(var1));
 
-                try {
-                    while (var2.ready()) {
-                        String var3 = var2.readLine();
-                        String[] var4 = var3.split(",", 7);
-                        if (var4.length == 7) {
-                            try {
-                                String var5 = var4[1].trim();
-                                String var6 = var4[2].trim();
-                                int var7 = Integer.parseInt(var4[3].trim());
-                                int var8 = Integer.parseInt(var4[4].trim());
-                                int var9 = Integer.parseInt(var4[5].trim());
-                                int var10 = Integer.parseInt(var4[6].trim());
-                                AC_TextureAnimated var11 = new AC_TextureAnimated(var5, var6, var7, var8, var9, var10);
-                                texManager.registerTextureAnimation(var4[0].trim(), var11);
-                            } catch (Exception var12) {
-                                var12.printStackTrace();
-                            }
+        var file = new File(this.levelDir, "animations.txt");
+        if (!file.exists()) {
+            return;
+        }
+
+        try {
+            var reader = new BufferedReader(new FileReader(file));
+            try {
+                while (reader.ready()) {
+                    String line = reader.readLine();
+                    String[] elements = line.split(",", 7);
+                    if (elements.length == 7) {
+                        try {
+                            String animName = elements[0].trim();
+                            String texName = elements[1].trim();
+                            String imageName = elements[2].trim();
+                            int x = Integer.parseInt(elements[3].trim());
+                            int y = Integer.parseInt(elements[4].trim());
+                            int w = Integer.parseInt(elements[5].trim());
+                            int h = Integer.parseInt(elements[6].trim());
+                            var instance = new AC_TextureAnimated(texName, imageName, x, y, w, h);
+                            texManager.registerTextureAnimation(animName, instance);
+                        } catch (Exception var12) {
+                            var12.printStackTrace();
                         }
                     }
-                } catch (IOException var13) {
-                    var13.printStackTrace();
                 }
-            } catch (FileNotFoundException var14) {
-                var14.printStackTrace();
+            } catch (IOException var13) {
+                var13.printStackTrace();
             }
+        } catch (FileNotFoundException var14) {
+            var14.printStackTrace();
         }
     }
 
     @Override
-    public BufferedImage loadMapTexture(String var1) {
-        File var2 = new File(this.levelDir, var1);
-        if (var2.exists()) {
+    public BufferedImage loadMapTexture(String name) {
+        var file = new File(this.levelDir, name);
+        if (file.exists()) {
             try {
-                BufferedImage var3 = ImageIO.read(var2);
-                return var3;
+                BufferedImage image = ImageIO.read(file);
+                return image;
             } catch (Exception var4) {
             }
         }
@@ -484,19 +487,19 @@ public abstract class MixinWorld implements ExWorld, BlockView {
 
     @Overwrite
     public WorldSource getChunkCache() {
-        ChunkIO var1;
+        ChunkIO io;
         if (this.dimensionData == null) {
-            var1 = this.mapHandler.getChunkIO(this.dimension);
+            io = this.mapHandler.getChunkIO(this.dimension);
         } else {
-            var1 = this.dimensionData.getChunkIO(this.dimension);
+            io = this.dimensionData.getChunkIO(this.dimension);
             if (this.mapHandler != null) {
-                var1 = new MapChunkLoader(this.mapHandler.getChunkIO(this.dimension), var1);
+                io = new MapChunkLoader(this.mapHandler.getChunkIO(this.dimension), io);
             }
         }
 
         try {
-            ChunkCache cache = (ChunkCache) ACMod.UNSAFE.allocateInstance(ChunkCache.class);
-            ((ExChunkCache) cache).init((World) (Object) this, var1, this.dimension.createWorldSource());
+            var cache = (ChunkCache) ACMod.UNSAFE.allocateInstance(ChunkCache.class);
+            ((ExChunkCache) cache).init((World) (Object) this, io, this.dimension.createWorldSource());
             return cache;
         } catch (InstantiationException e) {
             throw new RuntimeException(e);
