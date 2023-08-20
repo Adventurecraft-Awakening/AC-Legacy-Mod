@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.mixin.client;
 
 import com.llamalad7.mixinextras.injector.WrapWithCondition;
 import com.llamalad7.mixinextras.sugar.Local;
+import com.llamalad7.mixinextras.sugar.ref.LocalIntRef;
 import dev.adventurecraft.awakening.ACMainThread;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.client.options.Config;
@@ -14,6 +15,7 @@ import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.render.ExWorldEventRenderer;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
+import dev.adventurecraft.awakening.extension.util.ExProgressListener;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.script.ScriptEntity;
 import dev.adventurecraft.awakening.script.ScriptItem;
@@ -1086,6 +1088,22 @@ public abstract class MixinMinecraft implements ExMinecraft {
     private void initPlayerOnInit(World var1, String var2, PlayerEntity var3, CallbackInfo ci) {
         this.cutsceneCameraEntity = this.interactionManager.method_1717(var1);
         ((ExWorld) this.world).getScript().initPlayer(this.player);
+    }
+
+    @Redirect(
+        method = "loadIntoWorld",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/util/ProgressListenerImpl;progressStagePercentage(I)V"))
+    private void reportPreciseTerrainProgress(
+        ProgressListenerImpl instance,
+        int i,
+        @Local(ordinal = 1) int count,
+        @Local(ordinal = 2) int max) {
+
+        String stage = String.format("%4d / %4d", count, max);
+        ((ExProgressListener) this.progressListener).notifyProgress(
+            stage, count / (double) max, false);
     }
 
     @Overwrite

@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.ACMod;
+import dev.adventurecraft.awakening.extension.util.ExProgressListener;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ProgressListener;
@@ -51,15 +52,15 @@ public class AC_JScriptHandler {
                 }
             }
 
-            if (progressListener != null) {
-                progressListener.notifyProgress(String.format("%4d / %4d", i + 1, files.length));
-                progressListener.progressStagePercentage((int) ((100.0 * (double) i / files.length)));
+            if (progressListener instanceof ExProgressListener exProgressListener) {
+                String stage = String.format("%4d / %4d", i + 1, files.length);
+                exProgressListener.notifyProgress(stage, (double) i / files.length, false);
             }
         }
 
-        if (progressListener != null) {
-            progressListener.notifyProgress(String.format("%4d / %4d", files.length, files.length));
-            progressListener.progressStagePercentage(100);
+        if (progressListener instanceof ExProgressListener exProgressListener) {
+            String stage = String.format("%4d / %4d", files.length, files.length);
+            exProgressListener.notifyProgress(stage, 1, true);
         }
     }
 
