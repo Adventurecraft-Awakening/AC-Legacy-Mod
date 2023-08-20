@@ -37,6 +37,9 @@ public interface ExTextRenderer {
     }
 
     default TextRect getTextWidth(CharSequence text, int start) {
+        if (text == null) {
+            return null;
+        }
         return this.getTextWidth(text, start, text.length());
     }
 }

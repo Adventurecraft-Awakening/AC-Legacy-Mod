@@ -76,6 +76,9 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
 
     @Overwrite
     public void drawTextWithShadow(String text, int x, int y, int color) {
+        if (text == null) {
+            return;
+        }
         this.drawText(
             text, 0, text.length(),
             x, y, color, true, x + 1, y + 1, ExTextRenderer.getShadowColor(color));
@@ -83,6 +86,9 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
 
     @Overwrite
     public void drawText(String text, int x, int y, int color) {
+        if (text == null) {
+            return;
+        }
         this.drawText(
             text, 0, text.length(),
             (float) x, (float) y, color, false, 0, 0, 0);
@@ -90,6 +96,9 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
 
     @Overwrite
     public void drawText(String text, int x, int y, int color, boolean shadow) {
+        if (text == null) {
+            return;
+        }
         if (shadow) {
             color = ExTextRenderer.getShadowColor(color);
         }
@@ -195,7 +204,11 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
 
     @Overwrite
     public int getTextWidth(String text) {
-        return this.getTextWidth(text, 0).width();
+        var rect = this.getTextWidth(text, 0);
+        if (rect == null) {
+            return 0;
+        }
+        return rect.width();
     }
 
     @Override
@@ -246,6 +259,9 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
 
     @Overwrite
     public void method_1904(String text, int x, int y, int maxWidth, int color) {
+        if (text == null) {
+            return;
+        }
         String[] lines = text.split("\n");
         if (lines.length > 1) {
             for (String line : lines) {
@@ -258,7 +274,7 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
         String[] words = text.split(" ");
         int wordIndex = 0;
 
-        StringBuilder builder = new StringBuilder();
+        var builder = new StringBuilder();
         while (wordIndex < words.length) {
             builder.setLength(0);
             builder.append(words[wordIndex++]).append(" ");
@@ -288,6 +304,9 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
 
     @Overwrite
     public int method_1902(String text, int maxWidth) {
+        if (text == null) {
+            return 0;
+        }
         String[] lines = text.split("\n");
         if (lines.length > 1) {
             int y = 0;
