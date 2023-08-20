@@ -42,9 +42,9 @@ public class AC_BlockMobSpawner extends BlockWithEntity implements AC_ITriggerBl
     }
 
     @Override
-    public boolean canUse(World var1, int var2, int var3, int var4, PlayerEntity var5) {
+    public boolean canUse(World world, int x, int y, int z, PlayerEntity player) {
         if (AC_DebugMode.active) {
-            var entity = (AC_TileEntityMobSpawner) var1.getBlockEntity(var2, var3, var4);
+            var entity = (AC_TileEntityMobSpawner) world.getBlockEntity(x, y, z);
             AC_GuiMobSpawner.showUI(entity);
             return true;
         } else {
