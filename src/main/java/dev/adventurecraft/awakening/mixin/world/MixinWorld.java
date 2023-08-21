@@ -284,12 +284,12 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         this.collisionDebugLists = new ArrayList<>();
         this.rayCheckedBlocks = new ArrayList<>();
         this.rayDebugLists = new ArrayList<>();
-        File var7 = Minecraft.getGameDirectory();
-        File var8 = new File(var7, "../maps");
-        File var9 = new File(var8, mapName);
-        ((ExTranslationStorage) TranslationStorage.getInstance()).loadMapTranslation(var9);
-        this.mapHandler = new McRegionDimensionFile(var8, mapName, false);
-        this.levelDir = var9;
+        File gameDir = Minecraft.getGameDirectory();
+        File mapDir = new File(gameDir, "../maps");
+        File levelDir = new File(mapDir, mapName);
+        ((ExTranslationStorage) TranslationStorage.getInstance()).loadMapTranslation(levelDir);
+        this.mapHandler = new McRegionDimensionFile(mapDir, mapName, false);
+        this.levelDir = levelDir;
         this.lightingUpdates = new ArrayList<>();
         this.entities = new ArrayList<>();
         this.unloadedEntities = new ArrayList<>();
@@ -323,8 +323,8 @@ public abstract class MixinWorld implements ExWorld, BlockView {
             this.properties = this.mapHandler.getLevelProperties();
         }
 
-        if (!AC_TerrainImage.loadMap(var9)) {
-            AC_TerrainImage.loadMap(new File(new File(var7, "saves"), saveName));
+        if (!AC_TerrainImage.loadMap(levelDir)) {
+            AC_TerrainImage.loadMap(new File(new File(gameDir, "saves"), saveName));
         }
 
         this.field_215 = this.properties == null;
@@ -380,10 +380,10 @@ public abstract class MixinWorld implements ExWorld, BlockView {
             ScopeTag.loadScopeFromTag(this.script.globalScope, props.getGlobalScope());
         }
 
-        this.scriptHandler = new AC_JScriptHandler((World) (Object) this, var9);
+        this.scriptHandler = new AC_JScriptHandler((World) (Object) this, levelDir);
         this.scriptHandler.loadScripts(progressListener);
 
-        this.musicScripts = new AC_MusicScripts(this.script, var9, this.scriptHandler);
+        this.musicScripts = new AC_MusicScripts(this.script, levelDir, this.scriptHandler);
         if (props.getMusicScope() != null) {
             ScopeTag.loadScopeFromTag(this.musicScripts.scope, props.getMusicScope());
         }
@@ -394,8 +394,8 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         }
 
         this.loadSoundOverrides();
-        EntityDescriptions.loadDescriptions(new File(var9, "entitys"));
-        AC_ItemCustom.loadItems(new File(var9, "items"));
+        EntityDescriptions.loadDescriptions(new File(levelDir, "entitys"));
+        AC_ItemCustom.loadItems(new File(levelDir, "items"));
         AC_TileEntityNpcPath.lastEntity = null;
     }
 
@@ -404,14 +404,14 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         var texManager = ((ExTextureManager) Minecraft.instance.textureManager);
         Minecraft.instance.textureManager.reloadTexturesFromTexturePack();
 
-        for (Object entry : Minecraft.instance.textureManager.textures.entrySet()) {
-            Map.Entry<String, Integer> var3 = (Map.Entry<String, Integer>) entry;
-            String var4 = var3.getKey();
-            int var5 = var3.getValue();
-
+        for (Object oEntry : Minecraft.instance.textureManager.textures.entrySet()) {
+            var entry = (Map.Entry<String, Integer>) oEntry;
+            String name = entry.getKey();
+            int id = entry.getValue();
             try {
-                texManager.loadTexture(var5, var4);
-            } catch (IllegalArgumentException var7) {
+                texManager.loadTexture(id, name);
+            } catch (IllegalArgumentException ex) {
+                ACMod.LOGGER.error("Failed to load texture \"{}\".", name, ex);
             }
         }
 

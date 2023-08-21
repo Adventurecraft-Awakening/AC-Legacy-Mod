@@ -1,81 +1,92 @@
 package dev.adventurecraft.awakening.script;
 
+import dev.adventurecraft.awakening.ACMod;
+
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Properties;
 import java.util.Set;
 
-@SuppressWarnings("unused")
 public class EntityDescriptions {
 
-    static final HashMap<String, ScriptEntityDescription> descriptions = new HashMap();
+    static final HashMap<String, ScriptEntityDescription> descriptions = new HashMap<>();
 
-    public static ScriptEntityDescription getDescription(String var0) {
-        return descriptions.get(var0);
+    public static ScriptEntityDescription getDescription(String name) {
+        return descriptions.get(name);
     }
 
-    static void addDescription(String var0, ScriptEntityDescription var1) {
-        descriptions.put(var0, var1);
+    static void addDescription(String name, ScriptEntityDescription desc) {
+        descriptions.put(name, desc);
     }
 
     public static void clearDescriptions() {
         descriptions.clear();
     }
 
-    public static void loadDescriptions(File var0) {
+    public static void loadDescriptions(File directory) {
         clearDescriptions();
-        if (var0 != null && var0.exists() && var0.isDirectory()) {
-            File[] var1 = var0.listFiles();
-            for (File var4 : var1) {
-                if (var4.isFile() && var4.getName().endsWith(".txt")) {
-                    loadDescription(var4);
+        if (directory != null && directory.isDirectory()) {
+            File[] files = directory.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isFile() && file.getName().endsWith(".txt")) {
+                        loadDescription(file);
+                    }
                 }
             }
         }
     }
 
-    private static void loadDescription(File var0) {
-        Properties var1 = new Properties();
-
+    private static void loadDescription(File file) {
+        var bag = new Properties();
         try {
-            var1.load(new FileInputStream(var0));
-            ScriptEntityDescription var2 = new ScriptEntityDescription(var0.getName().split("\\.")[0]);
+            bag.load(new FileInputStream(file));
+            var desc = new ScriptEntityDescription(file.getName().split("\\.")[0]);
 
             try {
-                var2.health = Integer.parseInt(var1.getProperty("health", "10"));
-            } catch (NumberFormatException var7) {
+                desc.health = Integer.parseInt(bag.getProperty("health", "10"));
+            } catch (NumberFormatException ex) {
+                logException(file, "health", ex);
             }
 
             try {
-                var2.width = Float.parseFloat(var1.getProperty("width", "0.6"));
-            } catch (NumberFormatException var6) {
+                desc.width = Float.parseFloat(bag.getProperty("width", "0.6"));
+            } catch (NumberFormatException ex) {
+                logException(file, "width", ex);
             }
 
             try {
-                var2.height = Float.parseFloat(var1.getProperty("height", "1.8"));
-            } catch (NumberFormatException var5) {
+                desc.height = Float.parseFloat(bag.getProperty("height", "1.8"));
+            } catch (NumberFormatException ex) {
+                logException(file, "height", ex);
             }
 
             try {
-                var2.moveSpeed = Float.parseFloat(var1.getProperty("moveSpeed", "0.7"));
-            } catch (NumberFormatException var4) {
+                desc.moveSpeed = Float.parseFloat(bag.getProperty("moveSpeed", "0.7"));
+            } catch (NumberFormatException ex) {
+                logException(file, "moveSpeed", ex);
             }
 
-            var2.texture = var1.getProperty("texture", "/mob/char.png");
-            var2.onCreated = var1.getProperty("onCreated", "");
-            var2.onUpdate = var1.getProperty("onUpdate", "");
-            var2.onDeath = var1.getProperty("onDeath", "");
-            var2.onPathReached = var1.getProperty("onPathReached", "");
-            var2.onAttacked = var1.getProperty("onAttacked", "");
-            var2.onInteraction = var1.getProperty("onInteraction", "");
-        } catch (FileNotFoundException var8) {
-            var8.printStackTrace();
-        } catch (IOException var9) {
-            var9.printStackTrace();
+            desc.texture = bag.getProperty("texture", "/mob/char.png");
+            desc.onCreated = bag.getProperty("onCreated", "");
+            desc.onUpdate = bag.getProperty("onUpdate", "");
+            desc.onDeath = bag.getProperty("onDeath", "");
+            desc.onPathReached = bag.getProperty("onPathReached", "");
+            desc.onAttacked = bag.getProperty("onAttacked", "");
+            desc.onInteraction = bag.getProperty("onInteraction", "");
+        } catch (IOException ex) {
+            logException(file, ex);
         }
+    }
+
+    private static void logException(File file, String property, NumberFormatException ex) {
+        ACMod.LOGGER.error("Failed to parse property \"{}\" of entity description \"{}\".", property, file.getPath(), ex);
+    }
+
+    private static void logException(File file, Throwable ex) {
+        ACMod.LOGGER.error("Failed to load entity description \"{}\".", file.getPath(), ex);
     }
 
     public static Set<String> getDescriptions() {
