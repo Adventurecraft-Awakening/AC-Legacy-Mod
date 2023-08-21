@@ -12,7 +12,10 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.stream.Stream;
 
 public class AC_JScriptHandler {
 
@@ -26,14 +29,33 @@ public class AC_JScriptHandler {
         this.scripts = new HashMap<>();
     }
 
+    public Stream<Path> getFiles() throws IOException {
+        //noinspection resource
+        return Files.walk(this.scriptDir.toPath(), 1).filter(Files::isRegularFile);
+    }
+
+    public String[] getFileNames() {
+        try {
+            return getFiles().map(path -> path.getFileName().toString()).toArray(String[]::new);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public void loadScripts(ProgressListener progressListener) {
         this.scripts.clear();
 
         if (progressListener != null)
             progressListener.notifyIgnoreGameRunning("Loading scripts");
 
-        File[] files = this.scriptDir.listFiles();
-        if (files == null) {
+        File[] files;
+        try {
+            files = this.getFiles().map(Path::toFile).toArray(File[]::new);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        if (files.length == 0) {
             return;
         }
 

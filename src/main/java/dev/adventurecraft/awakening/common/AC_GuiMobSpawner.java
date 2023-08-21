@@ -1,12 +1,16 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.script.EntityDescriptions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.render.Tessellator;
 import net.minecraft.item.Item;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -239,7 +243,7 @@ public class AC_GuiMobSpawner extends Screen {
     }
 
     @Override
-    public void render(int mouseX, int mouseY, float deltaTime) {
+    public void render(int mouseX, int mouseY, float tickTime) {
         this.fill(0, 0, this.width, this.height, Integer.MIN_VALUE);
         this.drawTextWithShadow(this.textRenderer, String.format("Entity Spawn: %s", this.mobSpawner.entityID), 4, 4, 14737632);
         this.drawTextWithShadow(this.textRenderer, String.format("Entities Alive: %d", this.mobSpawner.getNumAlive()), 4, 14, 14737632);
@@ -254,7 +258,7 @@ public class AC_GuiMobSpawner extends Screen {
         this.spawnCountSlider.text = String.format("Spawn Count: %d", this.mobSpawner.spawnNumber);
         this.mobSpawner.respawnDelay = (int) (this.respawnSlider.sliderValue * 12000.0F + 0.5F);
         this.respawnSlider.text = String.format("Respawn Delay: %.1fs", (float) this.mobSpawner.respawnDelay / 20.0F);
-        super.render(mouseX, mouseY, deltaTime);
+        super.render(mouseX, mouseY, tickTime);
         this.mobSpawner.world.getChunk(this.mobSpawner.x, this.mobSpawner.z).method_885();
     }
 

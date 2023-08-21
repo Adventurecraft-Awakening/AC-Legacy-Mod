@@ -1589,17 +1589,7 @@ public abstract class MixinWorld implements ExWorld, BlockView {
 
     @Override
     public String[] getScriptFiles() {
-        File scriptDir = new File(this.levelDir, "scripts");
-        File[] files = scriptDir.listFiles();
-        if (files == null) {
-            return null;
-        }
-
-        String[] scripts = new String[files.length];
-        for (int i = 0; i < scripts.length; i++) {
-            scripts[i] = files[i].getName();
-        }
-        return scripts;
+        return this.scriptHandler.getFileNames();
     }
 
     @Override
