@@ -3,6 +3,7 @@ package dev.adventurecraft.awakening.common;
 import java.util.ArrayList;
 import java.util.List;
 
+import dev.adventurecraft.awakening.MathF;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
 import net.minecraft.client.render.Tessellator;
@@ -65,7 +66,7 @@ public class AC_CutsceneCamera {
             if (prevPoint != null) {
                 for (int i = 0; i < 25; ++i) {
                     float currTime = (float) (i + 1) / 25.0F;
-                    float nextTime = this.lerp(currTime, prevPoint.time, point.time);
+                    float nextTime = MathF.lerp(currTime, prevPoint.time, point.time);
                     AC_CutsceneCameraPoint nextPoint = camera.getPoint(nextTime);
                     Vec3d linePoint = Vec3d.create(nextPoint.posX, nextPoint.posY, nextPoint.posZ);
                     this.linePoints.add(linePoint);
@@ -153,18 +154,6 @@ public class AC_CutsceneCamera {
         this.prevPrevPoint = null;
         this.prevPoint = null;
         this.startTime = Minecraft.instance.world.getWorldTime();
-    }
-
-    private float cubicInterpolation(float mu, float y0, float y1, float y2, float y3) {
-        float mu2 = mu * mu;
-        float a0 = -0.5F * y0 + 1.5F * y1 - 1.5F * y2 + 0.5F * y3;
-        float a1 = y0 - 2.5F * y1 + 2.0F * y2 - 0.5F * y3;
-        float a2 = -0.5F * y0 + 0.5F * y2;
-        return a0 * mu * mu2 + a1 * mu2 + a2 * mu + y1;
-    }
-
-    private float lerp(float amount, float start, float end) {
-        return (1.0F - amount) * start + amount * end;
     }
 
     public boolean isEmpty() {
@@ -290,20 +279,20 @@ public class AC_CutsceneCamera {
 
         switch (this.prevPoint.blendType) {
             case LINEAR:
-                this.curPoint.posX = this.lerp(amount, this.prevPoint.posX, point.posX);
-                this.curPoint.posY = this.lerp(amount, this.prevPoint.posY, point.posY);
-                this.curPoint.posZ = this.lerp(amount, this.prevPoint.posZ, point.posZ);
-                this.curPoint.rotYaw = this.lerp(amount, this.prevPoint.rotYaw, point.rotYaw);
-                this.curPoint.rotPitch = this.lerp(amount, this.prevPoint.rotPitch, point.rotPitch);
+                this.curPoint.posX = MathF.lerp(amount, this.prevPoint.posX, point.posX);
+                this.curPoint.posY = MathF.lerp(amount, this.prevPoint.posY, point.posY);
+                this.curPoint.posZ = MathF.lerp(amount, this.prevPoint.posZ, point.posZ);
+                this.curPoint.rotYaw = MathF.lerp(amount, this.prevPoint.rotYaw, point.rotYaw);
+                this.curPoint.rotPitch = MathF.lerp(amount, this.prevPoint.rotPitch, point.rotPitch);
                 break;
 
             case QUADRATIC:
                 //noinspection SuspiciousNameCombination
-                this.curPoint.posX = this.cubicInterpolation(amount, this.prevPrevPoint.posX, this.prevPoint.posX, point.posX, nextPoint.posX);
-                this.curPoint.posY = this.cubicInterpolation(amount, this.prevPrevPoint.posY, this.prevPoint.posY, point.posY, nextPoint.posY);
-                this.curPoint.posZ = this.cubicInterpolation(amount, this.prevPrevPoint.posZ, this.prevPoint.posZ, point.posZ, nextPoint.posZ);
-                this.curPoint.rotYaw = this.cubicInterpolation(amount, this.prevPrevPoint.rotYaw, this.prevPoint.rotYaw, point.rotYaw, nextPoint.rotYaw);
-                this.curPoint.rotPitch = this.cubicInterpolation(amount, this.prevPrevPoint.rotPitch, this.prevPoint.rotPitch, point.rotPitch, nextPoint.rotPitch);
+                this.curPoint.posX = MathF.cubicInterpolation(amount, this.prevPrevPoint.posX, this.prevPoint.posX, point.posX, nextPoint.posX);
+                this.curPoint.posY = MathF.cubicInterpolation(amount, this.prevPrevPoint.posY, this.prevPoint.posY, point.posY, nextPoint.posY);
+                this.curPoint.posZ = MathF.cubicInterpolation(amount, this.prevPrevPoint.posZ, this.prevPoint.posZ, point.posZ, nextPoint.posZ);
+                this.curPoint.rotYaw = MathF.cubicInterpolation(amount, this.prevPrevPoint.rotYaw, this.prevPoint.rotYaw, point.rotYaw, nextPoint.rotYaw);
+                this.curPoint.rotPitch = MathF.cubicInterpolation(amount, this.prevPrevPoint.rotPitch, this.prevPoint.rotPitch, point.rotPitch, nextPoint.rotPitch);
                 break;
 
             case NONE:

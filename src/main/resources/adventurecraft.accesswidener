@@ -79,6 +79,8 @@ accessible field net/minecraft/client/gui/screen/Screen buttons Ljava/util/List;
 accessible field net/minecraft/client/gui/screen/Screen textRenderer Lnet/minecraft/client/render/TextRenderer;
 accessible field net/minecraft/client/gui/screen/Screen lastClickedButton Lnet/minecraft/client/gui/widget/ButtonWidget;
 
+accessible class net/minecraft/client/gui/screen/SelectWorldScreen$WorldList
+
 accessible method net/minecraft/client/gui/GuiElement fillGradient (IIIIII)V
 
 accessible field net/minecraft/client/gui/widgets/SliderWidget option Lnet/minecraft/client/options/Option;

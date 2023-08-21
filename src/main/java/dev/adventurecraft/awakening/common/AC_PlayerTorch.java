@@ -31,11 +31,11 @@ public class AC_PlayerTorch {
     }
 
     public static void setTorchPos(World world, float x, float y, float z) {
-        long avgFrameTime = ((ExMinecraft) Minecraft.instance).getAvgFrameTime();
+        double avgFrameTime = ((ExMinecraft) Minecraft.instance).getFrameTime();
         int updateRate = 1;
-        if (avgFrameTime > 33333333L) {
+        if (avgFrameTime > 1 / 30.0) {
             updateRate = 3;
-        } else if (avgFrameTime > 16666666L) {
+        } else if (avgFrameTime > 1 / 60.0) {
             updateRate = 2;
         }
 

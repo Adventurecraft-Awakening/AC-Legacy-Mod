@@ -16,7 +16,7 @@ public interface ExMinecraft {
 
     void saveMapUsed(String var1, String var2);
 
-    long getAvgFrameTime();
+    double getFrameTime();
 
     void updateStoreGUI();
 

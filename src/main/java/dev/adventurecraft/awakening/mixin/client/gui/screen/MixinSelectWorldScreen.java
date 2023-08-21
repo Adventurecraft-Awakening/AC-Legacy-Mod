@@ -1,13 +1,13 @@
 package dev.adventurecraft.awakening.mixin.client.gui.screen;
 
 import dev.adventurecraft.awakening.common.AC_GuiMapSelect;
+import dev.adventurecraft.awakening.extension.client.gui.widget.ExScrollableBaseWidget;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.SelectWorldScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.resource.language.TranslationStorage;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -21,6 +21,9 @@ public abstract class MixinSelectWorldScreen extends Screen {
     @Shadow
     private ButtonWidget deleteButton;
 
+    @Shadow
+    private SelectWorldScreen.WorldList worldList;
+
     //@Overwrite TODO: is this needed?
     public void addButtonsX() {
         TranslationStorage var1 = TranslationStorage.getInstance();
@@ -31,7 +34,9 @@ public abstract class MixinSelectWorldScreen extends Screen {
         this.deleteButton.active = false;
     }
 
-    @Redirect(method = "buttonClicked", at = @At(
+    @Redirect(
+        method = "buttonClicked",
+        at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/Minecraft;openScreen(Lnet/minecraft/client/gui/screen/Screen;)V",
             ordinal = 1))
@@ -39,10 +44,18 @@ public abstract class MixinSelectWorldScreen extends Screen {
         instance.openScreen(new AC_GuiMapSelect(this, ""));
     }
 
-    @Redirect(method = "loadWorld", at = @At(
+    @Redirect(
+        method = "loadWorld",
+        at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/Minecraft;openScreen(Lnet/minecraft/client/gui/screen/Screen;)V",
             ordinal = 1))
     private void disableOpenScreen(Minecraft instance, Screen screen) {
+    }
+
+    @Override
+    public void onMouseEvent() {
+        ((ExScrollableBaseWidget) this.worldList).onMouseEvent();
+        super.onMouseEvent();
     }
 }

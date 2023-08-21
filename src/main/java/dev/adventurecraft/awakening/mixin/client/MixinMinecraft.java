@@ -216,14 +216,10 @@ public abstract class MixinMinecraft implements ExMinecraft {
     @Shadow
     public ProgressListenerImpl progressListener;
 
-    private static long[] updateTimes = new long[512];
-    private static long updateRendererTime;
-
+    private long previousNanoTime;
+    private double deltaTime;
     private int rightMouseTicksRan;
     public AC_MapList mapList;
-    public int nextFrameTime;
-    public long prevFrameTimeForAvg;
-    public long[] tFrameTimes = new long[60];
     public AC_CutsceneCamera cutsceneCamera = new AC_CutsceneCamera();
     public AC_CutsceneCamera activeCutsceneCamera;
     public boolean cameraActive;
@@ -395,6 +391,18 @@ public abstract class MixinMinecraft implements ExMinecraft {
         ContextFactory.initGlobal(new ContextFactory());
     }
 
+    @Inject(
+        method = "run",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/util/math/AxixAlignedBoundingBox;method_85()V",
+            shift = At.Shift.BEFORE))
+    private void run_updateDeltaTime(CallbackInfo ci) {
+        long nanoTime = System.nanoTime();
+        this.deltaTime = (nanoTime - this.previousNanoTime) / (double) 1_000_000_000;
+        this.previousNanoTime = nanoTime;
+    }
+
     @Redirect(
         method = "run",
         at = @At(
@@ -406,19 +414,6 @@ public abstract class MixinMinecraft implements ExMinecraft {
         } else {
             instance.setSoundPosition(f, v);
         }
-    }
-
-    @Inject(
-        method = "run",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/Minecraft;printOpenGLError(Ljava/lang/String;)V",
-            shift = At.Shift.AFTER,
-            ordinal = 1))
-    private void run_updateFrameTimes(CallbackInfo ci) {
-        this.prevFrameTimeForAvg = System.nanoTime();
-        this.tFrameTimes[this.nextFrameTime] = this.prevFrameTimeForAvg;
-        this.nextFrameTime = (this.nextFrameTime + 1) % 60;
     }
 
     @Inject(
@@ -495,32 +490,6 @@ public abstract class MixinMinecraft implements ExMinecraft {
             ordinal = 0))
     private void printStackOnOutOfMem(CallbackInfo ci, @Local OutOfMemoryError error) {
         error.printStackTrace();
-    }
-
-    @Inject(
-        method = "method_2111",
-        at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/client/Minecraft;lastFrameRenderTime:J",
-            shift = At.Shift.BEFORE,
-            ordinal = 2))
-    private void setUpdateTime(long var1, CallbackInfo ci) {
-        updateTimes[frameRenderTimesAmount & updateTimes.length - 1] = updateRendererTime;
-    }
-
-    @Inject(
-        method = "method_2111",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/render/Tessellator;addVertex(DDD)V",
-            shift = At.Shift.BEFORE,
-            ordinal = 12),
-        locals = LocalCapture.CAPTURE_FAILHARD)
-    private void renderUpdateTime(long var1, CallbackInfo ci, long var3, long var5, Tessellator var7, int var8, long var9, int var11, int var12, int var13, int var14, int var15, long var16, long var18) {
-        long updateTime = updateTimes[var12] / 200000L;
-        var7.color(var14 * 1);
-        var7.addVertex((float) var12 + 0.5F, (float) ((long) this.actualHeight - (var16 - var18)) + 0.5F, 0.0D);
-        var7.addVertex((float) var12 + 0.5F, (float) ((long) this.actualHeight - (var16 - var18 - updateTime)) + 0.5F, 0.0D);
     }
 
     @Redirect(
@@ -1240,8 +1209,8 @@ public abstract class MixinMinecraft implements ExMinecraft {
     }
 
     @Override
-    public long getAvgFrameTime() {
-        return this.tFrameTimes[this.nextFrameTime] != 0L ? (this.prevFrameTimeForAvg - this.tFrameTimes[this.nextFrameTime]) / 60L : 23333333L;
+    public double getFrameTime() {
+        return this.deltaTime;
     }
 
     @Override

@@ -954,10 +954,10 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
     public float getFarPlane() {
         float dist = (float) (256 >> this.client.options.viewDistance);
         if (((ExGameOptions) this.client.options).isAutoFarClip()) {
-            long avgTime = ((ExMinecraft) this.client).getAvgFrameTime();
-            if (avgTime > 33333333L) {
+            double avgTime = ((ExMinecraft) this.client).getFrameTime();
+            if (avgTime > 0.033) {
                 this.farClipAdjustment *= 0.99F;
-            } else if (avgTime < 20000000L) {
+            } else if (avgTime < 0.02) {
                 this.farClipAdjustment *= 1.01F;
             }
 
