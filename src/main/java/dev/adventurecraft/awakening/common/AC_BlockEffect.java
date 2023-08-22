@@ -118,7 +118,7 @@ public class AC_BlockEffect extends BlockWithEntity implements AC_ITriggerBlock 
         boolean replaced = false;
 
         try {
-            BufferedReader reader = new BufferedReader(new FileReader(texFile));
+            var reader = new BufferedReader(new FileReader(texFile));
             try {
                 while (reader.ready()) {
                     String line = reader.readLine();

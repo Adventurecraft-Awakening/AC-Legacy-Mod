@@ -38,7 +38,7 @@ public class AC_JScriptHandler {
         try {
             return getFiles().map(path -> path.getFileName().toString()).toArray(String[]::new);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            return null;
         }
     }
 
@@ -52,7 +52,7 @@ public class AC_JScriptHandler {
         try {
             files = this.getFiles().map(Path::toFile).toArray(File[]::new);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            return;
         }
 
         if (files.length == 0) {
