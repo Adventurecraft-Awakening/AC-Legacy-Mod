@@ -15,7 +15,7 @@ public abstract class MixinTexturePack {
     @Inject(method = "getResourceAsStream", at = @At("HEAD"), cancellable = true)
     private void useAcResourceFirst(String key, CallbackInfoReturnable<InputStream> cir) {
         if (key.startsWith("/")) {
-            String acName = "/assets/adventurecraft" + key;
+            String acName = ACMod.getResourceName(key.substring(1));
             InputStream stream = ACMod.class.getResourceAsStream(acName);
             if (stream != null) {
                 cir.setReturnValue(stream);

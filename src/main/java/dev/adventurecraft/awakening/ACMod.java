@@ -29,6 +29,10 @@ public class ACMod implements ModInitializer {
         LOGGER.info("Hello AC world!");
     }
 
+    public static String getResourceName(String name) {
+        return "/assets/adventurecraft/" + name;
+    }
+
     static {
         try {
             Field field = Unsafe.class.getDeclaredField("theUnsafe");
