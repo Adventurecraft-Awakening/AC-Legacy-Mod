@@ -10,6 +10,8 @@ import java.io.File;
 @Environment(value = EnvType.CLIENT)
 public final class ACMainThread extends Minecraft {
 
+    public static File mapsDirectory;
+
     public ACMainThread(int width, int height, boolean fullScreen) {
         super(null, null, null, width, height, fullScreen);
     }
@@ -17,5 +19,12 @@ public final class ACMainThread extends Minecraft {
     @Override
     public void showGameStartupError(GameStartupError arg) {
         // TODO:
+    }
+
+    public static File getMapsDirectory() {
+        if (mapsDirectory == null) {
+            mapsDirectory = new File(getGameDirectory(), "../maps");
+        }
+        return mapsDirectory;
     }
 }

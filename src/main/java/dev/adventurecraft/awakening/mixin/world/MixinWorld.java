@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.mixin.world;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
+import dev.adventurecraft.awakening.ACMainThread;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.client.render.AC_TextureBinder;
 import dev.adventurecraft.awakening.common.*;
@@ -285,10 +286,10 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         this.rayCheckedBlocks = new ArrayList<>();
         this.rayDebugLists = new ArrayList<>();
         File gameDir = Minecraft.getGameDirectory();
-        File mapDir = new File(gameDir, "../maps");
-        File levelDir = new File(mapDir, mapName);
+        File mapsDir = ACMainThread.getMapsDirectory();
+        File levelDir = new File(mapsDir, mapName);
         ((ExTranslationStorage) TranslationStorage.getInstance()).loadMapTranslation(levelDir);
-        this.mapHandler = new McRegionDimensionFile(mapDir, mapName, false);
+        this.mapHandler = new McRegionDimensionFile(mapsDir, mapName, false);
         this.levelDir = levelDir;
         this.lightingUpdates = new ArrayList<>();
         this.entities = new ArrayList<>();

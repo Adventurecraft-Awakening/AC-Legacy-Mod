@@ -37,7 +37,6 @@ import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.options.Option;
 import net.minecraft.client.particle.ParticleManager;
 import net.minecraft.client.render.GameRenderer;
-import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.WorldEventRenderer;
 import net.minecraft.client.sound.SoundHelper;
 import net.minecraft.client.texture.TextureManager;
@@ -235,7 +234,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
     @Overwrite(remap = false)
     public static void main(String[] args) {
-        Arguments arguments = new Arguments();
+        var arguments = new Arguments();
         arguments.parse(args);
 
         String username = arguments.getOrDefault("username", "Player");
@@ -250,26 +249,24 @@ public abstract class MixinMinecraft implements ExMinecraft {
             sessionId = arguments.getExtraArgs().get(1);
         }
 
-        File gameDir = new File(arguments.getOrDefault("gameDir", "."));
+        ACMainThread.gameDirectory = new File(arguments.getOrDefault("gameDir", "."));
 
-        boolean doConnect = arguments.containsKey("server") && arguments.containsKey("port");
-        String host = "";
-        String port = "";
-
-        if (doConnect) {
-            host = arguments.get("server");
-            port = arguments.get("port");
+        if (arguments.containsKey("mapsDir")) {
+            ACMainThread.mapsDirectory = new File(arguments.get("mapsDir"));
         }
 
         boolean fullscreen = arguments.getExtraArgs().contains("--fullscreen");
         int width = Integer.parseInt(arguments.getOrDefault("width", "854"));
         int height = Integer.parseInt(arguments.getOrDefault("height", "480"));
 
-        ACMainThread acThread = new ACMainThread(width, height, fullscreen);
-        ACMainThread.gameDirectory = gameDir;
+        var acThread = new ACMainThread(width, height, fullscreen);
         acThread.minecraftUrl = "www.minecraft.net";
         acThread.session = new Session(username, sessionId);
+
+        boolean doConnect = arguments.containsKey("server") && arguments.containsKey("port");
         if (doConnect) {
+            String host = arguments.get("server");
+            String port = arguments.get("port");
             acThread.setIpPort(host, Integer.parseInt(port));
         }
 
@@ -365,7 +362,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
             target = "Lnet/minecraft/client/TexturePackManager;<init>(Lnet/minecraft/client/Minecraft;Ljava/io/File;)V",
             shift = At.Shift.AFTER))
     private void init_createMapList(CallbackInfo ci) {
-        this.mapList = new AC_MapList(this.gameDir);
+        this.mapList = new AC_MapList();
     }
 
     @Inject(

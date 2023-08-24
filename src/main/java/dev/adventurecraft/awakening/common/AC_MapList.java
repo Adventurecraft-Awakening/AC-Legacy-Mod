@@ -14,14 +14,14 @@ public class AC_MapList {
 	private List availableMaps = new ArrayList();
 	private File mapDir;
 
-	public AC_MapList(File var1) {
-		this.mapDir = new File(var1, "../maps");
-		if(!this.mapDir.exists()) {
-			this.mapDir.mkdirs();
-		}
+    public AC_MapList() {
+        this.mapDir = ACMainThread.getMapsDirectory();
+        if (!this.mapDir.exists()) {
+            this.mapDir.mkdirs();
+        }
 
-		this.findMaps();
-	}
+        this.findMaps();
+    }
 
 	public void findMaps() {
 		ArrayList var1 = new ArrayList();
