@@ -127,16 +127,16 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
         this.renderSelections = bl;
     }
 
-    @Overwrite
-    public void method_1261(boolean bl, int i) {
+    @Inject(method = "method_1261", at = @At("HEAD"))
+    public void capture_method_1261(boolean bl, int i, CallbackInfo ci) {
         this.doRenderStatItemSlot = bl;
         int contentYOffset = bl ? i : 0;
         this.rootWidget.setContentTopPadding(contentYOffset);
     }
 
     @Overwrite
-    public int method_1262(int i, int j) {
-        return this.rootWidget.getEntryUnderPoint(i, j);
+    public int method_1262(int x, int y) {
+        return this.rootWidget.getEntryUnderPoint(x, y);
     }
 
     @Overwrite
