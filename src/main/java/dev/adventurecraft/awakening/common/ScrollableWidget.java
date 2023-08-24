@@ -24,6 +24,8 @@ public abstract class ScrollableWidget extends GuiElement {
     private final int scrollBackRight;
     private final int scrollBackLeft;
 
+    private int scrollbarX = 124;
+    private int scrollbarWidth = 6;
     private int field_1533;
     private int field_1534;
     private double dragDistance = -2.0;
@@ -63,16 +65,14 @@ public abstract class ScrollableWidget extends GuiElement {
         return this.getEntryCount() * this.entryHeight + this.contentTopPadding;
     }
 
-    protected abstract void renderBackground();
-
     protected abstract void renderEntry(
         int entryIndex, double entryX, double entryY, int entryHeight, Tessellator tessellator);
 
-    protected boolean mouseClicked(int entryX, int entryY) {
+    protected boolean mouseClicked(int mouseX, int mouseY) {
         return false;
     }
 
-    protected void beforeRender(double x, double y, Tessellator tessellator) {
+    protected void beforeEntryRender(double x, double y, Tessellator tessellator) {
     }
 
     protected void afterRender(int mouseX, int mouseY, float tickTime, Tessellator tessellator) {
@@ -82,17 +82,17 @@ public abstract class ScrollableWidget extends GuiElement {
         this.contentTopPadding = value;
     }
 
+    public void setScrollbarSize(int x, int width) {
+        this.scrollbarX = x;
+        this.scrollbarWidth = width;
+    }
+
     public int getEntryUnderPoint(int x, int y) {
-        int center = this.width / 2 + this.widgetX;
-        int left = center - 110;
-        int right = center + 110;
-        if (x >= left && x <= right) {
-            int entryY = y - this.contentTop - this.contentTopPadding + (int) this.scrollY - 4 - this.widgetY;
-            if (entryY >= 0) {
-                int entryIndex = entryY / this.entryHeight;
-                if (entryIndex >= 0 && entryIndex < this.getEntryCount()) {
-                    return entryIndex;
-                }
+        int entryY = y - this.contentTop - this.contentTopPadding + (int) this.scrollY - this.widgetY;
+        if (entryY >= 0) {
+            int entryIndex = entryY / this.entryHeight;
+            if (entryIndex >= 0 && entryIndex < this.getEntryCount()) {
+                return entryIndex;
             }
         }
         return -1;
@@ -110,7 +110,7 @@ public abstract class ScrollableWidget extends GuiElement {
 
         if (!this.isUsingScrollbar && this.isScrolling) {
             // Drag with more and more friction
-            double maxY = this.getTotalRenderHeight() - (this.contentBot - this.contentTop - 4);
+            double maxY = this.getTotalRenderHeight() - (this.contentBot - this.contentTop);
             if (maxY < 0) {
                 maxY /= 2;
             }
@@ -129,7 +129,7 @@ public abstract class ScrollableWidget extends GuiElement {
     }
 
     private double clampTargetScroll(double value, double totalHeight) {
-        double maxY = totalHeight - (this.contentBot - this.contentTop - 4);
+        double maxY = totalHeight - (this.contentBot - this.contentTop);
         if (maxY < 0) {
             maxY /= 2;
         }
@@ -167,11 +167,10 @@ public abstract class ScrollableWidget extends GuiElement {
     }
 
     public void render(int mouseX, int mouseY, float tickTime) {
-        this.renderBackground();
         int entryCount = this.getEntryCount();
         int center = this.width / 2 + this.widgetX;
-        int scrollBarLeft = center + 124;
-        int scrollBarRight = scrollBarLeft + 6;
+        int scrollBarLeft = center + this.scrollbarX;
+        int scrollBarRight = scrollBarLeft + this.scrollbarWidth;
 
         int scrollBackLeft = this.scrollBackLeft + this.widgetX;
         int scrollBackRight = this.scrollBackRight + this.widgetX;
@@ -192,26 +191,21 @@ public abstract class ScrollableWidget extends GuiElement {
             if (this.dragDistance == -1.0) {
                 boolean doDragging = true;
                 if (mouseY >= contentTop && mouseY <= contentBot) {
-                    int entryLeft = center - 110;
-                    int entryRight = center + 110;
-                    if (mouseX >= entryLeft && mouseX <= entryRight) {
-                        int hoverY = mouseY - contentTop - this.contentTopPadding + (int) this.scrollY - 4;
-                        int entryIndex = hoverY / this.entryHeight;
-                        if (entryIndex >= 0 && hoverY >= 0 && entryIndex < entryCount) {
-                            boolean doubleClick = entryIndex == this.prevEntryIndex && System.currentTimeMillis() - this.prevClickTime < 250L;
-                            this.entryClicked(entryIndex, doubleClick);
-                            this.prevEntryIndex = entryIndex;
-                            this.prevClickTime = System.currentTimeMillis();
-                        } else if (hoverY < 0) {
-                            if (this.mouseClicked(mouseX - entryLeft, mouseY - contentTop + (int) this.scrollY - 4)) {
-                                doDragging = false;
-                            }
+                    int entryIndex = this.getEntryUnderPoint(mouseX, mouseY);
+                    if (entryIndex != -1) {
+                        boolean doubleClick = entryIndex == this.prevEntryIndex && System.currentTimeMillis() - this.prevClickTime < 250L;
+                        this.entryClicked(entryIndex, doubleClick);
+                        this.prevEntryIndex = entryIndex;
+                        this.prevClickTime = System.currentTimeMillis();
+                    } else {
+                        if (this.mouseClicked(mouseX, mouseY)) {
+                            doDragging = false;
                         }
                     }
 
-                    if (mouseX >= scrollBarLeft && mouseX <= scrollBarRight) {
+                    if (this.scrollbarWidth > 0 && mouseX >= scrollBarLeft && mouseX <= scrollBarRight) {
                         this.scrollAmount = -1.0;
-                        int n3 = totalHeight - (contentBot - contentTop - 4);
+                        int n3 = totalHeight - (contentBot - contentTop);
                         if (n3 < 1) {
                             n3 = 1;
                         }
@@ -219,8 +213,8 @@ public abstract class ScrollableWidget extends GuiElement {
                         if (n2 < 32) {
                             n2 = 32;
                         }
-                        if (n2 > contentBot - contentTop - 8) {
-                            n2 = contentBot - contentTop - 8;
+                        if (n2 > contentBot - contentTop) {
+                            n2 = contentBot - contentTop;
                         }
                         this.scrollAmount /= (double) (contentBot - contentTop - n2) / (double) n3;
                         this.isUsingScrollbar = true;
@@ -259,17 +253,16 @@ public abstract class ScrollableWidget extends GuiElement {
         var ts = Tessellator.INSTANCE;
         this.renderContentBackground(scrollBackLeft, scrollBackRight, contentTop, contentBot, this.scrollY, ts);
 
-        double entryBaseX = center - 92 - 16;
-        double entryBaseY = contentTop + 4 - this.scrollY;
-        this.beforeRender(entryBaseX, entryBaseY, ts);
+        double entryBaseX = center;
+        double entryBaseY = contentTop - this.scrollY;
+        this.beforeEntryRender(entryBaseX, entryBaseY, ts);
 
         for (int entryIndex = 0; entryIndex < entryCount; ++entryIndex) {
             double entryY = entryBaseY + entryIndex * this.entryHeight + this.contentTopPadding;
-            int entryContentHeight = this.entryHeight - 4;
-            if (entryY > contentBot || entryY + entryContentHeight < contentTop) {
+            if (entryY > contentBot || entryY + this.entryHeight < contentTop) {
                 continue;
             }
-            this.renderEntry(entryIndex, entryBaseX, entryY, entryContentHeight, ts);
+            this.renderEntry(entryIndex, entryBaseX, entryY, this.entryHeight, ts);
         }
         GL11.glDisable(GL11.GL_DEPTH_TEST);
         GL11.glEnable(GL11.GL_BLEND);
@@ -301,15 +294,15 @@ public abstract class ScrollableWidget extends GuiElement {
         ts.vertex(scrollBackLeft, contentBot - n4, 0.0, 0.0, 0.0);
         ts.tessellate();
 
-        int n3 = totalHeight - (contentBot - contentTop - 4);
-        if (n3 > 0) {
+        int n3 = totalHeight - (contentBot - contentTop);
+        if (this.scrollbarWidth > 0 && n3 > 0) {
             // Scrollbar rendering
             int n2 = (contentBot - contentTop) * (contentBot - contentTop) / totalHeight;
             if (n2 < 32) {
                 n2 = 32;
             }
-            if (n2 > contentBot - contentTop - 8) {
-                n2 = contentBot - contentTop - 8;
+            if (n2 > contentBot - contentTop) {
+                n2 = contentBot - contentTop;
             }
             int n = (int) this.clampTargetScroll(this.targetScrollY, totalHeight) * (contentBot - contentTop - n2) / n3 + contentTop;
             if (n < contentTop) {
@@ -386,5 +379,13 @@ public abstract class ScrollableWidget extends GuiElement {
         ts.vertex(right - borderThickness, y + height + borderThickness, 0.0, 1.0, 1.0);
         ts.vertex(right - borderThickness, y - borderThickness, 0.0, 1.0, 0.0);
         ts.vertex(left + borderThickness, y - borderThickness, 0.0, 0.0, 0.0);
+    }
+
+    public int getContentTopPadding() {
+        return this.contentTopPadding;
+    }
+
+    public double getScrollY() {
+        return this.scrollY;
     }
 }

@@ -15,7 +15,9 @@ public abstract class MixinStatsScreen extends Screen {
 
     @Override
     public void onMouseEvent() {
-        ((ExScrollableBaseWidget) this.generalTabBase).onMouseEvent();
         super.onMouseEvent();
+        if (this.generalTabBase instanceof ExScrollableBaseWidget scrollable) {
+            scrollable.onMouseEvent();
+        }
     }
 }

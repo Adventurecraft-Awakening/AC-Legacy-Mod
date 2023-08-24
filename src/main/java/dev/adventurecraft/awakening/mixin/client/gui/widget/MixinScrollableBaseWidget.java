@@ -51,42 +51,70 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
             }
 
             @Override
-            protected boolean mouseClicked(int x, int y) {
-                self.mouseClicked(x, y);
+            public int getEntryUnderPoint(int x, int y) {
+                int center = this.width / 2 + this.widgetX;
+                int left = center - 110;
+                int right = center + 110;
+                if (x >= left && x <= right) {
+                    int entryY = y - this.contentTop - this.getContentTopPadding() + (int) this.getScrollY() - 4 - this.widgetY;
+                    if (entryY >= 0) {
+                        int entryIndex = entryY / this.entryHeight;
+                        if (entryIndex >= 0 && entryIndex < this.getEntryCount()) {
+                            return entryIndex;
+                        }
+                    }
+                }
+                return -1;
+            }
+
+            @Override
+            protected boolean mouseClicked(int mouseX, int mouseY) {
+                int contentTop = this.contentTop + this.widgetY;
+                int scrollY = (int) this.getScrollY();
+                int entryLeft = mouseX - (this.width / 2 + this.widgetX - 110);
+                int entryTop = mouseY - contentTop + scrollY - 4;
+                int hoverY = mouseY - contentTop - this.getContentTopPadding() + scrollY - 4;
+                if (hoverY <= 0) {
+                    self.mouseClicked(entryLeft, entryTop);
+                }
                 return false;
             }
 
             @Override
             protected int getTotalRenderHeight() {
-                return self.getTotalRenderHeight();
+                return self.getTotalRenderHeight() + 4;
             }
 
             @Override
-            protected void renderBackground() {
+            protected void renderContentBackground(
+                double left, double right, double top, double bot, double scroll, Tessellator ts) {
                 self.renderBackground();
+                super.renderContentBackground(left, right, top, bot, scroll, ts);
             }
 
             @Override
             protected void renderEntry(int entryIndex, double entryX, double entryY, int entryHeight, Tessellator ts) {
-                int x = (int) Math.floor(entryX);
-                int y = (int) Math.floor(entryY);
+                int x = (int) Math.floor(entryX) - 92 - 16;
+                int y = (int) Math.floor(entryY) + 4;
+                int height = entryHeight - 4;
+
                 if (self.renderSelections && self.isWorldSelected(entryIndex)) {
                     GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
                     GL11.glDisable(GL11.GL_TEXTURE_2D);
                     ts.start();
                     self.rootWidget.renderContentSelection(
-                        x - 2, y, 220, entryHeight, 1, 0x808080, 0, ts);
+                        x - 2, y, 220, height, 1, 0x808080, 0, ts);
                     ts.tessellate();
                     GL11.glEnable(GL11.GL_TEXTURE_2D);
                 }
-                self.renderStatEntry(entryIndex, x, y, entryHeight, ts);
+                self.renderStatEntry(entryIndex, x, y, height, ts);
             }
 
             @Override
-            protected void beforeRender(double x, double y, Tessellator ts) {
+            protected void beforeEntryRender(double x, double y, Tessellator ts) {
                 if (self.doRenderStatItemSlot) {
-                    int sX = (int) Math.floor(x);
-                    int sY = (int) Math.floor(y);
+                    int sX = (int) Math.floor(x) - 92 - 16;
+                    int sY = (int) Math.floor(y) + 4;
                     self.renderStatItemSlot(sX, sY, ts);
                 }
             }

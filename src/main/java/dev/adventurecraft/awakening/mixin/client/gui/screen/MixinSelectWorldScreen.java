@@ -55,7 +55,9 @@ public abstract class MixinSelectWorldScreen extends Screen {
 
     @Override
     public void onMouseEvent() {
-        ((ExScrollableBaseWidget) this.worldList).onMouseEvent();
         super.onMouseEvent();
+        if (this.worldList instanceof ExScrollableBaseWidget scrollable) {
+            scrollable.onMouseEvent();
+        }
     }
 }
