@@ -33,7 +33,6 @@ public abstract class ScrollableWidget extends GuiElement {
     private double scrollY;
     private int prevEntryIndex = -1;
     private long prevClickTime = 0L;
-    private boolean renderSelections = true;
     private int contentTopPadding;
     private boolean isUsingScrollbar;
     private boolean isScrolling;
@@ -60,8 +59,6 @@ public abstract class ScrollableWidget extends GuiElement {
 
     protected abstract void entryClicked(int entryIndex, boolean doubleClick);
 
-    protected abstract boolean isEntrySelected(int entryIndex);
-
     protected int getTotalRenderHeight() {
         return this.getEntryCount() * this.entryHeight + this.contentTopPadding;
     }
@@ -71,17 +68,14 @@ public abstract class ScrollableWidget extends GuiElement {
     protected abstract void renderEntry(
         int entryIndex, double entryX, double entryY, int entryHeight, Tessellator tessellator);
 
-    protected void mouseClicked(int entryX, int entryY) {
+    protected boolean mouseClicked(int entryX, int entryY) {
+        return false;
     }
 
     protected void beforeRender(double x, double y, Tessellator tessellator) {
     }
 
     protected void afterRender(int mouseX, int mouseY, float tickTime, Tessellator tessellator) {
-    }
-
-    public void setRenderSelections(boolean bl) {
-        this.renderSelections = bl;
     }
 
     public void setContentTopPadding(int value) {
@@ -196,7 +190,7 @@ public abstract class ScrollableWidget extends GuiElement {
 
         if (Mouse.isButtonDown(0)) {
             if (this.dragDistance == -1.0) {
-                boolean bl = true;
+                boolean doDragging = true;
                 if (mouseY >= contentTop && mouseY <= contentBot) {
                     int entryLeft = center - 110;
                     int entryRight = center + 110;
@@ -209,8 +203,9 @@ public abstract class ScrollableWidget extends GuiElement {
                             this.prevEntryIndex = entryIndex;
                             this.prevClickTime = System.currentTimeMillis();
                         } else if (hoverY < 0) {
-                            this.mouseClicked(mouseX - entryLeft, mouseY - contentTop + (int) this.scrollY - 4);
-                            bl = false;
+                            if (this.mouseClicked(mouseX - entryLeft, mouseY - contentTop + (int) this.scrollY - 4)) {
+                                doDragging = false;
+                            }
                         }
                     }
 
@@ -232,7 +227,7 @@ public abstract class ScrollableWidget extends GuiElement {
                     } else {
                         this.scrollAmount = 1.0;
                     }
-                    this.dragDistance = bl ? (float) mouseY : -2.0;
+                    this.dragDistance = doDragging ? (double) mouseY : -2.0;
                 } else {
                     this.dragDistance = -2.0;
                 }
@@ -273,27 +268,6 @@ public abstract class ScrollableWidget extends GuiElement {
             int entryContentHeight = this.entryHeight - 4;
             if (entryY > contentBot || entryY + entryContentHeight < contentTop) {
                 continue;
-            }
-
-            if (this.renderSelections && this.isEntrySelected(entryIndex)) {
-                int shadowStartX = center - 110;
-                int shadowEndX = center + 110;
-                GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-                GL11.glDisable(GL11.GL_TEXTURE_2D);
-                ts.start();
-                ts.color(0x808080);
-                ts.vertex(shadowStartX, entryY + entryContentHeight + 2, 0.0, 0.0, 1.0);
-                ts.vertex(shadowEndX, entryY + entryContentHeight + 2, 0.0, 1.0, 1.0);
-                ts.vertex(shadowEndX, entryY - 2, 0.0, 1.0, 0.0);
-                ts.vertex(shadowStartX, entryY - 2, 0.0, 0.0, 0.0);
-
-                ts.color(0);
-                ts.vertex(shadowStartX + 1, entryY + entryContentHeight + 1, 0.0, 0.0, 1.0);
-                ts.vertex(shadowEndX - 1, entryY + entryContentHeight + 1, 0.0, 1.0, 1.0);
-                ts.vertex(shadowEndX - 1, entryY - 1, 0.0, 1.0, 0.0);
-                ts.vertex(shadowStartX + 1, entryY - 1, 0.0, 0.0, 0.0);
-                ts.tessellate();
-                GL11.glEnable(GL11.GL_TEXTURE_2D);
             }
             this.renderEntry(entryIndex, entryBaseX, entryY, entryContentHeight, ts);
         }
@@ -391,5 +365,26 @@ public abstract class ScrollableWidget extends GuiElement {
         ts.vertex(right, top, 0.0, right / f2, (top + scroll) / f2);
         ts.vertex(left, top, 0.0, left / f2, (top + scroll) / f2);
         ts.tessellate();
+    }
+
+    public void renderContentSelection(
+        double x, double y, double width, double height,
+        double borderThickness, int borderColor, int backColor, Tessellator ts) {
+
+        double left = x;
+        double right = x + width;
+        double thick2 = borderThickness * 2;
+
+        ts.color(borderColor);
+        ts.vertex(left, y + height + thick2, 0.0, 0.0, 1.0);
+        ts.vertex(right, y + height + thick2, 0.0, 1.0, 1.0);
+        ts.vertex(right, y - thick2, 0.0, 1.0, 0.0);
+        ts.vertex(left, y - thick2, 0.0, 0.0, 0.0);
+
+        ts.color(backColor);
+        ts.vertex(left + borderThickness, y + height + borderThickness, 0.0, 0.0, 1.0);
+        ts.vertex(right - borderThickness, y + height + borderThickness, 0.0, 1.0, 1.0);
+        ts.vertex(right - borderThickness, y - borderThickness, 0.0, 1.0, 0.0);
+        ts.vertex(left + borderThickness, y - borderThickness, 0.0, 0.0, 0.0);
     }
 }

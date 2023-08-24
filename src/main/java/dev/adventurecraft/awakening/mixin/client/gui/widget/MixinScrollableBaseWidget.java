@@ -6,6 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.ScrollableBaseWidget;
 import net.minecraft.client.render.Tessellator;
+import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -24,6 +25,9 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
 
     @Unique
     private boolean doRenderStatItemSlot;
+
+    @Unique
+    private boolean renderSelections = true;
 
     @Shadow
     protected abstract void method_1255(int i, int j);
@@ -47,13 +51,9 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
             }
 
             @Override
-            protected void mouseClicked(int x, int y) {
+            protected boolean mouseClicked(int x, int y) {
                 self.mouseClicked(x, y);
-            }
-
-            @Override
-            protected boolean isEntrySelected(int entryIndex) {
-                return self.isWorldSelected(entryIndex);
+                return false;
             }
 
             @Override
@@ -67,23 +67,32 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
             }
 
             @Override
-            protected void renderEntry(int entryIndex, double entryX, double entryY, int entryHeight, Tessellator tessellator) {
+            protected void renderEntry(int entryIndex, double entryX, double entryY, int entryHeight, Tessellator ts) {
                 int x = (int) Math.floor(entryX);
                 int y = (int) Math.floor(entryY);
-                self.renderStatEntry(entryIndex, x, y, entryHeight, tessellator);
+                if (self.renderSelections && self.isWorldSelected(entryIndex)) {
+                    GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+                    GL11.glDisable(GL11.GL_TEXTURE_2D);
+                    ts.start();
+                    self.rootWidget.renderContentSelection(
+                        x - 2, y, 220, entryHeight, 1, 0x808080, 0, ts);
+                    ts.tessellate();
+                    GL11.glEnable(GL11.GL_TEXTURE_2D);
+                }
+                self.renderStatEntry(entryIndex, x, y, entryHeight, ts);
             }
 
             @Override
-            protected void beforeRender(double x, double y, Tessellator tessellator) {
+            protected void beforeRender(double x, double y, Tessellator ts) {
                 if (self.doRenderStatItemSlot) {
                     int sX = (int) Math.floor(x);
                     int sY = (int) Math.floor(y);
-                    self.renderStatItemSlot(sX, sY, tessellator);
+                    self.renderStatItemSlot(sX, sY, ts);
                 }
             }
 
             @Override
-            protected void afterRender(int mouseX, int mouseY, float tickTime, Tessellator tessellator) {
+            protected void afterRender(int mouseX, int mouseY, float tickTime, Tessellator ts) {
                 self.method_1255(mouseX, mouseY);
             }
         };
@@ -93,10 +102,10 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
     protected abstract int getSize();
 
     @Shadow
-    protected abstract void entryClicked(int var1, boolean var2);
+    protected abstract void entryClicked(int entryIndex, boolean doubleClick);
 
     @Shadow
-    protected abstract boolean isWorldSelected(int var1);
+    protected abstract boolean isWorldSelected(int entryIndex);
 
     @Shadow
     protected abstract int getTotalRenderHeight();
@@ -108,14 +117,14 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
     protected abstract void renderBackground();
 
     @Shadow
-    protected abstract void renderStatEntry(int var1, int var2, int var3, int var4, Tessellator var5);
+    protected abstract void renderStatEntry(int entryIndex, int x, int y, int height, Tessellator ts);
 
     @Shadow
-    protected abstract void renderStatItemSlot(int i, int j, Tessellator arg);
+    protected abstract void renderStatItemSlot(int x, int y, Tessellator ts);
 
     @Overwrite
     public void method_1260(boolean bl) {
-        this.rootWidget.setRenderSelections(bl);
+        this.renderSelections = bl;
     }
 
     @Overwrite
