@@ -1,18 +1,21 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.ACMainThread;
+import dev.adventurecraft.awakening.ACMod;
+
+import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import javax.imageio.ImageIO;
 
 public class AC_MapList {
-	private List availableMaps = new ArrayList();
-	private File mapDir;
+
+    private ArrayList<AC_MapInfo> maps = new ArrayList<>();
+    private File mapDir;
 
     public AC_MapList() {
         this.mapDir = ACMainThread.getMapsDirectory();
@@ -23,47 +26,48 @@ public class AC_MapList {
         this.findMaps();
     }
 
-	public void findMaps() {
-		ArrayList var1 = new ArrayList();
-		if(this.mapDir.exists() && this.mapDir.isDirectory()) {
-			File[] var2 = this.mapDir.listFiles();
-			File[] var3 = var2;
-			int var4 = var2.length;
+    public void findMaps() {
+        this.maps.clear();
 
-			for(int var5 = 0; var5 < var4; ++var5) {
-				File var6 = var3[var5];
-				if(var6.isDirectory()) {
-					String var7 = var6.getName();
-					String var8 = "";
-					String var9 = "";
-					File var10 = new File(var6, "description.txt");
+        File[] files = this.mapDir.listFiles();
+        if (files == null) {
+            return;
+        }
 
-					try {
-						BufferedReader var11 = new BufferedReader(new FileReader(var10));
-						var8 = var11.readLine();
-						var9 = var11.readLine();
-					} catch (FileNotFoundException var16) {
-					} catch (IOException var17) {
-					}
+        for (File file : files) {
+            if (!file.isDirectory()) {
+                continue;
+            }
 
-					File var18 = new File(var6, "thumbnail.png");
-					BufferedImage var12 = null;
+            String name = file.getName();
+            String line1 = "";
+            String line2 = "";
 
-					try {
-						var12 = ImageIO.read(var18);
-					} catch (FileNotFoundException var14) {
-					} catch (IOException var15) {
-					}
+            File descFile = new File(file, "description.txt");
+            if (descFile.exists()) {
+                try (var reader = new BufferedReader(new FileReader(descFile))) {
+                    line1 = reader.readLine();
+                    line2 = reader.readLine();
+                } catch (IOException ex) {
+                    ACMod.LOGGER.warn("Failed to read map description \"{}\".", descFile.getPath(), ex);
+                }
+            }
 
-					var1.add(new AC_MapInfo(var7, var8, var9, var12));
-				}
-			}
-		}
+            BufferedImage thumbnail = null;
+            File thumbFile = new File(file, "thumbnail.png");
+            if (thumbFile.exists()) {
+                try {
+                    thumbnail = ImageIO.read(thumbFile);
+                } catch (IOException ex) {
+                    ACMod.LOGGER.warn("Failed to read map thumbnail \"{}\".", descFile.getPath(), ex);
+                }
+            }
 
-		this.availableMaps = var1;
-	}
+            this.maps.add(new AC_MapInfo(name, line1, line2, thumbnail));
+        }
+    }
 
-	public List availableMaps() {
-		return new ArrayList(this.availableMaps);
-	}
+    public List<AC_MapInfo> getMaps() {
+        return this.maps;
+    }
 }
