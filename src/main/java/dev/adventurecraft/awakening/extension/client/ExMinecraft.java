@@ -6,6 +6,8 @@ import dev.adventurecraft.awakening.common.AC_MapList;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.world.World;
 
+import java.net.URL;
+
 public interface ExMinecraft {
 
     World getWorld(String var1, long var2, String var4);
@@ -15,6 +17,8 @@ public interface ExMinecraft {
     String getMapUsed(String var1);
 
     void saveMapUsed(String var1, String var2);
+
+    void loadSoundFromDir(String id, URL url);
 
     double getFrameTime();
 

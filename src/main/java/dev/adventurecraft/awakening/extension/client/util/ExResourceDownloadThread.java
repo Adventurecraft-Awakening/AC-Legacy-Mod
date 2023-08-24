@@ -1,45 +1,76 @@
 package dev.adventurecraft.awakening.extension.client.util;
 
 import dev.adventurecraft.awakening.ACMod;
+import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import net.minecraft.client.Minecraft;
 
-import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public interface ExResourceDownloadThread {
 
-    static void loadSoundsFromResources(Minecraft client, Class<?> rootClass, String resourcePath, String namePath) {
-        var descriptor = rootClass.getResourceAsStream(resourcePath);
-        if (descriptor == null) {
+    static void loadSoundsFromResources(Minecraft client, Class<?> rootClass, String resourcePath) {
+        String resPath = resourcePath.replaceFirst("/", "");
+        ACMod.LOGGER.info(
+            "Loading sounds from path \"{}\" in \"{}\".",
+            resPath, rootClass.getName());
+
+        URI rootUri;
+        try {
+            rootUri = rootClass.getProtectionDomain().getCodeSource().getLocation().toURI();
+        } catch (URISyntaxException ex) {
+            ACMod.LOGGER.error("Failed to get class location.", ex);
             return;
         }
-        var reader = new BufferedReader(new InputStreamReader(descriptor));
-        try {
-            while (reader.ready()) {
-                String line = reader.readLine();
-                String subResourceName = resourcePath + line;
-                var subResource = rootClass.getResource(subResourceName);
-                if (subResource == null) {
-                    continue;
-                }
 
-                String subName = namePath + line;
-                try {
-                    var subFile = new File(subResource.toURI());
-                    if (subFile.isFile() && subResourceName.endsWith(".ogg")) {
-                        client.loadSoundFromDir(subName, subFile);
-                    } else if (subFile.isDirectory()) {
-                        loadSoundsFromResources(client, rootClass, subResourceName + "/", subName + "/");
-                    }
-                } catch (URISyntaxException e) {
-                    ACMod.LOGGER.warn("Failed to load resource \"{}\" from jar \"{}\".", subName, rootClass.getName(), e);
-                }
+        Path dirPath = Path.of(rootUri).resolve(resPath);
+        if (Files.isDirectory(dirPath)) {
+            try {
+                loadSounds(client, dirPath);
+            } catch (IOException ex) {
+                ACMod.LOGGER.error("Failed to load sounds from directory.", ex);
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+            return;
         }
+
+        try {
+            URI jarUri = URI.create(String.format("jar:%s!/", rootUri));
+            FileSystem jarFs = FileSystems.getFileSystem(jarUri);
+            Path jarPath = jarFs.getPath(resPath);
+            loadSounds(client, jarPath);
+        } catch (ProviderNotFoundException | IOException ex) {
+            ACMod.LOGGER.error("Failed to load sounds from JAR.", ex);
+        }
+    }
+
+    private static void loadSounds(Minecraft client, Path rootPath) throws IOException {
+        var count = new AtomicInteger();
+        var totalCount = new AtomicInteger();
+        Files.walkFileTree(rootPath, new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) {
+                if (!path.getFileName().toString().toLowerCase().endsWith(".ogg")) {
+                    return FileVisitResult.CONTINUE;
+                }
+                Path relativePath = rootPath.relativize(path);
+                String separator = rootPath.getFileSystem().getSeparator();
+                String namePath = relativePath.toString().replace(separator, "/");
+
+                totalCount.incrementAndGet();
+                try {
+                    ((ExMinecraft) client).loadSoundFromDir(namePath, path.toUri().toURL());
+                    count.incrementAndGet();
+                    ACMod.LOGGER.debug("Loaded sound \"{}\" (\"{}\").", namePath, path);
+                } catch (IOException ex) {
+                    ACMod.LOGGER.warn("Failed to load sound \"{}\" (\"{}\").", namePath, path, ex);
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
+        ACMod.LOGGER.info("Loaded {} out of {} sounds from \"{}\".", count, totalCount, rootPath);
     }
 }

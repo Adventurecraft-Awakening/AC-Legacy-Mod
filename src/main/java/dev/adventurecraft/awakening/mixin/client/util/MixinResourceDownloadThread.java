@@ -35,6 +35,6 @@ public abstract class MixinResourceDownloadThread implements ExResourceDownloadT
             value = "INVOKE", target = "Lnet/minecraft/client/util/ResourceDownloadThread;method_108(Ljava/io/File;Ljava/lang/String;)V",
             shift = At.Shift.AFTER))
     private void loadAtStartup(CallbackInfo ci) {
-        ExResourceDownloadThread.loadSoundsFromResources(this.client, ACMod.class, ACMod.getResourceName(""), "");
+        ExResourceDownloadThread.loadSoundsFromResources(this.client, ACMod.class, ACMod.getResourceName(""));
     }
 }

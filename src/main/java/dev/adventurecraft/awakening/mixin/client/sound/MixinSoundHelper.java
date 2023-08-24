@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.mixin.client.sound;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.extension.client.sound.ExSoundHelper;
+import dev.adventurecraft.awakening.extension.client.sound.ExSoundMap;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.options.GameOptions;
@@ -11,10 +12,13 @@ import net.minecraft.client.sound.SoundMap;
 import net.minecraft.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import paulscode.sound.SoundSystem;
+
+import java.net.URL;
 
 @Mixin(SoundHelper.class)
 public abstract class MixinSoundHelper implements ExSoundHelper {
@@ -22,12 +26,17 @@ public abstract class MixinSoundHelper implements ExSoundHelper {
     @Shadow
     private static SoundSystem soundSystem;
     @Shadow
+    private SoundMap sounds;
+    @Shadow
     private SoundMap streaming;
+    @Shadow
+    private SoundMap music;
     @Shadow
     private GameOptions gameOptions;
     @Shadow
     private static boolean initialized;
 
+    @Unique
     private String currentSoundName;
 
     @Inject(method = "handleBackgroundMusic", at = @At("HEAD"), cancellable = true)
@@ -96,5 +105,20 @@ public abstract class MixinSoundHelper implements ExSoundHelper {
                 ((ExWorldProperties) Minecraft.instance.world.properties).setPlayingMusic("");
             }
         }
+    }
+
+    @Override
+    public void addSound(String id, URL url) {
+        ((ExSoundMap) this.sounds).addSound(id, url);
+    }
+
+    @Override
+    public void addStreaming(String id, URL url) {
+        ((ExSoundMap) this.streaming).addSound(id, url);
+    }
+
+    @Override
+    public void addMusic(String id, URL url) {
+        ((ExSoundMap) this.music).addSound(id, url);
     }
 }

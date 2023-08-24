@@ -2,7 +2,6 @@ package dev.adventurecraft.awakening.mixin.client;
 
 import com.llamalad7.mixinextras.injector.WrapWithCondition;
 import com.llamalad7.mixinextras.sugar.Local;
-import com.llamalad7.mixinextras.sugar.ref.LocalIntRef;
 import dev.adventurecraft.awakening.ACMainThread;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.client.options.Config;
@@ -13,6 +12,7 @@ import dev.adventurecraft.awakening.extension.client.entity.player.ExAbstractCli
 import dev.adventurecraft.awakening.extension.client.gui.screen.ExScreen;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.render.ExWorldEventRenderer;
+import dev.adventurecraft.awakening.extension.client.sound.ExSoundHelper;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import dev.adventurecraft.awakening.extension.util.ExProgressListener;
@@ -76,9 +76,9 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.io.*;
+import java.net.URL;
 
 @Mixin(Minecraft.class)
 public abstract class MixinMinecraft implements ExMinecraft {
@@ -215,6 +215,9 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
     @Shadow
     public ProgressListenerImpl progressListener;
+
+    @Shadow
+    public SoundHelper soundHelper;
 
     private long previousNanoTime;
     private double deltaTime;
@@ -1205,6 +1208,26 @@ public abstract class MixinMinecraft implements ExMinecraft {
             writer.close();
         } catch (FileNotFoundException var8) {
         } catch (IOException var9) {
+        }
+    }
+
+    @Override
+    public void loadSoundFromDir(String path, URL url) {
+        int n = path.indexOf("/");
+        String firstDir = path.substring(0, n);
+        String id = path.substring(n + 1);
+
+        var sound = (ExSoundHelper) this.soundHelper;
+        if (firstDir.equalsIgnoreCase("sound")) {
+            sound.addSound(id, url);
+        } else if (firstDir.equalsIgnoreCase("newsound")) {
+            sound.addSound(id, url);
+        } else if (firstDir.equalsIgnoreCase("streaming")) {
+            sound.addStreaming(id, url);
+        } else if (firstDir.equalsIgnoreCase("music")) {
+            sound.addMusic(id, url);
+        } else if (firstDir.equalsIgnoreCase("newmusic")) {
+            sound.addMusic(id, url);
         }
     }
 
