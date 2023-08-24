@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
+import com.google.common.base.Stopwatch;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.util.ExProgressListener;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
@@ -43,46 +44,53 @@ public class AC_JScriptHandler {
     }
 
     public void loadScripts(ProgressListener progressListener) {
-        this.scripts.clear();
-
-        if (progressListener != null)
-            progressListener.notifyIgnoreGameRunning("Loading scripts");
-
-        File[] files;
+        Stopwatch stopwatch = Stopwatch.createStarted();
         try {
-            files = this.getFiles().map(Path::toFile).toArray(File[]::new);
-        } catch (IOException e) {
-            return;
-        }
+            this.scripts.clear();
 
-        if (files.length == 0) {
-            return;
-        }
+            if (progressListener != null)
+                progressListener.notifyIgnoreGameRunning("Loading scripts");
 
-        for (int i = 0; i < files.length; i++) {
-            File file = files[i];
-            String fileName = file.getName();
-            String name = fileName.toLowerCase();
+            File[] files;
+            try {
+                files = this.getFiles().map(Path::toFile).toArray(File[]::new);
+            } catch (IOException ex) {
+                ACMod.LOGGER.warn("Failed to load scripts.", ex);
+                return;
+            }
 
-            if (name.endsWith(".js")) {
-                try (var reader = new BufferedReader(new FileReader(file))) {
-                    var script = ((ExWorld) this.world).getScript().compileReader(reader, fileName);
-                    this.scripts.put(name, new AC_JScriptInfo(fileName, script));
-                } catch (IOException e) {
-                    Minecraft.instance.overlay.addChatMessage("JS: " + e.getMessage());
-                    ACMod.LOGGER.error("Failed to read script file \"{}\".", fileName, e);
+            if (files.length == 0) {
+                return;
+            }
+
+            for (int i = 0; i < files.length; i++) {
+                File file = files[i];
+                String fileName = file.getName();
+                String name = fileName.toLowerCase();
+
+                if (name.endsWith(".js")) {
+                    try (var reader = new BufferedReader(new FileReader(file))) {
+                        var script = ((ExWorld) this.world).getScript().compileReader(reader, fileName);
+                        this.scripts.put(name, new AC_JScriptInfo(fileName, script));
+                    } catch (IOException e) {
+                        Minecraft.instance.overlay.addChatMessage("JS: " + e.getMessage());
+                        ACMod.LOGGER.error("Failed to read script file \"{}\".", fileName, e);
+                    }
+                }
+
+                if (progressListener instanceof ExProgressListener exProgressListener) {
+                    String stage = String.format("%4d / %4d", i + 1, files.length);
+                    exProgressListener.notifyProgress(stage, (double) i / files.length, false);
                 }
             }
 
             if (progressListener instanceof ExProgressListener exProgressListener) {
-                String stage = String.format("%4d / %4d", i + 1, files.length);
-                exProgressListener.notifyProgress(stage, (double) i / files.length, false);
+                String stage = String.format("%4d / %4d", files.length, files.length);
+                exProgressListener.notifyProgress(stage, 1, true);
             }
-        }
-
-        if (progressListener instanceof ExProgressListener exProgressListener) {
-            String stage = String.format("%4d / %4d", files.length, files.length);
-            exProgressListener.notifyProgress(stage, 1, true);
+        } finally {
+            stopwatch.stop();
+            ACMod.LOGGER.info("Loaded {} scripts in {}.", this.scripts.size(), stopwatch);
         }
     }
 
