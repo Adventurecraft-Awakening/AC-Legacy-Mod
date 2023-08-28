@@ -31,13 +31,20 @@ public class AC_JScriptHandler {
     }
 
     public Stream<Path> getFiles() throws IOException {
+        if (!this.scriptDir.exists()) {
+            return null;
+        }
         //noinspection resource
         return Files.walk(this.scriptDir.toPath(), 1).filter(Files::isRegularFile);
     }
 
     public String[] getFileNames() {
         try {
-            return getFiles().map(path -> path.getFileName().toString()).toArray(String[]::new);
+            Stream<Path> files = this.getFiles();
+            if (files == null) {
+                return null;
+            }
+            return files.map(path -> path.getFileName().toString()).toArray(String[]::new);
         } catch (IOException e) {
             return null;
         }
@@ -53,7 +60,11 @@ public class AC_JScriptHandler {
 
             File[] files;
             try {
-                files = this.getFiles().map(Path::toFile).toArray(File[]::new);
+                Stream<Path> filePaths = this.getFiles();
+                if (filePaths == null) {
+                    return;
+                }
+                files = filePaths.map(Path::toFile).toArray(File[]::new);
             } catch (IOException ex) {
                 ACMod.LOGGER.warn("Failed to load scripts.", ex);
                 return;
