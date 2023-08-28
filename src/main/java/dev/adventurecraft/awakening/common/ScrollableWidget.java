@@ -24,8 +24,8 @@ public abstract class ScrollableWidget extends GuiElement {
     private final int scrollBackRight;
     private final int scrollBackLeft;
 
-    private int scrollbarX = 124;
-    private int scrollbarWidth = 6;
+    private int scrollbarX;
+    private int scrollbarWidth;
     private int field_1533;
     private int field_1534;
     private double dragDistance = -2.0;
@@ -54,6 +54,9 @@ public abstract class ScrollableWidget extends GuiElement {
         this.entryHeight = entryHeight;
         this.scrollBackLeft = 0;
         this.scrollBackRight = width;
+
+        this.scrollbarWidth = 6;
+        this.scrollbarX = width - this.scrollbarWidth;
         this.contentTopPadding = 0;
     }
 
@@ -169,7 +172,7 @@ public abstract class ScrollableWidget extends GuiElement {
     public void render(int mouseX, int mouseY, float tickTime) {
         int entryCount = this.getEntryCount();
         int center = this.width / 2 + this.widgetX;
-        int scrollBarLeft = center + this.scrollbarX;
+        int scrollBarLeft = this.scrollbarX;
         int scrollBarRight = scrollBarLeft + this.scrollbarWidth;
 
         int scrollBackLeft = this.scrollBackLeft + this.widgetX;
@@ -310,19 +313,19 @@ public abstract class ScrollableWidget extends GuiElement {
             }
 
             ts.start();
-            ts.color(0, 255);
+            ts.color(0, 127);
             ts.vertex(scrollBarLeft, contentBot, 0.0, 0.0, 1.0);
             ts.vertex(scrollBarRight, contentBot, 0.0, 1.0, 1.0);
             ts.vertex(scrollBarRight, contentTop, 0.0, 1.0, 0.0);
             ts.vertex(scrollBarLeft, contentTop, 0.0, 0.0, 0.0);
 
-            ts.color(0x808080, 255);
+            ts.color(0x808080, 127);
             ts.vertex(scrollBarLeft, n + n2, 0.0, 0.0, 1.0);
             ts.vertex(scrollBarRight, n + n2, 0.0, 1.0, 1.0);
             ts.vertex(scrollBarRight, n, 0.0, 1.0, 0.0);
             ts.vertex(scrollBarLeft, n, 0.0, 0.0, 0.0);
 
-            ts.color(0xC0C0C0, 255);
+            ts.color(0xC0C0C0, 127);
             ts.vertex(scrollBarLeft, n + n2 - 1, 0.0, 0.0, 1.0);
             ts.vertex(scrollBarRight - 1, n + n2 - 1, 0.0, 1.0, 1.0);
             ts.vertex(scrollBarRight - 1, n, 0.0, 1.0, 0.0);
