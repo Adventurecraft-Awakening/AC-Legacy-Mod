@@ -1,5 +1,6 @@
 
 mapList.title=Select a Map to Play
+mapList.newMap=New Map
 
 ## Video Settings names
 options.renderDistance.veryFar=Very Far

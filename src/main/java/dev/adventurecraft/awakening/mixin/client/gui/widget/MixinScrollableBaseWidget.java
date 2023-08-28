@@ -29,6 +29,9 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
     @Unique
     private boolean renderSelections = true;
 
+    @Unique
+    private int hoveredEntry = -1;
+
     @Shadow
     protected abstract void method_1255(int i, int j);
 
@@ -96,27 +99,37 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
             protected void renderEntry(int entryIndex, double entryX, double entryY, int entryHeight, Tessellator ts) {
                 int x = (int) Math.floor(entryX) - 92 - 16;
                 int y = (int) Math.floor(entryY) + 4;
-                int height = entryHeight - 4;
 
-                if (self.renderSelections && self.isWorldSelected(entryIndex)) {
-                    GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-                    GL11.glDisable(GL11.GL_TEXTURE_2D);
-                    ts.start();
-                    self.rootWidget.renderContentSelection(
-                        x - 2, y, 220, height, 1, 0x808080, 0, ts);
-                    ts.tessellate();
-                    GL11.glEnable(GL11.GL_TEXTURE_2D);
+                if (self.renderSelections) {
+                    boolean selected = self.isWorldSelected(entryIndex);
+                    if (selected || hoveredEntry == entryIndex) {
+                        boolean isHover = !selected && self.hoveredEntry == entryIndex;
+                        int borderColor = isHover ? 0x80808080 : 0xff808080;
+                        int backColor = isHover ? 0x80000000 : 0xff000000;
+
+                        GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+                        GL11.glDisable(GL11.GL_TEXTURE_2D);
+                        GL11.glEnable(GL11.GL_BLEND);
+                        ts.start();
+                        self.rootWidget.renderContentSelection(
+                            x - 2, y - 2, 220, entryHeight, 1, borderColor, backColor, ts);
+                        ts.tessellate();
+                        GL11.glEnable(GL11.GL_TEXTURE_2D);
+                        GL11.glDisable(GL11.GL_BLEND);
+                    }
                 }
-                self.renderStatEntry(entryIndex, x, y, height, ts);
+                self.renderStatEntry(entryIndex, x, y, entryHeight - 4, ts);
             }
 
             @Override
-            protected void beforeEntryRender(double x, double y, Tessellator ts) {
+            protected void beforeEntryRender(int mouseX, int mouseY, double entryX, double entryY, Tessellator ts) {
                 if (self.doRenderStatItemSlot) {
-                    int sX = (int) Math.floor(x) - 92 - 16;
-                    int sY = (int) Math.floor(y) + 4;
+                    int sX = (int) Math.floor(entryX) - 92 - 16;
+                    int sY = (int) Math.floor(entryY) + 4;
                     self.renderStatItemSlot(sX, sY, ts);
                 }
+
+                self.hoveredEntry = this.getEntryUnderPoint(mouseX, mouseY);
             }
 
             @Override

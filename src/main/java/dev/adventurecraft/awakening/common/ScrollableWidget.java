@@ -72,7 +72,7 @@ public abstract class ScrollableWidget extends GuiElement {
         return false;
     }
 
-    protected void beforeEntryRender(double x, double y, Tessellator tessellator) {
+    protected void beforeEntryRender(int mouseX, int mouseY, double entryX, double entryY, Tessellator tessellator) {
     }
 
     protected void afterRender(int mouseX, int mouseY, float tickTime, Tessellator tessellator) {
@@ -255,7 +255,7 @@ public abstract class ScrollableWidget extends GuiElement {
 
         double entryBaseX = center;
         double entryBaseY = contentTop - this.scrollY;
-        this.beforeEntryRender(entryBaseX, entryBaseY, ts);
+        this.beforeEntryRender(mouseX, mouseY, entryBaseX, entryBaseY, ts);
 
         for (int entryIndex = 0; entryIndex < entryCount; ++entryIndex) {
             double entryY = entryBaseY + entryIndex * this.entryHeight + this.contentTopPadding;
@@ -362,23 +362,22 @@ public abstract class ScrollableWidget extends GuiElement {
 
     public void renderContentSelection(
         double x, double y, double width, double height,
-        double borderThickness, int borderColor, int backColor, Tessellator ts) {
+        double borderSize, int borderColor, int backColor, Tessellator ts) {
 
         double left = x;
         double right = x + width;
-        double thick2 = borderThickness * 2;
 
-        ts.color(borderColor);
-        ts.vertex(left, y + height + thick2, 0.0, 0.0, 1.0);
-        ts.vertex(right, y + height + thick2, 0.0, 1.0, 1.0);
-        ts.vertex(right, y - thick2, 0.0, 1.0, 0.0);
-        ts.vertex(left, y - thick2, 0.0, 0.0, 0.0);
+        ts.color(borderColor, (int) ((Integer.toUnsignedLong(borderColor) & 0xff000000L) >> 24));
+        ts.vertex(left, y + height, 0.0, 0.0, 1.0);
+        ts.vertex(right, y + height, 0.0, 1.0, 1.0);
+        ts.vertex(right, y, 0.0, 1.0, 0.0);
+        ts.vertex(left, y, 0.0, 0.0, 0.0);
 
-        ts.color(backColor);
-        ts.vertex(left + borderThickness, y + height + borderThickness, 0.0, 0.0, 1.0);
-        ts.vertex(right - borderThickness, y + height + borderThickness, 0.0, 1.0, 1.0);
-        ts.vertex(right - borderThickness, y - borderThickness, 0.0, 1.0, 0.0);
-        ts.vertex(left + borderThickness, y - borderThickness, 0.0, 0.0, 0.0);
+        ts.color(backColor, (int) ((Integer.toUnsignedLong(backColor) & 0xff000000L) >> 24));
+        ts.vertex(left + borderSize, y + height - borderSize, 0.0, 0.0, 1.0);
+        ts.vertex(right - borderSize, y + height - borderSize, 0.0, 1.0, 1.0);
+        ts.vertex(right - borderSize, y + borderSize, 0.0, 1.0, 0.0);
+        ts.vertex(left + borderSize, y + borderSize, 0.0, 0.0, 0.0);
     }
 
     public int getContentTopPadding() {
