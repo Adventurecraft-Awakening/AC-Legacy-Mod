@@ -42,8 +42,10 @@ public interface ExResourceDownloadThread {
             FileSystem jarFs = FileSystems.getFileSystem(jarUri);
             Path jarPath = jarFs.getPath(resPath);
             loadSounds(client, jarPath);
-        } catch (ProviderNotFoundException | IOException ex) {
+        } catch (IOException ex) {
             ACMod.LOGGER.error("Failed to load sounds from JAR.", ex);
+        } catch (ProviderNotFoundException | FileSystemNotFoundException ex) {
+            ACMod.LOGGER.warn("Not loading sounds because JAR filesystem is not available.", ex);
         }
     }
 
