@@ -31,7 +31,7 @@ import org.spongepowered.asm.mixin.injection.Slice;
 
 import java.util.Random;
 
-@Mixin(BlockRenderer.class)
+@Mixin(value = BlockRenderer.class, priority = 999)
 public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
     private Random rand = new Random();

@@ -31,7 +31,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.HashSet;
 import java.util.List;
 
-@Mixin(class_66.class)
+@Mixin(value = class_66.class, priority = 999)
 public abstract class MixinClass_66 implements ExClass_66 {
 
     @Shadow
