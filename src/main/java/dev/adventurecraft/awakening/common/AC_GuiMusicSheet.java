@@ -35,29 +35,44 @@ public class AC_GuiMusicSheet extends Screen {
     @Override
     protected void keyPressed(char character, int key) {
         super.keyPressed(character, key);
-        if (this.songPlayed != null || key < 2 || key > 11) {
+        boolean keyCorrespondsToANote = key < 2 || key > 11; // Numeric top row on the keyboard
+        if (this.songPlayed != null || keyCorrespondsToANote) {
             return;
         }
 
         boolean shiftDown = Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT);
-        if (shiftDown && (key == 2 || key == 4 || key == 5 || key == 6 || key == 8 || key == 9 || key == 11)) {
-            if (this.spaceTaken + 25 >= 168) {
+        boolean canBeSharp = (key == Keyboard.KEY_1 || key == Keyboard.KEY_3 || key == Keyboard.KEY_4 || key == Keyboard.KEY_5 || key == Keyboard.KEY_7 || key == Keyboard.KEY_8 || key == Keyboard.KEY_0);
+        boolean noteIsSharp = shiftDown && canBeSharp;
+
+        int NOTE_SIZE = 11;
+        int MAX_NOTE_SPACE = 168;
+
+        if (noteIsSharp) {
+            int NOTE_MODIFIER_SIZE = 14;
+
+            int totalSpaceTaken = this.spaceTaken + NOTE_MODIFIER_SIZE + NOTE_SIZE;
+
+            if (totalSpaceTaken >= MAX_NOTE_SPACE) {
                 this.notesPlayed.clear();
                 this.notesPlayedString = "";
                 this.spaceTaken = 0;
             }
 
+            // Adding the key as negative adds a '#' instead of a note icon
             this.notesPlayed.add(-key);
-            this.spaceTaken += 14;
+            this.spaceTaken += NOTE_MODIFIER_SIZE;
         }
 
-        if (this.spaceTaken + 11 >= 168) {
+        int totalSpaceTaken = this.spaceTaken + NOTE_SIZE;
+
+
+        if (totalSpaceTaken >= MAX_NOTE_SPACE) {
             this.notesPlayed.clear();
             this.notesPlayedString = "";
             this.spaceTaken = 0;
         }
 
-        this.spaceTaken += 11;
+        this.spaceTaken += NOTE_SIZE;
         this.notesPlayed.add(key);
 
         if (key == Keyboard.KEY_1) {

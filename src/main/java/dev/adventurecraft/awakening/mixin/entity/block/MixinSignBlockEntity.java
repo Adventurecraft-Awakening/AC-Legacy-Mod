@@ -24,9 +24,9 @@ public abstract class MixinSignBlockEntity extends BlockEntity implements ExSign
         }
 
         if (this.tickSinceStart % 10 == 0) {
-            String var1 = this.text[0] + this.text[1] + this.text[2] + this.text[3];
-            if (this.onNote < MusicPlayer.countNotes(var1)) {
-                MusicPlayer.playNoteFromSong(this.world, this.x, this.y, this.z, this.instrument, var1, this.onNote, 1.0F);
+            String signContents = this.text[0] + this.text[1] + this.text[2] + this.text[3];
+            if (this.onNote < MusicPlayer.countNotes(signContents)) {
+                MusicPlayer.playNoteFromSong(this.world, this.x, this.y, this.z, this.instrument, signContents, this.onNote, 1.0F);
                 ++this.onNote;
             } else {
                 this.playSong = false;
@@ -37,9 +37,9 @@ public abstract class MixinSignBlockEntity extends BlockEntity implements ExSign
     }
 
     @Override
-    public void playSong(String var1) {
+    public void playSong(String instrumentString) {
         this.playSong = true;
-        this.instrument = var1;
+        this.instrument = instrumentString;
         this.tickSinceStart = 0;
         this.onNote = 0;
     }
