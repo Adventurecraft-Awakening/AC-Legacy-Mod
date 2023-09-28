@@ -60,6 +60,7 @@ import net.minecraft.world.dimension.DimensionData;
 import net.minecraft.world.source.WorldSource;
 import net.minecraft.world.storage.WorldStorage;
 import org.lwjgl.LWJGLException;
+import org.lwjgl.glfw.GLFW;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
@@ -78,6 +79,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.io.*;
 import java.net.URL;
+import java.util.Objects;
 
 @Mixin(Minecraft.class)
 public abstract class MixinMinecraft implements ExMinecraft {
@@ -255,6 +257,9 @@ public abstract class MixinMinecraft implements ExMinecraft {
             ACMainThread.mapsDirectory = new File(arguments.get("mapsDir"));
         }
 
+        ACMainThread.glDebug = arguments.containsKey("glDebug") || arguments.getExtraArgs().contains("--glDebug");
+        ACMainThread.glDebugTrace = Objects.equals(arguments.get("glDebug"), "trace");
+
         boolean fullscreen = arguments.getExtraArgs().contains("--fullscreen");
         int width = Integer.parseInt(arguments.getOrDefault("width", "854"));
         int height = Integer.parseInt(arguments.getOrDefault("height", "480"));
@@ -307,6 +312,10 @@ public abstract class MixinMinecraft implements ExMinecraft {
     private void init_createDisplay(CallbackInfo ci) throws LWJGLException {
         int sampleCount = ((ExGameOptions) options).ofAaLevel();
         ACMod.LOGGER.info("MSAA Samples: {}x", sampleCount);
+
+        if (ACMainThread.glDebug) {
+            GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_DEBUG_CONTEXT, 1);
+        }
 
         try {
             createDisplay(new PixelFormat().withSamples(sampleCount), true);

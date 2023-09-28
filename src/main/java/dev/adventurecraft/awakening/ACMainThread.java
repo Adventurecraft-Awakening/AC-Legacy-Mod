@@ -11,6 +11,8 @@ import java.io.File;
 public final class ACMainThread extends Minecraft {
 
     public static File mapsDirectory;
+    public static boolean glDebug;
+    public static boolean glDebugTrace;
 
     public ACMainThread(int width, int height, boolean fullScreen) {
         super(null, null, null, width, height, fullScreen);

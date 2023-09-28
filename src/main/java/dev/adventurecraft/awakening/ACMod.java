@@ -19,6 +19,7 @@ public class ACMod implements ModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("AC");
     public static final Logger CHAT_LOGGER = LoggerFactory.getLogger("Chat");
     public static final Logger JS_LOGGER = LoggerFactory.getLogger("JS");
+    public static final Logger GL_LOGGER = LoggerFactory.getLogger("GL");
 
     @Override
     public void onInitialize() {

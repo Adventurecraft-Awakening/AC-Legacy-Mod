@@ -1,13 +1,16 @@
 package dev.adventurecraft.awakening.client.options;
 
+import dev.adventurecraft.awakening.ACMainThread;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.options.GameOptions;
 import org.lwjgl.Sys;
+import org.lwjgl.opengl.ARBDebugOutput;
 import org.lwjgl.opengl.ContextCapabilities;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GLContext;
+import org.lwjgl.system.MemoryUtil;
 import org.slf4j.Logger;
 
 public class Config {
@@ -43,6 +46,52 @@ public class Config {
         logger.info("OpenGL Mipmap levels (GL12.GL_TEXTURE_MAX_LEVEL): {}", caps.OpenGL12);
         logger.info("OpenGL Fancy fog (GL_NV_fog_distance): {}", caps.GL_NV_fog_distance);
         logger.info("OpenGL Occlussion culling (GL_ARB_occlusion_query): {}", caps.GL_ARB_occlusion_query);
+
+        if (ACMainThread.glDebug) {
+            GL11.glEnable(37600);
+            GL11.glEnable(33346);
+            ARBDebugOutput.glDebugMessageCallbackARB(Config::debugMessageCallback, 0);
+        }
+    }
+
+    private static void debugMessageCallback(
+        int source, int type, int id, int severity, int length, long message, long userParam) {
+        Logger glLog = ACMod.GL_LOGGER;
+        String sSource = getSourceName(source);
+        String sType = getTypeName(type);
+        String sMessage = MemoryUtil.memUTF8(message, length);
+        Exception ex = ACMainThread.glDebugTrace ? new Exception() : null;
+
+        String format = "{}, {}, {}: {}";
+        switch (severity) {
+            case ARBDebugOutput.GL_DEBUG_SEVERITY_HIGH_ARB -> glLog.error(format, sSource, sType, id, sMessage, ex);
+            case ARBDebugOutput.GL_DEBUG_SEVERITY_MEDIUM_ARB -> glLog.warn(format, sSource, sType, id, sMessage, ex);
+            default -> glLog.info(format, sSource, sType, id, sMessage, ex);
+        }
+    }
+
+    private static String getSourceName(int value) {
+        return switch (value) {
+            case ARBDebugOutput.GL_DEBUG_SOURCE_API_ARB -> "API";
+            case ARBDebugOutput.GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB -> "WindowSystem";
+            case ARBDebugOutput.GL_DEBUG_SOURCE_SHADER_COMPILER_ARB -> "ShaderCompiler";
+            case ARBDebugOutput.GL_DEBUG_SOURCE_THIRD_PARTY_ARB -> "ThirdParty";
+            case ARBDebugOutput.GL_DEBUG_SOURCE_APPLICATION_ARB -> "Application";
+            case ARBDebugOutput.GL_DEBUG_SOURCE_OTHER_ARB -> "Other";
+            default -> Integer.toString(value);
+        };
+    }
+
+    private static String getTypeName(int value) {
+        return switch (value) {
+            case ARBDebugOutput.GL_DEBUG_TYPE_ERROR_ARB -> "Error";
+            case ARBDebugOutput.GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB -> "DeprecatedBehavior";
+            case ARBDebugOutput.GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB -> "UndefinedBehavior";
+            case ARBDebugOutput.GL_DEBUG_TYPE_PORTABILITY_ARB -> "Portability";
+            case ARBDebugOutput.GL_DEBUG_TYPE_PERFORMANCE_ARB -> "Performance";
+            case ARBDebugOutput.GL_DEBUG_TYPE_OTHER_ARB -> "Other";
+            default -> Integer.toString(value);
+        };
     }
 
     private static int getOpenGlVersion(ContextCapabilities caps) {
