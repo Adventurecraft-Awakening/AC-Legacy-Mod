@@ -18,10 +18,10 @@ public class AC_ItemInstrument extends Item {
     }
 
     @Override
-    public boolean useOnBlock(ItemStack var1, PlayerEntity var2, World var3, int var4, int var5, int var6, int var7) {
-        if (var3.getBlockId(var4, var5, var6) == Block.STANDING_SIGN.id) {
-            var var8 = (SignBlockEntity) var3.getBlockEntity(var4, var5, var6);
-            ((ExSignBlockEntity) var8).playSong(this.instrument);
+    public boolean useOnBlock(ItemStack var1, PlayerEntity var2, World world, int targetBlockX, int targetBlockY, int targetBlockZ, int var7) {
+        if (world.getBlockId(targetBlockX, targetBlockY, targetBlockZ) == Block.STANDING_SIGN.id) {
+            var targetSign = (SignBlockEntity) world.getBlockEntity(targetBlockX, targetBlockY, targetBlockZ);
+            ((ExSignBlockEntity) targetSign).playSong(this.instrument);
         }
 
         return false;

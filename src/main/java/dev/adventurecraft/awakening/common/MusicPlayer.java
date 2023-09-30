@@ -4,99 +4,140 @@ import net.minecraft.entity.Entity;
 import net.minecraft.world.World;
 
 public class MusicPlayer {
-    public static void playNoteFromEntity(World var0, Entity var1, String var2, char var3, boolean var4, float var5, float var6) {
-        playNote(var0, var1.x, var1.y, var1.z, var2, var3, var4, var5, var6);
+
+    /**
+     * @param world             The world in which the note will be played
+     * @param sourceEntity      The entity from which the location will be taken to play the note
+     * @param instrumentString  The instrument name from which the sound will be taken
+     * @param noteChar          The note character from A to G
+     * @param isSharp           Whether the note should be played half a step higher
+     * @param basePitchModifier How much should the pitch be altered for the given note
+     * @param volume            The volume of this note
+     */
+    public static void playNoteFromEntity(World world, Entity sourceEntity, String instrumentString, char noteChar, boolean isSharp, float basePitchModifier, float volume) {
+        playNote(world, sourceEntity.x, sourceEntity.y, sourceEntity.z, instrumentString, noteChar, isSharp, basePitchModifier, volume);
     }
 
-    public static void playNote(World var0, double var1, double var3, double var5, String var7, char var8, boolean var9, float var10, float var11) {
-        float var12 = 1.189207F;
-        switch (var8) {
+    /**
+     * @param targetWorld       The world in which the note will be played
+     * @param worldXPos         The X position of the sound
+     * @param worldYPos         The Y position of the sound
+     * @param worldZPos         The Z position of the sound
+     * @param instrumentString  The instrument name from which the sound will be taken
+     * @param noteChar          The note character from A to G
+     * @param isSharp           Whether the note should be played half a step higher
+     * @param basePitchModifier How much should the pitch be altered for the given note
+     * @param volume            The volume of this note
+     */
+    public static void playNote(World targetWorld, double worldXPos, double worldYPos, double worldZPos, String instrumentString, char noteChar, boolean isSharp, float basePitchModifier, float volume) {
+        float noteFrequency = 1.189207F; // Mod to F# to be A
+        switch (noteChar) { // Mod to A to be whatever note was played
             case 'A':
                 break;
             case 'B':
-                var12 *= 1.122462F;
+                noteFrequency *= 1.122462F;
                 break;
             case 'C':
-                var12 *= 1.189207F;
+                noteFrequency *= 1.189207F;
                 break;
             case 'D':
-                var12 *= 1.33484F;
+                noteFrequency *= 1.33484F;
                 break;
             case 'E':
-                var12 *= 1.498307F;
+                noteFrequency *= 1.498307F;
                 break;
             case 'F':
-                var12 *= 1.587401F;
+                noteFrequency *= 1.587401F;
                 break;
             case 'G':
-                var12 *= 1.781797F;
+                noteFrequency *= 1.781797F;
                 break;
             default:
                 return;
         }
 
-        if (var9) {
-            var12 = (float) ((double) var12 * 1.059463D);
+        if (isSharp) {
+            noteFrequency = (float) ((double) noteFrequency * 1.059463D); // Mod to the note that was played to give it half a step upwards
         }
 
-        var0.playSound(var1, var3, var5, var7, var11, var12 * var10);
+        targetWorld.playSound(worldXPos, worldYPos, worldZPos, instrumentString, volume, noteFrequency * basePitchModifier);
     }
 
-    public static void playNoteFromSong(World var0, double var1, double var3, double var5, String var7, String var8, int var9, float var10) {
-        int var11 = 0;
-        int var12 = 0;
-        boolean var13 = false;
-        boolean var14 = false;
-        char var15 = 65;
+    /**
+     * @param targetWorld      The world where the note will be played
+     * @param worldXPos        The x position in the world where the note will be played
+     * @param worldYPos        The y position in the world where the note will be played
+     * @param worldZPos        The z position in the world where the note will be played
+     * @param instrumentString The instrument that will be played
+     * @param songString       The string that contains the song
+     * @param noteIndex        The note to be played
+     * @param volume           The volume in which the song will be played
+     */
+    public static void playNoteFromSong(World targetWorld, double worldXPos, double worldYPos, double worldZPos, String instrumentString, String songString, int noteIndex, float volume) {
+        int stringIterationIndex = 0; // Current index on the string iteration
+        int noteIterationIndex = 0;  // Current note of the song
+        boolean isFlat = false;
+        boolean isSharp = false;
+        char noteToPlay = 'A';
 
-        float var16;
-        char var17;
-        for (var16 = 1.0F; var12 <= var9 && var11 < var8.length(); ++var11) {
-            var17 = var8.charAt(var11);
-            if (var17 == 43) {
-                var16 *= 2.0F;
-            } else if (var17 == 45) {
-                var16 *= 0.5F;
-            } else if (var17 != 35 && var17 != 98) {
-                var15 = var17;
-                ++var12;
+        float basePitchModifier;
+        char iterationChar;
+
+        // Count the octave changes before up to the current note
+        for (basePitchModifier = 1.0F; noteIterationIndex <= noteIndex && stringIterationIndex < songString.length(); ++stringIterationIndex) {
+            iterationChar = songString.charAt(stringIterationIndex);
+            if (iterationChar == '+') { // Increase the octave of the note
+                basePitchModifier *= 2.0F;
+            } else if (iterationChar == '-') { // Lower the octave of the note
+                basePitchModifier *= 0.5F;
+            } else if (iterationChar != '#' && iterationChar != 'b') { // Ignore sharps and flats
+                noteToPlay = iterationChar; // Set this as the current note
+                ++noteIterationIndex;
             }
         }
 
-        if (var11 < var8.length()) {
-            var17 = var8.charAt(var11);
-            if (var17 == 35) {
-                var14 = true;
-            } else if (var17 == 98) {
-                var13 = true;
+
+        // Check the next character for a sharp or a flat (if it can exist)
+        if (stringIterationIndex < songString.length()) {
+            iterationChar = songString.charAt(stringIterationIndex);
+            if (iterationChar == '#') {
+                isSharp = true;
+            } else if (iterationChar == 'b') {
+                isFlat = true;
             }
         }
 
-        if (var13) {
-            if (var15 == 65) {
-                var16 *= 0.5F;
-                var15 = 71;
+        // Translate all flats to sharps instead, by reducing its char value (or rolling over if it's A, the lowest ASCII).
+        if (isFlat) {
+            if (noteToPlay == 'A') {
+                basePitchModifier *= 0.5F;
+                noteToPlay = 'G';
             } else {
-                --var15;
+                --noteToPlay;
             }
 
-            var14 = true;
+            isSharp = true;
         }
 
-        playNote(var0, var1, var3, var5, var7, var15, var14, var16, var10);
+        // Finally play that note
+        playNote(targetWorld, worldXPos, worldYPos, worldZPos, instrumentString, noteToPlay, isSharp, basePitchModifier, volume);
     }
 
-    public static int countNotes(String var0) {
-        int var1 = 0;
+    /**
+     * @param songString The string representation of the song
+     * @return the amount of notes in the string
+     */
+    public static int countNotes(String songString) {
+        int i = 0;
 
-        int var2;
-        for (var2 = 0; var1 < var0.length(); ++var1) {
-            char var3 = var0.charAt(var1);
-            if (var3 != 43 && var3 != 45 && var3 != 35 && var3 != 98) {
-                ++var2;
+        int noteCount;
+        for (noteCount = 0; i < songString.length(); ++i) {
+            char currentNote = songString.charAt(i);
+            if (currentNote != '+' && currentNote != '-' && currentNote != '#' && currentNote != 'b') {
+                ++noteCount;
             }
         }
 
-        return var2;
+        return noteCount;
     }
 }
