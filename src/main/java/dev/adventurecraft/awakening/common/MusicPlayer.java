@@ -19,17 +19,17 @@ public class MusicPlayer {
     }
 
     /**
-     * @param targetWorld       The world in which the note will be played
-     * @param worldXPos         The X position of the sound
-     * @param worldYPos         The Y position of the sound
-     * @param worldZPos         The Z position of the sound
+     * @param world             The world in which the note will be played
+     * @param x                 The X position of the sound
+     * @param y                 The Y position of the sound
+     * @param z                 The Z position of the sound
      * @param instrumentString  The instrument name from which the sound will be taken
      * @param noteChar          The note character from A to G
      * @param isSharp           Whether the note should be played half a step higher
      * @param basePitchModifier How much should the pitch be altered for the given note
      * @param volume            The volume of this note
      */
-    public static void playNote(World targetWorld, double worldXPos, double worldYPos, double worldZPos, String instrumentString, char noteChar, boolean isSharp, float basePitchModifier, float volume) {
+    public static void playNote(World world, double x, double y, double z, String instrumentString, char noteChar, boolean isSharp, float basePitchModifier, float volume) {
         float noteFrequency = 1.189207F; // Mod to F# to be A
         switch (noteChar) { // Mod to A to be whatever note was played
             case 'A':
@@ -60,20 +60,20 @@ public class MusicPlayer {
             noteFrequency = (float) ((double) noteFrequency * 1.059463D); // Mod to the note that was played to give it half a step upwards
         }
 
-        targetWorld.playSound(worldXPos, worldYPos, worldZPos, instrumentString, volume, noteFrequency * basePitchModifier);
+        world.playSound(x, y, z, instrumentString, volume, noteFrequency * basePitchModifier);
     }
 
     /**
-     * @param targetWorld      The world where the note will be played
-     * @param worldXPos        The x position in the world where the note will be played
-     * @param worldYPos        The y position in the world where the note will be played
-     * @param worldZPos        The z position in the world where the note will be played
+     * @param world            The world where the note will be played
+     * @param x                The x position in the world where the note will be played
+     * @param y                The y position in the world where the note will be played
+     * @param z                The z position in the world where the note will be played
      * @param instrumentString The instrument that will be played
      * @param songString       The string that contains the song
      * @param noteIndex        The note to be played
      * @param volume           The volume in which the song will be played
      */
-    public static void playNoteFromSong(World targetWorld, double worldXPos, double worldYPos, double worldZPos, String instrumentString, String songString, int noteIndex, float volume) {
+    public static void playNoteFromSong(World world, double x, double y, double z, String instrumentString, String songString, int noteIndex, float volume) {
         int stringIterationIndex = 0; // Current index on the string iteration
         int noteIterationIndex = 0;  // Current note of the song
         boolean isFlat = false;
@@ -120,7 +120,7 @@ public class MusicPlayer {
         }
 
         // Finally play that note
-        playNote(targetWorld, worldXPos, worldYPos, worldZPos, instrumentString, noteToPlay, isSharp, basePitchModifier, volume);
+        playNote(world, x, y, z, instrumentString, noteToPlay, isSharp, basePitchModifier, volume);
     }
 
     /**
