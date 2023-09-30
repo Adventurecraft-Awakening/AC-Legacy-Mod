@@ -56,8 +56,11 @@ public class Config {
 
         if (ACMainThread.glDebugLogs && hasDebugOutput) {
             GL11.glEnable(37600 /* GL_DEBUG_OUTPUT */);
-            GL11.glEnable(33346 /* GL_DEBUG_OUTPUT_SYNCHRONOUS */);
 
+            if (ACMainThread.glDebugTrace) {
+                GL11.glEnable(33346 /* GL_DEBUG_OUTPUT_SYNCHRONOUS */);
+            }
+            
             ARBDebugOutput.glDebugMessageCallbackARB(Config::debugMessageCallback, 0);
             ARBDebugOutput.nglDebugMessageControlARB(GL11.GL_DONT_CARE, GL11.GL_DONT_CARE, GL11.GL_DONT_CARE, 0, 0, true);
         }
