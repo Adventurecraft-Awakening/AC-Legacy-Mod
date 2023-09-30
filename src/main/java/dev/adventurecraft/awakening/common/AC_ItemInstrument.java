@@ -12,11 +12,17 @@ public class AC_ItemInstrument extends Item {
 
 
     /**
-     * The sound's uri.
-     * To play, for example, resources/newsound/note/harp.ogg, the instrument would be <code>"note.harp"</code>
+     * The sound's URI.
+     * To play, for example, resources/newsound/note/harp.ogg, the instrument would be <code>"note.harp"</code>.
      */
     String instrument;
 
+    /**
+     * Creates a new instrument item.
+     *
+     * @param itemId        The ID of the item.
+     * @param instrumentUri The instrument's sound URI.
+     */
     protected AC_ItemInstrument(int itemId, String instrumentUri) {
         super(itemId);
         this.instrument = instrumentUri;
