@@ -37,9 +37,9 @@ public abstract class MixinSignBlockEntity extends BlockEntity implements ExSign
     }
 
     @Override
-    public void playSong(String instrumentString) {
+    public void playSong(String instrumentUri) {
         this.playSong = true;
-        this.instrument = instrumentString;
+        this.instrument = instrumentUri;
         this.tickSinceStart = 0;
         this.onNote = 0;
     }

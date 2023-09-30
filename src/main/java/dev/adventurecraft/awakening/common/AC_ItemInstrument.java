@@ -10,11 +10,16 @@ import net.minecraft.world.World;
 
 public class AC_ItemInstrument extends Item {
 
+
+    /**
+     * The sound's uri.
+     * To play, for example, resources/newsound/note/harp.ogg, the instrument would be <code>"note.harp"</code>
+     */
     String instrument;
 
-    protected AC_ItemInstrument(int var1, String var2) {
-        super(var1);
-        this.instrument = var2;
+    protected AC_ItemInstrument(int itemId, String instrumentUri) {
+        super(itemId);
+        this.instrument = instrumentUri;
     }
 
     @Override
