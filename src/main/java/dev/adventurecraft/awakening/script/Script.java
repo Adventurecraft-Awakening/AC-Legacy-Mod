@@ -42,7 +42,8 @@ public class Script {
                 fullClassName.equals("java.lang.Object") ||
                 fullClassName.equals("java.lang.String") ||
                 fullClassName.equals("java.lang.Double") ||
-                fullClassName.equals("java.lang.Boolean"));
+                fullClassName.equals("java.lang.Boolean") ||
+                fullClassName.equals("org.mozilla.javascript.ConsString"));
             shutterSet = true;
         }
 
@@ -190,11 +191,10 @@ public class Script {
     }
 
     private void printRhinoException(RhinoException ex) {
-        Minecraft.instance.overlay.addChatMessage("JS: " + ex.getMessage());
-        if (ACMod.JS_LOGGER.isTraceEnabled()) {
-            ACMod.JS_LOGGER.warn("{}\n{}", ex.getMessage(), ex.getScriptStackTrace(), ex);
-        } else {
-            ACMod.JS_LOGGER.warn("{}\n{}", ex.getMessage(), ex.getScriptStackTrace());
-        }
+        String message = ex.getMessage();
+        Minecraft.instance.overlay.addChatMessage("JS: " + message);
+
+        Exception logEx = ACMod.JS_LOGGER.isTraceEnabled() ? ex : null;
+        ACMod.JS_LOGGER.warn("{}\n{}", message, ex.getScriptStackTrace(), logEx);
     }
 }
