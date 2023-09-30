@@ -18,9 +18,9 @@ public class AC_ItemInstrument extends Item {
     }
 
     @Override
-    public boolean useOnBlock(ItemStack var1, PlayerEntity var2, World world, int targetBlockX, int targetBlockY, int targetBlockZ, int var7) {
-        if (world.getBlockId(targetBlockX, targetBlockY, targetBlockZ) == Block.STANDING_SIGN.id) {
-            var targetSign = (SignBlockEntity) world.getBlockEntity(targetBlockX, targetBlockY, targetBlockZ);
+    public boolean useOnBlock(ItemStack stack, PlayerEntity player, World world, int x, int y, int z, int side) {
+        if (world.getBlockId(x, y, z) == Block.STANDING_SIGN.id) {
+            var targetSign = (SignBlockEntity) world.getBlockEntity(x, y, z);
             ((ExSignBlockEntity) targetSign).playSong(this.instrument);
         }
 
@@ -28,8 +28,8 @@ public class AC_ItemInstrument extends Item {
     }
 
     @Override
-    public ItemStack use(ItemStack var1, World var2, PlayerEntity var3) {
+    public ItemStack use(ItemStack stack, World world, PlayerEntity player) {
         AC_GuiMusicSheet.showUI(this.instrument);
-        return var1;
+        return stack;
     }
 }
