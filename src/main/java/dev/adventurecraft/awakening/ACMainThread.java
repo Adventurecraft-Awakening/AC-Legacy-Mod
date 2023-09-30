@@ -11,9 +11,9 @@ import java.io.File;
 public final class ACMainThread extends Minecraft {
 
     public static File mapsDirectory;
-    public static boolean glDebugLogs;
+
     public static boolean glDebugContext;
-    public static boolean glDebugTrace;
+    public static GlDebugTraceSeverity glDebugTrace = GlDebugTraceSeverity.High;
 
     public ACMainThread(int width, int height, boolean fullScreen) {
         super(null, null, null, width, height, fullScreen);
@@ -29,5 +29,14 @@ public final class ACMainThread extends Minecraft {
             mapsDirectory = new File(getGameDirectory(), "../maps");
         }
         return mapsDirectory;
+    }
+
+    public enum GlDebugTraceSeverity {
+        Ignore,
+        High,
+        Medium,
+        Low,
+        Info,
+        All,
     }
 }

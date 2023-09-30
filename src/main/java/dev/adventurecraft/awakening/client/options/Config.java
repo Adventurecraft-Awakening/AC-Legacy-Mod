@@ -54,13 +54,13 @@ public class Config {
         boolean hasDebugOutput = glVersion >= 43 || caps.GL_KHR_debug || caps.GL_ARB_debug_output;
         logger.info("OpenGL Debug output: {}", hasDebugOutput);
 
-        if (ACMainThread.glDebugLogs && hasDebugOutput) {
+        if (hasDebugOutput) {
             GL11.glEnable(37600 /* GL_DEBUG_OUTPUT */);
 
-            if (ACMainThread.glDebugTrace) {
+            if (ACMainThread.glDebugTrace != ACMainThread.GlDebugTraceSeverity.Ignore) {
                 GL11.glEnable(33346 /* GL_DEBUG_OUTPUT_SYNCHRONOUS */);
             }
-            
+
             ARBDebugOutput.glDebugMessageCallbackARB(Config::debugMessageCallback, 0);
             ARBDebugOutput.nglDebugMessageControlARB(GL11.GL_DONT_CARE, GL11.GL_DONT_CARE, GL11.GL_DONT_CARE, 0, 0, true);
         }
@@ -72,15 +72,27 @@ public class Config {
         String sSrc = getSourceName(source);
         String sType = getTypeName(type);
         String sMsg = MemoryUtil.memUTF8(message, length);
-        Exception ex = ACMainThread.glDebugTrace ? new Exception() : null;
+        int traceSeverity = ACMainThread.glDebugTrace.ordinal();
 
         String format = "{}, {}, {}, {}: {}";
         switch (severity) {
-            case ARBDebugOutput.GL_DEBUG_SEVERITY_HIGH_ARB -> glLog.error(format, "HIGH", sSrc, sType, id, sMsg, ex);
-            case ARBDebugOutput.GL_DEBUG_SEVERITY_MEDIUM_ARB -> glLog.warn(format, "MED", sSrc, sType, id, sMsg, ex);
-            case ARBDebugOutput.GL_DEBUG_SEVERITY_LOW_ARB -> glLog.warn(format, "LOW", sSrc, sType, id, sMsg, ex);
-            case 0x826B /* GL_DEBUG_SEVERITY_NOTIFICATION */ -> glLog.info(format, "INFO", sSrc, sType, id, sMsg, ex);
-            default -> glLog.warn(format, severity, sSrc, sType, id, sMsg, ex);
+            case ARBDebugOutput.GL_DEBUG_SEVERITY_HIGH_ARB -> {
+                var ex = traceSeverity >= ACMainThread.GlDebugTraceSeverity.High.ordinal() ? new Exception() : null;
+                glLog.error(format, "HIGH", sSrc, sType, id, sMsg, ex);
+            }
+            case ARBDebugOutput.GL_DEBUG_SEVERITY_MEDIUM_ARB -> {
+                var ex = traceSeverity >= ACMainThread.GlDebugTraceSeverity.Medium.ordinal() ? new Exception() : null;
+                glLog.warn(format, "MED", sSrc, sType, id, sMsg, ex);
+            }
+            case ARBDebugOutput.GL_DEBUG_SEVERITY_LOW_ARB -> {
+                var ex = traceSeverity >= ACMainThread.GlDebugTraceSeverity.Low.ordinal() ? new Exception() : null;
+                glLog.warn(format, "LOW", sSrc, sType, id, sMsg, ex);
+            }
+            case 0x826B /* GL_DEBUG_SEVERITY_NOTIFICATION */ -> {
+                var ex = traceSeverity >= ACMainThread.GlDebugTraceSeverity.Info.ordinal() ? new Exception() : null;
+                glLog.info(format, "INFO", sSrc, sType, id, sMsg, ex);
+            }
+            default -> glLog.warn(format, severity, sSrc, sType, id, sMsg, new Exception());
         }
     }
 
