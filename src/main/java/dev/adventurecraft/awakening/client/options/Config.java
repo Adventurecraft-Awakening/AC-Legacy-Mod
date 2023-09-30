@@ -6,12 +6,11 @@ import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.options.GameOptions;
 import org.lwjgl.Sys;
-import org.lwjgl.opengl.ARBDebugOutput;
-import org.lwjgl.opengl.ContextCapabilities;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GLContext;
+import org.lwjgl.opengl.*;
 import org.lwjgl.system.MemoryUtil;
 import org.slf4j.Logger;
+
+import java.util.ArrayList;
 
 public class Config {
 
@@ -43,30 +42,42 @@ public class Config {
         var caps = GLContext.getCapabilities();
         int glVersion = getOpenGlVersion(caps);
         logger.info("OpenGL Version: {}.{}", glVersion / 10, glVersion % 10);
+
+        if (glVersion >= 30) {
+            printOpenGlContextFlags(logger);
+        }
+
         logger.info("OpenGL Mipmap levels (GL12.GL_TEXTURE_MAX_LEVEL): {}", caps.OpenGL12);
         logger.info("OpenGL Fancy fog (GL_NV_fog_distance): {}", caps.GL_NV_fog_distance);
         logger.info("OpenGL Occlussion culling (GL_ARB_occlusion_query): {}", caps.GL_ARB_occlusion_query);
 
-        if (ACMainThread.glDebug) {
-            GL11.glEnable(37600);
-            GL11.glEnable(33346);
+        boolean hasDebugOutput = glVersion >= 43 || caps.GL_KHR_debug || caps.GL_ARB_debug_output;
+        logger.info("OpenGL Debug output: {}", hasDebugOutput);
+
+        if (ACMainThread.glDebugLogs && hasDebugOutput) {
+            GL11.glEnable(37600 /* GL_DEBUG_OUTPUT */);
+            GL11.glEnable(33346 /* GL_DEBUG_OUTPUT_SYNCHRONOUS */);
+
             ARBDebugOutput.glDebugMessageCallbackARB(Config::debugMessageCallback, 0);
+            ARBDebugOutput.nglDebugMessageControlARB(GL11.GL_DONT_CARE, GL11.GL_DONT_CARE, GL11.GL_DONT_CARE, 0, 0, true);
         }
     }
 
     private static void debugMessageCallback(
         int source, int type, int id, int severity, int length, long message, long userParam) {
         Logger glLog = ACMod.GL_LOGGER;
-        String sSource = getSourceName(source);
+        String sSrc = getSourceName(source);
         String sType = getTypeName(type);
-        String sMessage = MemoryUtil.memUTF8(message, length);
+        String sMsg = MemoryUtil.memUTF8(message, length);
         Exception ex = ACMainThread.glDebugTrace ? new Exception() : null;
 
-        String format = "{}, {}, {}: {}";
+        String format = "{}, {}, {}, {}: {}";
         switch (severity) {
-            case ARBDebugOutput.GL_DEBUG_SEVERITY_HIGH_ARB -> glLog.error(format, sSource, sType, id, sMessage, ex);
-            case ARBDebugOutput.GL_DEBUG_SEVERITY_MEDIUM_ARB -> glLog.warn(format, sSource, sType, id, sMessage, ex);
-            default -> glLog.info(format, sSource, sType, id, sMessage, ex);
+            case ARBDebugOutput.GL_DEBUG_SEVERITY_HIGH_ARB -> glLog.error(format, "HIGH", sSrc, sType, id, sMsg, ex);
+            case ARBDebugOutput.GL_DEBUG_SEVERITY_MEDIUM_ARB -> glLog.warn(format, "MED", sSrc, sType, id, sMsg, ex);
+            case ARBDebugOutput.GL_DEBUG_SEVERITY_LOW_ARB -> glLog.warn(format, "LOW", sSrc, sType, id, sMsg, ex);
+            case 0x826B /* GL_DEBUG_SEVERITY_NOTIFICATION */ -> glLog.info(format, "INFO", sSrc, sType, id, sMsg, ex);
+            default -> glLog.warn(format, severity, sSrc, sType, id, sMsg, ex);
         }
     }
 
@@ -90,6 +101,9 @@ public class Config {
             case ARBDebugOutput.GL_DEBUG_TYPE_PORTABILITY_ARB -> "Portability";
             case ARBDebugOutput.GL_DEBUG_TYPE_PERFORMANCE_ARB -> "Performance";
             case ARBDebugOutput.GL_DEBUG_TYPE_OTHER_ARB -> "Other";
+            case 0x8268 /* GL_DEBUG_TYPE_MARKER */ -> "Marker";
+            case 0x8269 /* GL_DEBUG_TYPE_PUSH_GROUP */ -> "PushGroup";
+            case 0x826A /* GL_DEBUG_TYPE_POP_GROUP */ -> "PopGroup";
             default -> Integer.toString(value);
         };
     }
@@ -113,6 +127,30 @@ public class Config {
         if (caps.OpenGL12) return 12;
         if (caps.OpenGL11) return 11;
         return 10;
+    }
+
+    private static void printOpenGlContextFlags(Logger logger) {
+        int[] ctxFlags = new int[1];
+        GL11.glGetIntegerv(0x821E /* GL_CONTEXT_FLAGS */, ctxFlags);
+
+        var list = new ArrayList<String>();
+        if ((ctxFlags[0] & 0x1 /* GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT */) != 0) {
+            list.add("FORWARD_COMPATIBLE");
+        }
+        if ((ctxFlags[0] & 0x2 /* GL_CONTEXT_FLAG_DEBUG_BIT */) != 0) {
+            list.add("DEBUG");
+        }
+        if ((ctxFlags[0] & 0x4 /* GL_CONTEXT_FLAG_ROBUST_ACCESS_BIT */) != 0) {
+            list.add("ROBUST_ACCESS");
+        }
+        if ((ctxFlags[0] & 0x8 /* GL_CONTEXT_FLAG_NO_ERROR_BIT */) != 0) {
+            list.add("NO_ERROR");
+        }
+
+        logger.info(
+            "OpenGL Context flags: 0b{} ({})",
+            Integer.toBinaryString(ctxFlags[0]),
+            String.join(",", list));
     }
 
     private static GameOptions getOptions() {

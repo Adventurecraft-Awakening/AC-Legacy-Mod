@@ -79,7 +79,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.io.*;
 import java.net.URL;
-import java.util.Objects;
 
 @Mixin(Minecraft.class)
 public abstract class MixinMinecraft implements ExMinecraft {
@@ -257,8 +256,20 @@ public abstract class MixinMinecraft implements ExMinecraft {
             ACMainThread.mapsDirectory = new File(arguments.get("mapsDir"));
         }
 
-        ACMainThread.glDebug = arguments.containsKey("glDebug") || arguments.getExtraArgs().contains("--glDebug");
-        ACMainThread.glDebugTrace = Objects.equals(arguments.get("glDebug"), "trace");
+        String[] glDebugArgs = arguments.getOrDefault("glDebug", "").split("\\|");
+        for (String arg : glDebugArgs) {
+            if (arg.equalsIgnoreCase("log")) {
+                ACMainThread.glDebugLogs = true;
+            } else if (arg.equalsIgnoreCase("ctx")) {
+                ACMainThread.glDebugContext = true;
+            } else if (arg.equalsIgnoreCase("trace")) {
+                ACMainThread.glDebugTrace = true;
+            } else if (arg.equalsIgnoreCase("full")) {
+                ACMainThread.glDebugLogs = true;
+                ACMainThread.glDebugContext = true;
+                ACMainThread.glDebugTrace = true;
+            }
+        }
 
         boolean fullscreen = arguments.getExtraArgs().contains("--fullscreen");
         int width = Integer.parseInt(arguments.getOrDefault("width", "854"));
@@ -313,7 +324,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         int sampleCount = ((ExGameOptions) options).ofAaLevel();
         ACMod.LOGGER.info("MSAA Samples: {}x", sampleCount);
 
-        if (ACMainThread.glDebug) {
+        if (ACMainThread.glDebugContext) {
             GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_DEBUG_CONTEXT, 1);
         }
 
