@@ -26,7 +26,7 @@ public class AC_GuiMusicSheet extends Screen {
         this.songPlayed = null;
     }
 
-    public static Note[] keyboardNotes = {
+    public static final Note[] keyboardNotes = {
         new Note('D', -1), // Keyboard 1
         new Note('E', -1),
         new Note('F', -1),
