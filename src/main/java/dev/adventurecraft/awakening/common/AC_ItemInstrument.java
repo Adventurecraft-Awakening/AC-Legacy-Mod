@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.common;
 
-import dev.adventurecraft.awakening.common.instruments.InstrumentConfig;
+import dev.adventurecraft.awakening.common.instruments.IInstrumentConfig;
+import dev.adventurecraft.awakening.common.instruments.SimpleInstrumentConfig;
 import dev.adventurecraft.awakening.extension.entity.block.ExSongContainer;
 import net.minecraft.block.Block;
 import net.minecraft.entity.block.SignBlockEntity;
@@ -16,7 +17,7 @@ public class AC_ItemInstrument extends Item {
      * The sound's URI.
      * To play, for example, resources/newsound/note/harp.ogg, the instrument would be <code>"note.harp"</code>.
      */
-    InstrumentConfig instrument;
+    IInstrumentConfig instrument;
 
     /**
      * Creates a new instrument item.
@@ -26,7 +27,7 @@ public class AC_ItemInstrument extends Item {
      */
     protected AC_ItemInstrument(int itemId, String instrumentUri) {
         super(itemId);
-        this.instrument = new InstrumentConfig(instrumentUri);
+        this.instrument = new SimpleInstrumentConfig(instrumentUri);
     }
 
     /**
@@ -34,11 +35,22 @@ public class AC_ItemInstrument extends Item {
      *
      * @param itemId        The ID of the item.
      * @param instrumentUri The instrument's sound URI.
-     * @param noteOffset    The offset of the instrument to be tuned so its first note is A
+     * @param noteOffset    The offset of the instrument to be tuned to match with the pentagram
      */
     protected AC_ItemInstrument(int itemId, String instrumentUri, int noteOffset) {
         super(itemId);
-        this.instrument = new InstrumentConfig(instrumentUri, noteOffset);
+        this.instrument = new SimpleInstrumentConfig(instrumentUri, noteOffset);
+    }
+
+    /**
+     * Creates a new instrument item.
+     *
+     * @param itemId           The ID of the item.
+     * @param instrumentConfig The instrument config that the instrument will use
+     */
+    protected AC_ItemInstrument(int itemId, IInstrumentConfig instrumentConfig) {
+        super(itemId);
+        this.instrument = instrumentConfig;
     }
 
     @Override

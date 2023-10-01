@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.mixin.entity.block;
 
 import dev.adventurecraft.awakening.common.MusicPlayer;
-import dev.adventurecraft.awakening.common.instruments.InstrumentConfig;
+import dev.adventurecraft.awakening.common.instruments.IInstrumentConfig;
 import dev.adventurecraft.awakening.common.instruments.Note;
 import dev.adventurecraft.awakening.common.instruments.Song;
 import dev.adventurecraft.awakening.extension.entity.block.ExSongContainer;
@@ -18,7 +18,7 @@ public abstract class MixinSignBlockEntity extends BlockEntity implements ExSong
     @Shadow
     public String[] text;
     public boolean playSong;
-    public InstrumentConfig instrument;
+    public IInstrumentConfig instrument;
     public int tickSinceStart;
 
     public Iterator<Note> songIterator;
@@ -42,12 +42,12 @@ public abstract class MixinSignBlockEntity extends BlockEntity implements ExSong
     }
 
     @Override
-    public void playSong(InstrumentConfig instrumentConfig) {
+    public void playSong(IInstrumentConfig instrumentConfig) {
         this.playSong = true;
         this.instrument = instrumentConfig;
         this.tickSinceStart = 0;
 
-        Song songToPlay = new Song(getSong(), instrumentConfig.tuning);
+        Song songToPlay = new Song(getSong(), instrumentConfig.getTuning());
         this.songIterator = songToPlay.iterator();
     }
 

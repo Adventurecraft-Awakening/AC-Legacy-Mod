@@ -58,21 +58,25 @@ public class Note {
     }
 
     public Note(int value, int octave) {
-        this.setValue(value);
         this.octave = octave;
+        this.setValue(value);
     }
 
 
     /**
      * @return The change in pitch of the note to be played
      */
-    public float getFrequency() {
+    public float getPitch() {
         float product = (float) Math.pow(2, octave);
         return (float) (noteCoefficient[this.getValue()] * product);
     }
 
     public void shiftValue(int amount) {
         this.setValue(this.getValue() + amount);
+    }
+
+    public Note withShiftedValue(int amount) {
+        return new Note(this.getValue() + amount, this.octave);
     }
 
     /**
