@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.common.instruments.InstrumentConfig;
 import dev.adventurecraft.awakening.common.instruments.Note;
 import net.minecraft.entity.Entity;
 import net.minecraft.world.World;
@@ -73,7 +74,7 @@ public class MusicPlayer {
      * @param note             The note to be played
      * @param volume           The volume that the note will be played at
      */
-    public static void playNote(World world, double x, double y, double z, String instrumentString, Note note, float volume) {
-        world.playSound(x, y, z, instrumentString, volume, note.getFrequency());
+    public static void playNote(World world, double x, double y, double z, InstrumentConfig instrumentString, Note note, float volume) {
+        world.playSound(x, y, z, instrumentString.soundURI, volume, note.getFrequency());
     }
 }

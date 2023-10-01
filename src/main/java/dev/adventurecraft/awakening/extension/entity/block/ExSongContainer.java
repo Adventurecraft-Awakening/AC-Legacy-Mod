@@ -1,5 +1,7 @@
 package dev.adventurecraft.awakening.extension.entity.block;
 
+import dev.adventurecraft.awakening.common.instruments.InstrumentConfig;
+
 public interface ExSongContainer {
 
     /**
@@ -7,7 +9,7 @@ public interface ExSongContainer {
      *
      * @param instrumentUri the instrument's uri, the sound from the files that will be played.
      */
-    void playSong(String instrumentUri);
+    void playSong(InstrumentConfig instrumentUri);
 
     String getSong();
 }
