@@ -7,7 +7,7 @@ public interface ExSongContainer {
      *
      * @param instrumentUri the instrument's uri, the sound from the files that will be played.
      */
-    void PlaySong(String instrumentUri);
+    void playSong(String instrumentUri);
 
-    String GetSong();
+    String getSong();
 }

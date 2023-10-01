@@ -32,7 +32,7 @@ public class AC_ItemInstrument extends Item {
     public boolean useOnBlock(ItemStack stack, PlayerEntity player, World world, int x, int y, int z, int side) {
         if (world.getBlockId(x, y, z) == Block.STANDING_SIGN.id) {
             var targetSign = (SignBlockEntity) world.getBlockEntity(x, y, z);
-            ((ExSongContainer) targetSign).PlaySong(this.instrument);
+            ((ExSongContainer) targetSign).playSong(this.instrument);
         }
 
         return false;

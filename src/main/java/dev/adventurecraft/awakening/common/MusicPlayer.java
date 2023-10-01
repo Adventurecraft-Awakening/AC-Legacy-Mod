@@ -144,6 +144,6 @@ public class MusicPlayer {
 
     public static void
     playNote(World world, double x, double y, double z, String instrumentString, Note note, float volume) {
-        world.playSound(x, y, z, instrumentString, volume, note.GetFrequency());
+        world.playSound(x, y, z, instrumentString, volume, note.getFrequency());
     }
 }

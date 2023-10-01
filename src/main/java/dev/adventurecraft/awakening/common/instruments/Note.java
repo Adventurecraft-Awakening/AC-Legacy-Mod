@@ -76,12 +76,12 @@ public class Note {
     /**
      * @return The change in pitch of the note to be played
      */
-    public float GetFrequency() {
+    public float getFrequency() {
         float product = (float) Math.pow(2, octave);
         return (float) (noteCoefficient[this.getValue()] * product);
     }
 
-    public void ShiftValue(int amount) {
+    public void shiftValue(int amount) {
         this.setValue(this.getValue() + amount);
     }
 

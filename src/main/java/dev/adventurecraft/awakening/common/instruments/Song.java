@@ -36,7 +36,7 @@ public class Song implements Iterable<Note> {
 
             if (charIsANote(currentChar)) {
                 Note newNote = new Note(currentChar, currentOctave);
-                newNote.ShiftValue(baseShift);
+                newNote.shiftValue(baseShift);
                 this.notes.add(newNote);
                 noteCount++;
             } else {
@@ -45,12 +45,12 @@ public class Song implements Iterable<Note> {
                     case LOWER_OCTAVE -> currentOctave -= 1;
                     case SHARP -> {
                         if (noteCount > 0) {
-                            this.notes.get(noteCount - 1).ShiftValue(1);
+                            this.notes.get(noteCount - 1).shiftValue(1);
                         }
                     }
                     case FLAT -> {
                         if (noteCount > 0) {
-                            this.notes.get(noteCount - 1).ShiftValue(-1);
+                            this.notes.get(noteCount - 1).shiftValue(-1);
                         }
                     }
                     default -> this.notes.add(null);

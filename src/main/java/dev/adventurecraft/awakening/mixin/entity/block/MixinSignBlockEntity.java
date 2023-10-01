@@ -41,16 +41,16 @@ public abstract class MixinSignBlockEntity extends BlockEntity implements ExSong
     }
 
     @Override
-    public void PlaySong(String instrumentUri) {
+    public void playSong(String instrumentUri) {
         this.playSong = true;
         this.instrument = instrumentUri;
         this.tickSinceStart = 0;
 
-        Song songToPlay = new Song(GetSong(), 3);
+        Song songToPlay = new Song(getSong(), 3);
         this.songIterator = songToPlay.iterator();
     }
 
-    public String GetSong() {
+    public String getSong() {
         return this.text[0] + this.text[1] + this.text[2] + this.text[3];
     }
 }
