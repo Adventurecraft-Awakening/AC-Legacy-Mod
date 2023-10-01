@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.common.instruments.Note;
 import net.minecraft.entity.Entity;
 import net.minecraft.world.World;
 
@@ -139,5 +140,10 @@ public class MusicPlayer {
         }
 
         return noteCount;
+    }
+
+    public static void
+    playNote(World world, double x, double y, double z, String instrumentString, Note note, float volume) {
+        world.playSound(x, y, z, instrumentString, volume, note.GetFrequency());
     }
 }
