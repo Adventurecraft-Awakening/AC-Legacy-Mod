@@ -30,9 +30,9 @@ public class AC_EntityBomb extends ItemEntity {
 		this(world);
 		this.parentEntity = entity;
 		this.setRotation(entity.yaw, entity.pitch);
-		this.xVelocity = 0.3D * -Math.sin((double)(this.yaw / 180.0F * 3.141593F)) * Math.cos((double)(this.pitch / 180.0F * 3.141593F));
-		this.zVelocity = 0.3D * Math.cos((double)(this.yaw / 180.0F * 3.141593F)) * Math.cos((double)(this.pitch / 180.0F * 3.141593F));
-		this.yVelocity = 0.3D * -Math.sin((double)(this.pitch / 180.0F * 3.141593F)) + (double)0.1F;
+		this.xVelocity = 0.3D * -Math.sin(this.yaw / 180.0F * 3.141593F) * Math.cos(this.pitch / 180.0F * 3.141593F);
+		this.zVelocity = 0.3D * Math.cos(this.yaw / 180.0F * 3.141593F) * Math.cos(this.pitch / 180.0F * 3.141593F);
+		this.yVelocity = 0.3D * -Math.sin(this.pitch / 180.0F * 3.141593F) + (double)0.1F;
 		this.setPosition(entity.x, entity.y, entity.z);
 		this.prevX = this.x;
 		this.prevY = this.y;
@@ -91,8 +91,8 @@ public class AC_EntityBomb extends ItemEntity {
 		for(int xOffset = -bombDestroyRange; xOffset <= bombDestroyRange; ++xOffset) {
 			for(blockOffsetB = -bombDestroyRange; blockOffsetB <= 3; ++blockOffsetB) {
 				for(blockOffsetA = -bombDestroyRange; blockOffsetA <= bombDestroyRange; ++blockOffsetA) {
-					Double distanceSquared = Double.valueOf((double) xOffset * (double) xOffset + (double)(blockOffsetB * blockOffsetB) + (double)(blockOffsetA * blockOffsetA));
-					if(distanceSquared.doubleValue() <= 9.0D) {
+					double distanceSquared = (double) xOffset * (double) xOffset + (double) (blockOffsetB * blockOffsetB) + (double) (blockOffsetA * blockOffsetA);
+					if(distanceSquared <= 9.0D) {
 						int blockAtOffset = world.getBlockId(explodeeIndex + xOffset, yPosition + blockOffsetB, zPosition + blockOffsetA);
                         // Remove bombable tiles
 						if(Block.BY_ID[blockAtOffset] instanceof AC_BlockBombable) {
@@ -111,17 +111,17 @@ public class AC_EntityBomb extends ItemEntity {
 		for(blockOffsetB = -3; blockOffsetB <= 3; ++blockOffsetB) { // Used for X
 			for(blockOffsetA = -3; blockOffsetA <= 3; ++blockOffsetA) { // Used for Y
 				for(int blockOffsetD = -3; blockOffsetD <= 3; ++blockOffsetD) {
-					Double distanceSquared = Double.valueOf((double)blockOffsetB * (double)blockOffsetB + (double)(blockOffsetA * blockOffsetA) + (double)(blockOffsetD * blockOffsetD));
-					if(rng.nextInt(3) == 0 && distanceSquared.doubleValue() <= 9.0D) {
-						Double xDirection = Double.valueOf((double)blockOffsetB);
-						Double yDirection = Double.valueOf((double)blockOffsetA);
-						Double zDirection = Double.valueOf((double)blockOffsetD);
-						Double launchPower = Double.valueOf(Math.sqrt(distanceSquared.doubleValue()) * (0.75D + 0.5D * rng.nextDouble()) * 1.5D / 3.0D);
-						xDirection = Double.valueOf(xDirection.doubleValue() / launchPower.doubleValue());
-						yDirection = Double.valueOf(yDirection.doubleValue() / launchPower.doubleValue());
-						zDirection = Double.valueOf(zDirection.doubleValue() / launchPower.doubleValue());
-						world.addParticle("explode", x, y, z, xDirection.doubleValue(), yDirection.doubleValue(), zDirection.doubleValue());
-						world.addParticle("smoke", x, y, z, xDirection.doubleValue(), yDirection.doubleValue(), zDirection.doubleValue());
+					double distanceSquared = (double) blockOffsetB * (double) blockOffsetB + (double) (blockOffsetA * blockOffsetA) + (double) (blockOffsetD * blockOffsetD);
+					if(rng.nextInt(3) == 0 && distanceSquared <= 9.0D) {
+						double xDirection = blockOffsetB;
+						double yDirection = blockOffsetA;
+						double zDirection = blockOffsetD;
+						double launchPower = Math.sqrt(distanceSquared) * (0.75D + 0.5D * rng.nextDouble()) * 1.5D / 3.0D;
+						xDirection = xDirection / launchPower;
+						yDirection = yDirection / launchPower;
+						zDirection = zDirection / launchPower;
+						world.addParticle("explode", x, y, z, xDirection, yDirection, zDirection);
+						world.addParticle("smoke", x, y, z, xDirection, yDirection, zDirection);
 					}
 				}
 			}
