@@ -21,10 +21,6 @@ public class Song implements Iterable<Note> {
      */
     private final List<Note> notes;
 
-    public Song(String sourceString) {
-        this(sourceString, 0);
-    }
-
     public Song(String sourceString, int baseShift) {
         // Initialize the list
         this.notes = new ArrayList<>();

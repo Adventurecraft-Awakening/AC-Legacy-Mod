@@ -39,12 +39,6 @@ public class Note {
 
     private static final int baseOctave = 4;
 
-    private static final Note A4 = new Note(0, 4);
-
-    public Note() {
-        this(0, baseOctave);
-    }
-
     /**
      * Creates a note starting out from the 4th octave.
      *
@@ -59,10 +53,6 @@ public class Note {
      * @param sourceChar The note's source character. <code>'A'</code> for 0.
      *                   Invalid chars are set to 0.
      */
-    public Note(char sourceChar) {
-        this(sourceChar, baseOctave);
-    }
-
     public Note(char sourceChar, int octave) {
         this((sourceChar >= 'A' && sourceChar <= 'G') ? (charToNote[sourceChar - 'A']) : 0, octave);
     }

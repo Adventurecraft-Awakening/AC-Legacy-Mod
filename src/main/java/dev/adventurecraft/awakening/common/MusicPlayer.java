@@ -65,85 +65,15 @@ public class MusicPlayer {
     }
 
     /**
-     * @param world            The world where the note will be played
-     * @param x                The x position in the world where the note will be played
-     * @param y                The y position in the world where the note will be played
-     * @param z                The z position in the world where the note will be played
-     * @param instrumentString The instrument that will be played
-     * @param songString       The string that contains the song
-     * @param noteIndex        The note to be played
-     * @param volume           The volume in which the song will be played
+     * @param world            The world where the sound will be played
+     * @param x                The X position in said world
+     * @param y                The Y position in said world
+     * @param z                The Z position in said world
+     * @param instrumentString The sound uri to be used
+     * @param note             The note to be played
+     * @param volume           The volume that the note will be played at
      */
-    public static void playNoteFromSong(World world, double x, double y, double z, String instrumentString, String songString, int noteIndex, float volume) {
-        int stringIterationIndex = 0; // Current index on the string iteration
-        int noteIterationIndex = 0;  // Current note of the song
-        boolean isFlat = false;
-        boolean isSharp = false;
-        char noteToPlay = 'A';
-
-        float basePitchModifier;
-        char iterationChar;
-
-        // Count the octave changes before up to the current note
-        for (basePitchModifier = 1.0F; noteIterationIndex <= noteIndex && stringIterationIndex < songString.length(); ++stringIterationIndex) {
-            iterationChar = songString.charAt(stringIterationIndex);
-            if (iterationChar == '+') { // Increase the octave of the note
-                basePitchModifier *= 2.0F;
-            } else if (iterationChar == '-') { // Lower the octave of the note
-                basePitchModifier *= 0.5F;
-            } else if (iterationChar != '#' && iterationChar != 'b') { // Ignore sharps and flats
-                noteToPlay = iterationChar; // Set this as the current note
-                ++noteIterationIndex;
-            }
-        }
-
-
-        // Check the next character for a sharp or a flat (if it can exist)
-        if (stringIterationIndex < songString.length()) {
-            iterationChar = songString.charAt(stringIterationIndex);
-            if (iterationChar == '#') {
-                isSharp = true;
-            } else if (iterationChar == 'b') {
-                isFlat = true;
-            }
-        }
-
-        // Translate all flats to sharps instead, by reducing its char value (or rolling over if it's A, the lowest ASCII).
-        if (isFlat) {
-            if (noteToPlay == 'A') {
-                basePitchModifier *= 0.5F;
-                noteToPlay = 'G';
-            } else {
-                --noteToPlay;
-            }
-
-            isSharp = true;
-        }
-
-        // Finally play that note
-        playNote(world, x, y, z, instrumentString, noteToPlay, isSharp, basePitchModifier, volume);
-    }
-
-    /**
-     * @param songString The string representation of the song
-     * @return the amount of notes in the string
-     */
-    public static int countNotes(String songString) {
-        int i = 0;
-
-        int noteCount;
-        for (noteCount = 0; i < songString.length(); ++i) {
-            char currentNote = songString.charAt(i);
-            if (currentNote != '+' && currentNote != '-' && currentNote != '#' && currentNote != 'b') {
-                ++noteCount;
-            }
-        }
-
-        return noteCount;
-    }
-
-    public static void
-    playNote(World world, double x, double y, double z, String instrumentString, Note note, float volume) {
+    public static void playNote(World world, double x, double y, double z, String instrumentString, Note note, float volume) {
         world.playSound(x, y, z, instrumentString, volume, note.getFrequency());
     }
 }
