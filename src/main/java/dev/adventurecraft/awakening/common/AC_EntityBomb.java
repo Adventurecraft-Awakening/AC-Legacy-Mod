@@ -95,9 +95,9 @@ public class AC_EntityBomb extends ItemEntity {
     private static void destroyBombableBlocksAround(World world, int x, int y, int z) {
 
         int bombDestroyRange = (int) BOMB_DESTROY_RANGE;
-        // Look for blocks in a 3x3x3 volume centered on the explosion's center block's origin corner, but not the outermost ones.
+        // Look for blocks in a volume centered on the explosion's center block's origin corner.
         for (int blockOffsetX = -bombDestroyRange; blockOffsetX <= bombDestroyRange; ++blockOffsetX) {
-            for (int blockOffsetY = -bombDestroyRange; blockOffsetY <= 3; ++blockOffsetY) {
+            for (int blockOffsetY = -bombDestroyRange; blockOffsetY <= bombDestroyRange; ++blockOffsetY) {
                 for (int blockOffsetZ = -bombDestroyRange; blockOffsetZ <= bombDestroyRange; ++blockOffsetZ) {
                     double distanceSquared = (double) blockOffsetX * (double) blockOffsetX + (double) (blockOffsetY * blockOffsetY) + (double) (blockOffsetZ * blockOffsetZ);
                     if (distanceSquared <= 9.0D) {
