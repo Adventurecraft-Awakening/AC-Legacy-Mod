@@ -13,6 +13,7 @@ import net.minecraft.client.resource.language.TranslationStorage;
 import net.minecraft.client.util.ScreenScaler;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -29,6 +30,13 @@ public abstract class MixinVideoSettingsScreen extends Screen implements OptionT
     @Shadow
     private static Option[] OPTIONS;
 
+    @Unique
+    private static final String[] extraOptions = {
+        "options.of.textures",
+        "options.of.details",
+        "options.of.other"
+    };
+
     private int lastMouseX = 0;
     private int lastMouseY = 0;
     private long mouseStillTime = 0L;
@@ -43,6 +51,7 @@ public abstract class MixinVideoSettingsScreen extends Screen implements OptionT
             OptionOF.AA_LEVEL, OptionOF.BRIGHTNESS};
     }
 
+    @Override
     public void initVanillaScreen() {
         TranslationStorage ts = TranslationStorage.getInstance();
         this.title = ts.translate("options.videoTitle");
@@ -52,7 +61,7 @@ public abstract class MixinVideoSettingsScreen extends Screen implements OptionT
 
         for (Option option : options) {
             int x = this.width / 2 - 155 + index % 2 * 160;
-            int y = this.height / 6 + 21 * (index / 2) - 10;
+            int y = this.height / 6 + 24 * (index / 2);
 
             int id = option.getId();
             String text = this.options.getTranslatedValue(option);
@@ -66,20 +75,18 @@ public abstract class MixinVideoSettingsScreen extends Screen implements OptionT
             ++index;
         }
 
-        int y = this.height / 6 + 21 * (index / 2) - 10;
-        int x = this.width / 2 - 155;
-        this.buttons.add(new ButtonWidget(100, x, y, 150, 20, ts.translate("options.of.textures")));
+        for (int i = 0; i < extraOptions.length; i++) {
+            int x = this.width / 2 - 155 + index % 2 * 160;
+            int y = this.height / 6 + 24 * (index / 2);
 
-        x = this.width / 2 - 155 + 160;
-        this.buttons.add(new ButtonWidget(101, x, y, 150, 20, ts.translate("options.of.details")));
-
-        y += 21;
-        x = this.width / 2 - 155;
-        this.buttons.add(new ButtonWidget(103, x, y, 150, 20, ts.translate("options.of.other")));
+            this.buttons.add(new ButtonWidget(100 + i, x, y, 150, 20, ts.translate(extraOptions[i])));
+            index++;
+        }
 
         this.buttons.add(new ButtonWidget(200, this.width / 2 - 100, this.height / 6 + 168, ts.translate("gui.done")));
     }
 
+    @Override
     public void buttonClicked(ButtonWidget button) {
         if (!button.active) {
             return;
@@ -97,30 +104,31 @@ public abstract class MixinVideoSettingsScreen extends Screen implements OptionT
 
         if (button.id == 100) {
             this.client.options.saveOptions();
-            GuiTextureSettingsOF var2 = new GuiTextureSettingsOF(this, this.options);
+            var var2 = new GuiTextureSettingsOF(this, this.options);
             this.client.openScreen(var2);
         }
 
         if (button.id == 101) {
             this.client.options.saveOptions();
-            GuiDetailSettingsOF var5 = new GuiDetailSettingsOF(this, this.options);
+            var var5 = new GuiDetailSettingsOF(this, this.options);
             this.client.openScreen(var5);
         }
 
-        if (button.id == 103) {
+        if (button.id == 102) {
             this.client.options.saveOptions();
-            GuiOtherSettingsOF var7 = new GuiOtherSettingsOF(this, this.options);
+            var var7 = new GuiOtherSettingsOF(this, this.options);
             this.client.openScreen(var7);
         }
 
         if (button.id != OptionOF.BRIGHTNESS.ordinal() && button.id != OptionOF.AO_LEVEL.ordinal()) {
-            ScreenScaler var8 = new ScreenScaler(this.client.options, this.client.actualWidth, this.client.actualHeight);
+            var var8 = new ScreenScaler(this.client.options, this.client.actualWidth, this.client.actualHeight);
             int var3 = var8.getScaledWidth();
             int var4 = var8.getScaledHeight();
             this.init(this.client, var3, var4);
         }
     }
 
+    @Override
     public void render(int mouseX, int mouseY, float var3) {
         this.renderBackground();
         this.drawTextWithShadowCentred(this.textRenderer, this.title, this.width / 2, 20, 16777215);
