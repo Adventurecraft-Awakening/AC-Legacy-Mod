@@ -233,12 +233,14 @@ public abstract class MixinGameOptions implements ExGameOptions {
         this.client.worldRenderer.method_1537();
     }
 
-    @Inject(method = "setIntOption", at = @At(
-        value = "FIELD",
-        target = "Lnet/minecraft/client/options/GameOptions;advancedOpengl:Z",
-        ordinal = 0,
-        shift = At.Shift.BEFORE))
-    private void setIntOptionOF_ADVANCED_OPENGL(Option option, int value, CallbackInfo ci) {
+    @Redirect(
+        method = "setIntOption",
+        at = @At(
+            value = "FIELD",
+            opcode = Opcodes.PUTFIELD,
+            target = "Lnet/minecraft/client/options/GameOptions;advancedOpengl:Z",
+            ordinal = 0))
+    private void setIntOptionOF_ADVANCED_OPENGL(GameOptions instance, boolean value) {
         if (!GLContext.getCapabilities().GL_ARB_occlusion_query) {
             this.ofOcclusionFancy = false;
             this.advancedOpengl = false;
