@@ -15,6 +15,7 @@ import java.util.LinkedList;
 public class Script {
 
     static final String SCRIPT_PACKAGE = "dev.adventurecraft.awakening.script";
+    static final String PREFIXED_SCRIPT_PACKAGE = "Packages." + SCRIPT_PACKAGE;
 
     public Scriptable globalScope;
     Scriptable curScope;
@@ -73,14 +74,19 @@ public class Script {
         this.addObject("hitEntity", null);
         this.addObject("hitBlock", null);
 
-        this.runString(String.format("Item = Packages.%s.ScriptItem", SCRIPT_PACKAGE));
-        this.runString(String.format("UILabel = Packages.%s.ScriptUILabel", SCRIPT_PACKAGE));
-        this.runString(String.format("UISprite = Packages.%s.ScriptUISprite", SCRIPT_PACKAGE));
-        this.runString(String.format("UIRect = Packages.%s.ScriptUIRect", SCRIPT_PACKAGE));
-        this.runString(String.format("UIContainer = Packages.%s.ScriptUIContainer", SCRIPT_PACKAGE));
-        this.runString(String.format("UIContainer = Packages.%s.ScriptUIContainer", SCRIPT_PACKAGE));
-        this.runString(String.format("Model = Packages.%s.ScriptModel", SCRIPT_PACKAGE));
-        this.runString(String.format("Vec3 = Packages.%s.ScriptVec3", SCRIPT_PACKAGE));
+        // TODO: make these const
+        String initStr = String.join("\n", new String[]{
+            String.format("net = { minecraft: { script: %s } };", PREFIXED_SCRIPT_PACKAGE),
+            String.format("Item = %s.ScriptItem;", PREFIXED_SCRIPT_PACKAGE),
+            String.format("UILabel = %s.ScriptUILabel;", PREFIXED_SCRIPT_PACKAGE),
+            String.format("UISprite = %s.ScriptUISprite;", PREFIXED_SCRIPT_PACKAGE),
+            String.format("UIRect = %s.ScriptUIRect;", PREFIXED_SCRIPT_PACKAGE),
+            String.format("UIContainer = %s.ScriptUIContainer;", PREFIXED_SCRIPT_PACKAGE),
+            String.format("Model = %s.ScriptModel;", PREFIXED_SCRIPT_PACKAGE),
+            String.format("Vec3 = %s.ScriptVec3;", PREFIXED_SCRIPT_PACKAGE),
+            String.format("VecRot = %s.ScriptVecRot;", PREFIXED_SCRIPT_PACKAGE)
+        });
+        this.runString(initStr);
     }
 
     public void addObject(String name, Object value) {

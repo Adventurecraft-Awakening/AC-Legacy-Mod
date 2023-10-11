@@ -1,5 +1,7 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.common.instruments.IInstrumentConfig;
+import dev.adventurecraft.awakening.common.instruments.Note;
 import dev.adventurecraft.awakening.extension.client.gui.screen.ExScreen;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -10,27 +12,32 @@ import org.lwjgl.opengl.GL11;
 
 public class AC_GuiMusicSheet extends Screen {
 
-    private String instrument;
-    private IntArrayList notesPlayed;
+    private final IInstrumentConfig instrument;
+    private final IntArrayList notesPlayed;
     private String notesPlayedString;
     private int spaceTaken;
     private AC_MusicScriptEntry songPlayed;
     private long timeToFade;
 
-    public AC_GuiMusicSheet(String instrument) {
+    public AC_GuiMusicSheet(IInstrumentConfig instrument) {
         this.instrument = instrument;
         this.notesPlayed = new IntArrayList();
         this.notesPlayedString = "";
         this.songPlayed = null;
     }
 
-    @Override
-    public void tick() {
-    }
-
-    @Override
-    public void initVanillaScreen() {
-    }
+    public static final Note[] keyboardNotes = {
+        new Note('D', -1), // Keyboard 1
+        new Note('E', -1),
+        new Note('F', -1),
+        new Note('G', -1),
+        new Note('A', 0),
+        new Note('B', 0),
+        new Note('C', 0),
+        new Note('D', 0),
+        new Note('E', 0),
+        new Note('F', 0), // Keyboard 0
+    };
 
     @Override
     protected void keyPressed(char character, int key) {
@@ -65,7 +72,6 @@ public class AC_GuiMusicSheet extends Screen {
 
         int totalSpaceTaken = this.spaceTaken + NOTE_SIZE;
 
-
         if (totalSpaceTaken >= MAX_NOTE_SPACE) {
             this.notesPlayed.clear();
             this.notesPlayedString = "";
@@ -75,36 +81,17 @@ public class AC_GuiMusicSheet extends Screen {
         this.spaceTaken += NOTE_SIZE;
         this.notesPlayed.add(key);
 
-        if (key == Keyboard.KEY_1) {
-            MusicPlayer.playNoteFromEntity(this.client.world, this.client.player, this.instrument, 'D', shiftDown, 0.5F, 1.0F);
-            this.notesPlayedString = this.notesPlayedString + "1";
-        } else if (key == Keyboard.KEY_2) {
-            MusicPlayer.playNoteFromEntity(this.client.world, this.client.player, this.instrument, 'E', false, 0.5F, 1.0F);
-            this.notesPlayedString = this.notesPlayedString + "2";
-        } else if (key == Keyboard.KEY_3) {
-            MusicPlayer.playNoteFromEntity(this.client.world, this.client.player, this.instrument, 'F', shiftDown, 0.5F, 1.0F);
-            this.notesPlayedString = this.notesPlayedString + "3";
-        } else if (key == Keyboard.KEY_4) {
-            MusicPlayer.playNoteFromEntity(this.client.world, this.client.player, this.instrument, 'G', shiftDown, 0.5F, 1.0F);
-            this.notesPlayedString = this.notesPlayedString + "4";
-        } else if (key == Keyboard.KEY_5) {
-            MusicPlayer.playNoteFromEntity(this.client.world, this.client.player, this.instrument, 'A', shiftDown, 1.0F, 1.0F);
-            this.notesPlayedString = this.notesPlayedString + "5";
-        } else if (key == Keyboard.KEY_6) {
-            MusicPlayer.playNoteFromEntity(this.client.world, this.client.player, this.instrument, 'B', false, 1.0F, 1.0F);
-            this.notesPlayedString = this.notesPlayedString + "6";
-        } else if (key == Keyboard.KEY_7) {
-            MusicPlayer.playNoteFromEntity(this.client.world, this.client.player, this.instrument, 'C', shiftDown, 1.0F, 1.0F);
-            this.notesPlayedString = this.notesPlayedString + "7";
-        } else if (key == Keyboard.KEY_8) {
-            MusicPlayer.playNoteFromEntity(this.client.world, this.client.player, this.instrument, 'D', shiftDown, 1.0F, 1.0F);
-            this.notesPlayedString = this.notesPlayedString + "8";
-        } else if (key == Keyboard.KEY_9) {
-            MusicPlayer.playNoteFromEntity(this.client.world, this.client.player, this.instrument, 'E', false, 1.0F, 1.0F);
-            this.notesPlayedString = this.notesPlayedString + "9";
-        } else if (key == Keyboard.KEY_0) {
-            MusicPlayer.playNoteFromEntity(this.client.world, this.client.player, this.instrument, 'F', shiftDown, 1.0F, 1.0F);
-            this.notesPlayedString = this.notesPlayedString + "0";
+        Note noteToPlay = keyboardNotes[key - Keyboard.KEY_1];
+        this.notesPlayedString += Keyboard.getKeyName(key);
+
+
+        if (noteToPlay != null) {
+            int totalShiftValue = this.instrument.getTuning();
+            if (noteIsSharp)
+                totalShiftValue += 1;
+            noteToPlay = noteToPlay.withShiftedValue(totalShiftValue);
+
+            MusicPlayer.playNoteFromEntity(this.client.player, this.instrument, noteToPlay, 1F);
         }
 
         AC_MusicScriptEntry entry = ((ExWorld) this.client.world).getMusicScripts().executeMusic(this.notesPlayedString);
@@ -173,8 +160,8 @@ public class AC_GuiMusicSheet extends Screen {
         this.blit((this.width - 205) / 2 + 36 + x, this.height - 59 - 2 - 48 + 46 - (note - 2) * 4 - 5, 16, 64, 12, 17);
     }
 
-    public static void showUI(String var0) {
-        Minecraft.instance.openScreen(new AC_GuiMusicSheet(var0));
+    public static void showUI(IInstrumentConfig instrumentConfig) {
+        Minecraft.instance.openScreen(new AC_GuiMusicSheet(instrumentConfig));
     }
 
     @Override
