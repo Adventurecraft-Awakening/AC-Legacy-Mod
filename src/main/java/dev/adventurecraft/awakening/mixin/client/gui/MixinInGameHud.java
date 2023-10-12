@@ -1,10 +1,7 @@
 package dev.adventurecraft.awakening.mixin.client.gui;
 
 import dev.adventurecraft.awakening.ACMod;
-import dev.adventurecraft.awakening.common.AC_ChatMessage;
-import dev.adventurecraft.awakening.common.AC_DebugMode;
-import dev.adventurecraft.awakening.common.AC_TerrainImage;
-import dev.adventurecraft.awakening.common.AC_Version;
+import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
@@ -401,6 +398,10 @@ public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
         int x = 2;
         int yOffset = 0;
 
+        TextRendererState textState = exTextRenderer.createState();
+        textState.setShadow(true);
+        textState.setShadowOffset(1, 1);
+
         for (AC_ChatMessage message : messages) {
             if (message.age >= 200 && !isChatOpen) {
                 continue;
@@ -412,15 +413,18 @@ public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
 
             String text = message.text;
             int color = 16777215 + (alpha << 24);
+            textState.setColor(color);
+            textState.setShadowColor(ExTextRenderer.getShadowColor(color));
+
             for (int i = message.lines.size() - 1; i >= 0; i--) {
                 AC_ChatMessage.Line line = message.lines.get(i);
                 int y = (screenHeight - 48) - yOffset;
 
                 this.fill(x, y - 1, x + CHAT_WIDTH, y + 8, alpha / 2 << 24);
                 GL11.glEnable(GL11.GL_BLEND);
-                exTextRenderer.drawString(
-                    text, line.start(), line.end(),
-                    x, y, color, true);
+                textState.begin(Tessellator.INSTANCE);
+                textState.drawText(text, line.start(), line.end(), x, y);
+                textState.end();
 
                 yOffset += 9;
                 if (yOffset >= maxChatHeight) {
