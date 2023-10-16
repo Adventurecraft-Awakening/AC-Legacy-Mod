@@ -3,7 +3,7 @@ package dev.adventurecraft.awakening.mixin.world.chunk;
 import com.llamalad7.mixinextras.injector.WrapWithCondition;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.ACMod;
-import dev.adventurecraft.awakening.extension.block.ExBlock;
+import dev.adventurecraft.awakening.common.AC_UndoStack;
 import dev.adventurecraft.awakening.extension.entity.ExBlockEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
@@ -17,7 +17,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.LightType;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
-import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -161,137 +160,135 @@ public abstract class MixinChunk implements ExChunk {
     }
 
     @Overwrite
-    public boolean setBlockWithMetadata(int var1, int var2, int var3, int var4, int var5) {
-        int var6;
-        int var7;
-        if (((ExWorld) this.world).getUndoStack().isRecording()) {
-            var6 = this.getBlockId(var1, var2, var3);
-            var7 = this.method_875(var1, var2, var3);
-            BlockEntity var8 = this.getChunkBlockTileEntityDontCreate(var1, var2, var3);
-            CompoundTag var9 = null;
-            if (var8 != null) {
-                var9 = new CompoundTag();
-                var8.writeNBT(var9);
+    public boolean setBlockWithMetadata(int x, int y, int z, int id, int meta) {
+        AC_UndoStack undoStack = ((ExWorld) this.world).getUndoStack();
+        if (undoStack.isRecording()) {
+            int prevId = this.getBlockId(x, y, z);
+            int prevMeta = this.method_875(x, y, z);
+            BlockEntity entity = this.getChunkBlockTileEntityDontCreate(x, y, z);
+            CompoundTag prevNbt = null;
+            if (entity != null) {
+                prevNbt = new CompoundTag();
+                entity.writeNBT(prevNbt);
             }
 
-            ((ExWorld) this.world).getUndoStack().recordChange(var1 + (this.x << 4), var2, var3 + (this.z << 4), var6, var7, var9, var4, var5, (CompoundTag) null);
+            undoStack.recordChange(x, y, z, this.x, this.z, prevId, prevMeta, prevNbt, id, meta, null);
         }
 
-        var6 = ExChunk.translate256(var4);
-        var7 = this.heightmap[var3 << 4 | var1] & 255;
-        int var11 = ExChunk.translate256(this.blocks[var1 << 11 | var3 << 7 | var2]) & 255;
-        if (var11 == var4 && this.field_957.method_1703(var1, var2, var3) == var5) {
+        int id256 = ExChunk.translate256(id);
+        int height = this.heightmap[z << 4 | x] & 255;
+        int bId256 = ExChunk.translate256(this.blocks[x << 11 | z << 7 | y]) & 255;
+        if (bId256 == id && this.field_957.method_1703(x, y, z) == meta) {
             return false;
-        } else {
-            int var12 = this.x * 16 + var1;
-            int var10 = this.z * 16 + var3;
-            this.blocks[var1 << 11 | var3 << 7 | var2] = (byte) ExChunk.translate128(var6);
-            if (var11 != 0 && !this.world.isClient) {
-                Block.BY_ID[var11].onBlockRemoved(this.world, var12, var2, var10);
-            }
+        }
 
-            this.field_957.method_1704(var1, var2, var3, var5);
-            if (!this.world.dimension.halvesMapping) {
-                if (Block.LIGHT_OPACITY[var6 & 255] != 0) {
-                    if (var2 >= var7) {
-                        this.method_889(var1, var2 + 1, var3);
-                    }
-                } else if (var2 == var7 - 1) {
-                    this.method_889(var1, var2, var3);
+        int bX = this.x * 16 + x;
+        int bZ = this.z * 16 + z;
+        this.blocks[x << 11 | z << 7 | y] = (byte) ExChunk.translate128(id256);
+        if (bId256 != 0 && !this.world.isClient) {
+            Block.BY_ID[bId256].onBlockRemoved(this.world, bX, y, bZ);
+        }
+
+        this.field_957.method_1704(x, y, z, meta);
+        if (!this.world.dimension.halvesMapping) {
+            if (Block.LIGHT_OPACITY[id256 & 255] != 0) {
+                if (y >= height) {
+                    this.method_889(x, y + 1, z);
                 }
-
-                this.world.method_166(LightType.field_2757, var12, var2, var10, var12, var2, var10);
+            } else if (y == height - 1) {
+                this.method_889(x, y, z);
             }
 
-            this.world.method_166(LightType.field_2758, var12, var2, var10, var12, var2, var10);
-            this.method_887(var1, var3);
-            this.field_957.method_1704(var1, var2, var3, var5);
-            if (var4 != 0) {
-                Block.BY_ID[var4].onBlockPlaced(this.world, var12, var2, var10);
-            }
-
-            if (ACMod.chunkIsNotPopulating) {
-                this.field_967 = true;
-            }
-
-            return true;
-        }
-    }
-
-    @Overwrite
-    public boolean method_860(int var1, int var2, int var3, int var4) {
-        int var5;
-        int var6;
-        if (((ExWorld) this.world).getUndoStack().isRecording()) {
-            var5 = this.getBlockId(var1, var2, var3);
-            var6 = this.method_875(var1, var2, var3);
-            BlockEntity var7 = this.getChunkBlockTileEntityDontCreate(var1, var2, var3);
-            CompoundTag var8 = null;
-            if (var7 != null) {
-                var8 = new CompoundTag();
-                var7.writeNBT(var8);
-            }
-
-            ((ExWorld) this.world).getUndoStack().recordChange(var1 + (this.x << 4), var2, var3 + (this.z << 4), var5, var6, var8, var4, 0, (CompoundTag) null);
+            this.world.method_166(LightType.field_2757, bX, y, bZ, bX, y, bZ);
         }
 
-        var5 = ExChunk.translate256(var4);
-        var6 = this.heightmap[var3 << 4 | var1] & 255;
-        int var10 = ExChunk.translate256(this.blocks[var1 << 11 | var3 << 7 | var2]) & 255;
-        if (var10 == var4) {
-            return false;
-        } else {
-            int var11 = this.x * 16 + var1;
-            int var9 = this.z * 16 + var3;
-            this.blocks[var1 << 11 | var3 << 7 | var2] = (byte) ExChunk.translate128(var5);
-            if (var10 != 0) {
-                Block.BY_ID[var10].onBlockRemoved(this.world, var11, var2, var9);
-            }
-
-            this.field_957.method_1704(var1, var2, var3, 0);
-            if (Block.LIGHT_OPACITY[var5 & 255] != 0) {
-                if (var2 >= var6) {
-                    this.method_889(var1, var2 + 1, var3);
-                }
-            } else if (var2 == var6 - 1) {
-                this.method_889(var1, var2, var3);
-            }
-
-            this.world.method_166(LightType.field_2757, var11, var2, var9, var11, var2, var9);
-            this.world.method_166(LightType.field_2758, var11, var2, var9, var11, var2, var9);
-            this.method_887(var1, var3);
-            if (var4 != 0 && !this.world.isClient) {
-                Block.BY_ID[var4].onBlockPlaced(this.world, var11, var2, var9);
-            }
-
-            if (ACMod.chunkIsNotPopulating) {
-                this.field_967 = true;
-            }
-
-            return true;
-        }
-    }
-
-    @Overwrite
-    public void method_876(int var1, int var2, int var3, int var4) {
-        if (((ExWorld) this.world).getUndoStack().isRecording()) {
-            int var5 = this.getBlockId(var1, var2, var3);
-            int var6 = this.method_875(var1, var2, var3);
-            BlockEntity var7 = this.getChunkBlockTileEntityDontCreate(var1, var2, var3);
-            CompoundTag var8 = null;
-            if (var7 != null) {
-                var8 = new CompoundTag();
-                var7.writeNBT(var8);
-            }
-
-            ((ExWorld) this.world).getUndoStack().recordChange(var1 + (this.x << 4), var2, var3 + (this.z << 4), var5, var6, var8, var5, var4, null);
+        this.world.method_166(LightType.field_2758, bX, y, bZ, bX, y, bZ);
+        this.method_887(x, z);
+        this.field_957.method_1704(x, y, z, meta);
+        if (id != 0) {
+            Block.BY_ID[id].onBlockPlaced(this.world, bX, y, bZ);
         }
 
         if (ACMod.chunkIsNotPopulating) {
             this.field_967 = true;
         }
 
-        this.field_957.method_1704(var1, var2, var3, var4);
+        return true;
+    }
+
+    @Overwrite
+    public boolean method_860(int x, int y, int z, int id) {
+        AC_UndoStack undoStack = ((ExWorld) this.world).getUndoStack();
+        if (undoStack.isRecording()) {
+            int prevId = this.getBlockId(x, y, z);
+            int prevMeta = this.method_875(x, y, z);
+            BlockEntity entity = this.getChunkBlockTileEntityDontCreate(x, y, z);
+            CompoundTag prevNbt = null;
+            if (entity != null) {
+                prevNbt = new CompoundTag();
+                entity.writeNBT(prevNbt);
+            }
+
+            undoStack.recordChange(x, y, z, this.x, this.z, prevId, prevMeta, prevNbt, id, 0, null);
+        }
+
+        int id256 = ExChunk.translate256(id);
+        int height = this.heightmap[z << 4 | x] & 255;
+        int bId256 = ExChunk.translate256(this.blocks[x << 11 | z << 7 | y]) & 255;
+        if (bId256 == id) {
+            return false;
+        }
+
+        int bX = this.x * 16 + x;
+        int bZ = this.z * 16 + z;
+        this.blocks[x << 11 | z << 7 | y] = (byte) ExChunk.translate128(id256);
+        if (bId256 != 0) {
+            Block.BY_ID[bId256].onBlockRemoved(this.world, bX, y, bZ);
+        }
+
+        this.field_957.method_1704(x, y, z, 0);
+        if (Block.LIGHT_OPACITY[id256 & 255] != 0) {
+            if (y >= height) {
+                this.method_889(x, y + 1, z);
+            }
+        } else if (y == height - 1) {
+            this.method_889(x, y, z);
+        }
+
+        this.world.method_166(LightType.field_2757, bX, y, bZ, bX, y, bZ);
+        this.world.method_166(LightType.field_2758, bX, y, bZ, bX, y, bZ);
+        this.method_887(x, z);
+        if (id != 0 && !this.world.isClient) {
+            Block.BY_ID[id].onBlockPlaced(this.world, bX, y, bZ);
+        }
+
+        if (ACMod.chunkIsNotPopulating) {
+            this.field_967 = true;
+        }
+
+        return true;
+    }
+
+    @Overwrite
+    public void method_876(int x, int y, int z, int newMeta) {
+        AC_UndoStack undoStack = ((ExWorld) this.world).getUndoStack();
+        if (undoStack.isRecording()) {
+            int id = this.getBlockId(x, y, z);
+            int prevMeta = this.method_875(x, y, z);
+            BlockEntity entity = this.getChunkBlockTileEntityDontCreate(x, y, z);
+            CompoundTag prevNbt = null;
+            if (entity != null) {
+                prevNbt = new CompoundTag();
+                entity.writeNBT(prevNbt);
+            }
+            undoStack.recordChange(x, y, z, this.x, this.z, id, prevMeta, prevNbt, id, newMeta, null);
+        }
+
+        if (ACMod.chunkIsNotPopulating) {
+            this.field_967 = true;
+        }
+
+        this.field_957.method_1704(x, y, z, newMeta);
     }
 
     @WrapWithCondition(method = "addEntity", at = @At(

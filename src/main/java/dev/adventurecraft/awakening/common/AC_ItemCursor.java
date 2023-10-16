@@ -34,18 +34,20 @@ public class AC_ItemCursor extends Item implements AC_ILeftClickItem {
 
     @Override
     public boolean useOnBlock(ItemStack stack, PlayerEntity player, World world, int x, int y, int z, int side) {
+        int positionIndex;
         if (firstPosition) {
-            Minecraft.instance.overlay.addChatMessage(String.format("Setting Cursor Position 1 (%d, %d, %d)", x, y, z));
             oneX = x;
             oneY = y;
             oneZ = z;
+            positionIndex = 0;
         } else {
-            Minecraft.instance.overlay.addChatMessage(String.format("Setting Cursor Position 2 (%d, %d, %d)", x, y, z));
             twoX = x;
             twoY = y;
             twoZ = z;
             bothSet = true;
+            positionIndex = 1;
         }
+        String message = String.format("Setting Cursor Position %d (%d, %d, %d)", positionIndex + 1, x, y, z);
 
         minX = Math.min(oneX, twoX);
         minY = Math.min(oneY, twoY);
@@ -54,6 +56,17 @@ public class AC_ItemCursor extends Item implements AC_ILeftClickItem {
         maxY = Math.max(oneY, twoY);
         maxZ = Math.max(oneZ, twoZ);
         firstPosition = !firstPosition;
+
+        if (bothSet) {
+            int width = maxX - minX + 1;
+            int height = maxY - minY + 1;
+            int depth = maxZ - minZ + 1;
+            int blockCount = width * height * depth;
+
+            message += String.format("\nCursor Volume [%d, %d, %d]: %d blocks", width, height, depth, blockCount);
+        }
+
+        Minecraft.instance.overlay.addChatMessage(message);
         return false;
     }
 }
