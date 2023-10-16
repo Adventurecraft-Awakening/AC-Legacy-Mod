@@ -15,6 +15,11 @@ jobs:
           17,    # LTS & minimum supported by Minecraft
         ]
         os: [ubuntu-latest]
+        include:
+          - java: 17
+            os: ubuntu-latest
+            artifacts: true
+        
     runs-on: ${{ matrix.os }}
     
     steps:
@@ -39,7 +44,7 @@ jobs:
         run: ./gradlew build --no-daemon
       
       - name: capture build artifacts
-        if: ${{ runner.os == 'Linux' && matrix.java == '21' }}
+        if: ${{ matrix.artifacts }}
         uses: actions/upload-artifact@v3
         with:
           name: Artifacts
