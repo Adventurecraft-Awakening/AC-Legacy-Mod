@@ -46,6 +46,7 @@ public final class CommandUtils {
         String argName,
         ArgumentType<T> argumentType,
         CommandOpt<ServerCommandSource, T> command) {
+
         Class<T> argClass = getClass(argumentType);
         builder
             .then(argument(argName, argumentType)
@@ -59,6 +60,7 @@ public final class CommandUtils {
         String argName,
         ArgumentType<T> argumentType,
         CommandOpt<ServerCommandSource, T> command) {
+
         Class<T> argClass = getClass(argumentType);
         builder
             .then(argument(argName, argumentType)
@@ -68,6 +70,7 @@ public final class CommandUtils {
 
     @FunctionalInterface
     public interface CommandOpt<S, T> extends Command<S> {
+
         int run(CommandContext<S> context, T argument) throws CommandSyntaxException;
 
         @Override

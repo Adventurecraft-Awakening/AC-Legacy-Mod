@@ -5,7 +5,9 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.tree.CommandNode;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.render.ExWorldEventRenderer;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
@@ -17,11 +19,15 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static dev.adventurecraft.awakening.common.CommandUtils.*;
 
 public class ServerCommands {
+
+    public static final String DESCRIPTION_COLOR = "§e";
 
     public static void registerCommands(
         CommandDispatcher<ServerCommandSource> dispatcher,
@@ -53,6 +59,11 @@ public class ServerCommands {
 
         dispatcher.register(literal("scriptstatreset").executes(
             ServerCommands::cmdScriptStatReset));
+    }
+
+    public static void registerCommandsWithArgs(
+        CommandDispatcher<ServerCommandSource> dispatcher,
+        CommandDescriptions descs) {
 
         dispatcher.register(optionalArg(literal("health"),
             "amount", IntegerArgumentType.integer(1),
@@ -114,9 +125,24 @@ public class ServerCommands {
             "time", FloatArgumentType.floatArg(),
             ServerCommands::cmdCameraAdd));
 
-        dispatcher.register(optionalArg(literal("help"),
-            "page", IntegerArgumentType.integer(1),
-            (ctx, page) -> ServerCommands.cmdHelp(ctx, dispatcher, descs, page)));
+        {
+            var node = dispatcher.register(optionalArg(
+                literal("help"),
+                "page",
+                IntegerArgumentType.integer(1),
+                descs.attach(
+                    (ctx, page) -> ServerCommands.cmdHelp(ctx, dispatcher, descs, page),
+                    "Gets the first page of available commands")));
+            descs.attach(node.getChild("page").getCommand(), "Gets a page of available commands");
+        }
+        {
+            var node = dispatcher.register(requiredArg(
+                literal("help"),
+                "path",
+                StringArgumentType.greedyString(),
+                (ctx, name) -> ServerCommands.cmdHelp(ctx, dispatcher, descs, name)));
+            descs.attach(node.getChild("path").getCommand(), "Gets the description of a command node");
+        }
     }
 
     public static int cmdConfig(CommandContext<ServerCommandSource> context) {
@@ -447,25 +473,88 @@ public class ServerCommands {
         int pageCount = (usageMap.size() + commandsPerPage - 1) / commandsPerPage;
         client.overlay.addChatMessage(String.format("§2Help page %d out of %d:", currentPage + 1, pageCount));
 
-        long logCount = usageMap.keySet().stream()
+        int logCount = usageMap.keySet().stream()
             .skip((long) currentPage * commandsPerPage)
             .limit(commandsPerPage)
             .map(node -> {
-                String smartUsage = usageMap.get(node)
-                    .replace("[<", "§3[§7")
-                    .replace(">]", "§3]")
-                    .replace("<", "§a<§f")
-                    .replace(">", "§a>");
+                var lines = new ArrayList<String>();
 
-                String message = "/" + smartUsage;
+                String message = "/" + prettifyUsage(usageMap.get(node));
                 String description = descriptions.getDescription(node.getCommand());
                 if (description != null) {
-                    message += "§e - " + description;
+                    message += DESCRIPTION_COLOR + " - " + description;
+                }
+                lines.add(message);
+
+                var children = node.getChildren();
+                for (var child : children) {
+                    createCommandTree(child, descriptions, "  ", lines);
                 }
 
-                client.overlay.addChatMessage(message);
+                client.overlay.addChatMessage(String.join("\n", lines));
                 return 1;
             }).reduce(0, Integer::sum);
-        return (int) logCount;
+        return logCount;
+    }
+
+    private static void createCommandTree(
+        CommandNode<ServerCommandSource> node,
+        CommandDescriptions descriptions,
+        String prefix,
+        List<String> output) {
+
+        var children = node.getChildren();
+        for (var child : children) {
+            createCommandTree(child, descriptions, "  " + prefix, output);
+        }
+
+        String description = descriptions.getDescription(node.getCommand());
+        if (description != null) {
+            String message = prefix + "§f" + prettifyUsage(node.getUsageText());
+            message += DESCRIPTION_COLOR + " - " + description;
+            output.add(message);
+        }
+    }
+
+    private static String prettifyUsage(String value) {
+        return value
+            .replace("<", "§a<§7")
+            .replace(">", "§a>§f");
+    }
+
+    public static int cmdHelp(
+        CommandContext<ServerCommandSource> context,
+        CommandDispatcher<ServerCommandSource> dispatcher,
+        CommandDescriptions descriptions,
+        String path) {
+
+        var source = context.getSource();
+        var client = source.getClient();
+        var lines = new ArrayList<String>();
+        int result;
+
+        var rootNode = dispatcher.findNode(Arrays.asList(path.split(" ")));
+        if (rootNode != null) {
+            String rootDesc = descriptions.getDescription(rootNode.getCommand());
+            String rootDescC = rootDesc != null ? DESCRIPTION_COLOR + " - " + rootDesc : "";
+            lines.add(String.format("§2Command help for \"§f%s§2\"%s", path, rootDescC));
+
+            var usageMap = dispatcher.getSmartUsage(rootNode, source);
+            result = usageMap.keySet().stream()
+                .map(node -> {
+                    String line = prettifyUsage(usageMap.get(node));
+                    String description = descriptions.getDescription(node.getCommand());
+                    if (description != null) {
+                        line += DESCRIPTION_COLOR + " - " + description;
+                    }
+                    lines.add(line);
+                    return 1;
+                }).reduce(0, Integer::sum);
+        } else {
+            lines.add(String.format("§cNo command node for \"§f%s§c\"", path));
+            result = 0;
+        }
+        client.overlay.addChatMessage(String.join("\n", lines));
+        return result;
     }
 }
