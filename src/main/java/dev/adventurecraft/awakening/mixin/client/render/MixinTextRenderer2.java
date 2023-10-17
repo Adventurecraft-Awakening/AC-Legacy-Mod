@@ -9,10 +9,12 @@ import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.TextRenderer;
 import net.minecraft.client.texture.TextureManager;
 import net.minecraft.util.CharacterUtils;
+import org.jetbrains.annotations.NotNull;
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -29,6 +31,7 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
     @Shadow
     public int field_2461;
 
+    @Unique
     private float[] colorBuffer;
 
     @Redirect(
@@ -130,9 +133,6 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
     @Overwrite
     public int getTextWidth(String text) {
         var rect = this.getTextWidth(text, 0);
-        if (rect == null) {
-            return 0;
-        }
         return rect.width();
     }
 
@@ -142,13 +142,14 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
     }
 
     @Override
+    @NotNull
     public TextRect getTextWidth(CharSequence text, int start, int end, long maxWidth) {
         if (text == null) {
-            return null;
+            return TextRect.empty;
         }
         TextRendererState.validateCharSequence(text, start, end);
         if (end - start == 0) {
-            return null;
+            return TextRect.empty;
         }
 
         int width = 0;

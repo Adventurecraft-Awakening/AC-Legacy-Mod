@@ -4,6 +4,7 @@ import dev.adventurecraft.awakening.common.TextRect;
 import dev.adventurecraft.awakening.common.TextRendererState;
 import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.texture.TextureManager;
+import org.jetbrains.annotations.NotNull;
 
 public interface ExTextRenderer {
 
@@ -33,15 +34,18 @@ public interface ExTextRenderer {
 
     TextRendererState createState();
 
+    @NotNull
     TextRect getTextWidth(CharSequence text, int start, int end, long maxWidth);
 
+    @NotNull
     default TextRect getTextWidth(CharSequence text, int start, int end) {
         return this.getTextWidth(text, start, end, Long.MAX_VALUE);
     }
 
+    @NotNull
     default TextRect getTextWidth(CharSequence text, int start) {
         if (text == null) {
-            return null;
+            return TextRect.empty;
         }
         return this.getTextWidth(text, start, text.length());
     }
