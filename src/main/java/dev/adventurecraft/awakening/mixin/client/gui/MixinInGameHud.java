@@ -416,9 +416,10 @@ public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
             textState.setColor(color);
             textState.setShadowColor(ExTextRenderer.getShadowColor(color));
 
-            for (int i = message.lines.size() - 1; i >= 0; i--) {
+            int yBase = (screenHeight - 48) - yOffset - (message.lines.size() - 1) * 9;
+            for (int i = 0; i < message.lines.size(); i++) {
                 AC_ChatMessage.Line line = message.lines.get(i);
-                int y = (screenHeight - 48) - yOffset;
+                int y = yBase + i * 9;
 
                 this.fill(x, y - 1, x + CHAT_WIDTH, y + 8, alpha / 2 << 24);
                 GL11.glEnable(GL11.GL_BLEND);
