@@ -143,6 +143,12 @@ public class ServerCommands {
                 (ctx, name) -> ServerCommands.cmdHelp(ctx, dispatcher, descs, name)));
             descs.attach(node.getChild("path").getCommand(), "Gets the description of a command node");
         }
+
+        // TODO: save/restore for undostacks
+        dispatcher.register(literal("undostack")
+            .executes(descs.attach(ServerCommands::cmdUndoStack, "Gets info about the undo stack"))
+            .then(literal("clear")
+                .executes(descs.attach(ServerCommands::cmdUndoStackClear, "Clears the undo stack"))));
     }
 
     public static int cmdConfig(CommandContext<ServerCommandSource> context) {
@@ -556,5 +562,36 @@ public class ServerCommands {
         }
         client.overlay.addChatMessage(String.join("\n", lines));
         return result;
+    }
+
+    public static int cmdUndoStack(CommandContext<ServerCommandSource> context) {
+        var source = context.getSource();
+        var world = source.getWorld();
+        if (world instanceof ExWorld exWorld) {
+            var undoStack = exWorld.getUndoStack();
+
+            source.getClient().overlay.addChatMessage(String.format(
+                "Undos left: %d, Redos left: %d",
+                undoStack.undoStack.size(),
+                undoStack.redoStack.size()));
+            return Command.SINGLE_SUCCESS;
+        }
+        return 0;
+    }
+
+    public static int cmdUndoStackClear(CommandContext<ServerCommandSource> context) {
+        var source = context.getSource();
+        var world = source.getWorld();
+        if (world instanceof ExWorld exWorld) {
+            var undoStack = exWorld.getUndoStack();
+            int undoCount = undoStack.undoStack.size();
+            int redoCount = undoStack.redoStack.size();
+            undoStack.clear();
+
+            source.getClient().overlay.addChatMessage(String.format(
+                "Undos cleared: %d, Redos cleared: %d", undoCount, redoCount));
+            return Command.SINGLE_SUCCESS;
+        }
+        return 0;
     }
 }

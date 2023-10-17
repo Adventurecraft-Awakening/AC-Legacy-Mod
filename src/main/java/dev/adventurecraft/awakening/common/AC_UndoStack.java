@@ -51,6 +51,15 @@ public class AC_UndoStack {
         this.isRecording = false;
     }
 
+    public void clear() {
+        assert !this.isRecording;
+
+        this.undoStack.clear();
+        this.redoStack.clear();
+        this.undoSelectionStack.clear();
+        this.redoSelectionStack.clear();
+    }
+
     public boolean isRecording() {
         return this.isRecording;
     }
