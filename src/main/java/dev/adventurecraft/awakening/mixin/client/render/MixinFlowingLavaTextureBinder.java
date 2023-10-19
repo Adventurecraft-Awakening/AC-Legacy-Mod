@@ -178,26 +178,27 @@ public class MixinFlowingLavaTextureBinder extends MixinTextureBinder {
     }
 
     @Override
-    public void loadImage(World world) {
-        loadImage("/custom_lava_still.png", world);
-    }
-
-    @Override
     public void loadImage(String name, World world) {
-        BufferedImage var1 = null;
+        if (name == null) {
+            name = "/custom_lava_still.png";
+        }
+
+        BufferedImage image = null;
         if (world != null) {
-            var1 = ((ExWorld) world).loadMapTexture(name);
+            image = ((ExWorld) world).loadMapTexture(name);
         }
 
         curFrame = 0;
-        if (var1 == null) {
+        if (image == null) {
             hasImages = false;
+            grid = null;
         } else {
-            width = var1.getWidth();
-            numFrames = var1.getHeight() / var1.getWidth();
-            frameImages = new int[var1.getWidth() * var1.getHeight()];
-            var1.getRGB(0, 0, var1.getWidth(), var1.getHeight(), frameImages, 0, var1.getWidth());
+            width = image.getWidth();
+            numFrames = image.getHeight() / image.getWidth();
+            frameImages = new int[image.getWidth() * image.getHeight()];
+            image.getRGB(0, 0, image.getWidth(), image.getHeight(), frameImages, 0, image.getWidth());
             hasImages = true;
+            grid = new byte[width * width * 4];
         }
     }
 }

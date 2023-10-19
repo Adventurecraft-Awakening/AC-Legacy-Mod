@@ -439,7 +439,8 @@ public abstract class MixinTextureManager implements ExTextureManager {
         for (TextureBinder binder : this.textureBinders) {
             binder.render3d = this.gameOptions.anaglyph3d;
 
-            String texName = ((AC_TextureBinder) binder).getTexture();
+            var acBinder = (AC_TextureBinder) binder;
+            String texName = acBinder.getTexture();
             int texId = this.getTextureId(texName);
             Vec2 texSize = this.getTextureDimensions(texId);
             if (texSize == null) {
@@ -448,11 +449,11 @@ public abstract class MixinTextureManager implements ExTextureManager {
 
             int tileW = texSize.x / 16;
             int tileH = texSize.y / 16;
-            int gridIndex = tileW * tileH * 4;
             this.expandBinderGrid(texSize, binder);
-            ((AC_TextureBinder) binder).onTick(texSize);
+            acBinder.onTick(texSize);
 
-            if (binder.grid.length == gridIndex) {
+            int frameSize = (int) Math.sqrt(binder.grid.length / 4);
+            if (frameSize == tileW) {
                 this.currentImageBuffer.clear();
                 this.currentImageBuffer.put(binder.grid);
                 this.currentImageBuffer.position(0).limit(binder.grid.length);
@@ -575,7 +576,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
         this.checkImageDataSize(size.x, size.y);
 
         int gridIndex = tileW * tileH * 4;
-        if (binder.grid != null && binder.grid.length < gridIndex) {
+        if (binder.grid == null) {
             binder.grid = new byte[gridIndex];
         }
     }

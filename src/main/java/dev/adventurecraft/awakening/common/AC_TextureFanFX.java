@@ -31,33 +31,34 @@ public class AC_TextureFanFX extends TextureBinder implements AC_TextureBinder {
     }
 
     @Override
-    public void loadImage(World world) {
-        this.loadImage("/misc/fan.png", world);
-    }
-
-    @Override
     public void loadImage(String name, World world) {
+        if (name == null) {
+            name = "/misc/fan.png";
+        }
+
         try {
-            BufferedImage var0 = null;
+            BufferedImage image = null;
             if (world != null) {
-                var0 = ((ExWorld) world).loadMapTexture(name);
+                image = ((ExWorld) world).loadMapTexture(name);
             }
 
-            if (var0 == null) {
-                var0 = ((ExTextureManager) Minecraft.instance.textureManager).getTextureImage(name);
+            if (image == null) {
+                image = ((ExTextureManager) Minecraft.instance.textureManager).getTextureImage(name);
             }
 
-            width = var0.getWidth();
-            height = var0.getHeight();
-            numFrames = var0.getWidth() / var0.getHeight();
-            fanImage = new int[var0.getWidth() * var0.getHeight()];
-            var0.getRGB(0, 0, var0.getWidth(), var0.getHeight(), fanImage, 0, var0.getWidth());
+            width = image.getWidth();
+            height = image.getHeight();
+            numFrames = image.getWidth() / image.getHeight();
+            fanImage = new int[image.getWidth() * image.getHeight()];
+            image.getRGB(0, 0, image.getWidth(), image.getHeight(), fanImage, 0, image.getWidth());
+            grid = new byte[height * height * 4];
         } catch (IOException var1) {
             var1.printStackTrace();
             fanImage = new int[256];
             numFrames = 1;
             width = 16;
             height = 16;
+            grid = new byte[1024];
         }
     }
 
