@@ -21,6 +21,11 @@ public abstract class MixinTextureBinder implements AC_TextureBinder {
     @Shadow
     public int renderMode;
 
+    @Shadow
+    public void updateTexture() {
+        throw new AssertionError();
+    }
+
     @Overwrite
     public void bindTexture(TextureManager var1) {
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, var1.getTextureId(this.getTexture()));
@@ -28,6 +33,7 @@ public abstract class MixinTextureBinder implements AC_TextureBinder {
 
     @Override
     public void onTick(Vec2 size) {
+        this.updateTexture();
     }
 
     @Override
