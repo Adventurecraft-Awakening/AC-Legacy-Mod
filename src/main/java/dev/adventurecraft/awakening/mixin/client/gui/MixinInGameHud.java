@@ -399,6 +399,7 @@ public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
         int yOffset = 0;
 
         TextRendererState textState = exTextRenderer.createState();
+        textState.bindTexture();
         textState.setShadow(true);
         textState.setShadowOffset(1, 1);
 

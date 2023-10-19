@@ -117,8 +117,8 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
             return;
         }
 
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.field_2461);
         TextRendererState state = this.createState();
+        state.bindTexture();
         state.begin(Tessellator.INSTANCE);
         state.setColor(color);
         if (shadow) {
@@ -138,7 +138,9 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
 
     @Override
     public TextRendererState createState() {
-        return new TextRendererState(this.colorBuffer, this.field_2462);
+        var state = new TextRendererState(this.colorBuffer, this.field_2462);
+        state.setTexture(this.field_2461);
+        return state;
     }
 
     @Override

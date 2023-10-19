@@ -2,12 +2,14 @@ package dev.adventurecraft.awakening.common;
 
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.util.CharacterUtils;
+import org.lwjgl.opengl.GL11;
 
 public class TextRendererState {
 
     private final float[] colorPalette;
     private final int[] widthLookup;
     private Tessellator ts;
+    private int texture;
 
     private float r, g, b, a;
     private float sR, sG, sB, sA;
@@ -17,6 +19,10 @@ public class TextRendererState {
     public TextRendererState(float[] colorPalette, int[] widthLookup) {
         this.colorPalette = colorPalette;
         this.widthLookup = widthLookup;
+    }
+
+    public void bindTexture() {
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.texture);
     }
 
     public void begin(Tessellator tessallator) {
@@ -127,6 +133,14 @@ public class TextRendererState {
     public void setShadowOffset(float offsetX, float offsetY) {
         this.setShadowOffsetX(offsetX);
         this.setShadowOffsetY(offsetY);
+    }
+
+    public int getTexture() {
+        return this.texture;
+    }
+
+    public void setTexture(int textureId) {
+        this.texture = textureId;
     }
 
     private static void drawChar(Tessellator ts, int column, int row, float x, float y) {
