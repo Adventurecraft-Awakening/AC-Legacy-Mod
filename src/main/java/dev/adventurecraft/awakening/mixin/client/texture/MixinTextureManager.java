@@ -379,6 +379,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
         }
 
         this.textureBinders.add(binder);
+        this.expandBinderGrid(res, binder);
         ((AC_TextureBinder) binder).onTick(res);
         ACMod.LOGGER.info("Texture registered: {}, image: {}, index: {}", binder, binder.renderMode, binder.index);
     }
@@ -447,26 +448,16 @@ public abstract class MixinTextureManager implements ExTextureManager {
 
             int tileW = texSize.x / 16;
             int tileH = texSize.y / 16;
-            this.checkImageDataSize(texSize.x, texSize.y);
-            this.currentImageBuffer.limit(0);
+            int gridIndex = tileW * tileH * 4;
+            this.expandBinderGrid(texSize, binder);
+            ((AC_TextureBinder) binder).onTick(texSize);
 
-            if (this.currentImageBuffer.limit() <= 0) {
-                int gridIndex = tileW * tileH * 4;
-                if (binder.grid != null && binder.grid.length < gridIndex) {
-                    binder.grid = new byte[gridIndex];
-                }
-                ((AC_TextureBinder) binder).onTick(texSize);
-                if (binder.grid == null) {
-                    continue;
-                }
-
-                if (binder.grid.length == gridIndex) {
-                    this.currentImageBuffer.clear();
-                    this.currentImageBuffer.put(binder.grid);
-                    this.currentImageBuffer.position(0).limit(binder.grid.length);
-                } else {
-                    this.copyScaled(binder.grid, this.currentImageBuffer, tileW);
-                }
+            if (binder.grid.length == gridIndex) {
+                this.currentImageBuffer.clear();
+                this.currentImageBuffer.put(binder.grid);
+                this.currentImageBuffer.position(0).limit(binder.grid.length);
+            } else {
+                this.copyScaled(binder.grid, this.currentImageBuffer, tileW);
             }
 
             binder.bindTexture((TextureManager) (Object) this);
@@ -576,6 +567,17 @@ public abstract class MixinTextureManager implements ExTextureManager {
 
     private Vec2 getTextureDimensions(int var1) {
         return this.textureDimensionsMap.get(var1);
+    }
+
+    private void expandBinderGrid(Vec2 size, TextureBinder binder) {
+        int tileW = size.x / 16;
+        int tileH = size.y / 16;
+        this.checkImageDataSize(size.x, size.y);
+
+        int gridIndex = tileW * tileH * 4;
+        if (binder.grid != null && binder.grid.length < gridIndex) {
+            binder.grid = new byte[gridIndex];
+        }
     }
 
     private void checkImageDataSize(int width, int height) {
