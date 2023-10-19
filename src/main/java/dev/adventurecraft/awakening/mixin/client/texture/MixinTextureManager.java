@@ -452,14 +452,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
             this.expandBinderGrid(texSize, binder);
             acBinder.onTick(texSize);
 
-            int frameSize = (int) Math.sqrt(binder.grid.length / 4);
-            if (frameSize == tileW) {
-                this.currentImageBuffer.clear();
-                this.currentImageBuffer.put(binder.grid);
-                this.currentImageBuffer.position(0).limit(binder.grid.length);
-            } else {
-                this.copyScaled(binder.grid, this.currentImageBuffer, tileW);
-            }
+            this.copyScaled(binder.grid, this.currentImageBuffer, tileW);
 
             binder.bindTexture((TextureManager) (Object) this);
             boolean fastColor = this.scalesWithFastColor(binder);
@@ -614,39 +607,41 @@ public abstract class MixinTextureManager implements ExTextureManager {
         return size - 1;
     }
 
-    private void copyScaled(byte[] var1, ByteBuffer var2, int var3) {
-        int var4 = (int) Math.sqrt(var1.length / 4);
-        int var5 = var3 / var4;
-        byte[] var6 = new byte[4];
-        var2.clear();
-        if (var5 > 1) {
-            for (int var8 = 0; var8 < var4; ++var8) {
-                int var9 = var8 * var4;
-                int var10 = var8 * var5;
-                int var11 = var10 * var3;
+    private void copyScaled(byte[] grid, ByteBuffer dstBuffer, int tileW) {
+        int frameSize = (int) Math.sqrt(grid.length / 4);
+        int ratio = tileW / frameSize;
+        dstBuffer.clear();
+        if (ratio > 1) {
+            byte[] tmp = new byte[4];
+            for (int var8 = 0; var8 < frameSize; ++var8) {
+                int var9 = var8 * frameSize;
+                int var10 = var8 * ratio;
+                int var11 = var10 * tileW;
 
-                for (int var12 = 0; var12 < var4; ++var12) {
+                for (int var12 = 0; var12 < frameSize; ++var12) {
                     int var13 = (var12 + var9) * 4;
-                    var6[0] = var1[var13];
-                    var6[1] = var1[var13 + 1];
-                    var6[2] = var1[var13 + 2];
-                    var6[3] = var1[var13 + 3];
-                    int var14 = var12 * var5;
+                    tmp[0] = grid[var13];
+                    tmp[1] = grid[var13 + 1];
+                    tmp[2] = grid[var13 + 2];
+                    tmp[3] = grid[var13 + 3];
+                    int var14 = var12 * ratio;
                     int var15 = var14 + var11;
 
-                    for (int var16 = 0; var16 < var5; ++var16) {
-                        int var17 = var15 + var16 * var3;
-                        var2.position(var17 * 4);
+                    for (int var16 = 0; var16 < ratio; ++var16) {
+                        int var17 = var15 + var16 * tileW;
+                        dstBuffer.position(var17 * 4);
 
-                        for (int var18 = 0; var18 < var5; ++var18) {
-                            var2.put(var6);
+                        for (int var18 = 0; var18 < ratio; ++var18) {
+                            dstBuffer.put(tmp);
                         }
                     }
                 }
             }
+        } else {
+            dstBuffer.put(grid);
         }
 
-        var2.position(0).limit(var3 * var3 * 4);
+        dstBuffer.position(0).limit(tileW * tileW * 4);
     }
 
     private boolean scalesWithFastColor(TextureBinder binder) {
