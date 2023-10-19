@@ -8,6 +8,7 @@ import dev.adventurecraft.awakening.extension.client.ExTextureManager;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.render.TextureBinder;
+import net.minecraft.world.World;
 
 public class AC_TextureFanFX extends TextureBinder implements AC_TextureBinder {
 
@@ -30,16 +31,16 @@ public class AC_TextureFanFX extends TextureBinder implements AC_TextureBinder {
     }
 
     @Override
-    public void loadImage() {
-        this.loadImage("/misc/fan.png");
+    public void loadImage(World world) {
+        this.loadImage("/misc/fan.png", world);
     }
 
     @Override
-    public void loadImage(String name) {
+    public void loadImage(String name, World world) {
         try {
             BufferedImage var0 = null;
-            if (Minecraft.instance.world != null) {
-                var0 = ((ExWorld) Minecraft.instance.world).loadMapTexture(name);
+            if (world != null) {
+                var0 = ((ExWorld) world).loadMapTexture(name);
             }
 
             if (var0 == null) {

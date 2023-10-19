@@ -1,19 +1,16 @@
 package dev.adventurecraft.awakening.mixin.client.render;
 
-import dev.adventurecraft.awakening.client.render.AC_TextureBinder;
 import dev.adventurecraft.awakening.common.Vec2;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import net.minecraft.block.Block;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.render.FireTextureBinder;
-import net.minecraft.client.render.TextureBinder;
+import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 import java.awt.image.BufferedImage;
 
 @Mixin(FireTextureBinder.class)
-public abstract class MixinFireTextureBinder extends TextureBinder implements AC_TextureBinder {
+public class MixinFireTextureBinder extends MixinTextureBinder {
 
     @Shadow
     protected float[] currentFireFrame;
@@ -26,10 +23,6 @@ public abstract class MixinFireTextureBinder extends TextureBinder implements AC
     int[] frameImages;
     int width;
     int curFrame = 0;
-
-    public MixinFireTextureBinder(int var1) {
-        super(Block.FIRE.texture + var1 * 16);
-    }
 
     @Override
     public void onTick(Vec2 var1) {
@@ -191,15 +184,15 @@ public abstract class MixinFireTextureBinder extends TextureBinder implements AC
     }
 
     @Override
-    public void loadImage() {
-        loadImage("/custom_fire.png");
+    public void loadImage(World world) {
+        loadImage("/custom_fire.png", world);
     }
 
     @Override
-    public void loadImage(String name) {
+    public void loadImage(String name, World world) {
         BufferedImage var1 = null;
-        if (Minecraft.instance.world != null) {
-            var1 = ((ExWorld) Minecraft.instance.world).loadMapTexture(name);
+        if (world != null) {
+            var1 = ((ExWorld) world).loadMapTexture(name);
         }
 
         curFrame = 0;

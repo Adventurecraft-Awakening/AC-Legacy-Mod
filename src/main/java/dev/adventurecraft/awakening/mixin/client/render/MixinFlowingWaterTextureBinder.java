@@ -1,20 +1,17 @@
 package dev.adventurecraft.awakening.mixin.client.render;
 
-import java.awt.image.BufferedImage;
-
-import dev.adventurecraft.awakening.client.render.AC_TextureBinder;
 import dev.adventurecraft.awakening.common.AC_TerrainImage;
 import dev.adventurecraft.awakening.common.Vec2;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import net.minecraft.block.Block;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.render.FlowingWaterTextureBinder;
-import net.minecraft.client.render.TextureBinder;
+import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
+import java.awt.image.BufferedImage;
+
 @Mixin(FlowingWaterTextureBinder.class)
-public abstract class MixinFlowingWaterTextureBinder extends TextureBinder implements AC_TextureBinder {
+public class MixinFlowingWaterTextureBinder extends MixinTextureBinder {
 
     @Shadow
     protected float[] field_2118;
@@ -36,11 +33,6 @@ public abstract class MixinFlowingWaterTextureBinder extends TextureBinder imple
     int[] frameImages;
     int width;
     int curFrame = 0;
-
-    public MixinFlowingWaterTextureBinder() {
-        super(Block.FLOWING_WATER.texture + 1);
-        this.textureSize = 2;
-    }
 
     @Override
     public void onTick(Vec2 var1) {
@@ -198,14 +190,16 @@ public abstract class MixinFlowingWaterTextureBinder extends TextureBinder imple
         }
     }
 
-    public void loadImage() {
-        loadImage("/custom_water_flowing.png");
+    @Override
+    public void loadImage(World world) {
+        loadImage("/custom_water_flowing.png", world);
     }
 
-    public void loadImage(String name) {
+    @Override
+    public void loadImage(String name, World world) {
         BufferedImage var1 = null;
-        if (Minecraft.instance.world != null) {
-            var1 = ((ExWorld) Minecraft.instance.world).loadMapTexture(name);
+        if (world != null) {
+            var1 = ((ExWorld) world).loadMapTexture(name);
         }
 
         curFrame = 0;

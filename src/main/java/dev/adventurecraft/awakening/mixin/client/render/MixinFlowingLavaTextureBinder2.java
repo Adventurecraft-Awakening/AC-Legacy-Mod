@@ -1,20 +1,17 @@
 package dev.adventurecraft.awakening.mixin.client.render;
 
-import java.awt.image.BufferedImage;
-
-import dev.adventurecraft.awakening.client.render.AC_TextureBinder;
 import dev.adventurecraft.awakening.common.Vec2;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import net.minecraft.block.Block;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.render.FlowingLavaTextureBinder2;
-import net.minecraft.client.render.TextureBinder;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
+import java.awt.image.BufferedImage;
+
 @Mixin(FlowingLavaTextureBinder2.class)
-public abstract class MixinFlowingLavaTextureBinder2 extends TextureBinder implements AC_TextureBinder {
+public class MixinFlowingLavaTextureBinder2 extends MixinTextureBinder {
 
     @Shadow
     protected float[] field_1166;
@@ -36,11 +33,6 @@ public abstract class MixinFlowingLavaTextureBinder2 extends TextureBinder imple
     int[] frameImages;
     int width;
     int curFrame = 0;
-
-    public MixinFlowingLavaTextureBinder2() {
-        super(Block.FLOWING_LAVA.texture + 1);
-        this.textureSize = 2;
-    }
 
     @Override
     public void onTick(Vec2 var1) {
@@ -191,14 +183,16 @@ public abstract class MixinFlowingLavaTextureBinder2 extends TextureBinder imple
         }
     }
 
-    public void loadImage() {
-        loadImage("/custom_lava_flowing.png");
+    @Override
+    public void loadImage(World world) {
+        loadImage("/custom_lava_flowing.png", world);
     }
 
-    public void loadImage(String name) {
+    @Override
+    public void loadImage(String name, World world) {
         BufferedImage var1 = null;
-        if (Minecraft.instance.world != null) {
-            var1 = ((ExWorld) Minecraft.instance.world).loadMapTexture(name);
+        if (world != null) {
+            var1 = ((ExWorld) world).loadMapTexture(name);
         }
 
         curFrame = 0;

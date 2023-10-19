@@ -13,10 +13,13 @@ import org.spongepowered.asm.mixin.Shadow;
 public abstract class MixinTextureBinder implements AC_TextureBinder {
 
     @Shadow
-    public int renderMode;
+    public byte[] grid;
 
     @Shadow
-    public abstract void updateTexture();
+    public boolean render3d;
+
+    @Shadow
+    public int renderMode;
 
     @Overwrite
     public void bindTexture(TextureManager var1) {
@@ -25,7 +28,6 @@ public abstract class MixinTextureBinder implements AC_TextureBinder {
 
     @Override
     public void onTick(Vec2 size) {
-        this.updateTexture();
     }
 
     @Override
