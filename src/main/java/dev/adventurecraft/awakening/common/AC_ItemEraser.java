@@ -14,20 +14,27 @@ public class AC_ItemEraser extends Item {
 
     @Override
     public boolean useOnBlock(ItemStack item, PlayerEntity player, World world, int x, int y, int z, int side) {
-        if (AC_ItemCursor.bothSet) {
-            Minecraft.instance.overlay.addChatMessage("Erasing Area");
-            int minX = Math.min(AC_ItemCursor.oneX, AC_ItemCursor.twoX);
-            int maxX = Math.max(AC_ItemCursor.oneX, AC_ItemCursor.twoX);
-            int minY = Math.min(AC_ItemCursor.oneY, AC_ItemCursor.twoY);
-            int maxY = Math.max(AC_ItemCursor.oneY, AC_ItemCursor.twoY);
-            int minZ = Math.min(AC_ItemCursor.oneZ, AC_ItemCursor.twoZ);
-            int maxZ = Math.max(AC_ItemCursor.oneZ, AC_ItemCursor.twoZ);
+        if (!AC_ItemCursor.bothSet) {
+            return false;
+        }
 
-            for (int bX = minX; bX <= maxX; ++bX) {
-                for (int bY = minY; bY <= maxY; ++bY) {
-                    for (int bZ = minZ; bZ <= maxZ; ++bZ) {
-                        world.setBlock(bX, bY, bZ, 0);
-                    }
+        int minX = Math.min(AC_ItemCursor.oneX, AC_ItemCursor.twoX);
+        int maxX = Math.max(AC_ItemCursor.oneX, AC_ItemCursor.twoX);
+        int minY = Math.min(AC_ItemCursor.oneY, AC_ItemCursor.twoY);
+        int maxY = Math.max(AC_ItemCursor.oneY, AC_ItemCursor.twoY);
+        int minZ = Math.min(AC_ItemCursor.oneZ, AC_ItemCursor.twoZ);
+        int maxZ = Math.max(AC_ItemCursor.oneZ, AC_ItemCursor.twoZ);
+
+        int width = maxX - minX + 1;
+        int height = maxY - minY + 1;
+        int depth = maxZ - minZ + 1;
+        int blockCount = width * height * depth;
+        Minecraft.instance.overlay.addChatMessage(String.format("Erasing Area (%d blocks)", blockCount));
+
+        for (int bX = minX; bX <= maxX; ++bX) {
+            for (int bY = minY; bY <= maxY; ++bY) {
+                for (int bZ = minZ; bZ <= maxZ; ++bZ) {
+                    world.setBlock(bX, bY, bZ, 0);
                 }
             }
         }
