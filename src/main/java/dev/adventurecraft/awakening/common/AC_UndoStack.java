@@ -10,7 +10,7 @@ public class AC_UndoStack {
 
     public static final int MAX_UNDO = 128;
 
-    public boolean isRecording = false;
+    private boolean isRecording = false;
     public AC_UndoSelection selection = null;
     public ArrayList<AC_EditAction> actionList = null;
     public LinkedList<ArrayList<AC_EditAction>> undoStack = new LinkedList<>();
@@ -19,7 +19,7 @@ public class AC_UndoStack {
     public LinkedList<AC_UndoSelection> redoSelectionStack = new LinkedList<>();
 
     public void startRecording() {
-        assert !this.isRecording;
+        assert !this.isRecording();
 
         this.isRecording = true;
         this.selection = new AC_UndoSelection();
@@ -29,7 +29,7 @@ public class AC_UndoStack {
     }
 
     public void stopRecording() {
-        assert this.isRecording;
+        assert this.isRecording();
 
         if (this.actionList.size() != 0) {
             this.redoStack.clear();
@@ -52,7 +52,7 @@ public class AC_UndoStack {
     }
 
     public void clear() {
-        assert !this.isRecording;
+        assert !this.isRecording();
 
         this.undoStack.clear();
         this.redoStack.clear();
