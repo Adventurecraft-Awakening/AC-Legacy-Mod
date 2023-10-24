@@ -97,7 +97,8 @@ public class AC_UndoStack {
         }
 
         ArrayList<AC_EditAction> actionList = this.undoStack.removeLast();
-        for (AC_EditAction action : actionList) {
+        for (int i = actionList.size() - 1; i >= 0; i--) {
+            AC_EditAction action = actionList.get(i);
             action.undo(world);
         }
         this.redoStack.addLast(actionList);
@@ -119,7 +120,8 @@ public class AC_UndoStack {
         }
 
         ArrayList<AC_EditAction> actionList = this.redoStack.removeLast();
-        for (AC_EditAction action : actionList) {
+        for (int i = actionList.size() - 1; i >= 0; i--) {
+            AC_EditAction action = actionList.get(i);
             action.redo(world);
         }
         this.undoStack.addLast(actionList);
