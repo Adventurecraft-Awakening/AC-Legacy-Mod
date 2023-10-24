@@ -69,12 +69,26 @@ public class AC_UndoStack {
         int prevBlockId, int prevBlockMeta, CompoundTag prevNbt,
         int newBlockId, int newBlockMeta, CompoundTag newNbt) {
 
+        ArrayList<AC_EditAction> list = this.actionList;
+        int bX = x + (cX << 4);
+        int bZ = z + (cZ << 4);
+
+        if (list.size() > 0) {
+            AC_EditAction lastAction = list.get(list.size() - 1);
+            if (lastAction.x == bX && lastAction.y == y && lastAction.z == bZ) {
+                lastAction.newBlockID = newBlockId;
+                lastAction.newMetadata = newBlockMeta;
+                lastAction.newNBT = newNbt;
+                return;
+            }
+        }
+
         var newAction = new AC_EditAction(
-            x + (cX << 4), y, z + (cZ << 4),
+            bX, y, bZ,
             prevBlockId, prevBlockMeta, prevNbt,
             newBlockId, newBlockMeta, newNbt);
 
-        this.actionList.add(newAction);
+        list.add(newAction);
     }
 
     public void undo(World world) {
