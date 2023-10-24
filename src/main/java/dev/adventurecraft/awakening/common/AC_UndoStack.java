@@ -73,16 +73,6 @@ public class AC_UndoStack {
         int bX = x + (cX << 4);
         int bZ = z + (cZ << 4);
 
-        if (list.size() > 0) {
-            AC_EditAction lastAction = list.get(list.size() - 1);
-            if (lastAction.x == bX && lastAction.y == y && lastAction.z == bZ) {
-                lastAction.newBlockID = newBlockId;
-                lastAction.newMetadata = newBlockMeta;
-                lastAction.newNBT = newNbt;
-                return;
-            }
-        }
-
         var newAction = new AC_EditAction(
             bX, y, bZ,
             prevBlockId, prevBlockMeta, prevNbt,
@@ -120,8 +110,7 @@ public class AC_UndoStack {
         }
 
         ArrayList<AC_EditAction> actionList = this.redoStack.removeLast();
-        for (int i = actionList.size() - 1; i >= 0; i--) {
-            AC_EditAction action = actionList.get(i);
+        for (AC_EditAction action : actionList) {
             action.redo(world);
         }
         this.undoStack.addLast(actionList);
