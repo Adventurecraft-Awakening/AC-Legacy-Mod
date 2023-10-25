@@ -1,8 +1,10 @@
 package dev.adventurecraft.awakening.script;
 
+import dev.adventurecraft.awakening.common.TextRendererState;
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.TextRenderer;
 import net.minecraft.client.texture.TextureManager;
 
@@ -23,7 +25,6 @@ public class ScriptUILabel extends UIElement {
     }
 
     public ScriptUILabel(String text, float x, float y, ScriptUIContainer container) {
-        this.text = "";
         this.shadow = true;
         this.centered = false;
         this.red = 1.0F;
@@ -52,17 +53,27 @@ public class ScriptUILabel extends UIElement {
         float x = this.getXAtTime(deltaTime);
         float y = this.getYAtTime(deltaTime);
         String[] lines = this.textLines;
+        int shadowColor = ExTextRenderer.getShadowColor(color);
 
+        TextRendererState state = ((ExTextRenderer) textRenderer).createState();
+        state.setShadow(shadow);
+        state.setShadowOffset(1, 1);
+
+        state.bindTexture();
+        state.begin(Tessellator.INSTANCE);
         for (String line : lines) {
             float lineX = x;
             if (this.centered) {
                 lineX = x - (float) (textRenderer.getTextWidth(line) / 2);
             }
 
-            ((ExTextRenderer) textRenderer).drawString(line, lineX, y, color, this.shadow);
+            state.setColor(color);
+            state.setShadowColor(shadowColor);
+            state.drawText(line, 0, line.length(), lineX, y);
 
             y += 9.0F;
         }
+        state.end();
     }
 
     public String getText() {
