@@ -119,13 +119,13 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
 
         TextRendererState state = this.createState();
         state.bindTexture();
-        state.begin(Tessellator.INSTANCE);
         state.setColor(color);
         if (shadow) {
             state.setShadow(true);
             state.setShadowOffset(sX, sY);
             state.setShadowColor(sColor);
         }
+        state.begin(Tessellator.INSTANCE);
         state.drawText(text, start, end, x, y);
         state.end();
     }
