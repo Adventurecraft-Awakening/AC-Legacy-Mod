@@ -35,11 +35,11 @@ public interface ExTextRenderer {
     TextRendererState createState();
 
     @NotNull
-    TextRect getTextWidth(CharSequence text, int start, int end, long maxWidth);
+    TextRect getTextWidth(CharSequence text, int start, int end, long maxWidth, boolean newLines);
 
     @NotNull
     default TextRect getTextWidth(CharSequence text, int start, int end) {
-        return this.getTextWidth(text, start, end, Long.MAX_VALUE);
+        return this.getTextWidth(text, start, end, Long.MAX_VALUE, false);
     }
 
     @NotNull

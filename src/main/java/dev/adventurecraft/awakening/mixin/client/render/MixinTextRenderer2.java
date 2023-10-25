@@ -145,7 +145,7 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
 
     @Override
     @NotNull
-    public TextRect getTextWidth(CharSequence text, int start, int end, long maxWidth) {
+    public TextRect getTextWidth(CharSequence text, int start, int end, long maxWidth, boolean newLines) {
         if (text == null) {
             return TextRect.empty;
         }
@@ -170,7 +170,7 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
                 width += this.field_2462[c];
             }
 
-            if (width > maxWidth || c == '\n') {
+            if (width > maxWidth || (newLines && c == '\n')) {
                 i++;
                 break;
             }
