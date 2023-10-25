@@ -32,7 +32,6 @@ public class TextRendererState {
         this.ts = tessallator;
 
         ts.start();
-        ts.color(r, g, b, a);
     }
 
     public void end() {
@@ -43,10 +42,12 @@ public class TextRendererState {
         if (text == null) {
             return;
         }
-        validateCharSequence(text, start, end);
         if (end - start == 0) {
             return;
         }
+        validateCharSequence(text, start, end);
+
+        ts.color(r, g, b, a);
 
         float xOff = 0;
 
