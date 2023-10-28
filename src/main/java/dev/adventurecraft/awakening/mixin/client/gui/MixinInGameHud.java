@@ -492,6 +492,7 @@ public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
     }
 
     private static StringBuilder colorCodesToAnsi(CharSequence text, int start, int end) {
+        TextRendererState.validateCharSequence(text, start, end);
         var builder = new StringBuilder((int) ((end - start) * 1.1));
         for (int i = start; i < end; ++i) {
             char c = text.charAt(i);

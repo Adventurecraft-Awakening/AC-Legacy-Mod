@@ -9,10 +9,10 @@ import net.minecraft.util.ProgressListener;
 import net.minecraft.world.World;
 import org.mozilla.javascript.Scriptable;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -80,7 +80,8 @@ public class AC_JScriptHandler {
                 String name = fileName.toLowerCase();
 
                 if (name.endsWith(".js")) {
-                    try (var reader = new BufferedReader(new FileReader(file))) {
+                    // TODO: update charset to UTF-8 in new maps?
+                    try (var reader = new FileReader(file, StandardCharsets.ISO_8859_1)) {
                         var script = ((ExWorld) this.world).getScript().compileReader(reader, fileName);
                         this.scripts.put(name, new AC_JScriptInfo(fileName, script));
                     } catch (IOException e) {
