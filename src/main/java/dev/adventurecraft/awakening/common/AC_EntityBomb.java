@@ -61,11 +61,17 @@ public class AC_EntityBomb extends ItemEntity {
 
     }
 
+    /**
+     * Deals damage around a given entity (Defined by the BOMB_RANGE)
+     * @param world The world where the entities will be harmed
+     * @param exploder The entity that will explode
+     * @param explosionParent The owner of the explosive (the owner of the damage)
+     */
     private static void harmEntitiesAround(World world, Entity exploder, Entity explosionParent) {
         double x = exploder.x;
         double y = exploder.y;
         double z = exploder.z;
-        List explodees = world.getEntities(
+        var victims = world.getEntities(
             exploder,
             AxixAlignedBoundingBox.createAndAddToList(
                 Math.floor(x - BOMB_RANGE),
@@ -77,17 +83,21 @@ public class AC_EntityBomb extends ItemEntity {
             )
         );
 
-        int explodeeIndex;
-        for (explodeeIndex = 0; explodeeIndex < explodees.size(); ++explodeeIndex) {
-            Entity explodee = (Entity) explodees.get(explodeeIndex);
-            double distanceFromExplosion = explodee.distanceTo(x, y, z);
+        int victimIndex;
+        int victimAmount = victims.size();
+        for (victimIndex = 0; victimIndex < victimAmount; ++victimIndex) {
+            Entity victim = (Entity) victims.get(victimIndex);
+            // TODO: This is a band-aid fix that prevents players from accumulating hit boxes and thus accelerating multiple times from a single explosion.
+            if (!victim.isAlive()) continue;
+            // End of band-aid fix
+            double distanceFromExplosion = victim.distanceTo(x, y, z);
             if (distanceFromExplosion < BOMB_RANGE) {
                 distanceFromExplosion = (BOMB_RANGE - distanceFromExplosion) / BOMB_RANGE; // Percentage of how close the character is
-                double xForce = explodee.x - x;
-                double yForce = explodee.y - y;
-                double zForce = explodee.z - z;
-                explodee.accelerate(distanceFromExplosion * xForce, distanceFromExplosion * yForce, distanceFromExplosion * zForce);
-                explodee.damage(explosionParent, (int) Math.ceil(distanceFromExplosion * BOMB_DAMAGE));
+                double xForce = victim.x - x;
+                double yForce = victim.y - y;
+                double zForce = victim.z - z;
+                victim.accelerate(distanceFromExplosion * xForce, distanceFromExplosion * yForce, distanceFromExplosion * zForce);
+                victim.damage(explosionParent, (int) Math.ceil(distanceFromExplosion * BOMB_DAMAGE));
             }
         }
     }
