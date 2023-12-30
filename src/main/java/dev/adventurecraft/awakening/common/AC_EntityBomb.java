@@ -62,7 +62,7 @@ public class AC_EntityBomb extends ItemEntity {
     }
 
     /**
-     * Deals damage around a given entity (Defined by the BOMB_RANGE)
+     * Deals damage around a given entity (radius efined by the BOMB_RANGE)
      * @param world The world where the entities will be harmed
      * @param exploder The entity that will explode
      * @param explosionParent The owner of the explosive (the owner of the damage)
@@ -100,6 +100,13 @@ public class AC_EntityBomb extends ItemEntity {
         }
     }
 
+    /**
+     * Destroys blocks around a given block (radius defined by BOMB_DESTROY_RANGE)
+     * @param world The world to check for bombable blocks
+     * @param x The source of the explosion's X position.
+     * @param y The source of the explosion's Y position.
+     * @param z The source of the explosion's Z position.
+     */
     private static void destroyBombableBlocksAround(World world, int x, int y, int z) {
 
         int bombDestroyRange = (int) BOMB_DESTROY_RANGE;
@@ -120,6 +127,13 @@ public class AC_EntityBomb extends ItemEntity {
         }
     }
 
+    /**
+     * Displays explosion particles sourced from a position.
+     * @param world The world in which to spawn the particles.
+     * @param x The source of the particles' X position.
+     * @param y The source of the particles' Y position.
+     * @param z The source of the particles' Z position.
+     */
     private static void displayExplosionParticles(World world, double x, double y, double z) {
         Random rng = new Random();
         rng.setSeed(world.getWorldTime());
