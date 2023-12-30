@@ -85,7 +85,7 @@ public class AC_EntityBomb extends ItemEntity {
 
         for (Object o : victims) {
             Entity victim = (Entity) o;
-            // TODO: This is a band-aid fix that prevents players from accumulating hit boxes and thus accelerating multiple times from a single explosion.
+            // TODO: This is a band-aid fix that prevents players' accumulated hit boxes from being accelerated (and thus accelerating multiple times from a single explosion.)
             if (!victim.isAlive()) continue;
             // End of band-aid fix
             double distanceFromExplosion = victim.distanceTo(x, y, z);
