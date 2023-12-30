@@ -146,13 +146,11 @@ public class AC_EntityBomb extends ItemEntity {
                 for (int zDirectionForce = -3; zDirectionForce <= 3; ++zDirectionForce) {
                     double distanceSquared = (double) xDirectionForce * (double) xDirectionForce + (double) (yDirectionForce * yDirectionForce) + (double) (zDirectionForce * zDirectionForce);
                     if (rng.nextInt(3) == 0 && distanceSquared <= 9.0D) {
-                        double xDirection = xDirectionForce;
-                        double yDirection = yDirectionForce;
-                        double zDirection = zDirectionForce;
                         double launchPower = Math.sqrt(distanceSquared) * (0.75D + 0.5D * rng.nextDouble()) * 1.5D / 3.0D;
-                        xDirection = xDirection / launchPower;
-                        yDirection = yDirection / launchPower;
-                        zDirection = zDirection / launchPower;
+                        double xDirection = xDirectionForce / launchPower;
+                        double yDirection = yDirectionForce / launchPower;
+                        double zDirection = zDirectionForce / launchPower;
+
                         world.addParticle("explode", x, y, z, xDirection, yDirection, zDirection);
                         world.addParticle("smoke", x, y, z, xDirection, yDirection, zDirection);
                     }
