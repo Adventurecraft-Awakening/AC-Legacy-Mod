@@ -9,7 +9,6 @@ import net.minecraft.util.io.CompoundTag;
 import net.minecraft.util.math.AxixAlignedBoundingBox;
 import net.minecraft.world.World;
 
-import java.util.List;
 import java.util.Random;
 
 public class AC_EntityBomb extends ItemEntity {
@@ -62,7 +61,7 @@ public class AC_EntityBomb extends ItemEntity {
     }
 
     /**
-     * Deals damage around a given entity (radius efined by the BOMB_RANGE)
+     * Deals damage around a given entity (radius defined by the BOMB_RANGE)
      * @param world The world where the entities will be harmed
      * @param exploder The entity that will explode
      * @param explosionParent The owner of the explosive (the owner of the damage)
@@ -144,9 +143,10 @@ public class AC_EntityBomb extends ItemEntity {
         for (int xDirectionForce = -3; xDirectionForce <= 3; ++xDirectionForce) { // Used for X
             for (int yDirectionForce = -3; yDirectionForce <= 3; ++yDirectionForce) { // Used for Y
                 for (int zDirectionForce = -3; zDirectionForce <= 3; ++zDirectionForce) {
+
                     double distanceSquared = (double) xDirectionForce * (double) xDirectionForce + (double) (yDirectionForce * yDirectionForce) + (double) (zDirectionForce * zDirectionForce);
                     if (rng.nextInt(3) == 0 && distanceSquared <= 9.0D) {
-                        double launchPower = Math.sqrt(distanceSquared) * (0.75D + 0.5D * rng.nextDouble()) * 1.5D / 3.0D;
+                        double launchPower = Math.sqrt(distanceSquared) * (0.375D + 0.25D * rng.nextDouble());
                         double xDirection = xDirectionForce / launchPower;
                         double yDirection = yDirectionForce / launchPower;
                         double zDirection = zDirectionForce / launchPower;
