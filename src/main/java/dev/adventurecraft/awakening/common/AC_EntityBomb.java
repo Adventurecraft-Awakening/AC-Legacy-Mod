@@ -83,10 +83,8 @@ public class AC_EntityBomb extends ItemEntity {
             )
         );
 
-        int victimIndex;
-        int victimAmount = victims.size();
-        for (victimIndex = 0; victimIndex < victimAmount; ++victimIndex) {
-            Entity victim = (Entity) victims.get(victimIndex);
+        for (Object o : victims) {
+            Entity victim = (Entity) o;
             // TODO: This is a band-aid fix that prevents players from accumulating hit boxes and thus accelerating multiple times from a single explosion.
             if (!victim.isAlive()) continue;
             // End of band-aid fix
