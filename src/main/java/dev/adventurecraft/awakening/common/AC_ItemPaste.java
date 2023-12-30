@@ -64,17 +64,6 @@ public class AC_ItemPaste extends Item {
         for (int x = 0; x < width; ++x) {
             for (int y = 0; y < height; ++y) {
                 for (int z = 0; z < depth; ++z) {
-                    int i = depth * (height * x + y) + z;
-                    int id = idArray[i];
-                    int meta = metaArray[i];
-                    world.setBlockWithMetadata(baseX + x, baseY + y, baseZ + z, id, meta);
-                }
-            }
-        }
-
-        for (int x = 0; x < width; ++x) {
-            for (int y = 0; y < height; ++y) {
-                for (int z = 0; z < depth; ++z) {
                     int id = idArray[depth * (height * x + y) + z];
                     world.notifyOfNeighborChange(baseX + x, baseY + y, baseZ + z, id);
                 }

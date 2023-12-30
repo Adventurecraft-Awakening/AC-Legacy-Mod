@@ -1,21 +1,21 @@
 package dev.adventurecraft.awakening.mixin.client.render;
 
+import dev.adventurecraft.awakening.common.Vec2;
+import dev.adventurecraft.awakening.extension.world.ExWorld;
+import net.minecraft.client.render.PortalTextureBinder;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.World;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
 import java.awt.image.BufferedImage;
 import java.util.Random;
 
-import dev.adventurecraft.awakening.client.render.AC_TextureBinder;
-import dev.adventurecraft.awakening.common.Vec2;
-import dev.adventurecraft.awakening.extension.world.ExWorld;
-import net.minecraft.block.Block;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.render.PortalTextureBinder;
-import net.minecraft.client.render.TextureBinder;
-import net.minecraft.util.math.MathHelper;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-
 @Mixin(PortalTextureBinder.class)
-public abstract class MixinPortalTextureBinder extends TextureBinder implements AC_TextureBinder {
+public class MixinPortalTextureBinder extends MixinTextureBinder {
 
     @Shadow
     private int updatesRan;
@@ -29,8 +29,8 @@ public abstract class MixinPortalTextureBinder extends TextureBinder implements 
     int width;
     int curFrame = 0;
 
-    public MixinPortalTextureBinder() {
-        super(Block.PORTAL.texture);
+    @Inject(method = "<init>", at = @At("TAIL"))
+    private void initData(CallbackInfo ci) {
         this.generatePortalData(16, 16);
     }
 
@@ -185,25 +185,28 @@ public abstract class MixinPortalTextureBinder extends TextureBinder implements 
         }
     }
 
-    public  void loadImage() {
-        loadImage("/custom_portal.png");
-    }
+    @Override
+    public void loadImage(String name, World world) {
+        if (name == null) {
+            name = "/custom_portal.png";
+        }
 
-    public  void loadImage(String name) {
-        BufferedImage var1 = null;
-        if (Minecraft.instance.world != null) {
-            var1 = ((ExWorld)Minecraft.instance.world).loadMapTexture(name);
+        BufferedImage image = null;
+        if (world != null) {
+            image = ((ExWorld) world).loadMapTexture(name);
         }
 
         curFrame = 0;
-        if (var1 == null) {
+        if (image == null) {
             hasImages = false;
+            grid = null;
         } else {
-            width = var1.getWidth();
-            numFrames = var1.getHeight() / var1.getWidth();
-            frameImages = new int[var1.getWidth() * var1.getHeight()];
-            var1.getRGB(0, 0, var1.getWidth(), var1.getHeight(), frameImages, 0, var1.getWidth());
+            width = image.getWidth();
+            numFrames = image.getHeight() / image.getWidth();
+            frameImages = new int[image.getWidth() * image.getHeight()];
+            image.getRGB(0, 0, image.getWidth(), image.getHeight(), frameImages, 0, image.getWidth());
             hasImages = true;
+            grid = new byte[width * width * 4];
         }
     }
 }

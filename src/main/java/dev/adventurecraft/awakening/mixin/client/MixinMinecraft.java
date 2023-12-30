@@ -256,20 +256,10 @@ public abstract class MixinMinecraft implements ExMinecraft {
             ACMainThread.mapsDirectory = new File(arguments.get("mapsDir"));
         }
 
-        String[] glDebugArgs = arguments.getOrDefault("glDebug", "").split("\\|");
-        for (String arg : glDebugArgs) {
-            if (arg.equalsIgnoreCase("log")) {
-                ACMainThread.glDebugLogs = true;
-            } else if (arg.equalsIgnoreCase("ctx")) {
-                ACMainThread.glDebugContext = true;
-            } else if (arg.equalsIgnoreCase("trace")) {
-                ACMainThread.glDebugTrace = true;
-            } else if (arg.equalsIgnoreCase("full")) {
-                ACMainThread.glDebugLogs = true;
-                ACMainThread.glDebugContext = true;
-                ACMainThread.glDebugTrace = true;
-            }
-        }
+        ACMainThread.glDebugContext = arguments.getExtraArgs().contains("--glDebugContext");
+
+        ACMainThread.glDebugTrace = ACMainThread.GlDebugTraceSeverity.valueOf(
+            arguments.getOrDefault("glDebugTraceSeverity", ACMainThread.GlDebugTraceSeverity.High.name()));
 
         boolean fullscreen = arguments.getExtraArgs().contains("--fullscreen");
         int width = Integer.parseInt(arguments.getOrDefault("width", "854"));

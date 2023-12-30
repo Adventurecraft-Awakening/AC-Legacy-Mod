@@ -146,7 +146,7 @@ public class AC_GuiMapSelect extends Screen {
             var exText = (ExTextRenderer) AC_GuiMapSelect.this.textRenderer;
 
             int iconX = (int) entryX - 110 + 2;
-            int iconY = (int) entryY + 2;
+            int iconY = (int) entryY;
             int iconWidth = 32;
             int iconHeight = 32;
 

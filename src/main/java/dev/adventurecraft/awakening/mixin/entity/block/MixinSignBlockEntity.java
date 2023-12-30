@@ -1,21 +1,27 @@
 package dev.adventurecraft.awakening.mixin.entity.block;
 
 import dev.adventurecraft.awakening.common.MusicPlayer;
-import dev.adventurecraft.awakening.extension.entity.block.ExSignBlockEntity;
+import dev.adventurecraft.awakening.common.instruments.IInstrumentConfig;
+import dev.adventurecraft.awakening.common.instruments.Note;
+import dev.adventurecraft.awakening.common.instruments.Song;
+import dev.adventurecraft.awakening.extension.entity.block.ExSongContainer;
 import net.minecraft.entity.BlockEntity;
 import net.minecraft.entity.block.SignBlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
+import java.util.Iterator;
+
 @Mixin(SignBlockEntity.class)
-public abstract class MixinSignBlockEntity extends BlockEntity implements ExSignBlockEntity {
+public abstract class MixinSignBlockEntity extends BlockEntity implements ExSongContainer {
 
     @Shadow
     public String[] text;
     public boolean playSong;
-    public String instrument;
-    public int onNote;
+    public IInstrumentConfig instrument;
     public int tickSinceStart;
+
+    public Iterator<Note> songIterator;
 
     @Override
     public void tick() {
@@ -24,12 +30,11 @@ public abstract class MixinSignBlockEntity extends BlockEntity implements ExSign
         }
 
         if (this.tickSinceStart % 10 == 0) {
-            String signContents = this.text[0] + this.text[1] + this.text[2] + this.text[3];
-            if (this.onNote < MusicPlayer.countNotes(signContents)) {
-                MusicPlayer.playNoteFromSong(this.world, this.x, this.y, this.z, this.instrument, signContents, this.onNote, 1.0F);
-                ++this.onNote;
-            } else {
-                this.playSong = false;
+            if (!songIterator.hasNext()) this.playSong = false;
+            else {
+                Note currentNote = songIterator.next();
+                if (currentNote != null)
+                    MusicPlayer.playNote(this.world, this.x, this.y, this.z, this.instrument, currentNote, 1.0F);
             }
         }
 
@@ -37,10 +42,16 @@ public abstract class MixinSignBlockEntity extends BlockEntity implements ExSign
     }
 
     @Override
-    public void playSong(String instrumentString) {
+    public void playSong(IInstrumentConfig instrumentConfig) {
         this.playSong = true;
-        this.instrument = instrumentString;
+        this.instrument = instrumentConfig;
         this.tickSinceStart = 0;
-        this.onNote = 0;
+
+        Song songToPlay = new Song(getSong(), instrumentConfig.getTuning());
+        this.songIterator = songToPlay.iterator();
+    }
+
+    public String getSong() {
+        return this.text[0] + this.text[1] + this.text[2] + this.text[3];
     }
 }

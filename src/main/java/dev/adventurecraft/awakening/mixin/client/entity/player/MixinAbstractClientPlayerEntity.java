@@ -42,6 +42,7 @@ public abstract class MixinAbstractClientPlayerEntity extends PlayerEntity imple
         this.commandDispatcher = new CommandDispatcher<>();
         this.commandDescriptions = new CommandDescriptions();
         ServerCommands.registerCommands(this.commandDispatcher, this.commandDescriptions);
+        ServerCommands.registerCommandsWithArgs(this.commandDispatcher, this.commandDescriptions);
     }
 
     @Redirect(method = "tickHandSwing", at = @At(

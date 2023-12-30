@@ -35,7 +35,7 @@ public abstract class GuiBaseSettingsOF extends Screen implements OptionTooltipP
 
         for (Option option : options) {
             int x = this.width / 2 - 155 + index % 2 * 160;
-            int y = this.height / 6 + 21 * (index / 2) - 10;
+            int y = this.height / 6 + 24 * (index / 2);
 
             int id = option.getId();
             String text = this.options.getTranslatedValue(option);

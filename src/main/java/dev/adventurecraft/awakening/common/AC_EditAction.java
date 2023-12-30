@@ -4,9 +4,8 @@ import net.minecraft.entity.BlockEntity;
 import net.minecraft.util.io.CompoundTag;
 import net.minecraft.world.World;
 
-public class AC_EditAction {
-    
-    public AC_EditAction nextAction;
+public final class AC_EditAction {
+
     public int x;
     public int y;
     public int z;
@@ -30,7 +29,6 @@ public class AC_EditAction {
         this.newBlockID = newBlockId;
         this.newMetadata = newBlockMeta;
         this.newNBT = newNbt;
-        this.nextAction = null;
     }
 
     public void undo(World world) {
@@ -39,10 +37,6 @@ public class AC_EditAction {
             BlockEntity entity = BlockEntity.ofNBT(this.prevNBT);
             world.setBlockEntity(entity.x, entity.y, entity.z, entity);
         }
-
-        if (this.nextAction != null) {
-            this.nextAction.undo(world);
-        }
     }
 
     public void redo(World world) {
@@ -50,10 +44,6 @@ public class AC_EditAction {
         if (this.newNBT != null) {
             BlockEntity entity = BlockEntity.ofNBT(this.newNBT);
             world.setBlockEntity(entity.x, entity.y, entity.z, entity);
-        }
-
-        if (this.nextAction != null) {
-            this.nextAction.redo(world);
         }
     }
 }

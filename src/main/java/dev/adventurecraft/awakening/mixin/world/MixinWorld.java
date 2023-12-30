@@ -417,16 +417,17 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         }
 
         this.loadTextureAnimations();
-        AC_TextureBinder.loadImages(texManager, AC_TextureFanFX.class);
-        AC_TextureBinder.loadImages(texManager, FireTextureBinder.class);
-        AC_TextureBinder.loadImages(texManager, FlowingLavaTextureBinder.class);
-        AC_TextureBinder.loadImages(texManager, FlowingLavaTextureBinder2.class);
-        AC_TextureBinder.loadImages(texManager, PortalTextureBinder.class);
-        AC_TextureBinder.loadImages(texManager, FlowingWaterTextureBinder2.class);
-        AC_TextureBinder.loadImages(texManager, FlowingWaterTextureBinder.class);
-        ExGrassColor.loadGrass("/misc/grasscolor.png");
-        ExFoliageColor.loadFoliage("/misc/foliagecolor.png");
-        ((ExWorldProperties) this.properties).loadTextureReplacements((World) (Object) this);
+        World world = (World) (Object) this;
+        AC_TextureBinder.loadImages(texManager, AC_TextureFanFX.class, world);
+        AC_TextureBinder.loadImages(texManager, FireTextureBinder.class, world);
+        AC_TextureBinder.loadImages(texManager, FlowingLavaTextureBinder.class, world);
+        AC_TextureBinder.loadImages(texManager, FlowingLavaTextureBinder2.class, world);
+        AC_TextureBinder.loadImages(texManager, PortalTextureBinder.class, world);
+        AC_TextureBinder.loadImages(texManager, FlowingWaterTextureBinder2.class, world);
+        AC_TextureBinder.loadImages(texManager, FlowingWaterTextureBinder.class, world);
+        ExGrassColor.loadGrass("/misc/grasscolor.png", world);
+        ExFoliageColor.loadFoliage("/misc/foliagecolor.png", world);
+        ((ExWorldProperties) this.properties).loadTextureReplacements(world);
     }
 
     private void loadTextureAnimations() {
