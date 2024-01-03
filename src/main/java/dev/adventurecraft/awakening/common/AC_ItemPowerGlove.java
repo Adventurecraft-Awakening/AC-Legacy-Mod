@@ -15,45 +15,56 @@ public class AC_ItemPowerGlove extends Item {
         super(id);
     }
 
+    private FallingBlockEntity currentFallingBlock = null;
     @Override
     public boolean useOnBlock(ItemStack stack, PlayerEntity player, World world, int x, int y, int z, int side) {
+        boolean currentBlockExists = currentFallingBlock != null && !currentFallingBlock.removed;
+        if (currentBlockExists) return false;
         int xDir = 0;
         int zDir = 0;
-        if (side == 2) {
-            zDir = 1;
-        } else if (side == 3) {
-            zDir = -1;
-        } else if (side == 4) {
-            xDir = 1;
-        } else {
-            if (side != 5) {
+
+        switch (side) {
+            case 2:
+                zDir = 1;
+                break;
+            case 3:
+                zDir = -1;
+                break;
+            case 4:
+                xDir = 1;
+                break;
+            case 5:
+                xDir = -1;
+                break;
+            default:
                 return false;
-            }
-
-            xDir = -1;
         }
 
-        if (world.getBlockId(x, y, z) != AC_Blocks.pushableBlock.id) {
-            return false;
-        } else {
-            if (Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL)) {
-                xDir *= -1;
-                zDir *= -1;
-            }
+        int currentBlockId = world.getBlockId(x, y, z);
+        boolean isPushableBlock =  currentBlockId != AC_Blocks.pushableBlock.id;
 
-            int id = world.getBlockId(x + xDir, y, z + zDir);
-            if (Block.BY_ID[id] == null || Block.BY_ID[id].material.isLiquid() || id == Block.FIRE.id) {
-                int var11 = world.getBlockId(x, y, z);
-                int var12 = world.getBlockMeta(x, y, z);
-                world.placeBlockWithMetaData(x, y, z, 0, 0);
-                var var13 = new FallingBlockEntity(world, (double) x + 0.5D, (double) y + 0.5D, (double) z + 0.5D, var11);
-                var13.xVelocity = 0.3D * (double) xDir;
-                var13.zVelocity = 0.3D * (double) zDir;
-                ((ExFallingBlockEntity) var13).setMetadata(var12);
-                world.spawnEntity(var13);
-            }
+        if (!isPushableBlock) return false;
 
-            return true;
+        boolean isPulling = Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL);
+
+        if (isPulling) {
+            xDir *= -1;
+            zDir *= -1;
         }
+
+        int destinationBlockId = world.getBlockId(x + xDir, y, z + zDir);
+        Block destinationBlock = Block.BY_ID[destinationBlockId];
+        boolean isValidDestination = destinationBlock == null || destinationBlock.material.isLiquid() || destinationBlockId == Block.FIRE.id;
+
+        if (isValidDestination) {
+            int blockMetadata = world.getBlockMeta(x, y, z);
+            world.placeBlockWithMetaData(x, y, z, 0, 0);
+            currentFallingBlock = new FallingBlockEntity(world, (double) x + 0.5D, (double) y + 0.5D, (double) z + 0.5D, currentBlockId);
+            currentFallingBlock.xVelocity = 0.3D * (double) xDir;
+            currentFallingBlock.zVelocity = 0.3D * (double) zDir;
+            ((ExFallingBlockEntity) currentFallingBlock).setMetadata(blockMetadata);
+            world.spawnEntity(currentFallingBlock);
+        }
+        return true;
     }
 }
