@@ -58,6 +58,7 @@ public class AC_ItemHookshot extends Item {
             onMainHand = false;
         }
 
+        // The hook exists if there is a reference, it is not removed, and it is on the current world.
         boolean mainHookExists = !(mainHook == null || mainHook.removed || mainHook.world != world);
         boolean offHookExists = !(offHook == null || offHook.removed || offHook.world != world);
         boolean playerIsSwimming = player.method_1335() || player.method_1393(); // In lava and water respectively.
