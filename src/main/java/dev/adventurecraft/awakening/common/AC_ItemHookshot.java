@@ -1,7 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
