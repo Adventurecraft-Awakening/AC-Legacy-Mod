@@ -669,7 +669,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
                                             this.overlay.addChatMessage("Resetting all blocks in loaded chunks");
                                         }
 
-                                    } else if (eventKey == Keyboard.KEY_F7 || (eventKey == Keyboard.KEY_E && isShiftPressed)) {
+                                    } else if (eventKey == Keyboard.KEY_F7 || (eventKey == this.options.inventoryKey.key && isShiftPressed)) {
                                         ((ExAbstractClientPlayerEntity) this.player).displayGUIPalette();
 
                                     } else if (eventKey == this.options.inventoryKey.key) {
