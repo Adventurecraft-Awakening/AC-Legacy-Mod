@@ -752,31 +752,32 @@ public class InventoryDebug implements Inventory {
         return var2;
     }
 
-    public void fillInventory(int var1) {
-        boolean var2 = false;
+    public void fillInventory(int firstBlockID) {
+        boolean firstItemSet = false;
         this.atEnd = false;
 
-        for (int var3 = 0; var3 < this.size; ++var3) {
-            int var4 = this.getID(var3 + var1);
-            if (Item.byId[var4] != null) {
-                this.inventoryContents[var3] = new ItemStack(Item.byId[var4], -64);
-                this.inventoryContents[var3].setMeta(this.getSubtype(var3 + var1));
-                this.lastItem = var3 + var1;
-                if (!var2) {
-                    this.firstItem = var3 + var1;
-                    var2 = true;
+        for (int relativeBlockID = 0; relativeBlockID < this.size; ++relativeBlockID) {
+            int currentBlockID = this.getID(relativeBlockID + firstBlockID);
+            Item currentBlockItem = Item.byId[currentBlockID];
+            if (currentBlockItem != null) {
+                this.inventoryContents[relativeBlockID] = new ItemStack(currentBlockItem, -64);
+                this.inventoryContents[relativeBlockID].setMeta(this.getSubtype(relativeBlockID + firstBlockID));
+                this.lastItem = relativeBlockID + firstBlockID;
+                if (!firstItemSet) {
+                    this.firstItem = relativeBlockID + firstBlockID;
+                    firstItemSet = true;
                 }
             } else {
-                if (var4 >= 31999) {
-                    for (this.atEnd = true; var3 < this.size; ++var3) {
-                        this.inventoryContents[var3] = null;
+                if (currentBlockID >= 31999) {
+                    for (this.atEnd = true; relativeBlockID < this.size; ++relativeBlockID) {
+                        this.inventoryContents[relativeBlockID] = null;
                     }
 
                     return;
                 }
 
-                --var3;
-                ++var1;
+                --relativeBlockID;
+                ++firstBlockID;
             }
         }
 
