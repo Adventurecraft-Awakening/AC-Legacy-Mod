@@ -628,6 +628,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
                             int eventKey = Keyboard.getEventKey();
                             boolean isShiftPressed = Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT);
+                            boolean isControlPressed = Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL);
 
                             if (eventKey == Keyboard.KEY_F11) {
                                 this.toggleFullscreen();
@@ -680,11 +681,12 @@ public abstract class MixinMinecraft implements ExMinecraft {
                                     } else if ((this.hasWorld() || AC_DebugMode.active) && eventKey == this.options.chatKey.key) {
                                         this.openScreen(new ChatScreen());
 
-                                    } else if (AC_DebugMode.active && (Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL))) {
-                                        if (eventKey == Keyboard.KEY_Z) {
+                                    } else if (AC_DebugMode.active && isControlPressed) {
+                                        if (eventKey == Keyboard.KEY_Z) { // Undo
                                             ServerCommands.cmdUndo(new ServerCommandSource(
                                                 (Minecraft) (Object) this, this.world, this.player), null);
-                                        } else if (eventKey == Keyboard.KEY_Y) {
+
+                                        } else if (eventKey == Keyboard.KEY_Y) { // Redo
                                             ServerCommands.cmdRedo(new ServerCommandSource(
                                                 (Minecraft) (Object) this, this.world, this.player), null);
                                         }
@@ -696,13 +698,13 @@ public abstract class MixinMinecraft implements ExMinecraft {
                                 while (true) {
                                     if (currentSlot >= 9) {
                                         if (eventKey == this.options.fogKey.key) {
-                                            this.options.setIntOption(Option.RENDER_DISTANCE, !Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) && !Keyboard.isKeyDown(Keyboard.KEY_RSHIFT) ? 1 : -1);
+                                            this.options.setIntOption(Option.RENDER_DISTANCE, !isShiftPressed ? 1 : -1);
                                         }
                                         break;
                                     }
 
                                     if (eventKey == Keyboard.KEY_1 + currentSlot) {
-                                        if (!Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) && !Keyboard.isKeyDown(Keyboard.KEY_RCONTROL)) {
+                                        if (!isControlPressed) {
                                             if (currentSlot == ((ExPlayerInventory) this.player.inventory).getOffhandItem()) {
                                                 ((ExPlayerInventory) this.player.inventory).setOffhandItem(this.player.inventory.selectedHotBarSlot);
                                             }
