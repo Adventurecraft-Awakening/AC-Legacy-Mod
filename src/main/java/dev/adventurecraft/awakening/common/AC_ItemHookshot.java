@@ -20,6 +20,22 @@ public class AC_ItemHookshot extends Item {
         this.maxStackSize = 1;
     }
 
+    /**
+     * Removes the existing hookshots and references to them.
+     * NOTE: Should this information be saved in the player entity instead for multiplayer purposes or future proofing?
+     *       Maybe as an implemented interface for extra cleanliness?
+     */
+    public void resetPlayerHookshotState() {
+        if (mainHookshot != null) {
+            mainHookshot.remove();
+            mainHookshot = null;
+        }
+        if (offHookshot != null) {
+            offHookshot.remove();
+            offHookshot = null;
+        }
+    }
+
     public boolean shouldSpinWhenRendering() {
         return true;
     }
