@@ -16,6 +16,18 @@ public class AC_ItemPowerGlove extends Item {
     }
 
     private FallingBlockEntity currentFallingBlock = null;
+
+    /**
+     * Uses the current item to push a given block.
+     * @param stack The current power glove item stack.
+     * @param player The player that is trying to move the block
+     * @param world The block in which the block is being moved
+     * @param x The x position of the block
+     * @param y The y position of the block
+     * @param z The z position of the block
+     * @param side The side from which the block was moved.
+     * @return false if the move operation was unsuccessful. Otherwise, true.
+     */
     @Override
     public boolean useOnBlock(ItemStack stack, PlayerEntity player, World world, int x, int y, int z, int side) {
         boolean currentBlockExists = currentFallingBlock != null && !currentFallingBlock.removed;
