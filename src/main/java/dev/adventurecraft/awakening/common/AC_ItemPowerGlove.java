@@ -34,9 +34,10 @@ public class AC_ItemPowerGlove extends Item {
         boolean currentBlockExists = currentFallingBlock != null && !currentFallingBlock.removed;
         if (currentBlockExists) {
             // Saving and exiting while the block is falling keeps the falling block entity saved to the item.
-            // The glove thinks there is a falling block, but it isn't on the current world.
-            // This means that the player cannot use the power glove until the game is reset.
-            // So we check if the currently tracked falling block is on this world.
+            // In this case, the glove thinks there is a falling block, but it isn't on the current world.
+            // This would mean that the player would not be able to use the power glove until the game is reset.
+            // So we check if the currently tracked falling block is on this world:
+            // If it is, do nothing (fail to push), if not, unset it and proceed with the push.
             if (currentFallingBlock.world == world) return false;
             else currentFallingBlock = null;
         }
