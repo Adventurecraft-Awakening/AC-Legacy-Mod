@@ -85,6 +85,10 @@ public class ScriptEntity {
     }
 
     public void setRotation(float yaw, float pitch) {
+        // Clamp previous values to prevent snapping.
+        this.entity.prevYaw %= 360.0f;
+        this.entity.prevPitch %= 360.0f;
+
         this.entity.setRotation(yaw, pitch);
     }
 
