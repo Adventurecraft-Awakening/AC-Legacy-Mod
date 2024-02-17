@@ -43,7 +43,7 @@ repositories {
 
 import org.gradle.internal.os.OperatingSystem
 
-project.ext.lwjglVersion = "3.3.2"
+project.ext.lwjglVersion = "3.3.3"
 switch (OperatingSystem.current()) {
     case OperatingSystem.LINUX:
         project.ext.lwjglNatives = "natives-linux"
@@ -87,7 +87,7 @@ dependencies {
 
     include(implementation('com.github.Chocohead:Fabric-ASM:v2.3'))
 
-    implementation 'com.google.guava:guava:31+'
+    implementation 'com.google.guava:guava:31.1-jre'
     implementation 'org.apache.commons:commons-lang3:3.12.0'
 
     implementation('it.unimi.dsi:fastutil-core:8.5.12')
