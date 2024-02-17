@@ -13,10 +13,18 @@ import org.spongepowered.asm.mixin.Shadow;
 public abstract class MixinTextureBinder implements AC_TextureBinder {
 
     @Shadow
+    public byte[] grid;
+
+    @Shadow
+    public boolean render3d;
+
+    @Shadow
     public int renderMode;
 
     @Shadow
-    public abstract void updateTexture();
+    public void updateTexture() {
+        throw new AssertionError();
+    }
 
     @Overwrite
     public void bindTexture(TextureManager var1) {

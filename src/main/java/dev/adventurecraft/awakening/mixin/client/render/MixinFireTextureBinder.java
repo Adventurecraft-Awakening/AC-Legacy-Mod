@@ -1,19 +1,16 @@
 package dev.adventurecraft.awakening.mixin.client.render;
 
-import dev.adventurecraft.awakening.client.render.AC_TextureBinder;
 import dev.adventurecraft.awakening.common.Vec2;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import net.minecraft.block.Block;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.render.FireTextureBinder;
-import net.minecraft.client.render.TextureBinder;
+import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 import java.awt.image.BufferedImage;
 
 @Mixin(FireTextureBinder.class)
-public abstract class MixinFireTextureBinder extends TextureBinder implements AC_TextureBinder {
+public class MixinFireTextureBinder extends MixinTextureBinder {
 
     @Shadow
     protected float[] currentFireFrame;
@@ -26,10 +23,6 @@ public abstract class MixinFireTextureBinder extends TextureBinder implements AC
     int[] frameImages;
     int width;
     int curFrame = 0;
-
-    public MixinFireTextureBinder(int var1) {
-        super(Block.FIRE.texture + var1 * 16);
-    }
 
     @Override
     public void onTick(Vec2 var1) {
@@ -191,26 +184,27 @@ public abstract class MixinFireTextureBinder extends TextureBinder implements AC
     }
 
     @Override
-    public void loadImage() {
-        loadImage("/custom_fire.png");
-    }
+    public void loadImage(String name, World world) {
+        if (name == null) {
+            name = "/custom_fire.png";
+        }
 
-    @Override
-    public void loadImage(String name) {
-        BufferedImage var1 = null;
-        if (Minecraft.instance.world != null) {
-            var1 = ((ExWorld) Minecraft.instance.world).loadMapTexture(name);
+        BufferedImage image = null;
+        if (world != null) {
+            image = ((ExWorld) world).loadMapTexture(name);
         }
 
         curFrame = 0;
-        if (var1 == null) {
+        if (image == null) {
             hasImages = false;
+            grid = null;
         } else {
-            width = var1.getWidth();
-            numFrames = var1.getHeight() / var1.getWidth();
-            frameImages = new int[var1.getWidth() * var1.getHeight()];
-            var1.getRGB(0, 0, var1.getWidth(), var1.getHeight(), frameImages, 0, var1.getWidth());
+            width = image.getWidth();
+            numFrames = image.getHeight() / image.getWidth();
+            frameImages = new int[image.getWidth() * image.getHeight()];
+            image.getRGB(0, 0, image.getWidth(), image.getHeight(), frameImages, 0, image.getWidth());
             hasImages = true;
+            grid = new byte[width * width * 4];
         }
     }
 }

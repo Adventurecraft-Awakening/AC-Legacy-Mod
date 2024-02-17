@@ -4,6 +4,7 @@ import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.render.block.FoliageColor;
 import net.minecraft.client.render.block.GrassColor;
+import net.minecraft.world.World;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -14,8 +15,8 @@ public interface ExGrassColor {
         return GrassColor.map[0];
     }
 
-    static void loadGrass(String fileName) {
-        BufferedImage var1 = ((ExWorld) Minecraft.instance.world).loadMapTexture(fileName);
+    static void loadGrass(String fileName, World world) {
+        BufferedImage var1 = ((ExWorld) world).loadMapTexture(fileName);
         if (var1 == null) {
             try {
                 var1 = ImageIO.read(FoliageColor.class.getResource(fileName));

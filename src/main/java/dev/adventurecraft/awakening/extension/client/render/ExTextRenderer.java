@@ -1,8 +1,10 @@
 package dev.adventurecraft.awakening.extension.client.render;
 
 import dev.adventurecraft.awakening.common.TextRect;
+import dev.adventurecraft.awakening.common.TextRendererState;
 import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.texture.TextureManager;
+import org.jetbrains.annotations.NotNull;
 
 public interface ExTextRenderer {
 
@@ -23,22 +25,27 @@ public interface ExTextRenderer {
         float x, float y, int color, boolean shadow) {
         this.drawText(
             text, start, end,
-            x, y, color, shadow, x + 1.0F, y + 1.0F, getShadowColor(color));
+            x, y, color, shadow, 1.0F, 1.0F, getShadowColor(color));
     }
 
     default void drawString(CharSequence text, float x, float y, int color, boolean shadow) {
         this.drawString(text, 0, text.length(), x, y, color, shadow);
     }
 
-    TextRect getTextWidth(CharSequence text, int start, int end, long maxWidth);
+    TextRendererState createState();
 
+    @NotNull
+    TextRect getTextWidth(CharSequence text, int start, int end, long maxWidth, boolean newLines);
+
+    @NotNull
     default TextRect getTextWidth(CharSequence text, int start, int end) {
-        return this.getTextWidth(text, start, end, Long.MAX_VALUE);
+        return this.getTextWidth(text, start, end, Long.MAX_VALUE, false);
     }
 
+    @NotNull
     default TextRect getTextWidth(CharSequence text, int start) {
         if (text == null) {
-            return null;
+            return TextRect.empty;
         }
         return this.getTextWidth(text, start, text.length());
     }

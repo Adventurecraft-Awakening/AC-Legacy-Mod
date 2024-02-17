@@ -98,8 +98,8 @@ public class AC_BlockEffect extends BlockWithEntity implements AC_ITriggerBlock 
     public static void revertTextures(World world) {
         ((ExTextureManager) Minecraft.instance.textureManager).revertTextures();
         if (needsReloadForRevert) {
-            ExGrassColor.loadGrass("/misc/grasscolor.png");
-            ExFoliageColor.loadFoliage("/misc/foliagecolor.png");
+            ExGrassColor.loadGrass("/misc/grasscolor.png", world);
+            ExFoliageColor.loadFoliage("/misc/foliagecolor.png", world);
             AC_TerrainImage.loadWaterMap(new File(((ExWorld) world).getLevelDir(), "watermap.png"));
             AC_TerrainImage.loadBiomeMap(new File(((ExWorld) world).getLevelDir(), "biomemap.png"));
             Minecraft.instance.worldRenderer.method_1148();
@@ -153,30 +153,30 @@ public class AC_BlockEffect extends BlockWithEntity implements AC_ITriggerBlock 
             needsReloadForRevert = true;
             return true;
         } else if (key.equals("/misc/grasscolor.png")) {
-            ExGrassColor.loadGrass(replacementName);
+            ExGrassColor.loadGrass(replacementName, world);
             needsReloadForRevert = true;
             return true;
         } else if (key.equals("/misc/foliagecolor.png")) {
-            ExFoliageColor.loadFoliage(replacementName);
+            ExFoliageColor.loadFoliage(replacementName, world);
             needsReloadForRevert = true;
             return true;
         } else if (key.equals("/custom_fire.png")) {
-            AC_TextureBinder.loadImages(texManager, FireTextureBinder.class, replacementName);
+            AC_TextureBinder.loadImages(texManager, FireTextureBinder.class, replacementName, world);
             return true;
         } else if (key.equals("/custom_lava_flowing.png")) {
-            AC_TextureBinder.loadImages(texManager, FlowingLavaTextureBinder2.class, replacementName);
+            AC_TextureBinder.loadImages(texManager, FlowingLavaTextureBinder2.class, replacementName, world);
             return true;
         } else if (key.equals("/custom_lava_still.png")) {
-            AC_TextureBinder.loadImages(texManager, FlowingLavaTextureBinder.class, replacementName);
+            AC_TextureBinder.loadImages(texManager, FlowingLavaTextureBinder.class, replacementName, world);
             return true;
         } else if (key.equals("/custom_portal.png")) {
-            AC_TextureBinder.loadImages(texManager, PortalTextureBinder.class, replacementName);
+            AC_TextureBinder.loadImages(texManager, PortalTextureBinder.class, replacementName, world);
             return true;
         } else if (key.equals("/custom_water_flowing.png")) {
-            AC_TextureBinder.loadImages(texManager, FlowingWaterTextureBinder.class, replacementName);
+            AC_TextureBinder.loadImages(texManager, FlowingWaterTextureBinder.class, replacementName, world);
             return true;
         } else if (key.equals("/custom_water_still.png")) {
-            AC_TextureBinder.loadImages(texManager, FlowingWaterTextureBinder2.class, replacementName);
+            AC_TextureBinder.loadImages(texManager, FlowingWaterTextureBinder2.class, replacementName, world);
             return true;
         } else {
             texManager.replaceTexture(keyName, replacementName);

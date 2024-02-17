@@ -20,7 +20,11 @@ public abstract class MixinSingleplayerInteractionManager extends MixinClientInt
     @Overwrite
     public boolean breakBlock(int x, int y, int z, int side) {
         AC_UndoStack undoStack = ((ExWorld) this.client.world).getUndoStack();
-        undoStack.startRecording();
+        boolean hasRecording = false;
+        if (!undoStack.isRecording()) {
+            undoStack.startRecording();
+            hasRecording = true;
+        }
         boolean broken = false;
 
         int destroyWidth = this.getDestroyExtraWidth();
@@ -46,7 +50,9 @@ public abstract class MixinSingleplayerInteractionManager extends MixinClientInt
             }
         }
 
-        undoStack.stopRecording();
+        if (hasRecording) {
+            undoStack.stopRecording();
+        }
         return broken;
     }
 

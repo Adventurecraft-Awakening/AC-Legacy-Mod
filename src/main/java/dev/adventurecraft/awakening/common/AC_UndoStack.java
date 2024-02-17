@@ -3,34 +3,37 @@ package dev.adventurecraft.awakening.common;
 import net.minecraft.util.io.CompoundTag;
 import net.minecraft.world.World;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 
 public class AC_UndoStack {
 
     public static final int MAX_UNDO = 128;
 
-    public boolean isRecording = false;
+    private boolean isRecording = false;
     public AC_UndoSelection selection = null;
-    public AC_EditAction firstAction = null;
-    public AC_EditAction lastAction = null;
-    public LinkedList<AC_EditAction> undoStack = new LinkedList<>();
-    public LinkedList<AC_EditAction> redoStack = new LinkedList<>();
+    public ArrayList<AC_EditAction> actionList = null;
+    public LinkedList<ArrayList<AC_EditAction>> undoStack = new LinkedList<>();
+    public LinkedList<ArrayList<AC_EditAction>> redoStack = new LinkedList<>();
     public LinkedList<AC_UndoSelection> undoSelectionStack = new LinkedList<>();
     public LinkedList<AC_UndoSelection> redoSelectionStack = new LinkedList<>();
 
     public void startRecording() {
-        assert !this.isRecording;
+        assert !this.isRecording();
 
         this.isRecording = true;
         this.selection = new AC_UndoSelection();
+        if (this.actionList == null) {
+            this.actionList = new ArrayList<>();
+        }
     }
 
     public void stopRecording() {
-        assert this.isRecording;
+        assert this.isRecording();
 
-        if (this.firstAction != null) {
+        if (this.actionList.size() != 0) {
             this.redoStack.clear();
-            this.undoStack.addLast(this.firstAction);
+            this.undoStack.addLast(this.actionList);
             if (this.undoStack.size() > MAX_UNDO) {
                 this.undoStack.removeFirst();
             }
@@ -41,12 +44,20 @@ public class AC_UndoStack {
                 this.undoSelectionStack.removeFirst();
             }
 
-            this.firstAction = null;
-            this.lastAction = null;
             this.selection = null;
+            this.actionList = null;
         }
 
         this.isRecording = false;
+    }
+
+    public void clear() {
+        assert !this.isRecording();
+
+        this.undoStack.clear();
+        this.redoStack.clear();
+        this.undoSelectionStack.clear();
+        this.redoSelectionStack.clear();
     }
 
     public boolean isRecording() {
@@ -54,27 +65,20 @@ public class AC_UndoStack {
     }
 
     public void recordChange(
-        int x, int y, int z,
+        int x, int y, int z, int cX, int cZ,
         int prevBlockId, int prevBlockMeta, CompoundTag prevNbt,
         int newBlockId, int newBlockMeta, CompoundTag newNbt) {
 
-        var newAction = new AC_EditAction(x, y, z, prevBlockId, prevBlockMeta, prevNbt, newBlockId, newBlockMeta, newNbt);
-        if (this.firstAction == null) {
-            this.firstAction = newAction;
-        } else {
-            for (AC_EditAction action = this.firstAction; action != null; action = action.nextAction) {
-                if (action.x == x && action.y == y && action.z == z) {
-                    action.newBlockID = newBlockId;
-                    action.newMetadata = newBlockMeta;
-                    action.newNBT = newNbt;
-                    return;
-                }
-            }
+        ArrayList<AC_EditAction> list = this.actionList;
+        int bX = x + (cX << 4);
+        int bZ = z + (cZ << 4);
 
-            this.lastAction.nextAction = newAction;
-        }
+        var newAction = new AC_EditAction(
+            bX, y, bZ,
+            prevBlockId, prevBlockMeta, prevNbt,
+            newBlockId, newBlockMeta, newNbt);
 
-        this.lastAction = newAction;
+        list.add(newAction);
     }
 
     public void undo(World world) {
@@ -82,9 +86,12 @@ public class AC_UndoStack {
             return;
         }
 
-        AC_EditAction action = this.undoStack.removeLast();
-        action.undo(world);
-        this.redoStack.addLast(action);
+        ArrayList<AC_EditAction> actionList = this.undoStack.removeLast();
+        for (int i = actionList.size() - 1; i >= 0; i--) {
+            AC_EditAction action = actionList.get(i);
+            action.undo(world);
+        }
+        this.redoStack.addLast(actionList);
         if (this.redoStack.size() > MAX_UNDO) {
             this.redoStack.removeFirst();
         }
@@ -102,9 +109,11 @@ public class AC_UndoStack {
             return;
         }
 
-        AC_EditAction action = this.redoStack.removeLast();
-        action.redo(world);
-        this.undoStack.addLast(action);
+        ArrayList<AC_EditAction> actionList = this.redoStack.removeLast();
+        for (AC_EditAction action : actionList) {
+            action.redo(world);
+        }
+        this.undoStack.addLast(actionList);
         if (this.undoStack.size() > MAX_UNDO) {
             this.undoStack.removeFirst();
         }
