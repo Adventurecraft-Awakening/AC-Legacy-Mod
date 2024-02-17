@@ -258,8 +258,11 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
         ACMainThread.glDebugContext = arguments.getExtraArgs().contains("--glDebugContext");
 
-        ACMainThread.glDebugTrace = ACMainThread.GlDebugTraceSeverity.valueOf(
-            arguments.getOrDefault("glDebugTraceSeverity", ACMainThread.GlDebugTraceSeverity.High.name()));
+        ACMainThread.glDebugLogSeverity = ACMainThread.GlDebugSeverity.valueOf(
+            arguments.getOrDefault("glDebugLogSeverity", ACMainThread.glDebugLogSeverity.name()));
+
+        ACMainThread.glDebugTraceSeverity = ACMainThread.GlDebugSeverity.valueOf(
+            arguments.getOrDefault("glDebugTraceSeverity", ACMainThread.glDebugTraceSeverity.name()));
 
         boolean fullscreen = arguments.getExtraArgs().contains("--fullscreen");
         int width = Integer.parseInt(arguments.getOrDefault("width", "854"));
