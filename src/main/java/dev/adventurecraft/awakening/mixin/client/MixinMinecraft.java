@@ -813,6 +813,10 @@ public abstract class MixinMinecraft implements ExMinecraft {
                 this.worldRenderer.method_1557();
             }
 
+            if (!this.paused || this.hasWorld()) {
+                ((ExWorld) this.world).ac$preTick();
+            }
+
             if (!this.paused) {
                 if (this.world.field_210 > 0) {
                     --this.world.field_210;

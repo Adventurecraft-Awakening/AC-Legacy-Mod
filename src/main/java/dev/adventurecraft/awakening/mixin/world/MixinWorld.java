@@ -1142,10 +1142,11 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         }
     }
 
-    @Overwrite
-    public void method_242() {
-        var props = (ExWorldProperties) this.properties;
+    @Override
+    public void ac$preTick() {
         if (this.firstTick) {
+            var props = (ExWorldProperties) this.properties;
+
             if (this.newSave && !props.getOnNewSaveScript().equals("")) {
                 this.scriptHandler.runScript(props.getOnNewSaveScript(), this.scope);
             }
@@ -1156,6 +1157,11 @@ public abstract class MixinWorld implements ExWorld, BlockView {
 
             this.firstTick = false;
         }
+    }
+
+    @Overwrite
+    public void method_242() {
+        var props = (ExWorldProperties) this.properties;
 
         ScriptModel.updateAll();
         if (!props.getOnUpdateScript().equals("")) {

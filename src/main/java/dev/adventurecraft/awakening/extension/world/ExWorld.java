@@ -32,6 +32,8 @@ public interface ExWorld {
 
     void loadMapMusic();
 
+    void ac$preTick();
+
     HitResult rayTraceBlocks2(
         Vec3d pointA, Vec3d pointB,
         boolean blockCollidableFlag, boolean useCollisionShapes, boolean collideWithClip);
