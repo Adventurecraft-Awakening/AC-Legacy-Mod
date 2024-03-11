@@ -15,7 +15,9 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 import paulscode.sound.SoundSystem;
 
 import java.net.URL;
@@ -120,5 +122,15 @@ public abstract class MixinSoundHelper implements ExSoundHelper {
     @Override
     public void addMusic(String id, URL url) {
         ((ExSoundMap) this.music).addSound(id, url);
+    }
+
+    @ModifyArgs(
+        method = "playSound*",
+        at = @At(
+            value = "INVOKE",
+            target = "Lpaulscode/sound/SoundSystem;newSource(ZLjava/lang/String;Ljava/net/URL;Ljava/lang/String;ZFFFIF)V"))
+    private void useUrlForSourceName(Args args) {
+        URL url = args.get(2);
+        args.set(3, url.toString());
     }
 }

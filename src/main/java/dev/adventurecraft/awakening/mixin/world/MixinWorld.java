@@ -1476,6 +1476,8 @@ public abstract class MixinWorld implements ExWorld, BlockView {
     }
 
     public void loadSoundOverrides() {
+        // TODO: unload sounds?
+
         Minecraft.instance.resourceDownloadThread.method_107();
         File var1 = new File(this.levelDir, "soundOverrides");
         if (var1.exists()) {
