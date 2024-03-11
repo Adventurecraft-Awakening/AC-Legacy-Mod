@@ -77,8 +77,6 @@ dependencies {
     // There are more archived versions on this website: https://www-archive.mozilla.org/rhino/rhino16r2
     implementation 'org.mozilla:rhino:1.7.14'
 
-    include(implementation(annotationProcessor("com.github.llamalad7.mixinextras:mixinextras-fabric:0.2.0-beta.6")))
-
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings "net.legacyfabric:beta-yarn:${project.yarn_version}"
     modImplementation "babric:fabric-loader:${project.loader_version}"
