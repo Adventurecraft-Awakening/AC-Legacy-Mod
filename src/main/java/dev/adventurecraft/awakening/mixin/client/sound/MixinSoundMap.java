@@ -27,10 +27,10 @@ public abstract class MixinSoundMap implements ExSoundMap {
     public boolean isRandomSound;
 
     @Overwrite
-    public SoundEntry addSound(String id, File file) {
+    public SoundEntry addSound(String name, File file) {
         try {
             URL url = file.toURI().toURL();
-            return this.addSound(id, url);
+            return this.addSound(name, url);
         } catch (MalformedURLException ex) {
             ex.printStackTrace();
             throw new RuntimeException(ex);
@@ -38,11 +38,10 @@ public abstract class MixinSoundMap implements ExSoundMap {
     }
 
     @Override
-    public SoundEntry addSound(String id, URL url) {
-        String var3 = id;
-        id = id.substring(0, id.indexOf("."));
+    public SoundEntry addSound(String name, URL url) {
+        String fileName = name.substring(0, name.indexOf(".")); // strip extension
 
-        String var4 = id;
+        String id = fileName;
         if (this.isRandomSound) {
             while (Character.isDigit(id.charAt(id.length() - 1))) {
                 id = id.substring(0, id.length() - 1);
@@ -56,13 +55,15 @@ public abstract class MixinSoundMap implements ExSoundMap {
 
         List<SoundEntry> entries = this.idToSounds.get(id);
         for (SoundEntry entry : entries) {
-            if (var4.equals(entry.soundName.substring(0, entry.soundName.indexOf(".")))) {
+            String entryName = entry.soundName.substring(0, entry.soundName.indexOf(".")); // strip extension
+            if (fileName.equals(entryName)) {
                 entries.remove(entry);
+                this.soundList.remove(entry);
                 break;
             }
         }
 
-        var newEntry = new SoundEntry(var3, url);
+        var newEntry = new SoundEntry(name, url);
         entries.add(newEntry);
         this.soundList.add(newEntry);
         ++this.count;
