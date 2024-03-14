@@ -102,9 +102,9 @@ public abstract class MixinAbstractClientPlayerEntity extends PlayerEntity imple
 
     @Override
     public void displayGUIPalette() {
-        InventoryDebug var1 = new InventoryDebug("Palette", 54);
-        var1.fillInventory(1);
-        this.client.openScreen(new AC_GuiPalette(this.inventory, var1));
+        InventoryDebug debugInventory = new InventoryDebug("Palette", 54);
+        debugInventory.fillInventory(1);
+        this.client.openScreen(new AC_GuiPalette(this.inventory, debugInventory));
     }
 
     @Overwrite

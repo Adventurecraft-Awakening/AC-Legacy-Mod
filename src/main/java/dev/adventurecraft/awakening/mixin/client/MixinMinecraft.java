@@ -541,6 +541,11 @@ public abstract class MixinMinecraft implements ExMinecraft {
         updateStoreGUI();
     }
 
+    /**
+     * @author Cryect
+     * (Kiroto added Javadoc)
+     * @reason Different things done on tick
+     */
     @Overwrite
     public void tick() {
         if (this.ticksPlayed == 6000) {
@@ -604,6 +609,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
                         }
 
                         while (true) {
+
                             do {
                                 if (!Keyboard.next()) {
                                     if (this.currentScreen == null || ((ExScreen) this.currentScreen).isDisabledInputGrabbing()) {
@@ -623,72 +629,67 @@ public abstract class MixinMinecraft implements ExMinecraft {
                                 this.player.method_136(Keyboard.getEventKey(), Keyboard.getEventKeyState());
                             } while (!Keyboard.getEventKeyState());
 
-                            if (Keyboard.getEventKey() == Keyboard.KEY_F11) {
+                            int eventKey = Keyboard.getEventKey();
+                            boolean isShiftPressed = Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT);
+                            boolean isControlPressed = Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL);
+
+                            if (eventKey == Keyboard.KEY_F11) {
                                 this.toggleFullscreen();
                             } else {
                                 if (this.currentScreen != null && !((ExScreen) this.currentScreen).isDisabledInputGrabbing()) {
                                     // TODO: fix doubled events (one for key press, one for text input)
                                     this.currentScreen.onKeyboardEvent();
                                 } else {
-                                    if (Keyboard.getEventKey() == Keyboard.KEY_ESCAPE) {
+                                    // Not compile time constants, else-if is a must.
+                                    // Trust me, I tried to use a switch here.
+                                    if (eventKey == Keyboard.KEY_ESCAPE) {
                                         this.openPauseMenu();
-                                    }
 
-                                    if (Keyboard.getEventKey() == Keyboard.KEY_S && Keyboard.isKeyDown(Keyboard.KEY_F3)) {
+                                    } else if (eventKey == Keyboard.KEY_S && Keyboard.isKeyDown(Keyboard.KEY_F3)) {
                                         this.forceResourceReload();
-                                    }
 
-                                    if (Keyboard.getEventKey() == Keyboard.KEY_F1) {
+                                    } else if (eventKey == Keyboard.KEY_F1) {
                                         this.options.hideHud = !this.options.hideHud;
-                                    }
 
-                                    if (Keyboard.getEventKey() == Keyboard.KEY_F3) {
+                                    } else if (eventKey == Keyboard.KEY_F3) {
                                         this.options.debugHud = !this.options.debugHud;
-                                    }
 
-                                    if (Keyboard.getEventKey() == Keyboard.KEY_F4) {
+                                    } else if (eventKey == Keyboard.KEY_F4) {
                                         AC_DebugMode.active = !AC_DebugMode.active;
                                         if (AC_DebugMode.active) {
                                             this.overlay.addChatMessage("Debug Mode Active");
                                         } else {
                                             this.overlay.addChatMessage("Debug Mode Deactivated");
                                         }
-
                                         ((ExWorldEventRenderer) this.worldRenderer).updateAllTheRenderers();
-                                    }
 
-                                    if (Keyboard.getEventKey() == Keyboard.KEY_F5) {
+                                    } else if (eventKey == Keyboard.KEY_F5) {
                                         this.options.thirdPerson = !this.options.thirdPerson;
-                                    }
 
-                                    if (Keyboard.getEventKey() == Keyboard.KEY_F6) {
+                                    } else if (eventKey == Keyboard.KEY_F6) {
                                         if (AC_DebugMode.active) {
                                             ((ExWorldEventRenderer) this.worldRenderer).resetAll();
                                             this.overlay.addChatMessage("Resetting all blocks in loaded chunks");
                                         }
-                                    }
 
-                                    if (Keyboard.getEventKey() == Keyboard.KEY_F7) {
+                                    } else if (eventKey == Keyboard.KEY_F7 || (eventKey == this.options.inventoryKey.key && isShiftPressed)) {
                                         ((ExAbstractClientPlayerEntity) this.player).displayGUIPalette();
-                                    }
 
-                                    if (Keyboard.getEventKey() == this.options.inventoryKey.key) {
+                                    } else if (eventKey == this.options.inventoryKey.key) {
                                         this.openScreen(new PlayerInventoryScreen(this.player));
-                                    }
 
-                                    if (Keyboard.getEventKey() == this.options.dropKey.key) {
+                                    } else if (eventKey == this.options.dropKey.key) {
                                         this.player.dropSelectedItem();
-                                    }
 
-                                    if ((this.hasWorld() || AC_DebugMode.active) && Keyboard.getEventKey() == this.options.chatKey.key) {
+                                    } else if ((this.hasWorld() || AC_DebugMode.active) && eventKey == this.options.chatKey.key) {
                                         this.openScreen(new ChatScreen());
-                                    }
 
-                                    if (AC_DebugMode.active && (Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL))) {
-                                        if (Keyboard.getEventKey() == Keyboard.KEY_Z) {
+                                    } else if (AC_DebugMode.active && isControlPressed) {
+                                        if (eventKey == Keyboard.KEY_Z) { // Undo
                                             ServerCommands.cmdUndo(new ServerCommandSource(
                                                 (Minecraft) (Object) this, this.world, this.player), null);
-                                        } else if (Keyboard.getEventKey() == Keyboard.KEY_Y) {
+
+                                        } else if (eventKey == Keyboard.KEY_Y) { // Redo
                                             ServerCommands.cmdRedo(new ServerCommandSource(
                                                 (Minecraft) (Object) this, this.world, this.player), null);
                                         }
@@ -699,14 +700,14 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
                                 while (true) {
                                     if (currentSlot >= 9) {
-                                        if (Keyboard.getEventKey() == this.options.fogKey.key) {
-                                            this.options.setIntOption(Option.RENDER_DISTANCE, !Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) && !Keyboard.isKeyDown(Keyboard.KEY_RSHIFT) ? 1 : -1);
+                                        if (eventKey == this.options.fogKey.key) {
+                                            this.options.setIntOption(Option.RENDER_DISTANCE, !isShiftPressed ? 1 : -1);
                                         }
                                         break;
                                     }
 
-                                    if (Keyboard.getEventKey() == Keyboard.KEY_1 + currentSlot) {
-                                        if (!Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) && !Keyboard.isKeyDown(Keyboard.KEY_RCONTROL)) {
+                                    if (eventKey == Keyboard.KEY_1 + currentSlot) {
+                                        if (!isControlPressed) {
                                             if (currentSlot == ((ExPlayerInventory) this.player.inventory).getOffhandItem()) {
                                                 ((ExPlayerInventory) this.player.inventory).setOffhandItem(this.player.inventory.selectedHotBarSlot);
                                             }
@@ -726,7 +727,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
                             }
 
                             if (this.world != null) {
-                                ((ExWorld) this.world).getScript().keyboard.processKeyPress(Keyboard.getEventKey());
+                                ((ExWorld) this.world).getScript().keyboard.processKeyPress(eventKey);
                             }
                         }
 
