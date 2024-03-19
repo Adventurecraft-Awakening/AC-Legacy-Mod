@@ -20,6 +20,22 @@ public class AC_ItemHookshot extends Item {
         this.maxStackSize = 1;
     }
 
+    /**
+     * Removes the existing hookshots and references to them.
+     * NOTE: Should this information be saved in the player entity instead for multiplayer purposes or future proofing?
+     *       Maybe as an implemented interface for extra cleanliness?
+     */
+    public void resetPlayerHookshotState() {
+        if (mainHookshot != null) {
+            mainHookshot.remove();
+            mainHookshot = null;
+        }
+        if (offHookshot != null) {
+            offHookshot.remove();
+            offHookshot = null;
+        }
+    }
+
     public boolean shouldSpinWhenRendering() {
         return true;
     }
@@ -29,24 +45,30 @@ public class AC_ItemHookshot extends Item {
     }
 
     public ItemStack use(ItemStack stack, World world, PlayerEntity player) {
-        boolean swapped;
+        boolean onMainHand;
         AC_EntityHookshot mainHook;
         AC_EntityHookshot offHook;
         if (!((ExPlayerEntity) player).areSwappedItems()) {
             mainHook = this.mainHookshot;
             offHook = this.offHookshot;
-            swapped = true;
+            onMainHand = true;
         } else {
             mainHook = this.offHookshot;
             offHook = this.mainHookshot;
-            swapped = false;
+            onMainHand = false;
         }
 
-        if ((mainHook == null || mainHook.removed) && (offHook != null && offHook.attachedToSurface || player.onGround || player.method_1335() || player.method_1393())) {
-            mainHook = new AC_EntityHookshot(world, player, swapped, stack);
+        // The hook exists if there is a reference, it is not removed, and it is on the current world.
+        boolean mainHookExists = !(mainHook == null || mainHook.removed || mainHook.world != world);
+        boolean offHookExists = !(offHook == null || offHook.removed || offHook.world != world);
+        boolean playerIsSwimming = player.method_1335() || player.method_1393(); // In lava and water respectively.
+        boolean playerInValidTerrain = (offHookExists && offHook.attachedToSurface) || player.onGround || playerIsSwimming;
+
+        if (!mainHookExists && playerInValidTerrain) {
+            mainHook = new AC_EntityHookshot(world, player, onMainHand, stack);
             world.spawnEntity(mainHook);
             player.swingHand();
-            if (swapped) {
+            if (onMainHand) {
                 this.mainActiveHookshot = stack;
                 this.mainActiveHookshot.setMeta(1);
             } else {
@@ -59,7 +81,7 @@ public class AC_ItemHookshot extends Item {
             this.releaseHookshot(mainHook);
         }
 
-        if (swapped) {
+        if (onMainHand) {
             this.mainHookshot = mainHook;
         } else {
             this.offHookshot = mainHook;

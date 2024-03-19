@@ -83,6 +83,7 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
 
     @Inject(method = "afterSpawn", at = @At("TAIL"))
     private void resetAfterSpawn(CallbackInfo ci) {
+        AC_Items.hookshot.resetPlayerHookshotState();
         this.removed = false;
         this.fireTicks = -this.field_1646;
     }
