@@ -454,7 +454,9 @@ public abstract class MixinWorld implements ExWorld, BlockView {
                             int y = Integer.parseInt(elements[4].trim());
                             int w = Integer.parseInt(elements[5].trim());
                             int h = Integer.parseInt(elements[6].trim());
-                            var instance = new AC_TextureAnimated(texName, imageName, x, y, w, h);
+                            var instance = new AC_TextureAnimated(texName, x, y, w, h);
+                            //noinspection DataFlowIssue
+                            ((AC_TextureBinder) instance).loadImage(imageName, (World) (Object) this);
                             texManager.registerTextureAnimation(animName, instance);
                         } catch (Exception var12) {
                             var12.printStackTrace();

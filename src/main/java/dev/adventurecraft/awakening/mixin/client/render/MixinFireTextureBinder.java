@@ -18,16 +18,10 @@ public class MixinFireTextureBinder extends MixinTextureBinder {
     @Shadow
     protected float[] lastFireFrame;
 
-    boolean hasImages;
-    int numFrames;
-    int[] frameImages;
-    int width;
-    int curFrame = 0;
-
     @Override
-    public void onTick(Vec2 var1) {
-        int var2 = var1.x / 16;
-        int var3 = var1.y / 16;
+    public void onTick(Vec2 size) {
+        int var2 = size.x / 16;
+        int var3 = size.y / 16;
         int var5;
         int var6;
         int var8;
@@ -40,6 +34,8 @@ public class MixinFireTextureBinder extends MixinTextureBinder {
         int var16;
         int var24;
         if (hasImages) {
+            this.imageData.clear();
+
             int var18 = var2 / width;
             var5 = curFrame * width * width;
             var6 = 0;
@@ -52,7 +48,7 @@ public class MixinFireTextureBinder extends MixinTextureBinder {
             if (!var20) {
                 for (var8 = 0; var8 < width; ++var8) {
                     for (var9 = 0; var9 < width; ++var9) {
-                        var10 = frameImages[var9 + var8 * width + var5];
+                        var10 = this.imageData.get(var9 + var8 * width + var5);
 
                         for (var24 = 0; var24 < var18; ++var24) {
                             for (var12 = 0; var12 < var18; ++var12) {
@@ -75,7 +71,7 @@ public class MixinFireTextureBinder extends MixinTextureBinder {
 
                         for (var14 = 0; var14 < var18; ++var14) {
                             for (var15 = 0; var15 < var18; ++var15) {
-                                var16 = frameImages[var9 * var18 + var14 + (var8 * var18 + var15) * width + var5];
+                                var16 = this.imageData.get(var9 * var18 + var14 + (var8 * var18 + var15) * width + var5);
                                 var10 += var16 >> 16 & 255;
                                 var24 += var16 >> 8 & 255;
                                 var12 += var16 & 255;
@@ -94,14 +90,14 @@ public class MixinFireTextureBinder extends MixinTextureBinder {
 
             curFrame = (curFrame + 1) % numFrames;
         } else {
-            var3 = var1.y / 16 * 20 / 16;
+            var3 = size.y / 16 * 20 / 16;
             if (this.currentFireFrame.length != var2 * var3) {
                 this.currentFireFrame = new float[var2 * var3];
                 this.lastFireFrame = new float[var2 * var3];
             }
 
-            float var4 = 1.0F + 15.36F / (float) var1.y;
-            var5 = var1.y / 256;
+            float var4 = 1.0F + 15.36F / (float) size.y;
+            var5 = size.y / 256;
             var6 = 14 + (var5 + 1) * (var5 + 1);
             byte var19;
             if (var5 >= 4) {
@@ -144,7 +140,7 @@ public class MixinFireTextureBinder extends MixinTextureBinder {
                 this.currentFireFrame = var21;
             }
 
-            var3 = var1.y / 16;
+            var3 = size.y / 16;
             var7 = var2 * var3;
 
             for (var8 = 0; var8 < var7; ++var8) {
@@ -189,22 +185,6 @@ public class MixinFireTextureBinder extends MixinTextureBinder {
             name = "/custom_fire.png";
         }
 
-        BufferedImage image = null;
-        if (world != null) {
-            image = ((ExWorld) world).loadMapTexture(name);
-        }
-
-        curFrame = 0;
-        if (image == null) {
-            hasImages = false;
-            grid = null;
-        } else {
-            width = image.getWidth();
-            numFrames = image.getHeight() / image.getWidth();
-            frameImages = new int[image.getWidth() * image.getHeight()];
-            image.getRGB(0, 0, image.getWidth(), image.getHeight(), frameImages, 0, image.getWidth());
-            hasImages = true;
-            grid = new byte[width * width * 4];
-        }
+        super.loadImage(name, world);
     }
 }

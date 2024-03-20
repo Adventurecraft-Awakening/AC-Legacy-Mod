@@ -1,5 +1,7 @@
 package dev.adventurecraft.awakening.script;
 
+import dev.adventurecraft.awakening.client.render.AC_TextureBinder;
+import dev.adventurecraft.awakening.common.AC_TextureAnimated;
 import dev.adventurecraft.awakening.common.LightHelper;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.ExTextureManager;
@@ -10,7 +12,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.particle.ParticleEntity;
 import net.minecraft.client.render.WorldEventRenderer;
 import dev.adventurecraft.awakening.common.AC_BlockEffect;
-import dev.adventurecraft.awakening.common.AC_TextureAnimated;
 import net.minecraft.world.World;
 
 @SuppressWarnings("unused")
@@ -102,12 +103,13 @@ public class ScriptEffect {
     }
 
     public void registerTextureAnimation(String animationName, String texName, String imageName, int x, int y, int width, int height) {
-        var animation = new AC_TextureAnimated(texName, imageName, x, y, width, height);
+        var animation = new AC_TextureAnimated(texName, x, y, width, height);
+        ((AC_TextureBinder) animation).loadImage(imageName, world);
         ((ExTextureManager) Minecraft.instance.textureManager).registerTextureAnimation(animationName, animation);
     }
 
-    public void unregisterTextureAnimation(String var1) {
-        ((ExTextureManager) Minecraft.instance.textureManager).unregisterTextureAnimation(var1);
+    public void unregisterTextureAnimation(String animationName) {
+        ((ExTextureManager) Minecraft.instance.textureManager).unregisterTextureAnimation(animationName);
     }
 
     public void explode(ScriptEntity entity, double x, double y, double z, float power, boolean causeFires) {
