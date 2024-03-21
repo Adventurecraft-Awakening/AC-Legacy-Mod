@@ -11,9 +11,9 @@ class AC_ItemBomb extends Item {
 		this.setTexturePosition(150);
 	}
 
-	public ItemStack use(ItemStack var1, World var2, PlayerEntity var3) {
-		--var1.count;
-		var2.spawnEntity(new AC_EntityBomb(var2, var3));
-		return var1;
+	public ItemStack use(ItemStack stack, World world, PlayerEntity player) {
+		--stack.count;
+		world.spawnEntity(new AC_EntityBomb(world, player));
+		return stack;
 	}
 }
