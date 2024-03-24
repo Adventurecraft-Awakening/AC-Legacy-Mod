@@ -110,7 +110,6 @@ public class AC_GuiPalette extends DoubleChestScreen {
                 if (button.isMouseOver(this.client, mouseX, mouseY)) {
                     this.prevButton = button;
                     this.client.soundHelper.playSound("random.click", 1.0F, 1.0F);
-                    this.buttonClicked(button);
                 }
             }
         }
