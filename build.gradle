@@ -75,7 +75,7 @@ dependencies {
 
     // Compiles rhino, our javascript dependency, releases can be found here: https://github.com/mozilla/rhino/releases
     // There are more archived versions on this website: https://www-archive.mozilla.org/rhino/rhino16r2
-    implementation 'org.mozilla:rhino:1.7.14'
+    implementation 'org.mozilla:rhino:1.7.15'
 
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings "net.legacyfabric:beta-yarn:${project.yarn_version}"
