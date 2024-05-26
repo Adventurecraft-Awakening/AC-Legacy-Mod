@@ -66,7 +66,9 @@ public abstract class MixinSoundHelper implements ExSoundHelper {
     public String getMusicFromStreaming() {
         if (Minecraft.instance.world != null) {
             // getPlayingMusic with substring 6 to get rid of "music." at the beginning the music name
-            return ((ExWorldProperties) Minecraft.instance.world.properties).getPlayingMusic().substring(6);
+            String curMusic = ((ExWorldProperties) Minecraft.instance.world.properties).getPlayingMusic();
+            curMusic = curMusic.length() <= 0 ? "" : curMusic.substring(6);
+            return curMusic;
         }
         else {
             return "";
