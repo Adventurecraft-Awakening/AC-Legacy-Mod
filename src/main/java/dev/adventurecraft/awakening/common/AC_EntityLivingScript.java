@@ -236,6 +236,7 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
         this.pathToVec = null;
         this.path = null;
         this.triggerOnPath = null;
+        this.forwardVelocity = 0.0F;
     }
 
     private void continuePathing() {
