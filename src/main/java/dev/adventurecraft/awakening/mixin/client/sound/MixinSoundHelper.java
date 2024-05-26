@@ -63,6 +63,16 @@ public abstract class MixinSoundHelper implements ExSoundHelper {
         soundSystem.setPosition("BgMusic", (float) var4, (float) var6, (float) var8);
     }
 
+    public String getMusicFromStreaming() {
+        if (Minecraft.instance.world != null) {
+            // getPlayingMusic with substring 6 to get rid of "music." at the beginning the music name
+            return ((ExWorldProperties) Minecraft.instance.world.properties).getPlayingMusic().substring(6);
+        }
+        else {
+            return "";
+        }
+    }
+
     @Override
     public void playMusicFromStreaming(String id, int var2, int var3) {
         if (!initialized) {

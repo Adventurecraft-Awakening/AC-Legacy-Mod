@@ -6,6 +6,8 @@ public interface ExSoundHelper {
 
     void playMusicFromStreaming(String id, int var2, int var3);
 
+    String getMusicFromStreaming();
+
     void stopMusic();
 
     void addSound(String id, URL url);
