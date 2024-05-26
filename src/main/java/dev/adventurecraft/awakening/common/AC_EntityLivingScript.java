@@ -187,6 +187,7 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
 
     private boolean runOnAttackedScript() {
         if (!this.onAttacked.equals("")) {
+            ((ExWorld) this.world).getScript().setNewScope(this.scope);
             Object result = ((ExWorld) this.world).getScriptHandler().runScript(this.onAttacked, this.scope);
             return result instanceof Boolean b ? b : true;
         } else {

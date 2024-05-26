@@ -138,6 +138,10 @@ public class Script {
         return var1;
     }
 
+    public void setNewScope(Scriptable pScope) {
+        this.curScope = pScope;
+    }
+
     public Object runScript(org.mozilla.javascript.Script script, Scriptable scope) {
         if (this.curScope != null) {
             return script.exec(this.cx, this.curScope);
