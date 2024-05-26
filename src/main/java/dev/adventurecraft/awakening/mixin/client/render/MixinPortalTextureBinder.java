@@ -23,12 +23,6 @@ public class MixinPortalTextureBinder extends MixinTextureBinder {
     @Shadow
     private byte[][] texture;
 
-    boolean hasImages;
-    int numFrames;
-    int[] frameImages;
-    int width;
-    int curFrame = 0;
-
     @Inject(method = "<init>", at = @At("TAIL"))
     private void initData(CallbackInfo ci) {
         this.generatePortalData(16, 16);
@@ -88,9 +82,9 @@ public class MixinPortalTextureBinder extends MixinTextureBinder {
     }
 
     @Override
-    public void onTick(Vec2 var1) {
-        int var2 = var1.x / 16;
-        int var3 = var1.y / 16;
+    public void onTick(Vec2 size) {
+        int var2 = size.x / 16;
+        int var3 = size.y / 16;
         int var4;
         int var6;
         int var8;
@@ -100,6 +94,8 @@ public class MixinPortalTextureBinder extends MixinTextureBinder {
         int var12;
         int var13;
         if (hasImages) {
+            this.imageData.clear();
+
             var4 = var2 / width;
             int var17 = curFrame * width * width;
             var6 = 0;
@@ -112,7 +108,7 @@ public class MixinPortalTextureBinder extends MixinTextureBinder {
             if (!var18) {
                 for (var8 = 0; var8 < width; ++var8) {
                     for (var9 = 0; var9 < width; ++var9) {
-                        var10 = frameImages[var9 + var8 * width + var17];
+                        var10 = this.imageData.get(var9 + var8 * width + var17);
 
                         for (var11 = 0; var11 < var4; ++var11) {
                             for (var12 = 0; var12 < var4; ++var12) {
@@ -135,7 +131,7 @@ public class MixinPortalTextureBinder extends MixinTextureBinder {
 
                         for (int var14 = 0; var14 < var4; ++var14) {
                             for (int var15 = 0; var15 < var4; ++var15) {
-                                int var16 = frameImages[var9 * var4 + var14 + (var8 * var4 + var15) * width + var17];
+                                int var16 = this.imageData.get(var9 * var4 + var14 + (var8 * var4 + var15) * width + var17);
                                 var10 += var16 >> 16 & 255;
                                 var11 += var16 >> 8 & 255;
                                 var12 += var16 & 255;
@@ -154,9 +150,9 @@ public class MixinPortalTextureBinder extends MixinTextureBinder {
 
             curFrame = (curFrame + 1) % numFrames;
         } else {
-            var4 = var1.x * var1.y / 256;
+            var4 = size.x * size.y / 256;
             if (this.texture[0].length != var4 * 4) {
-                this.generatePortalData(var1.x / 16, var1.y / 16);
+                this.generatePortalData(size.x / 16, size.y / 16);
             }
 
             ++this.updatesRan;
@@ -191,23 +187,7 @@ public class MixinPortalTextureBinder extends MixinTextureBinder {
             name = "/custom_portal.png";
         }
 
-        BufferedImage image = null;
-        if (world != null) {
-            image = ((ExWorld) world).loadMapTexture(name);
-        }
-
-        curFrame = 0;
-        if (image == null) {
-            hasImages = false;
-            grid = null;
-        } else {
-            width = image.getWidth();
-            numFrames = image.getHeight() / image.getWidth();
-            frameImages = new int[image.getWidth() * image.getHeight()];
-            image.getRGB(0, 0, image.getWidth(), image.getHeight(), frameImages, 0, image.getWidth());
-            hasImages = true;
-            grid = new byte[width * width * 4];
-        }
+        super.loadImage(name, world);
     }
 }
 

@@ -65,6 +65,8 @@ accessible field net/minecraft/entity/projectile/ArrowEntity blockZ I
 accessible field net/minecraft/entity/projectile/ArrowEntity inBlock I
 accessible field net/minecraft/entity/projectile/ArrowEntity ticksFlying I
 
+accessible field net/minecraft/entity/ItemEntity health I
+
 accessible field net/minecraft/client/render/block/BlockRenderer blockView Lnet/minecraft/world/BlockView;
 
 accessible field net/minecraft/client/render/GameRenderer field_2365 F

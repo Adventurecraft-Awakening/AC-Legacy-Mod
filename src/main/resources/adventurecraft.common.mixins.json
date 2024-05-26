@@ -4,6 +4,8 @@
   "package": "dev.adventurecraft.awakening.common.mixin",
   "compatibilityLevel": "JAVA_17",
   "client": [
+    "MixinAC_TextureAnimated",
+    "MixinAC_TextureFanFX"
   ],
   "injectors": {
     "defaultRequire": 1

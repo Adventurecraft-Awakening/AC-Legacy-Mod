@@ -25,16 +25,10 @@ public class MixinFlowingLavaTextureBinder extends MixinTextureBinder {
     @Shadow
     protected float[] field_2704;
 
-    boolean hasImages;
-    int numFrames;
-    int[] frameImages;
-    int width;
-    int curFrame = 0;
-
     @Override
-    public void onTick(Vec2 var1) {
-        int var2 = var1.x / 16;
-        int var3 = var1.y / 16;
+    public void onTick(Vec2 size) {
+        int var2 = size.x / 16;
+        int var3 = size.y / 16;
         int var4;
         int var5;
         int var6;
@@ -47,6 +41,8 @@ public class MixinFlowingLavaTextureBinder extends MixinTextureBinder {
         int var15;
         int var16;
         if (hasImages) {
+            this.imageData.clear();
+
             var4 = var2 / width;
             var5 = curFrame * width * width;
             var6 = 0;
@@ -60,7 +56,7 @@ public class MixinFlowingLavaTextureBinder extends MixinTextureBinder {
             if (!var18) {
                 for (var8 = 0; var8 < width; ++var8) {
                     for (var9 = 0; var9 < width; ++var9) {
-                        var20 = frameImages[var9 + var8 * width + var5];
+                        var20 = this.imageData.get(var9 + var8 * width + var5);
 
                         for (var11 = 0; var11 < var4; ++var11) {
                             for (var12 = 0; var12 < var4; ++var12) {
@@ -83,7 +79,7 @@ public class MixinFlowingLavaTextureBinder extends MixinTextureBinder {
 
                         for (var14 = 0; var14 < var4; ++var14) {
                             for (var15 = 0; var15 < var4; ++var15) {
-                                var16 = frameImages[var9 * var4 + var14 + (var8 * var4 + var15) * width + var5];
+                                var16 = this.imageData.get(var9 * var4 + var14 + (var8 * var4 + var15) * width + var5);
                                 var20 += var16 >> 16 & 255;
                                 var11 += var16 >> 8 & 255;
                                 var12 += var16 & 255;
@@ -183,22 +179,6 @@ public class MixinFlowingLavaTextureBinder extends MixinTextureBinder {
             name = "/custom_lava_still.png";
         }
 
-        BufferedImage image = null;
-        if (world != null) {
-            image = ((ExWorld) world).loadMapTexture(name);
-        }
-
-        curFrame = 0;
-        if (image == null) {
-            hasImages = false;
-            grid = null;
-        } else {
-            width = image.getWidth();
-            numFrames = image.getHeight() / image.getWidth();
-            frameImages = new int[image.getWidth() * image.getHeight()];
-            image.getRGB(0, 0, image.getWidth(), image.getHeight(), frameImages, 0, image.getWidth());
-            hasImages = true;
-            grid = new byte[width * width * 4];
-        }
+        super.loadImage(name, world);
     }
 }

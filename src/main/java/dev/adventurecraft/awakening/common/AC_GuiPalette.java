@@ -1,60 +1,118 @@
 package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.client.ExInteractionManager;
-import net.minecraft.client.gui.screen.container.DoubleChestScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.container.slot.Slot;
 import net.minecraft.inventory.Inventory;
+import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 
 import java.util.List;
 
-public class AC_GuiPalette extends DoubleChestScreen {
+public class AC_GuiPalette extends ScrollableContainerScreen {
 
-    private InventoryDebug palette;
-    GuiSlider2 extraWidth;
-    GuiSlider2 extraDepth;
-    private ButtonWidget prevButton;
+    private final InventoryDebug palette;
+    private final Inventory inv1;
+    private final Inventory inv2;
+    private final int slotHeight;
 
-    public AC_GuiPalette(Inventory var1, InventoryDebug var2) {
-        super(var1, var2);
-        this.palette = var2;
+    private GuiSlider2 extraWidth;
+    private GuiSlider2 extraDepth;
+    private ButtonWidget nextPageButton;
+    private ButtonWidget previousPageButton;
+
+    public AC_GuiPalette(Inventory playerInventory, InventoryDebug chestInventory, int slotHeight, int rowsPerPage) {
+        super(new ScrollableContainer(playerInventory, chestInventory, slotHeight), rowsPerPage);
+        this.inv1 = playerInventory;
+        this.inv2 = chestInventory;
+        this.palette = chestInventory;
+        this.slotHeight = slotHeight;
+
+        int yOffset = (this.rowsPerPage - 4) * slotHeight;
+        for (Slot slot : container.getStaticSlots()) {
+            slot.y += yOffset;
+        }
+
+        this.passEvents = false;
+        int n = 222;
+        int n2 = n - 108;
+        this.containerHeight = n2 + this.rowsPerPage * slotHeight;
     }
 
     @Override
     public void initVanillaScreen() {
         super.initVanillaScreen();
         var intMan = (ExInteractionManager) this.client.interactionManager;
-        this.extraDepth = new GuiSlider2(50, this.width / 2 + 2, 3, 10, String.format("Extra Depth: %d", intMan.getDestroyExtraDepth()), (float) intMan.getDestroyExtraDepth() / 16.0F);
-        this.extraWidth = new GuiSlider2(50, this.width / 2 - 2 - this.extraDepth.width, 3, 10, String.format("Extra Width: %d", intMan.getDestroyExtraWidth()), (float) intMan.getDestroyExtraWidth() / 5.0F);
+
+        int sliderID = 50; // Same for both for some reason
+
+        int slidersY = 3; // 3 units from the top
+        int containerMiddle = this.width / 2;
+
+        // Source is 2 units right from the middle
+        int extraDepthSliderX = containerMiddle + 2;
+        // Source is 2 units and a whole length from the middle, essentially anchoring to the right instead of left.
+        int extraWidthSliderX = containerMiddle - 2 - GuiSlider2.DEFAULT_WIDTH;
+
+        // Current config values
+        int destroyExtraDepth = intMan.getDestroyExtraDepth();
+        int destroyExtraWidth = intMan.getDestroyExtraWidth();
+
+        this.extraDepth = new GuiSlider2(sliderID, extraDepthSliderX, slidersY, 10, String.format("Extra Depth: %d", destroyExtraDepth), (float) destroyExtraDepth / 16.0F);
+        this.extraWidth = new GuiSlider2(sliderID, extraWidthSliderX, slidersY, 10, String.format("Extra Width: %d", destroyExtraWidth), (float) destroyExtraWidth / 5.0F);
+
+        int buttonId = 50;
+        int buttonsX = this.width / 2 + containerWidth / 2 + 4;
+        int heightMiddle = this.height / 2;
+        this.nextPageButton = new ButtonWidget(buttonId, buttonsX, heightMiddle + 30, 50, 20, "Next");
+        this.previousPageButton = new ButtonWidget(buttonId, buttonsX, heightMiddle, 50, 20, "Previous");
+
         this.buttons.add(this.extraDepth);
         this.buttons.add(this.extraWidth);
+
+        this.buttons.add(this.nextPageButton);
+        this.buttons.add(this.previousPageButton);
     }
 
     @Override
-    protected void keyPressed(char var1, int var2) {
-        super.keyPressed(var1, var2);
-        if (var2 == 65 && this.palette.firstItem > 1) {
-            this.palette.fillInventoryBackwards(this.palette.firstItem - 1);
-        } else if (var2 == 66 && !this.palette.atEnd) {
-            this.palette.fillInventory(this.palette.lastItem + 1);
+    protected void keyPressed(char keyCharacter, int keyCode) {
+        if (keyCode == Keyboard.KEY_F7) {
+            this.client.soundHelper.playSound("random.click", 1.0F, 1.0F);
+            goToPageRelative(-1);
+        } else if (keyCode == Keyboard.KEY_F8) {
+            this.client.soundHelper.playSound("random.click", 1.0F, 1.0F);
+            goToPageRelative(1);
+        } else {
+            super.keyPressed(keyCharacter, keyCode);
         }
     }
 
+    private void goToPageRelative(int count) {
+        double row = this.itemList.getScrollRow() / this.rowsPerPage;
+        if (count < 0)
+            row = Math.ceil(row);
+        else
+            row = Math.floor(row);
+
+        double newRow = (row + count) * this.rowsPerPage;
+        this.itemList.setScrollRow(newRow, false);
+    }
+
     @Override
-    public void render(int var1, int var2, float var3) {
-        super.render(var1, var2, var3);
+    public void render(int mouseX, int mouseY, float deltaTime) {
+        super.render(mouseX, mouseY, deltaTime);
         GL11.glPushMatrix();
         GL11.glDisable(GL11.GL_LIGHTING);
         GL11.glDisable(GL11.GL_DEPTH_TEST);
 
         for (ButtonWidget button : (List<ButtonWidget>) this.buttons) {
-            button.render(this.client, var1, var2);
+            button.render(this.client, mouseX, mouseY);
         }
 
         GL11.glEnable(GL11.GL_LIGHTING);
         GL11.glEnable(GL11.GL_DEPTH_TEST);
         GL11.glPopMatrix();
-        ExInteractionManager intMan = (ExInteractionManager) this.client.interactionManager;
+        var intMan = (ExInteractionManager) this.client.interactionManager;
         intMan.setDestroyExtraDepth((int) Math.min(16.0F * this.extraDepth.sliderValue, 15.0F));
         intMan.setDestroyExtraWidth((int) Math.min(5.0F * this.extraWidth.sliderValue, 4.0F));
         this.extraWidth.text = String.format("Extra Width: %d", intMan.getDestroyExtraWidth());
@@ -62,27 +120,28 @@ public class AC_GuiPalette extends DoubleChestScreen {
     }
 
     @Override
-    protected void mouseClicked(int mouseX, int mouseY, int mouseButton) {
-        if (mouseButton == 0) {
-            for (ButtonWidget button : (List<ButtonWidget>) this.buttons) {
-                if (button.isMouseOver(this.client, mouseX, mouseY)) {
-                    this.prevButton = button;
-                    this.client.soundHelper.playSound("random.click", 1.0F, 1.0F);
-                    this.buttonClicked(button);
-                }
-            }
+    protected void buttonClicked(ButtonWidget buttonWidget) {
+        if (buttonWidget == this.nextPageButton) {
+            goToPageRelative(1);
+        } else if (buttonWidget == this.previousPageButton) {
+            goToPageRelative(-1);
+        } else {
+            super.buttonClicked(buttonWidget);
         }
-
-        super.mouseClicked(mouseX, mouseY, mouseButton);
     }
 
-    @Override
-    protected void mouseReleased(int mouseX, int mouseY, int mouseButton) {
-        if (this.prevButton != null && mouseButton == 0) {
-            this.prevButton.mouseReleased(mouseX, mouseY);
-            this.prevButton = null;
-        }
+    protected void renderForeground() {
+        this.textRenderer.drawText(this.inv2.getContainerName(), 8, 6, 0x404040);
+        this.textRenderer.drawText(this.inv1.getContainerName(), 8, this.containerHeight - 96 + 2, 0x404040);
+    }
 
-        super.mouseReleased(mouseX, mouseY, mouseButton);
+    protected void renderContainerBackground(float f) {
+        int texId = this.client.textureManager.getTextureId("/gui/container.png");
+        GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+        this.client.textureManager.bindTexture(texId);
+        int x = (this.width - this.containerWidth) / 2;
+        int y = (this.height - this.containerHeight) / 2;
+        this.blit(x, y, 0, 0, this.containerWidth, this.rowsPerPage * slotHeight + 17);
+        this.blit(x, y + this.rowsPerPage * slotHeight + 17, 0, 126, this.containerWidth, 96);
     }
 }

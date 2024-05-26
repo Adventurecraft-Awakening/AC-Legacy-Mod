@@ -23,6 +23,7 @@ import org.lwjgl.opengl.GLContext;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -569,7 +570,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
         this.checkImageDataSize(size.x, size.y);
 
         int gridIndex = tileW * tileH * 4;
-        if (binder.grid == null) {
+        if (binder.grid == null || (binder.grid.length != 0 && binder.grid.length < gridIndex)) {
             binder.grid = new byte[gridIndex];
         }
     }
@@ -669,14 +670,18 @@ public abstract class MixinTextureManager implements ExTextureManager {
         this.textureAnimations.remove(animationName);
     }
 
+    @Unique
     public void updateTextureAnimations() {
-        for (AC_TextureAnimated tex : this.textureAnimations.values()) {
-            tex.onTick();
-            this.currentImageBuffer.clear();
-            this.currentImageBuffer.put(tex.imageData);
-            this.currentImageBuffer.position(0).limit(tex.imageData.length);
+        for (AC_TextureAnimated acBinder : this.textureAnimations.values()) {
+            var tex = (AC_TextureBinder) acBinder;
+            IntBuffer imgBuffer = tex.getBufferAtCurrentFrame();
+            if (imgBuffer == null) {
+                continue;
+            }
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.getTextureId(tex.getTexture()));
-            GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, tex.x, tex.y, tex.width, tex.height, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, this.currentImageBuffer);
+            GL11.glTexSubImage2D(
+                GL11.GL_TEXTURE_2D, 0, tex.getX(), tex.getY(), tex.getWidth(), tex.getHeight(),
+                GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, imgBuffer);
         }
     }
 

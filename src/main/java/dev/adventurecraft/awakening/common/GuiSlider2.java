@@ -5,12 +5,15 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import org.lwjgl.opengl.GL11;
 
 public class GuiSlider2 extends ButtonWidget {
+
+    public static int DEFAULT_WIDTH = 150;
+    public static int DEFAULT_HEIGHT = 20;
 	public float sliderValue;
 	public boolean dragging = false;
 
-	public GuiSlider2(int var1, int var2, int var3, int var4, String var5, float var6) {
-		super(var1, var2, var3, 150, 20, var5);
-		this.sliderValue = var6;
+	public GuiSlider2(int buttonID, int xPosition, int yPosition, int var4, String var5, float sliderValue) {
+		super(buttonID, xPosition, yPosition, DEFAULT_WIDTH, DEFAULT_HEIGHT, var5);
+		this.sliderValue = sliderValue;
 	}
 
 	protected int getHoverState(boolean var1) {

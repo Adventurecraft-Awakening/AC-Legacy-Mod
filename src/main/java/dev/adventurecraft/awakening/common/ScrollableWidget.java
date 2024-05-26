@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.MathF;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import net.minecraft.client.Minecraft;
@@ -36,6 +37,8 @@ public abstract class ScrollableWidget extends GuiElement {
     private int prevEntryIndex = -1;
     private long prevClickTime = 0L;
     private int contentTopPadding;
+    private int contentBotPadding;
+    private boolean renderEdgeShadows = true;
     private boolean isUsingScrollbar;
     private boolean isScrolling;
     private boolean firstFrame = true;
@@ -65,7 +68,7 @@ public abstract class ScrollableWidget extends GuiElement {
     protected abstract void entryClicked(int entryIndex, boolean doubleClick);
 
     protected int getTotalRenderHeight() {
-        return this.getEntryCount() * this.entryHeight + this.contentTopPadding;
+        return this.getEntryCount() * this.entryHeight + this.contentTopPadding + this.contentBotPadding;
     }
 
     protected abstract void renderEntry(
@@ -83,6 +86,14 @@ public abstract class ScrollableWidget extends GuiElement {
 
     public void setContentTopPadding(int value) {
         this.contentTopPadding = value;
+    }
+
+    public void setContentBotPadding(int value) {
+        this.contentBotPadding = value;
+    }
+
+    public void setRenderEdgeShadows(boolean value) {
+        this.renderEdgeShadows = value;
     }
 
     public void setScrollbarSize(int x, int width) {
@@ -129,6 +140,7 @@ public abstract class ScrollableWidget extends GuiElement {
             }
         }
         this.targetScrollY += amount;
+        ACMod.LOGGER.info("scroll Y: " + this.targetScrollY + ", amount: " + amount);
     }
 
     private double clampTargetScroll(double value, double totalHeight) {
@@ -246,7 +258,7 @@ public abstract class ScrollableWidget extends GuiElement {
         double lerpFactor = this.isUsingScrollbar ? 45 : 25;
         double deltaTime = ((ExMinecraft) this.client).getFrameTime();
         this.lerpScrollY = MathF.lerp(lerpFactor * deltaTime, this.lerpScrollY, this.targetScrollY);
-        this.scrollY = MathF.round(this.lerpScrollY, 3);
+        this.scrollY = Math.round(this.lerpScrollY);
         if (!this.isScrolling) {
             this.clampTargetScroll(totalHeight);
         }
@@ -280,22 +292,24 @@ public abstract class ScrollableWidget extends GuiElement {
         GL11.glDisable(GL11.GL_ALPHA_TEST);
         GL11.glDisable(GL11.GL_TEXTURE_2D);
 
-        int n4 = 4;
-        ts.start();
-        ts.color(0, 0);
-        ts.vertex(scrollBackLeft, contentTop + n4, 0.0, 0.0, 1.0);
-        ts.vertex(scrollBackRight, contentTop + n4, 0.0, 1.0, 1.0);
-        ts.color(0, 255);
-        ts.vertex(scrollBackRight, contentTop, 0.0, 1.0, 0.0);
-        ts.vertex(scrollBackLeft, contentTop, 0.0, 0.0, 0.0);
+        if (renderEdgeShadows) {
+            int n4 = 4;
+            ts.start();
+            ts.color(0, 0);
+            ts.vertex(scrollBackLeft, contentTop + n4, 0.0, 0.0, 1.0);
+            ts.vertex(scrollBackRight, contentTop + n4, 0.0, 1.0, 1.0);
+            ts.color(0, 255);
+            ts.vertex(scrollBackRight, contentTop, 0.0, 1.0, 0.0);
+            ts.vertex(scrollBackLeft, contentTop, 0.0, 0.0, 0.0);
 
-        ts.color(0, 255);
-        ts.vertex(scrollBackLeft, contentBot, 0.0, 0.0, 1.0);
-        ts.vertex(scrollBackRight, contentBot, 0.0, 1.0, 1.0);
-        ts.color(0, 0);
-        ts.vertex(scrollBackRight, contentBot - n4, 0.0, 1.0, 0.0);
-        ts.vertex(scrollBackLeft, contentBot - n4, 0.0, 0.0, 0.0);
-        ts.tessellate();
+            ts.color(0, 255);
+            ts.vertex(scrollBackLeft, contentBot, 0.0, 0.0, 1.0);
+            ts.vertex(scrollBackRight, contentBot, 0.0, 1.0, 1.0);
+            ts.color(0, 0);
+            ts.vertex(scrollBackRight, contentBot - n4, 0.0, 1.0, 0.0);
+            ts.vertex(scrollBackLeft, contentBot - n4, 0.0, 0.0, 0.0);
+            ts.tessellate();
+        }
 
         int n3 = totalHeight - (contentBot - contentTop);
         if (this.scrollbarWidth > 0 && n3 > 0) {
@@ -339,7 +353,7 @@ public abstract class ScrollableWidget extends GuiElement {
         GL11.glDisable(GL11.GL_BLEND);
     }
 
-    private void renderBackground(int topY, int botY, int topAlpha, int botAlpha) {
+    protected void renderBackground(int topY, int botY, int topAlpha, int botAlpha) {
         var ts = Tessellator.INSTANCE;
         float f = 32.0f;
         ts.color(0x404040, topAlpha);
@@ -383,11 +397,40 @@ public abstract class ScrollableWidget extends GuiElement {
         ts.vertex(left + borderSize, y + borderSize, 0.0, 0.0, 0.0);
     }
 
+    public int getContentTop() {
+        return this.contentTop;
+    }
+
+    public int getContentBot() {
+        return this.contentBot;
+    }
+
     public int getContentTopPadding() {
         return this.contentTopPadding;
     }
 
+    public int getContentBotPadding() {
+        return this.contentBotPadding;
+    }
+
     public double getScrollY() {
         return this.scrollY;
+    }
+
+    public void setScrollY(double value, boolean lerp) {
+        value = clampTargetScroll(value, getTotalRenderHeight());
+        this.targetScrollY = value;
+        if (!lerp) {
+            this.scrollY = value;
+            this.lerpScrollY = value;
+        }
+    }
+
+    public double getScrollRow() {
+        return this.targetScrollY / this.entryHeight;
+    }
+
+    public void setScrollRow(double row, boolean lerp) {
+        setScrollY(row * this.entryHeight, lerp);
     }
 }

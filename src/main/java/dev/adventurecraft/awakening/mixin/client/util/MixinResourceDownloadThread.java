@@ -6,6 +6,7 @@ import dev.adventurecraft.awakening.extension.client.util.ExResourceDownloadThre
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.util.ResourceDownloadThread;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -19,6 +20,9 @@ public abstract class MixinResourceDownloadThread implements ExResourceDownloadT
     @Shadow
     private Minecraft client;
 
+    @Shadow
+    public abstract void method_107();
+
     @WrapWithCondition(
         method = "method_108",
         at = @At(
@@ -29,8 +33,13 @@ public abstract class MixinResourceDownloadThread implements ExResourceDownloadT
         return fileName.toLowerCase().endsWith(".ogg");
     }
 
+    @Overwrite
+    public void run() {
+        method_107();
+    }
+
     @Inject(
-        method = {"run", "method_107"},
+        method = "method_107",
         at = @At(
             value = "INVOKE", target = "Lnet/minecraft/client/util/ResourceDownloadThread;method_108(Ljava/io/File;Ljava/lang/String;)V",
             shift = At.Shift.AFTER))

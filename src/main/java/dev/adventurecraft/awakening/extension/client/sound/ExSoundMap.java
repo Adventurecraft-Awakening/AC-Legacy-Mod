@@ -6,5 +6,5 @@ import java.net.URL;
 
 public interface ExSoundMap {
 
-    SoundEntry addSound(String id, URL url);
+    SoundEntry addSound(String name, URL url);
 }

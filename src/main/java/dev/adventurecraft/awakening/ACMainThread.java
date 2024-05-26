@@ -13,7 +13,8 @@ public final class ACMainThread extends Minecraft {
     public static File mapsDirectory;
 
     public static boolean glDebugContext;
-    public static GlDebugTraceSeverity glDebugTrace = GlDebugTraceSeverity.High;
+    public static GlDebugSeverity glDebugLogSeverity = GlDebugSeverity.All;
+    public static GlDebugSeverity glDebugTraceSeverity = GlDebugSeverity.High;
 
     public ACMainThread(int width, int height, boolean fullScreen) {
         super(null, null, null, width, height, fullScreen);
@@ -31,7 +32,7 @@ public final class ACMainThread extends Minecraft {
         return mapsDirectory;
     }
 
-    public enum GlDebugTraceSeverity {
+    public enum GlDebugSeverity {
         Ignore,
         High,
         Medium,

@@ -7,6 +7,7 @@ import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ProgressListener;
 import net.minecraft.world.World;
+import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Scriptable;
 
 import java.io.File;
@@ -87,6 +88,9 @@ public class AC_JScriptHandler {
                     } catch (IOException e) {
                         Minecraft.instance.overlay.addChatMessage("JS: " + e.getMessage());
                         ACMod.LOGGER.error("Failed to read script file \"{}\".", fileName, e);
+                    } catch (RhinoException e) {
+                        Minecraft.instance.overlay.addChatMessage("JS: " + e.getMessage());
+                        ACMod.LOGGER.error("Failed to parse script file \"{}\".", fileName, e);
                     }
                 }
 

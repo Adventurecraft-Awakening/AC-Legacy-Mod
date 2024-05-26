@@ -12,6 +12,7 @@ import net.minecraft.client.PlayerKeypressManager;
 import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
 import net.minecraft.client.util.Session;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -102,9 +103,10 @@ public abstract class MixinAbstractClientPlayerEntity extends PlayerEntity imple
 
     @Override
     public void displayGUIPalette() {
-        InventoryDebug var1 = new InventoryDebug("Palette", 54);
-        var1.fillInventory(1);
-        this.client.openScreen(new AC_GuiPalette(this.inventory, var1));
+        var debugInventory = new InventoryDebug("Palette", Item.byId.length);
+        debugInventory.fillInventory(1);
+
+        this.client.openScreen(new AC_GuiPalette(this.inventory, debugInventory, 18, 6));
     }
 
     @Overwrite

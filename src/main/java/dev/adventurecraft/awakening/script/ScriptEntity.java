@@ -6,10 +6,7 @@ import dev.adventurecraft.awakening.common.AC_UtilBullet;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.extension.entity.ExEntityRegistry;
 import net.minecraft.block.material.Material;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.FlyingEntity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MobEntity;
+import net.minecraft.entity.*;
 import net.minecraft.entity.animal.WolfEntity;
 import net.minecraft.entity.monster.MonsterEntity;
 import net.minecraft.entity.monster.SlimeEntity;
@@ -44,6 +41,7 @@ public class ScriptEntity {
         if (entity instanceof SlimeEntity e) return new ScriptEntitySlime(e);
         if (entity instanceof LivingEntity e) return new ScriptEntityLiving(e);
         if (entity instanceof ArrowEntity e) return new ScriptEntityArrow(e);
+        if (entity instanceof ItemEntity e) return new ScriptEntityItem(e);
         return new ScriptEntity(entity);
     }
 
@@ -85,6 +83,10 @@ public class ScriptEntity {
     }
 
     public void setRotation(float yaw, float pitch) {
+        // Clamp previous values to prevent snapping.
+        this.entity.prevYaw %= 360.0f;
+        this.entity.prevPitch %= 360.0f;
+
         this.entity.setRotation(yaw, pitch);
     }
 
@@ -131,7 +133,6 @@ public class ScriptEntity {
         } else {
             this.entity.startRiding(null);
         }
-
     }
 
     public ScriptEntity getMountedEntity() {
@@ -283,7 +284,7 @@ public class ScriptEntity {
     }
 
     public Object[] rayTrace(double aX, double aY, double aZ, double bX, double bY, double bZ) {
-       var result = new Object[3];
+        var result = new Object[3];
         HitResult hit = AC_UtilBullet.rayTrace(this.entity.world, this.entity, Vec3d.from(aX, aY, aZ), Vec3d.from(bX, bY, bZ));
         if (hit != null) {
             result[0] = new ScriptVec3(hit.field_1988.x, hit.field_1988.y, hit.field_1988.z);
