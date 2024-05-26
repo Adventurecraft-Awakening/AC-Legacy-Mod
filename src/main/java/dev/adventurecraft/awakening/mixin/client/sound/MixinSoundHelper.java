@@ -92,7 +92,12 @@ public abstract class MixinSoundHelper implements ExSoundHelper {
             if (this.currentSoundName.equals(entry.soundName)) {
                 return;
             }
-            soundSystem.fadeOutIn("BgMusic", entry.soundUrl, entry.soundName, var2, var3);
+            // In case there is no fadeIn and fadeOut value, just start playing the music (fadeOutIn doesn't work with 0 values)
+            if(var2 == 0 && var3 == 0){
+                soundSystem.backgroundMusic("BgMusic", entry.soundUrl, entry.soundName, true);
+            } else {
+                soundSystem.fadeOutIn("BgMusic", entry.soundUrl, entry.soundName, var2, var3);
+            }
         } else {
             soundSystem.backgroundMusic("BgMusic", entry.soundUrl, entry.soundName, true);
         }
