@@ -6,6 +6,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.io.CompoundTag;
 import net.minecraft.world.World;
@@ -15,49 +16,47 @@ import java.util.List;
 
 public class AC_EntityBoomerang extends Entity {
 
-    double bounceFactor;
-    float prevBoomerangRotation;
-    float boomerangRotation;
-    int timeBeforeTurnAround;
-    boolean turningAround;
-    Entity returnsTo;
-    ArrayList<ItemEntity> itemsPickedUp;
-    ItemStack itemStack;
-    int chunkX;
-    int chunkY;
-    int chunkZ;
+    private static final double VELOCITY_SPEED =0.5D;
+    private static final double BOUNCE_FACTOR =0.85D;
+    private static final float STANDING_EYE_HEIGHT = 0.03125F;
+    private final ArrayList<ItemEntity> itemsPickedUp = new ArrayList<>();
+    private boolean turningAround = true;
+    private Entity returnsTo = null;
+    private int ticksBeforeTurnAround = 0;
+    private int blockX = 0;
+    private int blockY = 0;
+    private int blockZ = 0;
+    public float prevBoomerangRotation;
+    public float boomerangRotation = 0.0F;
 
     public AC_EntityBoomerang(World world) {
         super(world);
         this.setSize(0.5F, 1.0F / 16.0F);
-        this.standingEyeHeight = 0.03125F;
-        this.bounceFactor = 0.85D;
-        this.boomerangRotation = 0.0F;
-        this.turningAround = true;
-        this.timeBeforeTurnAround = 0;
-        this.itemsPickedUp = new ArrayList<>();
+        this.standingEyeHeight = STANDING_EYE_HEIGHT;
+
         ((ExEntity) this).setCollidesWithClipBlocks(false);
     }
 
-    public AC_EntityBoomerang(World world, Entity returnsTo, ItemStack stack) {
+    public AC_EntityBoomerang(World world, Entity returnsTo) {
         this(world);
-        this.itemStack = stack;
+        this.returnsTo = returnsTo;
+        //this.itemStack = stack;
+
+        this.ticksBeforeTurnAround = 30;
+        this.turningAround = false;
+
+        //Entity positions/rotations
         this.setRotation(returnsTo.yaw, returnsTo.pitch);
         double xVel = -Math.sin(returnsTo.yaw * Math.PI / 180.0D);
         double zVel = Math.cos(returnsTo.yaw * Math.PI / 180.0D);
-        this.xVelocity = 0.5D * xVel * Math.cos(returnsTo.pitch / 180.0D * Math.PI);
-        this.yVelocity = -0.5D * Math.sin(returnsTo.pitch / 180.0D * Math.PI);
-        this.zVelocity = 0.5D * zVel * Math.cos(returnsTo.pitch / 180.0D * Math.PI);
+        this.xVelocity = VELOCITY_SPEED * xVel * Math.cos(returnsTo.pitch / 180.0D * Math.PI);
+        this.yVelocity = -VELOCITY_SPEED * Math.sin(returnsTo.pitch / 180.0D * Math.PI);
+        this.zVelocity = VELOCITY_SPEED * zVel * Math.cos(returnsTo.pitch / 180.0D * Math.PI);
         this.setPosition(returnsTo.x, returnsTo.y, returnsTo.z);
+
         this.prevX = this.x;
         this.prevY = this.y;
         this.prevZ = this.z;
-        this.timeBeforeTurnAround = 30;
-        this.turningAround = false;
-        this.returnsTo = returnsTo;
-        this.chunkX = (int) Math.floor(this.x);
-        this.chunkY = (int) Math.floor(this.y);
-        this.chunkZ = (int) Math.floor(this.z);
     }
 
     @Override
@@ -90,12 +89,12 @@ public class AC_EntityBoomerang extends Entity {
             }
 
             if (bounced) {
-                this.xVelocity *= this.bounceFactor;
-                this.yVelocity *= this.bounceFactor;
-                this.zVelocity *= this.bounceFactor;
+                this.xVelocity *= BOUNCE_FACTOR;
+                this.yVelocity *= BOUNCE_FACTOR;
+                this.zVelocity *= BOUNCE_FACTOR;
             }
 
-            if (this.timeBeforeTurnAround-- <= 0) {
+            if (this.ticksBeforeTurnAround-- <= 0) {
                 this.turningAround = true;
             }
         } else if (this.returnsTo != null) {
@@ -103,16 +102,18 @@ public class AC_EntityBoomerang extends Entity {
             double rY = this.returnsTo.y - this.y;
             double rZ = this.returnsTo.z - this.z;
             double dist = Math.sqrt(rX * rX + rY * rY + rZ * rZ);
-            if (dist < 1.5D) {
+
+            if (dist < 1.5D || dist > 25.0D) {
                 this.remove();
             }
 
-            this.xVelocity = 0.5D * rX / dist;
-            this.yVelocity = 0.5D * rY / dist;
-            this.zVelocity = 0.5D * rZ / dist;
+            this.xVelocity = VELOCITY_SPEED * rX / dist;
+            this.yVelocity = VELOCITY_SPEED * rY / dist;
+            this.zVelocity = VELOCITY_SPEED * rZ / dist;
             this.setPosition(this.x + this.xVelocity, this.y + this.yVelocity, this.z + this.zVelocity);
         } else {
             this.remove();
+            return;
         }
 
         this.determineRotation();
@@ -127,7 +128,9 @@ public class AC_EntityBoomerang extends Entity {
         for (Entity entity : entities) {
             if (entity instanceof ItemEntity itemEntity) {
                 this.itemsPickedUp.add(itemEntity);
-            } else if (entity instanceof LivingEntity && entity != this.returnsTo) {
+                continue;
+            }
+            if (entity instanceof LivingEntity && entity != this.returnsTo) {
                 ((ExEntity) entity).setStunned(20);
                 entity.prevX = entity.x;
                 entity.prevY = entity.y;
@@ -143,16 +146,18 @@ public class AC_EntityBoomerang extends Entity {
             }
         }
 
-        int cX = (int) Math.floor(this.x);
-        int cY = (int) Math.floor(this.y);
-        int cZ = (int) Math.floor(this.z);
-        if (cX != this.chunkX || cY != this.chunkY || cZ != this.chunkZ) {
-            this.chunkX = cX;
-            this.chunkY = cY;
-            this.chunkZ = cZ;
-            int id = this.world.getBlockId(this.chunkX, this.chunkY, this.chunkZ);
+        int bX = (int) Math.floor(this.x);
+        int bY = (int) Math.floor(this.y);
+        int bZ = (int) Math.floor(this.z);
+        if (bX != this.blockX ||
+            bY != this.blockY ||
+            bZ != this.blockZ) {
+            this.blockX = bX;
+            this.blockY = bY;
+            this.blockZ = bZ;
+            int id = this.world.getBlockId(this.blockX, this.blockY, this.blockZ);
             if (id == Block.LEVER.id && this.returnsTo instanceof PlayerEntity player) {
-                Block.LEVER.canUse(this.world, this.chunkX, this.chunkY, this.chunkZ, player);
+                Block.LEVER.canUse(this.world, this.blockX, this.blockY, this.blockZ, player);
             }
         }
     }
@@ -160,12 +165,43 @@ public class AC_EntityBoomerang extends Entity {
     @Override
     public void remove() {
         super.remove();
-        if (this.itemStack != null) {
-            this.itemStack.setMeta(0);
+        if(this.returnsTo == null){
+            return;
+        }
+        if(!(this.returnsTo instanceof PlayerEntity)){
+            return;
+        }
+        for (PlayerEntity player : (List<PlayerEntity>) world.players) {
+            PlayerInventory playerInventory = player.inventory;
+            //checks if the player still holds the item on the cursor
+            if(playerInventory.getCursorItem() != null){
+                ItemStack cursorItemStack = playerInventory.getCursorItem();
+                if(setBoomerangMeta(cursorItemStack)){
+                    break;
+                }
+            }
+
+            //searching if the boomerang is still somewhere in the inventory
+            for(ItemStack itemStacks : playerInventory.main){
+                if(itemStacks == null){
+                    continue;
+                }
+                if(setBoomerangMeta(itemStacks)){
+                    break;
+                }
+            }
         }
     }
 
-    public void determineRotation() {
+    private boolean setBoomerangMeta(ItemStack itemStack){
+        if(itemStack.itemId == 456 && itemStack.getMeta() > 0){
+            itemStack.setMeta(0);
+            return true;
+        }
+        return false;
+    }
+
+    private void determineRotation() {
         this.yaw = (float) (-57.29578D * Math.atan2(this.xVelocity, this.zVelocity));
         double speed = Math.sqrt(this.zVelocity * this.zVelocity + this.xVelocity * this.xVelocity);
         this.pitch = (float) (-57.29578D * Math.atan2(this.yVelocity, speed));

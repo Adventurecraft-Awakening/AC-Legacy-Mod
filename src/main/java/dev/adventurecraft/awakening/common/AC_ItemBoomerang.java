@@ -6,6 +6,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 
 class AC_ItemBoomerang extends Item {
+
 	public AC_ItemBoomerang(int var1) {
 		super(var1);
 		this.setTexturePosition(144);
@@ -18,12 +19,12 @@ class AC_ItemBoomerang extends Item {
 		return var1 == 0 ? this.texturePosition : 165;
 	}
 
-	public ItemStack use(ItemStack var1, World var2, PlayerEntity var3) {
-		if(var1.getMeta() == 0) {
-			var2.spawnEntity(new AC_EntityBoomerang(var2, var3, var1));
-			var1.setMeta(1);
+	public ItemStack use(ItemStack itemStack, World world, PlayerEntity playerEntity) {
+		if(itemStack.getMeta() == 0) {
+			world.spawnEntity(new AC_EntityBoomerang(world, playerEntity));
+			itemStack.setMeta(1);
 		}
 
-		return var1;
+		return itemStack;
 	}
 }
