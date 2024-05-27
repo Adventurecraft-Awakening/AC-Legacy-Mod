@@ -148,7 +148,13 @@ public class AC_BlockTrigger extends BlockWithEntity implements AC_ITriggerBlock
                 ExBlock.resetArea(world, tileEntity.minX, tileEntity.minY, tileEntity.minZ, tileEntity.maxX, tileEntity.maxY, tileEntity.maxZ);
             }
         }
-        tileEntity.activated = 2;
+        // If player is dead, set activated to 0 so that the triggerArea can be removed!
+        if (((PlayerEntity) entity).health <= 0){
+            tileEntity.activated = 0;
+        }
+        else {
+            tileEntity.activated = 2;
+        }
     }
 
     public void deactivateTrigger(World world, int x, int y, int z) {
