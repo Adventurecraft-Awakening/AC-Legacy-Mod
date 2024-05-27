@@ -141,7 +141,11 @@ public class AC_BlockTrigger extends BlockWithEntity implements AC_ITriggerBlock
         }
 
         var tileEntity = (AC_TileEntityTrigger) world.getBlockEntity(x, y, z);
-        if (!this.isAlreadyActivated(world, x, y, z)) {
+        // Treat trigger blocks with no set as if they are not trigger blocks
+        if(!tileEntity.isSet()){
+            return;
+        }
+        else if (!this.isAlreadyActivated(world, x, y, z)) {
             if (!tileEntity.resetOnTrigger) {
                 ((ExWorld) world).getTriggerManager().addArea(x, y, z, new AC_TriggerArea(tileEntity.minX, tileEntity.minY, tileEntity.minZ, tileEntity.maxX, tileEntity.maxY, tileEntity.maxZ));
             } else {
@@ -217,7 +221,6 @@ public class AC_BlockTrigger extends BlockWithEntity implements AC_ITriggerBlock
 
     @Override
     public boolean canUse(World world, int x, int y, int z, PlayerEntity player) {
-        // #79 place trigger blocks on trigger blocks + #5 open trigger gui with hand or cursor, everything else (see else) places the block
         if (AC_DebugMode.active  && (player.getHeldItem() == null || player.getHeldItem().itemId == AC_Items.cursor.id)) {
             var entity = (AC_TileEntityTrigger) world.getBlockEntity(x, y, z);
             AC_GuiTrigger.showUI(world, x, y, z, entity);
