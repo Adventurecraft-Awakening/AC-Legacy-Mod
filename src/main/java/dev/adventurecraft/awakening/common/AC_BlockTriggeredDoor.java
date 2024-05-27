@@ -22,7 +22,7 @@ public class AC_BlockTriggeredDoor extends Block implements AC_ITriggerBlock {
 
     @Override
     public boolean isCollidable() {
-        return AC_DebugMode.active;
+        return true;
     }
 
     @Override
