@@ -148,9 +148,9 @@ public class AC_BlockTrigger extends BlockWithEntity implements AC_ITriggerBlock
                 ExBlock.resetArea(world, tileEntity.minX, tileEntity.minY, tileEntity.minZ, tileEntity.maxX, tileEntity.maxY, tileEntity.maxZ);
             }
         }
-        // If player is dead, set activated to 0 so that the triggerArea can be removed!
+        // If player is dead, set activated to 1 so that the triggerArea can be removed in AC_TileEntityTrigger!
         if (((PlayerEntity) entity).health <= 0){
-            tileEntity.activated = 0;
+            tileEntity.activated = 1;
         }
         else {
             tileEntity.activated = 2;
@@ -217,9 +217,13 @@ public class AC_BlockTrigger extends BlockWithEntity implements AC_ITriggerBlock
 
     @Override
     public boolean canUse(World world, int x, int y, int z, PlayerEntity player) {
-        if (AC_DebugMode.active && player.getHeldItem() != null && player.getHeldItem().itemId == AC_Items.cursor.id) {
+        // #79 place trigger blocks on trigger blocks + #5 open trigger gui with hand or cursor, everything else (see else) places the block
+        if (AC_DebugMode.active  && (player.getHeldItem() == null || player.getHeldItem().itemId == AC_Items.cursor.id)) {
             var entity = (AC_TileEntityTrigger) world.getBlockEntity(x, y, z);
             AC_GuiTrigger.showUI(world, x, y, z, entity);
+        }
+        else {
+            return false;
         }
         return true;
     }
