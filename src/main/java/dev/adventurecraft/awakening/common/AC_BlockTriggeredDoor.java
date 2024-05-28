@@ -10,6 +10,7 @@ import net.minecraft.world.World;
 
 public class AC_BlockTriggeredDoor extends Block implements AC_ITriggerBlock {
 
+    private boolean isActived = false;
     protected AC_BlockTriggeredDoor(int var1) {
         super(var1, Material.WOOD);
         this.texture = 208;
@@ -22,7 +23,7 @@ public class AC_BlockTriggeredDoor extends Block implements AC_ITriggerBlock {
 
     @Override
     public boolean isCollidable() {
-        return true;
+        return AC_DebugMode.active || this.isActived;
     }
 
     @Override
@@ -47,11 +48,13 @@ public class AC_BlockTriggeredDoor extends Block implements AC_ITriggerBlock {
     public void onTriggerActivated(World world, int x, int y, int z) {
         world.playSound((double) x + 0.5D, (double) y + 0.5D, (double) z + 0.5D, "random.door_open", 1.0F, world.rand.nextFloat() * 0.1F + 0.9F);
         world.notifyListeners(x, y, z);
+        this.isActived = true;
     }
 
     @Override
     public void onTriggerDeactivated(World world, int x, int y, int z) {
         world.playSound((double) x + 0.5D, (double) y + 0.5D, (double) z + 0.5D, "random.door_close", 1.0F, world.rand.nextFloat() * 0.1F + 0.9F);
         world.notifyListeners(x, y, z);
+        this.isActived = false;
     }
 }
