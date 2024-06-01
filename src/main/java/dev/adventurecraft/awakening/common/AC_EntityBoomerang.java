@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
+import dev.adventurecraft.awakening.mixin.entity.MixinEntity;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
@@ -10,9 +11,11 @@ import net.minecraft.inventory.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.io.CompoundTag;
 import net.minecraft.world.World;
+import org.lwjgl.Sys;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class AC_EntityBoomerang extends Entity {
 
@@ -34,7 +37,8 @@ public class AC_EntityBoomerang extends Entity {
         this.setSize(0.5F, 1.0F / 16.0F);
         this.standingEyeHeight = STANDING_EYE_HEIGHT;
 
-        ((ExEntity) this).setCollidesWithClipBlocks(false);
+        ExEntity entity = (ExEntity)this;
+        entity.setCollidesWithClipBlocks(true);
     }
 
     public AC_EntityBoomerang(World world, Entity returnsTo) {
@@ -70,6 +74,7 @@ public class AC_EntityBoomerang extends Entity {
             double velX = this.xVelocity;
             double velY = this.yVelocity;
             double velZ = this.zVelocity;
+
             this.move(this.xVelocity, this.yVelocity, this.zVelocity);
 
             boolean bounced = false;
@@ -121,6 +126,8 @@ public class AC_EntityBoomerang extends Entity {
 
         this.boomerangRotation += 36.0F;
         while (this.boomerangRotation > 360.0F) {
+
+            this.prevBoomerangRotation -= 360.0F;
             this.boomerangRotation -= 360.0F;
         }
 
@@ -190,6 +197,19 @@ public class AC_EntityBoomerang extends Entity {
                     break;
                 }
             }
+        }
+        List<Entity> entities = this.world.getEntities(this, this.boundingBox.expand(0.5D, 0.5D, 0.5D));
+        for (Entity entity : entities) {
+            if(entity == null){
+                continue;
+            }
+            if(!(entity instanceof ItemEntity itemEntity)){
+                continue;
+            }
+            if(itemEntity.stack == null){
+                return;
+            }
+            setBoomerangMeta(itemEntity.stack);
         }
     }
 
