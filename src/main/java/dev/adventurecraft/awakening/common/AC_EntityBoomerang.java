@@ -19,8 +19,8 @@ import java.util.logging.Logger;
 
 public class AC_EntityBoomerang extends Entity {
 
-    private static final double VELOCITY_SPEED =0.5D;
-    private static final double BOUNCE_FACTOR =0.85D;
+    private static final double VELOCITY_SPEED = 0.5D;
+    private static final double BOUNCE_FACTOR = 0.85D;
     private static final float STANDING_EYE_HEIGHT = 0.03125F;
     private final ArrayList<ItemEntity> itemsPickedUp = new ArrayList<>();
     private boolean turningAround = true;
@@ -39,6 +39,7 @@ public class AC_EntityBoomerang extends Entity {
 
         ExEntity entity = (ExEntity)this;
         entity.setCollidesWithClipBlocks(true);
+        entity.setIgnoreCobwebCollision(true);
     }
 
     public AC_EntityBoomerang(World world, Entity returnsTo) {
@@ -57,6 +58,7 @@ public class AC_EntityBoomerang extends Entity {
         this.yVelocity = -VELOCITY_SPEED * Math.sin(returnsTo.pitch / 180.0D * Math.PI);
         this.zVelocity = VELOCITY_SPEED * zVel * Math.cos(returnsTo.pitch / 180.0D * Math.PI);
         this.setPosition(returnsTo.x, returnsTo.y, returnsTo.z);
+        this.determineRotation();
 
         this.prevX = this.x;
         this.prevY = this.y;
