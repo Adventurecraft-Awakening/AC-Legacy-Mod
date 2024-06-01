@@ -65,6 +65,8 @@ public abstract class MixinEntity implements ExEntity {
     @Shadow
     public boolean field_1624;
     @Shadow
+    public boolean inCobweb;
+    @Shadow
     public boolean removed;
     @Shadow
     public float standingEyeHeight;
@@ -91,6 +93,7 @@ public abstract class MixinEntity implements ExEntity {
     @Shadow
     public int air;
 
+    public boolean ignoreCobwebCollision = false;
     public boolean isFlying;
     public int stunned;
     public boolean collidesWithClipBlocks = true;
@@ -129,6 +132,13 @@ public abstract class MixinEntity implements ExEntity {
     @Shadow
     public abstract void move(double d, double e, double f);
 
+    @Inject(method = "move", at = @At(value = "HEAD"))
+    private void collideWithCobweb(CallbackInfo ci) {
+        if (this.inCobweb && isIgnoreCobwebCollision()) {
+            this.inCobweb = false;
+        }
+    }
+
     @Shadow
     public abstract ItemEntity dropItem(int i, int j);
 
@@ -141,8 +151,8 @@ public abstract class MixinEntity implements ExEntity {
     @Shadow
     public abstract boolean method_1344(double d, double e, double f);
 
-    @Shadow
-    public abstract boolean method_1373();
+    @Shadow(aliases = "method_1373")//@TODO figure out what this method actually do/mean
+    public abstract boolean isSneaking();
 
     @Shadow
     public abstract float distanceTo(Entity arg);
@@ -163,20 +173,19 @@ public abstract class MixinEntity implements ExEntity {
         @Local(ordinal = 7) double var15) {
         this.collisionX = Double.compare(var11, var1);
 
-        int var22;
-        boolean var38;
-        int var39;
+        int yPos;
+        boolean isCollidingWithBlock = false;
+        int blockId;
         if (this.collisionX != 0) {
-            var38 = false;
-
-            for (var22 = 0; (double) var22 < (double) this.height + this.y - (double) this.standingEyeHeight - Math.floor(this.y - (double) this.standingEyeHeight); ++var22) {
-                var39 = this.world.getBlockId((int) Math.floor(this.x) + this.collisionX, (int) Math.floor(this.y + (double) var22 - (double) this.standingEyeHeight), (int) Math.floor(this.z));
-                if (var39 != 0 && var39 != AC_Blocks.clipBlock.id) {
-                    var38 = true;
+            for (yPos = 0; (double) yPos < (double) this.height + this.y - (double) this.standingEyeHeight - Math.floor(this.y - (double) this.standingEyeHeight); ++yPos) {
+                blockId = this.world.getBlockId((int) Math.floor(this.x) + this.collisionX, (int) Math.floor(this.y + (double) yPos - (double) this.standingEyeHeight), (int) Math.floor(this.z));
+                if (blockId != 0 && blockId != AC_Blocks.clipBlock.id) {
+                    isCollidingWithBlock = true;
+                    break;
                 }
             }
 
-            if (!var38) {
+            if (!isCollidingWithBlock) {
                 this.collisionX = 0;
             }
         }
@@ -184,16 +193,17 @@ public abstract class MixinEntity implements ExEntity {
         this.collisionZ = Double.compare(var15, var5);
 
         if (this.collisionZ != 0) {
-            var38 = false;
+            isCollidingWithBlock = false;
 
-            for (var22 = 0; (double) var22 < (double) this.height + this.y - this.standingEyeHeight - Math.floor(this.y - (double) this.standingEyeHeight); ++var22) {
-                var39 = this.world.getBlockId((int) Math.floor(this.x), (int) Math.floor(this.y + (double) var22 - (double) this.standingEyeHeight), (int) Math.floor(this.z) + this.collisionZ);
-                if (var39 != 0 && var39 != AC_Blocks.clipBlock.id) {
-                    var38 = true;
+            for (yPos = 0; (double) yPos < (double) this.height + this.y - this.standingEyeHeight - Math.floor(this.y - (double) this.standingEyeHeight); ++yPos) {
+                blockId = this.world.getBlockId((int) Math.floor(this.x), (int) Math.floor(this.y + (double) yPos - (double) this.standingEyeHeight), (int) Math.floor(this.z) + this.collisionZ);
+                if (blockId != 0 && blockId != AC_Blocks.clipBlock.id) {
+                    isCollidingWithBlock = true;
+                    break;
                 }
             }
 
-            if (!var38) {
+            if (!isCollidingWithBlock) {
                 this.collisionZ = 0;
             }
         }
@@ -323,5 +333,15 @@ public abstract class MixinEntity implements ExEntity {
     @Override
     public int getCollisionZ() {
         return this.collisionZ;
+    }
+
+    @Override
+    public void setIgnoreCobwebCollision(boolean value){
+        this.ignoreCobwebCollision = value;
+    }
+
+    @Override
+    public boolean isIgnoreCobwebCollision(){
+        return ignoreCobwebCollision;
     }
 }
