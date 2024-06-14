@@ -14,6 +14,8 @@ public interface ExMinecraft {
 
     void startWorld(String var1, String var2, long var3, String var5);
 
+    void ReloadWorld();
+
     String getMapUsed(String var1);
 
     void saveMapUsed(String var1, String var2);

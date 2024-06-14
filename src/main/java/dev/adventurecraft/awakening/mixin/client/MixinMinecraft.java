@@ -233,6 +233,12 @@ public abstract class MixinMinecraft implements ExMinecraft {
     Entity lastEntityHit;
     ScriptVec3 lastBlockHit;
 
+    @Override
+    public void ReloadWorld() {
+        ((ExWorldEventRenderer) this.worldRenderer).resetAll();
+        ((ExWorldEventRenderer) this.worldRenderer).updateAllTheRenderers();
+    }
+
     @Overwrite(remap = false)
     public static void main(String[] args) {
         var arguments = new Arguments();
