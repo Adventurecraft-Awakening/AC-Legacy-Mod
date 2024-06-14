@@ -22,6 +22,8 @@ public class AC_EntityBoomerang extends Entity {
     private static final double VELOCITY_SPEED = 0.5D;
     private static final double BOUNCE_FACTOR = 0.85D;
     private static final float STANDING_EYE_HEIGHT = 0.03125F;
+    private static final double DISTANCE_MAX = 35.0D;
+    private static final double DISTANCE_MIN = 1.5D;
     private final ArrayList<ItemEntity> itemsPickedUp = new ArrayList<>();
     private boolean turningAround = true;
     private Entity returnsTo = null;
@@ -110,8 +112,9 @@ public class AC_EntityBoomerang extends Entity {
             double rZ = this.returnsTo.z - this.z;
             double dist = Math.sqrt(rX * rX + rY * rY + rZ * rZ);
 
-            if (dist < 1.5D || dist > 25.0D) {
+            if (dist < DISTANCE_MIN || dist > DISTANCE_MAX) {
                 this.remove();
+                return;
             }
 
             this.xVelocity = VELOCITY_SPEED * rX / dist;
@@ -124,19 +127,19 @@ public class AC_EntityBoomerang extends Entity {
         }
 
         this.determineRotation();
-        this.prevBoomerangRotation = this.boomerangRotation;
 
         this.boomerangRotation += 36.0F;
-        while (this.boomerangRotation > 360.0F) {
-
-            this.prevBoomerangRotation -= 360.0F;
+        if(this.boomerangRotation >= 360.0F){
             this.boomerangRotation -= 360.0F;
         }
+        this.prevBoomerangRotation = this.boomerangRotation;
 
         List<Entity> entities = this.world.getEntities(this, this.boundingBox.expand(0.5D, 0.5D, 0.5D));
         for (Entity entity : entities) {
             if (entity instanceof ItemEntity itemEntity) {
-                this.itemsPickedUp.add(itemEntity);
+                if(!this.itemsPickedUp.contains(itemEntity)) {
+                    this.itemsPickedUp.add(itemEntity);
+                }
                 continue;
             }
             if (entity instanceof LivingEntity && entity != this.returnsTo) {
