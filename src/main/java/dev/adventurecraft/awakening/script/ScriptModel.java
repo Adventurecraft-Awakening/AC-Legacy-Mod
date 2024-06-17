@@ -161,16 +161,17 @@ public class ScriptModel {
         v.set(0.0F, 0.0F, 0.0F, 1.0F);
         Matrix4f.transform(transform, v, vr);
 
+        float brightness = 1.0F;
+        //a provisional/alternative fix for the "model shadow"
+        //it only occurs because the coordination of the model is getting rounded and most likely its the position next to it
         if(attachedTo != null && !disableLightning){
             var position = attachedTo.getPosition();
-            int eX = (int)Math.round(position.x);
-            int eY = (int)Math.round(position.y);
-            int eZ = (int)Math.round(position.z);
-
-            float brightness = world.method_1782(eX,eY,eZ);
-            //black colored model have a brightness of exactly 0.05F
-            GL11.glColor3f(brightness, brightness, brightness);
+            int eX = (int)Math.floor(position.x);
+            int eY = (int)Math.floor(position.y);
+            int eZ = (int)Math.floor(position.z);
+            brightness = world.method_1782(eX,eY,eZ);
         }
+        GL11.glColor3f(brightness, brightness, brightness);
         GL11.glPushMatrix();
         this.transform(var1);
 
