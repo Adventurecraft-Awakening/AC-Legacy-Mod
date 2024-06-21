@@ -63,6 +63,18 @@ public abstract class MixinSoundHelper implements ExSoundHelper {
         soundSystem.setPosition("BgMusic", (float) var4, (float) var6, (float) var8);
     }
 
+    public String getMusicFromStreaming() {
+        if (Minecraft.instance.world != null) {
+            // getPlayingMusic with substring 6 to get rid of "music." at the beginning the music name
+            String curMusic = ((ExWorldProperties) Minecraft.instance.world.properties).getPlayingMusic();
+            curMusic = curMusic.length() <= 0 ? "" : curMusic.substring(6);
+            return curMusic;
+        }
+        else {
+            return "";
+        }
+    }
+
     @Override
     public void playMusicFromStreaming(String id, int var2, int var3) {
         if (!initialized) {
@@ -82,7 +94,12 @@ public abstract class MixinSoundHelper implements ExSoundHelper {
             if (this.currentSoundName.equals(entry.soundName)) {
                 return;
             }
-            soundSystem.fadeOutIn("BgMusic", entry.soundUrl, entry.soundName, var2, var3);
+            // In case there is no fadeIn and fadeOut value, just start playing the music (fadeOutIn doesn't work with 0 values)
+            if(var2 == 0 && var3 == 0){
+                soundSystem.backgroundMusic("BgMusic", entry.soundUrl, entry.soundName, true);
+            } else {
+                soundSystem.fadeOutIn("BgMusic", entry.soundUrl, entry.soundName, var2, var3);
+            }
         } else {
             soundSystem.backgroundMusic("BgMusic", entry.soundUrl, entry.soundName, true);
         }
