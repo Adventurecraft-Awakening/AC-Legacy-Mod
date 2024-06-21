@@ -192,7 +192,7 @@ public class AC_BlockEffect extends BlockWithEntity implements AC_ITriggerBlock 
 
     @Override
     public boolean canUse(World world, int x, int y, int z, PlayerEntity player) {
-        if (AC_DebugMode.active && player.getHeldItem() != null && player.getHeldItem().itemId == AC_Items.cursor.id) {
+        if (AC_DebugMode.active && (player.getHeldItem() == null || player.getHeldItem().itemId == AC_Items.cursor.id)) {
             var entity = (AC_TileEntityEffect) world.getBlockEntity(x, y, z);
             AC_GuiEffect.showUI(entity);
             return true;

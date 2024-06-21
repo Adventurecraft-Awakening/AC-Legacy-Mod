@@ -50,13 +50,14 @@ public class AC_BlockRedstoneTrigger extends BlockWithEntity implements AC_ITrig
     }
 
     @Override
-    public boolean canUse(World var1, int var2, int var3, int var4, PlayerEntity var5) {
-        if (AC_DebugMode.active && var5.getHeldItem() != null && var5.getHeldItem().itemId == AC_Items.cursor.id) {
-            var entity = (AC_TileEntityRedstoneTrigger) var1.getBlockEntity(var2, var3, var4);
-            AC_GuiRedstoneTrigger.showUI(var1, var2, var3, var4, entity);
+    public boolean canUse(World world, int x, int y, int z, PlayerEntity player) {
+        if (AC_DebugMode.active && (player.getHeldItem() == null || player.getHeldItem().itemId == AC_Items.cursor.id)) {
+            var entity = (AC_TileEntityRedstoneTrigger) world.getBlockEntity(x, y, z);
+            AC_GuiRedstoneTrigger.showUI(world, x, y, z, entity);
+            return true;
+        } else {
+            return false;
         }
-
-        return true;
     }
 
     public void setTriggerToSelection(World world, int x, int y, int z) {

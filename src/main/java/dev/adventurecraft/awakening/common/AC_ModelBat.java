@@ -15,19 +15,19 @@ public class AC_ModelBat extends EntityModel {
     public AC_ModelBat() {
         float var1 = 16.0F;
         this.theHead = new Cuboid(0, 0);
-        this.theHead.method_1818(-1.5F, -3.0F, -1.5F, 3, 3, 3, 0.0F);
+        this.theHead.method_1818(-1.5F, 5.0F, -1.5F, 3, 3, 3, 0.0F);
         this.theHead.setRotationPoint(0.0F, -4.0F + var1, 0.0F);
         this.ears = new Cuboid(12, 10);
-        this.ears.method_1818(-1.5F, -4.0F, 0.0F, 3, 1, 0, 0.0F);
+        this.ears.method_1818(-1.5F, 4.0F, 0.0F, 3, 1, 0, 0.0F);
         this.ears.setRotationPoint(0.0F, -4.0F + var1, 0.0F);
         this.theBody = new Cuboid(0, 6);
-        this.theBody.method_1818(-1.5F, -4.0F, -1.5F, 3, 5, 3, 0.0F);
+        this.theBody.method_1818(-1.5F, 4.0F, -1.5F, 3, 5, 3, 0.0F);
         this.theBody.setRotationPoint(0.0F, 0.0F + var1, 0.0F);
         this.leftWing = new Cuboid(12, 0);
-        this.leftWing.method_1818(0.0F, -4.0F, 0.0F, 7, 5, 0, 0.0F);
+        this.leftWing.method_1818(0.0F, 4.0F, 0.0F, 7, 5, 0, 0.0F);
         this.leftWing.setRotationPoint(1.5F, 0.0F + var1, 0.0F);
         this.rightWing = new Cuboid(12, 5);
-        this.rightWing.method_1818(-7.0F, -4.0F, 0.0F, 7, 5, 0, 0.0F);
+        this.rightWing.method_1818(-7.0F, 4.0F, 0.0F, 7, 5, 0, 0.0F);
         this.rightWing.setRotationPoint(-1.5F, 0.0F + var1, 0.0F);
     }
 

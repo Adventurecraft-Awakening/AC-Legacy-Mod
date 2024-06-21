@@ -187,8 +187,12 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
 
     private boolean runOnAttackedScript() {
         if (!this.onAttacked.equals("")) {
-            ((ExWorld) this.world).getScript().setNewScope(this.scope);
+            // Save curscope temporary
+            Scriptable tempScope = ((ExWorld) this.world).getScript().getCurScope();
+            ((ExWorld) this.world).getScript().setNewCurScope(this.scope);
             Object result = ((ExWorld) this.world).getScriptHandler().runScript(this.onAttacked, this.scope);
+            // Reset curScope afterwards! IMPORTANT for normal damage scripts
+            ((ExWorld) this.world).getScript().setNewCurScope(tempScope);
             return result instanceof Boolean b ? b : true;
         } else {
             return true;
