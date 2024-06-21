@@ -212,7 +212,7 @@ public class AC_EntityBoomerang extends Entity {
                 continue;
             }
             if(itemEntity.stack == null){
-                return;
+                continue;
             }
             setBoomerangMeta(itemEntity.stack);
         }
