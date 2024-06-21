@@ -9,10 +9,7 @@ import net.minecraft.util.math.AxixAlignedBoundingBox;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.objectweb.asm.Opcodes;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -151,8 +148,13 @@ public abstract class MixinEntity implements ExEntity {
     @Shadow
     public abstract boolean method_1344(double d, double e, double f);
 
-    @Shadow(aliases = "method_1373")//@TODO figure out what this method actually do/mean
-    public abstract boolean isSneaking();
+    @Shadow // TODO: figure out what this method actually do/mean
+    public abstract boolean method_1373();
+
+    @Unique
+    public boolean isSneaking() {
+        return this.method_1373();
+    }
 
     @Shadow
     public abstract float distanceTo(Entity arg);
@@ -336,12 +338,12 @@ public abstract class MixinEntity implements ExEntity {
     }
 
     @Override
-    public void setIgnoreCobwebCollision(boolean value){
+    public void setIgnoreCobwebCollision(boolean value) {
         this.ignoreCobwebCollision = value;
     }
 
     @Override
-    public boolean isIgnoreCobwebCollision(){
+    public boolean isIgnoreCobwebCollision() {
         return ignoreCobwebCollision;
     }
 }
