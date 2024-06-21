@@ -12,6 +12,9 @@ public class AC_TileEntityMobSpawnerRenderer extends BlockEntityRenderer {
         if (!AC_DebugMode.active) {
             return;
         }
+        if(!entity.showDebugInfo){
+            return;
+        }
 
         GL11.glPushMatrix();
         GL11.glEnable(GL11.GL_BLEND);
@@ -23,7 +26,7 @@ public class AC_TileEntityMobSpawnerRenderer extends BlockEntityRenderer {
         GL11.glShadeModel(GL11.GL_SMOOTH);
         GL11.glBegin(GL11.GL_LINES);
 
-        for (int i = 0; i < 4; ++i) {
+        for (int i = 0; i < 8; i++) {
             Coord min = entity.minVec[i];
             Coord max = entity.maxVec[i];
 
@@ -34,7 +37,7 @@ public class AC_TileEntityMobSpawnerRenderer extends BlockEntityRenderer {
                         if (block != null && ((ExBlock) block).canBeTriggered()) {
                             GL11.glColor3f(0.0F, 0.0F, 0.0F);
                             GL11.glVertex3f(0.0F, 0.0F, 0.0F);
-                            GL11.glColor3f(0.105F, 0.329F, 0.486F);
+                            GL11.glColor3f(0.105F * i, (float) 1 /i, 0.486F);
                             GL11.glVertex3f((float) (bX - entity.x), (float) (bY - entity.y), (float) (bZ - entity.z));
                         }
                     }

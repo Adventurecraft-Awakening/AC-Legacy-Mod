@@ -156,6 +156,7 @@ public class AC_GuiNPC extends Screen {
                 if (this.npc.trackPlayer) {
                     var1.text = "Track Player";
                 } else {
+                    this.npc.entityToTrack = null;
                     var1.text = "Don't Track Player";
                 }
             } else if (var1.id == -4) {

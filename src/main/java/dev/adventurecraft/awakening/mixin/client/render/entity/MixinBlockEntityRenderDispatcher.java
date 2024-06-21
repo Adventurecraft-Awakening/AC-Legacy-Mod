@@ -29,6 +29,7 @@ public abstract class MixinBlockEntityRenderDispatcher {
         renderers.put(AC_TileEntityMobSpawner.class, new AC_TileEntityMobSpawnerRenderer());
         renderers.put(AC_TileEntityStore.class, new AC_TileEntityStoreRenderer());
         renderers.put(AC_TileEntityEffect.class, new AC_TileEntityEffectRenderer());
+        renderers.put(AC_TileEntityTriggerPushable.class, new AC_TileEntityMinMaxRenderer(1.0F,1.0F,1.0F));
 
         for (BlockEntityRenderer renderer : renderers.values()) {
             renderer.setRenderDispatcher((BlockEntityRenderDispatcher) (Object) this);
