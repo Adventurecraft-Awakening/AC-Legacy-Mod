@@ -203,7 +203,7 @@ public class AC_EntityBoomerang extends Entity {
                 }
             }
         }
-        List<Entity> entities = this.world.getEntities(this, this.boundingBox.expand(0.5D, 0.5D, 0.5D));
+        List<Entity> entities = this.world.getEntities();
         for (Entity entity : entities) {
             if(entity == null){
                 continue;
