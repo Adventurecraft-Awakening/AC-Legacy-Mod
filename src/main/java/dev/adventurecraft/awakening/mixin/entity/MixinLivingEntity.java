@@ -98,6 +98,10 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
     @Shadow
     protected int field_1034;
 
+    public boolean canGetFallDamage = true;
+    public void setCanGetFallDamage(boolean arg){this.canGetFallDamage = arg;};
+    public boolean getCanGetFallDamage(){return this.canGetFallDamage;};
+
     protected int maxHealth = 10;
     @Unique
     private ItemStack ac$heldItem;
@@ -351,6 +355,10 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
 
     @Overwrite
     public void handleFallDamage(float var1) {
+        if(!this.canGetFallDamage) {
+            return;
+        }
+
         if (this.handleFlying()) {
             return;
         }
