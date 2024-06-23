@@ -151,11 +151,11 @@ public abstract class MixinEntity implements ExEntity {
     @Shadow
     public abstract boolean method_1344(double d, double e, double f);
 
-    @Shadow(aliases = "method_1373")//@TODO figure out what this method actually do/mean
-    public abstract boolean isSneaking();
-
     @Shadow
     public abstract float distanceTo(Entity arg);
+
+    @Shadow
+    public abstract boolean method_1373();
 
     @Inject(method = "move", at = @At(
         value = "FIELD",
