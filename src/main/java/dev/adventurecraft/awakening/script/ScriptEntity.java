@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.common.AC_EntityLivingScript;
 import dev.adventurecraft.awakening.common.AC_EntityNPC;
+import dev.adventurecraft.awakening.common.AC_Particle;
 import dev.adventurecraft.awakening.common.AC_UtilBullet;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.extension.entity.ExEntityRegistry;
@@ -42,6 +43,7 @@ public class ScriptEntity {
         if (entity instanceof LivingEntity e) return new ScriptEntityLiving(e);
         if (entity instanceof ArrowEntity e) return new ScriptEntityArrow(e);
         if (entity instanceof ItemEntity e) return new ScriptEntityItem(e);
+        if(entity instanceof AC_Particle e) return new ScriptParticleEntity(e);
         return new ScriptEntity(entity);
     }
 

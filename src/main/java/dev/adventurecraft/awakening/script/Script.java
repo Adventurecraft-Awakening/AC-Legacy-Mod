@@ -27,6 +27,7 @@ public class Script {
     ScriptChat chat;
     ScriptWeather weather;
     ScriptEffect effect;
+    ScriptParticle particle;
     ScriptSound sound;
     ScriptUI ui;
     ScriptScript script;
@@ -56,6 +57,7 @@ public class Script {
         this.chat = new ScriptChat();
         this.weather = new ScriptWeather(var1);
         this.effect = new ScriptEffect(var1, Minecraft.instance.worldRenderer);
+        this.particle = new ScriptParticle(Minecraft.instance.worldRenderer);
         this.sound = new ScriptSound(Minecraft.instance.soundHelper);
         this.ui = new ScriptUI();
         this.script = new ScriptScript(var1);
@@ -66,6 +68,7 @@ public class Script {
         this.addObject("chat", this.chat);
         this.addObject("weather", this.weather);
         this.addObject("effect", this.effect);
+        this.addObject("particle", this.particle);
         this.addObject("sound", this.sound);
         this.addObject("ui", this.ui);
         this.addObject("screen", ((ExInGameHud) Minecraft.instance.overlay).getScriptUI());
