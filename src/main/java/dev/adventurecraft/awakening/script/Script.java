@@ -30,6 +30,7 @@ public class Script {
     ScriptParticle particle;
     ScriptSound sound;
     ScriptUI ui;
+    ScriptRenderer renderer;
     ScriptScript script;
     public ScriptKeyboard keyboard;
     LinkedList<ScriptContinuation> sleepingScripts = new LinkedList<>();
@@ -62,6 +63,7 @@ public class Script {
         this.ui = new ScriptUI();
         this.script = new ScriptScript(var1);
         this.keyboard = new ScriptKeyboard(var1, Minecraft.instance.options, this.getNewScope());
+        this.renderer = new ScriptRenderer(Minecraft.instance.worldRenderer);
 
         this.addObject("time", this.time);
         this.addObject("world", this.world);
@@ -76,6 +78,7 @@ public class Script {
         this.addObject("keyboard", this.keyboard);
         this.addObject("hitEntity", null);
         this.addObject("hitBlock", null);
+        this.addObject("renderer",this.renderer);
 
         // TODO: make these const
         String initStr = String.join("\n", new String[]{
