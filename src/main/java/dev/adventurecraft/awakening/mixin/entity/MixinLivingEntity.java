@@ -549,6 +549,7 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         tag.put("randomLookVelocity", this.randomLookVelocity);
         tag.put("randomLookRate", this.randomLookRate);
         tag.put("randomLookRateVariation", this.randomLookRateVariation);
+        tag.put("canGetFallDamage", this.canGetFallDamage);
     }
 
     @Inject(method = "readAdditional", at = @At("TAIL"))
@@ -584,6 +585,10 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
 
         if (tag.containsKey("randomLookRateVariation")) {
             this.randomLookRateVariation = tag.getInt("randomLookRateVariation");
+        }
+
+        if (tag.containsKey("canGetFallDamage")) {
+            this.canGetFallDamage = tag.getBoolean("canGetFallDamage");
         }
     }
 
