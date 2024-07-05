@@ -47,6 +47,7 @@ public class ScriptModel {
     private static final LinkedList<ScriptModel> activeModels = new LinkedList<>();
 
     public ScriptModel() {
+        this.addToRendering();
     }
 
     public ScriptModel(int width, int height) {
