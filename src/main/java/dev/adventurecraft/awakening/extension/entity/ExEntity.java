@@ -28,4 +28,14 @@ public interface ExEntity extends AC_IMultiAttackEntity {
     void setIgnoreCobwebCollision(boolean value);
 
     boolean isIgnoreCobwebCollision();
+
+    void setCustomTagString(String key,String value);
+
+    boolean hasCustomTagString(String key);
+
+    String getOrCreateCustomTagString(String key,String defaultValue);
+
+    String getCustomTagString(String key);
+
+
 }

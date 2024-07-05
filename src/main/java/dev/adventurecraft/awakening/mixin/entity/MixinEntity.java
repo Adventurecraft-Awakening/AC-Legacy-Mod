@@ -15,6 +15,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 @Mixin(Entity.class)
@@ -97,6 +99,8 @@ public abstract class MixinEntity implements ExEntity {
     public int collisionX;
     public int collisionZ;
     public float moveYawOffset = 0.0F;
+
+    protected Map<String,String> customData = new HashMap<>();
 
     @Shadow
     protected abstract void handleFallDamage(float f);
@@ -345,5 +349,26 @@ public abstract class MixinEntity implements ExEntity {
     @Override
     public boolean isIgnoreCobwebCollision() {
         return ignoreCobwebCollision;
+    }
+
+    @Override
+    public void setCustomTagString(String key,String value){
+        this.customData.put(key,value);
+    }
+    @Override
+    public boolean hasCustomTagString(String key){
+        return this.customData.containsKey(key);
+    }
+    @Override
+    public String getOrCreateCustomTagString(String key,String defaultValue){
+        if(this.customData.containsKey(key)){
+            return this.customData.get(key);
+        }
+        this.customData.put(key,defaultValue);
+        return defaultValue;
+    }
+    @Override
+    public String getCustomTagString(String key){
+        return customData.get(key);
     }
 }

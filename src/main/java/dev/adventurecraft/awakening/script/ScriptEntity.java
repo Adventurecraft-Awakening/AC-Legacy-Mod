@@ -312,4 +312,23 @@ public class ScriptEntity {
     public void setyOffset(float value) {
         this.entity.standingEyeHeight = value;
     }
+
+
+    public void setCustomTagString(String key,String value){
+        ((ExEntity) this.entity).setCustomTagString(key,value);
+    }
+
+    public boolean hasCustomTagString(String key){
+        return ((ExEntity) this.entity).hasCustomTagString(key);
+
+    }
+
+    public String getOrCreateCustomTagString(String key,String defaultValue){
+        return ((ExEntity) this.entity).getOrCreateCustomTagString(key,defaultValue);
+    }
+
+    public String getCustomTagString(String key){
+        return ((ExEntity) this.entity).getCustomTagString(key);
+    }
+
 }
