@@ -172,7 +172,7 @@ public class ScriptModel {
         Matrix4f.transform(transform, v, vr);
 
         if (modes >= 1) {
-            if(modes == 1) {
+            if(modes == 1 && attachedTo != null) {
                 var position = attachedTo.getPosition();
                 setBrightness(world.method_1782((int) Math.floor(position.x), (int) Math.floor(position.y), (int) Math.floor(position.z)));
             }
