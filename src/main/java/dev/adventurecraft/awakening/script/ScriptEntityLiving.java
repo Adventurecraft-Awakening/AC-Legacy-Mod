@@ -16,6 +16,10 @@ public class ScriptEntityLiving extends ScriptEntity {
         this.entityLiving = entity;
     }
 
+    public boolean isTouchingWater(){
+        return entityLiving.isTouchingWater();
+    }
+
     public void playLivingSound() {
         this.entityLiving.method_918();
     }

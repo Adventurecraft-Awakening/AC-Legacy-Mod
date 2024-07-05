@@ -32,6 +32,10 @@ public class ScriptSound {
         playMusic(var1, 0, 0);
     }
 
+    public String getMusic() {
+        return ((ExSoundHelper) this.soundMgr).getMusicFromStreaming();
+    }
+
     public void playMusic(String var1, int var2, int var3) {
         ((ExSoundHelper) this.soundMgr).playMusicFromStreaming(var1.toLowerCase(), var2, var3);
     }
