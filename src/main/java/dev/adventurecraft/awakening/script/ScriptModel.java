@@ -171,14 +171,29 @@ public class ScriptModel {
         GL11.glPopMatrix();
         v.set(0.0F, 0.0F, 0.0F, 1.0F);
         Matrix4f.transform(transform, v, vr);
-
-        if (modes >= 1) {
-            if(modes == 1 && attachedTo != null) {
-                var position = attachedTo.getPosition();
-                setBrightness(world.method_1782((int) Math.floor(position.x), (int) Math.floor(position.y), (int) Math.floor(position.z)));
-            }
-        } else {
-            setBrightness(world.method_1782(Math.round(vr.x), Math.round(vr.x), Math.round(vr.x)));
+        switch (this.modes){
+            case 1:
+                //using the position of the attached entity
+                if(this.attachedTo != null){
+                    var position = this.attachedTo.getPosition();
+                    setBrightness(world.method_1782((int) Math.floor(position.x), (int) Math.floor(position.y), (int) Math.floor(position.z)));
+                }
+                break;
+            case 2:
+                //usage for custom RGB Values
+                break;
+            case 3:
+                //use the lightning value of the attached model
+                if(this.modelAttachment != null){
+                    this.colorRed = this.modelAttachment.colorRed;
+                    this.colorGreen = this.modelAttachment.colorGreen;
+                    this.colorBlue = this.modelAttachment.colorBlue;
+                }
+                break;
+            default:
+                //Default lightning values
+                setBrightness(world.method_1782(Math.round(vr.x), Math.round(vr.x), Math.round(vr.x)));
+                break;
         }
         GL11.glColor3f(colorRed, colorGreen, colorBlue);
         GL11.glPushMatrix();
