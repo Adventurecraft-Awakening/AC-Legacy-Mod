@@ -38,6 +38,7 @@ public class ScriptModel {
     public float colorRed = 1.0F;
     public float colorGreen = 1.0F;
     public float colorBlue = 1.0F;
+    public float colorAlpha = 1.0F;
     private int textureWidth = 64;
     private int textureHeight = 32;
     private static final FloatBuffer modelView = BufferUtils.createFloatBuffer(16);
@@ -165,6 +166,7 @@ public class ScriptModel {
         GL11.glPushMatrix();
         GL11.glLoadIdentity();
         this.transform(var1);
+
         modelView.rewind();
         GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, modelView);
         transform.load(modelView);
@@ -195,7 +197,14 @@ public class ScriptModel {
                 setBrightness(world.method_1782(Math.round(vr.x), Math.round(vr.x), Math.round(vr.x)));
                 break;
         }
-        GL11.glColor3f(colorRed, colorGreen, colorBlue);
+        if(colorAlpha < 1.0){
+            GL11.glBlendFunc(GL11.GL_SRC_ALPHA,GL11.GL_ONE_MINUS_SRC_ALPHA);
+            GL11.glEnable(GL11.GL_BLEND);
+            GL11.glColor4f(colorRed, colorGreen, colorBlue, colorAlpha);
+        } else{
+            GL11.glColor3f(colorRed, colorGreen, colorBlue);
+        }
+        //GL11.glColor3f(colorRed, colorGreen, colorBlue);
         GL11.glPushMatrix();
         this.transform(var1);
 
@@ -204,6 +213,9 @@ public class ScriptModel {
         }
 
         GL11.glPopMatrix();
+        if(colorAlpha < 1.0){
+            GL11.glDisable(GL11.GL_BLEND);
+        }
     }
 
     public void removeFromRendering() {
