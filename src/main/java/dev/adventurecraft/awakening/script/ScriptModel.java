@@ -56,39 +56,52 @@ public class ScriptModel {
         this.textureWidth = width;
         this.textureHeight = height;
     }
-
     public void setBrightness(float brightness){
         this.colorRed = this.colorGreen = this.colorBlue = brightness;
     }
 
-    public void addBox(String boxName, float var2, float var3, float var4, int var5, int var6, int var7, int var8, int var9) {
-        this.addBoxExpanded(var2, var3, var4, var5, var6, var7, var8, var9, 0.0F);
-    }
-    public void addBox(float var2, float var3, float var4, int var5, int var6, int var7, int var8, int var9) {
-        this.addBoxExpanded(var2, var3, var4, var5, var6, var7, var8, var9, 0.0F);
+    //Old method
+    public void addBox(String boxName,
+                       float offsetX, float offsetY, float offsetZ,
+                       int width, int height, int length,
+                       int textureOffsetX, int textureOffsetY) {
+        this.addBoxExpanded(offsetX, offsetY, offsetZ, width, height, length, textureOffsetX, textureOffsetY, 0.0F);
     }
 
-    public void addBoxExpanded(String boxName, float var2, float var3, float var4, int var5, int var6, int var7, int var8, int var9, float var10) {
-        this.addBoxExpanded(var2, var3, var4, var5, var6, var7, var8, var9, 0.0F);
+    public void addBox(float offsetX, float offsetY, float offsetZ,
+                       int width, int height, int length,
+                       int textureOffsetX, int textureOffsetY) {
+        this.addBoxExpanded(offsetX, offsetY, offsetZ, width, height, length, textureOffsetX, textureOffsetY, 0.0F);
     }
-    public void addBoxExpanded(float var2, float var3, float var4, int var5, int var6, int var7, int var8, int var9, float var10) {
-        Cuboid cuboid = new Cuboid(var8, var9);
+
+    //Old legacy method
+    public void addBoxExpanded(String boxName,
+                               float offsetX, float offsetY, float offsetZ,
+                               int width, int height, int length,
+                               int textureOffsetX, int textureOffsetY,
+                               float scale) {
+        this.addBoxExpanded(offsetX, offsetY, offsetZ, width, height, length, textureOffsetX, textureOffsetY, scale);
+    }
+
+    public void addBoxExpanded(float offsetX, float offsetY, float offsetZ,
+                               int width, int height, int length,
+                               int textureOffsetX, int textureOffsetY,
+                               float scale) {
+        Cuboid cuboid = new Cuboid(textureOffsetX, textureOffsetY);
         ((ExCuboid) cuboid).setTWidth(this.textureWidth);
         ((ExCuboid) cuboid).setTHeight(this.textureHeight);
-        ((ExCuboid) cuboid).addBoxInverted(var2, var3, var4, var5, var6, var7, var10);
+        ((ExCuboid) cuboid).addBoxInverted(offsetX, offsetY, offsetZ, width, height, length, scale);
         this.boxes.add(cuboid);
+    }
+
+    public ScriptVec3 getPosition() {
+        return new ScriptVec3(x, y, z);
     }
 
     public void setPosition(double x, double y, double z) {
         this.prevX = this.x = x;
         this.prevY = this.y = y;
         this.prevZ = this.z = z;
-    }
-
-    public void setRotation(float yaw, float pitch, float roll) {
-        this.prevYaw = this.yaw = yaw;
-        this.prevPitch = this.pitch = pitch;
-        this.prevRoll = this.roll = roll;
     }
 
     public void moveTo(double x, double y, double z) {
@@ -112,6 +125,12 @@ public class ScriptModel {
         this.x += x;
         this.y += tempY;
         this.z += z;
+    }
+
+    public void setRotation(float yaw, float pitch, float roll) {
+        this.prevYaw = this.yaw = yaw;
+        this.prevPitch = this.pitch = pitch;
+        this.prevRoll = this.roll = roll;
     }
 
     public void rotateTo(float yaw, float pitch, float roll) {
@@ -156,6 +175,9 @@ public class ScriptModel {
     }
 
     private void render(float var1) {
+        if (boxes.isEmpty()) {
+            return;
+        }
         World world = Minecraft.instance.world;
         TextureManager var3 = Minecraft.instance.textureManager;
         if (this.texture != null && !this.texture.isEmpty()) {
@@ -165,14 +187,21 @@ public class ScriptModel {
         // TODO: clean up?
         GL11.glPushMatrix();
         GL11.glLoadIdentity();
+
+
         this.transform(var1);
 
         modelView.rewind();
         GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, modelView);
+
+        //GL11.glTranslatef(scale,scale,scale);
+
         transform.load(modelView);
         GL11.glPopMatrix();
         v.set(0.0F, 0.0F, 0.0F, 1.0F);
         Matrix4f.transform(transform, v, vr);
+
+
         switch (this.modes){
             case 1:
                 //using the position of the attached entity
