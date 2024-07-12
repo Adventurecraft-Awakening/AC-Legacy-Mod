@@ -16,36 +16,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 @SuppressWarnings("unused")
-public class ScriptModel {
-
-    private final List<Cuboid> boxes = new LinkedList<>();
-    public ScriptEntity attachedTo;
-    public ScriptModel modelAttachment;
-    public String texture;
-    public double prevX;
-    public double prevY;
-    public double prevZ;
-    public float prevYaw;
-    public float prevPitch;
-    public float prevRoll;
-    public double x;
-    public double y;
-    public double z;
-    public float yaw;
-    public float pitch;
-    public float roll;
-    public int modes = 0;
-    public float colorRed = 1.0F;
-    public float colorGreen = 1.0F;
-    public float colorBlue = 1.0F;
-    public float colorAlpha = 1.0F;
-    private int textureWidth = 64;
-    private int textureHeight = 32;
-    private static final FloatBuffer modelView = BufferUtils.createFloatBuffer(16);
-    private static final Matrix4f transform = new Matrix4f();
-    private static final Vector4f v = new Vector4f();
-    private static final Vector4f vr = new Vector4f();
-    private static final LinkedList<ScriptModel> activeModels = new LinkedList<>();
+public class ScriptModel extends ScriptModelBase {
 
     public ScriptModel() {
         this.addToRendering();
@@ -145,7 +116,8 @@ public class ScriptModel {
         this.roll += roll;
     }
 
-    private void update() {
+    @Override
+    protected void update() {
         this.prevX = this.x;
         this.prevY = this.y;
         this.prevZ = this.z;
@@ -154,7 +126,8 @@ public class ScriptModel {
         this.prevRoll = this.roll;
     }
 
-    private void transform(float deltaTime) {
+    @Override
+    protected void transform(float deltaTime) {
         if (this.attachedTo != null) {
             ScriptVec3 position = this.attachedTo.getPosition(deltaTime);
             ScriptVecRot rotation = this.attachedTo.getRotation(deltaTime);
@@ -174,7 +147,8 @@ public class ScriptModel {
         GL11.glRotatef(deltaTime * this.roll + deltaTimeTick * this.prevRoll, 0.0F, 0.0F, 1.0F);
     }
 
-    private void render(float var1) {
+    @Override
+    protected void render(float var1) {
         if (boxes.isEmpty()) {
             return;
         }
@@ -245,36 +219,5 @@ public class ScriptModel {
         if(colorAlpha < 1.0){
             GL11.glDisable(GL11.GL_BLEND);
         }
-    }
-
-    public void removeFromRendering() {
-        activeModels.remove(this);
-    }
-
-    public void addToRendering() {
-        activeModels.add(this);
-    }
-
-    public static void renderAll(float var0) {
-        GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-        GL11.glDisable(GL11.GL_CULL_FACE);
-        GL11.glEnable(GL11.GL_ALPHA_TEST);
-
-        for (ScriptModel scriptModel : activeModels) {
-            scriptModel.render(var0);
-        }
-
-        GL11.glEnable(GL11.GL_CULL_FACE);
-        GL11.glDisable(GL12.GL_RESCALE_NORMAL);
-    }
-
-    public static void updateAll() {
-        for (ScriptModel scriptModel : activeModels) {
-            scriptModel.update();
-        }
-    }
-
-    public static void clearAll() {
-        activeModels.clear();
     }
 }

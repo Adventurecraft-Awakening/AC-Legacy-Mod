@@ -89,6 +89,7 @@ public class Script {
             String.format("UIRect = %s.ScriptUIRect;", PREFIXED_SCRIPT_PACKAGE),
             String.format("UIContainer = %s.ScriptUIContainer;", PREFIXED_SCRIPT_PACKAGE),
             String.format("Model = %s.ScriptModel;", PREFIXED_SCRIPT_PACKAGE),
+            String.format("ModelBlockbench = %s.ScriptModelBlockbench;", PREFIXED_SCRIPT_PACKAGE),
             String.format("Vec3 = %s.ScriptVec3;", PREFIXED_SCRIPT_PACKAGE),
             String.format("VecRot = %s.ScriptVecRot;", PREFIXED_SCRIPT_PACKAGE)
         });
