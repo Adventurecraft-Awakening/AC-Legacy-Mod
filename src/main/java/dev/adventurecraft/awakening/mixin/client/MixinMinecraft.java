@@ -17,6 +17,7 @@ import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import dev.adventurecraft.awakening.extension.util.ExProgressListener;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
+import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.script.ScriptEntity;
 import dev.adventurecraft.awakening.script.ScriptItem;
 import dev.adventurecraft.awakening.script.ScriptVec3;
@@ -561,6 +562,15 @@ public abstract class MixinMinecraft implements ExMinecraft {
                 int chunkX = MathHelper.floor((float) ((int) this.player.x)) >> 4;
                 int chunkZ = MathHelper.floor((float) ((int) this.player.z)) >> 4;
                 chunkCache.method_1242(chunkX, chunkZ);
+            }
+            // Bed safety leave
+            if(this.player.isLyingOnBed() && this.player.getSleepTimer()>= 100)
+            {
+                if(((ExWorldProperties) this.world.properties).getTimeRate()==0){
+                    this.player.getOutOfBed(true,false,false);
+                } else {
+                    ((ExWorld) this.world).setTimeOfDay(10000);
+                }
             }
         }
 

@@ -127,4 +127,8 @@ public class ScriptEffect {
     public void cancelCutscene() {
         ((ExMinecraft) Minecraft.instance).setCameraActive(false);
     }
+
+    public boolean getIsCameraActive(){
+        return ((ExMinecraft) Minecraft.instance).isCameraActive();
+    }
 }

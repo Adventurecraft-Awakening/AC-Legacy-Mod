@@ -47,6 +47,12 @@ public class ScriptEntity {
         return new ScriptEntity(entity);
     }
 
+    public void setCanGetFallDamage(boolean arg){
+        ((ExEntity)this.entity).setCanGetFallDamage(arg);
+    }
+    public boolean getCanGetFallDamage(){
+        return ((ExEntity)this.entity).getCanGetFallDamage();
+    }
     public int getEntityID() {
         return this.entity.entityId;
     }

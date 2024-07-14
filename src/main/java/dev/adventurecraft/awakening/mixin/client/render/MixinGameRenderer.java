@@ -6,6 +6,7 @@ import dev.adventurecraft.awakening.client.options.Config;
 import dev.adventurecraft.awakening.client.options.ConnectedGrassOption;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
+import dev.adventurecraft.awakening.extension.client.gui.screen.ExScreen;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.render.ExGameRenderer;
 import dev.adventurecraft.awakening.extension.client.render.ExHeldItemRenderer;
@@ -119,7 +120,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         target = "Lnet/minecraft/entity/LivingEntity;health:I",
         shift = At.Shift.BEFORE))
     private void handleZoom(float var1, CallbackInfoReturnable<Float> cir) {
-        if (Keyboard.isKeyDown(((ExGameOptions) this.client.options).ofKeyBindZoom().key)) {
+        if (Keyboard.isKeyDown(((ExGameOptions) this.client.options).ofKeyBindZoom().key) && ((ExScreen)this.client.currentScreen) == null) {
             if (!this.zoomMode) {
                 this.zoomMode = true;
                 this.client.options.cinematicMode = true;
