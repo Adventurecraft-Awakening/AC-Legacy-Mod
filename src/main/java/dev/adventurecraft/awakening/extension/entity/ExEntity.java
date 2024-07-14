@@ -28,4 +28,8 @@ public interface ExEntity extends AC_IMultiAttackEntity {
     int getCollisionX();
 
     int getCollisionZ();
+
+    void setIgnoreCobwebCollision(boolean value);
+
+    boolean isIgnoreCobwebCollision();
 }

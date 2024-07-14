@@ -482,7 +482,7 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
                     this.yVelocity = -0.15D;
                 }
 
-                if (this.method_1373() && this.yVelocity < 0.0D) {
+                if (this.isSneaking() && this.yVelocity < 0.0D) {
                     this.yVelocity = 0.0D;
                 }
             }

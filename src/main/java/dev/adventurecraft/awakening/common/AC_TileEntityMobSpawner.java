@@ -1,8 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import dev.adventurecraft.awakening.extension.entity.ExFallingBlockEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
@@ -27,6 +25,7 @@ import org.mozilla.javascript.Scriptable;
 
 public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
 
+    private static final Map<String,String> ALTERNATIVE_NAMES = new HashMap<>();
     public int delay = -1;
     public String entityID = "Pig";
     public int spawnNumber;
@@ -46,6 +45,10 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
     public Coord maxSpawnVec;
     public int ticksBeforeLoad = 20;
     public CompoundTag delayLoadData;
+    public boolean showDebugInfo = true;
+    public boolean showParticles = true;
+    private boolean ignoreSpawnConditions = false;
+
     private boolean spawnStill = false;
     Scriptable scope;
 
@@ -77,12 +80,12 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
     public int getNumAlive() {
         int count = 0;
 
-        for (Entity var3 : this.spawnedEntities) {
-            if (!var3.removed) {
-                ++count;
-            } else {
-                this.entitiesLeft.remove(var3);
+        for (Entity entity : this.spawnedEntities) {
+            if (entity.removed) {
+                this.entitiesLeft.remove(entity);
+                continue;
             }
+            count++;
         }
 
         return count;
@@ -101,8 +104,11 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
     }
 
     private boolean canSpawn(Entity entity) {
+        if(ignoreSpawnConditions){
+            return true;
+        }
         return this.world.canSpawnEntity(entity.boundingBox) &&
-            this.world.method_190(entity, entity.boundingBox).size() == 0 &&
+            this.world.method_190(entity, entity.boundingBox).isEmpty() &&
             !this.world.method_218(entity.boundingBox);
     }
 
@@ -113,73 +119,91 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
     }
 
     public void spawnMobs() {
-        if (this.delay > 0 || this.getNumAlive() > 0 || this.delayLoadData != null) {
+        if (this.delay > 0 ||
+            this.getNumAlive() > 0 ||
+            this.delayLoadData != null) {
             return;
         }
-
         int spawnedCount = 0;
-
         while (true) {
             if (spawnedCount < this.spawnNumber * 6) {
-                String id = this.entityID.replace(" ", "");
-                if (id.equalsIgnoreCase("FallingBlock")) {
+                String id = this.entityID;
+                if(ALTERNATIVE_NAMES.containsKey(this.entityID)){
+                    id = ALTERNATIVE_NAMES.get(this.entityID);
+                } else if(this.entityID.endsWith("(Scripted)")){
+                    id = "Script";
+                }
+
+                /*if (id.equalsIgnoreCase("FallingBlock")) {
                     id = "FallingSand";
-                } else if (id.startsWith("Slime")) {
+                } else
+                if (id.startsWith("Slime")) {
                     id = "Slime";
-                } else if (id.startsWith("Minecart")) {
+                } else
+                if (id.startsWith("Minecart")) {
                     id = "Minecart";
-                } else if (id.startsWith("Spider")) {
+                } else
+                if (id.startsWith("Spider")) {
                     id = "Spider";
                 } else if (id.startsWith("Wolf")) {
                     id = "Wolf";
                 } else if (id.endsWith("(Scripted)")) {
                     id = "Script";
-                }
+                }*/
 
                 Entity entity = EntityRegistry.create(id, this.world);
                 if (entity == null) {
+                    System.out.println("NULL");
                     return;
                 }
-
-                if (id.equalsIgnoreCase("FallingSand")) {
-                    if (this.spawnID >= 256 || Block.BY_ID[this.spawnID] == null) {
-                        return;
-                    }
-
-                    ((FallingBlockEntity) entity).blockId = this.spawnID;
-                    ((ExFallingBlockEntity) entity).setMetadata(this.spawnMeta);
-                } else if (id.equalsIgnoreCase("Item")) {
-                    if (Item.byId[this.spawnID] == null) {
-                        return;
-                    }
-
-                    ((ItemEntity) entity).stack = new ItemStack(this.spawnID, 1, this.spawnMeta);
-                } else if (this.entityID.startsWith("Slime") && this.entityID.length() > 6) {
-                    int size = Integer.parseInt(this.entityID.split(":")[1].trim());
-                    ((SlimeEntity) entity).setSize(size);
-                } else if (this.entityID.equalsIgnoreCase("Minecart Chest")) {
-                    ((ChestMinecartEntity) entity).type = 1;
-                } else if (this.entityID.equalsIgnoreCase("Minecart Furnace")) {
-                    ((ChestMinecartEntity) entity).type = 2;
+                switch (id){
+                    case "FallingSand":
+                        if (this.spawnID >= 256 || Block.BY_ID[this.spawnID] == null) {
+                            return;
+                        }
+                        if(this.spawnID == 0){
+                            this.spawnID = 12;
+                        }
+                        ((FallingBlockEntity) entity).blockId = this.spawnID;
+                        ((ExFallingBlockEntity) entity).setMetadata(this.spawnMeta);
+                        break;
+                    case "Item":
+                        if (Item.byId[this.spawnID] == null) {
+                            return;
+                        }
+                        ((ItemEntity) entity).stack = new ItemStack(this.spawnID, 1, this.spawnMeta);
+                        break;
+                    case "Slime":
+                        if(this.entityID.length() <= 6){
+                            break;
+                        }
+                        int size = Integer.parseInt(this.entityID.split(":")[1].trim());
+                        ((SlimeEntity) entity).setSize(size);
+                        break;
+                    case "Minecart":
+                        if (this.entityID.equalsIgnoreCase("Minecart Chest")) {
+                            ((ChestMinecartEntity) entity).type = 1;
+                            break;
+                        }
+                        if (this.entityID.equalsIgnoreCase("Minecart Furnace")) {
+                            ((ChestMinecartEntity) entity).type = 2;
+                        }
+                        break;
                 }
-
-                double y;
-                if (this.maxSpawnVec.y == this.minSpawnVec.y) {
-                    y = this.y + this.maxSpawnVec.y;
-                } else {
+                double y = this.y + this.maxSpawnVec.y;
+                if (this.maxSpawnVec.y != this.minSpawnVec.y) {
                     y = this.y + this.minSpawnVec.y + this.world.rand.nextInt(this.maxSpawnVec.y - this.minSpawnVec.y);
                 }
 
                 double x = (double) (this.x + this.minSpawnVec.x) + this.world.rand.nextDouble() * (double) (this.maxSpawnVec.x - this.minSpawnVec.x) + 0.5D;
                 double z = (double) (this.z + this.minSpawnVec.z) + this.world.rand.nextDouble() * (double) (this.maxSpawnVec.z - this.minSpawnVec.z) + 0.5D;
-                float yaw;
+
+                float yaw = 0.0F;
                 if (!id.equalsIgnoreCase("FallingSand")) {
                     yaw = this.world.rand.nextFloat() * 360.0F;
-                } else {
-                    yaw = 0.0F;
                 }
-
                 entity.setPositionAndAngles(x, y, z, yaw, 0.0F);
+
                 if (!this.canSpawn(entity)) {
                     ++spawnedCount;
                     continue;
@@ -187,29 +211,32 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
 
                 this.spawnEntity(entity);
 
-                if (this.entityID.equalsIgnoreCase("Spider Skeleton")) {
-                    var skeleton = new SkeletonEntity(this.world);
-                    skeleton.setPositionAndAngles(x, y, z, yaw, 0.0F);
-                    this.spawnEntity(skeleton);
-                    skeleton.startRiding(entity);
-                } else if (this.entityID.equalsIgnoreCase("Spider Skeleton Sword")) {
-                    var skeleton = new AC_EntitySkeletonSword(this.world);
-                    skeleton.setPositionAndAngles(x, y, z, yaw, 0.0F);
-                    this.spawnEntity(skeleton);
-                    skeleton.startRiding(entity);
-                } else {
-                    if (this.entityID.equalsIgnoreCase("Wolf (Angry)")) {
-                        var wolf = (WolfEntity) entity;
-                        wolf.setAngry(true);
-                    } else if (this.entityID.equalsIgnoreCase("Wolf (Tame)")) {
-                        var wolf = (WolfEntity) entity;
-                        wolf.setHasOwner(true);
-                        wolf.setTarget(null);
-                        wolf.health = 20;
-                        wolf.setOwner(Minecraft.instance.player.name);
-                        wolf.spawnBoneParticles(true);
-                        this.world.method_185(wolf, (byte) 7);
-                    }
+                switch (this.entityID){
+                    case "Spider Skeleton":
+                        var skeleton = new SkeletonEntity(this.world);
+                        skeleton.setPositionAndAngles(x, y, z, yaw, 0.0F);
+                        skeleton.startRiding(entity);
+                        this.spawnEntity(skeleton);
+                        break;
+                    case "Spider Skeleton Sword":
+                        var skeletonSword = new AC_EntitySkeletonSword(this.world);
+                        skeletonSword.setPositionAndAngles(x, y, z, yaw, 0.0F);
+                        skeletonSword.startRiding(entity);
+                        this.spawnEntity(skeletonSword);
+                        break;
+                    case "Wolf (Angry)":
+                        var wolfAngry = (WolfEntity) entity;
+                        wolfAngry.setAngry(true);
+                        break;
+                    case "Wolf (Tame)":
+                        var wolfTamed = (WolfEntity) entity;
+                        wolfTamed.setHasOwner(true);
+                        wolfTamed.setTarget(null);
+                        wolfTamed.health = 20;
+                        wolfTamed.setOwner(Minecraft.instance.player.name);
+                        wolfTamed.spawnBoneParticles(true);
+                        this.world.method_185(wolfTamed, (byte) 7);
+                        break;
                 }
 
                 if (this.entityID.endsWith("(Scripted)")) {
@@ -217,8 +244,10 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
                     scripted.setEntityDescription(this.entityID.replace(" (Scripted)", ""));
                 }
 
-                if (entity instanceof LivingEntity livingEntity) {
-                    livingEntity.onSpawnedFromSpawner();
+                if(showParticles) {
+                    if (entity instanceof LivingEntity livingEntity) {
+                        livingEntity.onSpawnedFromSpawner();
+                    }
                 }
 
                 if (this.spawnedEntities.size() < this.spawnNumber) {
@@ -227,7 +256,7 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
                 }
             }
 
-            if (this.spawnNumber > 0 && this.spawnedEntities.size() == 0) {
+            if (this.spawnNumber > 0 && this.spawnedEntities.isEmpty()) {
                 this.delay = 20;
                 this.spawnStill = true;
             } else {
@@ -235,11 +264,12 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
                 this.executeScript(this.onTriggerScriptFile);
                 this.spawnStill = false;
             }
-            return;
+            break;
         }
     }
 
     public void tick() {
+
         if (this.delayLoadData != null) {
             if (this.ticksBeforeLoad == 0) {
                 short entityCount = this.delayLoadData.getShort("numEntities");
@@ -264,9 +294,13 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
             }
 
             --this.ticksBeforeLoad;
-        } else if (this.delay > 0) {
+            return;
+        }
+        if (this.delay > 0) {
             --this.delay;
-        } else if (!this.spawnedEntities.isEmpty()) {
+            return;
+        }
+        if (!this.spawnedEntities.isEmpty()) {
             if (this.getNumAlive() == 0) {
                 this.spawnedEntities.clear();
                 this.entitiesLeft.clear();
@@ -276,18 +310,19 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
                     item.pickupDelay = 10;
                     this.world.spawnEntity(item);
 
-                    for (int i = 0; i < 20; ++i) {
-                        double x = this.rand.nextGaussian() * 0.02D;
-                        double y = this.rand.nextGaussian() * 0.02D;
-                        double z = this.rand.nextGaussian() * 0.02D;
-                        double var9 = 10.0D;
-                        this.world.addParticle(
-                            "explode",
-                            item.x + (double) (this.rand.nextFloat() * 2.0F) - 1.0D - x * var9,
-                            item.y + (double) this.rand.nextFloat() - y * var9,
-                            item.z + (double) (this.rand.nextFloat() * 2.0F) - 1.0D - z * var9, x, y, z);
+                    if(this.showParticles){
+                        for (int i = 0; i < 20; ++i) {
+                            double x = this.rand.nextGaussian() * 0.02D;
+                            double y = this.rand.nextGaussian() * 0.02D;
+                            double z = this.rand.nextGaussian() * 0.02D;
+                            double var9 = 10.0D;
+                            this.world.addParticle(
+                                "explode",
+                                item.x + (double) (this.rand.nextFloat() * 2.0F) - 1.0D - x * var9,
+                                item.y + (double) this.rand.nextFloat() - y * var9,
+                                item.z + (double) (this.rand.nextFloat() * 2.0F) - 1.0D - z * var9, x, y, z);
+                        }
                     }
-
                     this.hasDroppedItem = true;
                 }
 
@@ -303,14 +338,14 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
             } else {
                 this.executeScript(this.onUpdateScriptFile);
             }
-
-        } else {
-            if (this.spawnStill || !this.spawnOnTrigger && !this.spawnOnDetrigger) {
-                this.spawnMobs();
-            }
-
-            super.tick();
+            return;
         }
+
+        if (this.spawnStill || !this.spawnOnTrigger && !this.spawnOnDetrigger) {
+            this.spawnMobs();
+        }
+
+        super.tick();
     }
 
     public void setSpawnVec() {
@@ -379,7 +414,13 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
         this.dropItem = tag.getInt("DropItem");
         this.hasDroppedItem = tag.getBoolean("HasDroppedItem");
         this.spawnID = tag.getInt("SpawnID");
-
+        this.spawnMeta = tag.getInt("SpawnMeta");
+        if(tag.containsKey("ShowDebugInfo")) {
+            this.showDebugInfo = tag.getBoolean("ShowDebugInfo");
+        }
+        if(tag.containsKey("ShowParticles")) {
+            this.showParticles = tag.getBoolean("ShowParticles");
+        }
         for (int id = 0; id < 8; ++id) {
             this.minVec[id].x = tag.getInt("minX".concat(Integer.toString(id)));
             this.minVec[id].y = tag.getInt("minY".concat(Integer.toString(id)));
@@ -388,7 +429,6 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
             this.maxVec[id].y = tag.getInt("maxY".concat(Integer.toString(id)));
             this.maxVec[id].z = tag.getInt("maxZ".concat(Integer.toString(id)));
         }
-
         this.minSpawnVec.x = tag.getInt("minSpawnX");
         this.minSpawnVec.y = tag.getInt("minSpawnY");
         this.minSpawnVec.z = tag.getInt("minSpawnZ");
@@ -415,8 +455,11 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
         tag.put("SpawnOnTrigger", this.spawnOnTrigger);
         tag.put("SpawnOnDetrigger", this.spawnOnDetrigger);
         tag.put("SpawnID", this.spawnID);
+        tag.put("SpawnMeta", this.spawnMeta);
         tag.put("DropItem", this.dropItem);
         tag.put("HasDroppedItem", this.hasDroppedItem);
+        tag.put("ShowDebugInfo",this.showDebugInfo);
+        tag.put("ShowParticles",this.showParticles);
 
         for (int id = 0; id < 8; ++id) {
             tag.put("minX".concat(Integer.toString(id)), this.minVec[id].x);
@@ -445,7 +488,7 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
     }
 
     private void executeScript(String name) {
-        if (name.equals("")) {
+        if (name.isEmpty()) {
             return;
         }
 
@@ -458,5 +501,26 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
 
         ((ExWorld) this.world).getScript().addObject("spawnedEntities", spawned);
         ((ExWorld) this.world).getScriptHandler().runScript(name, this.scope);
+    }
+
+    static {
+        ALTERNATIVE_NAMES.put("Falling Block", "FallingSand");
+        ALTERNATIVE_NAMES.put("Slime Size: 1", "Slime");
+        ALTERNATIVE_NAMES.put("Slime Size: 2", "Slime");
+        ALTERNATIVE_NAMES.put("Slime Size: 4", "Slime");
+        ALTERNATIVE_NAMES.put("Slime Size: 8", "Slime");
+        ALTERNATIVE_NAMES.put("Slime Size: 16", "Slime");
+        ALTERNATIVE_NAMES.put("Minecart Chest", "Minecart");
+        ALTERNATIVE_NAMES.put("Minecart Furnace", "Minecart");
+        ALTERNATIVE_NAMES.put("Spider Skeleton", "Spider");
+        ALTERNATIVE_NAMES.put("Spider Skeleton Sword", "Spider");
+        ALTERNATIVE_NAMES.put("Wolf (Angry)", "Wolf");
+        ALTERNATIVE_NAMES.put("Wolf (Tame)", "Wolf");
+        ALTERNATIVE_NAMES.put("Pig Zombie","PigZombie");
+        ALTERNATIVE_NAMES.put("Skeleton Boss","SkeletonBoss");
+        ALTERNATIVE_NAMES.put("Skeleton Rifle","SkeletonRifle");
+        ALTERNATIVE_NAMES.put("Skeleton Shotgun","SkeletonShotgun");
+        ALTERNATIVE_NAMES.put("Skeleton Sword","SkeletonSword");
+        ALTERNATIVE_NAMES.put("Primed Tnt","PrimedTnt");
     }
 }

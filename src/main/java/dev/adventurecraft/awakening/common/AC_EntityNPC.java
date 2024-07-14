@@ -17,8 +17,9 @@ public class AC_EntityNPC extends AC_EntityLivingScript {
     public boolean pathToHome = true;
     public boolean trackPlayer = true;
     public boolean isAttackable = false;
-    Entity entityToTrack;
+    public Entity entityToTrack = null;
     private boolean ranOnCreate = false;
+
 
     public AC_EntityNPC(World world) {
         super(world);

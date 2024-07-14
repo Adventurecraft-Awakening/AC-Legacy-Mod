@@ -254,7 +254,13 @@ public class ScriptEntity {
     public void setCollidesWithClipBlocks(boolean value) {
         ((ExEntity) this.entity).setCollidesWithClipBlocks(value);
     }
+    public void setIgnoreCobwebCollision(boolean value){
+        ((ExEntity) this.entity).setIgnoreCobwebCollision(value);
+    }
 
+    public boolean isIgnoreCobwebCollision(){
+        return ((ExEntity) this.entity).isIgnoreCobwebCollision();
+    }
     public float getHeight() {
         return this.entity.height;
     }
