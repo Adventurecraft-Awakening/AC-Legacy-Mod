@@ -9,6 +9,8 @@ import net.minecraft.util.io.CompoundTag;
 import net.minecraft.util.math.AxixAlignedBoundingBox;
 import net.minecraft.world.World;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
 
 public class AC_EntityBomb extends ItemEntity {
@@ -82,13 +84,18 @@ public class AC_EntityBomb extends ItemEntity {
             )
         );
 
+        List<Entity> appliedForceOnEntity = new LinkedList<>();
         int victimIndex;
         int victimAmount = victims.size();
         for (victimIndex = 0; victimIndex < victimAmount; ++victimIndex) {
             Entity victim = (Entity) victims.get(victimIndex);
-            // TODO: This is a band-aid fix that prevents players' accumulated hit boxes from being accelerated (and thus accelerating multiple times from a single explosion.)
-            if (!victim.isAlive()) continue;
-            // End of band-aid fix
+            if (!victim.isAlive()) {
+                continue;
+            }
+            if(appliedForceOnEntity.contains(victim)){
+                continue;
+            }
+
             double distanceFromExplosion = victim.distanceTo(x, y, z);
             if (distanceFromExplosion < BOMB_RANGE) {
                 distanceFromExplosion = (BOMB_RANGE - distanceFromExplosion) / BOMB_RANGE; // Percentage of how close the character is
@@ -97,8 +104,10 @@ public class AC_EntityBomb extends ItemEntity {
                 double zForce = victim.z - z;
                 victim.accelerate(distanceFromExplosion * xForce, distanceFromExplosion * yForce, distanceFromExplosion * zForce);
                 victim.damage(explosionParent, (int) Math.ceil(distanceFromExplosion * BOMB_DAMAGE));
+                appliedForceOnEntity.add(victim);
             }
         }
+        appliedForceOnEntity.clear();
     }
 
     /**
