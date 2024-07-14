@@ -27,8 +27,10 @@ public class Script {
     ScriptChat chat;
     ScriptWeather weather;
     ScriptEffect effect;
+    ScriptParticle particle;
     ScriptSound sound;
     ScriptUI ui;
+    ScriptRenderer renderer;
     ScriptScript script;
     public ScriptKeyboard keyboard;
     LinkedList<ScriptContinuation> sleepingScripts = new LinkedList<>();
@@ -56,16 +58,19 @@ public class Script {
         this.chat = new ScriptChat();
         this.weather = new ScriptWeather(var1);
         this.effect = new ScriptEffect(var1, Minecraft.instance.worldRenderer);
+        this.particle = new ScriptParticle(Minecraft.instance.worldRenderer);
         this.sound = new ScriptSound(Minecraft.instance.soundHelper);
         this.ui = new ScriptUI();
         this.script = new ScriptScript(var1);
         this.keyboard = new ScriptKeyboard(var1, Minecraft.instance.options, this.getNewScope());
+        this.renderer = new ScriptRenderer(Minecraft.instance.worldRenderer);
 
         this.addObject("time", this.time);
         this.addObject("world", this.world);
         this.addObject("chat", this.chat);
         this.addObject("weather", this.weather);
         this.addObject("effect", this.effect);
+        this.addObject("particle", this.particle);
         this.addObject("sound", this.sound);
         this.addObject("ui", this.ui);
         this.addObject("screen", ((ExInGameHud) Minecraft.instance.overlay).getScriptUI());
@@ -73,6 +78,7 @@ public class Script {
         this.addObject("keyboard", this.keyboard);
         this.addObject("hitEntity", null);
         this.addObject("hitBlock", null);
+        this.addObject("renderer",this.renderer);
 
         // TODO: make these const
         String initStr = String.join("\n", new String[]{
@@ -83,6 +89,7 @@ public class Script {
             String.format("UIRect = %s.ScriptUIRect;", PREFIXED_SCRIPT_PACKAGE),
             String.format("UIContainer = %s.ScriptUIContainer;", PREFIXED_SCRIPT_PACKAGE),
             String.format("Model = %s.ScriptModel;", PREFIXED_SCRIPT_PACKAGE),
+            String.format("ModelBlockbench = %s.ScriptModelBlockbench;", PREFIXED_SCRIPT_PACKAGE),
             String.format("Vec3 = %s.ScriptVec3;", PREFIXED_SCRIPT_PACKAGE),
             String.format("VecRot = %s.ScriptVecRot;", PREFIXED_SCRIPT_PACKAGE)
         });

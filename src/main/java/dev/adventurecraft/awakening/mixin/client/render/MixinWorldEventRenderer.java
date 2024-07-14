@@ -11,7 +11,9 @@ import dev.adventurecraft.awakening.extension.client.render.ExWorldEventRenderer
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunkCache;
+import dev.adventurecraft.awakening.common.AC_Particle;
 import dev.adventurecraft.awakening.script.ScriptModel;
+import dev.adventurecraft.awakening.script.ScriptModelBase;
 import net.minecraft.block.Block;
 import net.minecraft.class_66;
 import net.minecraft.client.Minecraft;
@@ -38,6 +40,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraft.world.dimension.Dimension;
 import org.lwjgl.BufferUtils;
+import org.lwjgl.Sys;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.ARBOcclusionQuery;
 import org.lwjgl.opengl.GL11;
@@ -911,7 +914,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     private void renderScriptModels(Vec3d var1, CameraView var2, float var3, CallbackInfo ci) {
         GL11.glPushMatrix();
         GL11.glTranslated(-EntityRenderDispatcher.field_2490, -EntityRenderDispatcher.field_2491, -EntityRenderDispatcher.field_2492);
-        ScriptModel.renderAll(var3);
+        ScriptModelBase.renderAll(var3);
         GL11.glPopMatrix();
     }
 
@@ -1131,7 +1134,6 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         if (dX * dX + dY * dY + dZ * dZ > dMax * dMax) {
             return null;
         }
-
         ParticleEntity particle = switch (name) {
             case "bubble" -> new BubbleParticle(this.world, x, y, z, vX, vY, vZ);
             case "smoke" -> new SmokeParticleEntity(this.world, x, y, z, vX, vY, vZ);
@@ -1148,6 +1150,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             case "snowshovel" -> new SnowPuffParticle(this.world, x, y, z, vX, vY, vZ);
             case "slime" -> new PoofParticleEntity(this.world, x, y, z, Item.SLIMEBALL);
             case "heart" -> new HeartParticleEntity(this.world, x, y, z, vX, vY, vZ);
+            case "ac_particle" -> new AC_Particle(this.world,x,y,z, vX, vY, vZ);
             default -> null;
         };
 
