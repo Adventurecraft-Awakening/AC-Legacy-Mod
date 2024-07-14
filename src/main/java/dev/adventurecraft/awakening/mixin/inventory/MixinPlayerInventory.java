@@ -22,6 +22,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.LinkedList;
+import java.util.List;
+
 @Mixin(PlayerInventory.class)
 public abstract class MixinPlayerInventory implements ExPlayerInventory {
 
@@ -45,7 +48,7 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
     protected abstract int mergeStacks(ItemStack arg);
 
     public int offhandItem = 1;
-    public int[] consumeInventory = new int[36];
+    //public int[] consumeInventory = new int[36];
 
     @Override
     public int getOffhandItem() {
@@ -322,39 +325,42 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
 
     @Override
     public boolean consumeItemAmount(int id, int meta, int count) {
-        int searchedSlots = 0;
         int remaining = count;
+        List<Integer> slots = new LinkedList<>();
+        for(int i = 0; i < this.main.length; i++) {
+            ItemStack itemStack = this.main[i];
 
-        for (int slot = 0; slot < 36; ++slot) {
-            ItemStack stack = this.main[slot];
-            if (stack != null &&
-                stack.itemId == id &&
-                stack.getMeta() == meta) {
-                this.consumeInventory[searchedSlots++] = slot;
-                remaining -= stack.count;
-                if (remaining <= 0) {
-                    break;
-                }
+            if (itemStack == null) {
+                continue;
+            }
+            if (itemStack.itemId != id){
+                continue;
+            }
+            if(itemStack.getMeta() != meta){
+                continue;
+            }
+            slots.add(i);
+            remaining -= itemStack.count;
+            if(remaining <= 0){
+                break;
             }
         }
 
-        if (remaining > 0) {
+        if(remaining > 0){
             return false;
         }
+        for(int slot : slots) {
+            ItemStack itemStack = this.main[slot];
 
-        for (int slot = 0; slot < searchedSlots; ++slot) {
-            int cSlot = this.consumeInventory[slot];
-            ItemStack stack = this.main[cSlot];
-            if (stack.count > count) {
-                stack.count -= count;
-            } else {
-                count -= stack.count;
-                stack.count = 0;
-                this.main[cSlot] = null;
-                this.onItemRemovedFromSlot(cSlot, stack);
+            if (itemStack.count > count) {
+                itemStack.count -= count;
+                break;
             }
+            count -= itemStack.count;
+            itemStack.count = 0;
+            this.main[slot] = null;
+            this.onItemRemovedFromSlot(slot,itemStack);
         }
-
         return true;
     }
 }

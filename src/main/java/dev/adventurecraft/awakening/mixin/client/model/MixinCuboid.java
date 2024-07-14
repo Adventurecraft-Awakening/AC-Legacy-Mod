@@ -45,49 +45,39 @@ public abstract class MixinCuboid implements ExCuboid {
     }
 
     @Override
-    public void addBoxInverted(float var1, float var2, float var3, int var4, int var5, int var6, float var7) {
-        this.corners = new QuadPoint[8];
-        this.faces = new TexturedQuad[6];
-        float var8 = var1 + (float) var4;
-        float var9 = var2 + (float) var5;
-        float var10 = var3 + (float) var6;
-        var1 -= var7;
-        var2 -= var7;
-        var3 -= var7;
-        var8 += var7;
-        var9 += var7;
-        var10 += var7;
+    public void addBoxInverted(float offsetX, float offsetY, float offsetZ, int width, int height, int length, float offsetLength) {
+        float offsetMaxX = offsetX + (float) width + offsetLength;
+        float offsetMaxY = offsetY + (float) height + offsetLength;
+        float offsetMaxZ = offsetZ + (float) length + offsetLength;
+        offsetX -= offsetLength;
+        offsetY -= offsetLength;
+        offsetZ -= offsetLength;
         if (this.mirror) {
-            float var11 = var8;
-            var8 = var1;
-            var1 = var11;
+            float var11 = offsetMaxX;
+            offsetMaxX = offsetX;
+            offsetX = var11;
         }
 
-        QuadPoint var20 = new QuadPoint(var1, var2, var3, 0.0F, 0.0F);
-        QuadPoint var12 = new QuadPoint(var8, var2, var3, 0.0F, 8.0F);
-        QuadPoint var13 = new QuadPoint(var8, var9, var3, 8.0F, 8.0F);
-        QuadPoint var14 = new QuadPoint(var1, var9, var3, 8.0F, 0.0F);
-        QuadPoint var15 = new QuadPoint(var1, var2, var10, 0.0F, 0.0F);
-        QuadPoint var16 = new QuadPoint(var8, var2, var10, 0.0F, 8.0F);
-        QuadPoint var17 = new QuadPoint(var8, var9, var10, 8.0F, 8.0F);
-        QuadPoint var18 = new QuadPoint(var1, var9, var10, 8.0F, 0.0F);
-        this.corners[0] = var20;
-        this.corners[1] = var12;
-        this.corners[2] = var13;
-        this.corners[3] = var14;
-        this.corners[4] = var15;
-        this.corners[5] = var16;
-        this.corners[6] = var17;
-        this.corners[7] = var18;
+        this.corners = new QuadPoint[8];
+        this.corners[0] = new QuadPoint(offsetX, offsetY, offsetZ, 0.0F, 0.0F);
+        this.corners[1] = new QuadPoint(offsetMaxX, offsetY, offsetZ, 0.0F, 8.0F);
+        this.corners[2] = new QuadPoint(offsetMaxX, offsetMaxY, offsetZ, 8.0F, 8.0F);
+        this.corners[3] = new QuadPoint(offsetX, offsetMaxY, offsetZ, 8.0F, 0.0F);
+        this.corners[4] = new QuadPoint(offsetX, offsetY, offsetMaxZ, 0.0F, 0.0F);
+        this.corners[5] = new QuadPoint(offsetMaxX, offsetY, offsetMaxZ, 0.0F, 8.0F);
+        this.corners[6] = new QuadPoint(offsetMaxX, offsetMaxY, offsetMaxZ, 8.0F, 8.0F);
+        this.corners[7] = new QuadPoint(offsetX, offsetMaxY, offsetMaxZ, 8.0F, 0.0F);
 
         int w = this.tWidth;
         int h = this.tHeight;
-        this.faces[0] = ExTexturedQuad.create(new QuadPoint[]{var16, var12, var13, var17}, this.textureOffsetX + var6 + var4 + var6, this.textureOffsetY + var6 + var5, this.textureOffsetX + var6 + var4, this.textureOffsetY + var6, w, h);
-        this.faces[1] = ExTexturedQuad.create(new QuadPoint[]{var20, var15, var18, var14}, this.textureOffsetX + var6, this.textureOffsetY + var6 + var5, this.textureOffsetX, this.textureOffsetY + var6, w, h);
-        this.faces[2] = ExTexturedQuad.create(new QuadPoint[]{var16, var15, var20, var12}, this.textureOffsetX + var6 + var4 + var4, this.textureOffsetY, this.textureOffsetX + var6 + var4, this.textureOffsetY + var6, w, h);
-        this.faces[3] = ExTexturedQuad.create(new QuadPoint[]{var13, var14, var18, var17}, this.textureOffsetX + var6 + var4, this.textureOffsetY, this.textureOffsetX + var6, this.textureOffsetY + var6, w, h);
-        this.faces[4] = ExTexturedQuad.create(new QuadPoint[]{var12, var20, var14, var13}, this.textureOffsetX + var6 + var4 + var6 + var4, this.textureOffsetY + var6 + var5, this.textureOffsetX + var6 + var4 + var6, this.textureOffsetY + var6, w, h);
-        this.faces[5] = ExTexturedQuad.create(new QuadPoint[]{var15, var16, var17, var18}, this.textureOffsetX + var6 + var4, this.textureOffsetY + var6 + var5, this.textureOffsetX + var6, this.textureOffsetY + var6, w, h);
+
+        this.faces = new TexturedQuad[6];
+        this.faces[0] = ExTexturedQuad.create(new QuadPoint[]{this.corners[5], this.corners[1], this.corners[2], this.corners[6]}, this.textureOffsetX + length + width + length, this.textureOffsetY + length + height, this.textureOffsetX + length + width, this.textureOffsetY + length, w, h);
+        this.faces[1] = ExTexturedQuad.create(new QuadPoint[]{this.corners[0], this.corners[4], this.corners[7], this.corners[3]}, this.textureOffsetX + length, this.textureOffsetY + length + height, this.textureOffsetX, this.textureOffsetY + length, w, h);
+        this.faces[2] = ExTexturedQuad.create(new QuadPoint[]{this.corners[5], this.corners[4], this.corners[0], this.corners[1]}, this.textureOffsetX + length + width + width, this.textureOffsetY, this.textureOffsetX + length + width, this.textureOffsetY + length, w, h);
+        this.faces[3] = ExTexturedQuad.create(new QuadPoint[]{this.corners[2], this.corners[3], this.corners[7], this.corners[6]}, this.textureOffsetX + length + width, this.textureOffsetY, this.textureOffsetX + length, this.textureOffsetY + length, w, h);
+        this.faces[4] = ExTexturedQuad.create(new QuadPoint[]{this.corners[1], this.corners[0], this.corners[3], this.corners[2]}, this.textureOffsetX + length + width + length + width, this.textureOffsetY + length + height, this.textureOffsetX + length + width + length, this.textureOffsetY + length, w, h);
+        this.faces[5] = ExTexturedQuad.create(new QuadPoint[]{this.corners[4], this.corners[5], this.corners[6], this.corners[7]}, this.textureOffsetX + length + width, this.textureOffsetY + length + height, this.textureOffsetX + length, this.textureOffsetY + length, w, h);
 
         if (this.mirror) {
             for (TexturedQuad face : this.faces) {
