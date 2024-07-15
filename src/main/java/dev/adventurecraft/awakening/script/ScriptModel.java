@@ -27,8 +27,13 @@ public class ScriptModel extends ScriptModelBase {
         this.textureWidth = width;
         this.textureHeight = height;
     }
-    public void setBrightness(float brightness){
-        this.colorRed = this.colorGreen = this.colorBlue = brightness;
+
+    public void setBrightness(float brightness) {
+        this.colorRed = this.colorGreen = this.colorBlue = Math.min(brightness, 1.0F);
+    }
+
+    public void setBrightness(int brightness) {
+        setBrightness(Math.max(brightness,255) / 256.0F);
     }
 
     //Old method
@@ -162,13 +167,10 @@ public class ScriptModel extends ScriptModelBase {
         GL11.glPushMatrix();
         GL11.glLoadIdentity();
 
-
         this.transform(var1);
 
         modelView.rewind();
         GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, modelView);
-
-        //GL11.glTranslatef(scale,scale,scale);
 
         transform.load(modelView);
         GL11.glPopMatrix();
@@ -176,10 +178,10 @@ public class ScriptModel extends ScriptModelBase {
         Matrix4f.transform(transform, v, vr);
 
 
-        switch (this.modes){
+        switch (this.modes) {
             case 1:
                 //using the position of the attached entity
-                if(this.attachedTo != null){
+                if (this.attachedTo != null) {
                     var position = this.attachedTo.getPosition();
                     setBrightness(world.method_1782((int) Math.floor(position.x), (int) Math.floor(position.y), (int) Math.floor(position.z)));
                 }
@@ -189,7 +191,7 @@ public class ScriptModel extends ScriptModelBase {
                 break;
             case 3:
                 //use the lightning value of the attached model
-                if(this.modelAttachment != null){
+                if (this.modelAttachment != null) {
                     this.colorRed = this.modelAttachment.colorRed;
                     this.colorGreen = this.modelAttachment.colorGreen;
                     this.colorBlue = this.modelAttachment.colorBlue;
@@ -197,17 +199,20 @@ public class ScriptModel extends ScriptModelBase {
                 break;
             default:
                 //Default lightning values
-                setBrightness(world.method_1782(Math.round(vr.x), Math.round(vr.x), Math.round(vr.x)));
+                setBrightness(world.method_1782(Math.round(vr.x), Math.round(vr.y), Math.round(vr.z)));
                 break;
         }
-        if(colorAlpha < 1.0){
-            GL11.glBlendFunc(GL11.GL_SRC_ALPHA,GL11.GL_ONE_MINUS_SRC_ALPHA);
+        float r = Math.min(this.colorRed, 1.0F);
+        float g = Math.min(this.colorGreen, 1.0F);
+        float b = Math.min(this.colorBlue, 1.0F);
+
+        if (this.colorAlpha < 1.0) {
+            GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
             GL11.glEnable(GL11.GL_BLEND);
-            GL11.glColor4f(colorRed, colorGreen, colorBlue, colorAlpha);
-        } else{
-            GL11.glColor3f(colorRed, colorGreen, colorBlue);
+            GL11.glColor4f(r, g, b, Math.min(this.colorAlpha, 1.0F));
+        } else {
+            GL11.glColor3f(r, g, b);
         }
-        //GL11.glColor3f(colorRed, colorGreen, colorBlue);
         GL11.glPushMatrix();
         this.transform(var1);
 
@@ -216,7 +221,7 @@ public class ScriptModel extends ScriptModelBase {
         }
 
         GL11.glPopMatrix();
-        if(colorAlpha < 1.0){
+        if (this.colorAlpha < 1.0) {
             GL11.glDisable(GL11.GL_BLEND);
         }
     }
