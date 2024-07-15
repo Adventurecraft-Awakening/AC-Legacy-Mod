@@ -197,7 +197,7 @@ public class ScriptModel extends ScriptModelBase {
                 break;
             default:
                 //Default lightning values
-                setBrightness(world.method_1782(Math.round(vr.x), Math.round(vr.x), Math.round(vr.x)));
+                setBrightness(world.method_1782(Math.round(vr.x), Math.round(vr.y), Math.round(vr.z)));
                 break;
         }
         if(colorAlpha < 1.0){
