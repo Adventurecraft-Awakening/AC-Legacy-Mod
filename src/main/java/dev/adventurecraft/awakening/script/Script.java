@@ -43,9 +43,15 @@ public class Script {
         if (!shutterSet) {
             this.cx.setClassShutter(fullClassName -> fullClassName.startsWith(SCRIPT_PACKAGE) ||
                 fullClassName.equals("java.lang.Object") ||
+                fullClassName.equals("java.lang.Character") ||
                 fullClassName.equals("java.lang.String") ||
+                fullClassName.equals("java.lang.Float") ||
                 fullClassName.equals("java.lang.Double") ||
                 fullClassName.equals("java.lang.Boolean") ||
+                fullClassName.equals("java.lang.Byte") ||
+                fullClassName.equals("java.lang.Short") ||
+                fullClassName.equals("java.lang.Integer") ||
+                fullClassName.equals("java.lang.Long") ||
                 fullClassName.equals("org.mozilla.javascript.ConsString"));
             shutterSet = true;
         }

@@ -1053,16 +1053,16 @@ public abstract class MixinMinecraft implements ExMinecraft {
             }
         }
         // Trigger item scripts
+        String scriptName;
         if(stack != null) {
-            String scriptName = stack.usesMeta()
+            scriptName = stack.usesMeta()
                 ? String.format("item_%d_%d.js", stack.itemId, stack.getMeta())
                 : String.format("item_%d.js", stack.itemId);
-            exWorld.getScriptHandler().runScript(scriptName, exWorld.getScope(), false);
         }
         else {
-            String scriptName = String.format("item_0.js", 0);
-            exWorld.getScriptHandler().runScript(scriptName, exWorld.getScope(), false);
+            scriptName = "item_0.js";
         }
+        exWorld.getScriptHandler().runScript(scriptName, exWorld.getScope(), false);
 
         if (swapOffhand) {
             ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
