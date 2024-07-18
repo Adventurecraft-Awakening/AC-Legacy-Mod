@@ -65,7 +65,7 @@ public class AC_BlockHealDamage extends BlockWithEntity implements AC_ITriggerBl
 
     @Override
     public boolean canUse(World world, int x, int y, int z, PlayerEntity player) {
-        if (AC_DebugMode.active && player.getHeldItem() != null && player.getHeldItem().itemId == AC_Items.cursor.id) {
+        if (AC_DebugMode.active && (player.getHeldItem() == null || player.getHeldItem().itemId == AC_Items.cursor.id)) {
             var entity = (AC_TileEntityHealDamage) world.getBlockEntity(x, y, z);
             AC_GuiHealDamage.showUI(world, entity);
             return true;

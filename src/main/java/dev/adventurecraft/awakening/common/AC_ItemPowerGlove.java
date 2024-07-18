@@ -31,15 +31,18 @@ public class AC_ItemPowerGlove extends Item {
      */
     @Override
     public boolean useOnBlock(ItemStack stack, PlayerEntity player, World world, int x, int y, int z, int side) {
-        boolean currentBlockExists = currentFallingBlock != null && !currentFallingBlock.removed;
+        boolean currentBlockExists = this.currentFallingBlock != null && !this.currentFallingBlock.removed;
+
         if (currentBlockExists) {
             // Saving and exiting while the block is falling keeps the falling block entity saved to the item.
             // In this case, the glove thinks there is a falling block, but it isn't on the current world.
             // This would mean that the player would not be able to use the power glove until the game is reset.
             // So we check if the currently tracked falling block is on this world:
             // If it is, do nothing (fail to push), if not, unset it and proceed with the push.
-            if (currentFallingBlock.world == world) return false;
-            else currentFallingBlock = null;
+            if (this.currentFallingBlock.world == world) {
+                return false;
+            }
+            this.currentFallingBlock = null;
         }
         int xDir = 0;
         int zDir = 0;
@@ -62,11 +65,13 @@ public class AC_ItemPowerGlove extends Item {
         }
 
         int currentBlockId = world.getBlockId(x, y, z);
-        boolean isPushableBlock = currentBlockId != AC_Blocks.pushableBlock.id;
+        boolean isPushableBlock = currentBlockId == AC_Blocks.pushableBlock.id;
+        if (!isPushableBlock) {
+            return false;
+        }
 
-        if (!isPushableBlock) return false;
-
-        boolean isPulling = Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL);
+        boolean isPulling = Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) ||
+            Keyboard.isKeyDown(Keyboard.KEY_RCONTROL);
 
         if (isPulling) {
             xDir *= -1;
@@ -75,17 +80,21 @@ public class AC_ItemPowerGlove extends Item {
 
         int destinationBlockId = world.getBlockId(x + xDir, y, z + zDir);
         Block destinationBlock = Block.BY_ID[destinationBlockId];
-        boolean isValidDestination = destinationBlock == null || destinationBlock.material.isLiquid() || destinationBlockId == Block.FIRE.id;
-
-        if (isValidDestination) {
-            int blockMetadata = world.getBlockMeta(x, y, z);
-            world.placeBlockWithMetaData(x, y, z, 0, 0);
-            currentFallingBlock = new FallingBlockEntity(world, (double) x + 0.5D, (double) y + 0.5D, (double) z + 0.5D, currentBlockId);
-            currentFallingBlock.xVelocity = 0.3D * (double) xDir;
-            currentFallingBlock.zVelocity = 0.3D * (double) zDir;
-            ((ExFallingBlockEntity) currentFallingBlock).setMetadata(blockMetadata);
-            world.spawnEntity(currentFallingBlock);
+        boolean isValidDestination = destinationBlock == null ||
+                destinationBlock.material.isLiquid() ||
+                destinationBlockId == Block.FIRE.id;
+        if (!isValidDestination) {
+            return false;
         }
+
+        int blockMetadata = world.getBlockMeta(x, y, z);
+        world.placeBlockWithMetaData(x, y, z, 0, 0);
+        this.currentFallingBlock = new FallingBlockEntity(world, (double) x + 0.5D, (double) y + 0.5D, (double) z + 0.5D, currentBlockId);
+        this.currentFallingBlock.xVelocity = 0.3D * (double) xDir;
+        this.currentFallingBlock.zVelocity = 0.3D * (double) zDir;
+        ((ExFallingBlockEntity) this.currentFallingBlock).setMetadata(blockMetadata);
+        world.spawnEntity(this.currentFallingBlock);
+
         return true;
     }
 }

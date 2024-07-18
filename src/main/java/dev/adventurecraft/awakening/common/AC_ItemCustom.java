@@ -78,10 +78,18 @@ public class AC_ItemCustom extends Item implements AC_IUseDelayItem {
                 this.maxStackSize = value;
             }
         }
+        // configurable itemUseDelay
+        this.itemUseDelay = 1; // Default
+        String sItemUseDelay = properties.getProperty("itemUseDelay");
+        if (sItemUseDelay != null) {
+            Integer value = this.loadPropertyInt("itemUseDelay", sItemUseDelay);
+            if (value != null) {
+                this.itemUseDelay = value;
+            }
+        }
 
         this.setTranslationKey(properties.getProperty("name", "Unnamed"));
         this.onItemUsedScript = properties.getProperty("onItemUsedScript", "");
-        this.itemUseDelay = 1;
     }
 
     private Integer loadPropertyInt(String name, String value) {

@@ -209,7 +209,7 @@ public class ServerCommands {
                 if (entity instanceof LivingEntity && !(entity instanceof PlayerEntity)) {
                     mobCount++;
                     if (!entity.removed) {
-                        entity.removed = true;
+                        entity.remove();
                         count++;
                     }
                 }

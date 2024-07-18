@@ -12,107 +12,117 @@ import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector4f;
 
 import java.nio.FloatBuffer;
-import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 
 @SuppressWarnings("unused")
-public class ScriptModel {
-
-    HashMap<String, Cuboid> boxes;
-    public ScriptEntity attachedTo;
-    public ScriptModel modelAttachment;
-    public String texture;
-    public double prevX;
-    public double prevY;
-    public double prevZ;
-    public float prevYaw;
-    public float prevPitch;
-    public float prevRoll;
-    public double x;
-    public double y;
-    public double z;
-    public float yaw;
-    public float pitch;
-    public float roll;
-    private int textureWidth;
-    private int textureHeight;
-    private static FloatBuffer modelview = BufferUtils.createFloatBuffer(16);
-    private static Matrix4f transform = new Matrix4f();
-    private static Vector4f v = new Vector4f();
-    private static Vector4f vr = new Vector4f();
-    static LinkedList<ScriptModel> activeModels = new LinkedList<>();
+public class ScriptModel extends ScriptModelBase {
 
     public ScriptModel() {
-        this(64, 32);
-    }
-
-    public ScriptModel(int var1, int var2) {
-        this.boxes = new HashMap<>();
         this.addToRendering();
-        this.textureWidth = var1;
-        this.textureHeight = var2;
     }
 
-    public void addBox(String var1, float var2, float var3, float var4, int var5, int var6, int var7, int var8, int var9) {
-        this.addBoxExpanded(var1, var2, var3, var4, var5, var6, var7, var8, var9, 0.0F);
+    public ScriptModel(int width, int height) {
+        this.addToRendering();
+        this.textureWidth = width;
+        this.textureHeight = height;
     }
 
-    public void addBoxExpanded(String var1, float var2, float var3, float var4, int var5, int var6, int var7, int var8, int var9, float var10) {
-        Cuboid var11 = new Cuboid(var8, var9);
-        ((ExCuboid) var11).setTWidth(this.textureWidth);
-        ((ExCuboid) var11).setTHeight(this.textureHeight);
-        ((ExCuboid) var11).addBoxInverted(var2, var3, var4, var5, var6, var7, var10);
-        this.boxes.put(var1, var11);
+    public void setBrightness(float brightness) {
+        this.colorRed = this.colorGreen = this.colorBlue = Math.min(brightness, 1.0F);
     }
 
-    public void setPosition(double var1, double var3, double var5) {
-        this.prevX = this.x = var1;
-        this.prevY = this.y = var3;
-        this.prevZ = this.z = var5;
+    public void setBrightness(int brightness) {
+        setBrightness(Math.max(brightness,255) / 256.0F);
     }
 
-    public void setRotation(float var1, float var2, float var3) {
-        this.prevYaw = this.yaw = var1;
-        this.prevPitch = this.pitch = var2;
-        this.prevRoll = this.roll = var3;
+    //Old method
+    public void addBox(String boxName,
+                       float offsetX, float offsetY, float offsetZ,
+                       int width, int height, int length,
+                       int textureOffsetX, int textureOffsetY) {
+        this.addBoxExpanded(offsetX, offsetY, offsetZ, width, height, length, textureOffsetX, textureOffsetY, 0.0F);
     }
 
-    public void moveTo(double var1, double var3, double var5) {
-        this.x = var1;
-        this.y = var3;
-        this.z = var5;
+    public void addBox(float offsetX, float offsetY, float offsetZ,
+                       int width, int height, int length,
+                       int textureOffsetX, int textureOffsetY) {
+        this.addBoxExpanded(offsetX, offsetY, offsetZ, width, height, length, textureOffsetX, textureOffsetY, 0.0F);
     }
 
-    public void moveBy(double var1, double var3, double var5) {
-        double var7 = Math.toRadians(this.yaw);
-        double var9 = Math.toRadians(this.pitch);
-        double var11 = Math.toRadians(this.roll);
-        double var13 = var1 * Math.cos(var7) + var5 * Math.sin(var7);
-        var5 = var5 * Math.cos(var7) - var1 * Math.sin(var7);
-        var1 = var13;
-        var13 = var5 * Math.cos(var9) + var3 * Math.sin(var9);
-        var3 = var3 * Math.cos(var9) - var5 * Math.sin(var9);
-        var5 = var13;
-        var13 = var3 * Math.cos(var11) + var1 * Math.sin(var11);
-        var1 = var1 * Math.cos(var11) - var3 * Math.sin(var11);
-        this.x += var1;
-        this.y += var13;
-        this.z += var5;
+    //Old legacy method
+    public void addBoxExpanded(String boxName,
+                               float offsetX, float offsetY, float offsetZ,
+                               int width, int height, int length,
+                               int textureOffsetX, int textureOffsetY,
+                               float scale) {
+        this.addBoxExpanded(offsetX, offsetY, offsetZ, width, height, length, textureOffsetX, textureOffsetY, scale);
     }
 
-    public void rotateTo(float var1, float var2, float var3) {
-        this.yaw = var1;
-        this.pitch = var2;
-        this.roll = var3;
+    public void addBoxExpanded(float offsetX, float offsetY, float offsetZ,
+                               int width, int height, int length,
+                               int textureOffsetX, int textureOffsetY,
+                               float scale) {
+        Cuboid cuboid = new Cuboid(textureOffsetX, textureOffsetY);
+        ((ExCuboid) cuboid).setTWidth(this.textureWidth);
+        ((ExCuboid) cuboid).setTHeight(this.textureHeight);
+        ((ExCuboid) cuboid).addBoxInverted(offsetX, offsetY, offsetZ, width, height, length, scale);
+        this.boxes.add(cuboid);
     }
 
-    public void rotateBy(float var1, float var2, float var3) {
-        this.yaw += var1;
-        this.pitch += var2;
-        this.roll += var3;
+    public ScriptVec3 getPosition() {
+        return new ScriptVec3(x, y, z);
     }
 
-    private void update() {
+    public void setPosition(double x, double y, double z) {
+        this.prevX = this.x = x;
+        this.prevY = this.y = y;
+        this.prevZ = this.z = z;
+    }
+
+    public void moveTo(double x, double y, double z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+
+    public void moveBy(double x, double y, double z) {
+        double yaw = Math.toRadians(this.yaw);
+        double pitch = Math.toRadians(this.pitch);
+        double roll = Math.toRadians(this.roll);
+        double tempY = x * Math.cos(yaw) + z * Math.sin(yaw);
+        z = z * Math.cos(yaw) - x * Math.sin(yaw);
+        x = tempY;
+        tempY = z * Math.cos(pitch) + y * Math.sin(pitch);
+        y = y * Math.cos(pitch) - z * Math.sin(pitch);
+        z = tempY;
+        tempY = y * Math.cos(roll) + x * Math.sin(roll);
+        x = x * Math.cos(roll) - y * Math.sin(roll);
+        this.x += x;
+        this.y += tempY;
+        this.z += z;
+    }
+
+    public void setRotation(float yaw, float pitch, float roll) {
+        this.prevYaw = this.yaw = yaw;
+        this.prevPitch = this.pitch = pitch;
+        this.prevRoll = this.roll = roll;
+    }
+
+    public void rotateTo(float yaw, float pitch, float roll) {
+        this.yaw = yaw;
+        this.pitch = pitch;
+        this.roll = roll;
+    }
+
+    public void rotateBy(float yaw, float pitch, float roll) {
+        this.yaw += yaw;
+        this.pitch += pitch;
+        this.roll += roll;
+    }
+
+    @Override
+    protected void update() {
         this.prevX = this.x;
         this.prevY = this.y;
         this.prevZ = this.z;
@@ -121,84 +131,98 @@ public class ScriptModel {
         this.prevRoll = this.roll;
     }
 
-    private void transform(float var1) {
+    @Override
+    protected void transform(float deltaTime) {
         if (this.attachedTo != null) {
-            ScriptVec3 var2 = this.attachedTo.getPosition(var1);
-            ScriptVecRot var3 = this.attachedTo.getRotation(var1);
-            GL11.glTranslated(var2.x, var2.y, var2.z);
-            GL11.glRotatef((float) (-var3.yaw), 0.0F, 1.0F, 0.0F);
-            GL11.glRotatef((float) var3.pitch, 1.0F, 0.0F, 0.0F);
+            ScriptVec3 position = this.attachedTo.getPosition(deltaTime);
+            ScriptVecRot rotation = this.attachedTo.getRotation(deltaTime);
+            GL11.glTranslated(position.x, position.y, position.z);
+            GL11.glRotatef((float) (-rotation.yaw), 0.0F, 1.0F, 0.0F);
+            GL11.glRotatef((float) rotation.pitch, 1.0F, 0.0F, 0.0F);
         } else if (this.modelAttachment != null) {
-            this.modelAttachment.transform(var1);
+            this.modelAttachment.transform(deltaTime);
         }
-
-        float var9 = 1.0F - var1;
-        double var10 = (double) var1 * this.x + (double) var9 * this.prevX;
-        double var5 = (double) var1 * this.y + (double) var9 * this.prevY;
-        double var7 = (double) var1 * this.z + (double) var9 * this.prevZ;
-        GL11.glTranslated(var10, var5, var7);
-        GL11.glRotatef(var1 * this.yaw + var9 * this.prevYaw, 0.0F, 1.0F, 0.0F);
-        GL11.glRotatef(var1 * this.pitch + var9 * this.prevPitch, 1.0F, 0.0F, 0.0F);
-        GL11.glRotatef(var1 * this.roll + var9 * this.prevRoll, 0.0F, 0.0F, 1.0F);
+        float deltaTimeTick = 1.0F - deltaTime;
+        double x = (double) deltaTime * this.x + (double) deltaTimeTick * this.prevX;
+        double y = (double) deltaTime * this.y + (double) deltaTimeTick * this.prevY;
+        double z = (double) deltaTime * this.z + (double) deltaTimeTick * this.prevZ;
+        GL11.glTranslated(x, y, z);
+        GL11.glRotatef(deltaTime * this.yaw + deltaTimeTick * this.prevYaw, 0.0F, 1.0F, 0.0F);
+        GL11.glRotatef(deltaTime * this.pitch + deltaTimeTick * this.prevPitch, 1.0F, 0.0F, 0.0F);
+        GL11.glRotatef(deltaTime * this.roll + deltaTimeTick * this.prevRoll, 0.0F, 0.0F, 1.0F);
     }
 
-    private void render(float var1) {
-        World var2 = Minecraft.instance.world;
+    @Override
+    protected void render(float var1) {
+        if (boxes.isEmpty()) {
+            return;
+        }
+        World world = Minecraft.instance.world;
         TextureManager var3 = Minecraft.instance.textureManager;
-        if (this.texture != null && !this.texture.equals("")) {
+        if (this.texture != null && !this.texture.isEmpty()) {
             var3.bindTexture(var3.getTextureId(this.texture));
         }
 
         // TODO: clean up?
         GL11.glPushMatrix();
         GL11.glLoadIdentity();
+
         this.transform(var1);
-        modelview.rewind();
-        GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, modelview);
-        transform.load(modelview);
+
+        modelView.rewind();
+        GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, modelView);
+
+        transform.load(modelView);
         GL11.glPopMatrix();
         v.set(0.0F, 0.0F, 0.0F, 1.0F);
         Matrix4f.transform(transform, v, vr);
-        float var4 = var2.method_1782(Math.round(vr.x), Math.round(vr.y), Math.round(vr.z));
-        GL11.glColor3f(var4, var4, var4);
+
+
+        switch (this.modes) {
+            case 1:
+                //using the position of the attached entity
+                if (this.attachedTo != null) {
+                    var position = this.attachedTo.getPosition();
+                    setBrightness(world.method_1782((int) Math.floor(position.x), (int) Math.floor(position.y), (int) Math.floor(position.z)));
+                }
+                break;
+            case 2:
+                //usage for custom RGB Values
+                break;
+            case 3:
+                //use the lightning value of the attached model
+                if (this.modelAttachment != null) {
+                    this.colorRed = this.modelAttachment.colorRed;
+                    this.colorGreen = this.modelAttachment.colorGreen;
+                    this.colorBlue = this.modelAttachment.colorBlue;
+                }
+                break;
+            default:
+                //Default lightning values
+                setBrightness(world.method_1782(Math.round(vr.x), Math.round(vr.y), Math.round(vr.z)));
+                break;
+        }
+        float r = Math.min(this.colorRed, 1.0F);
+        float g = Math.min(this.colorGreen, 1.0F);
+        float b = Math.min(this.colorBlue, 1.0F);
+
+        if (this.colorAlpha < 1.0) {
+            GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+            GL11.glEnable(GL11.GL_BLEND);
+            GL11.glColor4f(r, g, b, Math.min(this.colorAlpha, 1.0F));
+        } else {
+            GL11.glColor3f(r, g, b);
+        }
         GL11.glPushMatrix();
         this.transform(var1);
 
-        for (Cuboid var6 : this.boxes.values()) {
-            var6.render(1.0F / 16.0F);
+        for (Cuboid cuboid : this.boxes) {
+            cuboid.render(1.0F / 16.0F);
         }
 
         GL11.glPopMatrix();
-    }
-
-    public void removeFromRendering() {
-        activeModels.remove(this);
-    }
-
-    public void addToRendering() {
-        activeModels.add(this);
-    }
-
-    public static void renderAll(float var0) {
-        GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-        GL11.glDisable(GL11.GL_CULL_FACE);
-        GL11.glEnable(GL11.GL_ALPHA_TEST);
-
-        for (ScriptModel var2 : activeModels) {
-            var2.render(var0);
+        if (this.colorAlpha < 1.0) {
+            GL11.glDisable(GL11.GL_BLEND);
         }
-
-        GL11.glEnable(GL11.GL_CULL_FACE);
-        GL11.glDisable(GL12.GL_RESCALE_NORMAL);
-    }
-
-    public static void updateAll() {
-        for (ScriptModel var1 : activeModels) {
-            var1.update();
-        }
-    }
-
-    public static void clearAll() {
-        activeModels.clear();
     }
 }

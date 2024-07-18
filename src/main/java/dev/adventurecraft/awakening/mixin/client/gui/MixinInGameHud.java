@@ -306,11 +306,11 @@ public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
 
             GL11.glPopMatrix();
         } else {
-            textRenderer.drawTextWithShadow(AC_Version.shortVersion, 2, 2, 16777215);
-            int y = 12;
+            int y = 0; // 12 prev
             if (AC_DebugMode.active) {
-                textRenderer.drawTextWithShadow("Debug Active", 2, y, 16777215);
-                y += 10;
+                textRenderer.drawTextWithShadow(AC_Version.shortVersion, 2, 2, 16777215);
+                textRenderer.drawTextWithShadow("Debug Active", 2, 12, 16777215);
+                y += 22;
             }
 
             if (AC_DebugMode.levelEditing) {

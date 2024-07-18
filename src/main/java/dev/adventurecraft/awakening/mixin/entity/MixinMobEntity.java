@@ -6,12 +6,18 @@ import dev.adventurecraft.awakening.extension.entity.ai.pathing.ExEntityPath;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.ai.pathing.EntityPath;
+import net.minecraft.util.io.AbstractTag;
 import net.minecraft.util.io.CompoundTag;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 @Mixin(MobEntity.class)
 public abstract class MixinMobEntity extends MixinLivingEntity implements ExMobEntity, IEntityPather {
@@ -166,24 +172,36 @@ public abstract class MixinMobEntity extends MixinLivingEntity implements ExMobE
     }
 
     @Override
-    public void writeAdditional(CompoundTag var1) {
-        super.writeAdditional(var1);
-        var1.put("canPathRandomly", this.canPathRandomly);
-        var1.put("canForgetTargetRandomly", this.canForgetTargetRandomly);
+    public void writeAdditional(CompoundTag compoundTag) {
+        super.writeAdditional(compoundTag);
+        compoundTag.put("canPathRandomly", this.canPathRandomly);
+        compoundTag.put("canForgetTargetRandomly", this.canForgetTargetRandomly);
+        if(!customData.isEmpty()) {
+            CompoundTag customCompoundTag = new CompoundTag();
+            for(String key : customData.keySet()){
+                customCompoundTag.put(key,customData.get(key));
+            }
+            compoundTag.put("custom",customCompoundTag);
+        }
     }
 
     @Override
-    public void readAdditional(CompoundTag var1) {
-        super.readAdditional(var1);
-        if (var1.containsKey("canPathRandomly")) {
-            this.canPathRandomly = var1.getBoolean("canPathRandomly");
+    public void readAdditional(CompoundTag compoundTag) {
+        super.readAdditional(compoundTag);
+        if (compoundTag.containsKey("canPathRandomly")) {
+            this.canPathRandomly = compoundTag.getBoolean("canPathRandomly");
         }
 
-        if (var1.containsKey("canForgetTargetRandomly")) {
-            this.canPathRandomly = var1.getBoolean("canForgetTargetRandomly");
+        if (compoundTag.containsKey("canForgetTargetRandomly")) {
+            this.canPathRandomly = compoundTag.getBoolean("canForgetTargetRandomly");
+        }
+
+        if(compoundTag.containsKey("custom")){
+            for(AbstractTag tags : (Collection<AbstractTag>)compoundTag.getCompoundTag("custom").values()) {
+                customData.put(tags.getType(),tags.toString());
+            }
         }
     }
-
     @Override
     public boolean getCanForgetTargetRandomly() {
         return this.canForgetTargetRandomly;

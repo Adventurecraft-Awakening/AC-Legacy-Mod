@@ -5,6 +5,10 @@ import net.minecraft.util.math.Vec3d;
 
 public interface ExEntity extends AC_IMultiAttackEntity {
 
+    void setCanGetFallDamage(boolean arg);
+
+    boolean getCanGetFallDamage();
+
     Vec3d getRotation(float deltaTime);
 
     void setRotation(double x, double y, double z);
@@ -24,4 +28,18 @@ public interface ExEntity extends AC_IMultiAttackEntity {
     int getCollisionX();
 
     int getCollisionZ();
+
+    void setIgnoreCobwebCollision(boolean value);
+
+    boolean isIgnoreCobwebCollision();
+
+    void setCustomTagString(String key,String value);
+
+    boolean hasCustomTagString(String key);
+
+    String getOrCreateCustomTagString(String key,String defaultValue);
+
+    String getCustomTagString(String key);
+
+
 }

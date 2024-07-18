@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.common.AC_EntityLivingScript;
 import dev.adventurecraft.awakening.common.AC_EntityNPC;
+import dev.adventurecraft.awakening.common.AC_Particle;
 import dev.adventurecraft.awakening.common.AC_UtilBullet;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.extension.entity.ExEntityRegistry;
@@ -42,9 +43,16 @@ public class ScriptEntity {
         if (entity instanceof LivingEntity e) return new ScriptEntityLiving(e);
         if (entity instanceof ArrowEntity e) return new ScriptEntityArrow(e);
         if (entity instanceof ItemEntity e) return new ScriptEntityItem(e);
+        if(entity instanceof AC_Particle e) return new ScriptParticleEntity(e);
         return new ScriptEntity(entity);
     }
 
+    public void setCanGetFallDamage(boolean arg){
+        ((ExEntity)this.entity).setCanGetFallDamage(arg);
+    }
+    public boolean getCanGetFallDamage(){
+        return ((ExEntity)this.entity).getCanGetFallDamage();
+    }
     public int getEntityID() {
         return this.entity.entityId;
     }
@@ -248,7 +256,13 @@ public class ScriptEntity {
     public void setCollidesWithClipBlocks(boolean value) {
         ((ExEntity) this.entity).setCollidesWithClipBlocks(value);
     }
+    public void setIgnoreCobwebCollision(boolean value){
+        ((ExEntity) this.entity).setIgnoreCobwebCollision(value);
+    }
 
+    public boolean isIgnoreCobwebCollision(){
+        return ((ExEntity) this.entity).isIgnoreCobwebCollision();
+    }
     public float getHeight() {
         return this.entity.height;
     }
@@ -304,4 +318,23 @@ public class ScriptEntity {
     public void setyOffset(float value) {
         this.entity.standingEyeHeight = value;
     }
+
+
+    public void setCustomTagString(String key,String value){
+        ((ExEntity) this.entity).setCustomTagString(key,value);
+    }
+
+    public boolean hasCustomTagString(String key){
+        return ((ExEntity) this.entity).hasCustomTagString(key);
+
+    }
+
+    public String getOrCreateCustomTagString(String key,String defaultValue){
+        return ((ExEntity) this.entity).getOrCreateCustomTagString(key,defaultValue);
+    }
+
+    public String getCustomTagString(String key){
+        return ((ExEntity) this.entity).getCustomTagString(key);
+    }
+
 }

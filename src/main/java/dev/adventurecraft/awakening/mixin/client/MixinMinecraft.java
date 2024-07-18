@@ -17,6 +17,7 @@ import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import dev.adventurecraft.awakening.extension.util.ExProgressListener;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
+import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.script.ScriptEntity;
 import dev.adventurecraft.awakening.script.ScriptItem;
 import dev.adventurecraft.awakening.script.ScriptVec3;
@@ -562,6 +563,15 @@ public abstract class MixinMinecraft implements ExMinecraft {
                 int chunkZ = MathHelper.floor((float) ((int) this.player.z)) >> 4;
                 chunkCache.method_1242(chunkX, chunkZ);
             }
+            // Bed safety leave
+            if(this.player.isLyingOnBed() && this.player.getSleepTimer()>= 100)
+            {
+                if(((ExWorldProperties) this.world.properties).getTimeRate()==0){
+                    this.player.getOutOfBed(true,false,false);
+                } else {
+                    ((ExWorld) this.world).setTimeOfDay(10000);
+                }
+            }
         }
 
         if (!this.paused && this.world != null) {
@@ -947,18 +957,11 @@ public abstract class MixinMinecraft implements ExMinecraft {
                     }
 
                     if (stack == null) {
-                        if (swapOffhand) {
-                            ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
-                            ((ExPlayerEntity) this.player).setSwappedItems(false);
-                        }
-
                         if (AC_DebugMode.active) {
                             exWorld.getUndoStack().stopRecording();
                         }
-                        return;
-                    }
-
-                    if (stack.count == 0 && stack == this.player.inventory.main[this.player.inventory.selectedHotBarSlot]) {
+                        //return;
+                    } else if (stack.count == 0 && stack == this.player.inventory.main[this.player.inventory.selectedHotBarSlot]) {
                         this.player.inventory.main[this.player.inventory.selectedHotBarSlot] = null;
                     } else if (stack.count != count) {
                         this.gameRenderer.heldItemRenderer.method_1863();
@@ -976,75 +979,90 @@ public abstract class MixinMinecraft implements ExMinecraft {
         if (useOnBlock && mouseButton == 1 && stack != null && this.interactionManager.method_1712(this.player, this.world, stack)) {
             this.gameRenderer.heldItemRenderer.method_1865();
         }
-
+        // Hitblock and hitEntity sets
+        Scriptable globalScope = exWorld.getScript().globalScope;
+        // lastItemUsed
         if (stack != null) {
-            Scriptable globalScope = exWorld.getScript().globalScope;
-
             if (this.lastItemUsed != stack) {
                 var tmp = Context.javaToJS(new ScriptItem(stack), globalScope);
                 ScriptableObject.putProperty(globalScope, "lastItemUsed", tmp);
                 this.lastItemUsed = stack;
             }
-
-            if (this.hitResult == null) {
-                if (this.lastEntityHit != null) {
-                    this.lastEntityHit = null;
-                    var tmp = Context.javaToJS(null, globalScope);
-                    ScriptableObject.putProperty(globalScope, "hitEntity", tmp);
-                }
-
-                if (this.lastBlockHit != null) {
-                    this.lastBlockHit = null;
-                    var tmp = Context.javaToJS(null, globalScope);
-                    ScriptableObject.putProperty(globalScope, "hitBlock", tmp);
-                }
-            } else if (this.hitResult.type == HitType.field_790) {
-                if (this.lastEntityHit != this.hitResult.field_1989) {
-                    this.lastEntityHit = this.hitResult.field_1989;
-                    var tmp = Context.javaToJS(ScriptEntity.getEntityClass(this.hitResult.field_1989), globalScope);
-                    ScriptableObject.putProperty(globalScope, "hitEntity", tmp);
-                }
-
-                if (this.lastBlockHit != null) {
-                    this.lastBlockHit = null;
-                    var tmp = Context.javaToJS(null, globalScope);
-                    ScriptableObject.putProperty(globalScope, "hitBlock", tmp);
-                }
-            } else if (this.hitResult.type != HitType.field_789) {
-                if (this.lastEntityHit != null) {
-                    this.lastEntityHit = null;
-                    var tmp = Context.javaToJS(null, globalScope);
-                    ScriptableObject.putProperty(globalScope, "hitEntity", tmp);
-                }
-
-                if (this.lastBlockHit != null) {
-                    this.lastBlockHit = null;
-                    var tmp = Context.javaToJS(null, globalScope);
-                    ScriptableObject.putProperty(globalScope, "hitBlock", tmp);
-                }
-            } else {
-                if (this.lastBlockHit == null ||
-                    this.lastBlockHit.x != (double) this.hitResult.x ||
-                    this.lastBlockHit.y != (double) this.hitResult.y ||
-                    this.lastBlockHit.z != (double) this.hitResult.z) {
-
-                    this.lastBlockHit = new ScriptVec3((float) this.hitResult.x, (float) this.hitResult.y, (float) this.hitResult.z);
-                    var tmp = Context.javaToJS(this.lastBlockHit, globalScope);
-                    ScriptableObject.putProperty(globalScope, "hitBlock", tmp);
-                }
-
-                if (this.lastEntityHit != null) {
-                    this.lastEntityHit = null;
-                    var tmp = Context.javaToJS(null, globalScope);
-                    ScriptableObject.putProperty(globalScope, "hitEntity", tmp);
-                }
+        }
+        else {
+            var tmp = Context.javaToJS(null, globalScope);
+            ScriptableObject.putProperty(globalScope, "lastItemUsed", tmp);
+            this.lastItemUsed = null;
+        }
+        // Hit result sets
+        if (this.hitResult == null) {
+            // Hit Air
+            if (this.lastEntityHit != null) {
+                this.lastEntityHit = null;
+                var tmp = Context.javaToJS(null, globalScope);
+                ScriptableObject.putProperty(globalScope, "hitEntity", tmp);
             }
 
-            String scriptName = stack.usesMeta()
+            if (this.lastBlockHit != null) {
+                this.lastBlockHit = null;
+                var tmp = Context.javaToJS(null, globalScope);
+                ScriptableObject.putProperty(globalScope, "hitBlock", tmp);
+            }
+        } else if (this.hitResult.type == HitType.field_790) {
+            // Hit an entity
+            if (this.lastEntityHit != this.hitResult.field_1989) {
+                this.lastEntityHit = this.hitResult.field_1989;
+                var tmp = Context.javaToJS(ScriptEntity.getEntityClass(this.hitResult.field_1989), globalScope);
+                ScriptableObject.putProperty(globalScope, "hitEntity", tmp);
+            }
+
+            if (this.lastBlockHit != null) {
+                this.lastBlockHit = null;
+                var tmp = Context.javaToJS(null, globalScope);
+                ScriptableObject.putProperty(globalScope, "hitBlock", tmp);
+            }
+        } else if (this.hitResult.type != HitType.field_789) {
+            // Hit ???
+            if (this.lastEntityHit != null) {
+                this.lastEntityHit = null;
+                var tmp = Context.javaToJS(null, globalScope);
+                ScriptableObject.putProperty(globalScope, "hitEntity", tmp);
+            }
+
+            if (this.lastBlockHit != null) {
+                this.lastBlockHit = null;
+                    var tmp = Context.javaToJS(null, globalScope);
+                    ScriptableObject.putProperty(globalScope, "hitBlock", tmp);
+                }
+        } else {
+            // Hit a block
+            if (this.lastBlockHit == null ||
+                this.lastBlockHit.x != (double) this.hitResult.x ||
+                this.lastBlockHit.y != (double) this.hitResult.y ||
+                this.lastBlockHit.z != (double) this.hitResult.z) {
+
+                this.lastBlockHit = new ScriptVec3((float) this.hitResult.x, (float) this.hitResult.y, (float) this.hitResult.z);
+                var tmp = Context.javaToJS(this.lastBlockHit, globalScope);
+                ScriptableObject.putProperty(globalScope, "hitBlock", tmp);
+            }
+
+            if (this.lastEntityHit != null) {
+                this.lastEntityHit = null;
+                var tmp = Context.javaToJS(null, globalScope);
+                ScriptableObject.putProperty(globalScope, "hitEntity", tmp);
+            }
+        }
+        // Trigger item scripts
+        String scriptName;
+        if(stack != null) {
+            scriptName = stack.usesMeta()
                 ? String.format("item_%d_%d.js", stack.itemId, stack.getMeta())
                 : String.format("item_%d.js", stack.itemId);
-            exWorld.getScriptHandler().runScript(scriptName, exWorld.getScope(), false);
         }
+        else {
+            scriptName = "item_0.js";
+        }
+        exWorld.getScriptHandler().runScript(scriptName, exWorld.getScope(), false);
 
         if (swapOffhand) {
             ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();

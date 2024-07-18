@@ -18,6 +18,7 @@ import net.minecraft.util.io.CompoundTag;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.BlockView;
+
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -97,6 +98,10 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
 
     @Shadow
     protected int field_1034;
+
+    public boolean canGetFallDamage = true;
+    public void setCanGetFallDamage(boolean arg){this.canGetFallDamage = arg;};
+    public boolean getCanGetFallDamage(){return this.canGetFallDamage;};
 
     protected int maxHealth = 10;
     @Unique
@@ -351,6 +356,10 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
 
     @Overwrite
     public void handleFallDamage(float var1) {
+        if(!this.canGetFallDamage) {
+            return;
+        }
+
         if (this.handleFlying()) {
             return;
         }
@@ -541,6 +550,7 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         tag.put("randomLookVelocity", this.randomLookVelocity);
         tag.put("randomLookRate", this.randomLookRate);
         tag.put("randomLookRateVariation", this.randomLookRateVariation);
+        tag.put("canGetFallDamage", this.canGetFallDamage);
     }
 
     @Inject(method = "readAdditional", at = @At("TAIL"))
@@ -576,6 +586,10 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
 
         if (tag.containsKey("randomLookRateVariation")) {
             this.randomLookRateVariation = tag.getInt("randomLookRateVariation");
+        }
+
+        if (tag.containsKey("canGetFallDamage")) {
+            this.canGetFallDamage = tag.getBoolean("canGetFallDamage");
         }
     }
 
