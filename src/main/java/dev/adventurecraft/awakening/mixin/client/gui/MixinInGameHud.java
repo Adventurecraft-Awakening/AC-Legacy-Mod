@@ -130,6 +130,9 @@ public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
             this.renderPortalOverlay(var10, screenWidth, screenHeight);
         }
 
+        // Refresh hudEnabled property (has to be here, because ui.hudEnabled can be set directly....)
+        ((ExWorldProperties)this.client.world.properties).setHudEnabled(this.hudEnabled);
+
         if (this.hudEnabled) {
             int maxHealth = ((ExLivingEntity) this.client.player).getMaxHealth();
 
