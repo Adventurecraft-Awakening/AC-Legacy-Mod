@@ -35,7 +35,6 @@ public class AC_BlockHalfStep extends AC_BlockSolid {
 
     @Override
     public boolean isSideRendered(BlockView blockView, int x, int y, int z, int textureSide) {
-        this.updateBlockBounds(blockView, x, y, z);
         if (textureSide >= TEXTURE_SIDE_COORDINATION.length) {
             return super.isSideRendered(blockView, x, y, z, textureSide);
         }
@@ -71,8 +70,12 @@ public class AC_BlockHalfStep extends AC_BlockSolid {
 
     @Override
     public AxixAlignedBoundingBox getCollisionShape(World var1, int x, int y, int z) {
-        this.updateBlockBounds(var1, x, y, z);
         return super.getCollisionShape(var1, x, y, z);
+    }
+
+    @Override
+    public void updateBoundingBox(BlockView arg, int i, int j, int k) {
+        updateBlockBounds(arg,i,j,k);
     }
 
     private void updateBlockBounds(BlockView var1, int x, int y, int z) {
