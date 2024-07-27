@@ -52,7 +52,7 @@ public class AC_BlockHalfStep extends AC_BlockSolid {
                 return false;
             } else if (textureSide < 2 && !sameMeta) {
                 //Top, Bottom Sides
-                return false;
+                return true;
             }
         }
         if (meta % 2 == 0 && textureSide == 0) {
