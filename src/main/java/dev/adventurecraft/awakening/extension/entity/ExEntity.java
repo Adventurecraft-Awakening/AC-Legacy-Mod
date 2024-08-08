@@ -5,6 +5,10 @@ import net.minecraft.util.math.Vec3d;
 
 public interface ExEntity extends AC_IMultiAttackEntity {
 
+    void setCanGetFallDamage(boolean arg);
+
+    boolean getCanGetFallDamage();
+
     Vec3d getRotation(float deltaTime);
 
     void setRotation(double x, double y, double z);
