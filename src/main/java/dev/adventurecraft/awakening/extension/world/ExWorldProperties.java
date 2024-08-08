@@ -123,4 +123,8 @@ public interface ExWorldProperties {
     CompoundTag getMusicScope();
 
     void setMusicScope(CompoundTag value);
+
+    void setHudEnabled(boolean arg);
+
+    boolean getHudEnabled();
 }

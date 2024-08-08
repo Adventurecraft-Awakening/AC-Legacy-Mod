@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
+import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.util.ScreenScaler;
 
@@ -48,10 +49,12 @@ public class ScriptUI {
     }
 
     public boolean getHudEnabled() {
-        return ((ExInGameHud) this.mc.overlay).getHudEnabled();
+        return ((ExWorldProperties)this.mc.world.properties).getHudEnabled();
     }
 
     public void setHudEnabled(boolean var1) {
         ((ExInGameHud) this.mc.overlay).setHudEnabled(var1);
+        // Set it in properties
+        ((ExWorldProperties)this.mc.world.properties).setHudEnabled(var1);
     }
 }

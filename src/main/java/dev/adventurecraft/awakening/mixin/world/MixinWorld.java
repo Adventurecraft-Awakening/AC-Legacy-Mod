@@ -10,6 +10,7 @@ import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.block.ExLadderBlock;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.ExTextureManager;
+import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.render.block.ExFoliageColor;
 import dev.adventurecraft.awakening.extension.client.render.block.ExGrassColor;
@@ -346,6 +347,8 @@ public abstract class MixinWorld implements ExWorld, BlockView {
         }
 
         var props = (ExWorldProperties) this.properties;
+        // Load current hud status
+        ((ExInGameHud)Minecraft.instance.overlay).setHudEnabled(props.getHudEnabled());
 
         props.getWorldGenProps().useImages = AC_TerrainImage.isLoaded;
         if (props.getTriggerData() != null) {
