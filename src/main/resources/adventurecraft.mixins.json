@@ -41,6 +41,7 @@
     "client.render.block.MixinBlockRenderer",
     "client.render.entity.MixinBlockEntityRenderDispatcher",
     "client.render.entity.MixinEntityRenderDispatcher",
+    "client.render.entity.MixinEntityRenderer",
     "client.render.entity.MixinFallingBlockRenderer",
     "client.render.entity.MixinItemRenderer",
     "client.render.entity.MixinPlayerRenderer",
