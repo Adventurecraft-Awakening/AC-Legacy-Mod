@@ -30,6 +30,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     @Shadow
     private long time;
 
+    private boolean hudEnabled = true;
     public double tempOffset;
     private WorldGenProperties worldGenProps = new WorldGenProperties();
     public boolean iceMelts = true;
@@ -157,6 +158,12 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         } else {
             this.allowsInventoryCrafting = true;
         }
+
+        if (tag.containsKey("hudEnabled")) {
+            this.hudEnabled = tag.getBoolean("hudEnabled");
+        } else {
+            this.hudEnabled = true;
+        }
     }
 
     @Inject(method = "<init>(JLjava/lang/String;)V", at = @At("TAIL"))
@@ -245,6 +252,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
 
         tag.put("originallyFromAC", this.originallyFromAC);
         tag.put("allowsInventoryCrafting", this.allowsInventoryCrafting);
+        tag.put("hudEnabled", this.hudEnabled);
     }
 
     @Override
@@ -567,5 +575,13 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     @Override
     public void setMusicScope(CompoundTag value) {
         this.musicScope = value;
+    }
+
+    public void setHudEnabled(boolean arg){
+        this.hudEnabled = arg;
+    }
+
+    public boolean getHudEnabled(){
+        return this.hudEnabled;
     }
 }
