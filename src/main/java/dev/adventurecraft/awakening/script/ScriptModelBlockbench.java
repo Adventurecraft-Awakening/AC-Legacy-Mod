@@ -131,5 +131,14 @@ public class ScriptModelBlockbench extends ScriptModelBase {
         this.prevScaleZ = this.scaleZ;
     }
 
+    public void addBox(int width, int height, int length,
+                       int textureOffsetX, int textureOffsetY) {
+        this.setSize(width,height,length);
+
+        Cuboid cuboid = new Cuboid(textureOffsetX, textureOffsetY);
+        ((ExCuboid) cuboid).setTWidth(this.textureWidth);
+        ((ExCuboid) cuboid).setTHeight(this.textureHeight);
+        ((ExCuboid) cuboid).addBoxInverted(0,0,0, width, height, length, 0.0F);
+        this.boxes.add(cuboid);
     }
 }
