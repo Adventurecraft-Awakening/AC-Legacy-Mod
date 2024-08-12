@@ -119,6 +119,17 @@ public class ScriptModelBlockbench extends ScriptModelBase {
 
     @Override
     protected void update() {
+        this.prevX = this.x;
+        this.prevY = this.y;
+        this.prevZ = this.z;
+        this.prevRoll = this.roll;
+        this.prevPitch = this.pitch;
+        this.prevYaw = this.yaw;
+
+        this.prevScaleX = this.scaleX;
+        this.prevScaleY = this.scaleY;
+        this.prevScaleZ = this.scaleZ;
+    }
 
     }
 }
