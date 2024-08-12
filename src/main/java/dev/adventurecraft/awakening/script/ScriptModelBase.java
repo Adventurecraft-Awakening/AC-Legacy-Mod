@@ -15,7 +15,7 @@ public abstract class ScriptModelBase {
 
     protected final List<Cuboid> boxes = new LinkedList<>();
     public ScriptEntity attachedTo;
-    public ScriptModel modelAttachment;
+    public ScriptModelBase modelAttachment;
     public String texture;
     public double prevX;
     public double prevY;
