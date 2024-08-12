@@ -219,8 +219,6 @@ public class ScriptModelBlockbench extends ScriptModelBase {
     }
 
     public float getAlpha(){ return this.colorAlpha;}
-
-
-
-
 }
+
+
