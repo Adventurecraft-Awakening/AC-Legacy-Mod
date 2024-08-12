@@ -21,7 +21,41 @@ public class ScriptModelBlockbench extends ScriptModelBase {
     }
     @Override
     protected void transform(float deltaTime) {
+        if (this.attachedTo != null) {
 
+            ScriptVec3 position = this.attachedTo.getPosition(deltaTime);
+            ScriptVecRot rotation = this.attachedTo.getRotation(deltaTime);
+
+            GL11.glTranslated(position.x, position.y, position.z);
+
+            GL11.glRotatef((float) (-rotation.yaw), 0.0F, 1.0F, 0.0F);
+            GL11.glRotatef((float) rotation.pitch, 1.0F, 0.0F, 0.0F);
+
+        } else if (this.modelAttachment != null) {
+            this.modelAttachment.transform(deltaTime);
+        }
+
+        float deltaTimeTick = 1.0F - deltaTime;
+
+        double x = deltaTime * this.x + deltaTimeTick * this.prevX;
+        double y = deltaTime * this.y + deltaTimeTick * this.prevY;
+        double z = deltaTime * this.z + deltaTimeTick * this.prevZ;
+
+        // Move Rotation Origin to given pivot
+        GL11.glTranslatef(-this.pivotX * pixelSize, this.pivotY * pixelSize, -this.pivotZ * pixelSize);
+
+        GL11.glRotatef(-(deltaTime * this.roll + deltaTimeTick * this.prevRoll), 0.0F, 0.0F, 1.0F);
+        GL11.glRotatef(-(deltaTime * this.pitch + deltaTimeTick * this.prevPitch), 0.0F, 1.0F, 0.0F);
+        GL11.glRotatef((deltaTime * this.yaw + deltaTimeTick * this.prevYaw ), 1.0F, 0.0F, 0.0F);
+
+        // Move Object to intended Position
+        GL11.glTranslatef(
+            (float)(-x - this.sizeX + this.pivotX) * pixelSize,
+            (float)(y - this.pivotY) * pixelSize,
+            (float)(-z - this.sizeZ + this.pivotZ) * pixelSize);
+
+        // Apply scaling
+        GL11.glScalef(this.scaleX, this.scaleY, this.scaleZ);
     }
 
     protected void render(float var1) {
