@@ -141,4 +141,86 @@ public class ScriptModelBlockbench extends ScriptModelBase {
         ((ExCuboid) cuboid).addBoxInverted(0,0,0, width, height, length, 0.0F);
         this.boxes.add(cuboid);
     }
+    public void setBrightness(float brightness){ this.colorRed = this.colorGreen = this.colorBlue = brightness;}
+
+    public void setPosition(double x, double y, double z) {
+        this.prevX = this.x = x;
+        this.prevY = this.y = y;
+        this.prevZ = this.z = z;
+    }
+
+    public void setPosition(ScriptVec3 vec) {
+        this.prevX = this.x = vec.x;
+        this.prevY = this.y = vec.y;
+        this.prevZ = this.z = vec.z;
+    }
+
+    public ScriptVec3 getPosition() {
+        return new ScriptVec3(x, y, z);
+    }
+
+    public void setRotation(float yaw, float pitch, float roll) {
+        this.prevRoll = this.roll = roll;
+        this.prevPitch = this.pitch = -pitch;
+        this.prevYaw = this.yaw = -yaw;
+    }
+
+    public void setRotation(ScriptVec3 vec) {
+        this.prevRoll = this.roll = (float)vec.z;
+        this.prevPitch = this.pitch = - (float)vec.y;
+        this.prevYaw = this.yaw = - (float)vec.x;
+    }
+
+    public ScriptVec3 getRotation() {
+        return new ScriptVec3(-this.yaw,-this.pitch,this.roll);
+    }
+
+    public void setScale(float scaleX, float scaleY, float scaleZ) {
+        this.scaleX = scaleX;
+        this.scaleY = scaleY;
+        this.scaleZ = scaleZ;
+    }
+
+    public void scaleBy(float factorX, float factorY, float factorZ){
+        this.scaleX += factorX;
+        this.scaleY += factorY;
+        this.scaleZ += factorZ;
+    }
+
+    public ScriptVec3 getScale() {
+        return new ScriptVec3(this.scaleX, this.scaleY, this.scaleZ);
+    }
+
+    public void setSize(int sizeX, int sizeY, int sizeZ){
+        this.sizeX = sizeX;
+        this.sizeY = sizeY;
+        this.sizeZ = sizeZ;
+    }
+
+    public ScriptVec3 getSize(){ return new ScriptVec3(this.sizeX,this.sizeY,this.sizeZ);}
+
+    public void setPivot(float pivotX, float pivotY, float pivotZ) {
+        this.pivotX = pivotX;
+        this.pivotY = pivotY;
+        this.pivotZ = pivotZ;
+    }
+
+    public void setPivot(ScriptVec3 vec) {
+        this.pivotX = (float)vec.x;
+        this.pivotY = (float)vec.y;
+        this.pivotZ = (float)vec.z;
+    }
+
+    public ScriptVec3 getPivot() {return new ScriptVec3(this.pivotX, this.pivotY, this.pivotZ);
+    }
+
+    public void setAlpha(float alpha) {
+        this.colorAlpha = alpha;
+    }
+
+    public float getAlpha(){ return this.colorAlpha;}
+
+
+
+
 }
