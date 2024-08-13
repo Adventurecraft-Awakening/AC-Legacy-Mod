@@ -47,15 +47,15 @@ public class ScriptModelBlockbench extends ScriptModelBase {
         GL11.glRotatef(-(deltaTime * this.roll + deltaTimeTick * this.prevRoll), 0.0F, 0.0F, 1.0F);
         GL11.glRotatef(-(deltaTime * this.pitch + deltaTimeTick * this.prevPitch), 0.0F, 1.0F, 0.0F);
         GL11.glRotatef((deltaTime * this.yaw + deltaTimeTick * this.prevYaw ), 1.0F, 0.0F, 0.0F);
-
+        // Apply scaling
+        GL11.glScalef(this.scaleX, this.scaleY, this.scaleZ);
         // Move Object to intended Position
         GL11.glTranslatef(
             (float)(-x - this.sizeX + this.pivotX) * pixelSize,
             (float)(y - this.pivotY) * pixelSize,
             (float)(-z - this.sizeZ + this.pivotZ) * pixelSize);
 
-        // Apply scaling
-        GL11.glScalef(this.scaleX, this.scaleY, this.scaleZ);
+
     }
 
     protected void render(float var1) {
