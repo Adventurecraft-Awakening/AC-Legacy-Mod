@@ -140,7 +140,6 @@ public abstract class ScrollableWidget extends GuiElement {
             }
         }
         this.targetScrollY += amount;
-        ACMod.LOGGER.info("scroll Y: " + this.targetScrollY + ", amount: " + amount);
     }
 
     private double clampTargetScroll(double value, double totalHeight) {
