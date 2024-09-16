@@ -168,22 +168,22 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     protected int addend;
 
     @Shadow
-    private List entitiesToRemove;
+    private List<Entity> entitiesToRemove;
 
     @Shadow
-    public List tileEntityList;
+    public List<TileEntity> tileEntityList;
 
     @Shadow
-    private List pendingTileEntities;
+    private List<TileEntity> pendingTileEntities;
 
     @Shadow
-    public List globalEntities;
+    public List<Entity> globalEntities;
 
     @Shadow
     private long cloudColor;
 
     @Shadow
-    private List es;
+    private List<Entity> es;
 
     @Shadow
     private boolean spawnFriendlies;
@@ -359,7 +359,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
 
         var props = (ExWorldProperties) this.levelData;
         // Load current hud status
-        ((ExInGameHud)Minecraft.instance.gui).setHudEnabled(props.getHudEnabled());
+        ((ExInGameHud) Minecraft.instance.gui).setHudEnabled(props.getHudEnabled());
 
         props.getWorldGenProps().useImages = AC_TerrainImage.isLoaded;
         if (props.getTriggerData() != null) {
