@@ -1,43 +1,48 @@
 plugins {
-    // Babric loom version can be checked here: https://github.com/babric/fabric-loom/tags
-    id 'babric-loom' version '1.5-SNAPSHOT'
+    id 'fabric-loom' version '1.7.4'
+    id 'babric-loom-extension' version '1.7.4'
     id 'maven-publish'
 }
 
-sourceCompatibility = targetCompatibility = JavaVersion.VERSION_17
-
-archivesBaseName = project.archives_base_name
 version = project.mod_version
 group = project.maven_group
 def modId = project.mod_id
 
+base {
+    archivesName = project.archives_base_name
+}
+
 loom {
-    gluedMinecraftJar()
-    customMinecraftManifest.set("https://babric.github.io/manifest-polyfill/${minecraft_version}.json")
-    intermediaryUrl.set("https://maven.glass-launcher.net/babric/babric/intermediary/%1\$s/intermediary-%1\$s-v2.jar")
     accessWidenerPath = file("src/main/resources/${modId}.accesswidener")
 }
 
+babric {
+    disableM1Fixes.set(true) // Disable gambac (M1 colours fix.)
+}
+
 repositories {
+    // Used for the fabric toolchain in this project.
     maven {
         name = 'Babric'
         url = 'https://maven.glass-launcher.net/babric'
     }
+    // Used for mappings.
     maven {
-        name 'LegacyFabric'
-        url = "https://repo.legacyfabric.net/repository/legacyfabric"
+        name = 'Nostalgia'
+        url = 'https://maven.wispforest.io'
+    }
+    // Used for projects that do not have a maven repository, but do have a GitHub repository with working build scripts.
+    maven {
+        name = 'Jitpack'
+        url = 'https://jitpack.io/'
     }
     maven {
-        name 'Jitpack'
-        url 'https://jitpack.io/'
+        name = 'HalfOf2'
+        url = 'https://storage.googleapis.com/devan-maven/'
     }
     maven {
-        name 'HalfOf2'
-        url 'https://storage.googleapis.com/devan-maven/'
-    }
-    maven {
-        name 'LWJGL3'
-        url 'https://oss.sonatype.org/content/repositories/releases/'
+        name = 'LWJGL3'
+        url = 'https://oss.sonatype.org/content/repositories/releases/'
     }
     mavenLocal()
 }
@@ -78,8 +83,8 @@ dependencies {
     implementation 'org.mozilla:rhino:1.7.15'
 
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings "net.legacyfabric:beta-yarn:${project.yarn_version}"
-    modImplementation "babric:fabric-loader:${project.loader_version}"
+    mappings "me.alphamode:nostalgia:${project.nostalgia_mappings}:v2"
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
     implementation "org.slf4j:slf4j-api:1.8.0-beta4"
     implementation "org.apache.logging.log4j:log4j-slf4j18-impl:2.16.0"
@@ -112,11 +117,13 @@ java {
     // if it is present.
     // If you remove this line, sources will not be generated.
     withSourcesJar()
+
+    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_17
 }
 
 jar {
     from("LICENSE") {
-        rename { "${it}_${project.archivesBaseName}" }
+        rename { "${it}_${project.base.archivesName.get()}"}
     }
 }
 
