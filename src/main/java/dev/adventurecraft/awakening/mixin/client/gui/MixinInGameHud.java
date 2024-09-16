@@ -130,8 +130,10 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
             this.renderPortalOverlay(var10, screenWidth, screenHeight);
         }
 
-        // Refresh hudEnabled property (has to be here, because ui.hudEnabled can be set directly....)
-        ((ExWorldProperties) this.minecraft.level.levelData).setHudEnabled(this.hudEnabled);
+        if (this.minecraft.level != null) {
+            // Refresh hudEnabled property (has to be here, because ui.hudEnabled can be set directly....)
+            ((ExWorldProperties) this.minecraft.level.levelData).setHudEnabled(this.hudEnabled);
+        }
 
         if (this.hudEnabled) {
             int maxHealth = ((ExLivingEntity) this.minecraft.player).getMaxHealth();

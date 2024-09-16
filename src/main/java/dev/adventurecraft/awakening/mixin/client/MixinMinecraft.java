@@ -173,7 +173,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
     @Shadow
     public ParticleEngine particleEngine;
 
-    @Shadow(aliases = "method_2104")
+    @Shadow(remap = false, aliases = "method_2104")
     protected abstract void startLoginThread();
 
     @Shadow

@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.Shadow;
 @Mixin(AC_EntityNPC.class)
 public abstract class MixinAC_EntityNPC extends MixinAC_EntityLivingScript {
 
-    @Shadow
+    @Shadow(remap = false)
     public boolean isAttackable;
 
     @Override

@@ -6,7 +6,6 @@ import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-//import net.minecraft.block.*;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
@@ -115,11 +114,13 @@ public abstract class MixinBlock implements ExBlock {
         throw new AssertionError();
     }
 
-    @Inject(method = "<clinit>", at = @At(
-        value = "FIELD",
-        target = "Lnet/minecraft/world/item/Item;items:[Lnet/minecraft/world/item/Item;",
-        shift = At.Shift.BEFORE,
-        ordinal = 0))
+    @Inject(
+        method = "<clinit>",
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/world/item/Item;items:[Lnet/minecraft/world/item/Item;",
+            shift = At.Shift.BEFORE,
+            ordinal = 0))
     private static void changeBlocksAndItems(CallbackInfo ci) {
         tiles[1] = null;
         tiles[4] = null;
