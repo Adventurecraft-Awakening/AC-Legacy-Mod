@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.script;
 
+import dev.adventurecraft.awakening.extension.entity.projectile.ExArrowEntity;
 import net.minecraft.entity.projectile.ArrowEntity;
 
 @SuppressWarnings("unused")
@@ -31,5 +32,13 @@ public class ScriptEntityArrow extends ScriptEntity {
 
     public ScriptEntity getOwner() {
         return ScriptEntity.getEntityClass(this.entityArrow);
+    }
+
+    public void setAttackStrength(int value) {
+        ((ExArrowEntity)this.entityArrow).setAttackStrength(value);
+    }
+
+    public int getAttackStrength(){
+        return ((ExArrowEntity)this.entityArrow).getAttackStrength();
     }
 }
