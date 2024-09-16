@@ -1,8 +1,6 @@
 package dev.adventurecraft.awakening.mixin.client.render.entity;
 
 import dev.adventurecraft.awakening.common.*;
-import net.minecraft.client.render.entity.BlockEntityRenderDispatcher;
-import net.minecraft.client.render.entity.block.BlockEntityRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -11,16 +9,18 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.HashMap;
 import java.util.Map;
+import net.minecraft.client.renderer.tileentity.TileEntityRenderDispatcher;
+import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 
-@Mixin(BlockEntityRenderDispatcher.class)
+@Mixin(TileEntityRenderDispatcher.class)
 public abstract class MixinBlockEntityRenderDispatcher {
 
     @Shadow
-    private Map<Class<?>, BlockEntityRenderer> customRenderers;
+    private Map<Class<?>, TileEntityRenderer> customRenderers;
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void registerAcRenderers(CallbackInfo ci) {
-        var renderers = new HashMap<Class<?>, BlockEntityRenderer>();
+        var renderers = new HashMap<Class<?>, TileEntityRenderer>();
         renderers.put(AC_TileEntityTrigger.class, new AC_TileEntityMinMaxRenderer(1.0F, 0.5882F, 0.0F));
         renderers.put(AC_TileEntityTriggerInverter.class, new AC_TileEntityMinMaxRenderer(1.0F, 1.0F, 0.0F));
         renderers.put(AC_TileEntityTriggerMemory.class, new AC_TileEntityMinMaxRenderer(0.0F, 1.0F, 0.0F));
@@ -31,8 +31,8 @@ public abstract class MixinBlockEntityRenderDispatcher {
         renderers.put(AC_TileEntityEffect.class, new AC_TileEntityEffectRenderer());
         renderers.put(AC_TileEntityTriggerPushable.class, new AC_TileEntityMinMaxRenderer(1.0F,1.0F,1.0F));
 
-        for (BlockEntityRenderer renderer : renderers.values()) {
-            renderer.setRenderDispatcher((BlockEntityRenderDispatcher) (Object) this);
+        for (TileEntityRenderer renderer : renderers.values()) {
+            renderer.init((TileEntityRenderDispatcher) (Object) this);
         }
 
         this.customRenderers.putAll(renderers);

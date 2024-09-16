@@ -12,14 +12,17 @@ import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.render.block.ExBlockRenderer;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.block.*;
-import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.block.BlockRenderer;
-import net.minecraft.entity.BlockEntity;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.World;
+import net.minecraft.client.renderer.Tesselator;
+import net.minecraft.client.renderer.TileRenderer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelSource;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.tile.LiquidTile;
+import net.minecraft.world.level.tile.RailTile;
+import net.minecraft.world.level.tile.Tile;
+import net.minecraft.world.level.tile.entity.TileEntity;
 import org.lwjgl.opengl.GL11;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
@@ -31,7 +34,7 @@ import org.spongepowered.asm.mixin.injection.Slice;
 
 import java.util.Random;
 
-@Mixin(value = BlockRenderer.class, priority = 999)
+@Mixin(value = TileRenderer.class, priority = 999)
 public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
     private Random rand = new Random();
@@ -39,7 +42,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     @Shadow
     public static boolean field_67;
     @Shadow
-    public BlockView blockView;
+    public LevelSource blockView;
     @Shadow
     private int textureOverride;
     @Shadow
@@ -150,67 +153,67 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     private boolean field_80;
 
     @Shadow
-    public abstract void renderNorthFace(Block block, double x, double y, double z, int texture);
+    public abstract void renderNorthFace(Tile block, double x, double y, double z, int texture);
 
     @Shadow
-    public abstract void renderBottomFace(Block block, double x, double y, double z, int texture);
+    public abstract void renderBottomFace(Tile block, double x, double y, double z, int texture);
 
     @Shadow
-    public abstract void renderTopFace(Block block, double x, double y, double z, int texture);
+    public abstract void renderTopFace(Tile block, double x, double y, double z, int texture);
 
     @Shadow
-    public abstract void renderEastFace(Block block, double x, double y, double z, int texture);
+    public abstract void renderEastFace(Tile block, double x, double y, double z, int texture);
 
     @Shadow
-    public abstract void renderWestFace(Block block, double x, double y, double z, int texture);
+    public abstract void renderWestFace(Tile block, double x, double y, double z, int texture);
 
     @Shadow
-    public abstract void renderSouthFace(Block block, double x, double y, double z, int texture);
+    public abstract void renderSouthFace(Tile block, double x, double y, double z, int texture);
 
     @Shadow
-    protected abstract boolean renderBed(Block block, int x, int y, int z);
+    protected abstract boolean renderBed(Tile block, int x, int y, int z);
 
     @Shadow
-    public abstract boolean renderLever(Block block, int x, int y, int z);
+    public abstract boolean renderLever(Tile block, int x, int y, int z);
 
     @Shadow
-    public abstract boolean renderTorch(Block block, int x, int y, int z);
+    public abstract boolean renderTorch(Tile block, int x, int y, int z);
 
     @Shadow
-    public abstract boolean renderFire(Block block, int x, int y, int z);
+    public abstract boolean renderFire(Tile block, int x, int y, int z);
 
     @Shadow
-    public abstract boolean renderRedstoneDust(Block block, int x, int y, int z);
+    public abstract boolean renderRedstoneDust(Tile block, int x, int y, int z);
 
     @Shadow
-    public abstract boolean renderRails(RailBlock block, int x, int y, int z);
+    public abstract boolean renderRails(RailTile block, int x, int y, int z);
 
     @Shadow
-    protected abstract boolean renderRedstoneRepeater(Block block, int x, int y, int z);
+    protected abstract boolean renderRedstoneRepeater(Tile block, int x, int y, int z);
 
     @Shadow
-    protected abstract boolean renderPiston(Block block, int x, int y, int z, boolean bl);
+    protected abstract boolean renderPiston(Tile block, int x, int y, int z, boolean bl);
 
     @Shadow
-    protected abstract boolean renderPistonHead(Block block, int x, int y, int z, boolean bl);
+    protected abstract boolean renderPistonHead(Tile block, int x, int y, int z, boolean bl);
 
     @Shadow
-    public abstract boolean renderStandardBlock(Block block, int x, int y, int z);
+    public abstract boolean renderStandardBlock(Tile block, int x, int y, int z);
 
     @Shadow
-    public abstract boolean renderCactus(Block block, int x, int y, int z);
+    public abstract boolean renderCactus(Tile block, int x, int y, int z);
 
     @Shadow
-    public abstract boolean renderCrops(Block block, int x, int y, int z);
+    public abstract boolean renderCrops(Tile block, int x, int y, int z);
 
     @Shadow
-    public abstract boolean renderCrossed(Block block, int x, int y, int z);
+    public abstract boolean renderCrossed(Tile block, int x, int y, int z);
 
     @Shadow
-    public abstract boolean renderDoor(Block block, int x, int y, int z);
+    public abstract boolean renderDoor(Tile block, int x, int y, int z);
 
     @Shadow
-    public abstract void renderTorchTilted(Block block, double x, double y, double z, double x2, double z2);
+    public abstract void renderTorchTilted(Tile block, double x, double y, double z, double x2, double z2);
 
     @Shadow
     protected abstract float method_43(int x, int y, int z, Material material);
@@ -230,21 +233,21 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     */
 
     @Override
-    public void startRenderingBlocks(World world) {
+    public void startRenderingBlocks(Level world) {
         this.blockView = world;
-        if (Minecraft.isSmoothLightingEnabled()) {
+        if (Minecraft.useAmbientOcclusion()) {
             GL11.glShadeModel(GL11.GL_SMOOTH);
         }
 
-        Tessellator.INSTANCE.start();
+        Tesselator.instance.begin();
         this.renderAllSides = true;
     }
 
     @Override
     public void stopRenderingBlocks() {
         this.renderAllSides = false;
-        Tessellator.INSTANCE.tessellate();
-        if (Minecraft.isSmoothLightingEnabled()) {
+        Tesselator.instance.end();
+        if (Minecraft.useAmbientOcclusion()) {
             GL11.glShadeModel(GL11.GL_FLAT);
         }
 
@@ -256,7 +259,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     @Overwrite
-    public boolean method_50(Block block, int x, int y, int z, float r, float g, float b) {
+    public boolean method_50(Tile block, int x, int y, int z, float r, float g, float b) {
         this.field_92 = true;
         float aoLevel = ((ExGameOptions) Minecraft.instance.options).ofAoLevel();
         boolean var10 = false;
@@ -267,51 +270,51 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         boolean useNorthColor = true;
         boolean useSouthColor = true;
 
-        boolean renderBottom = this.renderAllSides || block.isSideRendered(this.blockView, x, y - 1, z, 0);
-        boolean renderTop = this.renderAllSides || block.isSideRendered(this.blockView, x, y + 1, z, 1);
-        boolean renderEast = this.renderAllSides || block.isSideRendered(this.blockView, x, y, z - 1, 2);
-        boolean renderWest = this.renderAllSides || block.isSideRendered(this.blockView, x, y, z + 1, 3);
-        boolean renderNorth = this.renderAllSides || block.isSideRendered(this.blockView, x - 1, y, z, 4);
-        boolean renderSouth = this.renderAllSides || block.isSideRendered(this.blockView, x + 1, y, z, 5);
+        boolean renderBottom = this.renderAllSides || block.shouldRenderFace(this.blockView, x, y - 1, z, 0);
+        boolean renderTop = this.renderAllSides || block.shouldRenderFace(this.blockView, x, y + 1, z, 1);
+        boolean renderEast = this.renderAllSides || block.shouldRenderFace(this.blockView, x, y, z - 1, 2);
+        boolean renderWest = this.renderAllSides || block.shouldRenderFace(this.blockView, x, y, z + 1, 3);
+        boolean renderNorth = this.renderAllSides || block.shouldRenderFace(this.blockView, x - 1, y, z, 4);
+        boolean renderSouth = this.renderAllSides || block.shouldRenderFace(this.blockView, x + 1, y, z, 5);
 
         if (renderTop || renderSouth)
-            this.field_70 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(x + 1, y + 1, z)];
+            this.field_70 = Tile.translucent[this.blockView.getTile(x + 1, y + 1, z)];
 
         if (renderBottom || renderSouth)
-            this.field_78 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(x + 1, y - 1, z)];
+            this.field_78 = Tile.translucent[this.blockView.getTile(x + 1, y - 1, z)];
 
         if (renderWest || renderSouth)
-            this.field_74 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(x + 1, y, z + 1)];
+            this.field_74 = Tile.translucent[this.blockView.getTile(x + 1, y, z + 1)];
 
         if (renderEast || renderSouth)
-            this.field_76 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(x + 1, y, z - 1)];
+            this.field_76 = Tile.translucent[this.blockView.getTile(x + 1, y, z - 1)];
 
         if (renderTop || renderNorth)
-            this.field_71 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(x - 1, y + 1, z)];
+            this.field_71 = Tile.translucent[this.blockView.getTile(x - 1, y + 1, z)];
 
         if (renderBottom || renderNorth)
-            this.field_79 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(x - 1, y - 1, z)];
+            this.field_79 = Tile.translucent[this.blockView.getTile(x - 1, y - 1, z)];
 
         if (renderEast || renderNorth)
-            this.field_73 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(x - 1, y, z - 1)];
+            this.field_73 = Tile.translucent[this.blockView.getTile(x - 1, y, z - 1)];
 
         if (renderWest || renderNorth)
-            this.field_75 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(x - 1, y, z + 1)];
+            this.field_75 = Tile.translucent[this.blockView.getTile(x - 1, y, z + 1)];
 
         if (renderTop || renderWest)
-            this.field_72 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(x, y + 1, z + 1)];
+            this.field_72 = Tile.translucent[this.blockView.getTile(x, y + 1, z + 1)];
 
         if (renderTop || renderEast)
-            this.field_69 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(x, y + 1, z - 1)];
+            this.field_69 = Tile.translucent[this.blockView.getTile(x, y + 1, z - 1)];
 
         if (renderBottom || renderWest)
-            this.field_80 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(x, y - 1, z + 1)];
+            this.field_80 = Tile.translucent[this.blockView.getTile(x, y - 1, z + 1)];
 
         if (renderBottom || renderEast)
-            this.field_77 = Block.ALLOWS_GRASS_UNDER[this.blockView.getBlockId(x, y - 1, z - 1)];
+            this.field_77 = Tile.translucent[this.blockView.getTile(x, y - 1, z - 1)];
 
-        boolean doGrassEdges = field_67 && block.id == Block.GRASS.id;
-        if (block.id == Block.GRASS.id || this.textureOverride >= 0) {
+        boolean doGrassEdges = field_67 && block.id == Tile.GRASS.id;
+        if (block.id == Tile.GRASS.id || this.textureOverride >= 0) {
             useSouthColor = false;
             useNorthColor = false;
             useWestColor = false;
@@ -348,7 +351,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     private boolean renderBottomSide(
-        Block block, int x, int y, int z, float r, float g, float b, float aoLevel, boolean useColor) {
+        Tile block, int x, int y, int z, float r, float g, float b, float aoLevel, boolean useColor) {
         this.field_95 = block.getBrightness(this.blockView, x, y - 1, z);
 
         float var21;
@@ -427,12 +430,12 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         this.field_59 *= var24;
         this.field_63 *= var24;
         this.field_68 *= var24;
-        this.renderBottomFace(block, x, y, z, block.getTextureForSide(this.blockView, x, y, z, 0));
+        this.renderBottomFace(block, x, y, z, block.getTexture(this.blockView, x, y, z, 0));
         return true;
     }
 
     private boolean renderTopSide(
-        Block block, int x, int y, int z, float r, float g, float b, float aoLevel, boolean useColor) {
+        Tile block, int x, int y, int z, float r, float g, float b, float aoLevel, boolean useColor) {
         this.field_98 = block.getBrightness(this.blockView, x, y + 1, z);
 
         float var21;
@@ -511,12 +514,12 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         this.field_59 *= var24;
         this.field_63 *= var24;
         this.field_68 *= var24;
-        this.renderTopFace(block, x, y, z, block.getTextureForSide(this.blockView, x, y, z, 1));
+        this.renderTopFace(block, x, y, z, block.getTexture(this.blockView, x, y, z, 1));
         return true;
     }
 
     private boolean renderEastSide(
-        Block block, int x, int y, int z, float r, float g, float b,
+        Tile block, int x, int y, int z, float r, float g, float b,
         float aoLevel, boolean useColor, boolean doGrassEdges) {
         this.field_96 = block.getBrightness(this.blockView, x, y, z - 1);
 
@@ -633,7 +636,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     private boolean renderWestSide(
-        Block block, int x, int y, int z, float r, float g, float b,
+        Tile block, int x, int y, int z, float r, float g, float b,
         float aoLevel, boolean useColor, boolean doGrassEdges) {
         this.field_99 = block.getBrightness(this.blockView, x, y, z + 1);
 
@@ -750,7 +753,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     private boolean renderNorthSide(
-        Block block, int x, int y, int z, float r, float g, float b,
+        Tile block, int x, int y, int z, float r, float g, float b,
         float aoLevel, boolean useColor, boolean doGrassEdges) {
         this.field_94 = block.getBrightness(this.blockView, x - 1, y, z);
 
@@ -867,7 +870,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     private boolean renderSouthSide(
-        Block block, int x, int y, int z, float r, float g, float b,
+        Tile block, int x, int y, int z, float r, float g, float b,
         float aoLevel, boolean useColor, boolean doGrassEdges) {
         this.field_97 = block.getBrightness(this.blockView, x + 1, y, z);
 
@@ -984,10 +987,10 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     @Overwrite
-    public boolean method_58(Block block, int x, int y, int z, float r, float g, float b) {
+    public boolean method_58(Tile block, int x, int y, int z, float r, float g, float b) {
         this.field_92 = false;
-        boolean doGrassEdges = field_67 && block.id == Block.GRASS.id;
-        Tessellator ts = Tessellator.INSTANCE;
+        boolean doGrassEdges = field_67 && block.id == Tile.GRASS.id;
+        Tesselator ts = Tesselator.instance;
         boolean var10 = false;
         float var11 = 0.5F;
         float var12 = 1.0F;
@@ -1006,7 +1009,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         float var25 = var13;
         float var26 = var14;
 
-        if (block.id != Block.GRASS.id) {
+        if (block.id != Tile.GRASS.id) {
             var18 = var11 * r;
             var19 = var13 * r;
             var20 = var14 * r;
@@ -1020,29 +1023,29 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
         float coreBrightness = block.getBrightness(this.blockView, x, y, z);
 
-        if (this.renderAllSides || block.isSideRendered(this.blockView, x, y - 1, z, 0)) {
+        if (this.renderAllSides || block.shouldRenderFace(this.blockView, x, y - 1, z, 0)) {
             float brightness = block.getBrightness(this.blockView, x, y - 1, z);
             ts.color(var18 * brightness, var21 * brightness, var24 * brightness);
-            this.renderBottomFace(block, x, y, z, block.getTextureForSide(this.blockView, x, y, z, 0));
+            this.renderBottomFace(block, x, y, z, block.getTexture(this.blockView, x, y, z, 0));
             var10 = true;
         }
 
-        if (this.renderAllSides || block.isSideRendered(this.blockView, x, y + 1, z, 1)) {
+        if (this.renderAllSides || block.shouldRenderFace(this.blockView, x, y + 1, z, 1)) {
             float brightness;
-            if (block.maxY != 1.0D && !block.material.isLiquid()) {
+            if (block.yy1 != 1.0D && !block.material.isLiquid()) {
                 brightness = coreBrightness;
             } else {
                 brightness = block.getBrightness(this.blockView, x, y + 1, z);
             }
 
             ts.color(var15 * brightness, var16 * brightness, var17 * brightness);
-            this.renderTopFace(block, x, y, z, block.getTextureForSide(this.blockView, x, y, z, 1));
+            this.renderTopFace(block, x, y, z, block.getTexture(this.blockView, x, y, z, 1));
             var10 = true;
         }
 
-        if (this.renderAllSides || block.isSideRendered(this.blockView, x, y, z - 1, 2)) {
+        if (this.renderAllSides || block.shouldRenderFace(this.blockView, x, y, z - 1, 2)) {
             float brightness;
-            if (block.minZ > 0.0D) {
+            if (block.zz0 > 0.0D) {
                 brightness = coreBrightness;
             } else {
                 brightness = block.getBrightness(this.blockView, x, y, z - 1);
@@ -1064,9 +1067,9 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             var10 = true;
         }
 
-        if (this.renderAllSides || block.isSideRendered(this.blockView, x, y, z + 1, 3)) {
+        if (this.renderAllSides || block.shouldRenderFace(this.blockView, x, y, z + 1, 3)) {
             float brightness;
-            if (block.maxZ < 1.0D) {
+            if (block.zz1 < 1.0D) {
                 brightness = coreBrightness;
             } else {
                 brightness = block.getBrightness(this.blockView, x, y, z + 1);
@@ -1088,9 +1091,9 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             var10 = true;
         }
 
-        if (this.renderAllSides || block.isSideRendered(this.blockView, x - 1, y, z, 4)) {
+        if (this.renderAllSides || block.shouldRenderFace(this.blockView, x - 1, y, z, 4)) {
             float brightness;
-            if (block.minX > 0.0D) {
+            if (block.xx0 > 0.0D) {
                 brightness = coreBrightness;
             } else {
                 brightness = block.getBrightness(this.blockView, x - 1, y, z);
@@ -1112,9 +1115,9 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             var10 = true;
         }
 
-        if (this.renderAllSides || block.isSideRendered(this.blockView, x + 1, y, z, 5)) {
+        if (this.renderAllSides || block.shouldRenderFace(this.blockView, x + 1, y, z, 5)) {
             float brightness;
-            if (block.maxX < 1.0D) {
+            if (block.xx1 < 1.0D) {
                 brightness = coreBrightness;
             } else {
                 brightness = block.getBrightness(this.blockView, x + 1, y, z);
@@ -1140,13 +1143,13 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     @Overwrite
-    public boolean render(Block block, int x, int y, int z) {
+    public boolean render(Tile block, int x, int y, int z) {
         if (!((ExBlock) block).shouldRender(this.blockView, x, y, z)) {
             return false;
         }
 
-        int renderType = block.getRenderType();
-        block.updateBoundingBox(this.blockView, x, y, z);
+        int renderType = block.getRenderShape();
+        block.updateShape(this.blockView, x, y, z);
         if (renderType == 0) {
             return this.renderStandardBlock(block, x, y, z);
         } else if (renderType == 4) {
@@ -1168,7 +1171,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         } else if (renderType == 7) {
             return this.renderDoor(block, x, y, z);
         } else if (renderType == 9) {
-            return this.renderRails((RailBlock) block, x, y, z);
+            return this.renderRails((RailTile) block, x, y, z);
         } else if (renderType == 10) {
             return this.renderStairs(block, x, y, z);
         } else if (renderType == 11) {
@@ -1185,16 +1188,16 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             return this.renderPistonHead(block, x, y, z, true);
         } else if (renderType == 30) {
             if (this.blockView != null && this.textureOverride == -1) {
-                int topId = this.blockView.getBlockId(x, y + 1, z);
-                if (topId == 0 || !((ExBlock) Block.BY_ID[topId]).shouldRender(this.blockView, x, y + 1, z)) {
+                int topId = this.blockView.getTile(x, y + 1, z);
+                if (topId == 0 || !((ExBlock) Tile.tiles[topId]).shouldRender(this.blockView, x, y + 1, z)) {
                     this.renderGrass(block, x, y, z);
                 }
             }
             return this.renderStandardBlock(block, x, y, z);
         } else if (renderType == 31) {
             boolean var7 = this.renderStandardBlock(block, x, y, z);
-            if (((ExWorld) Minecraft.instance.world).getTriggerManager().isActivated(x, y, z)) {
-                Tessellator.INSTANCE.color(1.0F, 1.0F, 1.0F);
+            if (((ExWorld) Minecraft.instance.level).getTriggerManager().isActivated(x, y, z)) {
+                Tesselator.instance.color(1.0F, 1.0F, 1.0F);
                 this.textureOverride = 99;
             } else {
                 this.textureOverride = 115;
@@ -1222,7 +1225,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     private int redirectToBlockLight(
         int[] array,
         int index,
-        @Local(index = 1, argsOnly = true) Block block,
+        @Local(index = 1, argsOnly = true) Tile block,
         @Local(index = 2, argsOnly = true) int x,
         @Local(index = 3, argsOnly = true) int y,
         @Local(index = 4, argsOnly = true) int z) {
@@ -1230,10 +1233,10 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     @Overwrite
-    public boolean renderLadder(Block block, int x, int y, int z) {
-        Tessellator ts = Tessellator.INSTANCE;
-        int meta = this.blockView.getBlockMeta(x, y, z);
-        int texture = block.getTextureForSide(0, meta);
+    public boolean renderLadder(Tile block, int x, int y, int z) {
+        Tesselator ts = Tesselator.instance;
+        int meta = this.blockView.getData(x, y, z);
+        int texture = block.getTexture(0, meta);
         if (this.textureOverride >= 0) {
             texture = this.textureOverride;
         }
@@ -1250,56 +1253,56 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         float var20 = 0.0F;
         float var21 = 0.025F;
         if (var19 == 5) {
-            ts.vertex((float) x + var21, (float) (y + 1) + var20, (float) (z + 1) + var20, var11, var15);
-            ts.vertex((float) x + var21, (float) (y + 0) - var20, (float) (z + 1) + var20, var11, var17);
-            ts.vertex((float) x + var21, (float) (y + 0) - var20, (float) (z + 0) - var20, var13, var17);
-            ts.vertex((float) x + var21, (float) (y + 1) + var20, (float) (z + 0) - var20, var13, var15);
-            ts.vertex((float) x + var21, (float) (y + 0) - var20, (float) (z + 1) + var20, var11, var17);
-            ts.vertex((float) x + var21, (float) (y + 1) + var20, (float) (z + 1) + var20, var11, var15);
-            ts.vertex((float) x + var21, (float) (y + 1) + var20, (float) (z + 0) - var20, var13, var15);
-            ts.vertex((float) x + var21, (float) (y + 0) - var20, (float) (z + 0) - var20, var13, var17);
+            ts.vertexUV((float) x + var21, (float) (y + 1) + var20, (float) (z + 1) + var20, var11, var15);
+            ts.vertexUV((float) x + var21, (float) (y + 0) - var20, (float) (z + 1) + var20, var11, var17);
+            ts.vertexUV((float) x + var21, (float) (y + 0) - var20, (float) (z + 0) - var20, var13, var17);
+            ts.vertexUV((float) x + var21, (float) (y + 1) + var20, (float) (z + 0) - var20, var13, var15);
+            ts.vertexUV((float) x + var21, (float) (y + 0) - var20, (float) (z + 1) + var20, var11, var17);
+            ts.vertexUV((float) x + var21, (float) (y + 1) + var20, (float) (z + 1) + var20, var11, var15);
+            ts.vertexUV((float) x + var21, (float) (y + 1) + var20, (float) (z + 0) - var20, var13, var15);
+            ts.vertexUV((float) x + var21, (float) (y + 0) - var20, (float) (z + 0) - var20, var13, var17);
         }
 
         if (var19 == 4) {
-            ts.vertex((float) (x + 1) - var21, (float) (y + 0) - var20, (float) (z + 1) + var20, var13, var17);
-            ts.vertex((float) (x + 1) - var21, (float) (y + 1) + var20, (float) (z + 1) + var20, var13, var15);
-            ts.vertex((float) (x + 1) - var21, (float) (y + 1) + var20, (float) (z + 0) - var20, var11, var15);
-            ts.vertex((float) (x + 1) - var21, (float) (y + 0) - var20, (float) (z + 0) - var20, var11, var17);
-            ts.vertex((float) (x + 1) - var21, (float) (y + 0) - var20, (float) (z + 0) - var20, var11, var17);
-            ts.vertex((float) (x + 1) - var21, (float) (y + 1) + var20, (float) (z + 0) - var20, var11, var15);
-            ts.vertex((float) (x + 1) - var21, (float) (y + 1) + var20, (float) (z + 1) + var20, var13, var15);
-            ts.vertex((float) (x + 1) - var21, (float) (y + 0) - var20, (float) (z + 1) + var20, var13, var17);
+            ts.vertexUV((float) (x + 1) - var21, (float) (y + 0) - var20, (float) (z + 1) + var20, var13, var17);
+            ts.vertexUV((float) (x + 1) - var21, (float) (y + 1) + var20, (float) (z + 1) + var20, var13, var15);
+            ts.vertexUV((float) (x + 1) - var21, (float) (y + 1) + var20, (float) (z + 0) - var20, var11, var15);
+            ts.vertexUV((float) (x + 1) - var21, (float) (y + 0) - var20, (float) (z + 0) - var20, var11, var17);
+            ts.vertexUV((float) (x + 1) - var21, (float) (y + 0) - var20, (float) (z + 0) - var20, var11, var17);
+            ts.vertexUV((float) (x + 1) - var21, (float) (y + 1) + var20, (float) (z + 0) - var20, var11, var15);
+            ts.vertexUV((float) (x + 1) - var21, (float) (y + 1) + var20, (float) (z + 1) + var20, var13, var15);
+            ts.vertexUV((float) (x + 1) - var21, (float) (y + 0) - var20, (float) (z + 1) + var20, var13, var17);
         }
 
         if (var19 == 3) {
-            ts.vertex((float) (x + 1) + var20, (float) (y + 0) - var20, (float) z + var21, var13, var17);
-            ts.vertex((float) (x + 1) + var20, (float) (y + 1) + var20, (float) z + var21, var13, var15);
-            ts.vertex((float) (x + 0) - var20, (float) (y + 1) + var20, (float) z + var21, var11, var15);
-            ts.vertex((float) (x + 0) - var20, (float) (y + 0) - var20, (float) z + var21, var11, var17);
-            ts.vertex((float) (x + 0) - var20, (float) (y + 0) - var20, (float) z + var21, var11, var17);
-            ts.vertex((float) (x + 0) - var20, (float) (y + 1) + var20, (float) z + var21, var11, var15);
-            ts.vertex((float) (x + 1) + var20, (float) (y + 1) + var20, (float) z + var21, var13, var15);
-            ts.vertex((float) (x + 1) + var20, (float) (y + 0) - var20, (float) z + var21, var13, var17);
+            ts.vertexUV((float) (x + 1) + var20, (float) (y + 0) - var20, (float) z + var21, var13, var17);
+            ts.vertexUV((float) (x + 1) + var20, (float) (y + 1) + var20, (float) z + var21, var13, var15);
+            ts.vertexUV((float) (x + 0) - var20, (float) (y + 1) + var20, (float) z + var21, var11, var15);
+            ts.vertexUV((float) (x + 0) - var20, (float) (y + 0) - var20, (float) z + var21, var11, var17);
+            ts.vertexUV((float) (x + 0) - var20, (float) (y + 0) - var20, (float) z + var21, var11, var17);
+            ts.vertexUV((float) (x + 0) - var20, (float) (y + 1) + var20, (float) z + var21, var11, var15);
+            ts.vertexUV((float) (x + 1) + var20, (float) (y + 1) + var20, (float) z + var21, var13, var15);
+            ts.vertexUV((float) (x + 1) + var20, (float) (y + 0) - var20, (float) z + var21, var13, var17);
         }
 
         if (var19 == 2) {
-            ts.vertex((float) (x + 1) + var20, (float) (y + 1) + var20, (float) (z + 1) - var21, var11, var15);
-            ts.vertex((float) (x + 1) + var20, (float) (y + 0) - var20, (float) (z + 1) - var21, var11, var17);
-            ts.vertex((float) (x + 0) - var20, (float) (y + 0) - var20, (float) (z + 1) - var21, var13, var17);
-            ts.vertex((float) (x + 0) - var20, (float) (y + 1) + var20, (float) (z + 1) - var21, var13, var15);
-            ts.vertex((float) (x + 0) - var20, (float) (y + 1) + var20, (float) (z + 1) - var21, var13, var15);
-            ts.vertex((float) (x + 0) - var20, (float) (y + 0) - var20, (float) (z + 1) - var21, var13, var17);
-            ts.vertex((float) (x + 1) + var20, (float) (y + 0) - var20, (float) (z + 1) - var21, var11, var17);
-            ts.vertex((float) (x + 1) + var20, (float) (y + 1) + var20, (float) (z + 1) - var21, var11, var15);
+            ts.vertexUV((float) (x + 1) + var20, (float) (y + 1) + var20, (float) (z + 1) - var21, var11, var15);
+            ts.vertexUV((float) (x + 1) + var20, (float) (y + 0) - var20, (float) (z + 1) - var21, var11, var17);
+            ts.vertexUV((float) (x + 0) - var20, (float) (y + 0) - var20, (float) (z + 1) - var21, var13, var17);
+            ts.vertexUV((float) (x + 0) - var20, (float) (y + 1) + var20, (float) (z + 1) - var21, var13, var15);
+            ts.vertexUV((float) (x + 0) - var20, (float) (y + 1) + var20, (float) (z + 1) - var21, var13, var15);
+            ts.vertexUV((float) (x + 0) - var20, (float) (y + 0) - var20, (float) (z + 1) - var21, var13, var17);
+            ts.vertexUV((float) (x + 1) + var20, (float) (y + 0) - var20, (float) (z + 1) - var21, var11, var17);
+            ts.vertexUV((float) (x + 1) + var20, (float) (y + 1) + var20, (float) (z + 1) - var21, var11, var15);
         }
 
         return true;
     }
 
     @Overwrite
-    public void method_47(Block block, int meta, double x, double y, double z) {
-        Tessellator ts = Tessellator.INSTANCE;
-        int texture = block.getTextureForSide(0, meta);
+    public void method_47(Tile block, int meta, double x, double y, double z) {
+        Tesselator ts = Tesselator.instance;
+        int texture = block.getTexture(0, meta);
         if (this.textureOverride >= 0) {
             texture = this.textureOverride;
         }
@@ -1314,16 +1317,16 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         double var23 = x + 0.5D + (double) 0.45F;
         double var25 = z + 0.5D - (double) 0.45F;
         double var27 = z + 0.5D + (double) 0.45F;
-        ts.vertex(var21, y + 1.0D, var25, var13, var17);
-        ts.vertex(var21, y + 0.0D, var25, var13, var19);
-        ts.vertex(var23, y + 0.0D, var27, var15, var19);
-        ts.vertex(var23, y + 1.0D, var27, var15, var17);
-        ts.vertex(var23, y + 1.0D, var27, var13, var17);
-        ts.vertex(var23, y + 0.0D, var27, var13, var19);
-        ts.vertex(var21, y + 0.0D, var25, var15, var19);
-        ts.vertex(var21, y + 1.0D, var25, var15, var17);
+        ts.vertexUV(var21, y + 1.0D, var25, var13, var17);
+        ts.vertexUV(var21, y + 0.0D, var25, var13, var19);
+        ts.vertexUV(var23, y + 0.0D, var27, var15, var19);
+        ts.vertexUV(var23, y + 1.0D, var27, var15, var17);
+        ts.vertexUV(var23, y + 1.0D, var27, var13, var17);
+        ts.vertexUV(var23, y + 0.0D, var27, var13, var19);
+        ts.vertexUV(var21, y + 0.0D, var25, var15, var19);
+        ts.vertexUV(var21, y + 1.0D, var25, var15, var17);
         if (this.textureOverride < 0) {
-            texture = block.getTextureForSide(1, meta);
+            texture = block.getTexture(1, meta);
             var11 = (texture & 15) << 4;
             var12 = texture & 240;
             var13 = (float) var11 / 256.0F;
@@ -1332,31 +1335,31 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             var19 = ((float) var12 + 15.99F) / 256.0F;
         }
 
-        ts.vertex(var21, y + 1.0D, var27, var13, var17);
-        ts.vertex(var21, y + 0.0D, var27, var13, var19);
-        ts.vertex(var23, y + 0.0D, var25, var15, var19);
-        ts.vertex(var23, y + 1.0D, var25, var15, var17);
-        ts.vertex(var23, y + 1.0D, var25, var13, var17);
-        ts.vertex(var23, y + 0.0D, var25, var13, var19);
-        ts.vertex(var21, y + 0.0D, var27, var15, var19);
-        ts.vertex(var21, y + 1.0D, var27, var15, var17);
+        ts.vertexUV(var21, y + 1.0D, var27, var13, var17);
+        ts.vertexUV(var21, y + 0.0D, var27, var13, var19);
+        ts.vertexUV(var23, y + 0.0D, var25, var15, var19);
+        ts.vertexUV(var23, y + 1.0D, var25, var15, var17);
+        ts.vertexUV(var23, y + 1.0D, var25, var13, var17);
+        ts.vertexUV(var23, y + 0.0D, var25, var13, var19);
+        ts.vertexUV(var21, y + 0.0D, var27, var15, var19);
+        ts.vertexUV(var21, y + 1.0D, var27, var15, var17);
     }
 
     @Overwrite
-    public boolean renderFluid(Block block, int x, int y, int z) {
-        Tessellator ts = Tessellator.INSTANCE;
-        boolean var6 = block.isSideRendered(this.blockView, x, y + 1, z, 1);
-        boolean var7 = block.isSideRendered(this.blockView, x, y - 1, z, 0);
+    public boolean renderFluid(Tile block, int x, int y, int z) {
+        Tesselator ts = Tesselator.instance;
+        boolean var6 = block.shouldRenderFace(this.blockView, x, y + 1, z, 1);
+        boolean var7 = block.shouldRenderFace(this.blockView, x, y - 1, z, 0);
         boolean[] var8 = new boolean[]{
-            block.isSideRendered(this.blockView, x, y, z - 1, 2),
-            block.isSideRendered(this.blockView, x, y, z + 1, 3),
-            block.isSideRendered(this.blockView, x - 1, y, z, 4),
-            block.isSideRendered(this.blockView, x + 1, y, z, 5)};
+            block.shouldRenderFace(this.blockView, x, y, z - 1, 2),
+            block.shouldRenderFace(this.blockView, x, y, z + 1, 3),
+            block.shouldRenderFace(this.blockView, x - 1, y, z, 4),
+            block.shouldRenderFace(this.blockView, x + 1, y, z, 5)};
         if (!var6 && !var7 && !var8[0] && !var8[1] && !var8[2] && !var8[3]) {
             return false;
         }
 
-        int colorMul = block.getColorMultiplier(this.blockView, x, y, z);
+        int colorMul = block.getFoliageColor(this.blockView, x, y, z);
         float red = (float) (colorMul >> 16 & 255) / 255.0F;
         float green = (float) (colorMul >> 8 & 255) / 255.0F;
         float blue = (float) (colorMul & 255) / 255.0F;
@@ -1368,7 +1371,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         double var18 = 0.0D;
         double var20 = 1.0D;
         Material material = block.material;
-        int meta = this.blockView.getBlockMeta(x, y, z);
+        int meta = this.blockView.getData(x, y, z);
         float var24 = this.method_43(x, y, z, material);
         float var25 = this.method_43(x, y, z + 1, material);
         float var26 = this.method_43(x + 1, y, z + 1, material);
@@ -1379,10 +1382,10 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         float var38;
         if (this.renderAllSides || var6) {
             var13 = true;
-            int texture = block.getTextureForSide(1, meta);
-            float var29 = (float) AbstractFluidBlock.method_1223(this.blockView, x, y, z, material);
+            int texture = block.getTexture(1, meta);
+            float var29 = (float) LiquidTile.getSlopeAngle(this.blockView, x, y, z, material);
             if (var29 > -999.0F) {
-                texture = block.getTextureForSide(2, meta);
+                texture = block.getTexture(2, meta);
             }
 
             int var30 = (texture & 15) << 4;
@@ -1396,20 +1399,20 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                 var34 = (float) (var31 + 16) / 256.0F;
             }
 
-            var36 = MathHelper.sin(var29) * 8.0F / 256.0F;
-            var37 = MathHelper.cos(var29) * 8.0F / 256.0F;
+            var36 = Mth.sin(var29) * 8.0F / 256.0F;
+            var37 = Mth.cos(var29) * 8.0F / 256.0F;
             var38 = block.getBrightness(this.blockView, x, y, z);
             ts.color(var15 * var38 * red, var15 * var38 * green, var15 * var38 * blue);
-            ts.vertex(x + 0, (float) y + var24, z + 0, var32 - (double) var37 - (double) var36, var34 - (double) var37 + (double) var36);
-            ts.vertex(x + 0, (float) y + var25, z + 1, var32 - (double) var37 + (double) var36, var34 + (double) var37 + (double) var36);
-            ts.vertex(x + 1, (float) y + var26, z + 1, var32 + (double) var37 + (double) var36, var34 + (double) var37 - (double) var36);
-            ts.vertex(x + 1, (float) y + var27, z + 0, var32 + (double) var37 - (double) var36, var34 - (double) var37 - (double) var36);
+            ts.vertexUV(x + 0, (float) y + var24, z + 0, var32 - (double) var37 - (double) var36, var34 - (double) var37 + (double) var36);
+            ts.vertexUV(x + 0, (float) y + var25, z + 1, var32 - (double) var37 + (double) var36, var34 + (double) var37 + (double) var36);
+            ts.vertexUV(x + 1, (float) y + var26, z + 1, var32 + (double) var37 + (double) var36, var34 + (double) var37 - (double) var36);
+            ts.vertexUV(x + 1, (float) y + var27, z + 0, var32 + (double) var37 - (double) var36, var34 - (double) var37 - (double) var36);
         }
 
         if (this.renderAllSides || var7) {
             float var52 = block.getBrightness(this.blockView, x, y - 1, z);
             ts.color(red * var14 * var52, green * var14 * var52, blue * var14 * var52);
-            this.renderBottomFace(block, x, y, z, block.getTextureForSide(0));
+            this.renderBottomFace(block, x, y, z, block.getTexture(0));
             var13 = true;
         }
 
@@ -1432,7 +1435,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                 ++var53;
             }
 
-            int texture = block.getTextureForSide(side + 2, meta);
+            int texture = block.getTexture(side + 2, meta);
             int var33 = (texture & 15) << 4;
             int var55 = texture & 240;
             if (this.renderAllSides || var8[side]) {
@@ -1483,20 +1486,20 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                 }
 
                 ts.color(var15 * var51 * red, var15 * var51 * green, var15 * var51 * blue);
-                ts.vertex(var37, (float) y + var35, var38, var41, var45);
-                ts.vertex(var39, (float) y + var36, var40, var43, var47);
-                ts.vertex(var39, y + 0, var40, var43, var49);
-                ts.vertex(var37, y + 0, var38, var41, var49);
+                ts.vertexUV(var37, (float) y + var35, var38, var41, var45);
+                ts.vertexUV(var39, (float) y + var36, var40, var43, var47);
+                ts.vertexUV(var39, y + 0, var40, var43, var49);
+                ts.vertexUV(var37, y + 0, var38, var41, var49);
             }
         }
 
-        block.minY = var18;
-        block.maxY = var20;
+        block.yy0 = var18;
+        block.yy1 = var20;
         return var13;
     }
 
     @Overwrite
-    public void method_53(Block block, World world, int x, int y, int z) {
+    public void method_53(Tile block, Level world, int x, int y, int z) {
         GL11.glTranslatef((float) (-x), (float) (-y), (float) (-z));
         GL11.glTranslatef(-0.5F, -0.5F, -0.5F);
         this.startRenderingBlocks(world);
@@ -1505,28 +1508,28 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     @Overwrite
-    public boolean renderFence(Block block, int x, int y, int z) {
+    public boolean renderFence(Tile block, int x, int y, int z) {
         float var6 = 6.0F / 16.0F;
         float var7 = 10.0F / 16.0F;
-        block.setBoundingBox(var6, 0.0F, var6, var7, 1.0F, var7);
+        block.setShape(var6, 0.0F, var6, var7, 1.0F, var7);
         this.renderStandardBlock(block, x, y, z);
         boolean var5 = true;
         boolean var8 = false;
         boolean var9 = false;
-        if (this.blockView.getBlockId(x - 1, y, z) == block.id ||
-            this.blockView.getBlockId(x + 1, y, z) == block.id) {
+        if (this.blockView.getTile(x - 1, y, z) == block.id ||
+            this.blockView.getTile(x + 1, y, z) == block.id) {
             var8 = true;
         }
 
-        if (this.blockView.getBlockId(x, y, z - 1) == block.id ||
-            this.blockView.getBlockId(x, y, z + 1) == block.id) {
+        if (this.blockView.getTile(x, y, z - 1) == block.id ||
+            this.blockView.getTile(x, y, z + 1) == block.id) {
             var9 = true;
         }
 
-        boolean var10 = this.blockView.getBlockId(x - 1, y, z) == block.id;
-        boolean var11 = this.blockView.getBlockId(x + 1, y, z) == block.id;
-        boolean var12 = this.blockView.getBlockId(x, y, z - 1) == block.id;
-        boolean var13 = this.blockView.getBlockId(x, y, z + 1) == block.id;
+        boolean var10 = this.blockView.getTile(x - 1, y, z) == block.id;
+        boolean var11 = this.blockView.getTile(x + 1, y, z) == block.id;
+        boolean var12 = this.blockView.getTile(x, y, z - 1) == block.id;
+        boolean var13 = this.blockView.getTile(x, y, z + 1) == block.id;
         if (!var8 && !var9) {
             var8 = true;
         }
@@ -1540,13 +1543,13 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         float var18 = var12 ? 0.0F : var6;
         float var19 = var13 ? 1.0F : var7;
         if (var8) {
-            block.setBoundingBox(var16, var14, var6, var17, var15, var7);
+            block.setShape(var16, var14, var6, var17, var15, var7);
             this.renderStandardBlock(block, x, y, z);
             var5 = true;
         }
 
         if (var9) {
-            block.setBoundingBox(var6, var14, var18, var7, var15, var19);
+            block.setShape(var6, var14, var18, var7, var15, var19);
             this.renderStandardBlock(block, x, y, z);
             var5 = true;
         }
@@ -1554,13 +1557,13 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         var14 = 6.0F / 16.0F;
         var15 = 9.0F / 16.0F;
         if (var8) {
-            block.setBoundingBox(var16, var14, var6, var17, var15, var7);
+            block.setShape(var16, var14, var6, var17, var15, var7);
             this.renderStandardBlock(block, x, y, z);
             var5 = true;
         }
 
         if (var9) {
-            block.setBoundingBox(var6, var14, var18, var7, var15, var19);
+            block.setShape(var6, var14, var18, var7, var15, var19);
             this.renderStandardBlock(block, x, y, z);
             var5 = true;
         }
@@ -1568,269 +1571,269 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         var6 = (var6 - 0.5F) * 0.707F + 0.5F;
         var7 = (var7 - 0.5F) * 0.707F + 0.5F;
 
-        if (this.blockView.getBlockId(x - 1, y, z + 1) == block.id && !var13 && !var10) {
-            Tessellator ts = Tessellator.INSTANCE;
-            int texture = block.getTextureForSide(this.blockView, x, y, z, 0);
+        if (this.blockView.getTile(x - 1, y, z + 1) == block.id && !var13 && !var10) {
+            Tesselator ts = Tesselator.instance;
+            int texture = block.getTexture(this.blockView, x, y, z, 0);
             int var22 = (texture & 15) << 4;
             int var23 = texture & 240;
             double var24 = (double) var22 / 256.0D;
             double var26 = ((double) var22 + 16.0D - 0.01D) / 256.0D;
             double var28 = ((double) var23 + 16.0D * (double) var15 - 1.0D) / 256.0D;
             double var30 = ((double) var23 + 16.0D * (double) var14 - 1.0D - 0.01D) / 256.0D;
-            float var32 = this.blockView.method_1782(x, y, z);
-            float var33 = this.blockView.method_1782(x - 1, y, z + 1);
+            float var32 = this.blockView.getBrightness(x, y, z);
+            float var33 = this.blockView.getBrightness(x - 1, y, z + 1);
             ts.color(var32 * 0.7F, var32 * 0.7F, var32 * 0.7F);
-            ts.vertex(var7 + (float) x, var14 + (float) y, var7 + (float) z, var24, var30);
-            ts.vertex(var7 + (float) x, var15 + (float) y, var7 + (float) z, var24, var28);
+            ts.vertexUV(var7 + (float) x, var14 + (float) y, var7 + (float) z, var24, var30);
+            ts.vertexUV(var7 + (float) x, var15 + (float) y, var7 + (float) z, var24, var28);
             ts.color(var33 * 0.7F, var33 * 0.7F, var33 * 0.7F);
-            ts.vertex(var7 + (float) x - 1.0F, var15 + (float) y, var7 + (float) z + 1.0F, var26, var28);
-            ts.vertex(var7 + (float) x - 1.0F, var14 + (float) y, var7 + (float) z + 1.0F, var26, var30);
+            ts.vertexUV(var7 + (float) x - 1.0F, var15 + (float) y, var7 + (float) z + 1.0F, var26, var28);
+            ts.vertexUV(var7 + (float) x - 1.0F, var14 + (float) y, var7 + (float) z + 1.0F, var26, var30);
             ts.color(var33 * 0.7F, var33 * 0.7F, var33 * 0.7F);
-            ts.vertex(var6 + (float) x - 1.0F, var14 + (float) y, var6 + (float) z + 1.0F, var26, var30);
-            ts.vertex(var6 + (float) x - 1.0F, var15 + (float) y, var6 + (float) z + 1.0F, var26, var28);
+            ts.vertexUV(var6 + (float) x - 1.0F, var14 + (float) y, var6 + (float) z + 1.0F, var26, var30);
+            ts.vertexUV(var6 + (float) x - 1.0F, var15 + (float) y, var6 + (float) z + 1.0F, var26, var28);
             ts.color(var32 * 0.7F, var32 * 0.7F, var32 * 0.7F);
-            ts.vertex(var6 + (float) x, var15 + (float) y, var6 + (float) z, var24, var28);
-            ts.vertex(var6 + (float) x, var14 + (float) y, var6 + (float) z, var24, var30);
+            ts.vertexUV(var6 + (float) x, var15 + (float) y, var6 + (float) z, var24, var28);
+            ts.vertexUV(var6 + (float) x, var14 + (float) y, var6 + (float) z, var24, var30);
             var28 = ((double) var23 + 16.0D * (double) var15) / 256.0D;
             var30 = ((double) var23 + 16.0D * (double) var15 + 2.0D - 0.01D) / 256.0D;
             ts.color(var33 * 0.5F, var33 * 0.5F, var33 * 0.5F);
-            ts.vertex(var7 + (float) x - 1.0F, var14 + (float) y, var7 + (float) z + 1.0F, var26, var28);
-            ts.vertex(var6 + (float) x - 1.0F, var14 + (float) y, var6 + (float) z + 1.0F, var26, var30);
+            ts.vertexUV(var7 + (float) x - 1.0F, var14 + (float) y, var7 + (float) z + 1.0F, var26, var28);
+            ts.vertexUV(var6 + (float) x - 1.0F, var14 + (float) y, var6 + (float) z + 1.0F, var26, var30);
             ts.color(var32 * 0.5F, var32 * 0.5F, var32 * 0.5F);
-            ts.vertex(var6 + (float) x, var14 + (float) y, var6 + (float) z, var24, var30);
-            ts.vertex(var7 + (float) x, var14 + (float) y, var7 + (float) z, var24, var28);
+            ts.vertexUV(var6 + (float) x, var14 + (float) y, var6 + (float) z, var24, var30);
+            ts.vertexUV(var7 + (float) x, var14 + (float) y, var7 + (float) z, var24, var28);
             ts.color(var33, var33, var33);
-            ts.vertex(var6 + (float) x - 1.0F, var15 + (float) y, var6 + (float) z + 1.0F, var26, var28);
-            ts.vertex(var7 + (float) x - 1.0F, var15 + (float) y, var7 + (float) z + 1.0F, var26, var30);
+            ts.vertexUV(var6 + (float) x - 1.0F, var15 + (float) y, var6 + (float) z + 1.0F, var26, var28);
+            ts.vertexUV(var7 + (float) x - 1.0F, var15 + (float) y, var7 + (float) z + 1.0F, var26, var30);
             ts.color(var32, var32, var32);
-            ts.vertex(var7 + (float) x, var15 + (float) y, var7 + (float) z, var24, var30);
-            ts.vertex(var6 + (float) x, var15 + (float) y, var6 + (float) z, var24, var28);
+            ts.vertexUV(var7 + (float) x, var15 + (float) y, var7 + (float) z, var24, var30);
+            ts.vertexUV(var6 + (float) x, var15 + (float) y, var6 + (float) z, var24, var28);
             var14 = 12.0F / 16.0F;
             var15 = 15.0F / 16.0F;
             var28 = ((double) var23 + 16.0D * (double) var15 - 1.0D) / 256.0D;
             var30 = ((double) var23 + 16.0D * (double) var14 - 1.0D - 0.01D) / 256.0D;
             ts.color(var32 * 0.7F, var32 * 0.7F, var32 * 0.7F);
-            ts.vertex(var7 + (float) x, var14 + (float) y, var7 + (float) z, var24, var30);
-            ts.vertex(var7 + (float) x, var15 + (float) y, var7 + (float) z, var24, var28);
+            ts.vertexUV(var7 + (float) x, var14 + (float) y, var7 + (float) z, var24, var30);
+            ts.vertexUV(var7 + (float) x, var15 + (float) y, var7 + (float) z, var24, var28);
             ts.color(var33 * 0.7F, var33 * 0.7F, var33 * 0.7F);
-            ts.vertex(var7 + (float) x - 1.0F, var15 + (float) y, var7 + (float) z + 1.0F, var26, var28);
-            ts.vertex(var7 + (float) x - 1.0F, var14 + (float) y, var7 + (float) z + 1.0F, var26, var30);
+            ts.vertexUV(var7 + (float) x - 1.0F, var15 + (float) y, var7 + (float) z + 1.0F, var26, var28);
+            ts.vertexUV(var7 + (float) x - 1.0F, var14 + (float) y, var7 + (float) z + 1.0F, var26, var30);
             ts.color(var33 * 0.7F, var33 * 0.7F, var33 * 0.7F);
-            ts.vertex(var6 + (float) x - 1.0F, var14 + (float) y, var6 + (float) z + 1.0F, var26, var30);
-            ts.vertex(var6 + (float) x - 1.0F, var15 + (float) y, var6 + (float) z + 1.0F, var26, var28);
+            ts.vertexUV(var6 + (float) x - 1.0F, var14 + (float) y, var6 + (float) z + 1.0F, var26, var30);
+            ts.vertexUV(var6 + (float) x - 1.0F, var15 + (float) y, var6 + (float) z + 1.0F, var26, var28);
             ts.color(var32 * 0.7F, var32 * 0.7F, var32 * 0.7F);
-            ts.vertex(var6 + (float) x, var15 + (float) y, var6 + (float) z, var24, var28);
-            ts.vertex(var6 + (float) x, var14 + (float) y, var6 + (float) z, var24, var30);
+            ts.vertexUV(var6 + (float) x, var15 + (float) y, var6 + (float) z, var24, var28);
+            ts.vertexUV(var6 + (float) x, var14 + (float) y, var6 + (float) z, var24, var30);
             var28 = ((double) var23 + 16.0D * (double) var15) / 256.0D;
             var30 = ((double) var23 + 16.0D * (double) var15 - 2.0D - 0.01D) / 256.0D;
             ts.color(var33 * 0.5F, var33 * 0.5F, var33 * 0.5F);
-            ts.vertex(var7 + (float) x - 1.0F, var14 + (float) y, var7 + (float) z + 1.0F, var26, var28);
-            ts.vertex(var6 + (float) x - 1.0F, var14 + (float) y, var6 + (float) z + 1.0F, var26, var30);
+            ts.vertexUV(var7 + (float) x - 1.0F, var14 + (float) y, var7 + (float) z + 1.0F, var26, var28);
+            ts.vertexUV(var6 + (float) x - 1.0F, var14 + (float) y, var6 + (float) z + 1.0F, var26, var30);
             ts.color(var32 * 0.5F, var32 * 0.5F, var32 * 0.5F);
-            ts.vertex(var6 + (float) x, var14 + (float) y, var6 + (float) z, var24, var30);
-            ts.vertex(var7 + (float) x, var14 + (float) y, var7 + (float) z, var24, var28);
+            ts.vertexUV(var6 + (float) x, var14 + (float) y, var6 + (float) z, var24, var30);
+            ts.vertexUV(var7 + (float) x, var14 + (float) y, var7 + (float) z, var24, var28);
             ts.color(var33, var33, var33);
-            ts.vertex(var6 + (float) x - 1.0F, var15 + (float) y, var6 + (float) z + 1.0F, var26, var28);
-            ts.vertex(var7 + (float) x - 1.0F, var15 + (float) y, var7 + (float) z + 1.0F, var26, var30);
+            ts.vertexUV(var6 + (float) x - 1.0F, var15 + (float) y, var6 + (float) z + 1.0F, var26, var28);
+            ts.vertexUV(var7 + (float) x - 1.0F, var15 + (float) y, var7 + (float) z + 1.0F, var26, var30);
             ts.color(var32, var32, var32);
-            ts.vertex(var7 + (float) x, var15 + (float) y, var7 + (float) z, var24, var30);
-            ts.vertex(var6 + (float) x, var15 + (float) y, var6 + (float) z, var24, var28);
+            ts.vertexUV(var7 + (float) x, var15 + (float) y, var7 + (float) z, var24, var30);
+            ts.vertexUV(var6 + (float) x, var15 + (float) y, var6 + (float) z, var24, var28);
         }
 
-        if (this.blockView.getBlockId(x + 1, y, z + 1) == block.id && !var13 && !var11) {
+        if (this.blockView.getTile(x + 1, y, z + 1) == block.id && !var13 && !var11) {
             var14 = 6.0F / 16.0F;
             var15 = 9.0F / 16.0F;
-            Tessellator ts = Tessellator.INSTANCE;
-            int texture = block.getTextureForSide(this.blockView, x, y, z, 0);
+            Tesselator ts = Tesselator.instance;
+            int texture = block.getTexture(this.blockView, x, y, z, 0);
             int var22 = (texture & 15) << 4;
             int var23 = texture & 240;
             double var24 = (double) var22 / 256.0D;
             double var26 = ((double) var22 + 16.0D - 0.01D) / 256.0D;
             double var28 = ((double) var23 + 16.0D * (double) var15 - 1.0D) / 256.0D;
             double var30 = ((double) var23 + 16.0D * (double) var14 - 1.0D - 0.01D) / 256.0D;
-            float var32 = this.blockView.method_1782(x, y, z);
-            float var33 = this.blockView.method_1782(x - 1, y, z + 1);
+            float var32 = this.blockView.getBrightness(x, y, z);
+            float var33 = this.blockView.getBrightness(x - 1, y, z + 1);
             ts.color(var32 * 0.7F, var32 * 0.7F, var32 * 0.7F);
-            ts.vertex(var7 + (float) x, var14 + (float) y, var6 + (float) z, var24, var30);
-            ts.vertex(var7 + (float) x, var15 + (float) y, var6 + (float) z, var24, var28);
+            ts.vertexUV(var7 + (float) x, var14 + (float) y, var6 + (float) z, var24, var30);
+            ts.vertexUV(var7 + (float) x, var15 + (float) y, var6 + (float) z, var24, var28);
             ts.color(var33 * 0.7F, var33 * 0.7F, var33 * 0.7F);
-            ts.vertex(var7 + (float) x + 1.0F, var15 + (float) y, var6 + (float) z + 1.0F, var26, var28);
-            ts.vertex(var7 + (float) x + 1.0F, var14 + (float) y, var6 + (float) z + 1.0F, var26, var30);
+            ts.vertexUV(var7 + (float) x + 1.0F, var15 + (float) y, var6 + (float) z + 1.0F, var26, var28);
+            ts.vertexUV(var7 + (float) x + 1.0F, var14 + (float) y, var6 + (float) z + 1.0F, var26, var30);
             ts.color(var33 * 0.7F, var33 * 0.7F, var33 * 0.7F);
-            ts.vertex(var6 + (float) x + 1.0F, var14 + (float) y, var7 + (float) z + 1.0F, var26, var30);
-            ts.vertex(var6 + (float) x + 1.0F, var15 + (float) y, var7 + (float) z + 1.0F, var26, var28);
+            ts.vertexUV(var6 + (float) x + 1.0F, var14 + (float) y, var7 + (float) z + 1.0F, var26, var30);
+            ts.vertexUV(var6 + (float) x + 1.0F, var15 + (float) y, var7 + (float) z + 1.0F, var26, var28);
             ts.color(var32 * 0.7F, var32 * 0.7F, var32 * 0.7F);
-            ts.vertex(var6 + (float) x, var15 + (float) y, var7 + (float) z, var24, var28);
-            ts.vertex(var6 + (float) x, var14 + (float) y, var7 + (float) z, var24, var30);
+            ts.vertexUV(var6 + (float) x, var15 + (float) y, var7 + (float) z, var24, var28);
+            ts.vertexUV(var6 + (float) x, var14 + (float) y, var7 + (float) z, var24, var30);
             var28 = ((double) var23 + 16.0D * (double) var15) / 256.0D;
             var30 = ((double) var23 + 16.0D * (double) var15 + 2.0D - 0.01D) / 256.0D;
             ts.color(var33 * 0.5F, var33 * 0.5F, var33 * 0.5F);
-            ts.vertex(var7 + (float) x + 1.0F, var14 + (float) y, var6 + (float) z + 1.0F, var26, var28);
-            ts.vertex(var6 + (float) x + 1.0F, var14 + (float) y, var7 + (float) z + 1.0F, var26, var30);
+            ts.vertexUV(var7 + (float) x + 1.0F, var14 + (float) y, var6 + (float) z + 1.0F, var26, var28);
+            ts.vertexUV(var6 + (float) x + 1.0F, var14 + (float) y, var7 + (float) z + 1.0F, var26, var30);
             ts.color(var32 * 0.5F, var32 * 0.5F, var32 * 0.5F);
-            ts.vertex(var6 + (float) x, var14 + (float) y, var7 + (float) z, var24, var30);
-            ts.vertex(var7 + (float) x, var14 + (float) y, var6 + (float) z, var24, var28);
+            ts.vertexUV(var6 + (float) x, var14 + (float) y, var7 + (float) z, var24, var30);
+            ts.vertexUV(var7 + (float) x, var14 + (float) y, var6 + (float) z, var24, var28);
             ts.color(var33, var33, var33);
-            ts.vertex(var6 + (float) x + 1.0F, var15 + (float) y, var7 + (float) z + 1.0F, var26, var28);
-            ts.vertex(var7 + (float) x + 1.0F, var15 + (float) y, var6 + (float) z + 1.0F, var26, var30);
+            ts.vertexUV(var6 + (float) x + 1.0F, var15 + (float) y, var7 + (float) z + 1.0F, var26, var28);
+            ts.vertexUV(var7 + (float) x + 1.0F, var15 + (float) y, var6 + (float) z + 1.0F, var26, var30);
             ts.color(var32, var32, var32);
-            ts.vertex(var7 + (float) x, var15 + (float) y, var6 + (float) z, var24, var30);
-            ts.vertex(var6 + (float) x, var15 + (float) y, var7 + (float) z, var24, var28);
+            ts.vertexUV(var7 + (float) x, var15 + (float) y, var6 + (float) z, var24, var30);
+            ts.vertexUV(var6 + (float) x, var15 + (float) y, var7 + (float) z, var24, var28);
             var14 = 12.0F / 16.0F;
             var15 = 15.0F / 16.0F;
             var28 = ((double) var23 + 16.0D * (double) var15 - 1.0D) / 256.0D;
             var30 = ((double) var23 + 16.0D * (double) var14 - 1.0D - 0.01D) / 256.0D;
             ts.color(var32 * 0.7F, var32 * 0.7F, var32 * 0.7F);
-            ts.vertex(var7 + (float) x, var14 + (float) y, var6 + (float) z, var24, var30);
-            ts.vertex(var7 + (float) x, var15 + (float) y, var6 + (float) z, var24, var28);
+            ts.vertexUV(var7 + (float) x, var14 + (float) y, var6 + (float) z, var24, var30);
+            ts.vertexUV(var7 + (float) x, var15 + (float) y, var6 + (float) z, var24, var28);
             ts.color(var33 * 0.7F, var33 * 0.7F, var33 * 0.7F);
-            ts.vertex(var7 + (float) x + 1.0F, var15 + (float) y, var6 + (float) z + 1.0F, var26, var28);
-            ts.vertex(var7 + (float) x + 1.0F, var14 + (float) y, var6 + (float) z + 1.0F, var26, var30);
+            ts.vertexUV(var7 + (float) x + 1.0F, var15 + (float) y, var6 + (float) z + 1.0F, var26, var28);
+            ts.vertexUV(var7 + (float) x + 1.0F, var14 + (float) y, var6 + (float) z + 1.0F, var26, var30);
             ts.color(var33 * 0.7F, var33 * 0.7F, var33 * 0.7F);
-            ts.vertex(var6 + (float) x + 1.0F, var14 + (float) y, var7 + (float) z + 1.0F, var26, var30);
-            ts.vertex(var6 + (float) x + 1.0F, var15 + (float) y, var7 + (float) z + 1.0F, var26, var28);
+            ts.vertexUV(var6 + (float) x + 1.0F, var14 + (float) y, var7 + (float) z + 1.0F, var26, var30);
+            ts.vertexUV(var6 + (float) x + 1.0F, var15 + (float) y, var7 + (float) z + 1.0F, var26, var28);
             ts.color(var32 * 0.7F, var32 * 0.7F, var32 * 0.7F);
-            ts.vertex(var6 + (float) x, var15 + (float) y, var7 + (float) z, var24, var28);
-            ts.vertex(var6 + (float) x, var14 + (float) y, var7 + (float) z, var24, var30);
+            ts.vertexUV(var6 + (float) x, var15 + (float) y, var7 + (float) z, var24, var28);
+            ts.vertexUV(var6 + (float) x, var14 + (float) y, var7 + (float) z, var24, var30);
             var28 = ((double) var23 + 16.0D * (double) var15) / 256.0D;
             var30 = ((double) var23 + 16.0D * (double) var15 - 2.0D - 0.01D) / 256.0D;
             ts.color(var33 * 0.5F, var33 * 0.5F, var33 * 0.5F);
-            ts.vertex(var7 + (float) x + 1.0F, var14 + (float) y, var6 + (float) z + 1.0F, var26, var28);
-            ts.vertex(var6 + (float) x + 1.0F, var14 + (float) y, var7 + (float) z + 1.0F, var26, var30);
+            ts.vertexUV(var7 + (float) x + 1.0F, var14 + (float) y, var6 + (float) z + 1.0F, var26, var28);
+            ts.vertexUV(var6 + (float) x + 1.0F, var14 + (float) y, var7 + (float) z + 1.0F, var26, var30);
             ts.color(var32 * 0.5F, var32 * 0.5F, var32 * 0.5F);
-            ts.vertex(var6 + (float) x, var14 + (float) y, var7 + (float) z, var24, var30);
-            ts.vertex(var7 + (float) x, var14 + (float) y, var6 + (float) z, var24, var28);
+            ts.vertexUV(var6 + (float) x, var14 + (float) y, var7 + (float) z, var24, var30);
+            ts.vertexUV(var7 + (float) x, var14 + (float) y, var6 + (float) z, var24, var28);
             ts.color(var33, var33, var33);
-            ts.vertex(var6 + (float) x + 1.0F, var15 + (float) y, var7 + (float) z + 1.0F, var26, var28);
-            ts.vertex(var7 + (float) x + 1.0F, var15 + (float) y, var6 + (float) z + 1.0F, var26, var30);
+            ts.vertexUV(var6 + (float) x + 1.0F, var15 + (float) y, var7 + (float) z + 1.0F, var26, var28);
+            ts.vertexUV(var7 + (float) x + 1.0F, var15 + (float) y, var6 + (float) z + 1.0F, var26, var30);
             ts.color(var32, var32, var32);
-            ts.vertex(var7 + (float) x, var15 + (float) y, var6 + (float) z, var24, var30);
-            ts.vertex(var6 + (float) x, var15 + (float) y, var7 + (float) z, var24, var28);
+            ts.vertexUV(var7 + (float) x, var15 + (float) y, var6 + (float) z, var24, var30);
+            ts.vertexUV(var6 + (float) x, var15 + (float) y, var7 + (float) z, var24, var28);
         }
 
-        block.setBoundingBox(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
+        block.setShape(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
         return var5;
     }
 
     @Overwrite
-    public boolean renderStairs(Block block, int x, int y, int z) {
+    public boolean renderStairs(Tile block, int x, int y, int z) {
         boolean var5 = false;
-        int coreMeta = this.blockView.getBlockMeta(x, y, z) & 3;
-        block.setBoundingBox(0.0F, 0.0F, 0.0F, 1.0F, 0.5F, 1.0F);
+        int coreMeta = this.blockView.getData(x, y, z) & 3;
+        block.setShape(0.0F, 0.0F, 0.0F, 1.0F, 0.5F, 1.0F);
         this.renderStandardBlock(block, x, y, z);
         if (coreMeta == 0) {
-            Block leftBlock = Block.BY_ID[this.blockView.getBlockId(x - 1, y, z)];
-            if (leftBlock != null && leftBlock.getRenderType() == 10) {
-                int leftMeta = this.blockView.getBlockMeta(x - 1, y, z) & 3;
+            Tile leftBlock = Tile.tiles[this.blockView.getTile(x - 1, y, z)];
+            if (leftBlock != null && leftBlock.getRenderShape() == 10) {
+                int leftMeta = this.blockView.getData(x - 1, y, z) & 3;
                 if (leftMeta == 2) {
-                    block.setBoundingBox(0.0F, 0.5F, 0.5F, 0.5F, 1.0F, 1.0F);
+                    block.setShape(0.0F, 0.5F, 0.5F, 0.5F, 1.0F, 1.0F);
                     this.renderStandardBlock(block, x, y, z);
                 } else if (leftMeta == 3) {
-                    block.setBoundingBox(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 0.5F);
+                    block.setShape(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 0.5F);
                     this.renderStandardBlock(block, x, y, z);
                 }
             }
 
-            int rightMeta = this.blockView.getBlockMeta(x + 1, y, z) & 3;
-            Block rightBlock = Block.BY_ID[this.blockView.getBlockId(x + 1, y, z)];
-            if (rightBlock != null && rightBlock.getRenderType() == 10 && (rightMeta == 2 || rightMeta == 3)) {
+            int rightMeta = this.blockView.getData(x + 1, y, z) & 3;
+            Tile rightBlock = Tile.tiles[this.blockView.getTile(x + 1, y, z)];
+            if (rightBlock != null && rightBlock.getRenderShape() == 10 && (rightMeta == 2 || rightMeta == 3)) {
                 if (rightMeta == 2) {
-                    block.setBoundingBox(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
+                    block.setShape(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
                     this.renderStandardBlock(block, x, y, z);
                 } else if (rightMeta == 3) {
-                    block.setBoundingBox(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
+                    block.setShape(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
                     this.renderStandardBlock(block, x, y, z);
                 }
             } else {
-                block.setBoundingBox(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 1.0F);
+                block.setShape(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 1.0F);
                 this.renderStandardBlock(block, x, y, z);
             }
 
             var5 = true;
         } else {
             if (coreMeta == 1) {
-                int leftMeta = this.blockView.getBlockMeta(x - 1, y, z) & 3;
-                Block leftBlock = Block.BY_ID[this.blockView.getBlockId(x - 1, y, z)];
-                if (leftBlock != null && leftBlock.getRenderType() == 10 && (leftMeta == 2 || leftMeta == 3)) {
+                int leftMeta = this.blockView.getData(x - 1, y, z) & 3;
+                Tile leftBlock = Tile.tiles[this.blockView.getTile(x - 1, y, z)];
+                if (leftBlock != null && leftBlock.getRenderShape() == 10 && (leftMeta == 2 || leftMeta == 3)) {
                     if (leftMeta == 3) {
-                        block.setBoundingBox(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 0.5F);
+                        block.setShape(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 0.5F);
                         this.renderStandardBlock(block, x, y, z);
                     } else {
-                        block.setBoundingBox(0.0F, 0.5F, 0.5F, 0.5F, 1.0F, 1.0F);
+                        block.setShape(0.0F, 0.5F, 0.5F, 0.5F, 1.0F, 1.0F);
                         this.renderStandardBlock(block, x, y, z);
                     }
                 } else {
-                    block.setBoundingBox(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 1.0F);
+                    block.setShape(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 1.0F);
                     this.renderStandardBlock(block, x, y, z);
                 }
 
-                Block rightBlock = Block.BY_ID[this.blockView.getBlockId(x + 1, y, z)];
-                if (rightBlock != null && rightBlock.getRenderType() == 10) {
-                    int rightMeta = this.blockView.getBlockMeta(x + 1, y, z) & 3;
+                Tile rightBlock = Tile.tiles[this.blockView.getTile(x + 1, y, z)];
+                if (rightBlock != null && rightBlock.getRenderShape() == 10) {
+                    int rightMeta = this.blockView.getData(x + 1, y, z) & 3;
                     if (rightMeta == 2) {
-                        block.setBoundingBox(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
+                        block.setShape(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
                         this.renderStandardBlock(block, x, y, z);
                     } else if (rightMeta == 3) {
-                        block.setBoundingBox(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
+                        block.setShape(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
                         this.renderStandardBlock(block, x, y, z);
                     }
                 }
 
                 var5 = true;
             } else if (coreMeta == 2) {
-                Block frontBlock = Block.BY_ID[this.blockView.getBlockId(x, y, z - 1)];
-                if (frontBlock != null && frontBlock.getRenderType() == 10) {
-                    int frontMeta = this.blockView.getBlockMeta(x, y, z - 1) & 3;
+                Tile frontBlock = Tile.tiles[this.blockView.getTile(x, y, z - 1)];
+                if (frontBlock != null && frontBlock.getRenderShape() == 10) {
+                    int frontMeta = this.blockView.getData(x, y, z - 1) & 3;
                     if (frontMeta == 1) {
-                        block.setBoundingBox(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 0.5F);
+                        block.setShape(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 0.5F);
                         this.renderStandardBlock(block, x, y, z);
                     } else if (frontMeta == 0) {
-                        block.setBoundingBox(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
+                        block.setShape(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
                         this.renderStandardBlock(block, x, y, z);
                     }
                 }
 
-                int backMeta = this.blockView.getBlockMeta(x, y, z + 1) & 3;
-                Block backBlock = Block.BY_ID[this.blockView.getBlockId(x, y, z + 1)];
-                if (backBlock != null && backBlock.getRenderType() == 10 && (backMeta == 0 || backMeta == 1)) {
+                int backMeta = this.blockView.getData(x, y, z + 1) & 3;
+                Tile backBlock = Tile.tiles[this.blockView.getTile(x, y, z + 1)];
+                if (backBlock != null && backBlock.getRenderShape() == 10 && (backMeta == 0 || backMeta == 1)) {
                     if (backMeta == 0) {
-                        block.setBoundingBox(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
+                        block.setShape(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
                         this.renderStandardBlock(block, x, y, z);
                     } else {
-                        block.setBoundingBox(0.0F, 0.5F, 0.5F, 0.5F, 1.0F, 1.0F);
+                        block.setShape(0.0F, 0.5F, 0.5F, 0.5F, 1.0F, 1.0F);
                         this.renderStandardBlock(block, x, y, z);
                     }
                 } else {
-                    block.setBoundingBox(0.0F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
+                    block.setShape(0.0F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
                     this.renderStandardBlock(block, x, y, z);
                 }
 
                 var5 = true;
             } else if (coreMeta == 3) {
-                Block backBlock = Block.BY_ID[this.blockView.getBlockId(x, y, z + 1)];
-                if (backBlock != null && backBlock.getRenderType() == 10) {
-                    int backMeta = this.blockView.getBlockMeta(x, y, z + 1) & 3;
+                Tile backBlock = Tile.tiles[this.blockView.getTile(x, y, z + 1)];
+                if (backBlock != null && backBlock.getRenderShape() == 10) {
+                    int backMeta = this.blockView.getData(x, y, z + 1) & 3;
                     if (backMeta == 1) {
-                        block.setBoundingBox(0.0F, 0.5F, 0.5F, 0.5F, 1.0F, 1.0F);
+                        block.setShape(0.0F, 0.5F, 0.5F, 0.5F, 1.0F, 1.0F);
                         this.renderStandardBlock(block, x, y, z);
                     } else if (backMeta == 0) {
-                        block.setBoundingBox(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
+                        block.setShape(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
                         this.renderStandardBlock(block, x, y, z);
                     }
                 }
 
-                int frontMeta = this.blockView.getBlockMeta(x, y, z - 1) & 3;
-                Block frontBlock = Block.BY_ID[this.blockView.getBlockId(x, y, z - 1)];
-                if (frontBlock != null && frontBlock.getRenderType() == 10 && (frontMeta == 0 || frontMeta == 1)) {
+                int frontMeta = this.blockView.getData(x, y, z - 1) & 3;
+                Tile frontBlock = Tile.tiles[this.blockView.getTile(x, y, z - 1)];
+                if (frontBlock != null && frontBlock.getRenderShape() == 10 && (frontMeta == 0 || frontMeta == 1)) {
                     if (frontMeta == 0) {
-                        block.setBoundingBox(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
+                        block.setShape(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
                         this.renderStandardBlock(block, x, y, z);
                     } else {
-                        block.setBoundingBox(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 0.5F);
+                        block.setShape(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 0.5F);
                         this.renderStandardBlock(block, x, y, z);
                     }
                 } else {
-                    block.setBoundingBox(0.0F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
+                    block.setShape(0.0F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
                     this.renderStandardBlock(block, x, y, z);
                 }
 
@@ -1838,7 +1841,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             }
         }
 
-        block.setBoundingBox(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
+        block.setShape(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
         return var5;
     }
 
@@ -1852,13 +1855,13 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                 value = "INVOKE",
                 target = "Lnet/minecraft/block/Block;getTextureForSide(I)I",
                 ordinal = 11)))
-    public int useTextureForSide(Block instance, int i, @Local(index = 2, argsOnly = true) int meta) {
-        return instance.getTextureForSide(i, meta);
+    public int useTextureForSide(Tile instance, int i, @Local(index = 2, argsOnly = true) int meta) {
+        return instance.getTexture(i, meta);
     }
 
-    public void renderCrossedSquaresUpsideDown(Block block, int meta, double x, double y, double z) {
-        Tessellator ts = Tessellator.INSTANCE;
-        int texture = block.getTextureForSide(0, meta);
+    public void renderCrossedSquaresUpsideDown(Tile block, int meta, double x, double y, double z) {
+        Tesselator ts = Tesselator.instance;
+        int texture = block.getTexture(0, meta);
         if (this.textureOverride >= 0) {
             texture = this.textureOverride;
         }
@@ -1873,16 +1876,16 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         double var23 = x + 0.5D + (double) 0.45F;
         double var25 = z + 0.5D - (double) 0.45F;
         double var27 = z + 0.5D + (double) 0.45F;
-        ts.vertex(var21, y + 0.0D, var25, var13, var17);
-        ts.vertex(var21, y + 1.0D, var25, var13, var19);
-        ts.vertex(var23, y + 1.0D, var27, var15, var19);
-        ts.vertex(var23, y + 0.0D, var27, var15, var17);
-        ts.vertex(var23, y + 0.0D, var27, var13, var17);
-        ts.vertex(var23, y + 1.0D, var27, var13, var19);
-        ts.vertex(var21, y + 1.0D, var25, var15, var19);
-        ts.vertex(var21, y + 0.0D, var25, var15, var17);
+        ts.vertexUV(var21, y + 0.0D, var25, var13, var17);
+        ts.vertexUV(var21, y + 1.0D, var25, var13, var19);
+        ts.vertexUV(var23, y + 1.0D, var27, var15, var19);
+        ts.vertexUV(var23, y + 0.0D, var27, var15, var17);
+        ts.vertexUV(var23, y + 0.0D, var27, var13, var17);
+        ts.vertexUV(var23, y + 1.0D, var27, var13, var19);
+        ts.vertexUV(var21, y + 1.0D, var25, var15, var19);
+        ts.vertexUV(var21, y + 0.0D, var25, var15, var17);
         if (this.textureOverride < 0) {
-            texture = block.getTextureForSide(1, meta);
+            texture = block.getTexture(1, meta);
             var11 = (texture & 15) << 4;
             var12 = texture & 240;
             var13 = (float) var11 / 256.0F;
@@ -1891,19 +1894,19 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             var19 = ((float) var12 + 15.99F) / 256.0F;
         }
 
-        ts.vertex(var21, y + 0.0D, var27, var13, var17);
-        ts.vertex(var21, y + 1.0D, var27, var13, var19);
-        ts.vertex(var23, y + 1.0D, var25, var15, var19);
-        ts.vertex(var23, y + 0.0D, var25, var15, var17);
-        ts.vertex(var23, y + 0.0D, var25, var13, var17);
-        ts.vertex(var23, y + 1.0D, var25, var13, var19);
-        ts.vertex(var21, y + 1.0D, var27, var15, var19);
-        ts.vertex(var21, y + 0.0D, var27, var15, var17);
+        ts.vertexUV(var21, y + 0.0D, var27, var13, var17);
+        ts.vertexUV(var21, y + 1.0D, var27, var13, var19);
+        ts.vertexUV(var23, y + 1.0D, var25, var15, var19);
+        ts.vertexUV(var23, y + 0.0D, var25, var15, var17);
+        ts.vertexUV(var23, y + 0.0D, var25, var13, var17);
+        ts.vertexUV(var23, y + 1.0D, var25, var13, var19);
+        ts.vertexUV(var21, y + 1.0D, var27, var15, var19);
+        ts.vertexUV(var21, y + 0.0D, var27, var15, var17);
     }
 
-    public void renderCrossedSquaresEast(Block block, int meta, double x, double y, double z) {
-        Tessellator ts = Tessellator.INSTANCE;
-        int texture = block.getTextureForSide(0, meta);
+    public void renderCrossedSquaresEast(Tile block, int meta, double x, double y, double z) {
+        Tesselator ts = Tesselator.instance;
+        int texture = block.getTexture(0, meta);
         if (this.textureOverride >= 0) {
             texture = this.textureOverride;
         }
@@ -1918,15 +1921,15 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         double var23 = y + 0.5D + (double) 0.45F;
         double var25 = z + 0.5D - (double) 0.45F;
         double var27 = z + 0.5D + (double) 0.45F;
-        ts.vertex(x + 1.0D, var21, var25, var13, var17);
-        ts.vertex(x + 0.0D, var21, var25, var13, var19);
-        ts.vertex(x + 0.0D, var23, var27, var15, var19);
-        ts.vertex(x + 1.0D, var23, var27, var15, var17);
-        ts.vertex(x + 1.0D, var23, var27, var13, var17);
-        ts.vertex(x + 0.0D, var23, var27, var13, var19);
-        ts.vertex(x + 0.0D, var21, var25, var15, var19);
+        ts.vertexUV(x + 1.0D, var21, var25, var13, var17);
+        ts.vertexUV(x + 0.0D, var21, var25, var13, var19);
+        ts.vertexUV(x + 0.0D, var23, var27, var15, var19);
+        ts.vertexUV(x + 1.0D, var23, var27, var15, var17);
+        ts.vertexUV(x + 1.0D, var23, var27, var13, var17);
+        ts.vertexUV(x + 0.0D, var23, var27, var13, var19);
+        ts.vertexUV(x + 0.0D, var21, var25, var15, var19);
         if (this.textureOverride < 0) {
-            texture = block.getTextureForSide(1, meta);
+            texture = block.getTexture(1, meta);
             var11 = (texture & 15) << 4;
             var12 = texture & 240;
             var13 = (float) var11 / 256.0F;
@@ -1935,20 +1938,20 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             var19 = ((float) var12 + 15.99F) / 256.0F;
         }
 
-        ts.vertex(x + 1.0D, var21, var25, var15, var17);
-        ts.vertex(x + 1.0D, var21, var27, var13, var17);
-        ts.vertex(x + 0.0D, var21, var27, var13, var19);
-        ts.vertex(x + 0.0D, var23, var25, var15, var19);
-        ts.vertex(x + 1.0D, var23, var25, var15, var17);
-        ts.vertex(x + 1.0D, var23, var25, var13, var17);
-        ts.vertex(x + 0.0D, var23, var25, var13, var19);
-        ts.vertex(x + 0.0D, var21, var27, var15, var19);
-        ts.vertex(x + 1.0D, var21, var27, var15, var17);
+        ts.vertexUV(x + 1.0D, var21, var25, var15, var17);
+        ts.vertexUV(x + 1.0D, var21, var27, var13, var17);
+        ts.vertexUV(x + 0.0D, var21, var27, var13, var19);
+        ts.vertexUV(x + 0.0D, var23, var25, var15, var19);
+        ts.vertexUV(x + 1.0D, var23, var25, var15, var17);
+        ts.vertexUV(x + 1.0D, var23, var25, var13, var17);
+        ts.vertexUV(x + 0.0D, var23, var25, var13, var19);
+        ts.vertexUV(x + 0.0D, var21, var27, var15, var19);
+        ts.vertexUV(x + 1.0D, var21, var27, var15, var17);
     }
 
-    public void renderCrossedSquaresWest(Block block, int meta, double x, double y, double z) {
-        Tessellator ts = Tessellator.INSTANCE;
-        int texture = block.getTextureForSide(0, meta);
+    public void renderCrossedSquaresWest(Tile block, int meta, double x, double y, double z) {
+        Tesselator ts = Tesselator.instance;
+        int texture = block.getTexture(0, meta);
         if (this.textureOverride >= 0) {
             texture = this.textureOverride;
         }
@@ -1963,16 +1966,16 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         double var23 = y + 0.5D + (double) 0.45F;
         double var25 = z + 0.5D - (double) 0.45F;
         double var27 = z + 0.5D + (double) 0.45F;
-        ts.vertex(x + 0.0D, var21, var25, var13, var17);
-        ts.vertex(x + 1.0D, var21, var25, var13, var19);
-        ts.vertex(x + 1.0D, var23, var27, var15, var19);
-        ts.vertex(x + 0.0D, var23, var27, var15, var17);
-        ts.vertex(x + 0.0D, var23, var27, var13, var17);
-        ts.vertex(x + 1.0D, var23, var27, var13, var19);
-        ts.vertex(x + 1.0D, var21, var25, var15, var19);
-        ts.vertex(x + 0.0D, var21, var25, var15, var17);
+        ts.vertexUV(x + 0.0D, var21, var25, var13, var17);
+        ts.vertexUV(x + 1.0D, var21, var25, var13, var19);
+        ts.vertexUV(x + 1.0D, var23, var27, var15, var19);
+        ts.vertexUV(x + 0.0D, var23, var27, var15, var17);
+        ts.vertexUV(x + 0.0D, var23, var27, var13, var17);
+        ts.vertexUV(x + 1.0D, var23, var27, var13, var19);
+        ts.vertexUV(x + 1.0D, var21, var25, var15, var19);
+        ts.vertexUV(x + 0.0D, var21, var25, var15, var17);
         if (this.textureOverride < 0) {
-            texture = block.getTextureForSide(1, meta);
+            texture = block.getTexture(1, meta);
             var11 = (texture & 15) << 4;
             var12 = texture & 240;
             var13 = (float) var11 / 256.0F;
@@ -1981,19 +1984,19 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             var19 = ((float) var12 + 15.99F) / 256.0F;
         }
 
-        ts.vertex(x + 0.0D, var21, var27, var13, var17);
-        ts.vertex(x + 1.0D, var21, var27, var13, var19);
-        ts.vertex(x + 1.0D, var23, var25, var15, var19);
-        ts.vertex(x + 0.0D, var23, var25, var15, var17);
-        ts.vertex(x + 0.0D, var23, var25, var13, var17);
-        ts.vertex(x + 1.0D, var23, var25, var13, var19);
-        ts.vertex(x + 1.0D, var21, var27, var15, var19);
-        ts.vertex(x + 0.0D, var21, var27, var15, var17);
+        ts.vertexUV(x + 0.0D, var21, var27, var13, var17);
+        ts.vertexUV(x + 1.0D, var21, var27, var13, var19);
+        ts.vertexUV(x + 1.0D, var23, var25, var15, var19);
+        ts.vertexUV(x + 0.0D, var23, var25, var15, var17);
+        ts.vertexUV(x + 0.0D, var23, var25, var13, var17);
+        ts.vertexUV(x + 1.0D, var23, var25, var13, var19);
+        ts.vertexUV(x + 1.0D, var21, var27, var15, var19);
+        ts.vertexUV(x + 0.0D, var21, var27, var15, var17);
     }
 
-    public void renderCrossedSquaresNorth(Block block, int meta, double x, double y, double z) {
-        Tessellator ts = Tessellator.INSTANCE;
-        int texture = block.getTextureForSide(0, meta);
+    public void renderCrossedSquaresNorth(Tile block, int meta, double x, double y, double z) {
+        Tesselator ts = Tesselator.instance;
+        int texture = block.getTexture(0, meta);
         if (this.textureOverride >= 0) {
             texture = this.textureOverride;
         }
@@ -2008,16 +2011,16 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         double var23 = y + 0.5D + (double) 0.45F;
         double var25 = x + 0.5D - (double) 0.45F;
         double var27 = x + 0.5D + (double) 0.45F;
-        ts.vertex(var25, var21, z + 1.0D, var13, var17);
-        ts.vertex(var25, var21, z + 0.0D, var13, var19);
-        ts.vertex(var27, var23, z + 0.0D, var15, var19);
-        ts.vertex(var27, var23, z + 1.0D, var15, var17);
-        ts.vertex(var27, var23, z + 1.0D, var13, var17);
-        ts.vertex(var27, var23, z + 0.0D, var13, var19);
-        ts.vertex(var25, var21, z + 0.0D, var15, var19);
-        ts.vertex(var25, var21, z + 1.0D, var15, var17);
+        ts.vertexUV(var25, var21, z + 1.0D, var13, var17);
+        ts.vertexUV(var25, var21, z + 0.0D, var13, var19);
+        ts.vertexUV(var27, var23, z + 0.0D, var15, var19);
+        ts.vertexUV(var27, var23, z + 1.0D, var15, var17);
+        ts.vertexUV(var27, var23, z + 1.0D, var13, var17);
+        ts.vertexUV(var27, var23, z + 0.0D, var13, var19);
+        ts.vertexUV(var25, var21, z + 0.0D, var15, var19);
+        ts.vertexUV(var25, var21, z + 1.0D, var15, var17);
         if (this.textureOverride < 0) {
-            texture = block.getTextureForSide(1, meta);
+            texture = block.getTexture(1, meta);
             var11 = (texture & 15) << 4;
             var12 = texture & 240;
             var13 = (float) var11 / 256.0F;
@@ -2026,19 +2029,19 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             var19 = ((float) var12 + 15.99F) / 256.0F;
         }
 
-        ts.vertex(var27, var21, z + 1.0D, var13, var17);
-        ts.vertex(var27, var21, z + 0.0D, var13, var19);
-        ts.vertex(var25, var23, z + 0.0D, var15, var19);
-        ts.vertex(var25, var23, z + 1.0D, var15, var17);
-        ts.vertex(var25, var23, z + 1.0D, var13, var17);
-        ts.vertex(var25, var23, z + 0.0D, var13, var19);
-        ts.vertex(var27, var21, z + 0.0D, var15, var19);
-        ts.vertex(var27, var21, z + 1.0D, var15, var17);
+        ts.vertexUV(var27, var21, z + 1.0D, var13, var17);
+        ts.vertexUV(var27, var21, z + 0.0D, var13, var19);
+        ts.vertexUV(var25, var23, z + 0.0D, var15, var19);
+        ts.vertexUV(var25, var23, z + 1.0D, var15, var17);
+        ts.vertexUV(var25, var23, z + 1.0D, var13, var17);
+        ts.vertexUV(var25, var23, z + 0.0D, var13, var19);
+        ts.vertexUV(var27, var21, z + 0.0D, var15, var19);
+        ts.vertexUV(var27, var21, z + 1.0D, var15, var17);
     }
 
-    public void renderCrossedSquaresSouth(Block block, int meta, double x, double y, double z) {
-        Tessellator ts = Tessellator.INSTANCE;
-        int texture = block.getTextureForSide(0, meta);
+    public void renderCrossedSquaresSouth(Tile block, int meta, double x, double y, double z) {
+        Tesselator ts = Tesselator.instance;
+        int texture = block.getTexture(0, meta);
         if (this.textureOverride >= 0) {
             texture = this.textureOverride;
         }
@@ -2053,16 +2056,16 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         double var23 = y + 0.5D + (double) 0.45F;
         double var25 = x + 0.5D - (double) 0.45F;
         double var27 = x + 0.5D + (double) 0.45F;
-        ts.vertex(var25, var21, z + 0.0D, var13, var17);
-        ts.vertex(var25, var21, z + 1.0D, var13, var19);
-        ts.vertex(var27, var23, z + 1.0D, var15, var19);
-        ts.vertex(var27, var23, z + 0.0D, var15, var17);
-        ts.vertex(var27, var23, z + 0.0D, var13, var17);
-        ts.vertex(var27, var23, z + 1.0D, var13, var19);
-        ts.vertex(var25, var21, z + 1.0D, var15, var19);
-        ts.vertex(var25, var21, z + 0.0D, var15, var17);
+        ts.vertexUV(var25, var21, z + 0.0D, var13, var17);
+        ts.vertexUV(var25, var21, z + 1.0D, var13, var19);
+        ts.vertexUV(var27, var23, z + 1.0D, var15, var19);
+        ts.vertexUV(var27, var23, z + 0.0D, var15, var17);
+        ts.vertexUV(var27, var23, z + 0.0D, var13, var17);
+        ts.vertexUV(var27, var23, z + 1.0D, var13, var19);
+        ts.vertexUV(var25, var21, z + 1.0D, var15, var19);
+        ts.vertexUV(var25, var21, z + 0.0D, var15, var17);
         if (this.textureOverride < 0) {
-            texture = block.getTextureForSide(1, meta);
+            texture = block.getTexture(1, meta);
             var11 = (texture & 15) << 4;
             var12 = texture & 240;
             var13 = (float) var11 / 256.0F;
@@ -2071,20 +2074,20 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             var19 = ((float) var12 + 15.99F) / 256.0F;
         }
 
-        ts.vertex(var27, var21, z + 0.0D, var13, var17);
-        ts.vertex(var27, var21, z + 1.0D, var13, var19);
-        ts.vertex(var25, var23, z + 1.0D, var15, var19);
-        ts.vertex(var25, var23, z + 0.0D, var15, var17);
-        ts.vertex(var25, var23, z + 0.0D, var13, var17);
-        ts.vertex(var25, var23, z + 1.0D, var13, var19);
-        ts.vertex(var27, var21, z + 1.0D, var15, var19);
-        ts.vertex(var27, var21, z + 0.0D, var15, var17);
+        ts.vertexUV(var27, var21, z + 0.0D, var13, var17);
+        ts.vertexUV(var27, var21, z + 1.0D, var13, var19);
+        ts.vertexUV(var25, var23, z + 1.0D, var15, var19);
+        ts.vertexUV(var25, var23, z + 0.0D, var15, var17);
+        ts.vertexUV(var25, var23, z + 0.0D, var13, var17);
+        ts.vertexUV(var25, var23, z + 1.0D, var13, var19);
+        ts.vertexUV(var27, var21, z + 1.0D, var15, var19);
+        ts.vertexUV(var27, var21, z + 0.0D, var15, var17);
     }
 
-    public boolean renderBlockSlope(Block block, int x, int y, int z) {
-        Tessellator ts = Tessellator.INSTANCE;
-        int coreMeta = this.blockView.getBlockMeta(x, y, z) & 3;
-        int coreTexture = block.getTextureForSide(this.blockView, x, y, z, 0);
+    public boolean renderBlockSlope(Tile block, int x, int y, int z) {
+        Tesselator ts = Tesselator.instance;
+        int coreMeta = this.blockView.getData(x, y, z) & 3;
+        int coreTexture = block.getTexture(this.blockView, x, y, z, 0);
         int var8 = (coreTexture & 15) << 4;
         int var9 = coreTexture & 240;
         double var10 = (double) var8 / 256.0D;
@@ -2093,430 +2096,430 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         double var16 = ((double) var9 + 16.0D - 0.01D) / 256.0D;
         float brightness = block.getBrightness(this.blockView, x, y, z);
         ts.color(0.5F * brightness, 0.5F * brightness, 0.5F * brightness);
-        block.setBoundingBox(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
-        ts.vertex(x, y, z, var10, var14);
-        ts.vertex(x + 1, y, z, var12, var14);
-        ts.vertex(x + 1, y, z + 1, var12, var16);
-        ts.vertex(x, y, z + 1, var10, var16);
+        block.setShape(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
+        ts.vertexUV(x, y, z, var10, var14);
+        ts.vertexUV(x + 1, y, z, var12, var14);
+        ts.vertexUV(x + 1, y, z + 1, var12, var16);
+        ts.vertexUV(x, y, z + 1, var10, var16);
 
         if (coreMeta == 0) {
-            Block leftBlock = Block.BY_ID[this.blockView.getBlockId(x - 1, y, z)];
-            int leftMeta = this.blockView.getBlockMeta(x - 1, y, z) & 3;
-            if (leftBlock != null && leftBlock.getRenderType() == 38 && (leftMeta == 2 || leftMeta == 3)) {
+            Tile leftBlock = Tile.tiles[this.blockView.getTile(x - 1, y, z)];
+            int leftMeta = this.blockView.getData(x - 1, y, z) & 3;
+            if (leftBlock != null && leftBlock.getRenderShape() == 38 && (leftMeta == 2 || leftMeta == 3)) {
                 if (leftMeta == 2) {
                     ts.color(0.9F * brightness, 0.9F * brightness, 0.9F * brightness);
-                    ts.vertex(x, y + 1, z + 1, var12, var14);
-                    ts.vertex(x + 1, y + 1, z + 1, var10, var14);
-                    ts.vertex(x + 1, y, z, var10, var16);
-                    ts.vertex(x, y, z, var12, var16);
+                    ts.vertexUV(x, y + 1, z + 1, var12, var14);
+                    ts.vertexUV(x + 1, y + 1, z + 1, var10, var14);
+                    ts.vertexUV(x + 1, y, z, var10, var16);
+                    ts.vertexUV(x, y, z, var12, var16);
                     ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
-                    ts.vertex(x + 1, y, z + 1, var12, var16);
-                    ts.vertex(x + 1, y + 1, z + 1, var12, var14);
-                    ts.vertex(x, y + 1, z + 1, var10, var14);
-                    ts.vertex(x, y, z + 1, var10, var16);
-                    ts.vertex(x + 1, y + 1, z, var10, var14);
-                    ts.vertex(x + 1, y, z, var10, var16);
-                    ts.vertex(x, y, z, var12, var16);
-                    ts.vertex(x, y, z, var12, var16);
+                    ts.vertexUV(x + 1, y, z + 1, var12, var16);
+                    ts.vertexUV(x + 1, y + 1, z + 1, var12, var14);
+                    ts.vertexUV(x, y + 1, z + 1, var10, var14);
+                    ts.vertexUV(x, y, z + 1, var10, var16);
+                    ts.vertexUV(x + 1, y + 1, z, var10, var14);
+                    ts.vertexUV(x + 1, y, z, var10, var16);
+                    ts.vertexUV(x, y, z, var12, var16);
+                    ts.vertexUV(x, y, z, var12, var16);
                 } else if (leftMeta == 3) {
                     ts.color(0.9F * brightness, 0.9F * brightness, 0.9F * brightness);
-                    ts.vertex(x, y, z + 1, var10, var16);
-                    ts.vertex(x + 1, y, z + 1, var12, var16);
-                    ts.vertex(x + 1, y + 1, z, var12, var14);
-                    ts.vertex(x, y + 1, z, var10, var14);
+                    ts.vertexUV(x, y, z + 1, var10, var16);
+                    ts.vertexUV(x + 1, y, z + 1, var12, var16);
+                    ts.vertexUV(x + 1, y + 1, z, var12, var14);
+                    ts.vertexUV(x, y + 1, z, var10, var14);
                     ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
-                    ts.vertex(x, y + 1, z, var10, var14);
-                    ts.vertex(x + 1, y + 1, z, var12, var14);
-                    ts.vertex(x + 1, y, z, var12, var16);
-                    ts.vertex(x, y, z, var10, var16);
-                    ts.vertex(x + 1, y + 1, z + 1, var12, var14);
-                    ts.vertex(x, y, z + 1, var10, var16);
-                    ts.vertex(x + 1, y, z + 1, var12, var16);
-                    ts.vertex(x + 1, y, z + 1, var12, var16);
+                    ts.vertexUV(x, y + 1, z, var10, var14);
+                    ts.vertexUV(x + 1, y + 1, z, var12, var14);
+                    ts.vertexUV(x + 1, y, z, var12, var16);
+                    ts.vertexUV(x, y, z, var10, var16);
+                    ts.vertexUV(x + 1, y + 1, z + 1, var12, var14);
+                    ts.vertexUV(x, y, z + 1, var10, var16);
+                    ts.vertexUV(x + 1, y, z + 1, var12, var16);
+                    ts.vertexUV(x + 1, y, z + 1, var12, var16);
                 }
 
-                ts.vertex(x, y, z, var10, var16);
-                ts.vertex(x, y, z + 1, var12, var16);
-                ts.vertex(x + 1, y + 1, z + 1, var12, var14);
-                ts.vertex(x + 1, y + 1, z, var10, var14);
+                ts.vertexUV(x, y, z, var10, var16);
+                ts.vertexUV(x, y, z + 1, var12, var16);
+                ts.vertexUV(x + 1, y + 1, z + 1, var12, var14);
+                ts.vertexUV(x + 1, y + 1, z, var10, var14);
                 ts.color(0.6F * brightness, 0.6F * brightness, 0.6F * brightness);
-                ts.vertex(x + 1, y, z, var10, var16);
-                ts.vertex(x + 1, y + 1, z, var10, var14);
-                ts.vertex(x + 1, y + 1, z + 1, var12, var14);
-                ts.vertex(x + 1, y, z + 1, var12, var16);
+                ts.vertexUV(x + 1, y, z, var10, var16);
+                ts.vertexUV(x + 1, y + 1, z, var10, var14);
+                ts.vertexUV(x + 1, y + 1, z + 1, var12, var14);
+                ts.vertexUV(x + 1, y, z + 1, var12, var16);
             } else {
-                int rightMeta = this.blockView.getBlockMeta(x + 1, y, z) & 3;
-                Block rightBlock = Block.BY_ID[this.blockView.getBlockId(x + 1, y, z)];
-                if (rightBlock != null && rightBlock.getRenderType() == 38 && (rightMeta == 2 || rightMeta == 3)) {
+                int rightMeta = this.blockView.getData(x + 1, y, z) & 3;
+                Tile rightBlock = Tile.tiles[this.blockView.getTile(x + 1, y, z)];
+                if (rightBlock != null && rightBlock.getRenderShape() == 38 && (rightMeta == 2 || rightMeta == 3)) {
                     if (rightMeta == 2) {
                         ts.color(0.9F * brightness, 0.9F * brightness, 0.9F * brightness);
-                        ts.vertex(x + 1, y, z, var10, var16);
-                        ts.vertex(x, y, z, var12, var16);
-                        ts.vertex(x + 1, y + 1, z + 1, var10, var14);
-                        ts.vertex(x + 1, y + 1, z + 1, var10, var14);
+                        ts.vertexUV(x + 1, y, z, var10, var16);
+                        ts.vertexUV(x, y, z, var12, var16);
+                        ts.vertexUV(x + 1, y + 1, z + 1, var10, var14);
+                        ts.vertexUV(x + 1, y + 1, z + 1, var10, var14);
                         ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
-                        ts.vertex(x, y, z, var10, var16);
-                        ts.vertex(x, y, z + 1, var12, var16);
-                        ts.vertex(x + 1, y + 1, z + 1, var12, var14);
-                        ts.vertex(x + 1, y + 1, z + 1, var12, var14);
-                        ts.vertex(x + 1, y + 1, z + 1, var12, var14);
-                        ts.vertex(x, y, z + 1, var10, var16);
-                        ts.vertex(x + 1, y, z + 1, var12, var16);
-                        ts.vertex(x + 1, y, z + 1, var12, var16);
+                        ts.vertexUV(x, y, z, var10, var16);
+                        ts.vertexUV(x, y, z + 1, var12, var16);
+                        ts.vertexUV(x + 1, y + 1, z + 1, var12, var14);
+                        ts.vertexUV(x + 1, y + 1, z + 1, var12, var14);
+                        ts.vertexUV(x + 1, y + 1, z + 1, var12, var14);
+                        ts.vertexUV(x, y, z + 1, var10, var16);
+                        ts.vertexUV(x + 1, y, z + 1, var12, var16);
+                        ts.vertexUV(x + 1, y, z + 1, var12, var16);
                     } else if (rightMeta == 3) {
                         ts.color(0.9F * brightness, 0.9F * brightness, 0.9F * brightness);
-                        ts.vertex(x, y, z + 1, var10, var16);
-                        ts.vertex(x + 1, y, z + 1, var12, var16);
-                        ts.vertex(x + 1, y + 1, z, var12, var14);
-                        ts.vertex(x + 1, y + 1, z, var12, var14);
+                        ts.vertexUV(x, y, z + 1, var10, var16);
+                        ts.vertexUV(x + 1, y, z + 1, var12, var16);
+                        ts.vertexUV(x + 1, y + 1, z, var12, var14);
+                        ts.vertexUV(x + 1, y + 1, z, var12, var14);
                         ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
-                        ts.vertex(x, y, z, var10, var16);
-                        ts.vertex(x, y, z + 1, var12, var16);
-                        ts.vertex(x + 1, y + 1, z, var10, var14);
-                        ts.vertex(x + 1, y + 1, z, var10, var14);
+                        ts.vertexUV(x, y, z, var10, var16);
+                        ts.vertexUV(x, y, z + 1, var12, var16);
+                        ts.vertexUV(x + 1, y + 1, z, var10, var14);
+                        ts.vertexUV(x + 1, y + 1, z, var10, var14);
                         ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
-                        ts.vertex(x + 1, y + 1, z, var10, var14);
-                        ts.vertex(x + 1, y, z, var10, var16);
-                        ts.vertex(x, y, z, var12, var16);
-                        ts.vertex(x, y, z, var12, var16);
+                        ts.vertexUV(x + 1, y + 1, z, var10, var14);
+                        ts.vertexUV(x + 1, y, z, var10, var16);
+                        ts.vertexUV(x, y, z, var12, var16);
+                        ts.vertexUV(x, y, z, var12, var16);
                     }
                 } else {
                     ts.color(0.6F * brightness, 0.6F * brightness, 0.6F * brightness);
-                    ts.vertex(x + 1, y, z, var10, var16);
-                    ts.vertex(x + 1, y + 1, z, var10, var14);
-                    ts.vertex(x + 1, y + 1, z + 1, var12, var14);
-                    ts.vertex(x + 1, y, z + 1, var12, var16);
+                    ts.vertexUV(x + 1, y, z, var10, var16);
+                    ts.vertexUV(x + 1, y + 1, z, var10, var14);
+                    ts.vertexUV(x + 1, y + 1, z + 1, var12, var14);
+                    ts.vertexUV(x + 1, y, z + 1, var12, var16);
                     ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
-                    ts.vertex(x, y, z, var10, var16);
-                    ts.vertex(x, y, z + 1, var12, var16);
-                    ts.vertex(x + 1, y + 1, z + 1, var12, var14);
-                    ts.vertex(x + 1, y + 1, z, var10, var14);
-                    ts.vertex(x + 1, y + 1, z, var10, var14);
-                    ts.vertex(x + 1, y, z, var10, var16);
-                    ts.vertex(x, y, z, var12, var16);
-                    ts.vertex(x, y, z, var12, var16);
-                    ts.vertex(x + 1, y + 1, z + 1, var12, var14);
-                    ts.vertex(x, y, z + 1, var10, var16);
-                    ts.vertex(x + 1, y, z + 1, var12, var16);
-                    ts.vertex(x + 1, y, z + 1, var12, var16);
+                    ts.vertexUV(x, y, z, var10, var16);
+                    ts.vertexUV(x, y, z + 1, var12, var16);
+                    ts.vertexUV(x + 1, y + 1, z + 1, var12, var14);
+                    ts.vertexUV(x + 1, y + 1, z, var10, var14);
+                    ts.vertexUV(x + 1, y + 1, z, var10, var14);
+                    ts.vertexUV(x + 1, y, z, var10, var16);
+                    ts.vertexUV(x, y, z, var12, var16);
+                    ts.vertexUV(x, y, z, var12, var16);
+                    ts.vertexUV(x + 1, y + 1, z + 1, var12, var14);
+                    ts.vertexUV(x, y, z + 1, var10, var16);
+                    ts.vertexUV(x + 1, y, z + 1, var12, var16);
+                    ts.vertexUV(x + 1, y, z + 1, var12, var16);
                 }
             }
         } else if (coreMeta == 1) {
-            Block rightBlock = Block.BY_ID[this.blockView.getBlockId(x + 1, y, z)];
-            int rightMeta = this.blockView.getBlockMeta(x + 1, y, z) & 3;
-            if (rightBlock != null && rightBlock.getRenderType() == 38 && (rightMeta == 2 || rightMeta == 3)) {
+            Tile rightBlock = Tile.tiles[this.blockView.getTile(x + 1, y, z)];
+            int rightMeta = this.blockView.getData(x + 1, y, z) & 3;
+            if (rightBlock != null && rightBlock.getRenderShape() == 38 && (rightMeta == 2 || rightMeta == 3)) {
                 if (rightMeta == 2) {
                     ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
-                    ts.vertex(x + 1, y, z + 1, var12, var16);
-                    ts.vertex(x + 1, y + 1, z + 1, var12, var14);
-                    ts.vertex(x, y + 1, z + 1, var10, var14);
-                    ts.vertex(x, y, z + 1, var10, var16);
+                    ts.vertexUV(x + 1, y, z + 1, var12, var16);
+                    ts.vertexUV(x + 1, y + 1, z + 1, var12, var14);
+                    ts.vertexUV(x, y + 1, z + 1, var10, var14);
+                    ts.vertexUV(x, y, z + 1, var10, var16);
                     ts.color(0.9F * brightness, 0.9F * brightness, 0.9F * brightness);
-                    ts.vertex(x, y + 1, z + 1, var12, var14);
-                    ts.vertex(x + 1, y + 1, z + 1, var10, var14);
-                    ts.vertex(x + 1, y, z, var10, var16);
-                    ts.vertex(x, y, z, var12, var16);
+                    ts.vertexUV(x, y + 1, z + 1, var12, var14);
+                    ts.vertexUV(x + 1, y + 1, z + 1, var10, var14);
+                    ts.vertexUV(x + 1, y, z, var10, var16);
+                    ts.vertexUV(x, y, z, var12, var16);
                     ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
-                    ts.vertex(x, y + 1, z, var12, var14);
-                    ts.vertex(x + 1, y, z, var10, var16);
-                    ts.vertex(x, y, z, var12, var16);
-                    ts.vertex(x, y, z, var12, var16);
+                    ts.vertexUV(x, y + 1, z, var12, var14);
+                    ts.vertexUV(x + 1, y, z, var10, var16);
+                    ts.vertexUV(x, y, z, var12, var16);
+                    ts.vertexUV(x, y, z, var12, var16);
                 } else {
                     ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
-                    ts.vertex(x, y + 1, z, var10, var14);
-                    ts.vertex(x + 1, y + 1, z, var12, var14);
-                    ts.vertex(x + 1, y, z, var12, var16);
-                    ts.vertex(x, y, z, var10, var16);
+                    ts.vertexUV(x, y + 1, z, var10, var14);
+                    ts.vertexUV(x + 1, y + 1, z, var12, var14);
+                    ts.vertexUV(x + 1, y, z, var12, var16);
+                    ts.vertexUV(x, y, z, var10, var16);
                     ts.color(0.9F * brightness, 0.9F * brightness, 0.9F * brightness);
-                    ts.vertex(x, y, z + 1, var10, var16);
-                    ts.vertex(x + 1, y, z + 1, var12, var16);
-                    ts.vertex(x + 1, y + 1, z, var12, var14);
-                    ts.vertex(x, y + 1, z, var10, var14);
+                    ts.vertexUV(x, y, z + 1, var10, var16);
+                    ts.vertexUV(x + 1, y, z + 1, var12, var16);
+                    ts.vertexUV(x + 1, y + 1, z, var12, var14);
+                    ts.vertexUV(x, y + 1, z, var10, var14);
                     ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
-                    ts.vertex(x, y + 1, z + 1, var10, var14);
-                    ts.vertex(x, y, z + 1, var10, var16);
-                    ts.vertex(x + 1, y, z + 1, var12, var16);
-                    ts.vertex(x + 1, y, z + 1, var12, var16);
+                    ts.vertexUV(x, y + 1, z + 1, var10, var14);
+                    ts.vertexUV(x, y, z + 1, var10, var16);
+                    ts.vertexUV(x + 1, y, z + 1, var12, var16);
+                    ts.vertexUV(x + 1, y, z + 1, var12, var16);
                 }
 
-                ts.vertex(x, y + 1, z, var12, var14);
-                ts.vertex(x, y + 1, z + 1, var10, var14);
-                ts.vertex(x + 1, y, z + 1, var10, var16);
-                ts.vertex(x + 1, y, z, var12, var16);
+                ts.vertexUV(x, y + 1, z, var12, var14);
+                ts.vertexUV(x, y + 1, z + 1, var10, var14);
+                ts.vertexUV(x + 1, y, z + 1, var10, var16);
+                ts.vertexUV(x + 1, y, z, var12, var16);
                 ts.color(0.6F * brightness, 0.6F * brightness, 0.6F * brightness);
-                ts.vertex(x, y, z, var10, var16);
-                ts.vertex(x, y, z + 1, var12, var16);
-                ts.vertex(x, y + 1, z + 1, var12, var14);
-                ts.vertex(x, y + 1, z, var10, var14);
+                ts.vertexUV(x, y, z, var10, var16);
+                ts.vertexUV(x, y, z + 1, var12, var16);
+                ts.vertexUV(x, y + 1, z + 1, var12, var14);
+                ts.vertexUV(x, y + 1, z, var10, var14);
             } else {
-                int leftMeta = this.blockView.getBlockMeta(x - 1, y, z) & 3;
-                Block leftBlock = Block.BY_ID[this.blockView.getBlockId(x - 1, y, z)];
-                if (leftBlock != null && leftBlock.getRenderType() == 38 && (leftMeta == 2 || leftMeta == 3)) {
+                int leftMeta = this.blockView.getData(x - 1, y, z) & 3;
+                Tile leftBlock = Tile.tiles[this.blockView.getTile(x - 1, y, z)];
+                if (leftBlock != null && leftBlock.getRenderShape() == 38 && (leftMeta == 2 || leftMeta == 3)) {
                     if (leftMeta == 3) {
                         ts.color(0.9F * brightness, 0.9F * brightness, 0.9F * brightness);
-                        ts.vertex(x, y, z + 1, var10, var16);
-                        ts.vertex(x + 1, y, z + 1, var12, var16);
-                        ts.vertex(x, y + 1, z, var10, var14);
-                        ts.vertex(x, y + 1, z, var10, var14);
+                        ts.vertexUV(x, y, z + 1, var10, var16);
+                        ts.vertexUV(x + 1, y, z + 1, var12, var16);
+                        ts.vertexUV(x, y + 1, z, var10, var14);
+                        ts.vertexUV(x, y + 1, z, var10, var14);
                         ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
-                        ts.vertex(x, y + 1, z, var12, var14);
-                        ts.vertex(x, y + 1, z, var12, var14);
-                        ts.vertex(x + 1, y, z + 1, var10, var16);
-                        ts.vertex(x + 1, y, z, var12, var16);
-                        ts.vertex(x, y + 1, z, var12, var14);
-                        ts.vertex(x + 1, y, z, var10, var16);
-                        ts.vertex(x, y, z, var12, var16);
-                        ts.vertex(x, y, z, var12, var16);
+                        ts.vertexUV(x, y + 1, z, var12, var14);
+                        ts.vertexUV(x, y + 1, z, var12, var14);
+                        ts.vertexUV(x + 1, y, z + 1, var10, var16);
+                        ts.vertexUV(x + 1, y, z, var12, var16);
+                        ts.vertexUV(x, y + 1, z, var12, var14);
+                        ts.vertexUV(x + 1, y, z, var10, var16);
+                        ts.vertexUV(x, y, z, var12, var16);
+                        ts.vertexUV(x, y, z, var12, var16);
                     } else {
                         ts.color(0.9F * brightness, 0.9F * brightness, 0.9F * brightness);
-                        ts.vertex(x, y + 1, z + 1, var12, var14);
-                        ts.vertex(x, y + 1, z + 1, var12, var14);
-                        ts.vertex(x + 1, y, z, var10, var16);
-                        ts.vertex(x, y, z, var12, var16);
+                        ts.vertexUV(x, y + 1, z + 1, var12, var14);
+                        ts.vertexUV(x, y + 1, z + 1, var12, var14);
+                        ts.vertexUV(x + 1, y, z, var10, var16);
+                        ts.vertexUV(x, y, z, var12, var16);
                         ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
-                        ts.vertex(x, y + 1, z + 1, var10, var14);
-                        ts.vertex(x, y + 1, z + 1, var10, var14);
-                        ts.vertex(x + 1, y, z + 1, var10, var16);
-                        ts.vertex(x + 1, y, z, var12, var16);
-                        ts.vertex(x, y + 1, z + 1, var10, var14);
-                        ts.vertex(x, y, z + 1, var10, var16);
-                        ts.vertex(x + 1, y, z + 1, var12, var16);
-                        ts.vertex(x + 1, y, z + 1, var12, var16);
+                        ts.vertexUV(x, y + 1, z + 1, var10, var14);
+                        ts.vertexUV(x, y + 1, z + 1, var10, var14);
+                        ts.vertexUV(x + 1, y, z + 1, var10, var16);
+                        ts.vertexUV(x + 1, y, z, var12, var16);
+                        ts.vertexUV(x, y + 1, z + 1, var10, var14);
+                        ts.vertexUV(x, y, z + 1, var10, var16);
+                        ts.vertexUV(x + 1, y, z + 1, var12, var16);
+                        ts.vertexUV(x + 1, y, z + 1, var12, var16);
                     }
                 } else {
                     ts.color(0.6F * brightness, 0.6F * brightness, 0.6F * brightness);
-                    ts.vertex(x, y, z, var10, var16);
-                    ts.vertex(x, y, z + 1, var12, var16);
-                    ts.vertex(x, y + 1, z + 1, var12, var14);
-                    ts.vertex(x, y + 1, z, var10, var14);
+                    ts.vertexUV(x, y, z, var10, var16);
+                    ts.vertexUV(x, y, z + 1, var12, var16);
+                    ts.vertexUV(x, y + 1, z + 1, var12, var14);
+                    ts.vertexUV(x, y + 1, z, var10, var14);
                     ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
-                    ts.vertex(x, y + 1, z, var12, var14);
-                    ts.vertex(x, y + 1, z + 1, var10, var14);
-                    ts.vertex(x + 1, y, z + 1, var10, var16);
-                    ts.vertex(x + 1, y, z, var12, var16);
-                    ts.vertex(x, y + 1, z + 1, var10, var14);
-                    ts.vertex(x, y, z + 1, var10, var16);
-                    ts.vertex(x + 1, y, z + 1, var12, var16);
-                    ts.vertex(x + 1, y, z + 1, var12, var16);
-                    ts.vertex(x, y + 1, z, var12, var14);
-                    ts.vertex(x + 1, y, z, var10, var16);
-                    ts.vertex(x, y, z, var12, var16);
-                    ts.vertex(x, y, z, var12, var16);
+                    ts.vertexUV(x, y + 1, z, var12, var14);
+                    ts.vertexUV(x, y + 1, z + 1, var10, var14);
+                    ts.vertexUV(x + 1, y, z + 1, var10, var16);
+                    ts.vertexUV(x + 1, y, z, var12, var16);
+                    ts.vertexUV(x, y + 1, z + 1, var10, var14);
+                    ts.vertexUV(x, y, z + 1, var10, var16);
+                    ts.vertexUV(x + 1, y, z + 1, var12, var16);
+                    ts.vertexUV(x + 1, y, z + 1, var12, var16);
+                    ts.vertexUV(x, y + 1, z, var12, var14);
+                    ts.vertexUV(x + 1, y, z, var10, var16);
+                    ts.vertexUV(x, y, z, var12, var16);
+                    ts.vertexUV(x, y, z, var12, var16);
                 }
             }
         } else {
             if (coreMeta == 2) {
-                int frontMeta = this.blockView.getBlockMeta(x, y, z - 1) & 3;
-                Block frontBlock = Block.BY_ID[this.blockView.getBlockId(x, y, z - 1)];
-                if (frontBlock != null && frontBlock.getRenderType() == 38 && (frontMeta == 0 || frontMeta == 1)) {
+                int frontMeta = this.blockView.getData(x, y, z - 1) & 3;
+                Tile frontBlock = Tile.tiles[this.blockView.getTile(x, y, z - 1)];
+                if (frontBlock != null && frontBlock.getRenderShape() == 38 && (frontMeta == 0 || frontMeta == 1)) {
                     if (frontMeta == 1) {
                         ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
-                        ts.vertex(x, y + 1, z, var12, var14);
-                        ts.vertex(x, y + 1, z + 1, var10, var14);
-                        ts.vertex(x + 1, y, z + 1, var10, var16);
-                        ts.vertex(x + 1, y, z, var12, var16);
+                        ts.vertexUV(x, y + 1, z, var12, var14);
+                        ts.vertexUV(x, y + 1, z + 1, var10, var14);
+                        ts.vertexUV(x + 1, y, z + 1, var10, var16);
+                        ts.vertexUV(x + 1, y, z, var12, var16);
                         ts.color(0.6F * brightness, 0.6F * brightness, 0.6F * brightness);
-                        ts.vertex(x, y, z, var10, var16);
-                        ts.vertex(x, y, z + 1, var12, var16);
-                        ts.vertex(x, y + 1, z + 1, var12, var14);
-                        ts.vertex(x, y + 1, z, var10, var14);
+                        ts.vertexUV(x, y, z, var10, var16);
+                        ts.vertexUV(x, y, z + 1, var12, var16);
+                        ts.vertexUV(x, y + 1, z + 1, var12, var14);
+                        ts.vertexUV(x, y + 1, z, var10, var14);
                         ts.color(0.6F * brightness, 0.6F * brightness, 0.6F * brightness);
-                        ts.vertex(x + 1, y, z, var12, var16);
-                        ts.vertex(x + 1, y + 1, z + 1, var10, var14);
-                        ts.vertex(x + 1, y, z + 1, var10, var16);
-                        ts.vertex(x + 1, y, z + 1, var10, var16);
+                        ts.vertexUV(x + 1, y, z, var12, var16);
+                        ts.vertexUV(x + 1, y + 1, z + 1, var10, var14);
+                        ts.vertexUV(x + 1, y, z + 1, var10, var16);
+                        ts.vertexUV(x + 1, y, z + 1, var10, var16);
                     } else if (frontMeta == 0) {
                         ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
-                        ts.vertex(x, y, z, var10, var16);
-                        ts.vertex(x, y, z + 1, var12, var16);
-                        ts.vertex(x + 1, y + 1, z + 1, var12, var14);
-                        ts.vertex(x + 1, y + 1, z, var10, var14);
+                        ts.vertexUV(x, y, z, var10, var16);
+                        ts.vertexUV(x, y, z + 1, var12, var16);
+                        ts.vertexUV(x + 1, y + 1, z + 1, var12, var14);
+                        ts.vertexUV(x + 1, y + 1, z, var10, var14);
                         ts.color(0.6F * brightness, 0.6F * brightness, 0.6F * brightness);
-                        ts.vertex(x + 1, y, z, var10, var16);
-                        ts.vertex(x + 1, y + 1, z, var10, var14);
-                        ts.vertex(x + 1, y + 1, z + 1, var12, var14);
-                        ts.vertex(x + 1, y, z + 1, var12, var16);
+                        ts.vertexUV(x + 1, y, z, var10, var16);
+                        ts.vertexUV(x + 1, y + 1, z, var10, var14);
+                        ts.vertexUV(x + 1, y + 1, z + 1, var12, var14);
+                        ts.vertexUV(x + 1, y, z + 1, var12, var16);
                         ts.color(0.6F * brightness, 0.6F * brightness, 0.6F * brightness);
-                        ts.vertex(x, y, z + 1, var12, var16);
-                        ts.vertex(x, y + 1, z + 1, var12, var14);
-                        ts.vertex(x, y, z, var10, var16);
-                        ts.vertex(x, y, z, var10, var16);
+                        ts.vertexUV(x, y, z + 1, var12, var16);
+                        ts.vertexUV(x, y + 1, z + 1, var12, var14);
+                        ts.vertexUV(x, y, z, var10, var16);
+                        ts.vertexUV(x, y, z, var10, var16);
                     }
 
                     ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
-                    ts.vertex(x + 1, y, z + 1, var12, var16);
-                    ts.vertex(x + 1, y + 1, z + 1, var12, var14);
-                    ts.vertex(x, y + 1, z + 1, var10, var14);
-                    ts.vertex(x, y, z + 1, var10, var16);
+                    ts.vertexUV(x + 1, y, z + 1, var12, var16);
+                    ts.vertexUV(x + 1, y + 1, z + 1, var12, var14);
+                    ts.vertexUV(x, y + 1, z + 1, var10, var14);
+                    ts.vertexUV(x, y, z + 1, var10, var16);
                     ts.color(0.9F * brightness, 0.9F * brightness, 0.9F * brightness);
-                    ts.vertex(x, y + 1, z + 1, var12, var14);
-                    ts.vertex(x + 1, y + 1, z + 1, var10, var14);
-                    ts.vertex(x + 1, y, z, var10, var16);
-                    ts.vertex(x, y, z, var12, var16);
+                    ts.vertexUV(x, y + 1, z + 1, var12, var14);
+                    ts.vertexUV(x + 1, y + 1, z + 1, var10, var14);
+                    ts.vertexUV(x + 1, y, z, var10, var16);
+                    ts.vertexUV(x, y, z, var12, var16);
                 } else {
-                    int backMeta = this.blockView.getBlockMeta(x, y, z + 1) & 3;
-                    Block backBlock = Block.BY_ID[this.blockView.getBlockId(x, y, z + 1)];
-                    if (backBlock != null && backBlock.getRenderType() == 38 && (backMeta == 0 || backMeta == 1)) {
+                    int backMeta = this.blockView.getData(x, y, z + 1) & 3;
+                    Tile backBlock = Tile.tiles[this.blockView.getTile(x, y, z + 1)];
+                    if (backBlock != null && backBlock.getRenderShape() == 38 && (backMeta == 0 || backMeta == 1)) {
                         if (backMeta == 0) {
                             ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
-                            ts.vertex(x, y, z, var10, var16);
-                            ts.vertex(x, y, z + 1, var12, var16);
-                            ts.vertex(x + 1, y + 1, z + 1, var12, var14);
-                            ts.vertex(x + 1, y + 1, z + 1, var12, var14);
+                            ts.vertexUV(x, y, z, var10, var16);
+                            ts.vertexUV(x, y, z + 1, var12, var16);
+                            ts.vertexUV(x + 1, y + 1, z + 1, var12, var14);
+                            ts.vertexUV(x + 1, y + 1, z + 1, var12, var14);
                             ts.color(0.9F * brightness, 0.9F * brightness, 0.9F * brightness);
-                            ts.vertex(x + 1, y + 1, z + 1, var10, var14);
-                            ts.vertex(x + 1, y + 1, z + 1, var10, var14);
-                            ts.vertex(x + 1, y, z, var10, var16);
-                            ts.vertex(x, y, z, var12, var16);
+                            ts.vertexUV(x + 1, y + 1, z + 1, var10, var14);
+                            ts.vertexUV(x + 1, y + 1, z + 1, var10, var14);
+                            ts.vertexUV(x + 1, y, z, var10, var16);
+                            ts.vertexUV(x, y, z, var12, var16);
                             ts.color(0.6F * brightness, 0.6F * brightness, 0.6F * brightness);
-                            ts.vertex(x + 1, y, z, var12, var16);
-                            ts.vertex(x + 1, y + 1, z + 1, var10, var14);
-                            ts.vertex(x + 1, y, z + 1, var10, var16);
-                            ts.vertex(x + 1, y, z + 1, var10, var16);
+                            ts.vertexUV(x + 1, y, z, var12, var16);
+                            ts.vertexUV(x + 1, y + 1, z + 1, var10, var14);
+                            ts.vertexUV(x + 1, y, z + 1, var10, var16);
+                            ts.vertexUV(x + 1, y, z + 1, var10, var16);
                         } else {
                             ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
-                            ts.vertex(x, y + 1, z + 1, var10, var14);
-                            ts.vertex(x, y + 1, z + 1, var10, var14);
-                            ts.vertex(x + 1, y, z + 1, var10, var16);
-                            ts.vertex(x + 1, y, z, var12, var16);
+                            ts.vertexUV(x, y + 1, z + 1, var10, var14);
+                            ts.vertexUV(x, y + 1, z + 1, var10, var14);
+                            ts.vertexUV(x + 1, y, z + 1, var10, var16);
+                            ts.vertexUV(x + 1, y, z, var12, var16);
                             ts.color(0.9F * brightness, 0.9F * brightness, 0.9F * brightness);
-                            ts.vertex(x, y + 1, z + 1, var12, var14);
-                            ts.vertex(x, y + 1, z + 1, var12, var14);
-                            ts.vertex(x + 1, y, z, var10, var16);
-                            ts.vertex(x, y, z, var12, var16);
+                            ts.vertexUV(x, y + 1, z + 1, var12, var14);
+                            ts.vertexUV(x, y + 1, z + 1, var12, var14);
+                            ts.vertexUV(x + 1, y, z, var10, var16);
+                            ts.vertexUV(x, y, z, var12, var16);
                             ts.color(0.6F * brightness, 0.6F * brightness, 0.6F * brightness);
-                            ts.vertex(x, y, z + 1, var12, var16);
-                            ts.vertex(x, y + 1, z + 1, var12, var14);
-                            ts.vertex(x, y, z, var10, var16);
-                            ts.vertex(x, y, z, var10, var16);
+                            ts.vertexUV(x, y, z + 1, var12, var16);
+                            ts.vertexUV(x, y + 1, z + 1, var12, var14);
+                            ts.vertexUV(x, y, z, var10, var16);
+                            ts.vertexUV(x, y, z, var10, var16);
                         }
                     } else {
                         ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
-                        ts.vertex(x + 1, y, z + 1, var12, var16);
-                        ts.vertex(x + 1, y + 1, z + 1, var12, var14);
-                        ts.vertex(x, y + 1, z + 1, var10, var14);
-                        ts.vertex(x, y, z + 1, var10, var16);
+                        ts.vertexUV(x + 1, y, z + 1, var12, var16);
+                        ts.vertexUV(x + 1, y + 1, z + 1, var12, var14);
+                        ts.vertexUV(x, y + 1, z + 1, var10, var14);
+                        ts.vertexUV(x, y, z + 1, var10, var16);
                         ts.color(0.9F * brightness, 0.9F * brightness, 0.9F * brightness);
-                        ts.vertex(x, y + 1, z + 1, var12, var14);
-                        ts.vertex(x + 1, y + 1, z + 1, var10, var14);
-                        ts.vertex(x + 1, y, z, var10, var16);
-                        ts.vertex(x, y, z, var12, var16);
+                        ts.vertexUV(x, y + 1, z + 1, var12, var14);
+                        ts.vertexUV(x + 1, y + 1, z + 1, var10, var14);
+                        ts.vertexUV(x + 1, y, z, var10, var16);
+                        ts.vertexUV(x, y, z, var12, var16);
                         ts.color(0.6F * brightness, 0.6F * brightness, 0.6F * brightness);
-                        ts.vertex(x, y, z + 1, var12, var16);
-                        ts.vertex(x, y + 1, z + 1, var12, var14);
-                        ts.vertex(x, y, z, var10, var16);
-                        ts.vertex(x, y, z, var10, var16);
-                        ts.vertex(x + 1, y, z, var12, var16);
-                        ts.vertex(x + 1, y + 1, z + 1, var10, var14);
-                        ts.vertex(x + 1, y, z + 1, var10, var16);
-                        ts.vertex(x + 1, y, z + 1, var10, var16);
+                        ts.vertexUV(x, y, z + 1, var12, var16);
+                        ts.vertexUV(x, y + 1, z + 1, var12, var14);
+                        ts.vertexUV(x, y, z, var10, var16);
+                        ts.vertexUV(x, y, z, var10, var16);
+                        ts.vertexUV(x + 1, y, z, var12, var16);
+                        ts.vertexUV(x + 1, y + 1, z + 1, var10, var14);
+                        ts.vertexUV(x + 1, y, z + 1, var10, var16);
+                        ts.vertexUV(x + 1, y, z + 1, var10, var16);
                     }
                 }
             } else if (coreMeta == 3) {
-                int backMeta = this.blockView.getBlockMeta(x, y, z + 1) & 3;
-                Block backBlock = Block.BY_ID[this.blockView.getBlockId(x, y, z + 1)];
-                if (backBlock != null && backBlock.getRenderType() == 38 && (backMeta == 0 || backMeta == 1)) {
+                int backMeta = this.blockView.getData(x, y, z + 1) & 3;
+                Tile backBlock = Tile.tiles[this.blockView.getTile(x, y, z + 1)];
+                if (backBlock != null && backBlock.getRenderShape() == 38 && (backMeta == 0 || backMeta == 1)) {
                     if (backMeta == 1) {
                         ts.color(0.6F * brightness, 0.6F * brightness, 0.6F * brightness);
-                        ts.vertex(x, y, z, var10, var16);
-                        ts.vertex(x, y, z + 1, var12, var16);
-                        ts.vertex(x, y + 1, z + 1, var12, var14);
-                        ts.vertex(x, y + 1, z, var10, var14);
+                        ts.vertexUV(x, y, z, var10, var16);
+                        ts.vertexUV(x, y, z + 1, var12, var16);
+                        ts.vertexUV(x, y + 1, z + 1, var12, var14);
+                        ts.vertexUV(x, y + 1, z, var10, var14);
                         ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
-                        ts.vertex(x, y + 1, z, var12, var14);
-                        ts.vertex(x, y + 1, z + 1, var10, var14);
-                        ts.vertex(x + 1, y, z + 1, var10, var16);
-                        ts.vertex(x + 1, y, z, var12, var16);
+                        ts.vertexUV(x, y + 1, z, var12, var14);
+                        ts.vertexUV(x, y + 1, z + 1, var10, var14);
+                        ts.vertexUV(x + 1, y, z + 1, var10, var16);
+                        ts.vertexUV(x + 1, y, z, var12, var16);
                         ts.color(0.6F * brightness, 0.6F * brightness, 0.6F * brightness);
-                        ts.vertex(x + 1, y, z, var12, var16);
-                        ts.vertex(x + 1, y + 1, z, var12, var14);
-                        ts.vertex(x + 1, y, z + 1, var10, var16);
-                        ts.vertex(x + 1, y, z + 1, var10, var16);
+                        ts.vertexUV(x + 1, y, z, var12, var16);
+                        ts.vertexUV(x + 1, y + 1, z, var12, var14);
+                        ts.vertexUV(x + 1, y, z + 1, var10, var16);
+                        ts.vertexUV(x + 1, y, z + 1, var10, var16);
                     } else if (backMeta == 0) {
                         ts.color(0.6F * brightness, 0.6F * brightness, 0.6F * brightness);
-                        ts.vertex(x + 1, y, z, var10, var16);
-                        ts.vertex(x + 1, y + 1, z, var10, var14);
-                        ts.vertex(x + 1, y + 1, z + 1, var12, var14);
-                        ts.vertex(x + 1, y, z + 1, var12, var16);
+                        ts.vertexUV(x + 1, y, z, var10, var16);
+                        ts.vertexUV(x + 1, y + 1, z, var10, var14);
+                        ts.vertexUV(x + 1, y + 1, z + 1, var12, var14);
+                        ts.vertexUV(x + 1, y, z + 1, var12, var16);
                         ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
-                        ts.vertex(x, y, z, var10, var16);
-                        ts.vertex(x, y, z + 1, var12, var16);
-                        ts.vertex(x + 1, y + 1, z + 1, var12, var14);
-                        ts.vertex(x + 1, y + 1, z, var10, var14);
+                        ts.vertexUV(x, y, z, var10, var16);
+                        ts.vertexUV(x, y, z + 1, var12, var16);
+                        ts.vertexUV(x + 1, y + 1, z + 1, var12, var14);
+                        ts.vertexUV(x + 1, y + 1, z, var10, var14);
                         ts.color(0.6F * brightness, 0.6F * brightness, 0.6F * brightness);
-                        ts.vertex(x, y, z + 1, var12, var16);
-                        ts.vertex(x, y + 1, z, var10, var14);
-                        ts.vertex(x, y, z, var10, var16);
-                        ts.vertex(x, y, z, var10, var16);
+                        ts.vertexUV(x, y, z + 1, var12, var16);
+                        ts.vertexUV(x, y + 1, z, var10, var14);
+                        ts.vertexUV(x, y, z, var10, var16);
+                        ts.vertexUV(x, y, z, var10, var16);
                     }
 
                     ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
-                    ts.vertex(x, y + 1, z, var10, var14);
-                    ts.vertex(x + 1, y + 1, z, var12, var14);
-                    ts.vertex(x + 1, y, z, var12, var16);
-                    ts.vertex(x, y, z, var10, var16);
+                    ts.vertexUV(x, y + 1, z, var10, var14);
+                    ts.vertexUV(x + 1, y + 1, z, var12, var14);
+                    ts.vertexUV(x + 1, y, z, var12, var16);
+                    ts.vertexUV(x, y, z, var10, var16);
                     ts.color(0.9F * brightness, 0.9F * brightness, 0.9F * brightness);
-                    ts.vertex(x, y, z + 1, var10, var16);
-                    ts.vertex(x + 1, y, z + 1, var12, var16);
-                    ts.vertex(x + 1, y + 1, z, var12, var14);
-                    ts.vertex(x, y + 1, z, var10, var14);
+                    ts.vertexUV(x, y, z + 1, var10, var16);
+                    ts.vertexUV(x + 1, y, z + 1, var12, var16);
+                    ts.vertexUV(x + 1, y + 1, z, var12, var14);
+                    ts.vertexUV(x, y + 1, z, var10, var14);
                 } else {
-                    int frontMeta = this.blockView.getBlockMeta(x, y, z - 1) & 3;
-                    Block frontBlock = Block.BY_ID[this.blockView.getBlockId(x, y, z - 1)];
-                    if (frontBlock != null && frontBlock.getRenderType() == 38 && (frontMeta == 0 || frontMeta == 1)) {
+                    int frontMeta = this.blockView.getData(x, y, z - 1) & 3;
+                    Tile frontBlock = Tile.tiles[this.blockView.getTile(x, y, z - 1)];
+                    if (frontBlock != null && frontBlock.getRenderShape() == 38 && (frontMeta == 0 || frontMeta == 1)) {
                         if (frontMeta == 0) {
                             ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
-                            ts.vertex(x, y, z, var10, var16);
-                            ts.vertex(x, y, z + 1, var12, var16);
-                            ts.vertex(x + 1, y + 1, z, var10, var14);
-                            ts.vertex(x + 1, y + 1, z, var10, var14);
+                            ts.vertexUV(x, y, z, var10, var16);
+                            ts.vertexUV(x, y, z + 1, var12, var16);
+                            ts.vertexUV(x + 1, y + 1, z, var10, var14);
+                            ts.vertexUV(x + 1, y + 1, z, var10, var14);
                             ts.color(0.9F * brightness, 0.9F * brightness, 0.9F * brightness);
-                            ts.vertex(x, y, z + 1, var10, var16);
-                            ts.vertex(x + 1, y, z + 1, var12, var16);
-                            ts.vertex(x + 1, y + 1, z, var12, var14);
-                            ts.vertex(x + 1, y + 1, z, var12, var14);
+                            ts.vertexUV(x, y, z + 1, var10, var16);
+                            ts.vertexUV(x + 1, y, z + 1, var12, var16);
+                            ts.vertexUV(x + 1, y + 1, z, var12, var14);
+                            ts.vertexUV(x + 1, y + 1, z, var12, var14);
                             ts.color(0.6F * brightness, 0.6F * brightness, 0.6F * brightness);
-                            ts.vertex(x + 1, y, z, var12, var16);
-                            ts.vertex(x + 1, y + 1, z, var12, var14);
-                            ts.vertex(x + 1, y, z + 1, var10, var16);
-                            ts.vertex(x + 1, y, z + 1, var10, var16);
+                            ts.vertexUV(x + 1, y, z, var12, var16);
+                            ts.vertexUV(x + 1, y + 1, z, var12, var14);
+                            ts.vertexUV(x + 1, y, z + 1, var10, var16);
+                            ts.vertexUV(x + 1, y, z + 1, var10, var16);
                         } else {
                             ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
-                            ts.vertex(x, y + 1, z, var12, var14);
-                            ts.vertex(x, y + 1, z, var12, var14);
-                            ts.vertex(x + 1, y, z + 1, var10, var16);
-                            ts.vertex(x + 1, y, z, var12, var16);
+                            ts.vertexUV(x, y + 1, z, var12, var14);
+                            ts.vertexUV(x, y + 1, z, var12, var14);
+                            ts.vertexUV(x + 1, y, z + 1, var10, var16);
+                            ts.vertexUV(x + 1, y, z, var12, var16);
                             ts.color(0.9F * brightness, 0.9F * brightness, 0.9F * brightness);
-                            ts.vertex(x, y, z + 1, var10, var16);
-                            ts.vertex(x + 1, y, z + 1, var12, var16);
-                            ts.vertex(x, y + 1, z, var10, var14);
-                            ts.vertex(x, y + 1, z, var10, var14);
+                            ts.vertexUV(x, y, z + 1, var10, var16);
+                            ts.vertexUV(x + 1, y, z + 1, var12, var16);
+                            ts.vertexUV(x, y + 1, z, var10, var14);
+                            ts.vertexUV(x, y + 1, z, var10, var14);
                             ts.color(0.6F * brightness, 0.6F * brightness, 0.6F * brightness);
-                            ts.vertex(x, y, z + 1, var12, var16);
-                            ts.vertex(x, y + 1, z, var10, var14);
-                            ts.vertex(x, y, z, var10, var16);
-                            ts.vertex(x, y, z, var10, var16);
+                            ts.vertexUV(x, y, z + 1, var12, var16);
+                            ts.vertexUV(x, y + 1, z, var10, var14);
+                            ts.vertexUV(x, y, z, var10, var16);
+                            ts.vertexUV(x, y, z, var10, var16);
                         }
                     } else {
                         ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
-                        ts.vertex(x, y + 1, z, var10, var14);
-                        ts.vertex(x + 1, y + 1, z, var12, var14);
-                        ts.vertex(x + 1, y, z, var12, var16);
-                        ts.vertex(x, y, z, var10, var16);
+                        ts.vertexUV(x, y + 1, z, var10, var14);
+                        ts.vertexUV(x + 1, y + 1, z, var12, var14);
+                        ts.vertexUV(x + 1, y, z, var12, var16);
+                        ts.vertexUV(x, y, z, var10, var16);
                         ts.color(0.9F * brightness, 0.9F * brightness, 0.9F * brightness);
-                        ts.vertex(x, y, z + 1, var10, var16);
-                        ts.vertex(x + 1, y, z + 1, var12, var16);
-                        ts.vertex(x + 1, y + 1, z, var12, var14);
-                        ts.vertex(x, y + 1, z, var10, var14);
+                        ts.vertexUV(x, y, z + 1, var10, var16);
+                        ts.vertexUV(x + 1, y, z + 1, var12, var16);
+                        ts.vertexUV(x + 1, y + 1, z, var12, var14);
+                        ts.vertexUV(x, y + 1, z, var10, var14);
                         ts.color(0.6F * brightness, 0.6F * brightness, 0.6F * brightness);
-                        ts.vertex(x + 1, y, z, var12, var16);
-                        ts.vertex(x + 1, y + 1, z, var12, var14);
-                        ts.vertex(x + 1, y, z + 1, var10, var16);
-                        ts.vertex(x + 1, y, z + 1, var10, var16);
-                        ts.vertex(x, y, z + 1, var12, var16);
-                        ts.vertex(x, y + 1, z, var10, var14);
-                        ts.vertex(x, y, z, var10, var16);
-                        ts.vertex(x, y, z, var10, var16);
+                        ts.vertexUV(x + 1, y, z, var12, var16);
+                        ts.vertexUV(x + 1, y + 1, z, var12, var14);
+                        ts.vertexUV(x + 1, y, z + 1, var10, var16);
+                        ts.vertexUV(x + 1, y, z + 1, var10, var16);
+                        ts.vertexUV(x, y, z + 1, var12, var16);
+                        ts.vertexUV(x, y + 1, z, var10, var14);
+                        ts.vertexUV(x, y, z, var10, var16);
+                        ts.vertexUV(x, y, z, var10, var16);
                     }
                 }
             }
@@ -2524,15 +2527,15 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         return true;
     }
 
-    public boolean renderGrass(Block block, int x, int y, int z) {
-        Tessellator ts = Tessellator.INSTANCE;
+    public boolean renderGrass(Tile block, int x, int y, int z) {
+        Tesselator ts = Tesselator.instance;
         float brightness = block.getBrightness(this.blockView, x, y + 1, z);
-        int colorMul = block.getColorMultiplier(this.blockView, x, y, z);
+        int colorMul = block.getFoliageColor(this.blockView, x, y, z);
         float red = (float) (colorMul >> 16 & 255) / 255.0F;
         float green = (float) (colorMul >> 8 & 255) / 255.0F;
         float blue = (float) (colorMul & 255) / 255.0F;
-        int meta = this.blockView.getBlockMeta(x, y, z);
-        float grassMul = ((ExGrassBlock) Block.GRASS).getGrassMultiplier(meta);
+        int meta = this.blockView.getData(x, y, z);
+        float grassMul = ((ExGrassBlock) Tile.GRASS).getGrassMultiplier(meta);
         if (grassMul < 0.0F) {
             return false;
         }
@@ -2555,14 +2558,14 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         double var31 = (double) x + 0.5D + (double) 0.45F;
         double var33 = (double) z + 0.5D - (double) 0.45F;
         double var35 = (double) z + 0.5D + (double) 0.45F;
-        ts.vertex(var29, dY + 1.0D, var33, var21, var25);
-        ts.vertex(var29, dY + 0.0D, var33, var21, var27);
-        ts.vertex(var31, dY + 0.0D, var35, var23, var27);
-        ts.vertex(var31, dY + 1.0D, var35, var23, var25);
-        ts.vertex(var31, dY + 1.0D, var35, var21, var25);
-        ts.vertex(var31, dY + 0.0D, var35, var21, var27);
-        ts.vertex(var29, dY + 0.0D, var33, var23, var27);
-        ts.vertex(var29, dY + 1.0D, var33, var23, var25);
+        ts.vertexUV(var29, dY + 1.0D, var33, var21, var25);
+        ts.vertexUV(var29, dY + 0.0D, var33, var21, var27);
+        ts.vertexUV(var31, dY + 0.0D, var35, var23, var27);
+        ts.vertexUV(var31, dY + 1.0D, var35, var23, var25);
+        ts.vertexUV(var31, dY + 1.0D, var35, var21, var25);
+        ts.vertexUV(var31, dY + 0.0D, var35, var21, var27);
+        ts.vertexUV(var29, dY + 0.0D, var33, var23, var27);
+        ts.vertexUV(var29, dY + 1.0D, var33, var23, var25);
         var19 = (var37 & 15) << 4;
         var20 = var37 & 240;
         var19 += this.rand.nextInt(32);
@@ -2570,33 +2573,33 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         var23 = ((float) var19 + 15.99F) / 256.0F;
         var25 = (float) var20 / 256.0F;
         var27 = ((float) var20 + 15.99F) / 256.0F;
-        ts.vertex(var29, dY + 1.0D, var35, var21, var25);
-        ts.vertex(var29, dY + 0.0D, var35, var21, var27);
-        ts.vertex(var31, dY + 0.0D, var33, var23, var27);
-        ts.vertex(var31, dY + 1.0D, var33, var23, var25);
-        ts.vertex(var31, dY + 1.0D, var33, var21, var25);
-        ts.vertex(var31, dY + 0.0D, var33, var21, var27);
-        ts.vertex(var29, dY + 0.0D, var35, var23, var27);
-        ts.vertex(var29, dY + 1.0D, var35, var23, var25);
+        ts.vertexUV(var29, dY + 1.0D, var35, var21, var25);
+        ts.vertexUV(var29, dY + 0.0D, var35, var21, var27);
+        ts.vertexUV(var31, dY + 0.0D, var33, var23, var27);
+        ts.vertexUV(var31, dY + 1.0D, var33, var23, var25);
+        ts.vertexUV(var31, dY + 1.0D, var33, var21, var25);
+        ts.vertexUV(var31, dY + 0.0D, var33, var21, var27);
+        ts.vertexUV(var29, dY + 0.0D, var35, var23, var27);
+        ts.vertexUV(var29, dY + 1.0D, var35, var23, var25);
         return true;
     }
 
-    public boolean renderSpikes(Block block, int x, int y, int z) {
-        Tessellator ts = Tessellator.INSTANCE;
+    public boolean renderSpikes(Tile block, int x, int y, int z) {
+        Tesselator ts = Tesselator.instance;
         float brightness = block.getBrightness(this.blockView, x, y, z);
         ts.color(brightness, brightness, brightness);
-        int meta = this.blockView.getBlockMeta(x, y, z);
-        if (this.blockView.method_1783(x, y - 1, z)) {
+        int meta = this.blockView.getData(x, y, z);
+        if (this.blockView.isSolidTile(x, y - 1, z)) {
             this.method_47(block, meta, x, y, z);
-        } else if (this.blockView.method_1783(x, y + 1, z)) {
+        } else if (this.blockView.isSolidTile(x, y + 1, z)) {
             this.renderCrossedSquaresUpsideDown(block, meta, x, y, z);
-        } else if (this.blockView.method_1783(x - 1, y, z)) {
+        } else if (this.blockView.isSolidTile(x - 1, y, z)) {
             this.renderCrossedSquaresEast(block, meta, x, y, z);
-        } else if (this.blockView.method_1783(x + 1, y, z)) {
+        } else if (this.blockView.isSolidTile(x + 1, y, z)) {
             this.renderCrossedSquaresWest(block, meta, x, y, z);
-        } else if (this.blockView.method_1783(x, y, z - 1)) {
+        } else if (this.blockView.isSolidTile(x, y, z - 1)) {
             this.renderCrossedSquaresNorth(block, meta, x, y, z);
-        } else if (this.blockView.method_1783(x, y, z + 1)) {
+        } else if (this.blockView.isSolidTile(x, y, z + 1)) {
             this.renderCrossedSquaresSouth(block, meta, x, y, z);
         } else {
             this.method_47(block, meta, x, y, z);
@@ -2604,74 +2607,74 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         return true;
     }
 
-    public boolean renderTable(Block block, int x, int y, int z) {
+    public boolean renderTable(Tile block, int x, int y, int z) {
         boolean var5 = this.renderStandardBlock(block, x, y, z);
-        boolean var6 = this.blockView.getBlockId(x, y, z + 1) != AC_Blocks.tableBlocks.id;
-        boolean var8 = this.blockView.getBlockId(x, y, z - 1) != AC_Blocks.tableBlocks.id;
-        boolean var7 = this.blockView.getBlockId(x - 1, y, z) != AC_Blocks.tableBlocks.id;
-        boolean var9 = this.blockView.getBlockId(x + 1, y, z) != AC_Blocks.tableBlocks.id;
+        boolean var6 = this.blockView.getTile(x, y, z + 1) != AC_Blocks.tableBlocks.id;
+        boolean var8 = this.blockView.getTile(x, y, z - 1) != AC_Blocks.tableBlocks.id;
+        boolean var7 = this.blockView.getTile(x - 1, y, z) != AC_Blocks.tableBlocks.id;
+        boolean var9 = this.blockView.getTile(x + 1, y, z) != AC_Blocks.tableBlocks.id;
         if (var7 && var8) {
-            block.setBoundingBox(0.0F, 0.0F, 0.0F, 3.0F / 16.0F, 14.0F / 16.0F, 3.0F / 16.0F);
+            block.setShape(0.0F, 0.0F, 0.0F, 3.0F / 16.0F, 14.0F / 16.0F, 3.0F / 16.0F);
             var5 |= this.renderStandardBlock(block, x, y, z);
         }
 
         if (var9 && var8) {
-            block.setBoundingBox(13.0F / 16.0F, 0.0F, 0.0F, 1.0F, 14.0F / 16.0F, 3.0F / 16.0F);
+            block.setShape(13.0F / 16.0F, 0.0F, 0.0F, 1.0F, 14.0F / 16.0F, 3.0F / 16.0F);
             var5 |= this.renderStandardBlock(block, x, y, z);
         }
 
         if (var9 && var6) {
-            block.setBoundingBox(13.0F / 16.0F, 0.0F, 13.0F / 16.0F, 1.0F, 14.0F / 16.0F, 1.0F);
+            block.setShape(13.0F / 16.0F, 0.0F, 13.0F / 16.0F, 1.0F, 14.0F / 16.0F, 1.0F);
             var5 |= this.renderStandardBlock(block, x, y, z);
         }
 
         if (var7 && var6) {
-            block.setBoundingBox(0.0F, 0.0F, 13.0F / 16.0F, 3.0F / 16.0F, 14.0F / 16.0F, 1.0F);
+            block.setShape(0.0F, 0.0F, 13.0F / 16.0F, 3.0F / 16.0F, 14.0F / 16.0F, 1.0F);
             var5 |= this.renderStandardBlock(block, x, y, z);
         }
 
-        block.setBoundingBox(0.0F, 14.0F / 16.0F, 0.0F, 1.0F, 1.0F, 1.0F);
+        block.setShape(0.0F, 14.0F / 16.0F, 0.0F, 1.0F, 1.0F, 1.0F);
         return var5;
     }
 
-    public boolean renderChair(Block block, int x, int y, int z) {
+    public boolean renderChair(Tile block, int x, int y, int z) {
         boolean var5 = this.renderStandardBlock(block, x, y, z);
-        int meta = this.blockView.getBlockMeta(x, y, z) % 4;
+        int meta = this.blockView.getData(x, y, z) % 4;
         switch (meta) {
             case 0:
-                block.setBoundingBox(2.0F / 16.0F, 10.0F / 16.0F, 2.0F / 16.0F, 0.25F, 1.25F, 14.0F / 16.0F);
+                block.setShape(2.0F / 16.0F, 10.0F / 16.0F, 2.0F / 16.0F, 0.25F, 1.25F, 14.0F / 16.0F);
                 var5 |= this.renderStandardBlock(block, x, y, z);
                 break;
             case 1:
-                block.setBoundingBox(2.0F / 16.0F, 10.0F / 16.0F, 2.0F / 16.0F, 14.0F / 16.0F, 1.25F, 0.25F);
+                block.setShape(2.0F / 16.0F, 10.0F / 16.0F, 2.0F / 16.0F, 14.0F / 16.0F, 1.25F, 0.25F);
                 var5 |= this.renderStandardBlock(block, x, y, z);
                 break;
             case 2:
-                block.setBoundingBox(12.0F / 16.0F, 10.0F / 16.0F, 2.0F / 16.0F, 14.0F / 16.0F, 1.25F, 14.0F / 16.0F);
+                block.setShape(12.0F / 16.0F, 10.0F / 16.0F, 2.0F / 16.0F, 14.0F / 16.0F, 1.25F, 14.0F / 16.0F);
                 var5 |= this.renderStandardBlock(block, x, y, z);
                 break;
             case 3:
-                block.setBoundingBox(2.0F / 16.0F, 10.0F / 16.0F, 12.0F / 16.0F, 14.0F / 16.0F, 1.25F, 14.0F / 16.0F);
+                block.setShape(2.0F / 16.0F, 10.0F / 16.0F, 12.0F / 16.0F, 14.0F / 16.0F, 1.25F, 14.0F / 16.0F);
                 var5 |= this.renderStandardBlock(block, x, y, z);
         }
 
-        block.setBoundingBox(2.0F / 16.0F, 0.0F, 2.0F / 16.0F, 0.25F, 0.5F, 0.25F);
+        block.setShape(2.0F / 16.0F, 0.0F, 2.0F / 16.0F, 0.25F, 0.5F, 0.25F);
         var5 |= this.renderStandardBlock(block, x, y, z);
-        block.setBoundingBox(12.0F / 16.0F, 0.0F, 2.0F / 16.0F, 14.0F / 16.0F, 0.5F, 0.25F);
+        block.setShape(12.0F / 16.0F, 0.0F, 2.0F / 16.0F, 14.0F / 16.0F, 0.5F, 0.25F);
         var5 |= this.renderStandardBlock(block, x, y, z);
-        block.setBoundingBox(12.0F / 16.0F, 0.0F, 12.0F / 16.0F, 14.0F / 16.0F, 0.5F, 14.0F / 16.0F);
+        block.setShape(12.0F / 16.0F, 0.0F, 12.0F / 16.0F, 14.0F / 16.0F, 0.5F, 14.0F / 16.0F);
         var5 |= this.renderStandardBlock(block, x, y, z);
-        block.setBoundingBox(2.0F / 16.0F, 0.0F, 12.0F / 16.0F, 0.25F, 0.5F, 14.0F / 16.0F);
+        block.setShape(2.0F / 16.0F, 0.0F, 12.0F / 16.0F, 0.25F, 0.5F, 14.0F / 16.0F);
         var5 |= this.renderStandardBlock(block, x, y, z);
-        block.setBoundingBox(2.0F / 16.0F, 0.5F, 2.0F / 16.0F, 14.0F / 16.0F, 10.0F / 16.0F, 14.0F / 16.0F);
+        block.setShape(2.0F / 16.0F, 0.5F, 2.0F / 16.0F, 14.0F / 16.0F, 10.0F / 16.0F, 14.0F / 16.0F);
         return var5;
     }
 
-    public boolean renderRope(Block block, int x, int y, int z) {
-        Tessellator ts = Tessellator.INSTANCE;
+    public boolean renderRope(Tile block, int x, int y, int z) {
+        Tesselator ts = Tesselator.instance;
         float brightness = block.getBrightness(this.blockView, x, y, z);
         ts.color(brightness, brightness, brightness);
-        int meta = this.blockView.getBlockMeta(x, y, z);
+        int meta = this.blockView.getData(x, y, z);
         int ropeMeta = meta % 3;
         if (ropeMeta == 0) {
             this.method_47(block, meta, x, y, z);
@@ -2684,18 +2687,18 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         return true;
     }
 
-    public boolean renderBlockTree(Block block, int x, int y, int z) {
-        Tessellator ts = Tessellator.INSTANCE;
+    public boolean renderBlockTree(Tile block, int x, int y, int z) {
+        Tesselator ts = Tesselator.instance;
         float brightness = block.getBrightness(this.blockView, x, y, z);
         ts.color(brightness, brightness, brightness);
-        BlockEntity entity = this.blockView.getBlockEntity(x, y, z);
+        TileEntity entity = this.blockView.getTileEntity(x, y, z);
         AC_TileEntityTree treeEntity = null;
         if (entity instanceof AC_TileEntityTree tree) {
             treeEntity = tree;
         }
 
-        int meta = this.blockView.getBlockMeta(x, y, z);
-        int texture = block.getTextureForSide(0, meta);
+        int meta = this.blockView.getData(x, y, z);
+        int texture = block.getTexture(0, meta);
         if (this.textureOverride >= 0) {
             texture = this.textureOverride;
         }
@@ -2715,16 +2718,16 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         double var29 = (double) x + 0.5D + (double) 0.45F * var35;
         double var31 = (double) z + 0.5D - (double) 0.45F * var35;
         double var33 = (double) z + 0.5D + (double) 0.45F * var35;
-        ts.vertex(var27, (double) y + var35, var31, var19, var23);
-        ts.vertex(var27, (double) y + 0.0D, var31, var19, var25);
-        ts.vertex(var29, (double) y + 0.0D, var33, var21, var25);
-        ts.vertex(var29, (double) y + var35, var33, var21, var23);
-        ts.vertex(var29, (double) y + var35, var33, var19, var23);
-        ts.vertex(var29, (double) y + 0.0D, var33, var19, var25);
-        ts.vertex(var27, (double) y + 0.0D, var31, var21, var25);
-        ts.vertex(var27, (double) y + var35, var31, var21, var23);
+        ts.vertexUV(var27, (double) y + var35, var31, var19, var23);
+        ts.vertexUV(var27, (double) y + 0.0D, var31, var19, var25);
+        ts.vertexUV(var29, (double) y + 0.0D, var33, var21, var25);
+        ts.vertexUV(var29, (double) y + var35, var33, var21, var23);
+        ts.vertexUV(var29, (double) y + var35, var33, var19, var23);
+        ts.vertexUV(var29, (double) y + 0.0D, var33, var19, var25);
+        ts.vertexUV(var27, (double) y + 0.0D, var31, var21, var25);
+        ts.vertexUV(var27, (double) y + var35, var31, var21, var23);
         if (this.textureOverride < 0) {
-            texture = block.getTextureForSide(1, meta);
+            texture = block.getTexture(1, meta);
             var17 = (texture & 15) << 4;
             var18 = texture & 240;
             var19 = (float) var17 / 256.0F;
@@ -2733,36 +2736,36 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             var25 = ((float) var18 + 15.99F) / 256.0F;
         }
 
-        ts.vertex(var27, (double) y + var35, var33, var19, var23);
-        ts.vertex(var27, (double) y + 0.0D, var33, var19, var25);
-        ts.vertex(var29, (double) y + 0.0D, var31, var21, var25);
-        ts.vertex(var29, (double) y + var35, var31, var21, var23);
-        ts.vertex(var29, (double) y + var35, var31, var19, var23);
-        ts.vertex(var29, (double) y + 0.0D, var31, var19, var25);
-        ts.vertex(var27, (double) y + 0.0D, var33, var21, var25);
-        ts.vertex(var27, (double) y + var35, var33, var21, var23);
+        ts.vertexUV(var27, (double) y + var35, var33, var19, var23);
+        ts.vertexUV(var27, (double) y + 0.0D, var33, var19, var25);
+        ts.vertexUV(var29, (double) y + 0.0D, var31, var21, var25);
+        ts.vertexUV(var29, (double) y + var35, var31, var21, var23);
+        ts.vertexUV(var29, (double) y + var35, var31, var19, var23);
+        ts.vertexUV(var29, (double) y + 0.0D, var31, var19, var25);
+        ts.vertexUV(var27, (double) y + 0.0D, var33, var21, var25);
+        ts.vertexUV(var27, (double) y + var35, var33, var21, var23);
         return true;
     }
 
     public boolean renderBlockOverlay(AC_BlockOverlay block, int x, int y, int z) {
-        Tessellator ts = Tessellator.INSTANCE;
+        Tesselator ts = Tesselator.instance;
         float brightness = block.getBrightness(this.blockView, x, y, z);
         ts.color(brightness, brightness, brightness);
 
-        int meta = this.blockView.getBlockMeta(x, y, z);
-        int texture = block.getTextureForSide(0, meta);
+        int meta = this.blockView.getData(x, y, z);
+        int texture = block.getTexture(0, meta);
         block.updateBounds(this.blockView, x, y, z);
-        if (this.blockView.method_1783(x, y - 1, z)) {
+        if (this.blockView.isSolidTile(x, y - 1, z)) {
             this.renderTopFace(block, x, y, z, texture);
-        } else if (this.blockView.method_1783(x, y + 1, z)) {
+        } else if (this.blockView.isSolidTile(x, y + 1, z)) {
             this.renderBottomFace(block, x, y, z, texture);
-        } else if (this.blockView.method_1783(x - 1, y, z)) {
+        } else if (this.blockView.isSolidTile(x - 1, y, z)) {
             this.renderSouthFace(block, x, y, z, texture);
-        } else if (this.blockView.method_1783(x + 1, y, z)) {
+        } else if (this.blockView.isSolidTile(x + 1, y, z)) {
             this.renderNorthFace(block, x, y, z, texture);
-        } else if (this.blockView.method_1783(x, y, z - 1)) {
+        } else if (this.blockView.isSolidTile(x, y, z - 1)) {
             this.renderWestFace(block, x, y, z, texture);
-        } else if (this.blockView.method_1783(x, y, z + 1)) {
+        } else if (this.blockView.isSolidTile(x, y, z + 1)) {
             this.renderEastFace(block, x, y, z, texture);
         } else {
             this.renderTopFace(block, x, y, z, texture);

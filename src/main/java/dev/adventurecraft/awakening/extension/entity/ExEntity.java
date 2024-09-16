@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.extension.entity;
 
 import dev.adventurecraft.awakening.common.AC_IMultiAttackEntity;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.phys.Vec3;
 
 public interface ExEntity extends AC_IMultiAttackEntity {
 
@@ -9,7 +9,7 @@ public interface ExEntity extends AC_IMultiAttackEntity {
 
     boolean getCanGetFallDamage();
 
-    Vec3d getRotation(float deltaTime);
+    Vec3 getRotation(float deltaTime);
 
     void setRotation(double x, double y, double z);
 

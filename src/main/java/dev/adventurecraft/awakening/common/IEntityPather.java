@@ -1,8 +1,8 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.entity.ai.pathing.EntityPath;
+import net.minecraft.world.level.pathfinder.Path;
 
 public interface IEntityPather {
 
-	EntityPath getCurrentPath();
+	Path getCurrentPath();
 }

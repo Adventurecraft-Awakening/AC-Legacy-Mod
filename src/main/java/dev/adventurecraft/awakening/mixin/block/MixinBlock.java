@@ -7,28 +7,33 @@ import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.*;
-import net.minecraft.block.material.Material;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.World;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelSource;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.tile.GrassTile;
+import net.minecraft.world.level.tile.SoundType;
+import net.minecraft.world.level.tile.StoneTile;
+import net.minecraft.world.level.tile.TallGrassTile;
+import net.minecraft.world.level.tile.Tile;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(Block.class)
+@Mixin(Tile.class)
 public abstract class MixinBlock implements ExBlock {
 
     private int textureNum;
 
     @Shadow
     @Final
-    public static BlockSounds PISTON_SOUNDS;
+    public static SoundType PISTON_SOUNDS;
 
     @Shadow
     @Final
-    public static Block[] BY_ID;
+    public static Tile[] BY_ID;
 
     @Shadow
     @Final
@@ -37,40 +42,40 @@ public abstract class MixinBlock implements ExBlock {
     @Shadow
     @Final
     @Mutable
-    public static Block STONE;
+    public static Tile STONE;
 
     @Shadow
     @Final
-    public static GrassBlock GRASS;
+    public static GrassTile GRASS;
 
     @Shadow
     @Final
     @Mutable
-    public static Block COBBLESTONE;
+    public static Tile COBBLESTONE;
 
     @Shadow
     @Final
-    public static Block FLOWING_WATER;
+    public static Tile FLOWING_WATER;
 
     @Shadow
     @Final
-    public static Block STILL_WATER;
+    public static Tile STILL_WATER;
 
     @Shadow
     @Final
-    public static Block FLOWING_LAVA;
+    public static Tile FLOWING_LAVA;
 
     @Shadow
     @Final
-    public static Block STILL_LAVA;
+    public static Tile STILL_LAVA;
 
     @Shadow
     @Final
-    public static Block SAND;
+    public static Tile SAND;
 
     @Shadow
     @Final
-    public static TallGrassBlock TALLGRASS;
+    public static TallGrassTile TALLGRASS;
 
     @Shadow
     @Final
@@ -98,7 +103,7 @@ public abstract class MixinBlock implements ExBlock {
     public abstract int getTextureForSide(int j, int l);
 
     @Shadow
-    public abstract int getTextureForSide(BlockView arg, int i, int j, int k, int l);
+    public abstract int getTextureForSide(LevelSource arg, int i, int j, int k, int l);
     
     @Shadow
     public int getBaseColor(int meta) {
@@ -119,41 +124,41 @@ public abstract class MixinBlock implements ExBlock {
         BY_ID[1] = null;
         BY_ID[4] = null;
 
-        STONE = (new StoneBlock(1, 215)).setHardness(1.5F).setBlastResistance(10.0F).setSounds(PISTON_SOUNDS).setTranslationKey("stone");
+        STONE = (new StoneTile(1, 215)).setDestroyTime(1.5F).setExplodeable(10.0F).setSoundType(PISTON_SOUNDS).setDescriptionId("stone");
         ((ExBlock) GRASS).setSubTypes(5);
-        COBBLESTONE = (new AC_BlockColor(4, 214, Material.STONE)).setHardness(2.0F).setBlastResistance(10.0F).setSounds(PISTON_SOUNDS).setTranslationKey("stonebrick");
-        FLOWING_WATER.setHardness(0.5F);
-        STILL_WATER.setHardness(0.5F);
-        FLOWING_LAVA.setHardness(0.5F);
-        STILL_LAVA.setHardness(0.5F);
+        COBBLESTONE = (new AC_BlockColor(4, 214, Material.STONE)).setDestroyTime(2.0F).setExplodeable(10.0F).setSoundType(PISTON_SOUNDS).setDescriptionId("stonebrick");
+        FLOWING_WATER.setDestroyTime(0.5F);
+        STILL_WATER.setDestroyTime(0.5F);
+        FLOWING_LAVA.setDestroyTime(0.5F);
+        STILL_LAVA.setDestroyTime(0.5F);
         ((ExBlock) SAND).setSubTypes(4);
 
-        Item.byId[GRASS.id] = (new AC_ItemSubtypes(GRASS.id - 256)).setTranslationKey("grass");
-        Item.byId[SAND.id] = (new AC_ItemSubtypes(SAND.id - 256)).setTranslationKey("sand");
-        Item.byId[TALLGRASS.id] = (new AC_ItemSubtypes(TALLGRASS.id - 256)).setTranslationKey("tallgrass");
+        Item.items[GRASS.id] = (new AC_ItemSubtypes(GRASS.id - 256)).setDescriptionId("grass");
+        Item.items[SAND.id] = (new AC_ItemSubtypes(SAND.id - 256)).setDescriptionId("sand");
+        Item.items[TALLGRASS.id] = (new AC_ItemSubtypes(TALLGRASS.id - 256)).setDescriptionId("tallgrass");
     }
 
     @Environment(value = EnvType.CLIENT)
     @Overwrite
-    public float getBrightness(BlockView arg, int i, int j, int k) {
-        return arg.getNaturalBrightness(i, j, k, this.getBlockLightValue(arg, i, j, k));
+    public float getBrightness(LevelSource arg, int i, int j, int k) {
+        return arg.getBrightness(i, j, k, this.getBlockLightValue(arg, i, j, k));
     }
 
     @Overwrite
-    public void onBlockRemoved(World var1, int var2, int var3, int var4) {
+    public void onBlockRemoved(Level var1, int var2, int var3, int var4) {
         ((ExWorld) var1).getTriggerManager().removeArea(var2, var3, var4);
     }
 
     @Overwrite
-    public void beforeDestroyedByExplosion(World var1, int var2, int var3, int var4, int var5, float var6) {
+    public void beforeDestroyedByExplosion(Level var1, int var2, int var3, int var4, int var5, float var6) {
     }
 
     @Overwrite
-    public void drop(World var1, int var2, int var3, int var4, ItemStack var5) {
+    public void drop(Level var1, int var2, int var3, int var4, ItemInstance var5) {
     }
 
     @Override
-    public int getBlockLightValue(BlockView view, int x, int y, int z) {
+    public int getBlockLightValue(LevelSource view, int x, int y, int z) {
         return EMITTANCE[this.id];
     }
 
@@ -173,19 +178,19 @@ public abstract class MixinBlock implements ExBlock {
     }
 
     @Override
-    public Block setTextureNum(int var1) {
+    public Tile setTextureNum(int var1) {
         this.textureNum = var1;
-        return (Block) (Object) this;
+        return (Tile) (Object) this;
     }
 
     @Override
-    public Block setSubTypes(int var1) {
+    public Tile setSubTypes(int var1) {
         subTypes[this.id] = var1;
-        return (Block) (Object) this;
+        return (Tile) (Object) this;
     }
 
     @Override
-    public long getTextureForSideEx(BlockView view, int x, int y, int z, int side) {
+    public long getTextureForSideEx(LevelSource view, int x, int y, int z, int side) {
         return this.getTextureForSide(view, x, y, z, side);
     }
 }

@@ -2,15 +2,14 @@ package dev.adventurecraft.awakening.extension.client.render.block;
 
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.render.block.FoliageColor;
-import net.minecraft.world.World;
-
+import net.minecraft.world.level.FoliageColor;
+import net.minecraft.world.level.Level;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 
 public interface ExFoliageColor {
 
-    static void loadFoliage(String fileName, World world) {
+    static void loadFoliage(String fileName, Level world) {
         BufferedImage var1 = ((ExWorld) world).loadMapTexture(fileName);
         if (var1 == null) {
             try {
@@ -21,7 +20,7 @@ public interface ExFoliageColor {
         }
 
         if (var1 != null) {
-            var1.getRGB(0, 0, 256, 256, FoliageColor.map, 0, 256);
+            var1.getRGB(0, 0, 256, 256, FoliageColor.pixels, 0, 256);
         }
     }
 }

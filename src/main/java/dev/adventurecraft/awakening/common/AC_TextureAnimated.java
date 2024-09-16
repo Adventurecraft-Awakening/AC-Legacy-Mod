@@ -1,9 +1,9 @@
 package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.client.render.AC_TextureBinder;
-import net.minecraft.client.render.TextureBinder;
+import net.minecraft.client.renderer.ptexture.DynamicTexture;
 
-public class AC_TextureAnimated extends TextureBinder {
+public class AC_TextureAnimated extends DynamicTexture {
 
     public String texName;
 

@@ -2,43 +2,43 @@ package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
 import dev.adventurecraft.awakening.extension.item.ExItemStack;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.monster.SkeletonEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.monster.Skeleton;
+import net.minecraft.world.level.Level;
 
-public class AC_EntitySkeletonShotgun extends SkeletonEntity {
+public class AC_EntitySkeletonShotgun extends Skeleton {
 
-    public AC_EntitySkeletonShotgun(World var1) {
+    public AC_EntitySkeletonShotgun(Level var1) {
         super(var1);
-        this.attackDamage = 2;
-        ((ExLivingEntity) this).setHeldItem(new ItemStack(AC_Items.shotgun, 1));
+        this.damage = 2;
+        ((ExLivingEntity) this).setHeldItem(new ItemInstance(AC_Items.shotgun, 1));
     }
 
     @Override
-    protected void tryAttack(Entity var1, float var2) {
-        if (!((double) var2 < 10.0D) || !this.rand.nextBoolean()) {
+    protected void checkHurtTarget(Entity var1, float var2) {
+        if (!((double) var2 < 10.0D) || !this.random.nextBoolean()) {
             return;
         }
 
-        this.lookAt(var1, 30.0F, 30.0F);
+        this.setLookAt(var1, 30.0F, 30.0F);
         if (this.attackTime == 0) {
-            this.lookAt(var1, 60.0F, 90.0F);
-            this.yaw = (float) ((double) this.yaw + 12.0D * this.rand.nextGaussian());
-            this.pitch = (float) ((double) this.pitch + 6.0D * this.rand.nextGaussian());
+            this.setLookAt(var1, 60.0F, 90.0F);
+            this.yRot = (float) ((double) this.yRot + 12.0D * this.random.nextGaussian());
+            this.xRot = (float) ((double) this.xRot + 6.0D * this.random.nextGaussian());
 
             for (int var3 = 0; var3 < 8; ++var3) {
-                AC_UtilBullet.fireBullet(this.world, this, 0.12F, this.attackDamage);
+                AC_UtilBullet.fireBullet(this.level, this, 0.12F, this.damage);
             }
 
             this.attackTime = 50;
-            this.world.playSound(this, "items.shotgun.fire_and_pump", 1.0F, 1.0F);
+            this.level.playSound(this, "items.shotgun.fire_and_pump", 1.0F, 1.0F);
         }
 
         double var7 = var1.x - this.x;
         double var5 = var1.z - this.z;
-        this.yaw = (float) (Math.atan2(var5, var7) * 180.0D / (double) ((float) Math.PI)) - 90.0F;
-        this.field_663 = true;
+        this.yRot = (float) (Math.atan2(var5, var7) * 180.0D / (double) ((float) Math.PI)) - 90.0F;
+        this.holdGround = true;
 
     }
 
@@ -55,7 +55,7 @@ public class AC_EntitySkeletonShotgun extends SkeletonEntity {
     }
 
     @Override
-    protected int getMobDrops() {
+    protected int getDeathLoot() {
         return AC_Items.shotgunAmmo.id;
     }
 }

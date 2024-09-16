@@ -1,7 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.phys.HitResult;
 
 public class RayDebugList {
 
@@ -27,9 +26,9 @@ public class RayDebugList {
         this.bZ = bZ;
         this.blockCollisions = blockCollisions;
         if (hit != null) {
-            this.hit = switch (hit.type) {
-                case field_789 -> new HitResult(hit.x, hit.y, hit.z, hit.field_1987, hit.field_1988);
-                case field_790 -> new HitResult(hit.field_1989);
+            this.hit = switch (hit.hitType) {
+                case TILE -> new HitResult(hit.x, hit.y, hit.z, hit.face, hit.pos);
+                case ENTITY -> new HitResult(hit.entity);
             };
         } else {
             this.hit = null;

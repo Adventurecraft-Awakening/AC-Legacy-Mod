@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.world.BlockView;
-import net.minecraft.world.World;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelSource;
 
 public interface AC_IBlockColor {
 
@@ -11,15 +11,15 @@ public interface AC_IBlockColor {
         return 7;
     }
 
-    default int getColorMeta(BlockView view, int x, int y, int z) {
-        return view.getBlockMeta(x, y, z);
+    default int getColorMeta(LevelSource view, int x, int y, int z) {
+        return view.getData(x, y, z);
     }
 
-    default void setColorMeta(World world, int x, int y, int z, int meta) {
-        world.setBlockMeta(x, y, z, meta);
+    default void setColorMeta(Level world, int x, int y, int z, int meta) {
+        world.setData(x, y, z, meta);
     }
 
-    default void incrementColor(World world, int x, int y, int z, int amount) {
+    default void incrementColor(Level world, int x, int y, int z, int amount) {
         int maxMeta = this.getMaxColorMeta();
         if (maxMeta == 0) {
             return;

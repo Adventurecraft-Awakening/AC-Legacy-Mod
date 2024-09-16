@@ -1,13 +1,13 @@
 package dev.adventurecraft.awakening.client.gui;
 
 import dev.adventurecraft.awakening.client.options.OptionOF;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.options.GameOptions;
-import net.minecraft.client.options.Option;
+import net.minecraft.client.Option;
+import net.minecraft.client.Options;
+import net.minecraft.client.gui.screens.Screen;
 
 public class GuiOtherSettingsOF extends GuiBaseSettingsOF {
 
-    public GuiOtherSettingsOF(Screen prevScreen, GameOptions options) {
+    public GuiOtherSettingsOF(Screen prevScreen, Options options) {
         super(prevScreen, options, "options.of.otherTitle");
     }
 

@@ -4,9 +4,9 @@ import dev.adventurecraft.awakening.common.TextRendererState;
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.TextRenderer;
-import net.minecraft.client.texture.TextureManager;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.Tesselator;
+import net.minecraft.client.renderer.Textures;
 
 @SuppressWarnings("unused")
 public class ScriptUILabel extends UIElement {
@@ -21,7 +21,7 @@ public class ScriptUILabel extends UIElement {
     public float alpha;
 
     public ScriptUILabel(String text, float x, float y) {
-        this(text, x, y, ((ExInGameHud) Minecraft.instance.overlay).getScriptUI());
+        this(text, x, y, ((ExInGameHud) Minecraft.instance.gui).getScriptUI());
     }
 
     public ScriptUILabel(String text, float x, float y, ScriptUIContainer container) {
@@ -41,7 +41,7 @@ public class ScriptUILabel extends UIElement {
     }
 
     @Override
-    public void render(TextRenderer textRenderer, TextureManager textureManager, float deltaTime) {
+    public void render(Font textRenderer, Textures textureManager, float deltaTime) {
         int color = Math.max(Math.min((int) (this.alpha * 255.0F), 255), 0);
         if (color == 0) {
             return;
@@ -60,11 +60,11 @@ public class ScriptUILabel extends UIElement {
         state.setShadowOffset(1, 1);
 
         state.bindTexture();
-        state.begin(Tessellator.INSTANCE);
+        state.begin(Tesselator.instance);
         for (String line : lines) {
             float lineX = x;
             if (this.centered) {
-                lineX = x - (float) (textRenderer.getTextWidth(line) / 2);
+                lineX = x - (float) (textRenderer.width(line) / 2);
             }
 
             state.setColor(color);

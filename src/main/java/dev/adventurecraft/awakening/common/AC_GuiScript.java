@@ -4,14 +4,14 @@ import java.io.File;
 
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
 
 public class AC_GuiScript extends Screen {
     AC_TileEntityScript script;
-    ButtonWidget setOnTrigger;
-    ButtonWidget setOnDetrigger;
-    ButtonWidget setOnUpdate;
+    Button setOnTrigger;
+    Button setOnDetrigger;
+    Button setOnUpdate;
     int selectedID;
 
     public AC_GuiScript(AC_TileEntityScript var1) {
@@ -19,19 +19,19 @@ public class AC_GuiScript extends Screen {
     }
 
     @Override
-    public void initVanillaScreen() {
+    public void init() {
         this.selectedID = 0;
-        this.setOnTrigger = new ButtonWidget(0, 4, 4, "OnTrigger (selected): " + this.script.onTriggerScriptFile);
-        this.setOnDetrigger = new ButtonWidget(1, 4, 26, "OnDetrigger: " + this.script.onDetriggerScriptFile);
-        this.setOnUpdate = new ButtonWidget(2, 4, 48, "OnUpdate: " + this.script.onUpdateScriptFile);
+        this.setOnTrigger = new Button(0, 4, 4, "OnTrigger (selected): " + this.script.onTriggerScriptFile);
+        this.setOnDetrigger = new Button(1, 4, 26, "OnDetrigger: " + this.script.onDetriggerScriptFile);
+        this.setOnUpdate = new Button(2, 4, 48, "OnUpdate: " + this.script.onUpdateScriptFile);
         this.buttons.add(this.setOnTrigger);
         this.buttons.add(this.setOnDetrigger);
         this.buttons.add(this.setOnUpdate);
-        ButtonWidget var1 = new ButtonWidget(3, 4, 70, 200, 20, "Reload Scripts");
+        Button var1 = new Button(3, 4, 70, 200, 20, "Reload Scripts");
         this.buttons.add(var1);
-        var1 = new ButtonWidget(4, 4, 92, 160, 18, "None");
+        var1 = new Button(4, 4, 92, 160, 18, "None");
         this.buttons.add(var1);
-        String[] var2 = ((ExWorld) this.client.world).getScriptFiles();
+        String[] var2 = ((ExWorld) this.minecraft.level).getScriptFiles();
         if (var2 != null) {
             int var3 = 1;
             String[] var4 = var2;
@@ -39,7 +39,7 @@ public class AC_GuiScript extends Screen {
 
             for (int var6 = 0; var6 < var5; ++var6) {
                 String var7 = var4[var6];
-                var1 = new ButtonWidget(4 + var3, 4 + var3 % 3 * this.width / 3, 92 + var3 / 3 * 20, 160, 18, var7);
+                var1 = new Button(4 + var3, 4 + var3 % 3 * this.width / 3, 92 + var3 / 3 * 20, 160, 18, var7);
                 this.buttons.add(var1);
                 ++var3;
             }
@@ -47,28 +47,28 @@ public class AC_GuiScript extends Screen {
     }
 
     private void resetNames() {
-        this.setOnTrigger.text = "OnTrigger: " + this.script.onTriggerScriptFile;
-        this.setOnDetrigger.text = "OnDetrigger: " + this.script.onDetriggerScriptFile;
-        this.setOnUpdate.text = "OnUpdate: " + this.script.onUpdateScriptFile;
+        this.setOnTrigger.message = "OnTrigger: " + this.script.onTriggerScriptFile;
+        this.setOnDetrigger.message = "OnDetrigger: " + this.script.onDetriggerScriptFile;
+        this.setOnUpdate.message = "OnUpdate: " + this.script.onUpdateScriptFile;
         if (this.selectedID == 0) {
-            this.setOnTrigger.text = "OnTrigger (selected): " + this.script.onTriggerScriptFile;
+            this.setOnTrigger.message = "OnTrigger (selected): " + this.script.onTriggerScriptFile;
         } else if (this.selectedID == 1) {
-            this.setOnDetrigger.text = "OnDetrigger (selected): " + this.script.onDetriggerScriptFile;
+            this.setOnDetrigger.message = "OnDetrigger (selected): " + this.script.onDetriggerScriptFile;
         } else if (this.selectedID == 2) {
-            this.setOnUpdate.text = "OnUpdate (selected): " + this.script.onUpdateScriptFile;
+            this.setOnUpdate.message = "OnUpdate (selected): " + this.script.onUpdateScriptFile;
         }
     }
 
     @Override
-    protected void buttonClicked(ButtonWidget var1) {
+    protected void buttonClicked(Button var1) {
         if (var1.id < 3) {
             this.selectedID = var1.id;
         } else if (var1.id == 3) {
-            ((ExWorld) this.script.world).getScriptHandler().loadScripts();
+            ((ExWorld) this.script.level).getScriptHandler().loadScripts();
         } else if (var1.id == 4) {
             this.updateScriptFile("");
         } else {
-            this.updateScriptFile(var1.text);
+            this.updateScriptFile(var1.message);
         }
 
         this.resetNames();
@@ -91,7 +91,7 @@ public class AC_GuiScript extends Screen {
     }
 
     public static void showUI(AC_TileEntityScript var0) {
-        Minecraft.instance.openScreen(new AC_GuiScript(var0));
+        Minecraft.instance.setScreen(new AC_GuiScript(var0));
     }
 
     @Override

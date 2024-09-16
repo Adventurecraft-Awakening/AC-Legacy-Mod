@@ -2,15 +2,15 @@ package dev.adventurecraft.awakening.mixin.client.gui.screen.menu;
 
 import dev.adventurecraft.awakening.client.gui.*;
 import dev.adventurecraft.awakening.client.options.OptionOF;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.menu.VideoSettingsScreen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widgets.OptionButtonWidget;
-import net.minecraft.client.gui.widgets.SliderWidget;
-import net.minecraft.client.options.GameOptions;
-import net.minecraft.client.options.Option;
-import net.minecraft.client.resource.language.TranslationStorage;
-import net.minecraft.client.util.ScreenScaler;
+import net.minecraft.client.Option;
+import net.minecraft.client.Options;
+import net.minecraft.client.ScreenSizeCalculator;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.OptionButton;
+import net.minecraft.client.gui.components.SliderButton;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.VideoSettingsScreen;
+import net.minecraft.locale.I18n;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -26,7 +26,7 @@ public abstract class MixinVideoSettingsScreen extends Screen implements OptionT
     @Shadow
     protected String title;
     @Shadow
-    private GameOptions options;
+    private Options options;
     @Shadow
     private static Option[] OPTIONS;
 
@@ -44,17 +44,17 @@ public abstract class MixinVideoSettingsScreen extends Screen implements OptionT
     @Inject(method = "<clinit>", at = @At(value = "TAIL"))
     private static void init_rewriteOptions(CallbackInfo ci) {
         OPTIONS = new Option[]{
-            Option.GRAPHICS_QUALITY, Option.RENDER_DISTANCE,
-            OptionOF.AO_LEVEL, Option.LIMIT_FRAMERATE,
+            Option.GRAPHICS, Option.RENDER_DISTANCE,
+            OptionOF.AO_LEVEL, Option.FRAMERATE_LIMIT,
             Option.ANAGLYPH, Option.VIEW_BOBBING,
             Option.GUI_SCALE, Option.ADVANCED_OPENGL,
             OptionOF.AA_LEVEL, OptionOF.BRIGHTNESS};
     }
 
     @Override
-    public void initVanillaScreen() {
-        TranslationStorage ts = TranslationStorage.getInstance();
-        this.title = ts.translate("options.videoTitle");
+    public void init() {
+        I18n ts = I18n.getInstance();
+        this.title = ts.get("options.videoTitle");
 
         int index = 0;
         Option[] options = OPTIONS;
@@ -64,12 +64,12 @@ public abstract class MixinVideoSettingsScreen extends Screen implements OptionT
             int y = this.height / 6 + 24 * (index / 2);
 
             int id = option.getId();
-            String text = this.options.getTranslatedValue(option);
+            String text = this.options.getMessage(option);
 
-            if (!option.isSlider()) {
-                this.buttons.add(new OptionButtonWidget(id, x, y, option, text));
+            if (!option.isProgress()) {
+                this.buttons.add(new OptionButton(id, x, y, option, text));
             } else {
-                this.buttons.add(new SliderWidget(id, x, y, option, text, this.options.getFloatValue(option)));
+                this.buttons.add(new SliderButton(id, x, y, option, text, this.options.getProgressValue(option)));
             }
 
             ++index;
@@ -79,59 +79,59 @@ public abstract class MixinVideoSettingsScreen extends Screen implements OptionT
             int x = this.width / 2 - 155 + index % 2 * 160;
             int y = this.height / 6 + 24 * (index / 2);
 
-            this.buttons.add(new ButtonWidget(100 + i, x, y, 150, 20, ts.translate(extraOptions[i])));
+            this.buttons.add(new Button(100 + i, x, y, 150, 20, ts.get(extraOptions[i])));
             index++;
         }
 
-        this.buttons.add(new ButtonWidget(200, this.width / 2 - 100, this.height / 6 + 168, ts.translate("gui.done")));
+        this.buttons.add(new Button(200, this.width / 2 - 100, this.height / 6 + 168, ts.get("gui.done")));
     }
 
     @Override
-    public void buttonClicked(ButtonWidget button) {
+    public void buttonClicked(Button button) {
         if (!button.active) {
             return;
         }
 
-        if (button.id < 100 && button instanceof OptionButtonWidget) {
-            this.options.setIntOption(((OptionButtonWidget) button).getOption(), 1);
-            button.text = this.options.getTranslatedValue(Option.getById(button.id));
+        if (button.id < 100 && button instanceof OptionButton) {
+            this.options.toggle(((OptionButton) button).getOption(), 1);
+            button.message = this.options.getMessage(Option.getItem(button.id));
         }
 
         if (button.id == 200) {
-            this.client.options.saveOptions();
-            this.client.openScreen(this.parent);
+            this.minecraft.options.save();
+            this.minecraft.setScreen(this.parent);
         }
 
         if (button.id == 100) {
-            this.client.options.saveOptions();
+            this.minecraft.options.save();
             var var2 = new GuiTextureSettingsOF(this, this.options);
-            this.client.openScreen(var2);
+            this.minecraft.setScreen(var2);
         }
 
         if (button.id == 101) {
-            this.client.options.saveOptions();
+            this.minecraft.options.save();
             var var5 = new GuiDetailSettingsOF(this, this.options);
-            this.client.openScreen(var5);
+            this.minecraft.setScreen(var5);
         }
 
         if (button.id == 102) {
-            this.client.options.saveOptions();
+            this.minecraft.options.save();
             var var7 = new GuiOtherSettingsOF(this, this.options);
-            this.client.openScreen(var7);
+            this.minecraft.setScreen(var7);
         }
 
         if (button.id != OptionOF.BRIGHTNESS.ordinal() && button.id != OptionOF.AO_LEVEL.ordinal()) {
-            var var8 = new ScreenScaler(this.client.options, this.client.actualWidth, this.client.actualHeight);
-            int var3 = var8.getScaledWidth();
-            int var4 = var8.getScaledHeight();
-            this.init(this.client, var3, var4);
+            var var8 = new ScreenSizeCalculator(this.minecraft.options, this.minecraft.width, this.minecraft.height);
+            int var3 = var8.getWidth();
+            int var4 = var8.getHeight();
+            this.init(this.minecraft, var3, var4);
         }
     }
 
     @Override
     public void render(int mouseX, int mouseY, float var3) {
         this.renderBackground();
-        this.drawTextWithShadowCentred(this.textRenderer, this.title, this.width / 2, 20, 16777215);
+        this.drawCenteredString(this.font, this.title, this.width / 2, 20, 16777215);
 
         super.render(mouseX, mouseY, var3);
 

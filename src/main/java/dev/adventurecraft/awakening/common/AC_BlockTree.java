@@ -1,58 +1,58 @@
 package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.block.ExBlock;
-import net.minecraft.block.BlockWithEntity;
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.BlockEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.math.AxixAlignedBoundingBox;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.tile.TileEntityTile;
+import net.minecraft.world.level.tile.entity.TileEntity;
+import net.minecraft.world.phys.AABB;
 
-public class AC_BlockTree extends BlockWithEntity implements AC_IBlockColor {
+public class AC_BlockTree extends TileEntityTile implements AC_IBlockColor {
 
     protected AC_BlockTree(int var1, int var2) {
         super(var1, var2, Material.PLANT);
     }
 
     @Override
-    protected BlockEntity createBlockEntity() {
+    protected TileEntity newTileEntity() {
         return new AC_TileEntityTree();
     }
 
     @Override
-    public int getTextureForSide(int var1, int var2) {
-        return this.texture + var2;
+    public int getTexture(int var1, int var2) {
+        return this.tex + var2;
     }
 
     @Override
-    public AxixAlignedBoundingBox getCollisionShape(World world, int x, int y, int z) {
+    public AABB getAABB(Level world, int x, int y, int z) {
         return null;
     }
 
     @Override
-    public boolean isCollidable() {
+    public boolean mayPick() {
         return AC_DebugMode.active;
     }
 
     @Override
-    public boolean isFullOpaque() {
+    public boolean isSolidRender() {
         return false;
     }
 
     @Override
-    public boolean isFullCube() {
+    public boolean isCubeShaped() {
         return false;
     }
 
     @Override
-    public int getRenderType() {
+    public int getRenderShape() {
         return 36;
     }
 
     @Override
-    public boolean canUse(World world, int x, int y, int z, PlayerEntity player) {
+    public boolean use(Level world, int x, int y, int z, Player player) {
         if (AC_DebugMode.active) {
-            var entity = (AC_TileEntityTree) world.getBlockEntity(x, y, z);
+            var entity = (AC_TileEntityTree) world.getTileEntity(x, y, z);
             AC_GuiTree.showUI(world, x, y, z, entity);
         }
         return true;

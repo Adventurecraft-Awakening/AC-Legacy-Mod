@@ -2,10 +2,10 @@ package dev.adventurecraft.awakening.mixin.entity.monster;
 
 import dev.adventurecraft.awakening.extension.entity.monster.ExSlimeEntity;
 import dev.adventurecraft.awakening.mixin.entity.MixinLivingEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.monster.SlimeEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.monster.Slime;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(SlimeEntity.class)
+@Mixin(Slime.class)
 public abstract class MixinSlimeEntity extends MixinLivingEntity implements ExSlimeEntity {
 
     @Shadow
@@ -22,7 +22,7 @@ public abstract class MixinSlimeEntity extends MixinLivingEntity implements ExSl
     private int attackStrength;
 
     @Inject(method = "<init>", at = @At("TAIL"))
-    private void init(World var1, CallbackInfo ci) {
+    private void init(Level var1, CallbackInfo ci) {
         attackStrength = -1;
     }
 
@@ -45,7 +45,7 @@ public abstract class MixinSlimeEntity extends MixinLivingEntity implements ExSl
     }
 
     @Overwrite
-    public void onPlayerCollision(PlayerEntity var1) {
+    public void onPlayerCollision(Player var1) {
         int size = this.getSize();
         int strength = size;
         if (this.attackStrength != -1) {
@@ -55,7 +55,7 @@ public abstract class MixinSlimeEntity extends MixinLivingEntity implements ExSl
         if ((size > 1 || this.attackStrength != -1) &&
             this.method_928(var1) &&
             this.distanceTo(var1) < 0.6D * size &&
-            var1.damage((Entity) (Object) this, strength)) {
+            var1.hurt((Entity) (Object) this, strength)) {
 
             this.world.playSound(
                 (Entity) (Object) this,

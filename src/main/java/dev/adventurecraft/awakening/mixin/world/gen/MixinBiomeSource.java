@@ -2,10 +2,10 @@ package dev.adventurecraft.awakening.mixin.world.gen;
 
 import dev.adventurecraft.awakening.common.AC_TerrainImage;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
-import net.minecraft.util.noise.SimplexOctaveNoise;
-import net.minecraft.world.World;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.gen.BiomeSource;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.BiomeSource;
+import net.minecraft.world.level.levelgen.synth.PerlinSimplexNoise;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -17,11 +17,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinBiomeSource {
 
     @Shadow
-    private SimplexOctaveNoise temperatureNoise;
+    private PerlinSimplexNoise temperatureNoise;
     @Shadow
-    private SimplexOctaveNoise rainfallNoise;
+    private PerlinSimplexNoise rainfallNoise;
     @Shadow
-    private SimplexOctaveNoise detailNoise;
+    private PerlinSimplexNoise detailNoise;
     @Shadow
     public double[] temperatureNoises;
     @Shadow
@@ -29,10 +29,10 @@ public abstract class MixinBiomeSource {
     @Shadow
     public double[] detailNoises;
 
-    private World world;
+    private Level world;
 
     @Inject(method = "<init>(Lnet/minecraft/world/World;)V", at = @At("TAIL"))
-    private void init(World world, CallbackInfo ci) {
+    private void init(Level world, CallbackInfo ci) {
         this.world = world;
     }
 
@@ -42,11 +42,11 @@ public abstract class MixinBiomeSource {
             var1 = new double[var4 * var5];
         }
 
-        boolean useImages = ((ExWorldProperties) this.world.properties).getWorldGenProps().useImages;
+        boolean useImages = ((ExWorldProperties) this.world.levelData).getWorldGenProps().useImages;
 
         if (!useImages) {
-            var1 = this.temperatureNoise.sample(var1, var2, var3, var4, var5, 0.025F, 0.025F, 0.25D);
-            this.detailNoises = this.detailNoise.sample(this.detailNoises, var2, var3, var4, var5, 0.25D, 0.25D, 0.5882352941176471D);
+            var1 = this.temperatureNoise.getRegion(var1, var2, var3, var4, var5, 0.025F, 0.025F, 0.25D);
+            this.detailNoises = this.detailNoise.getRegion(this.detailNoises, var2, var3, var4, var5, 0.25D, 0.25D, 0.5882352941176471D);
         }
 
         int var6 = 0;
@@ -87,11 +87,11 @@ public abstract class MixinBiomeSource {
             var1 = new Biome[var4 * var5];
         }
 
-        boolean useImages = ((ExWorldProperties) this.world.properties).getWorldGenProps().useImages;
+        boolean useImages = ((ExWorldProperties) this.world.levelData).getWorldGenProps().useImages;
 
-        this.temperatureNoises = this.temperatureNoise.sample(this.temperatureNoises, var2, var3, var4, var4, 0.025F, 0.025F, 0.25D);
-        this.rainfallNoises = this.rainfallNoise.sample(this.rainfallNoises, var2, var3, var4, var4, 0.05F, 0.05F, 1.0D / 3.0D);
-        this.detailNoises = this.detailNoise.sample(this.detailNoises, var2, var3, var4, var4, 0.25D, 0.25D, 0.5882352941176471D);
+        this.temperatureNoises = this.temperatureNoise.getRegion(this.temperatureNoises, var2, var3, var4, var4, 0.025F, 0.025F, 0.25D);
+        this.rainfallNoises = this.rainfallNoise.getRegion(this.rainfallNoises, var2, var3, var4, var4, 0.05F, 0.05F, 1.0D / 3.0D);
+        this.detailNoises = this.detailNoise.getRegion(this.detailNoises, var2, var3, var4, var4, 0.25D, 0.25D, 0.5882352941176471D);
         int var6 = 0;
         double var7;
         double var9;

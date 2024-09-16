@@ -1,18 +1,18 @@
 package dev.adventurecraft.awakening.mixin.entity;
 
 import dev.adventurecraft.awakening.extension.entity.ExFallingBlockEntity;
-import net.minecraft.block.FallingBlock;
-import net.minecraft.entity.FallingBlockEntity;
-import net.minecraft.util.io.CompoundTag;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.item.FallingTile;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.tile.SandTile;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(FallingBlockEntity.class)
+@Mixin(FallingTile.class)
 public abstract class MixinFallingBlockEntity extends MixinEntity implements ExFallingBlockEntity {
 
     @Shadow
@@ -26,14 +26,14 @@ public abstract class MixinFallingBlockEntity extends MixinEntity implements ExF
     public double startZ;
 
     @Inject(method = "<init>(Lnet/minecraft/world/World;)V", at = @At("TAIL"))
-    private void init(World var1, CallbackInfo ci) {
+    private void init(Level var1, CallbackInfo ci) {
         this.setSize(0.98F, 0.98F);
         this.height = 0.98F;
         this.standingEyeHeight = this.height / 2.0F;
     }
 
     @Inject(method = "<init>(Lnet/minecraft/world/World;DDDI)V", at = @At("TAIL"))
-    private void init(World var1, double x, double y, double z, int var5, CallbackInfo ci) {
+    private void init(Level var1, double x, double y, double z, int var5, CallbackInfo ci) {
         init(var1, ci);
         this.startX = x;
         this.startZ = z;
@@ -52,22 +52,22 @@ public abstract class MixinFallingBlockEntity extends MixinEntity implements ExF
             this.xVelocity *= 0.98F;
             this.yVelocity *= 0.98F;
             this.zVelocity *= 0.98F;
-            int var1 = MathHelper.floor(this.x);
-            int var2 = MathHelper.floor(this.y);
-            int var3 = MathHelper.floor(this.z);
-            if (this.world.getBlockId(var1, var2, var3) == this.blockId) {
-                this.world.setBlock(var1, var2, var3, 0);
+            int var1 = Mth.floor(this.x);
+            int var2 = Mth.floor(this.y);
+            int var3 = Mth.floor(this.z);
+            if (this.world.getTile(var1, var2, var3) == this.blockId) {
+                this.world.setTile(var1, var2, var3, 0);
             }
 
             if (this.onGround && Math.abs(this.xVelocity) < 0.01D && Math.abs(this.zVelocity) < 0.01D) {
                 this.xVelocity *= 0.7F;
                 this.zVelocity *= 0.7F;
                 this.yVelocity *= -0.5D;
-                if (!FallingBlock.method_435(this.world, var1, var2 - 1, var3)) {
+                if (!SandTile.isFree(this.world, var1, var2 - 1, var3)) {
                     this.remove();
-                    if (!this.world.isClient) {
-                        if (!this.world.canPlaceBlock(this.blockId, var1, var2, var3, true, 1) ||
-                            !this.world.placeBlockWithMetaData(var1, var2, var3, this.blockId, this.metadata)) {
+                    if (!this.world.isClientSide) {
+                        if (!this.world.mayPlace(this.blockId, var1, var2, var3, true, 1) ||
+                            !this.world.setTileAndData(var1, var2, var3, this.blockId, this.metadata)) {
                             this.dropItem(this.blockId, 1);
                         }
                     }
@@ -76,7 +76,7 @@ public abstract class MixinFallingBlockEntity extends MixinEntity implements ExF
                     this.xVelocity = 0.0D;
                     this.zVelocity = 0.0D;
                 }
-            } else if (this.blockMeta > 100 && !this.world.isClient) {
+            } else if (this.blockMeta > 100 && !this.world.isClientSide) {
                 this.dropItem(this.blockId, 1);
                 this.remove();
             }
@@ -95,12 +95,12 @@ public abstract class MixinFallingBlockEntity extends MixinEntity implements ExF
 
     @Inject(method = "writeAdditional", at = @At("TAIL"))
     private void writeAc(CompoundTag var1, CallbackInfo ci) {
-        var1.put("EntityID", this.entityId);
+        var1.putInt("EntityID", this.entityId);
     }
 
     @Inject(method = "readAdditional", at = @At("TAIL"))
     private void readAc(CompoundTag var1, CallbackInfo ci) {
-        if (var1.containsKey("EntityID")) {
+        if (var1.hasKey("EntityID")) {
             this.entityId = var1.getInt("EntityID");
         }
     }

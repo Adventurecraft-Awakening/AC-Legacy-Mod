@@ -2,9 +2,6 @@ package dev.adventurecraft.awakening.mixin.container;
 
 import dev.adventurecraft.awakening.extension.container.ExPlayerContainer;
 import dev.adventurecraft.awakening.extension.container.slot.ExSlot;
-import net.minecraft.container.Container;
-import net.minecraft.container.PlayerContainer;
-import net.minecraft.container.slot.Slot;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
@@ -12,9 +9,12 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.Slice;
 
 import java.util.ArrayList;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.inventory.Slot;
 
-@Mixin(PlayerContainer.class)
-public abstract class MixinPlayerContainer extends Container implements ExPlayerContainer {
+@Mixin(InventoryMenu.class)
+public abstract class MixinPlayerContainer extends AbstractContainerMenu implements ExPlayerContainer {
 
     private boolean allowsCrafting = true;
     private final ArrayList<Slot> craftingSlots = new ArrayList<>();
@@ -29,7 +29,7 @@ public abstract class MixinPlayerContainer extends Container implements ExPlayer
                 value = "INVOKE",
                 target = "Lnet/minecraft/container/PlayerContainer;addSlot(Lnet/minecraft/container/slot/Slot;)V",
                 ordinal = 1)))
-    private void recordCraftingSlots(PlayerContainer instance, Slot slot) {
+    private void recordCraftingSlots(InventoryMenu instance, Slot slot) {
         instance.addSlot(slot);
         this.craftingSlots.add(slot);
     }

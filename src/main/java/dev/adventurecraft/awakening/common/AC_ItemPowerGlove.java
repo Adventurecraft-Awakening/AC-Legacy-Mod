@@ -1,12 +1,12 @@
 package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.entity.ExFallingBlockEntity;
-import net.minecraft.block.Block;
-import net.minecraft.entity.FallingBlockEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.item.FallingTile;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.tile.Tile;
 import org.lwjgl.input.Keyboard;
 
 public class AC_ItemPowerGlove extends Item {
@@ -15,7 +15,7 @@ public class AC_ItemPowerGlove extends Item {
         super(id);
     }
 
-    private FallingBlockEntity currentFallingBlock = null;
+    private FallingTile currentFallingBlock = null;
 
     /**
      * Uses the current item to push a given block.
@@ -30,7 +30,7 @@ public class AC_ItemPowerGlove extends Item {
      * @return false if the move operation was unsuccessful. Otherwise, true.
      */
     @Override
-    public boolean useOnBlock(ItemStack stack, PlayerEntity player, World world, int x, int y, int z, int side) {
+    public boolean useOn(ItemInstance stack, Player player, Level world, int x, int y, int z, int side) {
         boolean currentBlockExists = this.currentFallingBlock != null && !this.currentFallingBlock.removed;
 
         if (currentBlockExists) {
@@ -39,7 +39,7 @@ public class AC_ItemPowerGlove extends Item {
             // This would mean that the player would not be able to use the power glove until the game is reset.
             // So we check if the currently tracked falling block is on this world:
             // If it is, do nothing (fail to push), if not, unset it and proceed with the push.
-            if (this.currentFallingBlock.world == world) {
+            if (this.currentFallingBlock.level == world) {
                 return false;
             }
             this.currentFallingBlock = null;
@@ -64,7 +64,7 @@ public class AC_ItemPowerGlove extends Item {
                 return false;
         }
 
-        int currentBlockId = world.getBlockId(x, y, z);
+        int currentBlockId = world.getTile(x, y, z);
         boolean isPushableBlock = currentBlockId == AC_Blocks.pushableBlock.id;
         if (!isPushableBlock) {
             return false;
@@ -78,22 +78,22 @@ public class AC_ItemPowerGlove extends Item {
             zDir *= -1;
         }
 
-        int destinationBlockId = world.getBlockId(x + xDir, y, z + zDir);
-        Block destinationBlock = Block.BY_ID[destinationBlockId];
+        int destinationBlockId = world.getTile(x + xDir, y, z + zDir);
+        Tile destinationBlock = Tile.tiles[destinationBlockId];
         boolean isValidDestination = destinationBlock == null ||
                 destinationBlock.material.isLiquid() ||
-                destinationBlockId == Block.FIRE.id;
+                destinationBlockId == Tile.FIRE.id;
         if (!isValidDestination) {
             return false;
         }
 
-        int blockMetadata = world.getBlockMeta(x, y, z);
-        world.placeBlockWithMetaData(x, y, z, 0, 0);
-        this.currentFallingBlock = new FallingBlockEntity(world, (double) x + 0.5D, (double) y + 0.5D, (double) z + 0.5D, currentBlockId);
-        this.currentFallingBlock.xVelocity = 0.3D * (double) xDir;
-        this.currentFallingBlock.zVelocity = 0.3D * (double) zDir;
+        int blockMetadata = world.getData(x, y, z);
+        world.setTileAndData(x, y, z, 0, 0);
+        this.currentFallingBlock = new FallingTile(world, (double) x + 0.5D, (double) y + 0.5D, (double) z + 0.5D, currentBlockId);
+        this.currentFallingBlock.xd = 0.3D * (double) xDir;
+        this.currentFallingBlock.zd = 0.3D * (double) zDir;
         ((ExFallingBlockEntity) this.currentFallingBlock).setMetadata(blockMetadata);
-        world.spawnEntity(this.currentFallingBlock);
+        world.addEntity(this.currentFallingBlock);
 
         return true;
     }

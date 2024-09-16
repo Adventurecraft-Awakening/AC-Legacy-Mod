@@ -3,8 +3,8 @@ package dev.adventurecraft.awakening.mixin.client.util;
 import com.llamalad7.mixinextras.injector.WrapWithCondition;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.client.util.ExResourceDownloadThread;
+import net.minecraft.client.BackgroundDownloader;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.util.ResourceDownloadThread;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.io.File;
 
-@Mixin(ResourceDownloadThread.class)
+@Mixin(BackgroundDownloader.class)
 public abstract class MixinResourceDownloadThread implements ExResourceDownloadThread {
 
     @Shadow

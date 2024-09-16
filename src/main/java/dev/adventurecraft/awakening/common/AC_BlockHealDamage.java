@@ -1,37 +1,36 @@
 package dev.adventurecraft.awakening.common;
 
 import java.util.List;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelSource;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.tile.TileEntityTile;
+import net.minecraft.world.level.tile.entity.TileEntity;
+import net.minecraft.world.phys.AABB;
 
-import net.minecraft.block.BlockWithEntity;
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.BlockEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.math.AxixAlignedBoundingBox;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.World;
-
-public class AC_BlockHealDamage extends BlockWithEntity implements AC_ITriggerBlock {
+public class AC_BlockHealDamage extends TileEntityTile implements AC_ITriggerBlock {
 
     protected AC_BlockHealDamage(int var1, int var2) {
         super(var1, var2, Material.AIR);
     }
 
-    protected BlockEntity createBlockEntity() {
+    protected TileEntity newTileEntity() {
         return new AC_TileEntityHealDamage();
     }
 
     @Override
-    public boolean isFullOpaque() {
+    public boolean isSolidRender() {
         return false;
     }
 
     @Override
-    public AxixAlignedBoundingBox getCollisionShape(World world, int x, int y, int z) {
+    public AABB getAABB(Level world, int x, int y, int z) {
         return null;
     }
 
     @Override
-    public boolean shouldRender(BlockView view, int x, int y, int z) {
+    public boolean shouldRender(LevelSource view, int x, int y, int z) {
         return AC_DebugMode.active;
     }
 
@@ -41,32 +40,32 @@ public class AC_BlockHealDamage extends BlockWithEntity implements AC_ITriggerBl
     }
 
     @Override
-    public void onTriggerActivated(World world, int x, int y, int z) {
-        var entity = (AC_TileEntityHealDamage) world.getBlockEntity(x, y, z);
+    public void onTriggerActivated(Level world, int x, int y, int z) {
+        var entity = (AC_TileEntityHealDamage) world.getTileEntity(x, y, z);
 
-        for (PlayerEntity var8 : (List<PlayerEntity>) world.players) {
+        for (Player var8 : (List<Player>) world.players) {
             if (entity.healDamage > 0) {
-                var8.addHealth(entity.healDamage);
+                var8.heal(entity.healDamage);
             } else {
-                var8.applyDamage(-entity.healDamage);
+                var8.actuallyHurt(-entity.healDamage);
             }
         }
 
     }
 
     @Override
-    public void onTriggerDeactivated(World world, int x, int y, int z) {
+    public void onTriggerDeactivated(Level world, int x, int y, int z) {
     }
 
     @Override
-    public boolean isCollidable() {
+    public boolean mayPick() {
         return AC_DebugMode.active;
     }
 
     @Override
-    public boolean canUse(World world, int x, int y, int z, PlayerEntity player) {
-        if (AC_DebugMode.active && (player.getHeldItem() == null || player.getHeldItem().itemId == AC_Items.cursor.id)) {
-            var entity = (AC_TileEntityHealDamage) world.getBlockEntity(x, y, z);
+    public boolean use(Level world, int x, int y, int z, Player player) {
+        if (AC_DebugMode.active && (player.getSelectedItem() == null || player.getSelectedItem().id == AC_Items.cursor.id)) {
+            var entity = (AC_TileEntityHealDamage) world.getTileEntity(x, y, z);
             AC_GuiHealDamage.showUI(world, entity);
             return true;
         } else {

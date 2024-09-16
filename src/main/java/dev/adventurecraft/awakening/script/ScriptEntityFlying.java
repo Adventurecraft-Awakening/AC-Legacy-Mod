@@ -1,13 +1,13 @@
 package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.extension.entity.ExFlyingEntity;
-import net.minecraft.entity.FlyingEntity;
+import net.minecraft.world.entity.FlyingMob;
 
 @SuppressWarnings("unused")
 public class ScriptEntityFlying extends ScriptEntityLiving {
-    FlyingEntity entityFlying;
+    FlyingMob entityFlying;
 
-    ScriptEntityFlying(FlyingEntity var1) {
+    ScriptEntityFlying(FlyingMob var1) {
         super(var1);
         this.entityFlying = var1;
     }

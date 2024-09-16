@@ -2,9 +2,6 @@ package dev.adventurecraft.awakening.mixin.client.render;
 
 import dev.adventurecraft.awakening.common.Vec2;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import net.minecraft.client.render.PortalTextureBinder;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -13,8 +10,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.awt.image.BufferedImage;
 import java.util.Random;
+import net.minecraft.client.renderer.ptexture.PortalTexture;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.Level;
 
-@Mixin(PortalTextureBinder.class)
+@Mixin(PortalTexture.class)
 public class MixinPortalTextureBinder extends MixinTextureBinder {
 
     @Shadow
@@ -61,7 +61,7 @@ public class MixinPortalTextureBinder extends MixinTextureBinder {
 
                         float var13 = var11 * var11 + var12 * var12;
                         float var14 = (float) Math.atan2((double) var12, (double) var11) + ((float) var4 / 32.0F * 3.141593F * 2.0F - var13 * 10.0F + (float) (var8 * 2)) * (float) (var8 * 2 - 1);
-                        var14 = (MathHelper.sin(var14) + 1.0F) / 2.0F;
+                        var14 = (Mth.sin(var14) + 1.0F) / 2.0F;
                         var14 /= var13 + 1.0F;
                         var7 += var14 * 0.5F;
                     }
@@ -182,7 +182,7 @@ public class MixinPortalTextureBinder extends MixinTextureBinder {
     }
 
     @Override
-    public void loadImage(String name, World world) {
+    public void loadImage(String name, Level world) {
         if (name == null) {
             name = "/custom_portal.png";
         }

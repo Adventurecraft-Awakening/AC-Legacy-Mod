@@ -1,14 +1,14 @@
 package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.world.entity.player.Player;
 
 @SuppressWarnings("unused")
 public class ScriptEntityPlayer extends ScriptEntityLiving {
 
-    PlayerEntity entityPlayer;
+    Player entityPlayer;
 
-    ScriptEntityPlayer(PlayerEntity entity) {
+    ScriptEntityPlayer(Player entity) {
         super(entity);
         this.entityPlayer = entity;
     }
@@ -30,7 +30,7 @@ public class ScriptEntityPlayer extends ScriptEntityLiving {
     }
 
     public void swingMainHand() {
-        this.entityPlayer.swingHand();
+        this.entityPlayer.swing();
     }
 
     public void swingOffHand() {

@@ -1,12 +1,12 @@
 package dev.adventurecraft.awakening.mixin.world.world.biome;
 
-import net.minecraft.world.biome.Biome;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.List;
+import net.minecraft.world.level.biome.Biome;
 
 @Mixin(Biome.class)
 public abstract class MixinBiome {

@@ -1,15 +1,15 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.client.entity.particle.ParticleEntity;
-import net.minecraft.util.io.CompoundTag;
-import net.minecraft.world.World;
+import net.minecraft.client.particle.Particle;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.Level;
 
-public class AC_Particle extends ParticleEntity {
-    public AC_Particle(World arg, double x, double y, double z, double velX, double velY, double velZ) {
+public class AC_Particle extends Particle {
+    public AC_Particle(Level arg, double x, double y, double z, double velX, double velY, double velZ) {
         super(arg, x,y,z,velX,velY,velZ);
-        this.xVelocity = velX;
-        this.yVelocity = velY;
-        this.zVelocity = velZ;
+        this.xd = velX;
+        this.yd = velY;
+        this.zd = velZ;
     }
 
     public void setTexture(int id){
@@ -17,23 +17,23 @@ public class AC_Particle extends ParticleEntity {
     }
 
     public void setAliveTicks(int ticks){
-        field_2639 = ticks;
+        lifetime = ticks;
     }
 
     public void setColor(float r, float g, float b){
-        this.red = r;
-        this.green = g;
-        this.blue = b;
+        this.rCol = r;
+        this.gCol = g;
+        this.bCol = b;
     }
 
 
     @Override
-    public void writeNBT(CompoundTag arg) {
-        super.writeNBT(arg);
+    public void saveWithoutId(CompoundTag arg) {
+        super.saveWithoutId(arg);
     }
 
     @Override
-    public void readNBT(CompoundTag arg) {
-        super.readNBT(arg);
+    public void load(CompoundTag arg) {
+        super.load(arg);
     }
 }

@@ -1,10 +1,10 @@
 package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.item.ExItemStack;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
 
 class AC_ItemShotgun extends Item implements AC_IItemReload, AC_IItemLight, AC_IUseDelayItem {
 
@@ -17,16 +17,16 @@ class AC_ItemShotgun extends Item implements AC_IItemReload, AC_IItemLight, AC_I
     }
 
     @Override
-    public ItemStack use(ItemStack stack, World world, PlayerEntity player) {
+    public ItemInstance use(ItemInstance stack, Level world, Player player) {
         var exStack = (ExItemStack) stack;
         if (exStack.getTimeLeft() > 0) {
-            if (exStack.getReloading() && stack.getMeta() > 0) {
+            if (exStack.getReloading() && stack.getAuxValue() > 0) {
                 exStack.setReloading(false);
             }
             return stack;
         }
 
-        if (stack.getMeta() == stack.getDurability()) {
+        if (stack.getAuxValue() == stack.getMaxDamage()) {
             exStack.setReloading(true);
             exStack.setTimeLeft(0);
             return stack;
@@ -38,32 +38,32 @@ class AC_ItemShotgun extends Item implements AC_IItemReload, AC_IItemLight, AC_I
             AC_UtilBullet.fireBullet(world, player, 0.12F, 2);
         }
 
-        stack.setMeta(stack.getMeta() + 1);
+        stack.setDamage(stack.getAuxValue() + 1);
         exStack.setTimeLeft(40);
-        if (stack.getMeta() == stack.getDurability()) {
+        if (stack.getAuxValue() == stack.getMaxDamage()) {
             exStack.setReloading(true);
         }
         return stack;
     }
 
     @Override
-    public boolean isLighting(ItemStack stack) {
+    public boolean isLighting(ItemInstance stack) {
         return ((ExItemStack) stack).getTimeLeft() > 42;
     }
 
     @Override
-    public boolean isMuzzleFlash(ItemStack stack) {
+    public boolean isMuzzleFlash(ItemInstance stack) {
         return ((ExItemStack) stack).getTimeLeft() > 35;
     }
 
     @Override
-    public void reload(ItemStack stack, World world, PlayerEntity player) {
+    public void reload(ItemInstance stack, Level world, Player player) {
         var exStack = (ExItemStack) stack;
-        if (stack.getMeta() > 0 && player.inventory.removeItem(AC_Items.shotgunAmmo.id)) {
-            stack.setMeta(stack.getMeta() - 1);
+        if (stack.getAuxValue() > 0 && player.inventory.removeResource(AC_Items.shotgunAmmo.id)) {
+            stack.setDamage(stack.getAuxValue() - 1);
             exStack.setTimeLeft(20);
             world.playSound(player, "items.shotgun.reload", 1.0F, 1.0F);
-            if (stack.getMeta() == 0) {
+            if (stack.getAuxValue() == 0) {
                 exStack.setReloading(false);
             }
         } else {

@@ -5,12 +5,12 @@ import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.SingleplayerInteractionManager;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widgets.OptionButtonWidget;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.resource.language.TranslationStorage;
+import net.minecraft.client.gamemode.SurvivalGameMode;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.OptionButton;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.Tesselator;
+import net.minecraft.locale.I18n;
 import org.lwjgl.opengl.GL11;
 
 import java.io.File;
@@ -29,21 +29,21 @@ public class AC_GuiMapSelect extends Screen {
     }
 
     @Override
-    public void initVanillaScreen() {
-        ((ExMinecraft) this.client).getMapList().findMaps();
-        var ts = TranslationStorage.getInstance();
+    public void init() {
+        ((ExMinecraft) this.minecraft).getMapList().findMaps();
+        var ts = I18n.getInstance();
         if (this.saveName == null) {
-            this.buttons.add(new OptionButtonWidget(6, this.width / 2 + 5, this.height - 48, ts.translate("gui.done")));
-            this.buttons.add(new ButtonWidget(7, this.width / 2 - 155, this.height - 48, 150, 20, ts.translate("mapList.newMap")));
+            this.buttons.add(new OptionButton(6, this.width / 2 + 5, this.height - 48, ts.get("gui.done")));
+            this.buttons.add(new Button(7, this.width / 2 - 155, this.height - 48, 150, 20, ts.get("mapList.newMap")));
         } else {
-            this.buttons.add(new OptionButtonWidget(6, this.width / 2 - 75, this.height - 48, ts.translate("gui.done")));
+            this.buttons.add(new OptionButton(6, this.width / 2 - 75, this.height - 48, ts.get("gui.done")));
         }
 
         this.mapList = new MapList();
     }
 
     @Override
-    protected void buttonClicked(ButtonWidget button) {
+    protected void buttonClicked(Button button) {
         if (!button.active) {
             return;
         }
@@ -51,11 +51,11 @@ public class AC_GuiMapSelect extends Screen {
         if (button.id == 6) {
             AC_MapInfo selectedMap = this.mapList.selectedMap;
             if (selectedMap == null) {
-                this.client.openScreen(this.parent);
+                this.minecraft.setScreen(this.parent);
             } else {
                 if (this.saveName != null) {
                     if (this.saveName.equals("")) {
-                        File gameDir = Minecraft.getGameDirectory();
+                        File gameDir = Minecraft.getWorkingDirectory();
                         File savesDir = new File(gameDir, "saves");
                         int saveIndex = 1;
 
@@ -67,20 +67,20 @@ public class AC_GuiMapSelect extends Screen {
                         } while (saveDir.exists());
                     }
 
-                    ((ExMinecraft) this.client).saveMapUsed(this.saveName, selectedMap.name);
+                    ((ExMinecraft) this.minecraft).saveMapUsed(this.saveName, selectedMap.name);
                 }
 
-                this.client.interactionManager = new SingleplayerInteractionManager(this.client);
-                ((ExMinecraft) this.client).startWorld(this.saveName, this.saveName, 0L, selectedMap.name);
+                this.minecraft.gameMode = new SurvivalGameMode(this.minecraft);
+                ((ExMinecraft) this.minecraft).startWorld(this.saveName, this.saveName, 0L, selectedMap.name);
             }
         } else if (button.id == 7) {
-            this.client.openScreen(new GuiCreateNewMap(this));
+            this.minecraft.setScreen(new GuiCreateNewMap(this));
         }
     }
 
     @Override
-    public void onMouseEvent() {
-        super.onMouseEvent();
+    public void mouseEvent() {
+        super.mouseEvent();
         this.mapList.onMouseEvent();
     }
 
@@ -90,8 +90,8 @@ public class AC_GuiMapSelect extends Screen {
 
         this.mapList.render(mouseX, mouseY, tickTime);
 
-        var translation = TranslationStorage.getInstance();
-        this.drawTextWithShadowCentred(this.textRenderer, translation.translate("mapList.title"), this.width / 2, 16, 16777215);
+        var translation = I18n.getInstance();
+        this.drawCenteredString(this.font, translation.get("mapList.title"), this.width / 2, 16, 16777215);
         super.render(mouseX, mouseY, tickTime);
     }
 
@@ -109,7 +109,7 @@ public class AC_GuiMapSelect extends Screen {
 
         public MapList() {
             super(
-                AC_GuiMapSelect.this.client,
+                AC_GuiMapSelect.this.minecraft,
                 0, 0, AC_GuiMapSelect.this.width, AC_GuiMapSelect.this.height,
                 32, AC_GuiMapSelect.this.height - 58 + 4, 36);
 
@@ -134,16 +134,16 @@ public class AC_GuiMapSelect extends Screen {
         }
 
         @Override
-        protected void beforeEntryRender(int mouseX, int mouseY, double entryX, double entryY, Tessellator ts) {
+        protected void beforeEntryRender(int mouseX, int mouseY, double entryX, double entryY, Tesselator ts) {
             super.beforeEntryRender(mouseX, mouseY, entryX, entryY, ts);
 
             this.hoveredEntry = this.getEntryUnderPoint(mouseX, mouseY);
         }
 
         @Override
-        protected void renderEntry(int entryIndex, double entryX, double entryY, int entryHeight, Tessellator ts) {
+        protected void renderEntry(int entryIndex, double entryX, double entryY, int entryHeight, Tesselator ts) {
             AC_MapInfo mapInfo = this.maps.get(entryIndex);
-            var exText = (ExTextRenderer) AC_GuiMapSelect.this.textRenderer;
+            var exText = (ExTextRenderer) AC_GuiMapSelect.this.font;
 
             int iconX = (int) entryX - 110 + 2;
             int iconY = (int) entryY;
@@ -162,22 +162,22 @@ public class AC_GuiMapSelect extends Screen {
 
                 GL11.glDisable(GL11.GL_TEXTURE_2D);
                 GL11.glEnable(GL11.GL_BLEND);
-                ts.start();
+                ts.begin();
                 this.renderContentSelection(
                     iconX - 2, iconY - 2, entryWidth, entryHeight, 1, borderColor, backColor, ts);
-                ts.tessellate();
+                ts.end();
                 GL11.glEnable(GL11.GL_TEXTURE_2D);
                 GL11.glDisable(GL11.GL_BLEND);
             }
 
-            mapInfo.bindTexture(this.client.textureManager);
-            ts.start();
+            mapInfo.bindTexture(this.client.textures);
+            ts.begin();
             ts.color(16777215);
-            ts.vertex(iconX, iconY + iconHeight, 0.0D, 0.0D, 1.0D);
-            ts.vertex(iconX + iconWidth, iconY + iconHeight, 0.0D, 1.0D, 1.0D);
-            ts.vertex(iconX + iconWidth, iconY, 0.0D, 1.0D, 0.0D);
-            ts.vertex(iconX, iconY, 0.0D, 0.0D, 0.0D);
-            ts.tessellate();
+            ts.vertexUV(iconX, iconY + iconHeight, 0.0D, 0.0D, 1.0D);
+            ts.vertexUV(iconX + iconWidth, iconY + iconHeight, 0.0D, 1.0D, 1.0D);
+            ts.vertexUV(iconX + iconWidth, iconY, 0.0D, 1.0D, 0.0D);
+            ts.vertexUV(iconX, iconY, 0.0D, 0.0D, 0.0D);
+            ts.end();
 
             int textY = iconY;
             int textX = iconX + iconWidth;

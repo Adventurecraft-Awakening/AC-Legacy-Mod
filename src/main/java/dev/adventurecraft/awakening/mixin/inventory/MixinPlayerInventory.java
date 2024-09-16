@@ -10,11 +10,11 @@ import dev.adventurecraft.awakening.extension.item.ExArmorItem;
 import dev.adventurecraft.awakening.extension.item.ExItemStack;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.PlayerInventory;
-import net.minecraft.item.ArmorItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ArmorItem;
+import net.minecraft.world.item.Item;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -25,18 +25,18 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.LinkedList;
 import java.util.List;
 
-@Mixin(PlayerInventory.class)
+@Mixin(Inventory.class)
 public abstract class MixinPlayerInventory implements ExPlayerInventory {
 
     @Shadow
-    public ItemStack[] main;
+    public ItemInstance[] main;
     @Shadow
     public int selectedHotBarSlot;
 
     @Shadow
-    public PlayerEntity player;
+    public Player player;
     @Shadow
-    public ItemStack[] armor;
+    public ItemInstance[] armor;
 
     @Shadow
     protected abstract int getFirstEmptySlotIndex();
@@ -45,7 +45,7 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
     public abstract int getSlotWithItem(int i);
 
     @Shadow
-    protected abstract int mergeStacks(ItemStack arg);
+    protected abstract int mergeStacks(ItemInstance arg);
 
     public int offhandItem = 1;
     //public int[] consumeInventory = new int[36];
@@ -60,7 +60,7 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
         this.offhandItem = value;
     }
 
-    public ItemStack getOffhandItemStack() {
+    public ItemInstance getOffhandItemStack() {
         return this.main[this.offhandItem];
     }
 
@@ -97,14 +97,14 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
         }
     }
 
-    private void onItemAddToSlot(int slot, ItemStack stack) {
-        if (Item.byId[stack.itemId] instanceof AC_ISlotCallbackItem slotCallbackItem) {
+    private void onItemAddToSlot(int slot, ItemInstance stack) {
+        if (Item.items[stack.id] instanceof AC_ISlotCallbackItem slotCallbackItem) {
             slotCallbackItem.onAddToSlot(this.player, slot, stack);
         }
     }
 
-    private void onItemRemovedFromSlot(int slot, ItemStack stack) {
-        if (Item.byId[stack.itemId] instanceof AC_ISlotCallbackItem slotCallbackItem) {
+    private void onItemRemovedFromSlot(int slot, ItemInstance stack) {
+        if (Item.items[stack.id] instanceof AC_ISlotCallbackItem slotCallbackItem) {
             slotCallbackItem.onRemovedFromSlot(this.player, slot, stack);
         }
     }
@@ -117,7 +117,7 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
             shift = At.Shift.AFTER,
             ordinal = 0))
     private void onAddOnMerge(
-        ItemStack stack,
+        ItemInstance stack,
         CallbackInfoReturnable<Integer> cir,
         @Local(ordinal = 2) int slot) {
         this.onItemAddToSlot(slot, stack);
@@ -126,11 +126,11 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
     @Overwrite
     public void tickInventory() {
         for (int slot = 0; slot < this.main.length; ++slot) {
-            ItemStack stack = this.main[slot];
+            ItemInstance stack = this.main[slot];
             if (stack == null) {
                 continue;
             }
-            stack.tick(this.player.world, this.player, slot, this.selectedHotBarSlot == slot);
+            stack.inventoryTick(this.player.level, this.player, slot, this.selectedHotBarSlot == slot);
 
             var exItem = (ExItemStack) stack;
             if (exItem.getTimeLeft() > 0) {
@@ -140,8 +140,8 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
             if ((slot == this.selectedHotBarSlot || slot == this.offhandItem) &&
                 exItem.getTimeLeft() == 0 &&
                 exItem.getReloading()) {
-                if (Item.byId[stack.itemId] instanceof AC_IItemReload itemReload) {
-                    itemReload.reload(stack, this.player.world, this.player);
+                if (Item.items[stack.id] instanceof AC_IItemReload itemReload) {
+                    itemReload.reload(stack, this.player.level, this.player);
                 }
             }
         }
@@ -154,7 +154,7 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
             return false;
         }
 
-        ItemStack stack = this.main[slot];
+        ItemInstance stack = this.main[slot];
         if (--stack.count == 0) {
             this.main[slot] = null;
             this.onItemRemovedFromSlot(slot, stack);
@@ -164,25 +164,25 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
     }
 
     @Overwrite
-    public boolean addStack(ItemStack stack) {
+    public boolean addStack(ItemInstance stack) {
         var exPlayer = (ExPlayerEntity) this.player;
         if (stack.count > 0) {
-            if (stack.itemId == AC_Items.heart.id) {
+            if (stack.id == AC_Items.heart.id) {
                 int heal = stack.count * 4;
                 stack.count = 0;
 
-                this.player.addHealth(heal);
+                this.player.heal(heal);
                 return true;
             }
-            if (stack.itemId == AC_Items.heartContainer.id) {
+            if (stack.id == AC_Items.heartContainer.id) {
                 int extraHealth = stack.count * 4;
                 stack.count = 0;
 
                 exPlayer.setMaxHealth(exPlayer.getMaxHealth() + extraHealth);
-                this.player.addHealth(exPlayer.getMaxHealth());
+                this.player.heal(exPlayer.getMaxHealth());
                 return true;
             }
-            if (stack.itemId == AC_Items.heartPiece.id) {
+            if (stack.id == AC_Items.heartPiece.id) {
                 int pieces = exPlayer.getHeartPiecesCount() + stack.count;
                 stack.count = 0;
 
@@ -191,7 +191,7 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
 
                 if (extraHearts > 0) {
                     exPlayer.setMaxHealth(exPlayer.getMaxHealth() + extraHearts * 4);
-                    this.player.addHealth(exPlayer.getMaxHealth());
+                    this.player.heal(exPlayer.getMaxHealth());
                 }
                 return true;
             }
@@ -207,7 +207,7 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
         int emptySlot = this.getFirstEmptySlotIndex();
         if (emptySlot >= 0) {
             this.main[emptySlot] = stack.copy();
-            this.main[emptySlot].cooldown = 5;
+            this.main[emptySlot].popTime = 5;
             stack.count = 0;
             this.onItemAddToSlot(emptySlot, stack);
             return true;
@@ -217,15 +217,15 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
     }
 
     @Overwrite
-    public ItemStack takeInventoryItem(int slot, int count) {
+    public ItemInstance takeInventoryItem(int slot, int count) {
         int originalSlot = slot;
-        ItemStack[] stacks = this.main;
+        ItemInstance[] stacks = this.main;
         if (slot >= this.main.length) {
             stacks = this.armor;
             slot -= this.main.length;
         }
 
-        ItemStack stack = stacks[slot];
+        ItemInstance stack = stacks[slot];
         if (stack == null) {
             return null;
         }
@@ -234,7 +234,7 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
             stacks[slot] = null;
             this.onItemRemovedFromSlot(originalSlot, stack);
         } else {
-            stack = stack.split(count);
+            stack = stack.shrink(count);
             if (stack.count == 0) {
                 stacks[slot] = null;
                 onItemRemovedFromSlot(originalSlot, stack);
@@ -244,15 +244,15 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
     }
 
     @Overwrite
-    public void setInventoryItem(int slot, ItemStack stack) {
+    public void setInventoryItem(int slot, ItemInstance stack) {
         int originalSlot = slot;
-        ItemStack[] stackArray = this.main;
+        ItemInstance[] stackArray = this.main;
         if (slot >= stackArray.length) {
             slot -= stackArray.length;
             stackArray = this.armor;
         }
 
-        ItemStack originalStack = stackArray[slot];
+        ItemInstance originalStack = stackArray[slot];
         stackArray[slot] = stack;
         if (originalStack != null) {
             this.onItemRemovedFromSlot(originalSlot, originalStack);
@@ -269,10 +269,10 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
         int remaining = 0;
         int durability = 0;
 
-        for (ItemStack item : this.armor) {
+        for (ItemInstance item : this.armor) {
             if (item != null && item.getItem() instanceof ArmorItem) {
-                int itemDurability = item.getDurability();
-                int itemDamage = item.getDamage();
+                int itemDurability = item.getMaxDamage();
+                int itemDamage = item.getDamageValue();
                 int itemRemaining = itemDurability - itemDamage;
                 remaining += itemRemaining;
                 durability += itemDurability;
@@ -290,11 +290,11 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
     @Overwrite
     public void damageArmor(int damage) {
         for (int slot = 0; slot < this.armor.length; ++slot) {
-            ItemStack stack = this.armor[slot];
+            ItemInstance stack = this.armor[slot];
             if (stack != null && stack.getItem() instanceof ArmorItem) {
-                stack.applyDamage(damage, this.player);
+                stack.hurtAndBreak(damage, this.player);
                 if (stack.count == 0) {
-                    stack.unusedEmptyMethod1(this.player);
+                    stack.snap(this.player);
                     this.armor[slot] = null;
                     this.onItemRemovedFromSlot(slot + this.main.length, stack);
                 }
@@ -305,18 +305,18 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
     @Overwrite
     public void dropInventory() {
         for (int slot = 0; slot < this.main.length; ++slot) {
-            ItemStack stack = this.main[slot];
+            ItemInstance stack = this.main[slot];
             if (stack != null) {
-                this.player.dropItem(stack, true);
+                this.player.drop(stack, true);
                 this.main[slot] = null;
                 this.onItemRemovedFromSlot(slot, stack);
             }
         }
 
         for (int slot = 0; slot < this.armor.length; ++slot) {
-            ItemStack stack = this.armor[slot];
+            ItemInstance stack = this.armor[slot];
             if (stack != null) {
-                this.player.dropItem(stack, true);
+                this.player.drop(stack, true);
                 this.armor[slot] = null;
                 this.onItemRemovedFromSlot(slot + this.main.length, stack);
             }
@@ -328,15 +328,15 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
         int remaining = count;
         List<Integer> slots = new LinkedList<>();
         for(int i = 0; i < this.main.length; i++) {
-            ItemStack itemStack = this.main[i];
+            ItemInstance itemStack = this.main[i];
 
             if (itemStack == null) {
                 continue;
             }
-            if (itemStack.itemId != id){
+            if (itemStack.id != id){
                 continue;
             }
-            if(itemStack.getMeta() != meta){
+            if(itemStack.getAuxValue() != meta){
                 continue;
             }
             slots.add(i);
@@ -350,7 +350,7 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
             return false;
         }
         for(int slot : slots) {
-            ItemStack itemStack = this.main[slot];
+            ItemInstance itemStack = this.main[slot];
 
             if (itemStack.count > count) {
                 itemStack.count -= count;

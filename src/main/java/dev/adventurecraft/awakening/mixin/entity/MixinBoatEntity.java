@@ -1,10 +1,10 @@
 package dev.adventurecraft.awakening.mixin.entity;
 
-import net.minecraft.entity.BoatEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.item.Item;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.Boat;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -12,17 +12,17 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(BoatEntity.class)
+@Mixin(Boat.class)
 public abstract class MixinBoatEntity extends Entity {
 
-    public MixinBoatEntity(World arg) {
+    public MixinBoatEntity(Level arg) {
         super(arg);
     }
 
     @Redirect(method = "damage", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/entity/BoatEntity;dropItem(IIF)Lnet/minecraft/entity/ItemEntity;"))
-    private ItemEntity disableDropItemOnDamage(BoatEntity instance, int var1, int var2, float var3) {
+    private ItemEntity disableDropItemOnDamage(Boat instance, int var1, int var2, float var3) {
         return null;
     }
 
@@ -37,7 +37,7 @@ public abstract class MixinBoatEntity extends Entity {
     @Redirect(method = "tick", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/entity/BoatEntity;dropItem(IIF)Lnet/minecraft/entity/ItemEntity;"))
-    private ItemEntity disableDropItemOnTick(BoatEntity instance, int var1, int var2, float var3) {
+    private ItemEntity disableDropItemOnTick(Boat instance, int var1, int var2, float var3) {
         return null;
     }
 
@@ -50,6 +50,6 @@ public abstract class MixinBoatEntity extends Entity {
     }
 
     private void dropBoatItem() {
-        this.dropItem(Item.BOAT.id, 1, 0.0F);
+        this.spawnAtLocation(Item.BOAT.id, 1, 0.0F);
     }
 }

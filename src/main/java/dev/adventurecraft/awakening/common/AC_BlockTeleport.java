@@ -1,40 +1,39 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.block.BlockWithEntity;
-import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.BlockEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.AxixAlignedBoundingBox;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.World;
-
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelSource;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.tile.TileEntityTile;
+import net.minecraft.world.level.tile.entity.TileEntity;
+import net.minecraft.world.phys.AABB;
 import java.util.List;
 
-public class AC_BlockTeleport extends BlockWithEntity implements AC_ITriggerBlock {
+public class AC_BlockTeleport extends TileEntityTile implements AC_ITriggerBlock {
 
     protected AC_BlockTeleport(int var1, int var2) {
         super(var1, var2, Material.AIR);
     }
 
     @Override
-    protected BlockEntity createBlockEntity() {
+    protected TileEntity newTileEntity() {
         return new AC_TileEntityTeleport();
     }
 
     @Override
-    public boolean isFullOpaque() {
+    public boolean isSolidRender() {
         return false;
     }
 
     @Override
-    public AxixAlignedBoundingBox getCollisionShape(World world, int x, int y, int z) {
+    public AABB getAABB(Level world, int x, int y, int z) {
         return null;
     }
 
     @Override
-    public boolean shouldRender(BlockView view, int x, int y, int z) {
+    public boolean shouldRender(LevelSource view, int x, int y, int z) {
         return AC_DebugMode.active;
     }
 
@@ -44,8 +43,8 @@ public class AC_BlockTeleport extends BlockWithEntity implements AC_ITriggerBloc
     }
 
     @Override
-    public void onTriggerActivated(World world, int x, int y, int z) {
-        var tileEntity = (AC_TileEntityTeleport) world.getBlockEntity(x, y, z);
+    public void onTriggerActivated(Level world, int x, int y, int z) {
+        var tileEntity = (AC_TileEntityTeleport) world.getTileEntity(x, y, z);
         if (!tileEntity.hasPosition) {
             return;
         }
@@ -55,31 +54,31 @@ public class AC_BlockTeleport extends BlockWithEntity implements AC_ITriggerBloc
             ++targetY;
         }
 
-        for (PlayerEntity player : (List<PlayerEntity>) world.players) {
-            player.setPosition((double) tileEntity.x + 0.5D, targetY, (double) tileEntity.z + 0.5D);
+        for (Player player : (List<Player>) world.players) {
+            player.setPos((double) tileEntity.x + 0.5D, targetY, (double) tileEntity.z + 0.5D);
         }
     }
 
     @Override
-    public void onTriggerDeactivated(World world, int x, int y, int z) {
+    public void onTriggerDeactivated(Level world, int x, int y, int z) {
     }
 
     @Override
-    public boolean isCollidable() {
+    public boolean mayPick() {
         return AC_DebugMode.active;
     }
 
     @Override
-    public boolean canUse(World world, int x, int y, int z, PlayerEntity player) {
+    public boolean use(Level world, int x, int y, int z, Player player) {
         if (AC_DebugMode.active) {
-            ItemStack heldItem = player.getHeldItem();
-            if (heldItem != null && heldItem.itemId == AC_Items.cursor.id) {
-                var entity = (AC_TileEntityTeleport) world.getBlockEntity(x, y, z);
+            ItemInstance heldItem = player.getSelectedItem();
+            if (heldItem != null && heldItem.id == AC_Items.cursor.id) {
+                var entity = (AC_TileEntityTeleport) world.getTileEntity(x, y, z);
                 entity.x = AC_ItemCursor.minX;
                 entity.y = AC_ItemCursor.minY;
                 entity.z = AC_ItemCursor.minZ;
                 entity.hasPosition = true;
-                Minecraft.instance.overlay.addChatMessage(String.format("Setting Teleport (%d, %d, %d)", entity.x, entity.y, entity.z));
+                Minecraft.instance.gui.addMessage(String.format("Setting Teleport (%d, %d, %d)", entity.x, entity.y, entity.z));
                 return true;
             }
         }

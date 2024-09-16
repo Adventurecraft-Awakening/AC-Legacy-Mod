@@ -1,12 +1,12 @@
 package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.block.ExBlock;
-import net.minecraft.block.Block;
-import net.minecraft.client.render.entity.block.BlockEntityRenderer;
-import net.minecraft.entity.BlockEntity;
+import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
+import net.minecraft.world.level.tile.Tile;
+import net.minecraft.world.level.tile.entity.TileEntity;
 import org.lwjgl.opengl.GL11;
 
-public class AC_TileEntityMinMaxRenderer extends BlockEntityRenderer {
+public class AC_TileEntityMinMaxRenderer extends TileEntityRenderer {
     float r;
     float g;
     float b;
@@ -32,7 +32,7 @@ public class AC_TileEntityMinMaxRenderer extends BlockEntityRenderer {
             for (int var9 = var1.minX; var9 <= var1.maxX; ++var9) {
                 for (int var10 = var1.minY; var10 <= var1.maxY; ++var10) {
                     for (int var11 = var1.minZ; var11 <= var1.maxZ; ++var11) {
-                        Block var12 = Block.BY_ID[var1.world.getBlockId(var9, var10, var11)];
+                        Tile var12 = Tile.tiles[var1.level.getTile(var9, var10, var11)];
                         if (var12 != null && ((ExBlock) var12).canBeTriggered()) {
                             GL11.glColor3f(0.0F, 0.0F, 0.0F);
                             GL11.glVertex3f(0.0F, 0.0F, 0.0F);
@@ -52,7 +52,7 @@ public class AC_TileEntityMinMaxRenderer extends BlockEntityRenderer {
         }
     }
 
-    public void render(BlockEntity var1, double var2, double var4, double var6, float var8) {
+    public void render(TileEntity var1, double var2, double var4, double var6, float var8) {
         this.render((AC_TileEntityMinMax) var1, var2, var4, var6, var8);
     }
 }

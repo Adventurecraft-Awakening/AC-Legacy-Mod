@@ -3,8 +3,8 @@ package dev.adventurecraft.awakening.script;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
-import net.minecraft.world.World;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.level.Level;
 import org.mozilla.javascript.*;
 
 import java.io.*;
@@ -37,7 +37,7 @@ public class Script {
     LinkedList<ScriptContinuation> removeMe = new LinkedList<>();
     static boolean shutterSet = false;
 
-    public Script(World var1) {
+    public Script(Level var1) {
         this.cx.setLanguageVersion(Context.VERSION_ES6);
         this.cx.setOptimizationLevel(-1);
         if (!shutterSet) {
@@ -63,13 +63,13 @@ public class Script {
         this.world = new ScriptWorld(var1);
         this.chat = new ScriptChat();
         this.weather = new ScriptWeather(var1);
-        this.effect = new ScriptEffect(var1, Minecraft.instance.worldRenderer);
-        this.particle = new ScriptParticle(Minecraft.instance.worldRenderer);
-        this.sound = new ScriptSound(Minecraft.instance.soundHelper);
+        this.effect = new ScriptEffect(var1, Minecraft.instance.levelRenderer);
+        this.particle = new ScriptParticle(Minecraft.instance.levelRenderer);
+        this.sound = new ScriptSound(Minecraft.instance.soundEngine);
         this.ui = new ScriptUI();
         this.script = new ScriptScript(var1);
         this.keyboard = new ScriptKeyboard(var1, Minecraft.instance.options, this.getNewScope());
-        this.renderer = new ScriptRenderer(Minecraft.instance.worldRenderer);
+        this.renderer = new ScriptRenderer(Minecraft.instance.levelRenderer);
 
         this.addObject("time", this.time);
         this.addObject("world", this.world);
@@ -79,7 +79,7 @@ public class Script {
         this.addObject("particle", this.particle);
         this.addObject("sound", this.sound);
         this.addObject("ui", this.ui);
-        this.addObject("screen", ((ExInGameHud) Minecraft.instance.overlay).getScriptUI());
+        this.addObject("screen", ((ExInGameHud) Minecraft.instance.gui).getScriptUI());
         this.addObject("script", this.script);
         this.addObject("keyboard", this.keyboard);
         this.addObject("hitEntity", null);
@@ -114,7 +114,7 @@ public class Script {
     }
     */
 
-    public void initPlayer(AbstractClientPlayerEntity player) {
+    public void initPlayer(LocalPlayer player) {
         this.player = new ScriptEntityPlayer(player);
         Object tmp = Context.javaToJS(this.player, this.globalScope);
         ScriptableObject.putProperty(this.globalScope, "player", tmp);
@@ -135,7 +135,7 @@ public class Script {
         try {
             return this.cx.compileString(sourceCode, sourceName, 1, null);
         } catch (Exception e) {
-            Minecraft.instance.overlay.addChatMessage("JS Compile: " + e.getMessage());
+            Minecraft.instance.gui.addMessage("JS Compile: " + e.getMessage());
             return null;
         }
     }
@@ -218,7 +218,7 @@ public class Script {
 
     private void printRhinoException(RhinoException ex) {
         String message = ex.getMessage();
-        Minecraft.instance.overlay.addChatMessage("JS: " + message);
+        Minecraft.instance.gui.addMessage("JS: " + message);
 
         Exception logEx = ACMod.JS_LOGGER.isTraceEnabled() ? ex : null;
         ACMod.JS_LOGGER.warn("{}\n{}", message, ex.getScriptStackTrace(), logEx);

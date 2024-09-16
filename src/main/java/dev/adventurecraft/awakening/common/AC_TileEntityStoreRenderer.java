@@ -2,32 +2,32 @@ package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.client.render.entity.ExItemRenderer;
-import net.minecraft.block.Block;
-import net.minecraft.client.render.entity.EntityRenderDispatcher;
-import net.minecraft.client.render.entity.ItemRenderer;
-import net.minecraft.client.render.entity.block.BlockEntityRenderer;
-import net.minecraft.entity.BlockEntity;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.item.ItemStack;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.level.tile.Tile;
+import net.minecraft.world.level.tile.entity.TileEntity;
 import org.lwjgl.opengl.GL11;
 
-public class AC_TileEntityStoreRenderer extends BlockEntityRenderer {
+public class AC_TileEntityStoreRenderer extends TileEntityRenderer {
 
-    static ItemStack item = new ItemStack(0, 0, 0);
+    static ItemInstance item = new ItemInstance(0, 0, 0);
     static ItemEntity eItem = new ItemEntity(null, 0.0D, 0.0D, 0.0D, item);
     static ItemRenderer renderItem = new ItemRenderer();
 
     public AC_TileEntityStoreRenderer() {
-        renderItem.setDispatcher(EntityRenderDispatcher.INSTANCE);
+        renderItem.init(EntityRenderDispatcher.INSTANCE);
     }
 
     public void renderTileEntityStore(AC_TileEntityStore tileEntity, double x, double y, double z, float deltaTime) {
         if (tileEntity.buySupplyLeft != 0 && tileEntity.buyItemID != 0) {
-            item.itemId = tileEntity.buyItemID;
+            item.id = tileEntity.buyItemID;
             item.count = tileEntity.buyItemAmount;
-            item.setMeta(tileEntity.buyItemDamage);
-            eItem.world = tileEntity.world;
-            eItem.setPosition(tileEntity.x, tileEntity.y, tileEntity.z);
+            item.setDamage(tileEntity.buyItemDamage);
+            eItem.level = tileEntity.level;
+            eItem.setPos(tileEntity.x, tileEntity.y, tileEntity.z);
             renderItem.render(eItem, x + 0.5D, y + 0.125D, z + 0.5D, 0.0F, 0.0F);
         }
 
@@ -45,7 +45,7 @@ public class AC_TileEntityStoreRenderer extends BlockEntityRenderer {
             for (int bX = tileEntity.tradeTrigger.minX; bX <= tileEntity.tradeTrigger.maxX; ++bX) {
                 for (int bY = tileEntity.tradeTrigger.minY; bY <= tileEntity.tradeTrigger.maxY; ++bY) {
                     for (int bZ = tileEntity.tradeTrigger.minZ; bZ <= tileEntity.tradeTrigger.maxZ; ++bZ) {
-                        Block block = Block.BY_ID[tileEntity.world.getBlockId(bX, bY, bZ)];
+                        Tile block = Tile.tiles[tileEntity.level.getTile(bX, bY, bZ)];
                         if (block != null && ((ExBlock) block).canBeTriggered()) {
                             GL11.glColor3f(0.0F, 0.0F, 0.0F);
                             GL11.glVertex3f(0.0F, 0.0F, 0.0F);
@@ -65,7 +65,7 @@ public class AC_TileEntityStoreRenderer extends BlockEntityRenderer {
         }
     }
 
-    public void render(BlockEntity entity, double x, double y, double z, float deltaTime) {
+    public void render(TileEntity entity, double x, double y, double z, float deltaTime) {
         this.renderTileEntityStore((AC_TileEntityStore) entity, x, y, z, deltaTime);
     }
 

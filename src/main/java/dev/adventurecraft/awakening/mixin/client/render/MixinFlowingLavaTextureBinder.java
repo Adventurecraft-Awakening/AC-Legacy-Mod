@@ -2,15 +2,15 @@ package dev.adventurecraft.awakening.mixin.client.render;
 
 import dev.adventurecraft.awakening.common.Vec2;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import net.minecraft.client.render.FlowingLavaTextureBinder;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 import java.awt.image.BufferedImage;
+import net.minecraft.client.renderer.ptexture.LavaTexture;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.Level;
 
-@Mixin(FlowingLavaTextureBinder.class)
+@Mixin(LavaTexture.class)
 public class MixinFlowingLavaTextureBinder extends MixinTextureBinder {
 
     @Shadow
@@ -114,8 +114,8 @@ public class MixinFlowingLavaTextureBinder extends MixinTextureBinder {
             for (var8 = 0; var8 < var2; ++var8) {
                 for (var9 = 0; var9 < var3; ++var9) {
                     var10 = 0.0F;
-                    var11 = (int) (MathHelper.sin((float) var9 * 3.141593F * 2.0F / (float) var2) * 1.2F);
-                    var12 = (int) (MathHelper.sin((float) var8 * 3.141593F * 2.0F / (float) var3) * 1.2F);
+                    var11 = (int) (Mth.sin((float) var9 * 3.141593F * 2.0F / (float) var2) * 1.2F);
+                    var12 = (int) (Mth.sin((float) var8 * 3.141593F * 2.0F / (float) var3) * 1.2F);
 
                     for (var13 = var8 - var5; var13 <= var8 + var5; ++var13) {
                         for (var14 = var9 - var6; var14 <= var9 + var6; ++var14) {
@@ -174,7 +174,7 @@ public class MixinFlowingLavaTextureBinder extends MixinTextureBinder {
     }
 
     @Override
-    public void loadImage(String name, World world) {
+    public void loadImage(String name, Level world) {
         if (name == null) {
             name = "/custom_lava_still.png";
         }

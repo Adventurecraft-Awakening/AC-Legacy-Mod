@@ -2,7 +2,7 @@ package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
-import net.minecraft.util.io.CompoundTag;
+import net.minecraft.nbt.CompoundTag;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 
@@ -30,9 +30,9 @@ public class ScopeTag {
         }
 
         if (value instanceof CharSequence string) {
-            tag.put("String_" + name, string.toString());
+            tag.putString("String_" + name, string.toString());
         } else if (value instanceof Boolean bool) {
-            tag.put("Boolean_" + name, bool);
+            tag.putBoolean("Boolean_" + name, bool);
         } else if (value instanceof Number number) {
             double doubleValue = number.doubleValue();
             float floatValue = number.floatValue();
@@ -41,15 +41,15 @@ public class ScopeTag {
             short shortValue = number.shortValue();
 
             if (doubleValue != (double) floatValue) {
-                tag.put("Double_" + name, doubleValue);
+                tag.putDouble("Double_" + name, doubleValue);
             } else if (floatValue != (float) longValue) {
-                tag.put("Float_" + name, floatValue);
+                tag.putFloat("Float_" + name, floatValue);
             } else if (longValue != (long) intValue) {
-                tag.put("Long_" + name, longValue);
+                tag.putLong("Long_" + name, longValue);
             } else if (intValue != shortValue) {
-                tag.put("Integer_" + name, intValue);
+                tag.putInt("Integer_" + name, intValue);
             } else {
-                tag.put("Short_" + name, shortValue);
+                tag.putShort("Short_" + name, shortValue);
             }
         } else if (Undefined.isUndefined(value)) {
             // Ignore

@@ -2,8 +2,8 @@ package dev.adventurecraft.awakening.mixin.client.render.entity.block;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
-import net.minecraft.block.Block;
-import net.minecraft.client.render.entity.block.PistonRenderer;
+import net.minecraft.client.renderer.tileentity.PistonRenderer;
+import net.minecraft.world.level.tile.Tile;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
@@ -14,7 +14,7 @@ public abstract class MixinPistonRenderer {
     @ModifyConstant(
         method = "render(Lnet/minecraft/entity/block/PistonBlockEntity;DDDF)V",
         constant = @Constant(stringValue = "/terrain.png"))
-    private String useTerrainTexture(String constant, @Local Block block) {
+    private String useTerrainTexture(String constant, @Local Tile block) {
         int texture = ((ExBlock) block).getTextureNum();
         String var11;
         if (texture == 0) {

@@ -1,19 +1,18 @@
 package dev.adventurecraft.awakening.mixin.entity.monster;
 
-import net.minecraft.entity.monster.CreeperEntity;
-import net.minecraft.entity.monster.MonsterEntity;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(CreeperEntity.class)
+@Mixin(Creeper.class)
 public abstract class MixinCreeperEntity extends MixinMonsterEntity {
 
     @Inject(method = "<init>", at = @At("TAIL"))
-    private void init(World var1, CallbackInfo ci) {
+    private void init(Level var1, CallbackInfo ci) {
         this.attackDamage = 3;
     }
 

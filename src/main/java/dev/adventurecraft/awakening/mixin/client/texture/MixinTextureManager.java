@@ -9,13 +9,13 @@ import dev.adventurecraft.awakening.extension.client.ExTextureManager;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import net.minecraft.client.MemoryTracker;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.TexturePackManager;
-import net.minecraft.client.options.GameOptions;
-import net.minecraft.client.render.TextureBinder;
-import net.minecraft.client.resource.TexturePack;
-import net.minecraft.client.texture.TextureManager;
-import net.minecraft.client.util.GLAllocationUtils;
+import net.minecraft.client.Options;
+import net.minecraft.client.renderer.Textures;
+import net.minecraft.client.renderer.ptexture.DynamicTexture;
+import net.minecraft.client.skins.TexturePack;
+import net.minecraft.client.skins.TexturePackRepository;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
@@ -44,7 +44,7 @@ import java.util.stream.Stream;
 // TODO: improve texture management and lookups.
 //       do to not use strings and IDs at random
 
-@Mixin(TextureManager.class)
+@Mixin(Textures.class)
 public abstract class MixinTextureManager implements ExTextureManager {
 
     private static final int GL_TEXTURE_MAX_ANISOTROPY_EXT = 0x84FE;
@@ -57,10 +57,10 @@ public abstract class MixinTextureManager implements ExTextureManager {
     public HashMap<String, Integer> textures;
 
     @Shadow
-    private GameOptions gameOptions;
+    private Options gameOptions;
 
     @Shadow
-    public TexturePackManager texturePackManager;
+    public TexturePackRepository texturePackManager;
 
     @Shadow
     private IntBuffer field_1249;
@@ -69,7 +69,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
     private ByteBuffer currentImageBuffer;
 
     @Shadow
-    private List<TextureBinder> textureBinders;
+    private List<DynamicTexture> textureBinders;
 
     @Shadow
     private boolean isClampTexture;
@@ -96,7 +96,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
     protected abstract BufferedImage method_1101(BufferedImage bufferedImage);
 
     @Inject(method = "<init>", at = @At("TAIL"))
-    private void init(TexturePackManager var1, GameOptions var2, CallbackInfo ci) {
+    private void init(TexturePackRepository var1, Options var2, CallbackInfo ci) {
         this.allocateImageData(256, 256);
     }
 
@@ -212,7 +212,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T extends TextureBinder> Stream<T> getTextureBinders(Class<T> type) {
+    public <T extends DynamicTexture> Stream<T> getTextureBinders(Class<T> type) {
         return this.textureBinders.stream()
             .filter(type::isInstance)
             .map(binder -> (T) binder);
@@ -220,7 +220,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
 
     @Override
     public BufferedImage getTextureImage(String name) throws IOException {
-        InputStream stream = this.texturePackManager.texturePack.getResourceAsStream(name);
+        InputStream stream = this.texturePackManager.selected.getResource(name);
         if (stream == null) {
             throw new FileNotFoundException(name);
         }
@@ -235,7 +235,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
         }
 
         this.field_1249.clear();
-        GLAllocationUtils.genTextures(this.field_1249);
+        MemoryTracker.genTextures(this.field_1249);
         int var4 = this.field_1249.get(0);
         this.loadTexture(var4, var1);
         this.textures.put(var1, var4);
@@ -247,7 +247,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
         String originalName = name;
 
         try {
-            TexturePack texPack = this.texturePackManager.texturePack;
+            TexturePack texPack = this.texturePackManager.selected;
             if (name.startsWith("##")) {
                 name = name.substring(2);
             } else if (name.startsWith("%clamp%")) {
@@ -259,12 +259,12 @@ public abstract class MixinTextureManager implements ExTextureManager {
             }
 
             BufferedImage image = null;
-            if (Minecraft.instance.world != null) {
-                image = ((ExWorld) Minecraft.instance.world).loadMapTexture(name);
+            if (Minecraft.instance.level != null) {
+                image = ((ExWorld) Minecraft.instance.level).loadMapTexture(name);
             }
 
             if (image == null) {
-                InputStream stream = texPack.getResourceAsStream(name);
+                InputStream stream = texPack.getResource(name);
                 if (stream == null) {
                     File file = new File(name);
                     if (file.exists()) {
@@ -362,13 +362,13 @@ public abstract class MixinTextureManager implements ExTextureManager {
     }
 
     @Overwrite
-    public void addTextureBinder(TextureBinder binder) {
+    public void addTextureBinder(DynamicTexture binder) {
         for (int i = 0; i < this.textureBinders.size(); ++i) {
-            TextureBinder b = this.textureBinders.get(i);
-            if (b.renderMode == binder.renderMode && b.index == binder.index) {
+            DynamicTexture b = this.textureBinders.get(i);
+            if (b.textureId == binder.textureId && b.tex == binder.tex) {
                 this.textureBinders.remove(i);
                 --i;
-                ACMod.LOGGER.info("Texture removed: {}, image: {}, index: {}", b, b.renderMode, b.index);
+                ACMod.LOGGER.info("Texture removed: {}, image: {}, index: {}", b, b.textureId, b.tex);
             }
         }
 
@@ -382,7 +382,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
         this.textureBinders.add(binder);
         this.expandBinderGrid(res, binder);
         ((AC_TextureBinder) binder).onTick(res);
-        ACMod.LOGGER.info("Texture registered: {}, image: {}, index: {}", binder, binder.renderMode, binder.index);
+        ACMod.LOGGER.info("Texture registered: {}, image: {}, index: {}", binder, binder.textureId, binder.tex);
     }
 
     private void generateMipMapsSub(int subX, int subY, int tileW, int tileH, ByteBuffer image, int texSize, boolean fastColor) {
@@ -437,8 +437,8 @@ public abstract class MixinTextureManager implements ExTextureManager {
         //this.terrainTextureId = this.getTextureId("/terrain.png");
         //this.guiItemsTextureId = this.getTextureId("/gui/items.png");
 
-        for (TextureBinder binder : this.textureBinders) {
-            binder.render3d = this.gameOptions.anaglyph3d;
+        for (DynamicTexture binder : this.textureBinders) {
+            binder.anaglyph3d = this.gameOptions.anaglyph3d;
 
             var acBinder = (AC_TextureBinder) binder;
             String texName = acBinder.getTexture();
@@ -453,36 +453,36 @@ public abstract class MixinTextureManager implements ExTextureManager {
             this.expandBinderGrid(texSize, binder);
             acBinder.onTick(texSize);
 
-            this.copyScaled(binder.grid, this.currentImageBuffer, tileW);
+            this.copyScaled(binder.pixels, this.currentImageBuffer, tileW);
 
-            binder.bindTexture((TextureManager) (Object) this);
+            binder.bind((Textures) (Object) this);
             boolean fastColor = this.scalesWithFastColor(binder);
 
-            for (int tileY = 0; tileY < binder.textureSize; ++tileY) {
-                for (int tileX = 0; tileX < binder.textureSize; ++tileX) {
-                    int subX = binder.index % 16 * tileW + tileX * tileW;
-                    int subY = binder.index / 16 * tileH + tileY * tileH;
+            for (int tileY = 0; tileY < binder.replicate; ++tileY) {
+                for (int tileX = 0; tileX < binder.replicate; ++tileX) {
+                    int subX = binder.tex % 16 * tileW + tileX * tileW;
+                    int subY = binder.tex / 16 * tileH + tileY * tileH;
                     GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, subX, subY, tileW, tileH, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, this.currentImageBuffer);
 
                     if (field_1245 && tileX == 0 && tileY == 0) {
-                        this.generateMipMapsSub(subX, subY, tileW, tileH, this.currentImageBuffer, binder.textureSize, fastColor);
+                        this.generateMipMapsSub(subX, subY, tileW, tileH, this.currentImageBuffer, binder.replicate, fastColor);
                     }
                 }
             }
         }
 
-        for (TextureBinder binder : this.textureBinders) {
-            if (binder.id <= 0) {
+        for (DynamicTexture binder : this.textureBinders) {
+            if (binder.copyTo <= 0) {
                 continue;
             }
 
             this.currentImageBuffer.clear();
-            this.currentImageBuffer.put(binder.grid);
-            this.currentImageBuffer.position(0).limit(binder.grid.length);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, binder.id);
+            this.currentImageBuffer.put(binder.pixels);
+            this.currentImageBuffer.position(0).limit(binder.pixels.length);
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, binder.copyTo);
             GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, 16, 16, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, this.currentImageBuffer);
             if (field_1245) {
-                this.generateMipMapsSub(0, 0, 16, 16, this.currentImageBuffer, binder.textureSize, false);
+                this.generateMipMapsSub(0, 0, 16, 16, this.currentImageBuffer, binder.replicate, false);
             }
         }
 
@@ -538,7 +538,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
         at = @At(
             value = "FIELD",
             target = "Lnet/minecraft/client/texture/TextureManager;textures:Ljava/util/HashMap;"))
-    private HashMap<String, Integer> useEmptySetForTextureReload(TextureManager instance) {
+    private HashMap<String, Integer> useEmptySetForTextureReload(Textures instance) {
         return new HashMap<>();
     }
 
@@ -564,14 +564,14 @@ public abstract class MixinTextureManager implements ExTextureManager {
         return this.textureDimensionsMap.get(var1);
     }
 
-    private void expandBinderGrid(Vec2 size, TextureBinder binder) {
+    private void expandBinderGrid(Vec2 size, DynamicTexture binder) {
         int tileW = size.x / 16;
         int tileH = size.y / 16;
         this.checkImageDataSize(size.x, size.y);
 
         int gridIndex = tileW * tileH * 4;
-        if (binder.grid == null || (binder.grid.length != 0 && binder.grid.length < gridIndex)) {
-            binder.grid = new byte[gridIndex];
+        if (binder.pixels == null || (binder.pixels.length != 0 && binder.pixels.length < gridIndex)) {
+            binder.pixels = new byte[gridIndex];
         }
     }
 
@@ -588,12 +588,12 @@ public abstract class MixinTextureManager implements ExTextureManager {
 
     private void allocateImageData(int width, int height) {
         int size = width * height * 4;
-        this.currentImageBuffer = GLAllocationUtils.allocateByteBuffer(size);
+        this.currentImageBuffer = MemoryTracker.createByteBuffer(size);
         ArrayList<ByteBuffer> mipBuffers = new ArrayList<>();
 
         for (int level = Math.max(width, height) / 2; level > 0; level /= 2) {
             int mipSize = level * level * 4;
-            ByteBuffer mipBuffer = GLAllocationUtils.allocateByteBuffer(mipSize);
+            ByteBuffer mipBuffer = MemoryTracker.createByteBuffer(mipSize);
             mipBuffers.add(mipBuffer);
         }
 
@@ -645,7 +645,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
         dstBuffer.position(0).limit(tileW * tileW * 4);
     }
 
-    private boolean scalesWithFastColor(TextureBinder binder) {
+    private boolean scalesWithFastColor(DynamicTexture binder) {
         return !binder.getClass().getName().equals("ModTextureStatic");
     }
 

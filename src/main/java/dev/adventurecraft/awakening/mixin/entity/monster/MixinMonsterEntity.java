@@ -2,15 +2,15 @@ package dev.adventurecraft.awakening.mixin.entity.monster;
 
 import dev.adventurecraft.awakening.extension.entity.monster.ExMonsterEntity;
 import dev.adventurecraft.awakening.mixin.entity.MixinMobEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.monster.MonsterEntity;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.monster.Monster;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(MonsterEntity.class)
+@Mixin(Monster.class)
 public abstract class MixinMonsterEntity extends MixinMobEntity implements ExMonsterEntity {
 
     @Shadow

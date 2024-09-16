@@ -1,12 +1,12 @@
 package dev.adventurecraft.awakening.mixin.entity.animal;
 
 import dev.adventurecraft.awakening.extension.entity.animal.ExWolfEntity;
-import net.minecraft.entity.animal.WolfEntity;
+import net.minecraft.world.entity.animal.Wolf;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
-@Mixin(WolfEntity.class)
+@Mixin(Wolf.class)
 public abstract class MixinWolfEntity implements ExWolfEntity {
 
     public int attackStrength = -1;

@@ -3,19 +3,19 @@ package dev.adventurecraft.awakening.common;
 import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
 import dev.adventurecraft.awakening.extension.entity.ai.pathing.ExEntityPath;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.pathing.EntityPath;
-import net.minecraft.entity.player.PlayerEntity;
 import dev.adventurecraft.awakening.script.EntityDescriptions;
 import dev.adventurecraft.awakening.script.ScopeTag;
 import dev.adventurecraft.awakening.script.ScriptEntity;
 import dev.adventurecraft.awakening.script.ScriptEntityDescription;
-import net.minecraft.util.io.AbstractTag;
-import net.minecraft.util.io.CompoundTag;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.phys.Vec3;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -33,7 +33,7 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
     public String onAttacked = "";
     public String onDeath = "";
     public String onInteraction = "";
-    private EntityPath path;
+    private Path path;
     private Entity pathToEntity;
     private AC_CoordBlock pathToVec;
     public float maxPathDistance = 64.0F;
@@ -41,7 +41,7 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
     private double prevDistToPoint = 999999.0D;
     AC_TileEntityNpcPath triggerOnPath = null;
 
-    public AC_EntityLivingScript(World world) {
+    public AC_EntityLivingScript(Level world) {
         super(world);
         this.scope = ((ExWorld) world).getScript().getNewScope();
         Object jsEntity = Context.javaToJS(ScriptEntity.getEntityClass(this), this.scope);
@@ -70,15 +70,15 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
             this.onInteraction = desc.onInteraction;
         }
 
-        this.width = desc.width;
-        this.height = desc.height;
-        this.texture = desc.texture;
-        this.movementSpeed = desc.moveSpeed;
+        this.bbWidth = desc.width;
+        this.bbHeight = desc.height;
+        this.textureName = desc.texture;
+        this.runSpeed = desc.moveSpeed;
         this.runCreatedScript();
     }
 
     @Override
-    protected void tickHandSwing() {
+    protected void serverAiStep() {
     }
 
     @Override
@@ -91,20 +91,20 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
             this.initDescTo = null;
         }
 
-        this.prevWidth = this.width;
-        this.prevHeight = this.height;
+        this.prevWidth = this.bbWidth;
+        this.prevHeight = this.bbHeight;
         this.continuePathing();
         this.runUpdateScript();
         super.tick();
     }
 
     @Override
-    public boolean damage(Entity entity, int damage) {
+    public boolean hurt(Entity entity, int damage) {
         Object jsEntity = Context.javaToJS(ScriptEntity.getEntityClass(entity), this.scope);
         ScriptableObject.putProperty(this.scope, "attackingEntity", jsEntity);
         Object jsDamage = Context.javaToJS(damage, this.scope);
         ScriptableObject.putProperty(this.scope, "attackingDamage", jsDamage);
-        return this.runOnAttackedScript() && super.damage(entity, damage);
+        return this.runOnAttackedScript() && super.hurt(entity, damage);
     }
 
     @Override
@@ -114,49 +114,49 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
     }
 
     @Override
-    public boolean interact(PlayerEntity entity) {
+    public boolean interact(Player entity) {
         return this.runOnInteractionScript();
     }
 
     @Override
-    public void writeAdditional(CompoundTag tag) {
-        super.writeAdditional(tag);
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
         if (this.descriptionName != null && !this.descriptionName.equals("")) {
-            tag.put("descriptionName", this.descriptionName);
+            tag.putString("descriptionName", this.descriptionName);
         }
 
         if (!this.onCreated.equals("")) {
-            tag.put("onCreated", this.onCreated);
+            tag.putString("onCreated", this.onCreated);
         }
 
         if (!this.onUpdate.equals("")) {
-            tag.put("onUpdate", this.onUpdate);
+            tag.putString("onUpdate", this.onUpdate);
         }
 
         if (!this.onPathReached.equals("")) {
-            tag.put("onPathReached", this.onPathReached);
+            tag.putString("onPathReached", this.onPathReached);
         }
 
         if (!this.onAttacked.equals("")) {
-            tag.put("onAttacked", this.onAttacked);
+            tag.putString("onAttacked", this.onAttacked);
         }
 
         if (!this.onDeath.equals("")) {
-            tag.put("onDeath", this.onDeath);
+            tag.putString("onDeath", this.onDeath);
         }
 
         if (!this.onInteraction.equals("")) {
-            tag.put("onInteraction", this.onInteraction);
+            tag.putString("onInteraction", this.onInteraction);
         }
 
-        if (tag.containsKey("scope")) {
+        if (tag.hasKey("scope")) {
             ScopeTag.loadScopeFromTag(this.scope, tag.getCompoundTag("scope"));
         }
     }
 
     @Override
-    public void readAdditional(CompoundTag tag) {
-        super.readAdditional(tag);
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
         this.initDescTo = tag.getString("descriptionName");
         this.onCreated = tag.getString("onCreated");
         this.onUpdate = tag.getString("onUpdate");
@@ -164,35 +164,35 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
         this.onAttacked = tag.getString("onAttacked");
         this.onDeath = tag.getString("onDeath");
         this.onInteraction = tag.getString("onInteraction");
-        tag.put("scope", (AbstractTag) ScopeTag.getTagFromScope(this.scope));
+        tag.putTag("scope", (Tag) ScopeTag.getTagFromScope(this.scope));
     }
 
     public void runCreatedScript() {
         if (!this.onCreated.equals("")) {
-            ((ExWorld) this.world).getScriptHandler().runScript(this.onCreated, this.scope);
+            ((ExWorld) this.level).getScriptHandler().runScript(this.onCreated, this.scope);
         }
     }
 
     private void runUpdateScript() {
         if (!this.onUpdate.equals("")) {
-            ((ExWorld) this.world).getScriptHandler().runScript(this.onUpdate, this.scope);
+            ((ExWorld) this.level).getScriptHandler().runScript(this.onUpdate, this.scope);
         }
     }
 
     private void runPathCompletedScript() {
         if (!this.onPathReached.equals("")) {
-            ((ExWorld) this.world).getScriptHandler().runScript(this.onPathReached, this.scope);
+            ((ExWorld) this.level).getScriptHandler().runScript(this.onPathReached, this.scope);
         }
     }
 
     private boolean runOnAttackedScript() {
         if (!this.onAttacked.equals("")) {
             // Save curscope temporary
-            Scriptable tempScope = ((ExWorld) this.world).getScript().getCurScope();
-            ((ExWorld) this.world).getScript().setNewCurScope(this.scope);
-            Object result = ((ExWorld) this.world).getScriptHandler().runScript(this.onAttacked, this.scope);
+            Scriptable tempScope = ((ExWorld) this.level).getScript().getCurScope();
+            ((ExWorld) this.level).getScript().setNewCurScope(this.scope);
+            Object result = ((ExWorld) this.level).getScriptHandler().runScript(this.onAttacked, this.scope);
             // Reset curScope afterwards! IMPORTANT for normal damage scripts
-            ((ExWorld) this.world).getScript().setNewCurScope(tempScope);
+            ((ExWorld) this.level).getScript().setNewCurScope(tempScope);
             return result instanceof Boolean b ? b : true;
         } else {
             return true;
@@ -201,13 +201,13 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
 
     private void runDeathScript() {
         if (!this.onDeath.equals("")) {
-            ((ExWorld) this.world).getScriptHandler().runScript(this.onDeath, this.scope);
+            ((ExWorld) this.level).getScriptHandler().runScript(this.onDeath, this.scope);
         }
     }
 
     private boolean runOnInteractionScript() {
         if (!this.onInteraction.equals("")) {
-            Object result = ((ExWorld) this.world).getScriptHandler().runScript(this.onInteraction, this.scope);
+            Object result = ((ExWorld) this.level).getScriptHandler().runScript(this.onInteraction, this.scope);
             return result instanceof Boolean b ? b : true;
         } else {
             return true;
@@ -221,8 +221,8 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
     public void pathToEntity(Entity entity) {
         this.pathToEntity = entity;
         this.pathToVec = null;
-        this.path = this.world.findPathTo(this, this.pathToEntity, this.maxPathDistance);
-        this.nextPathIn = this.world.rand.nextInt(40) + 60;
+        this.path = this.level.findPath(this, this.pathToEntity, this.maxPathDistance);
+        this.nextPathIn = this.level.random.nextInt(40) + 60;
         this.prevDistToPoint = 999999.0D;
         this.triggerOnPath = null;
     }
@@ -230,8 +230,8 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
     public void pathToPosition(int x, int y, int z) {
         this.pathToEntity = null;
         this.pathToVec = new AC_CoordBlock(x, y, z);
-        this.path = this.world.method_189(this, x, y, z, this.maxPathDistance);
-        this.nextPathIn = this.world.rand.nextInt(40) + 60;
+        this.path = this.level.findPath(this, x, y, z, this.maxPathDistance);
+        this.nextPathIn = this.level.random.nextInt(40) + 60;
         this.prevDistToPoint = 999999.0D;
         this.triggerOnPath = null;
     }
@@ -241,7 +241,7 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
         this.pathToVec = null;
         this.path = null;
         this.triggerOnPath = null;
-        this.forwardVelocity = 0.0F;
+        this.zza = 0.0F;
     }
 
     private void continuePathing() {
@@ -251,12 +251,12 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
 
         if (this.path == null || --this.nextPathIn <= 0 && this.pathToEntity != null && ((ExEntityPath) this.path).needNewPath(this.pathToEntity)) {
             if (this.pathToEntity != null) {
-                this.path = this.world.findPathTo(this, this.pathToEntity, this.maxPathDistance);
+                this.path = this.level.findPath(this, this.pathToEntity, this.maxPathDistance);
             } else if (this.pathToVec != null) {
-                this.path = this.world.method_189(this, this.pathToVec.x, this.pathToVec.y, this.pathToVec.z, this.maxPathDistance);
+                this.path = this.level.findPath(this, this.pathToVec.x, this.pathToVec.y, this.pathToVec.z, this.maxPathDistance);
             }
 
-            this.nextPathIn = this.world.rand.nextInt(40) + 10;
+            this.nextPathIn = this.level.random.nextInt(40) + 10;
             this.prevDistToPoint = 999999.0D;
         }
 
@@ -264,22 +264,22 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
             return;
         }
 
-        Vec3d point = this.path.method_2041(this);
-        this.forwardVelocity = 0.0F;
+        Vec3 point = this.path.current(this);
+        this.zza = 0.0F;
         this.jumping = false;
-        double dist = point.squareDistanceTo(this.x, point.y, this.z);
+        double dist = point.distanceToSqr(this.x, point.y, this.z);
         if (dist >= this.prevDistToPoint && this.nextPathIn > 5) {
-            this.nextPathIn = this.world.rand.nextInt(5) + 1;
+            this.nextPathIn = this.level.random.nextInt(5) + 1;
         }
 
         this.prevDistToPoint = dist;
 
-        double maxDist = (double) this.width * 1.1D;
+        double maxDist = (double) this.bbWidth * 1.1D;
         maxDist *= maxDist;
 
-        while (point != null && point.squareDistanceTo(this.x, point.y, this.z) < maxDist) {
-            this.path.method_2040();
-            if (this.path.method_2042()) {
+        while (point != null && point.distanceToSqr(this.x, point.y, this.z) < maxDist) {
+            this.path.next();
+            if (this.path.isDone()) {
                 point = null;
                 this.path = null;
                 this.runPathCompletedScript();
@@ -288,18 +288,18 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
                 }
                 return;
             }
-            point = this.path.method_2041(this);
+            point = this.path.current(this);
             this.prevDistToPoint = 999999.0D;
         }
 
         if (point != null) {
             double dX = point.x - this.x;
             double dZ = point.z - this.z;
-            double dY = point.y - (double) MathHelper.floor(this.boundingBox.minY + 0.5D);
+            double dY = point.y - (double) Mth.floor(this.bb.y0 + 0.5D);
             float newYaw = (float) (Math.atan2(dZ, dX) * 180.0D / (double) (float) Math.PI) - 90.0F;
-            float extraYaw = newYaw - this.yaw;
+            float extraYaw = newYaw - this.yRot;
 
-            this.forwardVelocity = this.movementSpeed;
+            this.zza = this.runSpeed;
             while (extraYaw < -180.0F) {
                 extraYaw += 360.0F;
             }
@@ -316,7 +316,7 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
                 extraYaw = -30.0F;
             }
 
-            this.yaw += extraYaw;
+            this.yRot += extraYaw;
             if (dY > 0.0D) {
                 this.jumping = true;
             }
@@ -324,7 +324,7 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
     }
 
     @Override
-    public EntityPath getCurrentPath() {
+    public Path getCurrentPath() {
         return this.path;
     }
 }

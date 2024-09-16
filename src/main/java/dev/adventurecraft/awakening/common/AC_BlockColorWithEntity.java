@@ -1,17 +1,17 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.block.BlockWithEntity;
-import net.minecraft.block.material.Material;
-import net.minecraft.world.BlockView;
+import net.minecraft.world.level.LevelSource;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.tile.TileEntityTile;
 
-public abstract class AC_BlockColorWithEntity extends BlockWithEntity implements AC_IBlockColor {
+public abstract class AC_BlockColorWithEntity extends TileEntityTile implements AC_IBlockColor {
 
     protected AC_BlockColorWithEntity(int i, int j, Material arg) {
         super(i, j, arg);
     }
 
     @Override
-    public int getColorMultiplier(BlockView view, int x, int y, int z) {
+    public int getFoliageColor(LevelSource view, int x, int y, int z) {
         int meta = this.getColorMeta(view, x, y, z);
         if (meta == 1) {
             meta = 16775065;

@@ -5,15 +5,15 @@ import dev.adventurecraft.awakening.common.AC_Version;
 import dev.adventurecraft.awakening.extension.client.sound.ExSoundHelper;
 import dev.adventurecraft.awakening.script.ScriptModel;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.SelectWorldScreen;
-import net.minecraft.client.gui.screen.menu.MultiplayerScreen;
-import net.minecraft.client.gui.screen.menu.OptionsScreen;
-import net.minecraft.client.gui.screen.menu.TexturePacksScreen;
-import net.minecraft.client.gui.screen.menu.TitleScreen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.resource.language.TranslationStorage;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.JoinMultiplayerScreen;
+import net.minecraft.client.gui.screens.OptionsScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.SelectWorldScreen;
+import net.minecraft.client.gui.screens.TexturePackSelectScreen;
+import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.locale.I18n;
+import net.minecraft.util.Mth;
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -29,51 +29,51 @@ public abstract class MixinTitleScreen extends Screen {
     private String splashMessage;
 
     @Shadow
-    private ButtonWidget multiplayerButton;
+    private Button multiplayerButton;
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(CallbackInfo ci) {
         ScriptModel.clearAll();
-        ((ExSoundHelper) Minecraft.instance.soundHelper).stopMusic();
+        ((ExSoundHelper) Minecraft.instance.soundEngine).stopMusic();
     }
 
     @Overwrite
-    public void initVanillaScreen() {
+    public void init() {
         this.splashMessage = "A Minecraft Total Conversion!";
-        TranslationStorage ts = TranslationStorage.getInstance();
+        I18n ts = I18n.getInstance();
         int y = this.height / 4 + 48;
-        this.buttons.add(new ButtonWidget(6, this.width / 2 - 100, y, "New Save"));
-        this.buttons.add(new ButtonWidget(1, this.width / 2 - 100, y + 22, "Load Save"));
-        this.buttons.add(new ButtonWidget(7, this.width / 2 - 100, y + 44, "Craft a Map"));
+        this.buttons.add(new Button(6, this.width / 2 - 100, y, "New Save"));
+        this.buttons.add(new Button(1, this.width / 2 - 100, y + 22, "Load Save"));
+        this.buttons.add(new Button(7, this.width / 2 - 100, y + 44, "Craft a Map"));
 
-        if (this.client.isApplet) {
-            this.buttons.add(new ButtonWidget(0, this.width / 2 - 100, y + 88, ts.translate("menu.options")));
+        if (this.minecraft.appletMode) {
+            this.buttons.add(new Button(0, this.width / 2 - 100, y + 88, ts.get("menu.options")));
         } else {
-            this.buttons.add(new ButtonWidget(0, this.width / 2 - 100, y + 88 + 11, 98, 20, ts.translate("menu.options")));
-            this.buttons.add(new ButtonWidget(4, this.width / 2 + 2, y + 88 + 11, 98, 20, ts.translate("menu.quit")));
+            this.buttons.add(new Button(0, this.width / 2 - 100, y + 88 + 11, 98, 20, ts.get("menu.options")));
+            this.buttons.add(new Button(4, this.width / 2 + 2, y + 88 + 11, 98, 20, ts.get("menu.quit")));
         }
 
-        if (this.client.session == null) {
+        if (this.minecraft.user == null) {
             this.multiplayerButton.active = false;
         }
     }
 
     @Overwrite
-    public void buttonClicked(ButtonWidget button) {
+    public void buttonClicked(Button button) {
         if (button.id == 0) {
-            this.client.openScreen(new OptionsScreen(this, this.client.options));
+            this.minecraft.setScreen(new OptionsScreen(this, this.minecraft.options));
         } else if (button.id == 1) {
-            this.client.openScreen(new SelectWorldScreen(this));
+            this.minecraft.setScreen(new SelectWorldScreen(this));
         } else if (button.id == 2) {
-            this.client.openScreen(new MultiplayerScreen(this));
+            this.minecraft.setScreen(new JoinMultiplayerScreen(this));
         } else if (button.id == 3) {
-            this.client.openScreen(new TexturePacksScreen(this));
+            this.minecraft.setScreen(new TexturePackSelectScreen(this));
         } else if (button.id == 4) {
-            this.client.scheduleStop();
+            this.minecraft.stop();
         } else if (button.id == 6) {
-            this.client.openScreen(new AC_GuiMapSelect(this, ""));
+            this.minecraft.setScreen(new AC_GuiMapSelect(this, ""));
         } else if (button.id == 7) {
-            this.client.openScreen(new AC_GuiMapSelect(this, null));
+            this.minecraft.setScreen(new AC_GuiMapSelect(this, null));
         }
     }
 
@@ -83,7 +83,7 @@ public abstract class MixinTitleScreen extends Screen {
 
         int x = this.width / 2 - 320 / 2;
         int y = 30;
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.client.textureManager.getTextureId("/acLogo.png"));
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.minecraft.textures.loadTexture("/acLogo.png"));
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
         this.blit(x, y , 0, 0, 256, 31);
         this.blit(x + 256, y, 0, 128, 64, 31);
@@ -91,16 +91,16 @@ public abstract class MixinTitleScreen extends Screen {
         GL11.glPushMatrix();
         GL11.glTranslatef((float) (this.width / 2 + 90), 70.0F, 0.0F);
         GL11.glRotatef(-20.0F, 0.0F, 0.0F, 1.0F);
-        float scale = 1.8F - MathHelper.abs(MathHelper.sin((float) (System.currentTimeMillis() % 1000L) / 1000.0F * 3.141593F * 2.0F) * 0.1F);
-        scale = scale * 100.0F / (float) (this.textRenderer.getTextWidth(this.splashMessage) + 32);
+        float scale = 1.8F - Mth.abs(Mth.sin((float) (System.currentTimeMillis() % 1000L) / 1000.0F * 3.141593F * 2.0F) * 0.1F);
+        scale = scale * 100.0F / (float) (this.font.width(this.splashMessage) + 32);
         GL11.glScalef(scale, scale, scale);
-        this.drawTextWithShadowCentred(this.textRenderer, this.splashMessage, 0, -8, 16776960);
+        this.drawCenteredString(this.font, this.splashMessage, 0, -8, 16776960);
         GL11.glPopMatrix();
 
-        this.drawTextWithShadow(this.textRenderer, AC_Version.version, 2, 2, 5263440);
+        this.drawString(this.font, AC_Version.version, 2, 2, 5263440);
 
         String copyrightText = "Copyright Mojang AB. Do not distribute.";
-        this.drawTextWithShadow(this.textRenderer, copyrightText, this.width - this.textRenderer.getTextWidth(copyrightText) - 2, this.height - 10, 16777215);
+        this.drawString(this.font, copyrightText, this.width - this.font.width(copyrightText) - 2, this.height - 10, 16777215);
 
         super.render(var1, var2, var3);
     }

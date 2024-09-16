@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.AxixAlignedBoundingBox;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.AABB;
 
 public class CollisionList {
 
@@ -14,14 +14,14 @@ public class CollisionList {
     public double maxZ;
     public double[] collisions;
 
-    public CollisionList(Entity entity, AxixAlignedBoundingBox aabb, double[] collisions) {
+    public CollisionList(Entity entity, AABB aabb, double[] collisions) {
         this.entity = entity;
-        this.minX = aabb.minX;
-        this.minY = aabb.minY;
-        this.minZ = aabb.minZ;
-        this.maxX = aabb.maxX;
-        this.maxY = aabb.maxY;
-        this.maxZ = aabb.maxZ;
+        this.minX = aabb.x0;
+        this.minY = aabb.y0;
+        this.minZ = aabb.z0;
+        this.maxX = aabb.x1;
+        this.maxY = aabb.y1;
+        this.maxZ = aabb.z1;
         this.collisions = collisions;
     }
 }

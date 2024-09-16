@@ -1,22 +1,22 @@
 package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
 
 public class AC_ItemHookshot extends Item {
 
     public AC_EntityHookshot mainHookshot = null;
     public AC_EntityHookshot offHookshot = null;
-    public ItemStack mainActiveHookshot = null;
-    public ItemStack offActiveHookshot = null;
-    public PlayerEntity player = null;
+    public ItemInstance mainActiveHookshot = null;
+    public ItemInstance offActiveHookshot = null;
+    public Player player = null;
 
     public AC_ItemHookshot(int var1) {
         super(var1);
-        this.setTexturePosition(3, 10);
+        this.setIcon(3, 10);
         this.maxStackSize = 1;
     }
 
@@ -36,15 +36,15 @@ public class AC_ItemHookshot extends Item {
         }
     }
 
-    public boolean shouldSpinWhenRendering() {
+    public boolean isMirroredArt() {
         return true;
     }
 
-    public int getTexturePosition(int var1) {
-        return var1 == 1 ? this.texturePosition + 1 : this.texturePosition;
+    public int getIcon(int var1) {
+        return var1 == 1 ? this.texture + 1 : this.texture;
     }
 
-    public ItemStack use(ItemStack stack, World world, PlayerEntity player) {
+    public ItemInstance use(ItemInstance stack, Level world, Player player) {
         boolean onMainHand;
         AC_EntityHookshot mainHook;
         AC_EntityHookshot offHook;
@@ -59,21 +59,21 @@ public class AC_ItemHookshot extends Item {
         }
 
         // The hook exists if there is a reference, it is not removed, and it is on the current world.
-        boolean mainHookExists = !(mainHook == null || mainHook.removed || mainHook.world != world);
-        boolean offHookExists = !(offHook == null || offHook.removed || offHook.world != world);
-        boolean playerIsSwimming = player.method_1335() || player.method_1393(); // In lava and water respectively.
+        boolean mainHookExists = !(mainHook == null || mainHook.removed || mainHook.level != world);
+        boolean offHookExists = !(offHook == null || offHook.removed || offHook.level != world);
+        boolean playerIsSwimming = player.isInLava() || player.checkInWater(); // In lava and water respectively.
         boolean playerInValidTerrain = (offHookExists && offHook.attachedToSurface) || player.onGround || playerIsSwimming;
 
         if (!mainHookExists && playerInValidTerrain) {
             mainHook = new AC_EntityHookshot(world, player, onMainHand, stack);
-            world.spawnEntity(mainHook);
-            player.swingHand();
+            world.addEntity(mainHook);
+            player.swing();
             if (onMainHand) {
                 this.mainActiveHookshot = stack;
-                this.mainActiveHookshot.setMeta(1);
+                this.mainActiveHookshot.setDamage(1);
             } else {
                 this.offActiveHookshot = stack;
-                this.offActiveHookshot.setMeta(1);
+                this.offActiveHookshot.setDamage(1);
             }
 
             this.player = player;
@@ -96,10 +96,10 @@ public class AC_ItemHookshot extends Item {
             entity.attachedToSurface = false;
             entity.entityGrabbed = null;
             if (entity == this.mainHookshot && this.mainActiveHookshot != null) {
-                this.mainActiveHookshot.setMeta(0);
+                this.mainActiveHookshot.setDamage(0);
                 this.mainActiveHookshot = null;
             } else if (this.offActiveHookshot != null) {
-                this.offActiveHookshot.setMeta(0);
+                this.offActiveHookshot.setDamage(0);
                 this.offActiveHookshot = null;
             }
         }

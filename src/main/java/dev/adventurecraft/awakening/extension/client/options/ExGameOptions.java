@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.extension.client.options;
 
 import dev.adventurecraft.awakening.client.options.ConnectedGrassOption;
-import net.minecraft.client.options.KeyBinding;
+import net.minecraft.client.KeyMapping;
 import org.lwjgl.opengl.GL11;
 
 public interface ExGameOptions {
@@ -106,7 +106,7 @@ public interface ExGameOptions {
 
     boolean ofAnimatedSmoke();
 
-    KeyBinding ofKeyBindZoom();
+    KeyMapping ofKeyBindZoom();
 
     boolean isGrass3d();
 

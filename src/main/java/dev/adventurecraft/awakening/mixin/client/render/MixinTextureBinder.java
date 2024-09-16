@@ -3,9 +3,6 @@ package dev.adventurecraft.awakening.mixin.client.render;
 import dev.adventurecraft.awakening.client.render.AC_TextureBinder;
 import dev.adventurecraft.awakening.common.Vec2;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import net.minecraft.client.render.TextureBinder;
-import net.minecraft.client.texture.TextureManager;
-import net.minecraft.world.World;
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -19,8 +16,11 @@ import java.awt.image.WritableRaster;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
+import net.minecraft.client.renderer.Textures;
+import net.minecraft.client.renderer.ptexture.DynamicTexture;
+import net.minecraft.world.level.Level;
 
-@Mixin(TextureBinder.class)
+@Mixin(DynamicTexture.class)
 public abstract class MixinTextureBinder implements AC_TextureBinder {
 
     @Shadow
@@ -58,8 +58,8 @@ public abstract class MixinTextureBinder implements AC_TextureBinder {
     }
 
     @Overwrite
-    public void bindTexture(TextureManager var1) {
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, var1.getTextureId(this.getTexture()));
+    public void bindTexture(Textures var1) {
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, var1.loadTexture(this.getTexture()));
     }
 
     @Override
@@ -99,7 +99,7 @@ public abstract class MixinTextureBinder implements AC_TextureBinder {
     }
 
     @Override
-    public void loadImage(String name, World world) {
+    public void loadImage(String name, Level world) {
         BufferedImage image = null;
         if (world instanceof ExWorld exWorld) {
             image = exWorld.loadMapTexture(name);

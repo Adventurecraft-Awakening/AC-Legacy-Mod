@@ -1,8 +1,6 @@
 package dev.adventurecraft.awakening.mixin.client.sound;
 
 import dev.adventurecraft.awakening.extension.client.sound.ExSoundMap;
-import net.minecraft.client.sound.SoundEntry;
-import net.minecraft.client.sound.SoundMap;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -13,21 +11,23 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.client.sounds.Sound;
+import net.minecraft.client.sounds.SoundRepository;
 
-@Mixin(SoundMap.class)
+@Mixin(SoundRepository.class)
 public abstract class MixinSoundMap implements ExSoundMap {
 
     @Shadow
-    private Map<String, List<SoundEntry>> idToSounds;
+    private Map<String, List<Sound>> idToSounds;
     @Shadow
-    private List<SoundEntry> soundList;
+    private List<Sound> soundList;
     @Shadow
     public int count;
     @Shadow
     public boolean isRandomSound;
 
     @Overwrite
-    public SoundEntry addSound(String name, File file) {
+    public Sound addSound(String name, File file) {
         try {
             URL url = file.toURI().toURL();
             return this.addSound(name, url);
@@ -38,7 +38,7 @@ public abstract class MixinSoundMap implements ExSoundMap {
     }
 
     @Override
-    public SoundEntry addSound(String name, URL url) {
+    public Sound addSound(String name, URL url) {
         String fileName = name.substring(0, name.indexOf(".")); // strip extension
 
         String id = fileName;
@@ -53,9 +53,9 @@ public abstract class MixinSoundMap implements ExSoundMap {
             this.idToSounds.put(id, new ArrayList<>());
         }
 
-        List<SoundEntry> entries = this.idToSounds.get(id);
-        for (SoundEntry entry : entries) {
-            String entryName = entry.soundName.substring(0, entry.soundName.indexOf(".")); // strip extension
+        List<Sound> entries = this.idToSounds.get(id);
+        for (Sound entry : entries) {
+            String entryName = entry.name.substring(0, entry.name.indexOf(".")); // strip extension
             if (fileName.equals(entryName)) {
                 entries.remove(entry);
                 this.soundList.remove(entry);
@@ -63,7 +63,7 @@ public abstract class MixinSoundMap implements ExSoundMap {
             }
         }
 
-        var newEntry = new SoundEntry(name, url);
+        var newEntry = new Sound(name, url);
         entries.add(newEntry);
         this.soundList.add(newEntry);
         ++this.count;

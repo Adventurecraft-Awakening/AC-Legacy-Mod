@@ -3,10 +3,10 @@ package dev.adventurecraft.awakening.mixin.util;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.extension.util.ExProgressListener;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.util.ScreenScaler;
-import net.minecraft.util.ProgressListenerError;
-import net.minecraft.util.ProgressListenerImpl;
+import net.minecraft.client.ProgressRenderer;
+import net.minecraft.client.ScreenSizeCalculator;
+import net.minecraft.client.StopGameException;
+import net.minecraft.client.renderer.Tesselator;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
@@ -18,7 +18,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(ProgressListenerImpl.class)
+@Mixin(ProgressRenderer.class)
 public abstract class MixinProgressListenerImpl implements ExProgressListener {
 
     @Shadow
@@ -74,7 +74,7 @@ public abstract class MixinProgressListenerImpl implements ExProgressListener {
             opcode = Opcodes.PUTFIELD,
             target = "Lnet/minecraft/util/ProgressListenerImpl;field_1717:J",
             ordinal = 1))
-    private void preventSwapDelayWrite(ProgressListenerImpl instance, long value) {
+    private void preventSwapDelayWrite(ProgressRenderer instance, long value) {
     }
 
     @Overwrite
@@ -87,28 +87,28 @@ public abstract class MixinProgressListenerImpl implements ExProgressListener {
             return;
         }
 
-        var screenScaler = new ScreenScaler(this.client.options, this.client.actualWidth, this.client.actualHeight);
-        int screenWidth = screenScaler.getScaledWidth();
-        int screenHeight = screenScaler.getScaledHeight();
+        var screenScaler = new ScreenSizeCalculator(this.client.options, this.client.width, this.client.height);
+        int screenWidth = screenScaler.getWidth();
+        int screenHeight = screenScaler.getHeight();
         GL11.glClear(256);
         GL11.glMatrixMode(5889);
         GL11.glLoadIdentity();
-        GL11.glOrtho(0.0, screenScaler.scaledWidth, screenScaler.scaledHeight, 0.0, 100.0, 300.0);
+        GL11.glOrtho(0.0, screenScaler.guiScaledWidth, screenScaler.guiScaledHeight, 0.0, 100.0, 300.0);
         GL11.glMatrixMode(5888);
         GL11.glLoadIdentity();
         GL11.glTranslatef(0.0f, 0.0f, -200.0f);
         GL11.glClear(16640);
-        Tessellator tessellator = Tessellator.INSTANCE;
-        int n3 = this.client.textureManager.getTextureId("/gui/background.png");
+        Tesselator tessellator = Tesselator.instance;
+        int n3 = this.client.textures.loadTexture("/gui/background.png");
         GL11.glBindTexture(3553, n3);
         float f = 32.0f;
-        tessellator.start();
+        tessellator.begin();
         tessellator.color(0x404040);
-        tessellator.vertex(0.0, screenHeight, 0.0, 0.0, (float) screenHeight / f);
-        tessellator.vertex(screenWidth, screenHeight, 0.0, (float) screenWidth / f, (float) screenHeight / f);
-        tessellator.vertex(screenWidth, 0.0, 0.0, (float) screenWidth / f, 0.0);
-        tessellator.vertex(0.0, 0.0, 0.0, 0.0, 0.0);
-        tessellator.tessellate();
+        tessellator.vertexUV(0.0, screenHeight, 0.0, 0.0, (float) screenHeight / f);
+        tessellator.vertexUV(screenWidth, screenHeight, 0.0, (float) screenWidth / f, (float) screenHeight / f);
+        tessellator.vertexUV(screenWidth, 0.0, 0.0, (float) screenWidth / f, 0.0);
+        tessellator.vertexUV(0.0, 0.0, 0.0, 0.0, 0.0);
+        tessellator.end();
         if (this.progressPercentage >= 0) {
             int barWidth = 200;
             int barHeight = 3;
@@ -116,32 +116,32 @@ public abstract class MixinProgressListenerImpl implements ExProgressListener {
             int barY = screenHeight / 2 + 16;
             GL11.glDisable(GL11.GL_TEXTURE_2D);
             GL11.glShadeModel(GL11.GL_SMOOTH);
-            tessellator.start();
+            tessellator.begin();
 
             tessellator.color(0x606060);
-            tessellator.addVertex(barX, barY, 0.0);
-            tessellator.addVertex(barX, barY + barHeight, 0.0);
-            tessellator.addVertex(barX + barWidth, barY + barHeight, 0.0);
-            tessellator.addVertex(barX + barWidth, barY, 0.0);
+            tessellator.vertex(barX, barY, 0.0);
+            tessellator.vertex(barX, barY + barHeight, 0.0);
+            tessellator.vertex(barX + barWidth, barY + barHeight, 0.0);
+            tessellator.vertex(barX + barWidth, barY, 0.0);
 
             double cursorX = this.progressPercentage * barWidth;
             tessellator.color(0x60FF60);
-            tessellator.addVertex(barX, barY, 0.0);
-            tessellator.addVertex(barX, barY + barHeight, 0.0);
-            tessellator.addVertex(barX + cursorX, barY + barHeight, 0.0);
-            tessellator.addVertex(barX + cursorX, barY, 0.0);
+            tessellator.vertex(barX, barY, 0.0);
+            tessellator.vertex(barX, barY + barHeight, 0.0);
+            tessellator.vertex(barX + cursorX, barY + barHeight, 0.0);
+            tessellator.vertex(barX + cursorX, barY, 0.0);
 
             tessellator.color(0, 2000, 255);
-            tessellator.addVertex(barX + cursorX - 1, barY - 1, 0.0);
-            tessellator.addVertex(barX + cursorX - 1, barY + barHeight + 1, 0.0);
-            tessellator.addVertex(barX + cursorX, barY + barHeight + 1, 0.0);
-            tessellator.addVertex(barX + cursorX, barY - 1, 0.0);
+            tessellator.vertex(barX + cursorX - 1, barY - 1, 0.0);
+            tessellator.vertex(barX + cursorX - 1, barY + barHeight + 1, 0.0);
+            tessellator.vertex(barX + cursorX, barY + barHeight + 1, 0.0);
+            tessellator.vertex(barX + cursorX, barY - 1, 0.0);
 
-            tessellator.tessellate();
+            tessellator.end();
             GL11.glEnable(GL11.GL_TEXTURE_2D);
         }
-        this.client.textRenderer.drawTextWithShadow(this.message, (screenWidth - this.client.textRenderer.getTextWidth(this.message)) / 2, screenHeight / 2 - 4 - 16, 0xFFFFFF);
-        this.client.textRenderer.drawTextWithShadow(this.field_1714, (screenWidth - this.client.textRenderer.getTextWidth(this.field_1714)) / 2, screenHeight / 2 - 4 + 8, 0xFFFFFF);
+        this.client.font.drawShadow(this.message, (screenWidth - this.client.font.width(this.message)) / 2, screenHeight / 2 - 4 - 16, 0xFFFFFF);
+        this.client.font.drawShadow(this.field_1714, (screenWidth - this.client.font.width(this.field_1714)) / 2, screenHeight / 2 - 4 + 8, 0xFFFFFF);
 
         try {
             Display.update();
@@ -166,7 +166,7 @@ public abstract class MixinProgressListenerImpl implements ExProgressListener {
             if (this.ignoreGameRunning) {
                 return;
             }
-            throw new ProgressListenerError();
+            throw new StopGameException();
         }
     }
 }

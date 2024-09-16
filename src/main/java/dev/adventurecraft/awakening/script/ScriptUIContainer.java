@@ -5,8 +5,8 @@ import java.util.List;
 
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.render.TextRenderer;
-import net.minecraft.client.texture.TextureManager;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.Textures;
 import org.lwjgl.opengl.GL11;
 
 @SuppressWarnings("unused")
@@ -17,7 +17,7 @@ public class ScriptUIContainer extends UIElement {
     private final LinkedList<UIElement> uiElements;
 
     public ScriptUIContainer(float x, float y) {
-        this(x, y, ((ExInGameHud) Minecraft.instance.overlay).getScriptUI());
+        this(x, y, ((ExInGameHud) Minecraft.instance.gui).getScriptUI());
     }
 
     public ScriptUIContainer(float x, float y, ScriptUIContainer parent) {
@@ -31,7 +31,7 @@ public class ScriptUIContainer extends UIElement {
     }
 
     @Override
-    public void render(TextRenderer textRenderer, TextureManager texManager, float deltaTime) {
+    public void render(Font textRenderer, Textures texManager, float deltaTime) {
         float x = this.getXAtTime(deltaTime);
         float y = this.getYAtTime(deltaTime);
         if (x != 0.0F || y != 0.0F) {

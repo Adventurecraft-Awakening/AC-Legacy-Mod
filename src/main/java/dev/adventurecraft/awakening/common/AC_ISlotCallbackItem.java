@@ -1,11 +1,11 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.player.Player;
 
 public interface AC_ISlotCallbackItem {
 
-    void onAddToSlot(PlayerEntity player, int slotId, ItemStack stack);
+    void onAddToSlot(Player player, int slotId, ItemInstance stack);
 
-    void onRemovedFromSlot(PlayerEntity player, int slotId, ItemStack stack);
+    void onRemovedFromSlot(Player player, int slotId, ItemInstance stack);
 }

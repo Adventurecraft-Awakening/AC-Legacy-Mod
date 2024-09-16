@@ -1,12 +1,12 @@
 package dev.adventurecraft.awakening.mixin.client.util;
 
 import dev.adventurecraft.awakening.extension.client.util.ExFrustum;
-import net.minecraft.client.util.Frustum;
+import net.minecraft.client.renderer.culling.FrustumData;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 
-@Mixin(Frustum.class)
+@Mixin(FrustumData.class)
 public abstract class MixinFrustum implements ExFrustum {
 
     @Shadow

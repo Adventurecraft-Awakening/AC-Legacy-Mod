@@ -15,28 +15,28 @@ import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import net.minecraft.block.Block;
-import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.particle.ParticleEntity;
-import net.minecraft.client.entity.particle.RainParticleEntity;
-import net.minecraft.client.entity.particle.SmokeParticleEntity;
-import net.minecraft.client.options.GameOptions;
-import net.minecraft.client.render.GameRenderer;
-import net.minecraft.client.render.HeldItemRenderer;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.WorldEventRenderer;
-import net.minecraft.client.render.block.BlockRenderer;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.hit.HitType;
-import net.minecraft.util.math.AxixAlignedBoundingBox;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
+import net.minecraft.client.Options;
+import net.minecraft.client.particle.Particle;
+import net.minecraft.client.particle.SmokeParticle;
+import net.minecraft.client.particle.WaterDropParticle;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.ItemInHandRenderer;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.Tesselator;
+import net.minecraft.client.renderer.TileRenderer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.tile.Tile;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.HitType;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GLContext;
@@ -59,7 +59,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
     @Shadow
     private Minecraft client;
     @Shadow
-    public HeldItemRenderer heldItemRenderer;
+    public ItemInHandRenderer heldItemRenderer;
     @Shadow
     private boolean field_2330;
     @Shadow
@@ -75,7 +75,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
 
     private boolean zoomMode = false;
 
-    private HeldItemRenderer offHandItemRenderer;
+    private ItemInHandRenderer offHandItemRenderer;
     private float farClipAdjustment;
 
     @Shadow
@@ -95,7 +95,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(Minecraft var1, CallbackInfo ci) {
-        this.offHandItemRenderer = new HeldItemRenderer(var1);
+        this.offHandItemRenderer = new ItemInHandRenderer(var1);
         this.farClipAdjustment = 1.0F;
     }
 
@@ -111,7 +111,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
     private void renderOffhandItem(CallbackInfo ci) {
         ExPlayerInventory inv = (ExPlayerInventory) this.client.player.inventory;
         inv.swapOffhandWithMain();
-        this.offHandItemRenderer.method_1859();
+        this.offHandItemRenderer.tick();
         inv.swapOffhandWithMain();
     }
 
@@ -120,14 +120,14 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         target = "Lnet/minecraft/entity/LivingEntity;health:I",
         shift = At.Shift.BEFORE))
     private void handleZoom(float var1, CallbackInfoReturnable<Float> cir) {
-        if (Keyboard.isKeyDown(((ExGameOptions) this.client.options).ofKeyBindZoom().key) && ((ExScreen)this.client.currentScreen) == null) {
+        if (Keyboard.isKeyDown(((ExGameOptions) this.client.options).ofKeyBindZoom().key) && ((ExScreen)this.client.screen) == null) {
             if (!this.zoomMode) {
                 this.zoomMode = true;
-                this.client.options.cinematicMode = true;
+                this.client.options.smoothCamera = true;
             }
         } else if (this.zoomMode) {
             this.zoomMode = false;
-            this.client.options.cinematicMode = false;
+            this.client.options.smoothCamera = false;
         }
     }
 
@@ -179,42 +179,42 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
 
     @Inject(method = "tick", at = @At("HEAD"))
     private void injectTick(float var1, CallbackInfo ci) {
-        World world = this.client.world;
+        Level world = this.client.level;
         var options = (ExGameOptions) this.client.options;
 
-        Minecraft.isPremiumCheckTime = 0L;
-        BlockRenderer.field_67 = options.isGrassFancy();
+        Minecraft.sessionTime = 0L;
+        TileRenderer.fancy = options.isGrassFancy();
 
-        Block.LEAVES.updateTexture(options.isLeavesFancy());
-
-        if (world != null) {
-            world.autoSaveInterval = options.ofAutoSaveTicks();
-        }
-
-        if (!options.ofWeather() && world != null && world.properties != null) {
-            world.properties.setRaining(false);
-        }
+        Tile.LEAVES.setFancy(options.isLeavesFancy());
 
         if (world != null) {
-            long worldTime = world.getWorldTime();
+            world.saveInterval = options.ofAutoSaveTicks();
+        }
+
+        if (!options.ofWeather() && world != null && world.levelData != null) {
+            world.levelData.setRaining(false);
+        }
+
+        if (world != null) {
+            long worldTime = world.getTime();
             long dayTime = worldTime % 24000L;
             if (options.isTimeDayOnly()) {
                 if (dayTime <= 1000L) {
-                    world.setWorldTime(worldTime - dayTime + 1001L);
+                    world.setTime(worldTime - dayTime + 1001L);
                 }
 
                 if (dayTime >= 11000L) {
-                    world.setWorldTime(worldTime - dayTime + 24001L);
+                    world.setTime(worldTime - dayTime + 24001L);
                 }
             }
 
             if (options.isTimeNightOnly()) {
                 if (dayTime <= 14000L) {
-                    world.setWorldTime(worldTime - dayTime + 14001L);
+                    world.setTime(worldTime - dayTime + 14001L);
                 }
 
                 if (dayTime >= 22000L) {
-                    world.setWorldTime(worldTime - dayTime + 24000L + 14001L);
+                    world.setTime(worldTime - dayTime + 24000L + 14001L);
                 }
             }
         }
@@ -246,16 +246,16 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         @Local(name = "var5") int var16,
         @Local(name = "var6") int var17) {
 
-        if (this.client.currentScreen != null) {
+        if (this.client.screen != null) {
             return;
         }
 
         HitResult hit = this.client.hitResult;
-        if (hit == null || hit.type != HitType.field_789 || this.client.world.getBlockId(hit.x, hit.y, hit.z) != AC_Blocks.store.id) {
+        if (hit == null || hit.hitType != HitType.TILE || this.client.level.getTile(hit.x, hit.y, hit.z) != AC_Blocks.store.id) {
             return;
         }
 
-        var store = (AC_TileEntityStore) this.client.world.getBlockEntity(hit.x, hit.y, hit.z);
+        var store = (AC_TileEntityStore) this.client.level.getTileEntity(hit.x, hit.y, hit.z);
         if (store.buySupplyLeft != 0) {
             AC_GuiStore storeGUI = ((ExMinecraft) this.client).getStoreGUI();
             storeGUI.setBuyItem(store.buyItemID, store.buyItemAmount, store.buyItemDamage);
@@ -280,7 +280,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
     @Redirect(method = "method_1841", at = @At(
         value = "FIELD",
         target = "Lnet/minecraft/client/options/GameOptions;fancyGraphics:Z"))
-    private boolean redirectFancyWaterToConfig(GameOptions instance) {
+    private boolean redirectFancyWaterToConfig(Options instance) {
         return ((ExGameOptions) instance).isWaterFancy();
     }
 
@@ -288,7 +288,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         value = "INVOKE",
         target = "Lnet/minecraft/client/render/WorldEventRenderer;method_1548(Lnet/minecraft/entity/LivingEntity;ID)I",
         ordinal = 1))
-    private int renderSortedRenderers1(WorldEventRenderer instance, LivingEntity var1, int var2, double var3) {
+    private int renderSortedRenderers1(LevelRenderer instance, LivingEntity var1, int var2, double var3) {
         int result = ((ExWorldEventRenderer) instance).renderAllSortedRenderers(1, var3);
         return result;
     }
@@ -296,7 +296,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
     @Redirect(method = "method_1841", at = @At(
         value = "INVOKE",
         target = "Lnet/minecraft/client/render/WorldEventRenderer;method_1540(ID)V"))
-    private void renderSortedRenderers2(WorldEventRenderer instance, int var1, double var2) {
+    private void renderSortedRenderers2(LevelRenderer instance, int var1, double var2) {
         ((ExWorldEventRenderer) instance).renderAllSortedRenderers(1, var2);
     }
 
@@ -312,19 +312,19 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
 
         if (mc.isCameraActive()) {
             AC_CutsceneCameraPoint point = mc.getCutsceneCamera().getCurrentPoint(var1);
-            this.client.viewEntity = mc.getCutsceneCameraEntity();
-            this.client.viewEntity.x = this.client.viewEntity.prevRenderX = this.client.viewEntity.prevX = point.posX;
-            this.client.viewEntity.y = this.client.viewEntity.prevRenderY = this.client.viewEntity.prevY = point.posY;
-            this.client.viewEntity.z = this.client.viewEntity.prevRenderZ = this.client.viewEntity.prevZ = point.posZ;
-            this.client.viewEntity.yaw = this.client.viewEntity.prevYaw = point.rotYaw;
-            this.client.viewEntity.pitch = this.client.viewEntity.prevPitch = point.rotPitch;
+            this.client.cameraEntity = mc.getCutsceneCameraEntity();
+            this.client.cameraEntity.x = this.client.cameraEntity.xOld = this.client.cameraEntity.xo = point.posX;
+            this.client.cameraEntity.y = this.client.cameraEntity.yOld = this.client.cameraEntity.yo = point.posY;
+            this.client.cameraEntity.z = this.client.cameraEntity.zOld = this.client.cameraEntity.zo = point.posZ;
+            this.client.cameraEntity.yRot = this.client.cameraEntity.yRotO = point.rotYaw;
+            this.client.cameraEntity.xRot = this.client.cameraEntity.xRotO = point.rotPitch;
         } else {
-            this.client.viewEntity = this.client.player;
+            this.client.cameraEntity = this.client.player;
             if (((ExEntity) this.client.player).getStunned() != 0) {
-                this.client.player.prevRenderX = this.client.player.prevX = this.client.player.x;
-                this.client.player.prevRenderY = this.client.player.prevY = this.client.player.y;
-                this.client.player.prevRenderZ = this.client.player.prevZ = this.client.player.z;
-                this.client.player.field_1634 = this.client.player.field_1635;
+                this.client.player.xOld = this.client.player.xo = this.client.player.x;
+                this.client.player.yOld = this.client.player.yo = this.client.player.y;
+                this.client.player.zOld = this.client.player.zo = this.client.player.z;
+                this.client.player.walkDistO = this.client.player.walkDist;
             }
         }
     }
@@ -362,12 +362,12 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
             AC_DebugMode.mapEditing.render(deltaTime);
         }
 
-        ItemStack heldItem = this.client.player.inventory.getHeldItem();
-        if (heldItem != null && heldItem.itemId == AC_Items.paste.id) {
+        ItemInstance heldItem = this.client.player.inventory.getSelected();
+        if (heldItem != null && heldItem.id == AC_Items.paste.id) {
             if (AC_DebugMode.mapEditing == null) {
-                AC_DebugMode.mapEditing = new AC_MapEditing(this.client, this.client.world);
+                AC_DebugMode.mapEditing = new AC_MapEditing(this.client, this.client.level);
             } else {
-                AC_DebugMode.mapEditing.updateWorld(this.client.world);
+                AC_DebugMode.mapEditing.updateWorld(this.client.level);
             }
 
             AC_DebugMode.mapEditing.renderSelection(deltaTime);
@@ -389,13 +389,13 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
     private void renderDebugModeDecorations(
         GameRenderer instance,
         float deltaTime,
-        @Local WorldEventRenderer worldRenderer,
+        @Local LevelRenderer worldRenderer,
         @Local LivingEntity viewEntity) {
 
         var wer = (ExWorldEventRenderer) worldRenderer;
 
         GL11.glDisable(GL11.GL_ALPHA_TEST);
-        wer.drawCursorSelection(viewEntity, ((PlayerEntity) viewEntity).inventory.getHeldItem(), deltaTime);
+        wer.drawCursorSelection(viewEntity, ((Player) viewEntity).inventory.getSelected(), deltaTime);
 
         if (AC_DebugMode.active) {
             AC_CutsceneCamera activeCamera = ((ExMinecraft) this.client).getActiveCutsceneCamera();
@@ -404,13 +404,13 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
             }
 
             if (AC_DebugMode.renderPaths) {
-                for (Entity entity : (List<Entity>) this.client.world.entities) {
+                for (Entity entity : (List<Entity>) this.client.level.entities) {
                     wer.drawEntityPath(entity, viewEntity, deltaTime);
                 }
             }
 
             if (AC_DebugMode.renderFov) {
-                for (Entity entity : (List<Entity>) this.client.world.entities) {
+                for (Entity entity : (List<Entity>) this.client.level.entities) {
                     if (entity instanceof LivingEntity) {
                         wer.drawEntityFOV((LivingEntity) entity, viewEntity, deltaTime);
                     }
@@ -419,12 +419,12 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         }
 
         if (AC_DebugMode.renderCollisions) {
-            var collisionLists = ((ExWorld) this.client.world).getCollisionDebugLists();
+            var collisionLists = ((ExWorld) this.client.level).getCollisionDebugLists();
             this.drawCollisionLists(collisionLists, viewEntity, deltaTime);
         }
 
         if (AC_DebugMode.renderRays) {
-            var rayDebugLists = ((ExWorld) this.client.world).getRayDebugLists();
+            var rayDebugLists = ((ExWorld) this.client.level).getRayDebugLists();
             this.drawRayDebugLists(rayDebugLists, viewEntity, deltaTime);
             rayDebugLists.clear();
         }
@@ -433,9 +433,9 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
     }
 
     private void drawCollisionLists(ArrayList<CollisionList> lists, Entity entity, double deltaTime) {
-        double dX = entity.prevRenderX + (entity.x - entity.prevRenderX) * deltaTime;
-        double dY = entity.prevRenderY + (entity.y - entity.prevRenderY) * deltaTime;
-        double dZ = entity.prevRenderZ + (entity.z - entity.prevRenderZ) * deltaTime;
+        double dX = entity.xOld + (entity.x - entity.xOld) * deltaTime;
+        double dY = entity.yOld + (entity.y - entity.yOld) * deltaTime;
+        double dZ = entity.zOld + (entity.z - entity.zOld) * deltaTime;
 
         double off = 1.0 / 1024.0;
         double x1 = dX + off;
@@ -450,12 +450,12 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         GL11.glDisable(GL11.GL_TEXTURE_2D);
         GL11.glLineWidth(2.0f);
 
-        Tessellator ts = Tessellator.INSTANCE;
-        ts.start(GL11.GL_LINES);
+        Tesselator ts = Tesselator.instance;
+        ts.begin(GL11.GL_LINES);
 
         for (CollisionList list : lists) {
             float alpha;
-            if (list.entity instanceof ParticleEntity) {
+            if (list.entity instanceof Particle) {
                 alpha = 0.05f;
             } else if (list.entity instanceof ItemEntity) {
                 alpha = 0.2f;
@@ -475,7 +475,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
             }
         }
 
-        ts.tessellate();
+        ts.end();
 
         GL11.glLineWidth(1.0f);
         GL11.glEnable(GL11.GL_TEXTURE_2D);
@@ -483,9 +483,9 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
     }
 
     private void drawRayDebugLists(ArrayList<RayDebugList> lists, Entity entity, double deltaTime) {
-        double dX = entity.prevRenderX + (entity.x - entity.prevRenderX) * deltaTime;
-        double dY = entity.prevRenderY + (entity.y - entity.prevRenderY) * deltaTime;
-        double dZ = entity.prevRenderZ + (entity.z - entity.prevRenderZ) * deltaTime;
+        double dX = entity.xOld + (entity.x - entity.xOld) * deltaTime;
+        double dY = entity.yOld + (entity.y - entity.yOld) * deltaTime;
+        double dZ = entity.zOld + (entity.z - entity.zOld) * deltaTime;
 
         double off = 1.0 / 1024.0;
         double x1 = dX + off;
@@ -495,31 +495,31 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         double y2 = dY - off;
         double z2 = dZ - off;
 
-        Tessellator ts = Tessellator.INSTANCE;
+        Tesselator ts = Tesselator.instance;
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GL11.glDisable(GL11.GL_TEXTURE_2D);
 
         GL11.glLineWidth(2.0f);
-        ts.start(GL11.GL_LINES);
+        ts.begin(GL11.GL_LINES);
         for (RayDebugList list : lists) {
             HitResult hit = list.hit;
             if (hit != null) {
-                AxixAlignedBoundingBox aabb = null;
-                if (hit.type == HitType.field_789) {
-                    Block block = Block.BY_ID[hit.field_1987];
+                AABB aabb = null;
+                if (hit.hitType == HitType.TILE) {
+                    Tile block = Tile.tiles[hit.face];
                     if (block != null) {
-                        aabb = block.getCollisionShape(this.client.world, hit.x, hit.y, hit.z);
+                        aabb = block.getAABB(this.client.level, hit.x, hit.y, hit.z);
                     }
-                } else if (hit.type == HitType.field_790) {
-                    aabb = hit.field_1989.boundingBox;
+                } else if (hit.hitType == HitType.ENTITY) {
+                    aabb = hit.entity.bb;
                 }
 
                 if (aabb != null) {
                     ts.color(0.0f, 0.9f, 0.2f, 0.5f);
                     drawBox(ts,
-                        aabb.minX - x1, aabb.minY - y1, aabb.minZ - z1,
-                        aabb.maxX - x2, aabb.maxY - y2, aabb.maxZ - z2);
+                        aabb.x0 - x1, aabb.y0 - y1, aabb.z0 - z1,
+                        aabb.x1 - x2, aabb.y1 - y2, aabb.z1 - z2);
                 }
             }
 
@@ -528,20 +528,20 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
                 drawBoxes(ts, list.blockCollisions, x1, y1, z1, x2, y2, z2);
             }
         }
-        ts.tessellate();
+        ts.end();
 
         GL11.glLineWidth(4.0f);
-        ts.start(GL11.GL_LINES);
+        ts.begin(GL11.GL_LINES);
         for (RayDebugList list : lists) {
             if (list.hit != null) {
                 ts.color(0.0f, 0.9f, 0.2f, 0.5f);
             } else {
                 ts.color(0.9f, 0.2f, 0.2f, 0.5f);
             }
-            ts.addVertex(list.aX - dX, list.aY - dY, list.aZ - dZ);
-            ts.addVertex(list.bX - dX, list.bY - dY, list.bZ - dZ);
+            ts.vertex(list.aX - dX, list.aY - dY, list.aZ - dZ);
+            ts.vertex(list.bX - dX, list.bY - dY, list.bZ - dZ);
         }
-        ts.tessellate();
+        ts.end();
 
         GL11.glLineWidth(1.0f);
         GL11.glEnable(GL11.GL_TEXTURE_2D);
@@ -549,7 +549,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
     }
 
     private static void drawBoxes(
-        Tessellator ts, double[] collisions, double x1, double y1, double z1, double x2, double y2, double z2) {
+        Tesselator ts, double[] collisions, double x1, double y1, double z1, double x2, double y2, double z2) {
 
         for (int i = 0; i < collisions.length; i += 6) {
             double minX = collisions[i + 0] - x1;
@@ -564,43 +564,43 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
     }
 
     private static void drawBox(
-        Tessellator ts, double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+        Tesselator ts, double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
 
-        ts.addVertex(minX, minY, minZ);
-        ts.addVertex(maxX, minY, minZ);
+        ts.vertex(minX, minY, minZ);
+        ts.vertex(maxX, minY, minZ);
 
-        ts.addVertex(maxX, minY, minZ);
-        ts.addVertex(maxX, minY, maxZ);
+        ts.vertex(maxX, minY, minZ);
+        ts.vertex(maxX, minY, maxZ);
 
-        ts.addVertex(maxX, minY, maxZ);
-        ts.addVertex(minX, minY, maxZ);
+        ts.vertex(maxX, minY, maxZ);
+        ts.vertex(minX, minY, maxZ);
 
-        ts.addVertex(minX, minY, maxZ);
-        ts.addVertex(minX, minY, minZ);
+        ts.vertex(minX, minY, maxZ);
+        ts.vertex(minX, minY, minZ);
 
-        ts.addVertex(minX, maxY, minZ);
-        ts.addVertex(maxX, maxY, minZ);
+        ts.vertex(minX, maxY, minZ);
+        ts.vertex(maxX, maxY, minZ);
 
-        ts.addVertex(maxX, maxY, minZ);
-        ts.addVertex(maxX, maxY, maxZ);
+        ts.vertex(maxX, maxY, minZ);
+        ts.vertex(maxX, maxY, maxZ);
 
-        ts.addVertex(maxX, maxY, maxZ);
-        ts.addVertex(minX, maxY, maxZ);
+        ts.vertex(maxX, maxY, maxZ);
+        ts.vertex(minX, maxY, maxZ);
 
-        ts.addVertex(minX, maxY, maxZ);
-        ts.addVertex(minX, maxY, minZ);
+        ts.vertex(minX, maxY, maxZ);
+        ts.vertex(minX, maxY, minZ);
 
-        ts.addVertex(minX, minY, minZ);
-        ts.addVertex(minX, maxY, minZ);
+        ts.vertex(minX, minY, minZ);
+        ts.vertex(minX, maxY, minZ);
 
-        ts.addVertex(maxX, minY, minZ);
-        ts.addVertex(maxX, maxY, minZ);
+        ts.vertex(maxX, minY, minZ);
+        ts.vertex(maxX, maxY, minZ);
 
-        ts.addVertex(maxX, minY, maxZ);
-        ts.addVertex(maxX, maxY, maxZ);
+        ts.vertex(maxX, minY, maxZ);
+        ts.vertex(maxX, maxY, maxZ);
 
-        ts.addVertex(minX, minY, maxZ);
-        ts.addVertex(minX, maxY, maxZ);
+        ts.vertex(minX, minY, maxZ);
+        ts.vertex(minX, maxY, maxZ);
     }
 
     @Inject(method = "method_1841", at = @At(
@@ -616,7 +616,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
     @Overwrite
     private void updateRain() {
         var options = (ExGameOptions) this.client.options;
-        float rainGradient = this.client.world.getRainGradient(1.0F);
+        float rainGradient = this.client.level.getRainLevel(1.0F);
         if (!options.isRainFancy()) {
             rainGradient /= 2.0F;
         }
@@ -626,11 +626,11 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         }
 
         this.field_2336.setSeed((long) this.field_2351 * 312987231L);
-        LivingEntity viewEntity = this.client.viewEntity;
-        World world = this.client.world;
-        int viewX = MathHelper.floor(viewEntity.x);
-        int viewY = MathHelper.floor(viewEntity.y);
-        int viewZ = MathHelper.floor(viewEntity.z);
+        LivingEntity viewEntity = this.client.cameraEntity;
+        Level world = this.client.level;
+        int viewX = Mth.floor(viewEntity.x);
+        int viewY = Mth.floor(viewEntity.y);
+        int viewZ = Mth.floor(viewEntity.z);
         int checkRange = 10;
         double lastPX = 0.0D;
         double lastPY = 0.0D;
@@ -641,8 +641,8 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         for (int i = 0; i < maxParticleChecks; ++i) {
             int x = viewX + this.field_2336.nextInt(checkRange) - this.field_2336.nextInt(checkRange);
             int z = viewZ + this.field_2336.nextInt(checkRange) - this.field_2336.nextInt(checkRange);
-            int blockingY = world.method_228(x, z);
-            int id = world.getBlockId(x, blockingY - 1, z);
+            int blockingY = world.getTopSolidBlock(x, z);
+            int id = world.getTile(x, blockingY - 1, z);
             if (id <= 0) {
                 continue;
             }
@@ -653,12 +653,12 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
                 continue;
             }
 
-            Block block = Block.BY_ID[id];
+            Tile block = Tile.tiles[id];
             double pX = (double) x + this.field_2336.nextFloat();
             double pZ = (double) z + this.field_2336.nextFloat();
-            double pY = (blockingY + 0.1D) - block.minY;
+            double pY = (blockingY + 0.1D) - block.yy0;
             if (block.material == Material.LAVA) {
-                this.client.particleManager.addParticle(new SmokeParticleEntity(world, pX, pY, pZ, 0.0D, 0.0D, 0.0D));
+                this.client.particleEngine.add(new SmokeParticle(world, pX, pY, pZ, 0.0D, 0.0D, 0.0D));
             } else {
                 ++spawnedRainParticles;
                 if (this.field_2336.nextInt(spawnedRainParticles) == 0) {
@@ -667,17 +667,17 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
                     lastPZ = pZ;
                 }
 
-                this.client.particleManager.addParticle(new RainParticleEntity(world, pX, pY, pZ));
+                this.client.particleEngine.add(new WaterDropParticle(world, pX, pY, pZ));
             }
         }
 
         if (spawnedRainParticles > 0 && this.field_2336.nextInt(3) < this.field_2337++) {
             this.field_2337 = 0;
             if (lastPY > viewEntity.y + 1.0D &&
-                world.method_228(MathHelper.floor(viewEntity.x), MathHelper.floor(viewEntity.z)) > MathHelper.floor(viewEntity.y)) {
-                this.client.world.playSound(lastPX, lastPY, lastPZ, "ambient.weather.rain", 0.1F, 0.5F);
+                world.getTopSolidBlock(Mth.floor(viewEntity.x), Mth.floor(viewEntity.z)) > Mth.floor(viewEntity.y)) {
+                this.client.level.playSound(lastPX, lastPY, lastPZ, "ambient.weather.rain", 0.1F, 0.5F);
             } else {
-                this.client.world.playSound(lastPX, lastPY, lastPZ, "ambient.weather.rain", 0.2F, 1.0F);
+                this.client.level.playSound(lastPX, lastPY, lastPZ, "ambient.weather.rain", 0.2F, 1.0F);
             }
         }
     }
@@ -689,27 +689,27 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
             return;
         }
 
-        float rainGradient = this.client.world.getRainGradient(deltaTime);
+        float rainGradient = this.client.level.getRainLevel(deltaTime);
         if (!(rainGradient > 0.0F)) {
             return;
         }
 
-        LivingEntity viewEntity = this.client.viewEntity;
-        World world = this.client.world;
-        int viewX = MathHelper.floor(viewEntity.x);
-        int viewY = MathHelper.floor(viewEntity.y);
-        int viewZ = MathHelper.floor(viewEntity.z);
-        Tessellator ts = Tessellator.INSTANCE;
+        LivingEntity viewEntity = this.client.cameraEntity;
+        Level world = this.client.level;
+        int viewX = Mth.floor(viewEntity.x);
+        int viewY = Mth.floor(viewEntity.y);
+        int viewZ = Mth.floor(viewEntity.z);
+        Tesselator ts = Tesselator.instance;
         GL11.glDisable(GL11.GL_CULL_FACE);
         GL11.glNormal3f(0.0F, 1.0F, 0.0F);
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GL11.glAlphaFunc(GL11.GL_GREATER, 0.01F);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.client.textureManager.getTextureId("/environment/snow.png"));
-        double vrX = viewEntity.prevRenderX + (viewEntity.x - viewEntity.prevRenderX) * (double) deltaTime;
-        double vrY = viewEntity.prevRenderY + (viewEntity.y - viewEntity.prevRenderY) * (double) deltaTime;
-        double vrZ = viewEntity.prevRenderZ + (viewEntity.z - viewEntity.prevRenderZ) * (double) deltaTime;
-        int vrbY = MathHelper.floor(vrY);
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.client.textures.loadTexture("/environment/snow.png"));
+        double vrX = viewEntity.xOld + (viewEntity.x - viewEntity.xOld) * (double) deltaTime;
+        double vrY = viewEntity.yOld + (viewEntity.y - viewEntity.yOld) * (double) deltaTime;
+        double vrZ = viewEntity.zOld + (viewEntity.z - viewEntity.zOld) * (double) deltaTime;
+        int vrbY = Mth.floor(vrY);
         int rainRange = 5;
         if (options.isRainFancy()) {
             rainRange = 10;
@@ -720,7 +720,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
                 if (!(((ExWorld) world).getTemperatureValue(x, z) < 0.5D)) {
                     continue;
                 }
-                int blockingY = world.method_228(x, z);
+                int blockingY = world.getTopSolidBlock(x, z);
                 if (blockingY < 0) {
                     blockingY = 0;
                 }
@@ -748,37 +748,37 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
                 float texOffY = this.field_2336.nextFloat() + texOff * (float) this.field_2336.nextGaussian() * 0.001F;
                 double dX = (double) ((float) x + 0.5F) - viewEntity.x;
                 double dZ = (double) ((float) z + 0.5F) - viewEntity.z;
-                float dist = MathHelper.sqrt(dX * dX + dZ * dZ) / (float) rainRange;
-                ts.start();
-                float light = world.method_1782(x, y, z);
+                float dist = Mth.sqrt(dX * dX + dZ * dZ) / (float) rainRange;
+                ts.begin();
+                float light = world.getBrightness(x, y, z);
                 GL11.glColor4f(light, light, light, ((1.0F - dist * dist) * 0.3F + 0.5F) * rainGradient);
-                ts.setOffset(-vrX, -vrY, -vrZ);
+                ts.offset(-vrX, -vrY, -vrZ);
 
                 float tX1 = 0.0F * texScale + texOffX;
                 float tX2 = 1.0F * texScale + texOffX;
                 float tY1 = (float) minY * texScale / 4.0F + texScaleY * texScale + texOffY;
                 float tY2 = (float) maxY * texScale / 4.0F + texScaleY * texScale + texOffY;
-                ts.vertex(x + 0, minY, z + 0.5D, tX1, tY1);
-                ts.vertex(x + 1, minY, z + 0.5D, tX2, tY1);
-                ts.vertex(x + 1, maxY, z + 0.5D, tX2, tY2);
-                ts.vertex(x + 0, maxY, z + 0.5D, tX1, tY2);
-                ts.vertex(x + 0.5D, minY, z + 0, tX1, tY1);
-                ts.vertex(x + 0.5D, minY, z + 1, tX2, tY1);
-                ts.vertex(x + 0.5D, maxY, z + 1, tX2, tY2);
-                ts.vertex(x + 0.5D, maxY, z + 0, tX1, tY2);
-                ts.setOffset(0.0D, 0.0D, 0.0D);
-                ts.tessellate();
+                ts.vertexUV(x + 0, minY, z + 0.5D, tX1, tY1);
+                ts.vertexUV(x + 1, minY, z + 0.5D, tX2, tY1);
+                ts.vertexUV(x + 1, maxY, z + 0.5D, tX2, tY2);
+                ts.vertexUV(x + 0, maxY, z + 0.5D, tX1, tY2);
+                ts.vertexUV(x + 0.5D, minY, z + 0, tX1, tY1);
+                ts.vertexUV(x + 0.5D, minY, z + 1, tX2, tY1);
+                ts.vertexUV(x + 0.5D, maxY, z + 1, tX2, tY2);
+                ts.vertexUV(x + 0.5D, maxY, z + 0, tX1, tY2);
+                ts.offset(0.0D, 0.0D, 0.0D);
+                ts.end();
             }
         }
 
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.client.textureManager.getTextureId("/environment/rain.png"));
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.client.textures.loadTexture("/environment/rain.png"));
 
         for (int x = viewX - rainRange; x <= viewX + rainRange; ++x) {
             for (int z = viewZ - rainRange; z <= viewZ + rainRange; ++z) {
                 if (!(((ExWorld) world).getTemperatureValue(x, z) >= 0.5D)) {
                     continue;
                 }
-                int blockingY = world.method_228(x, z);
+                int blockingY = world.getTopSolidBlock(x, z);
                 int minY = viewY - rainRange;
                 int maxY = viewY + rainRange;
                 if (minY < blockingY) {
@@ -798,26 +798,26 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
                 float texOffY = ((float) (this.field_2351 + seed & 31) + deltaTime) / 32.0F * (3.0F + this.field_2336.nextFloat());
                 double dX = (double) ((float) x + 0.5F) - viewEntity.x;
                 double dZ = (double) ((float) z + 0.5F) - viewEntity.z;
-                float dist = MathHelper.sqrt(dX * dX + dZ * dZ) / (float) rainRange;
-                ts.start();
-                float light = world.method_1782(x, 128, z) * 0.85F + 0.15F;
+                float dist = Mth.sqrt(dX * dX + dZ * dZ) / (float) rainRange;
+                ts.begin();
+                float light = world.getBrightness(x, 128, z) * 0.85F + 0.15F;
                 GL11.glColor4f(light, light, light, ((1.0F - dist * dist) * 0.5F + 0.5F) * rainGradient);
-                ts.setOffset(-vrX, -vrY, -vrZ);
+                ts.offset(-vrX, -vrY, -vrZ);
 
                 float tX1 = 0.0F * texScale;
                 float tX2 = 1.0F * texScale;
                 float tY1 = (float) minY * texScale / 4.0F + texOffY * texScale;
                 float tY2 = (float) maxY * texScale / 4.0F + texOffY * texScale;
-                ts.vertex(x + 0, minY, (double) z + 0.5D, tX1, tY1);
-                ts.vertex(x + 1, minY, (double) z + 0.5D, tX2, tY1);
-                ts.vertex(x + 1, maxY, (double) z + 0.5D, tX2, tY2);
-                ts.vertex(x + 0, maxY, (double) z + 0.5D, tX1, tY2);
-                ts.vertex((double) x + 0.5D, minY, z + 0, tX1, tY1);
-                ts.vertex((double) x + 0.5D, minY, z + 1, tX2, tY1);
-                ts.vertex((double) x + 0.5D, maxY, z + 1, tX2, tY2);
-                ts.vertex((double) x + 0.5D, maxY, z + 0, tX1, tY2);
-                ts.setOffset(0.0D, 0.0D, 0.0D);
-                ts.tessellate();
+                ts.vertexUV(x + 0, minY, (double) z + 0.5D, tX1, tY1);
+                ts.vertexUV(x + 1, minY, (double) z + 0.5D, tX2, tY1);
+                ts.vertexUV(x + 1, maxY, (double) z + 0.5D, tX2, tY2);
+                ts.vertexUV(x + 0, maxY, (double) z + 0.5D, tX1, tY2);
+                ts.vertexUV((double) x + 0.5D, minY, z + 0, tX1, tY1);
+                ts.vertexUV((double) x + 0.5D, minY, z + 1, tX2, tY1);
+                ts.vertexUV((double) x + 0.5D, maxY, z + 1, tX2, tY2);
+                ts.vertexUV((double) x + 0.5D, maxY, z + 0, tX1, tY2);
+                ts.offset(0.0D, 0.0D, 0.0D);
+                ts.end();
             }
         }
 
@@ -828,7 +828,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
 
     @Overwrite
     private void method_1842(int var1, float var2) {
-        LivingEntity viewEntity = this.client.viewEntity;
+        LivingEntity viewEntity = this.client.cameraEntity;
         GL11.glFog(GL11.GL_FOG_COLOR, this.method_1839(this.field_2346, this.field_2347, this.field_2348, 1.0F));
         GL11.glNormal3f(0.0F, -1.0F, 0.0F);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
@@ -841,7 +841,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
             GL11.glFogf(GL11.GL_FOG_DENSITY, 0.1F);
             fogStart = 1.0F;
             fogEnd = 1.0F;
-        } else if (viewEntity.isInFluid(Material.WATER)) {
+        } else if (viewEntity.isUnderLiquid(Material.WATER)) {
             GL11.glFogi(GL11.GL_FOG_MODE, GL11.GL_EXP);
             fogStart = 0.1F;
             if (options.ofClearWater()) {
@@ -850,7 +850,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
 
             GL11.glFogf(GL11.GL_FOG_DENSITY, fogStart);
             fogEnd = 0.4F;
-        } else if (viewEntity.isInFluid(Material.LAVA)) {
+        } else if (viewEntity.isUnderLiquid(Material.LAVA)) {
             GL11.glFogi(GL11.GL_FOG_MODE, GL11.GL_EXP);
             GL11.glFogf(GL11.GL_FOG_DENSITY, 2.0F);
             fogStart = 0.4F;
@@ -872,12 +872,12 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
                 fogEnd = 0.8F;
             }
 
-            if (this.client.world.dimension.blocksCompassAndClock) {
+            if (this.client.level.dimension.natural) {
                 fogStart = 0.0F;
                 fogEnd = 1.0F;
             }
 
-            var world = (ExWorld) this.client.world;
+            var world = (ExWorld) this.client.level;
             GL11.glFogf(GL11.GL_FOG_START, world.getFogStart(this.field_2350 * fogStart, var2));
             GL11.glFogf(GL11.GL_FOG_END, world.getFogEnd(this.field_2350 * fogEnd, var2));
         }
@@ -888,7 +888,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
 
     @Inject(method = "method_1850", at = @At("HEAD"), cancellable = true)
     private void renderPlayerWhenCameraInactive(float var1, CallbackInfo ci) {
-        if (!(!((ExMinecraft) this.client).isCameraActive() && ((ExEntity) this.client.viewEntity).getStunned() == 0)) {
+        if (!(!((ExMinecraft) this.client).isCameraActive() && ((ExEntity) this.client.cameraEntity).getStunned() == 0)) {
             ci.cancel();
         }
     }
@@ -928,8 +928,8 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
     @Redirect(method = "method_1845", at = @At(
         value = "INVOKE",
         target = "Lnet/minecraft/client/render/HeldItemRenderer;method_1860(F)V"))
-    private void renderBothHands(HeldItemRenderer instance, float v) {
-        float prog1 = this.client.player.getHandSwingProgress(v);
+    private void renderBothHands(ItemInHandRenderer instance, float v) {
+        float prog1 = this.client.player.getAttackAnim(v);
         float prog2 = ((ExPlayerEntity) this.client.player).getSwingOffhandProgress(v);
 
         ((ExHeldItemRenderer) this.heldItemRenderer).renderItemInFirstPerson(v, prog1, prog2);
@@ -969,7 +969,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
     }
 
     @Override
-    public HeldItemRenderer getOffHandItemRenderer() {
+    public ItemInHandRenderer getOffHandItemRenderer() {
         return this.offHandItemRenderer;
     }
 }

@@ -2,10 +2,10 @@ package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.io.CompoundTag;
-import net.minecraft.world.World;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 
 public class AC_EntityCamera extends LivingEntity {
 
@@ -13,7 +13,7 @@ public class AC_EntityCamera extends LivingEntity {
     AC_CutsceneCameraBlendType type;
     int cameraID;
 
-    public AC_EntityCamera(World world, float time, AC_CutsceneCameraBlendType type, int id) {
+    public AC_EntityCamera(Level world, float time, AC_CutsceneCameraBlendType type, int id) {
         super(world);
         this.time = time;
         this.cameraID = id;
@@ -21,7 +21,7 @@ public class AC_EntityCamera extends LivingEntity {
     }
 
     @Override
-    protected void initDataTracker() {
+    protected void defineSynchedData() {
     }
 
     public void deleteCameraPoint() {
@@ -31,11 +31,11 @@ public class AC_EntityCamera extends LivingEntity {
     }
 
     @Override
-    public void readAdditional(CompoundTag var1) {
+    public void addAdditionalSaveData(CompoundTag var1) {
     }
 
     @Override
-    public void writeAdditional(CompoundTag var1) {
+    public void readAdditionalSaveData(CompoundTag var1) {
     }
 
     @Override
@@ -43,7 +43,7 @@ public class AC_EntityCamera extends LivingEntity {
     }
 
     @Override
-    public void updateDespawnCounter() {
+    public void aiStep() {
     }
 
     @Override
@@ -51,17 +51,17 @@ public class AC_EntityCamera extends LivingEntity {
     }
 
     @Override
-    public boolean method_1356() {
+    public boolean isPickable() {
         return true;
     }
 
     @Override
-    public boolean method_1380() {
+    public boolean isPushable() {
         return false;
     }
 
     @Override
-    public boolean interact(PlayerEntity var1) {
+    public boolean interact(Player var1) {
         AC_GuiCamera.showUI(this);
         return true;
     }

@@ -1,15 +1,15 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.block.Block;
+import net.minecraft.world.level.tile.Tile;
 
 public class AC_BlockSlope extends AC_BlockStairMulti {
 
-    protected AC_BlockSlope(int id, Block template, int texture) {
+    protected AC_BlockSlope(int id, Tile template, int texture) {
         super(id, template, texture);
     }
 
     @Override
-    public int getRenderType() {
+    public int getRenderShape() {
         return 38;
     }
 }

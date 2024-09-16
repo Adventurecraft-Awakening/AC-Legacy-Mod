@@ -2,7 +2,7 @@ package dev.adventurecraft.awakening;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.GameStartupError;
+import net.minecraft.client.CrashReport;
 import net.minecraft.client.Minecraft;
 
 import java.io.File;
@@ -21,13 +21,13 @@ public final class ACMainThread extends Minecraft {
     }
 
     @Override
-    public void showGameStartupError(GameStartupError arg) {
+    public void onCrash(CrashReport arg) {
         // TODO:
     }
 
     public static File getMapsDirectory() {
         if (mapsDirectory == null) {
-            mapsDirectory = new File(getGameDirectory(), "../maps");
+            mapsDirectory = new File(getWorkingDirectory(), "../maps");
         }
         return mapsDirectory;
     }

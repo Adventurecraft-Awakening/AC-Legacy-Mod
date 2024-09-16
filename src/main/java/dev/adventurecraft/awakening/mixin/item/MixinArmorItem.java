@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.mixin.item;
 
 import dev.adventurecraft.awakening.extension.item.ExArmorItem;
-import net.minecraft.item.ArmorItem;
+import net.minecraft.world.item.ArmorItem;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;

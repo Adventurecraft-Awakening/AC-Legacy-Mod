@@ -1,9 +1,9 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.entity.BlockEntity;
-import net.minecraft.util.io.CompoundTag;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.tile.entity.TileEntity;
 
-public class AC_TileEntityMinMax extends BlockEntity {
+public class AC_TileEntityMinMax extends TileEntity {
 
 	public int minX;
 	public int minY;
@@ -12,8 +12,8 @@ public class AC_TileEntityMinMax extends BlockEntity {
 	public int maxY;
 	public int maxZ;
 
-	public void readNBT(CompoundTag tag) {
-		super.readNBT(tag);
+	public void load(CompoundTag tag) {
+		super.load(tag);
 		this.minX = tag.getInt("minX");
 		this.minY = tag.getInt("minY");
 		this.minZ = tag.getInt("minZ");
@@ -22,14 +22,14 @@ public class AC_TileEntityMinMax extends BlockEntity {
 		this.maxZ = tag.getInt("maxZ");
 	}
 
-	public void writeNBT(CompoundTag tag) {
-		super.writeNBT(tag);
-		tag.put("minX", this.minX);
-		tag.put("minY", this.minY);
-		tag.put("minZ", this.minZ);
-		tag.put("maxX", this.maxX);
-		tag.put("maxY", this.maxY);
-		tag.put("maxZ", this.maxZ);
+	public void save(CompoundTag tag) {
+		super.save(tag);
+		tag.putInt("minX", this.minX);
+		tag.putInt("minY", this.minY);
+		tag.putInt("minZ", this.minZ);
+		tag.putInt("maxX", this.maxX);
+		tag.putInt("maxY", this.maxY);
+		tag.putInt("maxZ", this.maxZ);
 	}
 
 	public boolean isSet() {

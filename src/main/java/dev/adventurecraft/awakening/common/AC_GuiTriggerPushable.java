@@ -1,9 +1,9 @@
 package dev.adventurecraft.awakening.common;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widgets.OptionButtonWidget;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.OptionButton;
+import net.minecraft.client.gui.screens.Screen;
 
 public class AC_GuiTriggerPushable extends Screen {
     private AC_TileEntityTriggerPushable trigger;
@@ -15,17 +15,17 @@ public class AC_GuiTriggerPushable extends Screen {
     public void tick() {
     }
 
-    public void initVanillaScreen() {
-        this.buttons.add(new OptionButtonWidget(0, 4, 40, "Use Current Selection"));
-        OptionButtonWidget var1 = new OptionButtonWidget(1, 4, 60, "Trigger Target");
+    public void init() {
+        this.buttons.add(new OptionButton(0, 4, 40, "Use Current Selection"));
+        OptionButton var1 = new OptionButton(1, 4, 60, "Trigger Target");
         if (this.trigger.resetOnTrigger) {
-            var1.text = "Reset Target";
+            var1.message = "Reset Target";
         }
 
         this.buttons.add(var1);
     }
 
-    protected void buttonClicked(ButtonWidget var1) {
+    protected void buttonClicked(Button var1) {
         if (var1.id == 0) {
             this.trigger.minX = AC_ItemCursor.minX;
             this.trigger.minY = AC_ItemCursor.minY;
@@ -36,24 +36,24 @@ public class AC_GuiTriggerPushable extends Screen {
         } else if (var1.id == 1) {
             this.trigger.resetOnTrigger = !this.trigger.resetOnTrigger;
             if (this.trigger.resetOnTrigger) {
-                var1.text = "Reset Target";
+                var1.message = "Reset Target";
             } else {
-                var1.text = "Trigger Target";
+                var1.message = "Trigger Target";
             }
         }
 
-        this.trigger.world.getChunk(this.trigger.x, this.trigger.z).method_885();
+        this.trigger.level.getChunkAt(this.trigger.x, this.trigger.z).markUnsaved();
     }
 
     public void render(int var1, int var2, float var3) {
         this.fill(0, 0, this.width, this.height, Integer.MIN_VALUE);
-        this.drawTextWithShadow(this.textRenderer, String.format("Min: (%d, %d, %d)", this.trigger.minX, this.trigger.minY, this.trigger.minZ), 4, 4, 14737632);
-        this.drawTextWithShadow(this.textRenderer, String.format("Max: (%d, %d, %d)", this.trigger.maxX, this.trigger.maxY, this.trigger.maxZ), 4, 24, 14737632);
+        this.drawString(this.font, String.format("Min: (%d, %d, %d)", this.trigger.minX, this.trigger.minY, this.trigger.minZ), 4, 4, 14737632);
+        this.drawString(this.font, String.format("Max: (%d, %d, %d)", this.trigger.maxX, this.trigger.maxY, this.trigger.maxZ), 4, 24, 14737632);
         super.render(var1, var2, var3);
     }
 
     public static void showUI(AC_TileEntityTriggerPushable var0) {
-        Minecraft.instance.openScreen(new AC_GuiTriggerPushable(var0));
+        Minecraft.instance.setScreen(new AC_GuiTriggerPushable(var0));
     }
 
     public boolean isPauseScreen() {

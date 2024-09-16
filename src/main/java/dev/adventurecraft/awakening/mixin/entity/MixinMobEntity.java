@@ -3,13 +3,6 @@ package dev.adventurecraft.awakening.mixin.entity;
 import dev.adventurecraft.awakening.common.IEntityPather;
 import dev.adventurecraft.awakening.extension.entity.ExMobEntity;
 import dev.adventurecraft.awakening.extension.entity.ai.pathing.ExEntityPath;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.ai.pathing.EntityPath;
-import net.minecraft.util.io.AbstractTag;
-import net.minecraft.util.io.CompoundTag;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -18,14 +11,21 @@ import org.spongepowered.asm.mixin.Unique;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.phys.Vec3;
 
-@Mixin(MobEntity.class)
+@Mixin(Mob.class)
 public abstract class MixinMobEntity extends MixinLivingEntity implements ExMobEntity, IEntityPather {
 
     @Shadow
     protected Entity entity;
     @Shadow
-    private EntityPath field_661;
+    private Path field_661;
     @Shadow
     protected boolean field_663;
 
@@ -58,7 +58,7 @@ public abstract class MixinMobEntity extends MixinLivingEntity implements ExMobE
         if (this.entity == null) {
             this.entity = this.getAttackTarget();
             if (this.entity != null) {
-                this.field_661 = this.world.findPathTo((Entity) (Object) this, this.entity, var1);
+                this.field_661 = this.world.findPath((Entity) (Object) this, this.entity, var1);
                 this.timeBeforeForget = 40;
             }
         } else if (!this.entity.isAlive()) {
@@ -78,7 +78,7 @@ public abstract class MixinMobEntity extends MixinLivingEntity implements ExMobE
         }
 
         if (!this.field_663 && this.entity != null && (this.field_661 == null || this.rand.nextInt(5) == 0 && ((ExEntityPath) this.field_661).needNewPath(this.entity)) && var21) {
-            this.field_661 = this.world.findPathTo((Entity) (Object) this, this.entity, var1);
+            this.field_661 = this.world.findPath((Entity) (Object) this, this.entity, var1);
         } else if (this.canPathRandomly && !this.field_663 && (this.field_661 == null && this.rand.nextInt(80) == 0 || this.rand.nextInt(80) == 0)) {
             this.method_632();
         }
@@ -91,21 +91,21 @@ public abstract class MixinMobEntity extends MixinLivingEntity implements ExMobE
             this.timeBeforeForget = 40;
         }
 
-        int var3 = MathHelper.floor(this.boundingBox.minY + 0.5D);
+        int var3 = Mth.floor(this.boundingBox.y0 + 0.5D);
         boolean var4 = this.method_1334();
         boolean var5 = this.method_1335();
         this.pitch = 0.0F;
         if (this.field_661 != null && (!this.canForgetTargetRandomly || this.rand.nextInt(300) != 0)) {
-            Vec3d var6 = this.field_661.method_2041((Entity) (Object) this);
+            Vec3 var6 = this.field_661.current((Entity) (Object) this);
             double var7 = this.width * 2.0F;
 
-            while (var6 != null && var6.squareDistanceTo(this.x, var6.y, this.z) < var7 * var7) {
-                this.field_661.method_2040();
-                if (this.field_661.method_2042()) {
+            while (var6 != null && var6.distanceToSqr(this.x, var6.y, this.z) < var7 * var7) {
+                this.field_661.next();
+                if (this.field_661.isDone()) {
                     var6 = null;
                     this.field_661 = null;
                 } else {
-                    var6 = this.field_661.method_2041((Entity) (Object) this);
+                    var6 = this.field_661.current((Entity) (Object) this);
                 }
             }
 
@@ -141,8 +141,8 @@ public abstract class MixinMobEntity extends MixinLivingEntity implements ExMobE
                     float var19 = this.yaw;
                     this.yaw = (float) (Math.atan2(var17, var15) * 180.0D / (double) ((float) Math.PI)) - 90.0F;
                     float var20 = (var19 - this.yaw + 90.0F) * 3.141593F / 180.0F;
-                    this.horizontalVelocity = -MathHelper.sin(var20) * this.forwardVelocity * 1.0F;
-                    this.forwardVelocity = MathHelper.cos(var20) * this.forwardVelocity * 1.0F;
+                    this.horizontalVelocity = -Mth.sin(var20) * this.forwardVelocity * 1.0F;
+                    this.forwardVelocity = Mth.cos(var20) * this.forwardVelocity * 1.0F;
                 }
 
                 if (var11 > 0.0D) {
@@ -167,37 +167,37 @@ public abstract class MixinMobEntity extends MixinLivingEntity implements ExMobE
     }
 
     @Override
-    public EntityPath getCurrentPath() {
+    public Path getCurrentPath() {
         return this.field_661;
     }
 
     @Override
     public void writeAdditional(CompoundTag compoundTag) {
         super.writeAdditional(compoundTag);
-        compoundTag.put("canPathRandomly", this.canPathRandomly);
-        compoundTag.put("canForgetTargetRandomly", this.canForgetTargetRandomly);
+        compoundTag.putBoolean("canPathRandomly", this.canPathRandomly);
+        compoundTag.putBoolean("canForgetTargetRandomly", this.canForgetTargetRandomly);
         if(!customData.isEmpty()) {
             CompoundTag customCompoundTag = new CompoundTag();
             for(String key : customData.keySet()){
-                customCompoundTag.put(key,customData.get(key));
+                customCompoundTag.putString(key,customData.get(key));
             }
-            compoundTag.put("custom",customCompoundTag);
+            compoundTag.putCompoundTag("custom",customCompoundTag);
         }
     }
 
     @Override
     public void readAdditional(CompoundTag compoundTag) {
         super.readAdditional(compoundTag);
-        if (compoundTag.containsKey("canPathRandomly")) {
+        if (compoundTag.hasKey("canPathRandomly")) {
             this.canPathRandomly = compoundTag.getBoolean("canPathRandomly");
         }
 
-        if (compoundTag.containsKey("canForgetTargetRandomly")) {
+        if (compoundTag.hasKey("canForgetTargetRandomly")) {
             this.canPathRandomly = compoundTag.getBoolean("canForgetTargetRandomly");
         }
 
-        if(compoundTag.containsKey("custom")){
-            for(AbstractTag tags : (Collection<AbstractTag>)compoundTag.getCompoundTag("custom").values()) {
+        if(compoundTag.hasKey("custom")){
+            for(Tag tags : (Collection<Tag>)compoundTag.getCompoundTag("custom").getTags()) {
                 customData.put(tags.getType(),tags.toString());
             }
         }

@@ -4,11 +4,6 @@ import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.common.TextRect;
 import dev.adventurecraft.awakening.common.TextRendererState;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
-import net.minecraft.client.options.GameOptions;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.TextRenderer;
-import net.minecraft.client.texture.TextureManager;
-import net.minecraft.util.CharacterUtils;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
@@ -21,8 +16,13 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.io.InputStream;
+import net.minecraft.SharedConstants;
+import net.minecraft.client.Options;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.Tesselator;
+import net.minecraft.client.renderer.Textures;
 
-@Mixin(TextRenderer.class)
+@Mixin(Font.class)
 public abstract class MixinTextRenderer2 implements ExTextRenderer {
 
     @Shadow
@@ -40,12 +40,12 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
             value = "INVOKE",
             target = "Ljava/lang/Class;getResourceAsStream(Ljava/lang/String;)Ljava/io/InputStream;",
             remap = false))
-    private InputStream redirectLoadToTexturePack(Class<?> instance, String name, @Local TextureManager texMan) {
-        return texMan.texturePackManager.texturePack.getResourceAsStream(name);
+    private InputStream redirectLoadToTexturePack(Class<?> instance, String name, @Local Textures texMan) {
+        return texMan.skins.selected.getResource(name);
     }
 
     @Inject(method = "<init>", at = @At("TAIL"))
-    private void initialize(GameOptions arg, String string, TextureManager arg2, CallbackInfo ci) {
+    private void initialize(Options arg, String string, Textures arg2, CallbackInfo ci) {
         this.colorBuffer = new float[32 * 3];
         for (int i = 0; i < 32; ++i) {
             int n4 = (i >> 3 & 1) * 85;
@@ -125,7 +125,7 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
             state.setShadowOffset(sX, sY);
             state.setShadowColor(sColor);
         }
-        state.begin(Tessellator.INSTANCE);
+        state.begin(Tesselator.instance);
         state.drawText(text, start, end, x, y);
         state.end();
     }
@@ -163,7 +163,7 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
                 continue;
             }
 
-            int index = CharacterUtils.validCharacters.indexOf(c);
+            int index = SharedConstants.acceptableLetters.indexOf(c);
             if (index >= 0 && c < 176) {
                 width += this.field_2462[index + 32];
             } else if (c < 256) {

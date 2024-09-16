@@ -1,12 +1,11 @@
 package dev.adventurecraft.awakening.common;
 
 import java.util.Random;
-
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.tile.entity.TileEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import net.minecraft.entity.BlockEntity;
-import net.minecraft.util.io.CompoundTag;
 
-public class AC_TileEntityEffect extends BlockEntity {
+public class AC_TileEntityEffect extends TileEntity {
 
     public boolean checkTrigger = true;
     public String particleType = "heart";
@@ -41,8 +40,8 @@ public class AC_TileEntityEffect extends BlockEntity {
     private static Random rand = new Random();
 
     @Override
-    public void readNBT(CompoundTag tag) {
-        super.readNBT(tag);
+    public void load(CompoundTag tag) {
+        super.load(tag);
 
         this.particleType = tag.getString("particleType");
         this.particlesPerSpawn = tag.getInt("particlesPerSpawn");
@@ -75,46 +74,46 @@ public class AC_TileEntityEffect extends BlockEntity {
     }
 
     @Override
-    public void writeNBT(CompoundTag tag) {
-        super.writeNBT(tag);
+    public void save(CompoundTag tag) {
+        super.save(tag);
 
         if (!this.particleType.equals("")) {
-            tag.put("particleType", this.particleType);
+            tag.putString("particleType", this.particleType);
         }
 
-        tag.put("particlesPerSpawn", this.particlesPerSpawn);
-        tag.put("ticksBetweenParticles", this.ticksBetweenParticles);
-        tag.put("isActivated", this.isActivated);
-        tag.put("offsetX", this.offsetX);
-        tag.put("offsetY", this.offsetY);
-        tag.put("offsetZ", this.offsetZ);
-        tag.put("randX", this.randX);
-        tag.put("randY", this.randY);
-        tag.put("randZ", this.randZ);
-        tag.put("floatArg1", this.floatArg1);
-        tag.put("floatArg2", this.floatArg2);
-        tag.put("floatArg3", this.floatArg3);
-        tag.put("floatRand1", this.floatRand1);
-        tag.put("floatRand2", this.floatRand2);
-        tag.put("floatRand3", this.floatRand3);
-        tag.put("changeFogColor", this.changeFogColor);
-        tag.put("fogR", this.fogR);
-        tag.put("fogG", this.fogG);
-        tag.put("fogB", this.fogB);
-        tag.put("changeFogDensity", this.changeFogDensity);
-        tag.put("fogStart", this.fogStart);
-        tag.put("fogEnd", this.fogEnd);
-        tag.put("setOverlay", this.setOverlay);
-        tag.put("overlay", this.overlay);
-        tag.put("revertTextures", this.revertTextures);
-        tag.put("replaceTextures", this.replaceTextures);
-        tag.put("textureReplacement", this.textureReplacement);
+        tag.putInt("particlesPerSpawn", this.particlesPerSpawn);
+        tag.putInt("ticksBetweenParticles", this.ticksBetweenParticles);
+        tag.putBoolean("isActivated", this.isActivated);
+        tag.putFloat("offsetX", this.offsetX);
+        tag.putFloat("offsetY", this.offsetY);
+        tag.putFloat("offsetZ", this.offsetZ);
+        tag.putFloat("randX", this.randX);
+        tag.putFloat("randY", this.randY);
+        tag.putFloat("randZ", this.randZ);
+        tag.putFloat("floatArg1", this.floatArg1);
+        tag.putFloat("floatArg2", this.floatArg2);
+        tag.putFloat("floatArg3", this.floatArg3);
+        tag.putFloat("floatRand1", this.floatRand1);
+        tag.putFloat("floatRand2", this.floatRand2);
+        tag.putFloat("floatRand3", this.floatRand3);
+        tag.putInt("changeFogColor", this.changeFogColor);
+        tag.putFloat("fogR", this.fogR);
+        tag.putFloat("fogG", this.fogG);
+        tag.putFloat("fogB", this.fogB);
+        tag.putInt("changeFogDensity", this.changeFogDensity);
+        tag.putFloat("fogStart", this.fogStart);
+        tag.putFloat("fogEnd", this.fogEnd);
+        tag.putBoolean("setOverlay", this.setOverlay);
+        tag.putString("overlay", this.overlay);
+        tag.putBoolean("revertTextures", this.revertTextures);
+        tag.putBoolean("replaceTextures", this.replaceTextures);
+        tag.putString("textureReplacement", this.textureReplacement);
     }
 
     @Override
     public void tick() {
         if (this.checkTrigger) {
-            this.isActivated = ((ExWorld) this.world).getTriggerManager().isActivated(this.x, this.y, this.z);
+            this.isActivated = ((ExWorld) this.level).getTriggerManager().isActivated(this.x, this.y, this.z);
             this.checkTrigger = false;
         }
 
@@ -130,7 +129,7 @@ public class AC_TileEntityEffect extends BlockEntity {
             float pZ = this.z + 0.5F + this.offsetZ;
 
             for (int i = 0; i < this.particlesPerSpawn; ++i) {
-                this.world.addParticle(
+                this.level.addParticle(
                     this.particleType,
                     pX + this.randX * (2.0F * rand.nextFloat() - 1.0F),
                     pY + this.randY * (2.0F * rand.nextFloat() - 1.0F),

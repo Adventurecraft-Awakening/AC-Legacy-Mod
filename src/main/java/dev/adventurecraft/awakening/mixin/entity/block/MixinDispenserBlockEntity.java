@@ -1,8 +1,8 @@
 package dev.adventurecraft.awakening.mixin.entity.block;
 
-import net.minecraft.entity.BlockEntity;
-import net.minecraft.entity.block.DispenserBlockEntity;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.level.tile.entity.DispenserTileEntity;
+import net.minecraft.world.level.tile.entity.TileEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -10,37 +10,37 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(DispenserBlockEntity.class)
-public abstract class MixinDispenserBlockEntity extends BlockEntity {
+@Mixin(DispenserTileEntity.class)
+public abstract class MixinDispenserBlockEntity extends TileEntity {
 
     @Shadow
-    private ItemStack[] contents;
+    private ItemInstance[] contents;
 
     @Overwrite
-    public ItemStack takeInventoryItem(int slot, int count) {
+    public ItemInstance takeInventoryItem(int slot, int count) {
         return this.takeInventoryItem(slot, count, false);
     }
 
     @Unique
-    private ItemStack takeInventoryItem(int slot, int count, boolean dispense) {
+    private ItemInstance takeInventoryItem(int slot, int count, boolean dispense) {
         if (this.contents[slot] == null) {
             return null;
         }
 
-        ItemStack stack;
+        ItemInstance stack;
         if (this.contents[slot].count <= count && !dispense) {
             stack = this.contents[slot];
             this.contents[slot] = null;
-            this.markDirty();
+            this.setChanged();
         } else if (this.contents[slot].count < 0) {
             stack = this.contents[slot].copy();
             stack.count = 1;
         } else {
-            stack = this.contents[slot].split(count);
+            stack = this.contents[slot].shrink(count);
             if (this.contents[slot].count == 0) {
                 this.contents[slot] = null;
             }
-            this.markDirty();
+            this.setChanged();
         }
         return stack;
     }
@@ -50,7 +50,7 @@ public abstract class MixinDispenserBlockEntity extends BlockEntity {
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/entity/block/DispenserBlockEntity;takeInventoryItem(II)Lnet/minecraft/item/ItemStack;"))
-    private ItemStack takeItemToDispense(DispenserBlockEntity instance, int j, int i) {
+    private ItemInstance takeItemToDispense(DispenserTileEntity instance, int j, int i) {
         return ((MixinDispenserBlockEntity) (Object) instance).takeInventoryItem(j, i, true);
     }
 }

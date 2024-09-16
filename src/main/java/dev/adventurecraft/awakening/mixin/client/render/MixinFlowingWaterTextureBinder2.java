@@ -3,14 +3,14 @@ package dev.adventurecraft.awakening.mixin.client.render;
 import dev.adventurecraft.awakening.common.AC_TerrainImage;
 import dev.adventurecraft.awakening.common.Vec2;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import net.minecraft.client.render.FlowingWaterTextureBinder2;
-import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 import java.awt.image.BufferedImage;
+import net.minecraft.client.renderer.ptexture.WaterTexture;
+import net.minecraft.world.level.Level;
 
-@Mixin(FlowingWaterTextureBinder2.class)
+@Mixin(WaterTexture.class)
 public class MixinFlowingWaterTextureBinder2 extends MixinTextureBinder {
 
     @Shadow
@@ -187,7 +187,7 @@ public class MixinFlowingWaterTextureBinder2 extends MixinTextureBinder {
     }
 
     @Override
-    public void loadImage(String name, World world) {
+    public void loadImage(String name, Level world) {
         if (name == null) {
             name = "/custom_water_still.png";
         }

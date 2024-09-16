@@ -1,42 +1,43 @@
 package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityRegistry;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityIO;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.HitType;
+import net.minecraft.world.phys.Vec3;
+import ;
 import dev.adventurecraft.awakening.common.AC_TriggerArea;
 import dev.adventurecraft.awakening.common.AC_UtilBullet;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.hit.HitType;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
 
 @SuppressWarnings("unused")
 public class ScriptWorld {
 
-    World world;
+    Level world;
 
-    ScriptWorld(World world) {
+    ScriptWorld(Level world) {
         this.world = world;
     }
 
     public int getBlockID(int x, int y, int z) {
-        return this.world.getBlockId(x, y, z);
+        return this.world.getTile(x, y, z);
     }
 
     public void setBlockID(int x, int y, int z, int id) {
-        this.world.setBlock(x, y, z, id);
+        this.world.setTile(x, y, z, id);
     }
 
     public int getMetadata(int x, int y, int z) {
-        return this.world.getBlockMeta(x, y, z);
+        return this.world.getData(x, y, z);
     }
 
     public void setMetadata(int x, int y, int z, int meta) {
-        this.world.setBlockMeta(x, y, z, meta);
+        this.world.setData(x, y, z, meta);
     }
 
     public void setBlockIDAndMetadata(int x, int y, int z, int id, int meta) {
-        this.world.placeBlockWithMetaData(x, y, z, id, meta);
+        this.world.setTileAndData(x, y, z, id, meta);
     }
 
     public float getLightValue(int x, int y, int z) {
@@ -69,10 +70,10 @@ public class ScriptWorld {
     }
 
     public ScriptEntity spawnEntity(String entityType, double x, double y, double z) {
-        Entity entity = EntityRegistry.create(entityType, this.world);
+        Entity entity = EntityIO.newEntity(entityType, this.world);
         if (entity != null) {
-            entity.setPosition(x, y, z);
-            this.world.method_287(entity);
+            entity.setPos(x, y, z);
+            this.world.ensureAdded(entity);
         }
 
         return ScriptEntity.getEntityClass(entity);
@@ -88,9 +89,9 @@ public class ScriptWorld {
 
     public Object[] rayTraceBlocks(double aX, double aY, double aZ, double bX, double bY, double bZ) {
         var result = new Object[2];
-        HitResult hit = AC_UtilBullet.rayTraceBlocks(this.world, Vec3d.from(aX, aY, aZ), Vec3d.from(bX, bY, bZ));
+        HitResult hit = AC_UtilBullet.rayTraceBlocks(this.world, Vec3.newTemp(aX, aY, aZ), Vec3.newTemp(bX, bY, bZ));
         if (hit != null) {
-            result[0] = new ScriptVec3(hit.field_1988.x, hit.field_1988.y, hit.field_1988.z);
+            result[0] = new ScriptVec3(hit.pos.x, hit.pos.y, hit.pos.z);
             result[1] = new ScriptVec3(hit.x, hit.y, hit.z);
         }
         return result;
@@ -102,13 +103,13 @@ public class ScriptWorld {
 
     public Object[] rayTrace(double aX, double aY, double aZ, double bX, double bY, double bZ) {
         var result = new Object[3];
-        HitResult hit = AC_UtilBullet.rayTrace(this.world, null, Vec3d.from(aX, aY, aZ), Vec3d.from(bX, bY, bZ));
+        HitResult hit = AC_UtilBullet.rayTrace(this.world, null, Vec3.newTemp(aX, aY, aZ), Vec3.newTemp(bX, bY, bZ));
         if (hit != null) {
-            result[0] = new ScriptVec3(hit.field_1988.x, hit.field_1988.y, hit.field_1988.z);
-            if (hit.type == HitType.field_789) {
+            result[0] = new ScriptVec3(hit.pos.x, hit.pos.y, hit.pos.z);
+            if (hit.hitType == HitType.TILE) {
                 result[1] = new ScriptVec3(hit.x, hit.y, hit.z);
             } else {
-                result[2] = ScriptEntity.getEntityClass(hit.field_1989);
+                result[2] = ScriptEntity.getEntityClass(hit.entity);
             }
         }
         return result;

@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.extension.entity;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityRegistry;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityIO;
 
 public interface ExEntityRegistry {
 
@@ -10,7 +10,7 @@ public interface ExEntityRegistry {
 
         Class<?> entityClass = entity.getClass();
         while (name == null && entityClass != null) {
-            name = (String) EntityRegistry.CLASS_TO_STRING_ID.get(entityClass);
+            name = (String) EntityIO.classIdMap.get(entityClass);
             entityClass = entityClass.getSuperclass();
         }
 

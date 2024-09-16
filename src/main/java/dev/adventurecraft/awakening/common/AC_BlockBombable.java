@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.block.material.Material;
+import net.minecraft.world.level.material.Material;
 
 public class AC_BlockBombable extends AC_BlockColor {
 

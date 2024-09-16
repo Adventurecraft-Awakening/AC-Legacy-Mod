@@ -2,23 +2,23 @@ package dev.adventurecraft.awakening.mixin.client.entity.particle;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
-import net.minecraft.block.Block;
-import net.minecraft.client.entity.particle.DiggingParticleEntity;
-import net.minecraft.client.entity.particle.ParticleEntity;
-import net.minecraft.world.World;
+import net.minecraft.client.particle.Particle;
+import net.minecraft.client.particle.TerrainParticle;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.tile.Tile;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 
-@Mixin(DiggingParticleEntity.class)
-public abstract class MixinDiggingParticleEntity extends ParticleEntity {
+@Mixin(TerrainParticle.class)
+public abstract class MixinDiggingParticleEntity extends Particle {
 
     @Shadow
-    private Block block;
+    private Tile block;
 
-    public MixinDiggingParticleEntity(World world, double x, double y, double z, double vX, double vY, double vZ) {
+    public MixinDiggingParticleEntity(Level world, double x, double y, double z, double vX, double vY, double vZ) {
         super(world, x, y, z, vX, vY, vZ);
     }
 
@@ -28,16 +28,16 @@ public abstract class MixinDiggingParticleEntity extends ParticleEntity {
     }
 
     @Overwrite
-    public DiggingParticleEntity multiplyColor(int x, int y, int z) {
-        int n = this.block.getColorMultiplier(this.world, x, y, z);
-        this.red *= (float) (n >> 16 & 0xFF) / 255.0f;
-        this.green *= (float) (n >> 8 & 0xFF) / 255.0f;
-        this.blue *= (float) (n & 0xFF) / 255.0f;
-        return (DiggingParticleEntity) (Object) this;
+    public TerrainParticle multiplyColor(int x, int y, int z) {
+        int n = this.block.getFoliageColor(this.level, x, y, z);
+        this.rCol *= (float) (n >> 16 & 0xFF) / 255.0f;
+        this.gCol *= (float) (n >> 8 & 0xFF) / 255.0f;
+        this.bCol *= (float) (n & 0xFF) / 255.0f;
+        return (TerrainParticle) (Object) this;
     }
 
     @Overwrite
-    public int method_2003() {
+    public int getParticleTexture() {
         int texture = ((ExBlock) this.block).getTextureNum();
         return texture == 2 ? 3 : (texture == 3 ? 4 : 1);
     }

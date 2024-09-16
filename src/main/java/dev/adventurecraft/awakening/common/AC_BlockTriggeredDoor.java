@@ -1,40 +1,40 @@
 package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import net.minecraft.block.Block;
-import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
-import net.minecraft.util.math.AxixAlignedBoundingBox;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.World;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelSource;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.tile.Tile;
+import net.minecraft.world.phys.AABB;
 
-public class AC_BlockTriggeredDoor extends Block implements AC_ITriggerBlock {
+public class AC_BlockTriggeredDoor extends Tile implements AC_ITriggerBlock {
 
     private boolean isActived = false;
     protected AC_BlockTriggeredDoor(int var1) {
         super(var1, Material.WOOD);
-        this.texture = 208;
+        this.tex = 208;
     }
 
     @Override
-    public boolean isFullOpaque() {
+    public boolean isSolidRender() {
         return false;
     }
 
     @Override
-    public boolean isCollidable() {
+    public boolean mayPick() {
         return AC_DebugMode.active || this.isActived;
     }
 
     @Override
-    public boolean shouldRender(BlockView view, int x, int y, int z) {
-        return AC_DebugMode.active || ((ExWorld) Minecraft.instance.world).getTriggerManager().isActivated(x, y, z);
+    public boolean shouldRender(LevelSource view, int x, int y, int z) {
+        return AC_DebugMode.active || ((ExWorld) Minecraft.instance.level).getTriggerManager().isActivated(x, y, z);
     }
 
     @Override
-    public AxixAlignedBoundingBox getCollisionShape(World world, int x, int y, int z) {
+    public AABB getAABB(Level world, int x, int y, int z) {
         if (((ExWorld) world).getTriggerManager().isActivated(x, y, z) && !AC_DebugMode.active) {
-            return super.getCollisionShape(world, x, y, z);
+            return super.getAABB(world, x, y, z);
         }
         return null;
     }
@@ -45,16 +45,16 @@ public class AC_BlockTriggeredDoor extends Block implements AC_ITriggerBlock {
     }
 
     @Override
-    public void onTriggerActivated(World world, int x, int y, int z) {
-        world.playSound((double) x + 0.5D, (double) y + 0.5D, (double) z + 0.5D, "random.door_open", 1.0F, world.rand.nextFloat() * 0.1F + 0.9F);
-        world.notifyListeners(x, y, z);
+    public void onTriggerActivated(Level world, int x, int y, int z) {
+        world.playSound((double) x + 0.5D, (double) y + 0.5D, (double) z + 0.5D, "random.door_open", 1.0F, world.random.nextFloat() * 0.1F + 0.9F);
+        world.sendTileUpdated(x, y, z);
         this.isActived = true;
     }
 
     @Override
-    public void onTriggerDeactivated(World world, int x, int y, int z) {
-        world.playSound((double) x + 0.5D, (double) y + 0.5D, (double) z + 0.5D, "random.door_close", 1.0F, world.rand.nextFloat() * 0.1F + 0.9F);
-        world.notifyListeners(x, y, z);
+    public void onTriggerDeactivated(Level world, int x, int y, int z) {
+        world.playSound((double) x + 0.5D, (double) y + 0.5D, (double) z + 0.5D, "random.door_close", 1.0F, world.random.nextFloat() * 0.1F + 0.9F);
+        world.sendTileUpdated(x, y, z);
         this.isActived = false;
     }
 }

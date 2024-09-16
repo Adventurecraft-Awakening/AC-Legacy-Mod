@@ -1,10 +1,10 @@
 package dev.adventurecraft.awakening.mixin.client.entity.particle;
 
-import net.minecraft.client.entity.particle.PickupParticleEntity;
+import net.minecraft.client.particle.TakeAnimationParticle;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
-@Mixin(PickupParticleEntity.class)
+@Mixin(TakeAnimationParticle.class)
 public abstract class MixinPickupParticleEntity {
 
     @Overwrite

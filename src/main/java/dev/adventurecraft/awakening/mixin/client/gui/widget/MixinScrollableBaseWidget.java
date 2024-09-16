@@ -3,9 +3,9 @@ package dev.adventurecraft.awakening.mixin.client.gui.widget;
 import dev.adventurecraft.awakening.common.ScrollableWidget;
 import dev.adventurecraft.awakening.extension.client.gui.widget.ExScrollableBaseWidget;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.ScrollableBaseWidget;
-import net.minecraft.client.render.Tessellator;
+import net.minecraft.client.gui.components.AbstractSelectionList;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.renderer.Tesselator;
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
 
-@Mixin(ScrollableBaseWidget.class)
+@Mixin(AbstractSelectionList.class)
 public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidget {
 
     @Unique
@@ -90,13 +90,13 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
 
             @Override
             protected void renderContentBackground(
-                double left, double right, double top, double bot, double scroll, Tessellator ts) {
+                double left, double right, double top, double bot, double scroll, Tesselator ts) {
                 self.renderBackground();
                 super.renderContentBackground(left, right, top, bot, scroll, ts);
             }
 
             @Override
-            protected void renderEntry(int entryIndex, double entryX, double entryY, int entryHeight, Tessellator ts) {
+            protected void renderEntry(int entryIndex, double entryX, double entryY, int entryHeight, Tesselator ts) {
                 int x = (int) Math.floor(entryX) - 92 - 16;
                 int y = (int) Math.floor(entryY) + 4;
 
@@ -110,10 +110,10 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
                         GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
                         GL11.glDisable(GL11.GL_TEXTURE_2D);
                         GL11.glEnable(GL11.GL_BLEND);
-                        ts.start();
+                        ts.begin();
                         self.rootWidget.renderContentSelection(
                             x - 2, y - 2, 220, entryHeight, 1, borderColor, backColor, ts);
-                        ts.tessellate();
+                        ts.end();
                         GL11.glEnable(GL11.GL_TEXTURE_2D);
                         GL11.glDisable(GL11.GL_BLEND);
                     }
@@ -122,7 +122,7 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
             }
 
             @Override
-            protected void beforeEntryRender(int mouseX, int mouseY, double entryX, double entryY, Tessellator ts) {
+            protected void beforeEntryRender(int mouseX, int mouseY, double entryX, double entryY, Tesselator ts) {
                 if (self.doRenderStatItemSlot) {
                     int sX = (int) Math.floor(entryX) - 92 - 16;
                     int sY = (int) Math.floor(entryY) + 4;
@@ -133,7 +133,7 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
             }
 
             @Override
-            protected void afterRender(int mouseX, int mouseY, float tickTime, Tessellator ts) {
+            protected void afterRender(int mouseX, int mouseY, float tickTime, Tesselator ts) {
                 self.method_1255(mouseX, mouseY);
             }
         };
@@ -158,10 +158,10 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
     protected abstract void renderBackground();
 
     @Shadow
-    protected abstract void renderStatEntry(int entryIndex, int x, int y, int height, Tessellator ts);
+    protected abstract void renderStatEntry(int entryIndex, int x, int y, int height, Tesselator ts);
 
     @Shadow
-    protected abstract void renderStatItemSlot(int x, int y, Tessellator ts);
+    protected abstract void renderStatItemSlot(int x, int y, Tesselator ts);
 
     @Overwrite
     public void method_1260(boolean bl) {
@@ -186,7 +186,7 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
     }
 
     @Overwrite
-    public void buttonClicked(ButtonWidget arg) {
+    public void buttonClicked(Button arg) {
         this.rootWidget.buttonClicked(arg);
     }
 

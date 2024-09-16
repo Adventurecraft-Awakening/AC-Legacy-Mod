@@ -2,14 +2,14 @@ package dev.adventurecraft.awakening.mixin.client.render;
 
 import dev.adventurecraft.awakening.common.Vec2;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import net.minecraft.client.render.FireTextureBinder;
-import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 import java.awt.image.BufferedImage;
+import net.minecraft.client.renderer.ptexture.FireTexture;
+import net.minecraft.world.level.Level;
 
-@Mixin(FireTextureBinder.class)
+@Mixin(FireTexture.class)
 public class MixinFireTextureBinder extends MixinTextureBinder {
 
     @Shadow
@@ -180,7 +180,7 @@ public class MixinFireTextureBinder extends MixinTextureBinder {
     }
 
     @Override
-    public void loadImage(String name, World world) {
+    public void loadImage(String name, Level world) {
         if (name == null) {
             name = "/custom_fire.png";
         }

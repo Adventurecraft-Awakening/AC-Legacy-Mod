@@ -2,14 +2,14 @@ package dev.adventurecraft.awakening.mixin.item;
 
 import dev.adventurecraft.awakening.common.AC_Items;
 import dev.adventurecraft.awakening.extension.item.ExItemStack;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.io.CompoundTag;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.item.Item;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 
-@Mixin(ItemStack.class)
+@Mixin(ItemInstance.class)
 public abstract class MixinItemStack implements ExItemStack {
 
     private int timeLeft;
@@ -30,9 +30,9 @@ public abstract class MixinItemStack implements ExItemStack {
 
     @Overwrite
     public CompoundTag writeNBT(CompoundTag tag) {
-        tag.put("id", (short) this.itemId);
-        tag.put("Count", this.count);
-        tag.put("Damage", (short) this.meta);
+        tag.putShort("id", (short) this.itemId);
+        tag.putInt("Count", this.count);
+        tag.putShort("Damage", (short) this.meta);
         return tag;
     }
 

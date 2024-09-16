@@ -1,12 +1,12 @@
 package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.block.ExBlock;
-import net.minecraft.block.Block;
-import net.minecraft.client.render.entity.block.BlockEntityRenderer;
-import net.minecraft.entity.BlockEntity;
+import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
+import net.minecraft.world.level.tile.Tile;
+import net.minecraft.world.level.tile.entity.TileEntity;
 import org.lwjgl.opengl.GL11;
 
-public class AC_TileEntityMobSpawnerRenderer extends BlockEntityRenderer {
+public class AC_TileEntityMobSpawnerRenderer extends TileEntityRenderer {
 
     public void render(AC_TileEntityMobSpawner entity, double x, double y, double z, float var8) {
         if (!AC_DebugMode.active) {
@@ -33,7 +33,7 @@ public class AC_TileEntityMobSpawnerRenderer extends BlockEntityRenderer {
             for (int bX = min.x; bX <= max.x; ++bX) {
                 for (int bY = min.y; bY <= max.y; ++bY) {
                     for (int bZ = min.z; bZ <= max.z; ++bZ) {
-                        Block block = Block.BY_ID[entity.world.getBlockId(bX, bY, bZ)];
+                        Tile block = Tile.tiles[entity.level.getTile(bX, bY, bZ)];
                         if (block != null && ((ExBlock) block).canBeTriggered()) {
                             GL11.glColor3f(0.0F, 0.0F, 0.0F);
                             GL11.glVertex3f(0.0F, 0.0F, 0.0F);
@@ -54,7 +54,7 @@ public class AC_TileEntityMobSpawnerRenderer extends BlockEntityRenderer {
     }
 
     @Override
-    public void render(BlockEntity var1, double var2, double var4, double var6, float var8) {
+    public void render(TileEntity var1, double var2, double var4, double var6, float var8) {
         this.render((AC_TileEntityMobSpawner) var1, var2, var4, var6, var8);
     }
 }

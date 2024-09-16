@@ -1,6 +1,12 @@
 package dev.adventurecraft.awakening.mixin.util.io;
 
 import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
+import net.minecraft.nbt.ByteTag;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.IntTag;
+import net.minecraft.nbt.LongTag;
+import net.minecraft.nbt.ShortTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.util.io.*;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -16,7 +22,7 @@ import java.util.Set;
 public abstract class MixinCompoundTag implements ExCompoundTag {
 
     @Shadow
-    private Map<String, AbstractTag> data;
+    private Map<String, Tag> data;
 
     @Shadow
     public abstract void put(String var1, byte var2);
@@ -53,7 +59,7 @@ public abstract class MixinCompoundTag implements ExCompoundTag {
 
     @Overwrite
     public short getShort(String var1) {
-        AbstractTag tag = this.data.get(var1);
+        Tag tag = this.data.get(var1);
         if (tag == null) {
             return 0;
         } else if (tag instanceof ShortTag sTag) {
@@ -65,7 +71,7 @@ public abstract class MixinCompoundTag implements ExCompoundTag {
 
     @Overwrite
     public int getInt(String var1) {
-        AbstractTag tag = this.data.get(var1);
+        Tag tag = this.data.get(var1);
         if (tag == null) {
             return 0;
         } else if (tag instanceof IntTag iTag) {
@@ -79,7 +85,7 @@ public abstract class MixinCompoundTag implements ExCompoundTag {
 
     @Overwrite
     public long getLong(String var1) {
-        AbstractTag tag = this.data.get(var1);
+        Tag tag = this.data.get(var1);
         if (tag == null) {
             return 0;
         } else if (tag instanceof LongTag lTag) {

@@ -5,11 +5,11 @@ import java.util.List;
 
 import dev.adventurecraft.awakening.MathF;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.Tesselator;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.Vec3;
 import org.lwjgl.opengl.GL11;
 
 public class AC_CutsceneCamera {
@@ -20,7 +20,7 @@ public class AC_CutsceneCamera {
     public AC_CutsceneCameraPoint prevPrevPoint;
     public AC_CutsceneCameraPoint prevPoint;
     public ArrayList<AC_CutsceneCameraPoint> cameraPoints = new ArrayList<>();
-    public ArrayList<Vec3d> linePoints = new ArrayList<>();
+    public ArrayList<Vec3> linePoints = new ArrayList<>();
     public AC_CutsceneCameraBlendType startType = AC_CutsceneCameraBlendType.QUADRATIC;
 
     public void addCameraPoint(
@@ -40,16 +40,16 @@ public class AC_CutsceneCamera {
 
     public void loadCameraEntities() {
 
-        for (Entity entity : (List<Entity>) Minecraft.instance.world.entities) {
+        for (Entity entity : (List<Entity>) Minecraft.instance.level.entities) {
             if (entity instanceof AC_EntityCamera) {
                 entity.remove();
             }
         }
 
         for (AC_CutsceneCameraPoint point : this.cameraPoints) {
-            var camera = new AC_EntityCamera(Minecraft.instance.world, point.time, point.blendType, point.cameraID);
-            camera.method_1338(point.posX, point.posY, point.posZ, point.rotYaw, point.rotPitch);
-            Minecraft.instance.world.spawnEntity(camera);
+            var camera = new AC_EntityCamera(Minecraft.instance.level, point.time, point.blendType, point.cameraID);
+            camera.absMoveTo(point.posX, point.posY, point.posZ, point.rotYaw, point.rotPitch);
+            Minecraft.instance.level.addEntity(camera);
         }
 
         var camera = new AC_CutsceneCamera();
@@ -68,33 +68,33 @@ public class AC_CutsceneCamera {
                     float currTime = (float) (i + 1) / 25.0F;
                     float nextTime = MathF.lerp(currTime, prevPoint.time, point.time);
                     AC_CutsceneCameraPoint nextPoint = camera.getPoint(nextTime);
-                    Vec3d linePoint = Vec3d.create(nextPoint.posX, nextPoint.posY, nextPoint.posZ);
+                    Vec3 linePoint = Vec3.create(nextPoint.posX, nextPoint.posY, nextPoint.posZ);
                     this.linePoints.add(linePoint);
                 }
             } else {
-                this.linePoints.add(Vec3d.create(point.posX, point.posY, point.posZ));
+                this.linePoints.add(Vec3.create(point.posX, point.posY, point.posZ));
             }
             prevPoint = point;
         }
     }
 
     public void drawLines(LivingEntity entity, float time) {
-        double prX = entity.prevRenderX + (entity.x - entity.prevRenderX) * (double) time;
-        double prY = entity.prevRenderY + (entity.y - entity.prevRenderY) * (double) time;
-        double prZ = entity.prevRenderZ + (entity.z - entity.prevRenderZ) * (double) time;
+        double prX = entity.xOld + (entity.x - entity.xOld) * (double) time;
+        double prY = entity.yOld + (entity.y - entity.yOld) * (double) time;
+        double prZ = entity.zOld + (entity.z - entity.zOld) * (double) time;
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GL11.glColor4f(1.0F, 0.2F, 0.0F, 1.0F);
         GL11.glLineWidth(5.0F);
         GL11.glDisable(GL11.GL_TEXTURE_2D);
-        Tessellator ts = Tessellator.INSTANCE;
-        ts.start(GL11.GL_LINE_STRIP);
+        Tesselator ts = Tesselator.instance;
+        ts.begin(GL11.GL_LINE_STRIP);
 
-        for (Vec3d linePoint : this.linePoints) {
-            ts.addVertex(linePoint.x - prX, linePoint.y - prY, linePoint.z - prZ);
+        for (Vec3 linePoint : this.linePoints) {
+            ts.vertex(linePoint.x - prX, linePoint.y - prY, linePoint.z - prZ);
         }
 
-        ts.tessellate();
+        ts.end();
         GL11.glLineWidth(1.0F);
         GL11.glEnable(GL11.GL_TEXTURE_2D);
         GL11.glDisable(GL11.GL_BLEND);
@@ -153,7 +153,7 @@ public class AC_CutsceneCamera {
     public void startCamera() {
         this.prevPrevPoint = null;
         this.prevPoint = null;
-        this.startTime = Minecraft.instance.world.getWorldTime();
+        this.startTime = Minecraft.instance.level.getTime();
     }
 
     public boolean isEmpty() {
@@ -165,7 +165,7 @@ public class AC_CutsceneCamera {
     }
 
     public AC_CutsceneCameraPoint getCurrentPoint(float time) {
-        float normalizedTime = ((float) (Minecraft.instance.world.getWorldTime() - this.startTime) + time) / 20.0F;
+        float normalizedTime = ((float) (Minecraft.instance.level.getTime() - this.startTime) + time) / 20.0F;
         return this.getPoint(normalizedTime);
     }
 
@@ -176,10 +176,10 @@ public class AC_CutsceneCamera {
             }
 
             if (this.startType != AC_CutsceneCameraBlendType.NONE) {
-                AbstractClientPlayerEntity entity = Minecraft.instance.player;
+                LocalPlayer entity = Minecraft.instance.player;
                 this.prevPoint = new AC_CutsceneCameraPoint(
-                    0.0F, (float) entity.x, (float) entity.y, (float) entity.z, entity.yaw, entity.pitch, this.startType);
-                this.fixYawPitch(entity.yaw, entity.pitch);
+                    0.0F, (float) entity.x, (float) entity.y, (float) entity.z, entity.yRot, entity.xRot, this.startType);
+                this.fixYawPitch(entity.yRot, entity.xRot);
             } else {
                 AC_CutsceneCameraPoint point = this.cameraPoints.get(0);
                 this.prevPoint = new AC_CutsceneCameraPoint(

@@ -2,14 +2,14 @@ package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.common.AC_GuiUrlRequest;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import net.minecraft.world.World;
+import net.minecraft.world.level.Level;
 
 @SuppressWarnings("unused")
 public class ScriptScript {
 
-    World world;
+    Level world;
 
-    ScriptScript(World var1) {
+    ScriptScript(Level var1) {
         this.world = var1;
     }
 

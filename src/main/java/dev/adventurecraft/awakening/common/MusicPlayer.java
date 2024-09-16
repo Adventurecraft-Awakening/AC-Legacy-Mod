@@ -2,8 +2,8 @@ package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.common.instruments.IInstrumentConfig;
 import dev.adventurecraft.awakening.common.instruments.Note;
-import net.minecraft.entity.Entity;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
 
 public class MusicPlayer {
     /**
@@ -15,7 +15,7 @@ public class MusicPlayer {
      * @param note             The note to be played
      * @param volume           The volume that the note will be played at
      */
-    public static void playNote(World world, double x, double y, double z, IInstrumentConfig instrumentConfig, Note note, float volume) {
+    public static void playNote(Level world, double x, double y, double z, IInstrumentConfig instrumentConfig, Note note, float volume) {
         playNote(world, x, y, z, instrumentConfig.getSoundString(note), instrumentConfig.getPitchModifier() * note.getPitch(), instrumentConfig.getVolumeModifier() * volume);
     }
 
@@ -28,11 +28,11 @@ public class MusicPlayer {
      * @param pitchMod The note to be played
      * @param volume   The volume that the note will be played at
      */
-    public static void playNote(World world, double x, double y, double z, String soundURI, float pitchMod, float volume) {
+    public static void playNote(Level world, double x, double y, double z, String soundURI, float pitchMod, float volume) {
         world.playSound(x, y, z, soundURI, volume, pitchMod);
     }
 
     public static void playNoteFromEntity(Entity entity, IInstrumentConfig instrumentConfig, Note note, float volume) {
-        playNote(entity.world, entity.x, entity.y, entity.z, instrumentConfig, note, volume);
+        playNote(entity.level, entity.x, entity.y, entity.z, instrumentConfig, note, volume);
     }
 }

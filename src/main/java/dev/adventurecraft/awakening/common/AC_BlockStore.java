@@ -2,38 +2,38 @@ package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import net.minecraft.block.BlockWithEntity;
-import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.BlockEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.tile.TileEntityTile;
+import net.minecraft.world.level.tile.entity.TileEntity;
 
-public class AC_BlockStore extends BlockWithEntity implements AC_ITriggerBlock {
+public class AC_BlockStore extends TileEntityTile implements AC_ITriggerBlock {
 
     protected AC_BlockStore(int var1, int var2) {
         super(var1, var2, Material.GLASS);
     }
 
     @Override
-    protected BlockEntity createBlockEntity() {
+    protected TileEntity newTileEntity() {
         return new AC_TileEntityStore();
     }
 
     @Override
-    public boolean isFullOpaque() {
+    public boolean isSolidRender() {
         return false;
     }
 
     @Override
-    public int getRenderPass() {
+    public int getRenderLayer() {
         return 1;
     }
 
     @Override
-    public boolean canUse(World world, int x, int y, int z, PlayerEntity player) {
-        var entity = (AC_TileEntityStore) world.getBlockEntity(x, y, z);
+    public boolean use(Level world, int x, int y, int z, Player player) {
+        var entity = (AC_TileEntityStore) world.getTileEntity(x, y, z);
         if (AC_DebugMode.active) {
             AC_GuiStoreDebug.showUI(entity);
             return true;
@@ -45,12 +45,12 @@ public class AC_BlockStore extends BlockWithEntity implements AC_ITriggerBlock {
 
         if (entity.sellItemID != 0 &&
             !((ExPlayerInventory) player.inventory).consumeItemAmount(entity.sellItemID, entity.sellItemDamage, entity.sellItemAmount)) {
-            Minecraft.instance.overlay.addChatMessage("Don't have enough to trade.");
+            Minecraft.instance.gui.addMessage("Don't have enough to trade.");
             return true;
         }
 
         if (entity.buyItemID != 0) {
-            player.inventory.addStack(new ItemStack(entity.buyItemID, entity.buyItemAmount, entity.buyItemDamage));
+            player.inventory.add(new ItemInstance(entity.buyItemID, entity.buyItemAmount, entity.buyItemDamage));
         }
 
         --entity.buySupplyLeft;
@@ -62,8 +62,8 @@ public class AC_BlockStore extends BlockWithEntity implements AC_ITriggerBlock {
     }
 
     @Override
-    public void reset(World world, int x, int y, int z, boolean forDeath) {
-        var entity = (AC_TileEntityStore) world.getBlockEntity(x, y, z);
+    public void reset(Level world, int x, int y, int z, boolean forDeath) {
+        var entity = (AC_TileEntityStore) world.getTileEntity(x, y, z);
         entity.buySupplyLeft = entity.buySupply;
     }
 }

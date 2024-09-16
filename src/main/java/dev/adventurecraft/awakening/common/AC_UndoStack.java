@@ -1,10 +1,9 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.util.io.CompoundTag;
-import net.minecraft.world.World;
-
 import java.util.ArrayList;
 import java.util.LinkedList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.Level;
 
 public class AC_UndoStack {
 
@@ -81,7 +80,7 @@ public class AC_UndoStack {
         list.add(newAction);
     }
 
-    public void undo(World world) {
+    public void undo(Level world) {
         if (this.undoStack.isEmpty()) {
             return;
         }
@@ -104,7 +103,7 @@ public class AC_UndoStack {
         }
     }
 
-    public void redo(World world) {
+    public void redo(Level world) {
         if (this.redoStack.isEmpty()) {
             return;
         }

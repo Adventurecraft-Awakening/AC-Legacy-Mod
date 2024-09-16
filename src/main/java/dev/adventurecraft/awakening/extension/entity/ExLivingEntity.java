@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.extension.entity;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.ItemInstance;
 
 public interface ExLivingEntity extends ExEntity {
 
@@ -24,9 +24,9 @@ public interface ExLivingEntity extends ExEntity {
 
     void setMaxHealth(int value);
 
-    ItemStack getHeldItem();
+    ItemInstance getHeldItem();
 
-    void setHeldItem(ItemStack value);
+    void setHeldItem(ItemInstance value);
 
     boolean getCanWallJump();
 

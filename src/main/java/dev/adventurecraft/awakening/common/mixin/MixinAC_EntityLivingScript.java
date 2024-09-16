@@ -3,7 +3,7 @@ package dev.adventurecraft.awakening.common.mixin;
 import dev.adventurecraft.awakening.common.AC_EntityLivingScript;
 import dev.adventurecraft.awakening.mixin.entity.MixinLivingEntity;
 import dev.adventurecraft.awakening.script.ScriptEntity;
-import net.minecraft.entity.Entity;
+import net.minecraft.world.entity.Entity;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;

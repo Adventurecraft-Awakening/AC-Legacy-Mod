@@ -2,15 +2,15 @@ package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.BlockEntity;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.world.level.tile.entity.TileEntity;
 import dev.adventurecraft.awakening.script.ScopeTag;
-import net.minecraft.util.io.AbstractTag;
-import net.minecraft.util.io.CompoundTag;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
-public class AC_TileEntityScript extends BlockEntity {
+public class AC_TileEntityScript extends TileEntity {
 
     public boolean inited = false;
     public boolean checkTrigger = true;
@@ -19,7 +19,7 @@ public class AC_TileEntityScript extends BlockEntity {
     public String onDetriggerScriptFile = "";
     public String onUpdateScriptFile = "";
     boolean loaded = false;
-    public Scriptable scope = ((ExWorld) Minecraft.instance.world).getScript().getNewScope();
+    public Scriptable scope = ((ExWorld) Minecraft.instance.level).getScript().getNewScope();
 
     @Override
     public void tick() {
@@ -34,43 +34,43 @@ public class AC_TileEntityScript extends BlockEntity {
         }
 
         if (this.checkTrigger) {
-            this.isActivated = ((ExWorld) this.world).getTriggerManager().isActivated(this.x, this.y, this.z);
+            this.isActivated = ((ExWorld) this.level).getTriggerManager().isActivated(this.x, this.y, this.z);
             this.checkTrigger = false;
         }
 
         if (this.isActivated && !this.onUpdateScriptFile.equals("")) {
-            ((ExWorld) this.world).getScriptHandler().runScript(this.onUpdateScriptFile, this.scope);
+            ((ExWorld) this.level).getScriptHandler().runScript(this.onUpdateScriptFile, this.scope);
         }
     }
 
     @Override
-    public void readNBT(CompoundTag var1) {
-        super.readNBT(var1);
+    public void load(CompoundTag var1) {
+        super.load(var1);
         this.onTriggerScriptFile = var1.getString("onTriggerScriptFile");
         this.onDetriggerScriptFile = var1.getString("onDetriggerScriptFile");
         this.onUpdateScriptFile = var1.getString("onUpdateScriptFile");
         this.isActivated = var1.getBoolean("isActivated");
-        if (var1.containsKey("scope")) {
+        if (var1.hasKey("scope")) {
             ScopeTag.loadScopeFromTag(this.scope, var1.getCompoundTag("scope"));
         }
     }
 
     @Override
-    public void writeNBT(CompoundTag var1) {
-        super.writeNBT(var1);
+    public void save(CompoundTag var1) {
+        super.save(var1);
         if (!this.onTriggerScriptFile.isEmpty()) {
-            var1.put("onTriggerScriptFile", this.onTriggerScriptFile);
+            var1.putString("onTriggerScriptFile", this.onTriggerScriptFile);
         }
 
         if (!this.onDetriggerScriptFile.isEmpty()) {
-            var1.put("onDetriggerScriptFile", this.onDetriggerScriptFile);
+            var1.putString("onDetriggerScriptFile", this.onDetriggerScriptFile);
         }
 
         if (!this.onUpdateScriptFile.isEmpty()) {
-            var1.put("onUpdateScriptFile", this.onUpdateScriptFile);
+            var1.putString("onUpdateScriptFile", this.onUpdateScriptFile);
         }
 
-        var1.put("isActivated", this.isActivated);
-        var1.put("scope", (AbstractTag) ScopeTag.getTagFromScope(this.scope));
+        var1.putBoolean("isActivated", this.isActivated);
+        var1.putTag("scope", (Tag) ScopeTag.getTagFromScope(this.scope));
     }
 }

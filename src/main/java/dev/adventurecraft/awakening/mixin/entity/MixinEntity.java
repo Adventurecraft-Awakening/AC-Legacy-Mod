@@ -3,11 +3,6 @@ package dev.adventurecraft.awakening.mixin.entity;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.common.AC_Blocks;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.util.math.AxixAlignedBoundingBox;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
@@ -18,6 +13,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 @Mixin(Entity.class)
 public abstract class MixinEntity implements ExEntity {
@@ -29,7 +29,7 @@ public abstract class MixinEntity implements ExEntity {
     @Shadow
     public Entity vehicle;
     @Shadow
-    public World world;
+    public Level world;
     @Shadow
     public double prevX;
     @Shadow
@@ -58,7 +58,7 @@ public abstract class MixinEntity implements ExEntity {
     public float prevPitch;
     @Final
     @Shadow
-    public AxixAlignedBoundingBox boundingBox;
+    public AABB boundingBox;
     @Shadow
     public boolean onGround;
     @Shadow
@@ -184,7 +184,7 @@ public abstract class MixinEntity implements ExEntity {
         int blockId;
         if (this.collisionX != 0) {
             for (yPos = 0; (double) yPos < (double) this.height + this.y - (double) this.standingEyeHeight - Math.floor(this.y - (double) this.standingEyeHeight); ++yPos) {
-                blockId = this.world.getBlockId((int) Math.floor(this.x) + this.collisionX, (int) Math.floor(this.y + (double) yPos - (double) this.standingEyeHeight), (int) Math.floor(this.z));
+                blockId = this.world.getTile((int) Math.floor(this.x) + this.collisionX, (int) Math.floor(this.y + (double) yPos - (double) this.standingEyeHeight), (int) Math.floor(this.z));
                 if (blockId != 0 && blockId != AC_Blocks.clipBlock.id) {
                     isCollidingWithBlock = true;
                     break;
@@ -202,7 +202,7 @@ public abstract class MixinEntity implements ExEntity {
             isCollidingWithBlock = false;
 
             for (yPos = 0; (double) yPos < (double) this.height + this.y - this.standingEyeHeight - Math.floor(this.y - (double) this.standingEyeHeight); ++yPos) {
-                blockId = this.world.getBlockId((int) Math.floor(this.x), (int) Math.floor(this.y + (double) yPos - (double) this.standingEyeHeight), (int) Math.floor(this.z) + this.collisionZ);
+                blockId = this.world.getTile((int) Math.floor(this.x), (int) Math.floor(this.y + (double) yPos - (double) this.standingEyeHeight), (int) Math.floor(this.z) + this.collisionZ);
                 if (blockId != 0 && blockId != AC_Blocks.clipBlock.id) {
                     isCollidingWithBlock = true;
                     break;
@@ -223,7 +223,7 @@ public abstract class MixinEntity implements ExEntity {
             opcode = Opcodes.PUTFIELD,
             ordinal = 0))
     private void moveCeil(Entity instance, int value) {
-        instance.field_1611 = (int) ((double) this.field_1611 + Math.ceil((this.field_1635 - (float) this.field_1611)));
+        instance.nextStep = (int) ((double) this.field_1611 + Math.ceil((this.field_1635 - (float) this.field_1611)));
     }
 
     @Overwrite
@@ -255,8 +255,8 @@ public abstract class MixinEntity implements ExEntity {
         target = "Lnet/minecraft/entity/Entity;accelerate(DDD)V",
         ordinal = 1))
     private void reverseAccelerateDir(Entity instance, double var2, double var3, double var4) {
-        if (instance.method_1380()) {
-            instance.accelerate(var2, var3, var4);
+        if (instance.isPushable()) {
+            instance.push(var2, var3, var4);
         } else {
             this.accelerate(-var2, var3, -var4);
         }
@@ -265,24 +265,24 @@ public abstract class MixinEntity implements ExEntity {
     @Redirect(method = "isInsideWall", at = @At(
         value = "INVOKE",
         target = "Lnet/minecraft/world/World;canSuffocate(III)Z"))
-    private boolean preventSuffocate(World instance, int x, int y, int z) {
-        return instance.canSuffocate(x, y, z) && instance.method_1783(x, y, z);
+    private boolean preventSuffocate(Level instance, int x, int y, int z) {
+        return instance.isSolidBlockingTile(x, y, z) && instance.isSolidTile(x, y, z);
     }
 
     @Overwrite
-    public Vec3d getRotation() {
+    public Vec3 getRotation() {
         return this.getRotation(1.0f);
     }
 
     @Override
-    public Vec3d getRotation(float deltaTime) {
+    public Vec3 getRotation(float deltaTime) {
         double pitch = this.prevPitch + (this.pitch - this.prevPitch) * deltaTime;
         double yaw = this.prevYaw + (this.yaw - this.prevYaw) * deltaTime;
         double yCos = Math.cos(-yaw * (Math.PI / 180) - Math.PI);
         double ySin = Math.sin(-yaw * (Math.PI / 180) - Math.PI);
         double pCos = -Math.cos(-pitch * (Math.PI / 180));
         double pSin = Math.sin(-pitch * (Math.PI / 180));
-        return Vec3d.from(ySin * pCos, pSin, yCos * pCos);
+        return Vec3.newTemp(ySin * pCos, pSin, yCos * pCos);
     }
 
     @Override

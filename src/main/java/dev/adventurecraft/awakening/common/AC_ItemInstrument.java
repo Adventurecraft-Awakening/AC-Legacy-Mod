@@ -3,12 +3,12 @@ package dev.adventurecraft.awakening.common;
 import dev.adventurecraft.awakening.common.instruments.IInstrumentConfig;
 import dev.adventurecraft.awakening.common.instruments.SimpleInstrumentConfig;
 import dev.adventurecraft.awakening.extension.entity.block.ExSongContainer;
-import net.minecraft.block.Block;
-import net.minecraft.entity.block.SignBlockEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.tile.Tile;
+import net.minecraft.world.level.tile.entity.SignTileEntity;
 
 public class AC_ItemInstrument extends Item {
 
@@ -54,9 +54,9 @@ public class AC_ItemInstrument extends Item {
     }
 
     @Override
-    public boolean useOnBlock(ItemStack stack, PlayerEntity player, World world, int x, int y, int z, int side) {
-        if (world.getBlockId(x, y, z) == Block.STANDING_SIGN.id) {
-            var targetSign = (SignBlockEntity) world.getBlockEntity(x, y, z);
+    public boolean useOn(ItemInstance stack, Player player, Level world, int x, int y, int z, int side) {
+        if (world.getTile(x, y, z) == Tile.SIGN.id) {
+            var targetSign = (SignTileEntity) world.getTileEntity(x, y, z);
             ((ExSongContainer) targetSign).playSong(this.instrument);
         }
 
@@ -64,7 +64,7 @@ public class AC_ItemInstrument extends Item {
     }
 
     @Override
-    public ItemStack use(ItemStack stack, World world, PlayerEntity player) {
+    public ItemInstance use(ItemInstance stack, Level world, Player player) {
         AC_GuiMusicSheet.showUI(this.instrument);
         return stack;
     }

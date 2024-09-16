@@ -1,6 +1,5 @@
 package dev.adventurecraft.awakening.script;
 
-import net.minecraft.client.model.Cuboid;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
@@ -10,10 +9,11 @@ import org.lwjgl.util.vector.Vector4f;
 import java.nio.FloatBuffer;
 import java.util.LinkedList;
 import java.util.List;
+import net.minecraft.client.model.geom.ModelPart;
 
 public abstract class ScriptModelBase {
 
-    protected final List<Cuboid> boxes = new LinkedList<>();
+    protected final List<ModelPart> boxes = new LinkedList<>();
     public ScriptEntity attachedTo;
     public ScriptModelBase modelAttachment;
     public String texture;

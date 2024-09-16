@@ -1,27 +1,27 @@
 package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.client.ExInteractionManager;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.container.slot.Slot;
-import net.minecraft.inventory.Inventory;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 
 import java.util.List;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.world.Container;
+import net.minecraft.world.inventory.Slot;
 
 public class AC_GuiPalette extends ScrollableContainerScreen {
 
     private final InventoryDebug palette;
-    private final Inventory inv1;
-    private final Inventory inv2;
+    private final Container inv1;
+    private final Container inv2;
     private final int slotHeight;
 
     private GuiSlider2 extraWidth;
     private GuiSlider2 extraDepth;
-    private ButtonWidget nextPageButton;
-    private ButtonWidget previousPageButton;
+    private Button nextPageButton;
+    private Button previousPageButton;
 
-    public AC_GuiPalette(Inventory playerInventory, InventoryDebug chestInventory, int slotHeight, int rowsPerPage) {
+    public AC_GuiPalette(Container playerInventory, InventoryDebug chestInventory, int slotHeight, int rowsPerPage) {
         super(new ScrollableContainer(playerInventory, chestInventory, slotHeight), rowsPerPage);
         this.inv1 = playerInventory;
         this.inv2 = chestInventory;
@@ -30,7 +30,7 @@ public class AC_GuiPalette extends ScrollableContainerScreen {
 
         int yOffset = (this.rowsPerPage - 4) * slotHeight;
         for (Slot slot : container.getStaticSlots()) {
-            slot.y += yOffset;
+            slot.z += yOffset;
         }
 
         this.passEvents = false;
@@ -40,9 +40,9 @@ public class AC_GuiPalette extends ScrollableContainerScreen {
     }
 
     @Override
-    public void initVanillaScreen() {
-        super.initVanillaScreen();
-        var intMan = (ExInteractionManager) this.client.interactionManager;
+    public void init() {
+        super.init();
+        var intMan = (ExInteractionManager) this.minecraft.gameMode;
 
         int sliderID = 50; // Same for both for some reason
 
@@ -64,8 +64,8 @@ public class AC_GuiPalette extends ScrollableContainerScreen {
         int buttonId = 50;
         int buttonsX = this.width / 2 + containerWidth / 2 + 4;
         int heightMiddle = this.height / 2;
-        this.nextPageButton = new ButtonWidget(buttonId, buttonsX, heightMiddle + 30, 50, 20, "Next");
-        this.previousPageButton = new ButtonWidget(buttonId, buttonsX, heightMiddle, 50, 20, "Previous");
+        this.nextPageButton = new Button(buttonId, buttonsX, heightMiddle + 30, 50, 20, "Next");
+        this.previousPageButton = new Button(buttonId, buttonsX, heightMiddle, 50, 20, "Previous");
 
         this.buttons.add(this.extraDepth);
         this.buttons.add(this.extraWidth);
@@ -77,10 +77,10 @@ public class AC_GuiPalette extends ScrollableContainerScreen {
     @Override
     protected void keyPressed(char keyCharacter, int keyCode) {
         if (keyCode == Keyboard.KEY_F7) {
-            this.client.soundHelper.playSound("random.click", 1.0F, 1.0F);
+            this.minecraft.soundEngine.playUI("random.click", 1.0F, 1.0F);
             goToPageRelative(-1);
         } else if (keyCode == Keyboard.KEY_F8) {
-            this.client.soundHelper.playSound("random.click", 1.0F, 1.0F);
+            this.minecraft.soundEngine.playUI("random.click", 1.0F, 1.0F);
             goToPageRelative(1);
         } else {
             super.keyPressed(keyCharacter, keyCode);
@@ -105,22 +105,22 @@ public class AC_GuiPalette extends ScrollableContainerScreen {
         GL11.glDisable(GL11.GL_LIGHTING);
         GL11.glDisable(GL11.GL_DEPTH_TEST);
 
-        for (ButtonWidget button : (List<ButtonWidget>) this.buttons) {
-            button.render(this.client, mouseX, mouseY);
+        for (Button button : (List<Button>) this.buttons) {
+            button.render(this.minecraft, mouseX, mouseY);
         }
 
         GL11.glEnable(GL11.GL_LIGHTING);
         GL11.glEnable(GL11.GL_DEPTH_TEST);
         GL11.glPopMatrix();
-        var intMan = (ExInteractionManager) this.client.interactionManager;
+        var intMan = (ExInteractionManager) this.minecraft.gameMode;
         intMan.setDestroyExtraDepth((int) Math.min(16.0F * this.extraDepth.sliderValue, 15.0F));
         intMan.setDestroyExtraWidth((int) Math.min(5.0F * this.extraWidth.sliderValue, 4.0F));
-        this.extraWidth.text = String.format("Extra Width: %d", intMan.getDestroyExtraWidth());
-        this.extraDepth.text = String.format("Extra Depth: %d", intMan.getDestroyExtraDepth());
+        this.extraWidth.message = String.format("Extra Width: %d", intMan.getDestroyExtraWidth());
+        this.extraDepth.message = String.format("Extra Depth: %d", intMan.getDestroyExtraDepth());
     }
 
     @Override
-    protected void buttonClicked(ButtonWidget buttonWidget) {
+    protected void buttonClicked(Button buttonWidget) {
         if (buttonWidget == this.nextPageButton) {
             goToPageRelative(1);
         } else if (buttonWidget == this.previousPageButton) {
@@ -131,14 +131,14 @@ public class AC_GuiPalette extends ScrollableContainerScreen {
     }
 
     protected void renderForeground() {
-        this.textRenderer.drawText(this.inv2.getContainerName(), 8, 6, 0x404040);
-        this.textRenderer.drawText(this.inv1.getContainerName(), 8, this.containerHeight - 96 + 2, 0x404040);
+        this.font.draw(this.inv2.getName(), 8, 6, 0x404040);
+        this.font.draw(this.inv1.getName(), 8, this.containerHeight - 96 + 2, 0x404040);
     }
 
     protected void renderContainerBackground(float f) {
-        int texId = this.client.textureManager.getTextureId("/gui/container.png");
+        int texId = this.minecraft.textures.loadTexture("/gui/container.png");
         GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-        this.client.textureManager.bindTexture(texId);
+        this.minecraft.textures.bind(texId);
         int x = (this.width - this.containerWidth) / 2;
         int y = (this.height - this.containerHeight) / 2;
         this.blit(x, y, 0, 0, this.containerWidth, this.rowsPerPage * slotHeight + 17);

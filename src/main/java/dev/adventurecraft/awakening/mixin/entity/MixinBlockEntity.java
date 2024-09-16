@@ -2,7 +2,6 @@ package dev.adventurecraft.awakening.mixin.entity;
 
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.extension.entity.ExBlockEntity;
-import net.minecraft.entity.BlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -12,8 +11,9 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Map;
+import net.minecraft.world.level.tile.entity.TileEntity;
 
-@Mixin(BlockEntity.class)
+@Mixin(TileEntity.class)
 public abstract class MixinBlockEntity implements ExBlockEntity {
 
     private boolean killedFromSaving;

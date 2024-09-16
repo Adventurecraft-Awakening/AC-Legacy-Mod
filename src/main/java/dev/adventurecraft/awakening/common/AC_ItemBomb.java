@@ -1,19 +1,19 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
 
 class AC_ItemBomb extends Item {
 	public AC_ItemBomb(int var1) {
 		super(var1);
-		this.setTexturePosition(150);
+		this.texture(150);
 	}
 
-	public ItemStack use(ItemStack stack, World world, PlayerEntity player) {
+	public ItemInstance use(ItemInstance stack, Level world, Player player) {
 		--stack.count;
-		world.spawnEntity(new AC_EntityBomb(world, player));
+		world.addEntity(new AC_EntityBomb(world, player));
 		return stack;
 	}
 }

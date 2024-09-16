@@ -1,35 +1,33 @@
 package dev.adventurecraft.awakening.client.gui;
 
 import dev.adventurecraft.awakening.client.options.OptionOF;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widgets.OptionButtonWidget;
-import net.minecraft.client.gui.widgets.SliderWidget;
-import net.minecraft.client.options.GameOptions;
-import net.minecraft.client.options.Option;
-import net.minecraft.client.resource.language.TranslationStorage;
-import net.minecraft.client.util.ScreenScaler;
-
 import java.util.List;
+import net.minecraft.client.Option;
+import net.minecraft.client.Options;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.OptionButton;
+import net.minecraft.client.gui.components.SliderButton;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.locale.I18n;
 
 public abstract class GuiBaseSettingsOF extends Screen implements OptionTooltipProvider {
 
     protected Screen prevScreen;
     protected String title;
-    protected GameOptions options;
+    protected Options options;
     protected int lastMouseX = 0;
     protected int lastMouseY = 0;
     protected long mouseStillTime = 0L;
 
-    public GuiBaseSettingsOF(Screen prevScreen, GameOptions options, String title) {
+    public GuiBaseSettingsOF(Screen prevScreen, Options options, String title) {
         this.prevScreen = prevScreen;
         this.options = options;
         this.title = title;
     }
 
     @Override
-    public void initVanillaScreen() {
-        TranslationStorage ts = TranslationStorage.getInstance();
+    public void init() {
+        I18n ts = I18n.getInstance();
         int index = 0;
         Option[] options = getOptions();
 
@@ -38,43 +36,43 @@ public abstract class GuiBaseSettingsOF extends Screen implements OptionTooltipP
             int y = this.height / 6 + 24 * (index / 2);
 
             int id = option.getId();
-            String text = this.options.getTranslatedValue(option);
+            String text = this.options.getMessage(option);
 
-            if (!option.isSlider()) {
-                this.buttons.add(new OptionButtonWidget(id, x, y, option, text));
+            if (!option.isProgress()) {
+                this.buttons.add(new OptionButton(id, x, y, option, text));
             } else {
-                this.buttons.add(new SliderWidget(id, x, y, option, text, this.options.getFloatValue(option)));
+                this.buttons.add(new SliderButton(id, x, y, option, text, this.options.getProgressValue(option)));
             }
 
             ++index;
         }
 
-        this.buttons.add(new ButtonWidget(200, this.width / 2 - 100, this.height / 6 + 168, ts.translate("gui.done")));
+        this.buttons.add(new Button(200, this.width / 2 - 100, this.height / 6 + 168, ts.get("gui.done")));
     }
 
     @Override
-    protected void buttonClicked(ButtonWidget button) {
+    protected void buttonClicked(Button button) {
         if (!button.active) {
             return;
         }
 
-        if (button.id < 100 && button instanceof OptionButtonWidget opButton) {
-            this.options.setIntOption(opButton.getOption(), 1);
-            button.text = this.options.getTranslatedValue(Option.getById(button.id));
+        if (button.id < 100 && button instanceof OptionButton opButton) {
+            this.options.toggle(opButton.getOption(), 1);
+            button.message = this.options.getMessage(Option.getItem(button.id));
         }
 
         if (button.id == 200) {
-            this.client.options.saveOptions();
-            this.client.openScreen(this.prevScreen);
+            this.minecraft.options.save();
+            this.minecraft.setScreen(this.prevScreen);
         }
     }
 
     @Override
     public void render(int mouseX, int mouseY, float var3) {
-        TranslationStorage ts = TranslationStorage.getInstance();
+        I18n ts = I18n.getInstance();
 
         this.renderBackground();
-        this.drawTextWithShadowCentred(this.textRenderer, ts.translate(this.title), this.width / 2, 20, 16777215);
+        this.drawCenteredString(this.font, ts.get(this.title), this.width / 2, 20, 16777215);
 
         super.render(mouseX, mouseY, var3);
 
@@ -101,7 +99,7 @@ public abstract class GuiBaseSettingsOF extends Screen implements OptionTooltipP
 
         int xEnd = x + 150 + 150;
         int yEnd = y + 84 + 10;
-        ButtonWidget button = getSelectedButton(screen.buttons, mouseX, mouseY);
+        Button button = getSelectedButton(screen.buttons, mouseX, mouseY);
         if (button == null) {
             return;
         }
@@ -115,12 +113,12 @@ public abstract class GuiBaseSettingsOF extends Screen implements OptionTooltipP
 
         for (int lineIndex = 0; lineIndex < tooltipLines.size(); ++lineIndex) {
             String line = tooltipLines.get(lineIndex);
-            screen.textRenderer.drawTextWithShadow(line, x + 5, y + 5 + lineIndex * 11, 14540253);
+            screen.font.drawShadow(line, x + 5, y + 5 + lineIndex * 11, 14540253);
         }
     }
 
-    public static ButtonWidget getSelectedButton(List<ButtonWidget> buttons, int x, int y) {
-        for (ButtonWidget button : buttons) {
+    public static Button getSelectedButton(List<Button> buttons, int x, int y) {
+        for (Button button : buttons) {
             boolean hit = x >= button.x &&
                 y >= button.y &&
                 x < button.x + button.width &&

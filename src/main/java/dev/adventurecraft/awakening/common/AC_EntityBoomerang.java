@@ -2,20 +2,20 @@ package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.mixin.entity.MixinEntity;
-import net.minecraft.block.Block;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.io.CompoundTag;
-import net.minecraft.world.World;
 import org.lwjgl.Sys;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.tile.Tile;
 
 public class AC_EntityBoomerang extends Entity {
 
@@ -34,17 +34,17 @@ public class AC_EntityBoomerang extends Entity {
     public float prevBoomerangRotation;
     public float boomerangRotation = 0.0F;
 
-    public AC_EntityBoomerang(World world) {
+    public AC_EntityBoomerang(Level world) {
         super(world);
         this.setSize(0.5F, 1.0F / 16.0F);
-        this.standingEyeHeight = STANDING_EYE_HEIGHT;
+        this.heightOffset = STANDING_EYE_HEIGHT;
 
         ExEntity entity = (ExEntity)this;
         entity.setCollidesWithClipBlocks(true);
         entity.setIgnoreCobwebCollision(true);
     }
 
-    public AC_EntityBoomerang(World world, Entity returnsTo) {
+    public AC_EntityBoomerang(Level world, Entity returnsTo) {
         this(world);
         this.returnsTo = returnsTo;
         //this.itemStack = stack;
@@ -53,54 +53,54 @@ public class AC_EntityBoomerang extends Entity {
         this.turningAround = false;
 
         //Entity positions/rotations
-        this.setRotation(returnsTo.yaw, returnsTo.pitch);
-        double xVel = -Math.sin(returnsTo.yaw * Math.PI / 180.0D);
-        double zVel = Math.cos(returnsTo.yaw * Math.PI / 180.0D);
-        this.xVelocity = VELOCITY_SPEED * xVel * Math.cos(returnsTo.pitch / 180.0D * Math.PI);
-        this.yVelocity = -VELOCITY_SPEED * Math.sin(returnsTo.pitch / 180.0D * Math.PI);
-        this.zVelocity = VELOCITY_SPEED * zVel * Math.cos(returnsTo.pitch / 180.0D * Math.PI);
-        this.setPosition(returnsTo.x, returnsTo.y, returnsTo.z);
+        this.setRot(returnsTo.yRot, returnsTo.xRot);
+        double xVel = -Math.sin(returnsTo.yRot * Math.PI / 180.0D);
+        double zVel = Math.cos(returnsTo.yRot * Math.PI / 180.0D);
+        this.xd = VELOCITY_SPEED * xVel * Math.cos(returnsTo.xRot / 180.0D * Math.PI);
+        this.yd = -VELOCITY_SPEED * Math.sin(returnsTo.xRot / 180.0D * Math.PI);
+        this.zd = VELOCITY_SPEED * zVel * Math.cos(returnsTo.xRot / 180.0D * Math.PI);
+        this.setPos(returnsTo.x, returnsTo.y, returnsTo.z);
         this.determineRotation();
 
-        this.prevX = this.x;
-        this.prevY = this.y;
-        this.prevZ = this.z;
+        this.xo = this.x;
+        this.yo = this.y;
+        this.zo = this.z;
     }
 
     @Override
     public void tick() {
-        this.prevX = this.x;
-        this.prevY = this.y;
-        this.prevZ = this.z;
-        this.prevYaw = this.yaw;
-        this.prevPitch = this.pitch;
+        this.xo = this.x;
+        this.yo = this.y;
+        this.zo = this.z;
+        this.yRotO = this.yRot;
+        this.xRotO = this.xRot;
         if (!this.turningAround) {
-            double velX = this.xVelocity;
-            double velY = this.yVelocity;
-            double velZ = this.zVelocity;
+            double velX = this.xd;
+            double velY = this.yd;
+            double velZ = this.zd;
 
-            this.move(this.xVelocity, this.yVelocity, this.zVelocity);
+            this.move(this.xd, this.yd, this.zd);
 
             boolean bounced = false;
-            if (this.xVelocity != velX) {
-                this.xVelocity = -velX;
+            if (this.xd != velX) {
+                this.xd = -velX;
                 bounced = true;
             }
 
-            if (this.yVelocity != velY) {
-                this.yVelocity = -velY;
+            if (this.yd != velY) {
+                this.yd = -velY;
                 bounced = true;
             }
 
-            if (this.zVelocity != velZ) {
-                this.zVelocity = -velZ;
+            if (this.zd != velZ) {
+                this.zd = -velZ;
                 bounced = true;
             }
 
             if (bounced) {
-                this.xVelocity *= BOUNCE_FACTOR;
-                this.yVelocity *= BOUNCE_FACTOR;
-                this.zVelocity *= BOUNCE_FACTOR;
+                this.xd *= BOUNCE_FACTOR;
+                this.yd *= BOUNCE_FACTOR;
+                this.zd *= BOUNCE_FACTOR;
             }
 
             if (this.ticksBeforeTurnAround-- <= 0) {
@@ -117,10 +117,10 @@ public class AC_EntityBoomerang extends Entity {
                 return;
             }
 
-            this.xVelocity = VELOCITY_SPEED * rX / dist;
-            this.yVelocity = VELOCITY_SPEED * rY / dist;
-            this.zVelocity = VELOCITY_SPEED * rZ / dist;
-            this.setPosition(this.x + this.xVelocity, this.y + this.yVelocity, this.z + this.zVelocity);
+            this.xd = VELOCITY_SPEED * rX / dist;
+            this.yd = VELOCITY_SPEED * rY / dist;
+            this.zd = VELOCITY_SPEED * rZ / dist;
+            this.setPos(this.x + this.xd, this.y + this.yd, this.z + this.zd);
         } else {
             this.remove();
             return;
@@ -134,7 +134,7 @@ public class AC_EntityBoomerang extends Entity {
         }
         this.prevBoomerangRotation = this.boomerangRotation;
 
-        List<Entity> entities = this.world.getEntities(this, this.boundingBox.expand(0.5D, 0.5D, 0.5D));
+        List<Entity> entities = this.level.getEntities(this, this.bb.inflate(0.5D, 0.5D, 0.5D));
         for (Entity entity : entities) {
             if (entity instanceof ItemEntity itemEntity) {
                 if(!this.itemsPickedUp.contains(itemEntity)) {
@@ -144,17 +144,17 @@ public class AC_EntityBoomerang extends Entity {
             }
             if (entity instanceof LivingEntity && entity != this.returnsTo) {
                 ((ExEntity) entity).setStunned(20);
-                entity.prevX = entity.x;
-                entity.prevY = entity.y;
-                entity.prevZ = entity.z;
-                entity.prevYaw = entity.yaw;
-                entity.prevPitch = entity.pitch;
+                entity.xo = entity.x;
+                entity.yo = entity.y;
+                entity.zo = entity.z;
+                entity.yRotO = entity.yRot;
+                entity.xRotO = entity.xRot;
             }
         }
 
         for (Entity entity : this.itemsPickedUp) {
             if (!entity.removed) {
-                entity.setPosition(this.x, this.y, this.z);
+                entity.setPos(this.x, this.y, this.z);
             }
         }
 
@@ -167,9 +167,9 @@ public class AC_EntityBoomerang extends Entity {
             this.blockX = bX;
             this.blockY = bY;
             this.blockZ = bZ;
-            int id = this.world.getBlockId(this.blockX, this.blockY, this.blockZ);
-            if (id == Block.LEVER.id && this.returnsTo instanceof PlayerEntity player) {
-                Block.LEVER.canUse(this.world, this.blockX, this.blockY, this.blockZ, player);
+            int id = this.level.getTile(this.blockX, this.blockY, this.blockZ);
+            if (id == Tile.LEVER.id && this.returnsTo instanceof Player player) {
+                Tile.LEVER.use(this.level, this.blockX, this.blockY, this.blockZ, player);
             }
         }
     }
@@ -180,21 +180,21 @@ public class AC_EntityBoomerang extends Entity {
         if(this.returnsTo == null){
             return;
         }
-        if(!(this.returnsTo instanceof PlayerEntity)){
+        if(!(this.returnsTo instanceof Player)){
             return;
         }
-        for (PlayerEntity player : (List<PlayerEntity>) world.players) {
-            PlayerInventory playerInventory = player.inventory;
+        for (Player player : (List<Player>) level.players) {
+            Inventory playerInventory = player.inventory;
             //checks if the player still holds the item on the cursor
-            if(playerInventory.getCursorItem() != null){
-                ItemStack cursorItemStack = playerInventory.getCursorItem();
+            if(playerInventory.getCarried() != null){
+                ItemInstance cursorItemStack = playerInventory.getCarried();
                 if(setBoomerangMeta(cursorItemStack)){
                     break;
                 }
             }
 
             //searching if the boomerang is still somewhere in the inventory
-            for(ItemStack itemStacks : playerInventory.main){
+            for(ItemInstance itemStacks : playerInventory.items){
                 if(itemStacks == null){
                     continue;
                 }
@@ -203,7 +203,7 @@ public class AC_EntityBoomerang extends Entity {
                 }
             }
         }
-        List<Entity> entities = this.world.getEntities();
+        List<Entity> entities = this.level.getAllEntities();
         for (Entity entity : entities) {
             if(entity == null){
                 continue;
@@ -211,45 +211,45 @@ public class AC_EntityBoomerang extends Entity {
             if(!(entity instanceof ItemEntity itemEntity)){
                 continue;
             }
-            if(itemEntity.stack == null){
+            if(itemEntity.item == null){
                 continue;
             }
-            setBoomerangMeta(itemEntity.stack);
+            setBoomerangMeta(itemEntity.item);
         }
     }
 
-    private boolean setBoomerangMeta(ItemStack itemStack){
-        if(itemStack.itemId == 456 && itemStack.getMeta() > 0){
-            itemStack.setMeta(0);
+    private boolean setBoomerangMeta(ItemInstance itemStack){
+        if(itemStack.id == 456 && itemStack.getAuxValue() > 0){
+            itemStack.setDamage(0);
             return true;
         }
         return false;
     }
 
     private void determineRotation() {
-        this.yaw = (float) (-57.29578D * Math.atan2(this.xVelocity, this.zVelocity));
-        double speed = Math.sqrt(this.zVelocity * this.zVelocity + this.xVelocity * this.xVelocity);
-        this.pitch = (float) (-57.29578D * Math.atan2(this.yVelocity, speed));
+        this.yRot = (float) (-57.29578D * Math.atan2(this.xd, this.zd));
+        double speed = Math.sqrt(this.zd * this.zd + this.xd * this.xd);
+        this.xRot = (float) (-57.29578D * Math.atan2(this.yd, speed));
     }
 
-    protected void writeAdditional(CompoundTag tag) {
+    protected void readAdditionalSaveData(CompoundTag tag) {
     }
 
     @Override
-    public void readAdditional(CompoundTag tag) {
+    public void addAdditionalSaveData(CompoundTag tag) {
         this.remove();
     }
 
     @Override
-    public void onPlayerCollision(PlayerEntity player) {
+    public void playerTouch(Player player) {
     }
 
     @Override
-    public boolean damage(Entity entity, int damage) {
+    public boolean hurt(Entity entity, int damage) {
         return false;
     }
 
     @Override
-    protected void initDataTracker() {
+    protected void defineSynchedData() {
     }
 }

@@ -23,6 +23,6 @@ public class ScriptParticleEntity extends ScriptEntity {
         acParticle.setColor(r,g,b);
         acParticle.setAliveTicks(alive);
 
-        Minecraft.instance.particleManager.addParticle(acParticle);
+        Minecraft.instance.particleEngine.add(acParticle);
     }
 }

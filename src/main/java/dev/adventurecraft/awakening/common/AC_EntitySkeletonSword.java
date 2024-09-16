@@ -1,30 +1,30 @@
 package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.monster.SkeletonEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.monster.Skeleton;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
 
-public class AC_EntitySkeletonSword extends SkeletonEntity {
+public class AC_EntitySkeletonSword extends Skeleton {
 
-    public AC_EntitySkeletonSword(World var1) {
+    public AC_EntitySkeletonSword(Level var1) {
         super(var1);
-        this.attackDamage = 1;
-        ((ExLivingEntity) this).setHeldItem(new ItemStack(Item.WOOD_SWORD, 1));
+        this.damage = 1;
+        ((ExLivingEntity) this).setHeldItem(new ItemInstance(Item.WOOD_SWORD, 1));
     }
 
     @Override
-    protected void tryAttack(Entity var1, float var2) {
-        if ((double) var2 < 2.5D && var1.boundingBox.maxY > this.boundingBox.minY && var1.boundingBox.minY < this.boundingBox.maxY) {
+    protected void checkHurtTarget(Entity var1, float var2) {
+        if ((double) var2 < 2.5D && var1.bb.y1 > this.bb.y0 && var1.bb.y0 < this.bb.y1) {
             this.attackTime = 20;
-            var1.damage(this, this.attackDamage);
+            var1.hurt(this, this.damage);
         }
     }
 
     @Override
-    protected int getMobDrops() {
+    protected int getDeathLoot() {
         return 0;
     }
 }

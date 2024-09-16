@@ -1,44 +1,44 @@
 package dev.adventurecraft.awakening.script;
 
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.Container;
+import net.minecraft.world.ItemInstance;
 
 @SuppressWarnings("unused")
 public class ScriptInventory {
 
-    Inventory inv;
+    Container inv;
 
-    ScriptInventory(Inventory var1) {
+    ScriptInventory(Container var1) {
         this.inv = var1;
     }
 
     public int getSizeInventory() {
-        return this.inv.getInventorySize();
+        return this.inv.getContainerSize();
     }
 
     public String getName() {
-        return this.inv.getContainerName();
+        return this.inv.getName();
     }
 
     public int getStackLimit() {
-        return this.inv.getMaxItemCount();
+        return this.inv.getMaxStackSize();
     }
 
     public ScriptItem getItemInSlot(int var1) {
-        ItemStack var2 = this.inv.getInventoryItem(var1);
-        return var2 != null && var2.itemId != 0 ? new ScriptItem(var2) : null;
+        ItemInstance var2 = this.inv.getItem(var1);
+        return var2 != null && var2.id != 0 ? new ScriptItem(var2) : null;
     }
 
     public ScriptItem decrementItem(int var1, int var2) {
-        ItemStack var3 = this.inv.takeInventoryItem(var1, var2);
-        return var3 != null && var3.itemId != 0 ? new ScriptItem(var3) : null;
+        ItemInstance var3 = this.inv.removeItem(var1, var2);
+        return var3 != null && var3.id != 0 ? new ScriptItem(var3) : null;
     }
 
     public void setSlot(int var1, ScriptItem var2) {
-        this.inv.setInventoryItem(var1, var2.item);
+        this.inv.setItem(var1, var2.item);
     }
 
     public void emptySlot(int var1) {
-        this.inv.setInventoryItem(var1, null);
+        this.inv.setItem(var1, null);
     }
 }

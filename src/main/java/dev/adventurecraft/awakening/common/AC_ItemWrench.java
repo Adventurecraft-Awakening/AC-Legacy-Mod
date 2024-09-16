@@ -1,22 +1,22 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.tile.Tile;
 
 public class AC_ItemWrench extends Item {
     protected AC_ItemWrench(int var1) {
         super(var1);
     }
 
-    public boolean useOnBlock(ItemStack var1, PlayerEntity var2, World var3, int var4, int var5, int var6, int var7) {
+    public boolean useOn(ItemInstance var1, Player var2, Level var3, int var4, int var5, int var6, int var7) {
         if (AC_ItemCursor.bothSet) {
-            int var8 = var3.getBlockId(var4, var5, var6);
-            int var9 = var3.getBlockMeta(var4, var5, var6);
-            Minecraft.instance.overlay.addChatMessage(String.format("Swapping blocks With BlockID %d", var8));
+            int var8 = var3.getTile(var4, var5, var6);
+            int var9 = var3.getData(var4, var5, var6);
+            Minecraft.instance.gui.addMessage(String.format("Swapping blocks With BlockID %d", var8));
             int var10 = Math.min(AC_ItemCursor.oneX, AC_ItemCursor.twoX);
             int var11 = Math.max(AC_ItemCursor.oneX, AC_ItemCursor.twoX);
             int var12 = Math.min(AC_ItemCursor.oneY, AC_ItemCursor.twoY);
@@ -29,7 +29,7 @@ public class AC_ItemWrench extends Item {
                     int var18 = var14;
 
                     while (var18 <= var15) {
-                        int var19 = var3.getBlockId(var16, var17, var18);
+                        int var19 = var3.getTile(var16, var17, var18);
                         switch (var19) {
                             case 1:
                             case 2:
@@ -122,7 +122,7 @@ public class AC_ItemWrench extends Item {
                             case 114:
                             case 116:
                             default:
-                                var3.placeBlockWithMetaData(var16, var17, var18, var8, var9);
+                                var3.setTileAndData(var16, var17, var18, var8, var9);
                             case 0:
                             case 23:
                             case 25:
@@ -162,15 +162,15 @@ public class AC_ItemWrench extends Item {
         return false;
     }
 
-    public float getStrengthOnBlock(ItemStack var1, Block var2) {
+    public float getDestroySpeed(ItemInstance var1, Tile var2) {
         return 32.0F;
     }
 
-    public boolean isEffectiveOn(Block var1) {
+    public boolean canDestroySpecial(Tile var1) {
         return true;
     }
 
-    public boolean shouldSpinWhenRendering() {
+    public boolean isMirroredArt() {
         return true;
     }
 }
