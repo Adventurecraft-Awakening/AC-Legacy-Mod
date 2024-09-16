@@ -26,6 +26,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Formatter;
 
+/**
+ * V1 of mixin, broken.
+ */
+@Deprecated(forRemoval = true)
 @Mixin(Font.class)
 public abstract class MixinTextRenderer implements ExTextRenderer {
 

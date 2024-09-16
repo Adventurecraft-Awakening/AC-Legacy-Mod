@@ -18,8 +18,9 @@ public abstract class MixinPaintingEntity {
 
     // Only breakable in debug mode!
     @Inject(method = "hurt", at = @At("HEAD"), cancellable = true)
-    private void disableHurt(CallbackInfoReturnable ci) {
-        if(!AC_DebugMode.active)
-            ci.cancel();
+    private void disableHurt(CallbackInfoReturnable<Boolean> ci) {
+        if (!AC_DebugMode.active) {
+            ci.setReturnValue(false);
+        }
     }
 }

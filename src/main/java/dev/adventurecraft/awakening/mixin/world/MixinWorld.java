@@ -534,9 +534,9 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     @Inject(method = "validateSpawn", at = @At(
         value = "INVOKE",
         target = "Lnet/minecraft/world/level/storage/LevelData;setSpawnZ(I)V",
-        shift = At.Shift.AFTER),
-        locals = LocalCapture.CAPTURE_FAILHARD)
-    private void spawnAtUncoveredBlock(CallbackInfo ci, int x, int z) {
+        shift = At.Shift.AFTER)
+    )
+    private void spawnAtUncoveredBlock(CallbackInfo ci, @Local(ordinal = 0) int x, @Local(ordinal = 1) int z) {
         this.levelData.setSpawnY(this.getFirstUncoveredBlockY(x, z));
     }
 

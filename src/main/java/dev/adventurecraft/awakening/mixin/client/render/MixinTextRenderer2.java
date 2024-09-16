@@ -39,7 +39,7 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
             value = "INVOKE",
             target = "Ljava/lang/Class;getResourceAsStream(Ljava/lang/String;)Ljava/io/InputStream;",
             remap = false))
-    private InputStream redirectLoadToTexturePack(Class<?> instance, String name, @Local Textures texMan) {
+    private InputStream redirectLoadToTexturePack(Class<?> instance, String name, @Local(argsOnly = true) Textures texMan) {
         return texMan.skins.selected.getResource(name);
     }
 
