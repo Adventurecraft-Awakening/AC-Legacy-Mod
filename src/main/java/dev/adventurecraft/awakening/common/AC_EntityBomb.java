@@ -83,12 +83,12 @@ public class AC_EntityBomb extends ItemEntity {
                 Math.ceil(z + BOMB_RANGE)
             )
         );
-
         List<Entity> appliedForceOnEntity = new LinkedList<>();
-        int victimIndex;
-        int victimAmount = victims.size();
-        for (victimIndex = 0; victimIndex < victimAmount; ++victimIndex) {
-            Entity victim = (Entity) victims.get(victimIndex);
+        for (int i = 0; i < victims.size(); i++) {
+            if(i >= victims.size()){
+                break;
+            }
+            Entity victim = (Entity) victims.get(i);
             if (!victim.isAlive()) {
                 continue;
             }
