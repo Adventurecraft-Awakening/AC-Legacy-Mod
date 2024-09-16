@@ -1,8 +1,5 @@
 package dev.adventurecraft.awakening.common;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.Entity;
@@ -11,6 +8,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.tile.Tile;
 import net.minecraft.world.phys.AABB;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
 
 public class AC_EntityBomb extends ItemEntity {
     private static final double BOMB_DAMAGE = 20.0D;

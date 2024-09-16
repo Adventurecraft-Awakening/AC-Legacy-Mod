@@ -7,7 +7,6 @@ import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.LongTag;
 import net.minecraft.nbt.ShortTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.util.io.*;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -22,44 +21,44 @@ import java.util.Set;
 public abstract class MixinCompoundTag implements ExCompoundTag {
 
     @Shadow
-    private Map<String, Tag> data;
+    private Map<String, Tag> entries;
 
     @Shadow
-    public abstract void put(String var1, byte var2);
+    public abstract void putByte(String var1, byte var2);
 
     @Shadow
-    public abstract void put(String var1, short var2);
+    public abstract void putShort(String var1, short var2);
 
     @Shadow
-    public abstract void put(String var1, int var2);
+    public abstract void putInt(String var1, int var2);
 
-    @Inject(method = "put(Ljava/lang/String;S)V", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "putShort(Ljava/lang/String;S)V", at = @At("HEAD"), cancellable = true)
     private void putByteForShort(String var1, short var2, CallbackInfo ci) {
         if ((byte) var2 == var2) {
-            this.put(var1, (byte) var2);
+            this.putByte(var1, (byte) var2);
             ci.cancel();
         }
     }
 
-    @Inject(method = "put(Ljava/lang/String;I)V", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "putInt(Ljava/lang/String;I)V", at = @At("HEAD"), cancellable = true)
     private void putShortForInt(String var1, int var2, CallbackInfo ci) {
         if ((short) var2 == var2) {
-            this.put(var1, (short) var2);
+            this.putShort(var1, (short) var2);
             ci.cancel();
         }
     }
 
-    @Inject(method = "put(Ljava/lang/String;J)V", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "putLong(Ljava/lang/String;J)V", at = @At("HEAD"), cancellable = true)
     private void putIntForLong(String var1, long var2, CallbackInfo ci) {
         if ((int) var2 == var2) {
-            this.put(var1, (int) var2);
+            this.putInt(var1, (int) var2);
             ci.cancel();
         }
     }
 
     @Overwrite
     public short getShort(String var1) {
-        Tag tag = this.data.get(var1);
+        Tag tag = this.entries.get(var1);
         if (tag == null) {
             return 0;
         } else if (tag instanceof ShortTag sTag) {
@@ -71,7 +70,7 @@ public abstract class MixinCompoundTag implements ExCompoundTag {
 
     @Overwrite
     public int getInt(String var1) {
-        Tag tag = this.data.get(var1);
+        Tag tag = this.entries.get(var1);
         if (tag == null) {
             return 0;
         } else if (tag instanceof IntTag iTag) {
@@ -85,7 +84,7 @@ public abstract class MixinCompoundTag implements ExCompoundTag {
 
     @Overwrite
     public long getLong(String var1) {
-        Tag tag = this.data.get(var1);
+        Tag tag = this.entries.get(var1);
         if (tag == null) {
             return 0;
         } else if (tag instanceof LongTag lTag) {
@@ -101,11 +100,11 @@ public abstract class MixinCompoundTag implements ExCompoundTag {
 
     @Override
     public Set<String> getKeys() {
-        return this.data.keySet();
+        return this.entries.keySet();
     }
 
     @Override
     public Object getValue(String key) {
-        return this.data.get(key);
+        return this.entries.get(key);
     }
 }

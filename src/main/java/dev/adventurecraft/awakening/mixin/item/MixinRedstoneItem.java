@@ -10,10 +10,10 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class MixinRedstoneItem {
 
     @ModifyExpressionValue(
-        method = "useOnBlock",
+        method = "useOn",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/block/Block;canPlaceAt(Lnet/minecraft/world/World;III)Z"))
+            target = "Lnet/minecraft/world/level/tile/Tile;mayPlace(Lnet/minecraft/world/level/Level;III)Z"))
     private boolean onlyPlaceInDebugMode(boolean value) {
         return AC_DebugMode.active && value;
     }

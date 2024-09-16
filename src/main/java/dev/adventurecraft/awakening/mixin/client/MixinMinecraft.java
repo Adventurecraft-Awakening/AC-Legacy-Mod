@@ -85,140 +85,134 @@ import java.net.URL;
 public abstract class MixinMinecraft implements ExMinecraft {
 
     @Shadow
-    private int width;
+    private int orgWidth;
     @Shadow
-    private int height;
+    private int orgHeight;
     @Shadow
-    private boolean isFullscreen;
+    private boolean fullscreen;
     @Shadow
-    public int actualWidth;
+    public int width;
     @Shadow
-    public int actualHeight;
+    public int height;
 
     @Shadow
-    protected abstract void updateScreenResolution(int i, int j);
+    protected abstract void resize(int i, int j);
 
     @Shadow
     public GameRenderer gameRenderer;
 
     @Shadow
-    public Gui overlay;
+    public Gui gui;
 
     @Shadow
     public LocalPlayer player;
 
     @Shadow
-    public Level world;
+    public Level level;
 
     @Shadow
-    public volatile boolean paused;
+    public volatile boolean pause;
 
     @Shadow
-    public GameMode interactionManager;
+    public GameMode gameMode;
 
     @Shadow
-    public Textures textureManager;
+    public Textures textures;
 
     @Shadow
-    public Screen currentScreen;
+    public Screen screen;
 
     @Shadow
-    public abstract void openScreen(Screen arg);
+    public abstract void setScreen(Screen arg);
 
     @Shadow
-    private int mouseTicksProcessed;
+    private int lastClickTick;
 
     @Shadow
-    private int ticksPlayed;
+    private int ticks;
 
     @Shadow
-    private int attackCooldown;
+    private int missTime;
 
     @Shadow
-    protected abstract void method_2110(int i, boolean bl);
+    protected abstract void handleMouseDown(int i, boolean bl);
 
     @Shadow
-    public abstract void toggleFullscreen();
+    public abstract void toggleFullScreen();
 
     @Shadow
-    public abstract void openPauseMenu();
+    public abstract void pauseGame();
 
     @Shadow
-    protected abstract void forceResourceReload();
+    protected abstract void reloadSound();
 
     @Shadow
     public Options options;
 
     @Shadow
-    public LevelRenderer worldRenderer;
+    public LevelRenderer levelRenderer;
 
     @Shadow
-    public abstract boolean hasWorld();
+    public abstract boolean isOnline();
 
     @Shadow
     long lastTickTime;
 
     @Shadow
-    public boolean hasFocus;
+    public boolean mouseGrabbed;
 
     @Shadow
-    public abstract void lockCursor();
+    public abstract void grabMouse();
 
     @Shadow
-    protected abstract void method_2103();
+    protected abstract void pickBlock();
 
     @Shadow
-    private int spawnMobCounter;
+    private int recheckPlayerIn;
 
     @Shadow
-    public ParticleEngine particleManager;
+    public ParticleEngine particleEngine;
 
-    @Shadow
+    @Shadow(aliases = "method_2104")
     protected abstract void startLoginThread();
 
     @Shadow
-    public abstract void switchDimension();
+    public abstract void toggleDimension();
 
     @Shadow
-    public LivingEntity viewEntity;
+    public LivingEntity cameraEntity;
 
     @Shadow
-    protected abstract void loadIntoWorld(String string);
+    protected abstract void prepareLevel(String string);
 
     @Shadow
-    public abstract LevelFormat getWorldStorage();
+    public abstract LevelFormat getLevelSource();
 
     @Shadow
-    public abstract void setWorld(Level arg);
+    public abstract void setLevel(Level arg);
 
     @Shadow
-    public static File getGameDirectory() {
+    public static File getWorkingDirectory() {
         return null;
     }
 
     @Shadow
-    protected abstract void convertWorldFormat(String string, String string2);
+    protected abstract void convertWorld(String string, String string2);
 
     @Shadow
     public HitResult hitResult;
 
     @Shadow
-    private File gameDir;
+    public StatsCounter statManager;
 
     @Shadow
-    public static int frameRenderTimesAmount;
+    public abstract void setLevel(Level arg, String string);
 
     @Shadow
-    public StatsCounter statFileWriter;
+    public ProgressRenderer progressRenderer;
 
     @Shadow
-    public abstract void notifyStatus(Level arg, String string);
-
-    @Shadow
-    public ProgressRenderer progressListener;
-
-    @Shadow
-    public SoundEngine soundHelper;
+    public SoundEngine soundEngine;
 
     private long previousNanoTime;
     private double deltaTime;
@@ -293,7 +287,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
     @Inject(method = "init", at = @At("HEAD"))
     private void init_makeResizable(CallbackInfo ci) {
-        this.width = this.actualWidth;
+        this.orgWidth = this.width;
         Display.setResizable(true);
     }
 
@@ -311,7 +305,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         method = "init",
         at = @At(
             value = "FIELD",
-            target = "Lnet/minecraft/client/Minecraft;options:Lnet/minecraft/client/options/GameOptions;",
+            target = "Lnet/minecraft/client/Minecraft;options:Lnet/minecraft/client/Options;",
             shift = At.Shift.AFTER,
             ordinal = 0))
     private void init_createDisplay(CallbackInfo ci) throws LWJGLException {
@@ -373,7 +367,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         method = "init",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/TexturePackManager;<init>(Lnet/minecraft/client/Minecraft;Ljava/io/File;)V",
+            target = "Lnet/minecraft/client/skins/TexturePackRepository;<init>(Lnet/minecraft/client/Minecraft;Ljava/io/File;)V",
             shift = At.Shift.AFTER))
     private void init_createMapList(CallbackInfo ci) {
         this.mapList = new AC_MapList();
@@ -383,10 +377,10 @@ public abstract class MixinMinecraft implements ExMinecraft {
         method = "init",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/texture/TextureManager;addTextureBinder(Lnet/minecraft/client/render/TextureBinder;)V",
+            target = "Lnet/minecraft/client/renderer/Textures;addDynamicTexture(Lnet/minecraft/client/renderer/ptexture/DynamicTexture;)V",
             ordinal = 0))
     private void init_addFanTextureBinder(CallbackInfo ci) {
-        this.textureManager.addDynamicTexture(new AC_TextureFanFX());
+        this.textures.addDynamicTexture(new AC_TextureFanFX());
     }
 
     @Inject(
@@ -399,9 +393,9 @@ public abstract class MixinMinecraft implements ExMinecraft {
             ordinal = 0,
             remap = false))
     private void run_setup(CallbackInfo ci) {
-        this.textureManager.loadTexture("/terrain.png");
-        this.textureManager.loadTexture("/terrain2.png");
-        this.textureManager.loadTexture("/terrain3.png");
+        this.textures.loadTexture("/terrain.png");
+        this.textures.loadTexture("/terrain2.png");
+        this.textures.loadTexture("/terrain3.png");
         ContextFactory.initGlobal(new ContextFactory());
     }
 
@@ -409,7 +403,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         method = "run",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/util/math/AxixAlignedBoundingBox;method_85()V",
+            target = "Lnet/minecraft/world/phys/AABB;resetPool()V",
             shift = At.Shift.BEFORE))
     private void run_updateDeltaTime(CallbackInfo ci) {
         long nanoTime = System.nanoTime();
@@ -421,7 +415,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         method = "run",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/sound/SoundHelper;setSoundPosition(Lnet/minecraft/entity/LivingEntity;F)V"))
+            target = "Lnet/minecraft/client/sounds/SoundEngine;update(Lnet/minecraft/world/entity/LivingEntity;F)V"))
     private void run_setSoundListenerPos(SoundEngine instance, LivingEntity f, float v) {
         if (this.cameraActive) {
             instance.update(this.cutsceneCameraEntity, v);
@@ -445,21 +439,21 @@ public abstract class MixinMinecraft implements ExMinecraft {
         method = "run",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/Minecraft;checkTakingScreenshot()V",
+            target = "Lnet/minecraft/client/Minecraft;checkScreenshot()V",
             shift = At.Shift.AFTER))
     private void fix_resize(CallbackInfo ci) {
-        if (!this.isFullscreen && (Display.getWidth() != this.actualWidth || Display.getHeight() != this.actualHeight)) {
-            this.actualWidth = Display.getWidth();
-            this.actualHeight = Display.getHeight();
-            if (this.actualWidth <= 0) {
-                this.actualWidth = 1;
+        if (!this.fullscreen && (Display.getWidth() != this.width || Display.getHeight() != this.height)) {
+            this.width = Display.getWidth();
+            this.height = Display.getHeight();
+            if (this.width <= 0) {
+                this.width = 1;
             }
 
-            if (this.actualHeight <= 0) {
-                this.actualHeight = 1;
+            if (this.height <= 0) {
+                this.height = 1;
             }
 
-            this.updateScreenResolution(this.actualWidth, this.actualHeight);
+            this.resize(this.width, this.height);
         }
     }
 
@@ -489,7 +483,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         remap = false,
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/Minecraft;method_2111(J)V"))
+            target = "Lnet/minecraft/client/Minecraft;renderFpsMeter(J)V"))
     private boolean renderFrameTimeGraph(Minecraft instance, long time) {
         return !((ExGameOptions) this.options).ofFastDebugInfo();
     }
@@ -499,7 +493,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         remap = false,
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/Minecraft;method_2131()V",
+            target = "Lnet/minecraft/client/Minecraft;emergencySave()V",
             shift = At.Shift.AFTER,
             ordinal = 0))
     private void printStackOnOutOfMem(CallbackInfo ci, @Local OutOfMemoryError error) {
@@ -507,37 +501,37 @@ public abstract class MixinMinecraft implements ExMinecraft {
     }
 
     @Redirect(
-        method = "toggleFullscreen",
+        method = "toggleFullScreen",
         at = @At(
             value = "FIELD",
-            target = "Lnet/minecraft/client/Minecraft;width:I"))
+            target = "Lnet/minecraft/client/Minecraft;orgWidth:I"))
     private int fix_getWidthAfterFullscreen(Minecraft instance) {
         return Display.getWidth();
     }
 
     @Redirect(
-        method = "toggleFullscreen",
+        method = "toggleFullScreen",
         at = @At(
             value = "FIELD",
-            target = "Lnet/minecraft/client/Minecraft;height:I"))
+            target = "Lnet/minecraft/client/Minecraft;orgHeight:I"))
     private int fix_getHeightAfterFullscreen(Minecraft instance) {
         return Display.getHeight();
     }
 
     @Inject(
-        method = "toggleFullscreen",
+        method = "toggleFullScreen",
         at = @At(
             value = "INVOKE",
             target = "Lorg/lwjgl/opengl/Display;setFullscreen(Z)V",
             remap = false,
             shift = At.Shift.AFTER))
     private void fix_restoreSizeAfterFullscreen(CallbackInfo ci) throws LWJGLException {
-        if (!this.isFullscreen && !Display.isMaximized()) {
-            Display.setDisplayMode(new DisplayMode(this.width, this.height));
+        if (!this.fullscreen && !Display.isMaximized()) {
+            Display.setDisplayMode(new DisplayMode(this.orgWidth, this.orgHeight));
         }
     }
 
-    @Inject(method = "updateScreenResolution", at = @At("TAIL"))
+    @Inject(method = "resize", at = @At("TAIL"))
     private void updateStoreGuiOnResize(int var1, int var2, CallbackInfo ci) {
         updateStoreGUI();
     }
@@ -549,15 +543,15 @@ public abstract class MixinMinecraft implements ExMinecraft {
      */
     @Overwrite
     public void tick() {
-        if (this.ticksPlayed == 6000) {
+        if (this.ticks == 6000) {
             this.startLoginThread();
         }
 
-        this.overlay.tick();
+        this.gui.tick();
         this.gameRenderer.pick(1.0F);
 
         if (this.player != null) {
-            ChunkSource worldSource = this.world.getChunkSource();
+            ChunkSource worldSource = this.level.getChunkSource();
             if (worldSource instanceof ChunkCache chunkCache) {
                 int chunkX = Mth.floor((float) ((int) this.player.x)) >> 4;
                 int chunkZ = Mth.floor((float) ((int) this.player.z)) >> 4;
@@ -566,44 +560,44 @@ public abstract class MixinMinecraft implements ExMinecraft {
             // Bed safety leave
             if(this.player.isSleeping() && this.player.getSleepTimer()>= 100)
             {
-                if(((ExWorldProperties) this.world.levelData).getTimeRate()==0){
+                if(((ExWorldProperties) this.level.levelData).getTimeRate()==0){
                     this.player.stopSleepInBed(true,false,false);
                 } else {
-                    ((ExWorld) this.world).setTimeOfDay(10000);
+                    ((ExWorld) this.level).setTimeOfDay(10000);
                 }
             }
         }
 
-        if (!this.paused && this.world != null) {
-            this.interactionManager.tick();
+        if (!this.pause && this.level != null) {
+            this.gameMode.tick();
         }
 
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.textureManager.loadTexture("/terrain.png"));
-        if (!this.paused) {
-            this.textureManager.tick();
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.textures.loadTexture("/terrain.png"));
+        if (!this.pause) {
+            this.textures.tick();
         }
 
-        if (this.currentScreen == null && this.player != null) {
+        if (this.screen == null && this.player != null) {
             if (this.player.health <= 0) {
-                this.openScreen(null);
-            } else if (this.player.isSleeping() && this.world != null && this.world.isClientSide) {
-                this.openScreen(new InBedChatScreen());
+                this.setScreen(null);
+            } else if (this.player.isSleeping() && this.level != null && this.level.isClientSide) {
+                this.setScreen(new InBedChatScreen());
             }
-        } else if (this.currentScreen != null && this.currentScreen instanceof InBedChatScreen && !this.player.isSleeping()) {
-            this.openScreen(null);
+        } else if (this.screen != null && this.screen instanceof InBedChatScreen && !this.player.isSleeping()) {
+            this.setScreen(null);
         }
 
-        if (this.currentScreen != null && !((ExScreen) this.currentScreen).isDisabledInputGrabbing()) {
-            this.mouseTicksProcessed = this.ticksPlayed + 10000;
+        if (this.screen != null && !((ExScreen) this.screen).isDisabledInputGrabbing()) {
+            this.lastClickTick = this.ticks + 10000;
 
-            this.currentScreen.updateEvents();
-            if (this.currentScreen != null) {
-                this.currentScreen.particles.tick();
-                this.currentScreen.tick();
+            this.screen.updateEvents();
+            if (this.screen != null) {
+                this.screen.particles.tick();
+                this.screen.tick();
             }
         }
 
-        if (this.currentScreen == null || this.currentScreen.passEvents || ((ExScreen) this.currentScreen).isDisabledInputGrabbing()) {
+        if (this.screen == null || this.screen.passEvents || ((ExScreen) this.screen).isDisabledInputGrabbing()) {
             label405:
             while (true) {
                 while (true) {
@@ -614,25 +608,25 @@ public abstract class MixinMinecraft implements ExMinecraft {
                             continue;
                         }
 
-                        if (this.attackCooldown > 0) {
-                            --this.attackCooldown;
+                        if (this.missTime > 0) {
+                            --this.missTime;
                         }
 
                         while (true) {
 
                             do {
                                 if (!Keyboard.next()) {
-                                    if (this.currentScreen == null || ((ExScreen) this.currentScreen).isDisabledInputGrabbing()) {
-                                        if (Mouse.isButtonDown(0) && (float) (this.ticksPlayed - this.mouseTicksProcessed) >= 0.0F && this.hasFocus) {
-                                            this.method_2107(0);
+                                    if (this.screen == null || ((ExScreen) this.screen).isDisabledInputGrabbing()) {
+                                        if (Mouse.isButtonDown(0) && (float) (this.ticks - this.lastClickTick) >= 0.0F && this.mouseGrabbed) {
+                                            this.handleMouseClick(0);
                                         }
 
-                                        if (Mouse.isButtonDown(1) && (float) (this.ticksPlayed - this.rightMouseTicksRan) >= 0.0F && this.hasFocus) {
-                                            this.method_2107(1);
+                                        if (Mouse.isButtonDown(1) && (float) (this.ticks - this.rightMouseTicksRan) >= 0.0F && this.mouseGrabbed) {
+                                            this.handleMouseClick(1);
                                         }
                                     }
 
-                                    this.method_2110(0, (this.currentScreen == null || ((ExScreen) this.currentScreen).isDisabledInputGrabbing()) && Mouse.isButtonDown(0) && this.hasFocus);
+                                    this.handleMouseDown(0, (this.screen == null || ((ExScreen) this.screen).isDisabledInputGrabbing()) && Mouse.isButtonDown(0) && this.mouseGrabbed);
                                     break label405;
                                 }
 
@@ -644,19 +638,19 @@ public abstract class MixinMinecraft implements ExMinecraft {
                             boolean isControlPressed = Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL);
 
                             if (eventKey == Keyboard.KEY_F11) {
-                                this.toggleFullscreen();
+                                this.toggleFullScreen();
                             } else {
-                                if (this.currentScreen != null && !((ExScreen) this.currentScreen).isDisabledInputGrabbing()) {
+                                if (this.screen != null && !((ExScreen) this.screen).isDisabledInputGrabbing()) {
                                     // TODO: fix doubled events (one for key press, one for text input)
-                                    this.currentScreen.keyboardEvent();
+                                    this.screen.keyboardEvent();
                                 } else {
                                     // Not compile time constants, else-if is a must.
                                     // Trust me, I tried to use a switch here.
                                     if (eventKey == Keyboard.KEY_ESCAPE) {
-                                        this.openPauseMenu();
+                                        this.pauseGame();
 
                                     } else if (eventKey == Keyboard.KEY_S && Keyboard.isKeyDown(Keyboard.KEY_F3)) {
-                                        this.forceResourceReload();
+                                        this.reloadSound();
 
                                     } else if (eventKey == Keyboard.KEY_F1) {
                                         this.options.hideGui = !this.options.hideGui;
@@ -667,41 +661,41 @@ public abstract class MixinMinecraft implements ExMinecraft {
                                     } else if (eventKey == Keyboard.KEY_F4) {
                                         AC_DebugMode.active = !AC_DebugMode.active;
                                         if (AC_DebugMode.active) {
-                                            this.overlay.addMessage("Debug Mode Active");
+                                            this.gui.addMessage("Debug Mode Active");
                                         } else {
-                                            this.overlay.addMessage("Debug Mode Deactivated");
+                                            this.gui.addMessage("Debug Mode Deactivated");
                                         }
-                                        ((ExWorldEventRenderer) this.worldRenderer).updateAllTheRenderers();
+                                        ((ExWorldEventRenderer) this.levelRenderer).updateAllTheRenderers();
 
                                     } else if (eventKey == Keyboard.KEY_F5) {
                                         this.options.thirdPersonView = !this.options.thirdPersonView;
 
                                     } else if (eventKey == Keyboard.KEY_F6) {
                                         if (AC_DebugMode.active) {
-                                            ((ExWorldEventRenderer) this.worldRenderer).resetAll();
-                                            this.overlay.addMessage("Resetting all blocks in loaded chunks");
+                                            ((ExWorldEventRenderer) this.levelRenderer).resetAll();
+                                            this.gui.addMessage("Resetting all blocks in loaded chunks");
                                         }
 
                                     } else if (eventKey == Keyboard.KEY_F7 || (eventKey == this.options.keyInventory.key && isShiftPressed)) {
                                         ((ExAbstractClientPlayerEntity) this.player).displayGUIPalette();
 
                                     } else if (eventKey == this.options.keyInventory.key) {
-                                        this.openScreen(new InventoryScreen(this.player));
+                                        this.setScreen(new InventoryScreen(this.player));
 
                                     } else if (eventKey == this.options.keyDrop.key) {
                                         this.player.drop();
 
-                                    } else if ((this.hasWorld() || AC_DebugMode.active) && eventKey == this.options.keyChat.key) {
-                                        this.openScreen(new ChatScreen());
+                                    } else if ((this.isOnline() || AC_DebugMode.active) && eventKey == this.options.keyChat.key) {
+                                        this.setScreen(new ChatScreen());
 
                                     } else if (AC_DebugMode.active && isControlPressed) {
                                         if (eventKey == Keyboard.KEY_Z) { // Undo
                                             ServerCommands.cmdUndo(new ServerCommandSource(
-                                                (Minecraft) (Object) this, this.world, this.player), null);
+                                                (Minecraft) (Object) this, this.level, this.player), null);
 
                                         } else if (eventKey == Keyboard.KEY_Y) { // Redo
                                             ServerCommands.cmdRedo(new ServerCommandSource(
-                                                (Minecraft) (Object) this, this.world, this.player), null);
+                                                (Minecraft) (Object) this, this.level, this.player), null);
                                         }
                                     }
                                 }
@@ -736,8 +730,8 @@ public abstract class MixinMinecraft implements ExMinecraft {
                                 }
                             }
 
-                            if (this.world != null) {
-                                ((ExWorld) this.world).getScript().keyboard.processKeyPress(eventKey);
+                            if (this.level != null) {
+                                ((ExWorld) this.level).getScript().keyboard.processKeyPress(eventKey);
                             }
                         }
 
@@ -758,7 +752,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
                         if (AC_DebugMode.active && menuDown) {
                             AC_DebugMode.reachDistance += wheelDelta;
                             AC_DebugMode.reachDistance = Math.min(Math.max(AC_DebugMode.reachDistance, 2), 100);
-                            this.overlay.addMessage(String.format("Reach Changed to %d", AC_DebugMode.reachDistance));
+                            this.gui.addMessage(String.format("Reach Changed to %d", AC_DebugMode.reachDistance));
                         } else {
                             if (ctrlDown) {
                                 int selectedSlot = this.player.inventory.selected;
@@ -779,77 +773,77 @@ public abstract class MixinMinecraft implements ExMinecraft {
                         }
                     }
 
-                    if (this.currentScreen != null && !((ExScreen) this.currentScreen).isDisabledInputGrabbing()) {
-                        if (this.currentScreen != null) {
-                            this.currentScreen.mouseEvent();
+                    if (this.screen != null && !((ExScreen) this.screen).isDisabledInputGrabbing()) {
+                        if (this.screen != null) {
+                            this.screen.mouseEvent();
                         }
-                    } else if (!this.hasFocus && Mouse.getEventButtonState()) {
-                        this.lockCursor();
+                    } else if (!this.mouseGrabbed && Mouse.getEventButtonState()) {
+                        this.grabMouse();
                     } else {
                         if (Mouse.getEventButton() == 0 && Mouse.getEventButtonState()) {
-                            this.method_2107(0);
+                            this.handleMouseClick(0);
                         }
 
                         if (Mouse.getEventButton() == 1 && Mouse.getEventButtonState()) {
-                            this.method_2107(1);
+                            this.handleMouseClick(1);
                         }
 
                         if (Mouse.getEventButton() == 2 && Mouse.getEventButtonState()) {
-                            this.method_2103();
+                            this.pickBlock();
                         }
                     }
                 }
             }
         }
 
-        if (this.world != null) {
+        if (this.level != null) {
             if (this.player != null) {
-                ++this.spawnMobCounter;
-                if (this.spawnMobCounter == 30) {
-                    this.spawnMobCounter = 0;
-                    this.world.ensureAdded(this.player);
+                ++this.recheckPlayerIn;
+                if (this.recheckPlayerIn == 30) {
+                    this.recheckPlayerIn = 0;
+                    this.level.ensureAdded(this.player);
                 }
             }
 
-            this.world.difficulty = this.options.difficulty;
-            if (this.world.isClientSide) {
-                this.world.difficulty = 3;
+            this.level.difficulty = this.options.difficulty;
+            if (this.level.isClientSide) {
+                this.level.difficulty = 3;
             }
 
-            if (!this.paused) {
+            if (!this.pause) {
                 this.gameRenderer.tick();
             }
 
-            if (!this.paused) {
-                this.worldRenderer.tick();
+            if (!this.pause) {
+                this.levelRenderer.tick();
             }
 
-            if (!this.paused || this.hasWorld()) {
-                ((ExWorld) this.world).ac$preTick();
+            if (!this.pause || this.isOnline()) {
+                ((ExWorld) this.level).ac$preTick();
             }
 
-            if (!this.paused) {
-                if (this.world.skyFlashTime > 0) {
-                    --this.world.skyFlashTime;
+            if (!this.pause) {
+                if (this.level.skyFlashTime > 0) {
+                    --this.level.skyFlashTime;
                 }
 
-                this.world.tickEntities();
+                this.level.tickEntities();
             }
 
-            if (!this.paused || this.hasWorld()) {
-                this.world.setSpawnSettings(this.options.difficulty > 0, true);
-                this.world.tick();
+            if (!this.pause || this.isOnline()) {
+                this.level.setSpawnSettings(this.options.difficulty > 0, true);
+                this.level.tick();
             }
 
-            if (!this.paused && this.world != null) {
-                this.world.animateTick(
+            if (!this.pause && this.level != null) {
+                this.level.animateTick(
                     Mth.floor(this.player.x),
                     Mth.floor(this.player.y),
                     Mth.floor(this.player.z));
             }
 
-            if (!this.paused) {
-                this.particleManager.tick();
+            if (!this.pause) {
+                this.particleEngine.tick();
             }
         }
 
@@ -857,21 +851,21 @@ public abstract class MixinMinecraft implements ExMinecraft {
     }
 
     @Redirect(
-        method = {"method_2110", "lockCursor"},
+        method = {"handleMouseDown", "grabMouse"},
         at = @At(
             value = "FIELD",
-            target = "Lnet/minecraft/client/Minecraft;attackCooldown:I",
+            target = "Lnet/minecraft/client/Minecraft;missTime:I",
             ordinal = 0))
     private void keepAttackCooldown(Minecraft instance, int value) {
     }
 
     @Overwrite
-    private void method_2107(int mouseButton) {
-        if (mouseButton == 0 && this.attackCooldown > 0) {
+    private void handleMouseClick(int mouseButton) {
+        if (mouseButton == 0 && this.missTime > 0) {
             return;
         }
 
-        var exWorld = (ExWorld) this.world;
+        var exWorld = (ExWorld) this.level;
         if (AC_DebugMode.active) {
             exWorld.getUndoStack().startRecording();
         }
@@ -892,9 +886,9 @@ public abstract class MixinMinecraft implements ExMinecraft {
             }
 
             if (mouseButton == 0) {
-                this.mouseTicksProcessed = this.ticksPlayed + useDelay;
+                this.lastClickTick = this.ticks + useDelay;
             } else {
-                this.rightMouseTicksRan = this.ticksPlayed + useDelay;
+                this.rightMouseTicksRan = this.ticks + useDelay;
             }
 
             if (stack != null &&
@@ -905,8 +899,8 @@ public abstract class MixinMinecraft implements ExMinecraft {
                 mouseButton = 1;
             }
         } else {
-            this.mouseTicksProcessed = this.ticksPlayed + 5;
-            this.rightMouseTicksRan = this.ticksPlayed + 5;
+            this.lastClickTick = this.ticks + 5;
+            this.rightMouseTicksRan = this.ticks + 5;
         }
 
         if (mouseButton == 0) {
@@ -915,43 +909,43 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
         boolean useOnBlock = true;
         if (this.hitResult == null) {
-            if (mouseButton == 0 && !(this.interactionManager instanceof CreativeMode)) {
-                this.attackCooldown = 10;
+            if (mouseButton == 0 && !(this.gameMode instanceof CreativeMode)) {
+                this.missTime = 10;
             }
         } else if (this.hitResult.hitType == HitType.ENTITY) {
             if (mouseButton == 0) {
-                this.interactionManager.attack(this.player, this.hitResult.entity);
+                this.gameMode.attack(this.player, this.hitResult.entity);
             }
 
             if (mouseButton == 1) {
-                this.interactionManager.interact(this.player, this.hitResult.entity);
+                this.gameMode.interact(this.player, this.hitResult.entity);
             }
         } else if (this.hitResult.hitType == HitType.TILE) {
             int bX = this.hitResult.x;
             int bY = this.hitResult.y;
             int bZ = this.hitResult.z;
             int bSide = this.hitResult.face;
-            Tile block = Tile.tiles[this.world.getTile(bX, bY, bZ)];
+            Tile block = Tile.tiles[this.level.getTile(bX, bY, bZ)];
             if (block != null) {
                 if (!AC_DebugMode.active && (block.id == Tile.CHEST.id || block.id == AC_Blocks.store.id)) {
                     mouseButton = 1;
                 }
 
                 if (!AC_DebugMode.active) {
-                    int var11 = ((ExBlock) block).alwaysUseClick(this.world, bX, bY, bZ);
+                    int var11 = ((ExBlock) block).alwaysUseClick(this.level, bX, bY, bZ);
                     if (var11 != -1) {
                         mouseButton = var11;
                     }
                 }
 
                 if (mouseButton == 0) {
-                    this.interactionManager.startDestroyBlock(bX, bY, bZ, this.hitResult.face);
+                    this.gameMode.startDestroyBlock(bX, bY, bZ, this.hitResult.face);
                     if (stack != null && Item.items[stack.id] instanceof AC_ILeftClickItem leftClickItem) {
-                        leftClickItem.onItemUseLeftClick(stack, this.player, this.world, bX, bY, bZ, bSide);
+                        leftClickItem.onItemUseLeftClick(stack, this.player, this.level, bX, bY, bZ, bSide);
                     }
                 } else {
                     int count = stack == null ? 0 : stack.count;
-                    if (this.interactionManager.useItemOn(this.player, this.world, stack, bX, bY, bZ, bSide)) {
+                    if (this.gameMode.useItemOn(this.player, this.level, stack, bX, bY, bZ, bSide)) {
                         useOnBlock = false;
                         this.player.swing();
                     }
@@ -972,11 +966,11 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
         if (useOnBlock && mouseButton == 0 && stack != null) {
             if (Item.items[stack.id] instanceof AC_ILeftClickItem leftClickItem) {
-                leftClickItem.onItemLeftClick(stack, this.world, this.player);
+                leftClickItem.onItemLeftClick(stack, this.level, this.player);
             }
         }
 
-        if (useOnBlock && mouseButton == 1 && stack != null && this.interactionManager.useItem(this.player, this.world, stack)) {
+        if (useOnBlock && mouseButton == 1 && stack != null && this.gameMode.useItem(this.player, this.level, stack)) {
             this.gameRenderer.itemInHandRenderer.itemUsed();
         }
         // Hitblock and hitEntity sets
@@ -1075,31 +1069,31 @@ public abstract class MixinMinecraft implements ExMinecraft {
     }
 
     @Inject(
-        method = "initWorld",
+        method = "setLevel(Lnet/minecraft/world/level/Level;Ljava/lang/String;Lnet/minecraft/world/entity/player/Player;)V",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/ClientInteractionManager;onInitWorld(Lnet/minecraft/world/World;)V",
+            target = "Lnet/minecraft/client/gamemode/GameMode;initLevel(Lnet/minecraft/world/level/Level;)V",
             shift = At.Shift.BEFORE))
     private void loadMapTexOnInit(Level var1, String var2, Player var3, CallbackInfo ci) {
-        ((ExWorld) this.world).loadMapTextures();
+        ((ExWorld) this.level).loadMapTextures();
     }
 
     @Inject(
-        method = "initWorld",
+        method = "setLevel(Lnet/minecraft/world/level/Level;Ljava/lang/String;Lnet/minecraft/world/entity/player/Player;)V",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/ClientInteractionManager;rotatePlayer(Lnet/minecraft/entity/player/PlayerEntity;)V",
+            target = "Lnet/minecraft/client/gamemode/GameMode;initPlayer(Lnet/minecraft/world/entity/player/Player;)V",
             shift = At.Shift.AFTER))
     private void initPlayerOnInit(Level var1, String var2, Player var3, CallbackInfo ci) {
-        this.cutsceneCameraEntity = this.interactionManager.createPlayer(var1);
-        ((ExWorld) this.world).getScript().initPlayer(this.player);
+        this.cutsceneCameraEntity = this.gameMode.createPlayer(var1);
+        ((ExWorld) this.level).getScript().initPlayer(this.player);
     }
 
     @Redirect(
-        method = "loadIntoWorld",
+        method = "prepareLevel",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/util/ProgressListenerImpl;progressStagePercentage(I)V"))
+            target = "Lnet/minecraft/client/ProgressRenderer;progressStagePercentage(I)V"))
     private void reportPreciseTerrainProgress(
         ProgressRenderer instance,
         int i,
@@ -1107,56 +1101,56 @@ public abstract class MixinMinecraft implements ExMinecraft {
         @Local(ordinal = 2) int max) {
 
         String stage = String.format("%4d / %4d", count, max);
-        ((ExProgressListener) this.progressListener).notifyProgress(
+        ((ExProgressListener) this.progressRenderer).notifyProgress(
             stage, count / (double) max, false);
     }
 
     @Overwrite
-    public void spawn(boolean var1, int var2) {
-        if (!this.world.isClientSide && !this.world.dimension.mayRespawn()) {
-            this.switchDimension();
+    public void respawnPlayer(boolean var1, int var2) {
+        if (!this.level.isClientSide && !this.level.dimension.mayRespawn()) {
+            this.toggleDimension();
         }
 
-        ChunkSource worldSource = this.world.getChunkSource();
+        ChunkSource worldSource = this.level.getChunkSource();
         if (worldSource instanceof ChunkCache chunkCache) {
-            Vec3i spawnPos = this.world.getSpawnPos();
+            Vec3i spawnPos = this.level.getSpawnPos();
             chunkCache.centerOn(spawnPos.x >> 4, spawnPos.z >> 4);
         }
 
-        this.world.removeAllPendingEntityRemovals();
+        this.level.removeAllPendingEntityRemovals();
         int playerId = 0;
         if (this.player != null) {
             playerId = this.player.id;
-            this.world.removeEntity(this.player);
+            this.level.removeEntity(this.player);
         } else {
-            this.player = (LocalPlayer) this.interactionManager.createPlayer(this.world);
-            ((ExWorld) this.world).getScript().initPlayer(this.player);
+            this.player = (LocalPlayer) this.gameMode.createPlayer(this.level);
+            ((ExWorld) this.level).getScript().initPlayer(this.player);
         }
 
-        ((ExWorldEventRenderer) this.worldRenderer).resetForDeath();
-        Vec3i spawnPos = this.world.getSpawnPos();
+        ((ExWorldEventRenderer) this.levelRenderer).resetForDeath();
+        Vec3i spawnPos = this.level.getSpawnPos();
         this.player.resetPos();
         this.player.moveTo((double) spawnPos.x + 0.5D, spawnPos.y, (double) spawnPos.z + 0.5D, 0.0F, 0.0F);
-        this.viewEntity = this.player;
+        this.cameraEntity = this.player;
         this.player.resetPos();
-        this.interactionManager.initPlayer(this.player);
-        this.world.loadPlayer(this.player);
+        this.gameMode.initPlayer(this.player);
+        this.level.loadPlayer(this.player);
         this.player.input = new KeyboardInput(this.options);
         this.player.id = playerId;
         this.player.method_494();
-        this.player.setRot(((ExWorld) this.world).getSpawnYaw(), 0.0F);
-        this.interactionManager.adjustPlayer(this.player);
-        this.loadIntoWorld("Respawning");
-        if (this.currentScreen instanceof DeathScreen) {
-            this.openScreen(null);
+        this.player.setRot(((ExWorld) this.level).getSpawnYaw(), 0.0F);
+        this.gameMode.adjustPlayer(this.player);
+        this.prepareLevel("Respawning");
+        if (this.screen instanceof DeathScreen) {
+            this.setScreen(null);
         }
     }
 
     @Overwrite
-    public void createOrLoadWorld(String var1, String saveName, long seed) {
+    public void selectLevel(String var1, String saveName, long seed) {
         String mapName = this.getMapUsed(var1);
         if (Mth.isStringInvalid(mapName)) {
-            this.openScreen(new AC_GuiMapSelect(null, var1));
+            this.setScreen(new AC_GuiMapSelect(null, var1));
         } else {
             this.startWorld(var1, saveName, seed, mapName);
         }
@@ -1164,48 +1158,48 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
     @Override
     public Level getWorld(String saveName, long seed, String mapName) {
-        this.setWorld(null);
-        LevelIO dimData = this.getWorldStorage().method_1009(saveName, false);
-        Level world = ExWorld.createWorld(mapName, dimData, saveName, seed, this.progressListener);
+        this.setLevel(null);
+        LevelIO dimData = this.getLevelSource().method_1009(saveName, false);
+        Level world = ExWorld.createWorld(mapName, dimData, saveName, seed, this.progressRenderer);
         return world;
     }
 
     @Override
     public void startWorld(String worldName, String saveName, long seed, String mapName) {
-        this.setWorld(null);
+        this.setLevel(null);
         System.gc();
-        if (worldName != null && this.getWorldStorage().requiresConversion(worldName)) {
-            this.convertWorldFormat(worldName, saveName);
+        if (worldName != null && this.getLevelSource().requiresConversion(worldName)) {
+            this.convertWorld(worldName, saveName);
         } else {
             // TODO: reset global state in consistent matter
             AC_DebugMode.active = false;
             AC_DebugMode.levelEditing = false;
             LevelIO dimData = null;
             if (worldName != null) {
-                dimData = this.getWorldStorage().method_1009(worldName, false);
+                dimData = this.getLevelSource().method_1009(worldName, false);
             }
 
             if (saveName == null) {
                 saveName = "Map Editing";
             }
 
-            Level world = ExWorld.createWorld(mapName, dimData, saveName, seed, this.progressListener);
+            Level world = ExWorld.createWorld(mapName, dimData, saveName, seed, this.progressRenderer);
             if (world.isNew) {
-                this.statFileWriter.addStat(Stats.CREATE_WORLD, 1);
-                this.statFileWriter.addStat(Stats.START_GAME, 1);
-                this.notifyStatus(world, "Generating level");
+                this.statManager.addStat(Stats.CREATE_WORLD, 1);
+                this.statManager.addStat(Stats.START_GAME, 1);
+                this.setLevel(world, "Generating level");
             } else {
-                this.statFileWriter.addStat(Stats.LOAD_WORLD, 1);
-                this.statFileWriter.addStat(Stats.START_GAME, 1);
-                this.notifyStatus(world, "Loading level");
+                this.statManager.addStat(Stats.LOAD_WORLD, 1);
+                this.statManager.addStat(Stats.START_GAME, 1);
+                this.setLevel(world, "Loading level");
             }
         }
 
-        this.openScreen(null);
+        this.setScreen(null);
     }
 
     private File getWorldFolder(String worldName) {
-        File gameFolder = getGameDirectory();
+        File gameFolder = getWorkingDirectory();
         File savesFolder = new File(gameFolder, "saves");
         File worldFolder = new File(savesFolder, worldName);
         return worldFolder;
@@ -1250,7 +1244,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         String firstDir = path.substring(0, n);
         String id = path.substring(n + 1);
 
-        var sound = (ExSoundHelper) this.soundHelper;
+        var sound = (ExSoundHelper) this.soundEngine;
         if (firstDir.equalsIgnoreCase("sound")) {
             sound.addSound(id, url);
         } else if (firstDir.equalsIgnoreCase("newsound")) {
@@ -1271,7 +1265,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
     @Override
     public void updateStoreGUI() {
-        var scaler = new ScreenSizeCalculator(this.options, this.actualWidth, this.actualHeight);
+        var scaler = new ScreenSizeCalculator(this.options, this.width, this.height);
         int width = scaler.getWidth();
         int height = scaler.getHeight();
         this.storeGUI.init((Minecraft) (Object) this, width, height);

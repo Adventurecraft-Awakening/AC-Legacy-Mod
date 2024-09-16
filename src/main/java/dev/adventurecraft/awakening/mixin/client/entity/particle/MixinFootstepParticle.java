@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 public abstract class MixinFootstepParticle {
 
     @Overwrite
-    public int method_2003() {
+    public int getParticleTexture() {
         return 5;
     }
 }

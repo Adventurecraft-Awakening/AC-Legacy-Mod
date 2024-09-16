@@ -11,7 +11,7 @@ import net.minecraft.client.MouseHandler;
 @Mixin(MouseHandler.class)
 public abstract class MixinMouseHelper {
 
-    @Redirect(method = "ungrabCursor", at = @At(
+    @Redirect(method = "release", at = @At(
             value = "INVOKE",
             target = "Ljava/awt/Component;getWidth()I"
     ))
@@ -19,7 +19,7 @@ public abstract class MixinMouseHelper {
         return Display.getWidth();
     }
 
-    @Redirect(method = "ungrabCursor", at = @At(
+    @Redirect(method = "release", at = @At(
             value = "INVOKE",
             target = "Ljava/awt/Component;getHeight()I"
     ))

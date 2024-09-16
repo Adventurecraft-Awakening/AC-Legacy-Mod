@@ -20,10 +20,10 @@ public abstract class MixinGhastEntity extends MixinFlyingEntity {
     }
 
     @Inject(
-        method = "tickHandSwing",
+        method = "serverAiStep",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/World;spawnEntity(Lnet/minecraft/entity/Entity;)Z",
+            target = "Lnet/minecraft/world/level/Level;addEntity(Lnet/minecraft/world/entity/Entity;)Z",
             shift = At.Shift.BEFORE))
     private void modifyAttackStrength(CallbackInfo ci, @Local Fireball fireball) {
         ((ExFireballEntity) fireball).setRadius(this.getAttackStrength());

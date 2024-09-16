@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(FurnaceTile.class)
 public abstract class MixinFurnaceBlock {
 
-    @Inject(method = "updateFurnaceState", at = @At("TAIL"))
+    @Inject(method = "setLit", at = @At("TAIL"))
     private static void validateAfterUpdate(
         boolean var1, Level var2, int var3, int var4, int var5, CallbackInfo ci,
         @Local TileEntity var6) {

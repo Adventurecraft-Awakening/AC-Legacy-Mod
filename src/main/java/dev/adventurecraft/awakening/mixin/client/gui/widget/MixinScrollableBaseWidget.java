@@ -33,7 +33,7 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
     private int hoveredEntry = -1;
 
     @Shadow
-    protected abstract void method_1255(int i, int j);
+    protected abstract void renderDecorations(int i, int j);
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(
@@ -45,12 +45,12 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
             instance, 0, 0, width, height, contentTop, contentBot, entryHeight) {
             @Override
             protected int getEntryCount() {
-                return self.getSize();
+                return self.getItemCount();
             }
 
             @Override
             protected void entryClicked(int entryIndex, boolean doubleClick) {
-                self.entryClicked(entryIndex, doubleClick);
+                self.method_1267(entryIndex, doubleClick);
             }
 
             @Override
@@ -78,14 +78,14 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
                 int entryTop = mouseY - contentTop + scrollY - 4;
                 int hoverY = mouseY - contentTop - this.getContentTopPadding() + scrollY - 4;
                 if (hoverY <= 0) {
-                    self.mouseClicked(entryLeft, entryTop);
+                    self.method_1254(entryLeft, entryTop);
                 }
                 return false;
             }
 
             @Override
             protected int getTotalRenderHeight() {
-                return self.getTotalRenderHeight() + 4;
+                return self.getMaxPosition() + 4;
             }
 
             @Override
@@ -101,7 +101,7 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
                 int y = (int) Math.floor(entryY) + 4;
 
                 if (self.renderSelections) {
-                    boolean selected = self.isWorldSelected(entryIndex);
+                    boolean selected = self.isSelectedItem(entryIndex);
                     if (selected || hoveredEntry == entryIndex) {
                         boolean isHover = !selected && self.hoveredEntry == entryIndex;
                         int borderColor = isHover ? 0x80808080 : 0xff808080;
@@ -118,7 +118,7 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
                         GL11.glDisable(GL11.GL_BLEND);
                     }
                 }
-                self.renderStatEntry(entryIndex, x, y, entryHeight - 4, ts);
+                self.renderEntry(entryIndex, x, y, entryHeight - 4, ts);
             }
 
             @Override
@@ -126,7 +126,7 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
                 if (self.doRenderStatItemSlot) {
                     int sX = (int) Math.floor(entryX) - 92 - 16;
                     int sY = (int) Math.floor(entryY) + 4;
-                    self.renderStatItemSlot(sX, sY, ts);
+                    self.renderHeader(sX, sY, ts);
                 }
 
                 self.hoveredEntry = this.getEntryUnderPoint(mouseX, mouseY);
@@ -134,41 +134,41 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
 
             @Override
             protected void afterRender(int mouseX, int mouseY, float tickTime, Tesselator ts) {
-                self.method_1255(mouseX, mouseY);
+                self.renderDecorations(mouseX, mouseY);
             }
         };
     }
 
     @Shadow
-    protected abstract int getSize();
+    protected abstract int getItemCount();
 
     @Shadow
-    protected abstract void entryClicked(int entryIndex, boolean doubleClick);
+    protected abstract void method_1267(int entryIndex, boolean doubleClick);
 
     @Shadow
-    protected abstract boolean isWorldSelected(int entryIndex);
+    protected abstract boolean isSelectedItem(int entryIndex);
 
     @Shadow
-    protected abstract int getTotalRenderHeight();
+    protected abstract int getMaxPosition();
 
     @Shadow
-    protected abstract void mouseClicked(int x, int y);
+    protected abstract void method_1254(int x, int y);
 
     @Shadow
     protected abstract void renderBackground();
 
     @Shadow
-    protected abstract void renderStatEntry(int entryIndex, int x, int y, int height, Tesselator ts);
+    protected abstract void renderEntry(int entryIndex, int x, int y, int height, Tesselator ts);
 
     @Shadow
-    protected abstract void renderStatItemSlot(int x, int y, Tesselator ts);
+    protected abstract void renderHeader(int x, int y, Tesselator ts);
 
     @Overwrite
-    public void method_1260(boolean bl) {
+    public void setRenderSelection(boolean bl) {
         this.renderSelections = bl;
     }
 
-    @Inject(method = "method_1261", at = @At("HEAD"))
+    @Inject(method = "setRenderHeader", at = @At("HEAD"))
     public void capture_method_1261(boolean bl, int i, CallbackInfo ci) {
         this.doRenderStatItemSlot = bl;
         int contentYOffset = bl ? i : 0;
@@ -176,12 +176,12 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
     }
 
     @Overwrite
-    public int method_1262(int x, int y) {
+    public int getEntryAtPosition(int x, int y) {
         return this.rootWidget.getEntryUnderPoint(x, y);
     }
 
     @Overwrite
-    public void registerButtons(List list, int i, int j) {
+    public void updateSize(List list, int i, int j) {
         this.rootWidget.registerButtons(list, i, j);
     }
 

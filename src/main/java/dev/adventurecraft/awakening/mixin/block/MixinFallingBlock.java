@@ -22,10 +22,10 @@ public abstract class MixinFallingBlock extends Tile implements AC_IBlockColor {
     }
 
     @Inject(
-        method = "method_436",
+        method = "checkSlide",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/World;spawnEntity(Lnet/minecraft/entity/Entity;)Z",
+            target = "Lnet/minecraft/world/level/Level;addEntity(Lnet/minecraft/world/entity/Entity;)Z",
             shift = At.Shift.BEFORE))
     private void setMetaOnEntity(
         Level world, int x, int y, int z, CallbackInfo ci,

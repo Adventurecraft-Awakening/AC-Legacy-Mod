@@ -16,7 +16,7 @@ import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 public abstract class MixinBlockEntityRenderDispatcher {
 
     @Shadow
-    private Map<Class<?>, TileEntityRenderer> customRenderers;
+    private Map<Class<?>, TileEntityRenderer> renderers;
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void registerAcRenderers(CallbackInfo ci) {
@@ -35,6 +35,6 @@ public abstract class MixinBlockEntityRenderDispatcher {
             renderer.init((TileEntityRenderDispatcher) (Object) this);
         }
 
-        this.customRenderers.putAll(renderers);
+        this.renderers.putAll(renderers);
     }
 }

@@ -24,7 +24,7 @@ public interface ExLivingEntity extends ExEntity {
 
     void setMaxHealth(int value);
 
-    ItemInstance getHeldItem();
+    ItemInstance getSelectedItem();
 
     void setHeldItem(ItemInstance value);
 

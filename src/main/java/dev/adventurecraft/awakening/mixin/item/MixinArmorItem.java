@@ -14,14 +14,14 @@ public abstract class MixinArmorItem implements ExArmorItem {
 
     @Shadow
     @Final
-    private static int[] MAXIMUM_DAMAGE;
+    private static int[] defensePerSlot;
 
     private float maxDamage;
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(int var1, int var2, int var3, int var4, CallbackInfo ci) {
         float var5 = ((float)var2 + 1.0F) / 4.0F;
-        this.maxDamage = var5 * (float)MAXIMUM_DAMAGE[var4];
+        this.maxDamage = var5 * (float) defensePerSlot[var4];
     }
 
     @Override

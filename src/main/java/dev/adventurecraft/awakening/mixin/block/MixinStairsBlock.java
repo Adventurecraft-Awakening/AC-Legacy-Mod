@@ -20,7 +20,7 @@ import net.minecraft.world.phys.AABB;
 public abstract class MixinStairsBlock extends Tile implements AC_IBlockColor {
 
     @Shadow
-    private Tile template;
+    private Tile base;
 
     private int defaultColor;
 
@@ -156,7 +156,7 @@ public abstract class MixinStairsBlock extends Tile implements AC_IBlockColor {
 
     @Override
     public void dropResources(Level world, int x, int y, int z, int meta) {
-        this.template.dropResources(world, x, y, z, meta);
+        this.base.dropResources(world, x, y, z, meta);
     }
 
     @Override

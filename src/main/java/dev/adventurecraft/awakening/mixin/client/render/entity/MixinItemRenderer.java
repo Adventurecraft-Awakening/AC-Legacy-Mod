@@ -23,15 +23,15 @@ import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 public abstract class MixinItemRenderer extends EntityRenderer implements ExItemRenderer {
 
     @Shadow
-    protected abstract void method_1485(Tesselator ts, int x, int y, int w, int h, int color);
+    protected abstract void fillRect(Tesselator ts, int x, int y, int w, int h, int color);
 
     @Shadow
-    public abstract void renderItemOnGui(
+    public abstract void renderGuiItem(
         Font textRenderer, Textures texManager, int itemId, int meta, int texture, int x, int y);
 
     public float scale = 1.0F;
 
-    @ModifyArgs(method = "render(Lnet/minecraft/entity/ItemEntity;DDDFF)V", at = @At(
+    @ModifyArgs(method = "render(Lnet/minecraft/world/entity/item/ItemEntity;DDDFF)V", at = @At(
         value = "INVOKE",
         target = "Lorg/lwjgl/opengl/GL11;glScalef(FFF)V",
         remap = false))
@@ -45,14 +45,14 @@ public abstract class MixinItemRenderer extends EntityRenderer implements ExItem
     }
 
     @Redirect(
-        method = "render(Lnet/minecraft/entity/ItemEntity;DDDFF)V",
+        method = "render(Lnet/minecraft/world/entity/item/ItemEntity;DDDFF)V",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/render/entity/ItemRenderer;bindTexture(Ljava/lang/String;)V"),
+            target = "Lnet/minecraft/client/renderer/entity/ItemRenderer;bindTexture(Ljava/lang/String;)V"),
         slice = @Slice(
             to = @At(
                 value = "INVOKE",
-                target = "Lnet/minecraft/client/render/entity/ItemRenderer;bindTexture(Ljava/lang/String;)V",
+                target = "Lnet/minecraft/client/renderer/entity/ItemRenderer;bindTexture(Ljava/lang/String;)V",
                 ordinal = 1)))
     private void useTerrainTexture0(
         ItemRenderer instance,
@@ -68,14 +68,14 @@ public abstract class MixinItemRenderer extends EntityRenderer implements ExItem
     }
 
     @Redirect(
-        method = "renderItemOnGui",
+        method = "renderGuiItem",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/texture/TextureManager;getTextureId(Ljava/lang/String;)I"),
+            target = "Lnet/minecraft/client/renderer/Textures;loadTexture(Ljava/lang/String;)I"),
         slice = @Slice(
             to = @At(
                 value = "INVOKE",
-                target = "Lnet/minecraft/client/texture/TextureManager;getTextureId(Ljava/lang/String;)I",
+                target = "Lnet/minecraft/client/renderer/Textures;loadTexture(Ljava/lang/String;)I",
                 ordinal = 1)))
     private int useTerrainTexture1(
         Textures instance,
@@ -91,14 +91,14 @@ public abstract class MixinItemRenderer extends EntityRenderer implements ExItem
     }
 
     @Overwrite
-    public void method_1487(Font textRenderer, Textures texManager, ItemInstance stack, int x, int y) {
+    public void renderAndDecorateItem(Font textRenderer, Textures texManager, ItemInstance stack, int x, int y) {
         if (stack != null && Item.items[stack.id] != null) {
-            this.renderItemOnGui(textRenderer, texManager, stack.id, stack.getAuxValue(), stack.getIcon(), x, y);
+            this.renderGuiItem(textRenderer, texManager, stack.id, stack.getAuxValue(), stack.getIcon(), x, y);
         }
     }
 
     @Overwrite
-    public void method_1488(Font textRenderer, Textures texManager, ItemInstance stack, int x, int y) {
+    public void renderGuiItemDecorations(Font textRenderer, Textures texManager, ItemInstance stack, int x, int y) {
         if (stack == null) {
             return;
         }
@@ -136,9 +136,9 @@ public abstract class MixinItemRenderer extends EntityRenderer implements ExItem
             Tesselator ts = Tesselator.instance;
             int barColor = 255 - color << 16 | color << 8;
             int backColor = (255 - color) / 4 << 16 | 0x3f00;
-            this.method_1485(ts, x + 2, y + 13, 13, 2, 0);
-            this.method_1485(ts, x + 2, y + 13, 12, 1, backColor);
-            this.method_1485(ts, x + 2, y + 13, width, 1, barColor);
+            this.fillRect(ts, x + 2, y + 13, 13, 2, 0);
+            this.fillRect(ts, x + 2, y + 13, 12, 1, backColor);
+            this.fillRect(ts, x + 2, y + 13, width, 1, barColor);
             GL11.glEnable(GL11.GL_TEXTURE_2D);
             GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
         }

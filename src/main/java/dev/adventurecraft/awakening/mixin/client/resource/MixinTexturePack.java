@@ -12,7 +12,7 @@ import net.minecraft.client.skins.TexturePack;
 @Mixin(TexturePack.class)
 public abstract class MixinTexturePack {
 
-    @Inject(method = "getResourceAsStream", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "getResource", at = @At("HEAD"), cancellable = true)
     private void useAcResourceFirst(String key, CallbackInfoReturnable<InputStream> cir) {
         if (key.startsWith("/")) {
             String acName = ACMod.getResourceName(key.substring(1));

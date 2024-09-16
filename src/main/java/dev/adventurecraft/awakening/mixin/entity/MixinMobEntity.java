@@ -6,11 +6,9 @@ import dev.adventurecraft.awakening.extension.entity.ai.pathing.ExEntityPath;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.util.Mth;
@@ -23,89 +21,89 @@ import net.minecraft.world.phys.Vec3;
 public abstract class MixinMobEntity extends MixinLivingEntity implements ExMobEntity, IEntityPather {
 
     @Shadow
-    protected Entity entity;
+    protected Entity attackTarget;
     @Shadow
-    private Path field_661;
+    private Path path;
     @Shadow
-    protected boolean field_663;
+    protected boolean holdGround;
 
     @Shadow
     protected abstract void method_632();
 
     @Shadow
-    protected abstract boolean method_640();
+    protected abstract boolean shouldHoldGround();
 
     @Shadow
-    protected abstract Entity getAttackTarget();
+    protected abstract Entity findAttackTarget();
 
     @Shadow
-    protected abstract void method_639(Entity arg, float f);
+    protected abstract void resetAttack(Entity arg, float f);
 
     @Shadow
-    protected abstract void tryAttack(Entity arg, float f);
+    protected abstract void checkHurtTarget(Entity arg, float f);
 
     @Shadow
-    public abstract boolean method_633();
+    public abstract boolean hasPath();
 
     public boolean canForgetTargetRandomly = true;
     public int timeBeforeForget = 0;
     public boolean canPathRandomly = true;
 
     @Overwrite
-    public void tickHandSwing() {
-        this.field_663 = this.method_640();
+    public void serverAiStep() {
+        this.holdGround = this.shouldHoldGround();
         float var1 = 16.0F;
-        if (this.entity == null) {
-            this.entity = this.getAttackTarget();
-            if (this.entity != null) {
-                this.field_661 = this.world.findPath((Entity) (Object) this, this.entity, var1);
+        if (this.attackTarget == null) {
+            this.attackTarget = this.findAttackTarget();
+            if (this.attackTarget != null) {
+                this.path = this.level.findPath((Entity) (Object) this, this.attackTarget, var1);
                 this.timeBeforeForget = 40;
             }
-        } else if (!this.entity.isAlive()) {
-            this.entity = null;
+        } else if (!this.attackTarget.isAlive()) {
+            this.attackTarget = null;
         } else {
-            float var2 = this.entity.distanceTo((Entity) (Object) this);
-            if (this.method_928(this.entity)) {
-                this.tryAttack(this.entity, var2);
+            float var2 = this.attackTarget.distanceTo((Entity) (Object) this);
+            if (this.canSee(this.attackTarget)) {
+                this.checkHurtTarget(this.attackTarget, var2);
             } else {
-                this.method_639(this.entity, var2);
+                this.resetAttack(this.attackTarget, var2);
             }
         }
 
         boolean var21 = false;
-        if (this.entity != null) {
-            var21 = this.method_928(this.entity);
+        if (this.attackTarget != null) {
+            var21 = this.canSee(this.attackTarget);
         }
 
-        if (!this.field_663 && this.entity != null && (this.field_661 == null || this.rand.nextInt(5) == 0 && ((ExEntityPath) this.field_661).needNewPath(this.entity)) && var21) {
-            this.field_661 = this.world.findPath((Entity) (Object) this, this.entity, var1);
-        } else if (this.canPathRandomly && !this.field_663 && (this.field_661 == null && this.rand.nextInt(80) == 0 || this.rand.nextInt(80) == 0)) {
+        if (!this.holdGround && this.attackTarget != null && (this.path == null || this.random.nextInt(5) == 0 && ((ExEntityPath) this.path).needNewPath(this.attackTarget)) && var21) {
+            this.path = this.level.findPath((Entity) (Object) this, this.attackTarget, var1);
+        } else if (this.canPathRandomly && !this.holdGround && (this.path == null && this.random.nextInt(80) == 0 || this.random.nextInt(80) == 0)) {
             this.method_632();
         }
 
-        if (this.entity != null && this.field_661 == null && !var21) {
+        if (this.attackTarget != null && this.path == null && !var21) {
             if (this.timeBeforeForget-- <= 0) {
-                this.entity = null;
+                this.attackTarget = null;
             }
         } else {
             this.timeBeforeForget = 40;
         }
 
-        int var3 = Mth.floor(this.boundingBox.y0 + 0.5D);
-        boolean var4 = this.method_1334();
-        boolean var5 = this.method_1335();
-        this.pitch = 0.0F;
-        if (this.field_661 != null && (!this.canForgetTargetRandomly || this.rand.nextInt(300) != 0)) {
-            Vec3 var6 = this.field_661.current((Entity) (Object) this);
-            double var7 = this.width * 2.0F;
+        int var3 = Mth.floor(this.bb.y0 + 0.5D);
+        boolean var4 = this.isInWater();
+        boolean var5 = this.isInLava();
+        this.xRot = 0.0F;
+        if (this.path != null && (!this.canForgetTargetRandomly || this.random.nextInt(300) != 0)) {
+            Vec3 var6 = this.path.current((Entity) (Object) this);
+            double var7 = this.bbWidth * 2.0F;
 
             while (var6 != null && var6.distanceToSqr(this.x, var6.y, this.z) < var7 * var7) {
-                this.field_661.next();
-                if (this.field_661.isDone()) {
+                this.path.next();
+                if (this.path.isDone()) {
                     var6 = null;
-                    this.field_661 = null;
+                    this.path = null;
                 } else {
-                    var6 = this.field_661.current((Entity) (Object) this);
+                    var6 = this.path.current((Entity) (Object) this);
                 }
             }
 
@@ -115,9 +113,9 @@ public abstract class MixinMobEntity extends MixinLivingEntity implements ExMobE
                 double var9 = var6.z - this.z;
                 double var11 = var6.y - (double) var3;
                 float var13 = (float) (Math.atan2(var9, var7) * 180.0D / (double) ((float) Math.PI)) - 90.0F;
-                float var14 = var13 - this.yaw;
+                float var14 = var13 - this.yRot;
 
-                this.forwardVelocity = this.movementSpeed;
+                this.zza = this.runSpeed;
                 while (var14 < -180.0F) {
                     var14 += 360.0F;
                 }
@@ -134,46 +132,46 @@ public abstract class MixinMobEntity extends MixinLivingEntity implements ExMobE
                     var14 = -30.0F;
                 }
 
-                this.yaw += var14;
-                if (this.field_663 && this.entity != null) {
-                    double var15 = this.entity.x - this.x;
-                    double var17 = this.entity.z - this.z;
-                    float var19 = this.yaw;
-                    this.yaw = (float) (Math.atan2(var17, var15) * 180.0D / (double) ((float) Math.PI)) - 90.0F;
-                    float var20 = (var19 - this.yaw + 90.0F) * 3.141593F / 180.0F;
-                    this.horizontalVelocity = -Mth.sin(var20) * this.forwardVelocity * 1.0F;
-                    this.forwardVelocity = Mth.cos(var20) * this.forwardVelocity * 1.0F;
+                this.yRot += var14;
+                if (this.holdGround && this.attackTarget != null) {
+                    double var15 = this.attackTarget.x - this.x;
+                    double var17 = this.attackTarget.z - this.z;
+                    float var19 = this.yRot;
+                    this.yRot = (float) (Math.atan2(var17, var15) * 180.0D / (double) ((float) Math.PI)) - 90.0F;
+                    float var20 = (var19 - this.yRot + 90.0F) * 3.141593F / 180.0F;
+                    this.xxa = -Mth.sin(var20) * this.zza * 1.0F;
+                    this.zza = Mth.cos(var20) * this.zza * 1.0F;
                 }
 
                 if (var11 > 0.0D) {
                     this.jumping = true;
                 }
-            } else if (this.entity != null) {
-                this.lookAt(this.entity, 30.0F, 30.0F);
+            } else if (this.attackTarget != null) {
+                this.setLookAt(this.attackTarget, 30.0F, 30.0F);
             }
 
-            if (this.field_1624 && !this.method_633()) {
+            if (this.horizontalCollision && !this.hasPath()) {
                 this.jumping = true;
             }
 
-            if (this.rand.nextFloat() < 0.8F && (var4 || var5)) {
+            if (this.random.nextFloat() < 0.8F && (var4 || var5)) {
                 this.jumping = true;
             }
 
         } else {
-            super.tickHandSwing();
-            this.field_661 = null;
+            super.serverAiStep();
+            this.path = null;
         }
     }
 
     @Override
     public Path getCurrentPath() {
-        return this.field_661;
+        return this.path;
     }
 
     @Override
-    public void writeAdditional(CompoundTag compoundTag) {
-        super.writeAdditional(compoundTag);
+    public void readAdditionalSaveData(CompoundTag compoundTag) {
+        super.readAdditionalSaveData(compoundTag);
         compoundTag.putBoolean("canPathRandomly", this.canPathRandomly);
         compoundTag.putBoolean("canForgetTargetRandomly", this.canForgetTargetRandomly);
         if(!customData.isEmpty()) {
@@ -186,8 +184,8 @@ public abstract class MixinMobEntity extends MixinLivingEntity implements ExMobE
     }
 
     @Override
-    public void readAdditional(CompoundTag compoundTag) {
-        super.readAdditional(compoundTag);
+    public void addAdditionalSaveData(CompoundTag compoundTag) {
+        super.addAdditionalSaveData(compoundTag);
         if (compoundTag.hasKey("canPathRandomly")) {
             this.canPathRandomly = compoundTag.getBoolean("canPathRandomly");
         }

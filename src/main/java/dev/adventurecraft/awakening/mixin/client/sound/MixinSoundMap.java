@@ -18,16 +18,16 @@ import net.minecraft.client.sounds.SoundRepository;
 public abstract class MixinSoundMap implements ExSoundMap {
 
     @Shadow
-    private Map<String, List<Sound>> idToSounds;
+    private Map<String, List<Sound>> urls;
     @Shadow
-    private List<Sound> soundList;
+    private List<Sound> all;
     @Shadow
     public int count;
     @Shadow
-    public boolean isRandomSound;
+    public boolean trimDigits;
 
     @Overwrite
-    public Sound addSound(String name, File file) {
+    public Sound add(String name, File file) {
         try {
             URL url = file.toURI().toURL();
             return this.addSound(name, url);
@@ -42,30 +42,30 @@ public abstract class MixinSoundMap implements ExSoundMap {
         String fileName = name.substring(0, name.indexOf(".")); // strip extension
 
         String id = fileName;
-        if (this.isRandomSound) {
+        if (this.trimDigits) {
             while (Character.isDigit(id.charAt(id.length() - 1))) {
                 id = id.substring(0, id.length() - 1);
             }
         }
 
         id = id.replaceAll("/", ".");
-        if (!this.idToSounds.containsKey(id)) {
-            this.idToSounds.put(id, new ArrayList<>());
+        if (!this.urls.containsKey(id)) {
+            this.urls.put(id, new ArrayList<>());
         }
 
-        List<Sound> entries = this.idToSounds.get(id);
+        List<Sound> entries = this.urls.get(id);
         for (Sound entry : entries) {
             String entryName = entry.name.substring(0, entry.name.indexOf(".")); // strip extension
             if (fileName.equals(entryName)) {
                 entries.remove(entry);
-                this.soundList.remove(entry);
+                this.all.remove(entry);
                 break;
             }
         }
 
         var newEntry = new Sound(name, url);
         entries.add(newEntry);
-        this.soundList.add(newEntry);
+        this.all.add(newEntry);
         ++this.count;
         return newEntry;
     }

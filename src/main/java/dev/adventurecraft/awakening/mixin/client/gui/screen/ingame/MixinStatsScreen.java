@@ -11,12 +11,12 @@ import org.spongepowered.asm.mixin.Shadow;
 public abstract class MixinStatsScreen extends Screen {
 
     @Shadow
-    private AbstractSelectionList generalTabBase;
+    private AbstractSelectionList activeList;
 
     @Override
     public void mouseEvent() {
         super.mouseEvent();
-        if (this.generalTabBase instanceof ExScrollableBaseWidget scrollable) {
+        if (this.activeList instanceof ExScrollableBaseWidget scrollable) {
             scrollable.onMouseEvent();
         }
     }

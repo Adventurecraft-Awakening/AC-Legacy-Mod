@@ -26,7 +26,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinTitleScreen extends Screen {
 
     @Shadow
-    private String splashMessage;
+    private String splash;
 
     @Shadow
     private Button multiplayerButton;
@@ -39,7 +39,7 @@ public abstract class MixinTitleScreen extends Screen {
 
     @Overwrite
     public void init() {
-        this.splashMessage = "A Minecraft Total Conversion!";
+        this.splash = "A Minecraft Total Conversion!";
         I18n ts = I18n.getInstance();
         int y = this.height / 4 + 48;
         this.buttons.add(new Button(6, this.width / 2 - 100, y, "New Save"));
@@ -92,9 +92,9 @@ public abstract class MixinTitleScreen extends Screen {
         GL11.glTranslatef((float) (this.width / 2 + 90), 70.0F, 0.0F);
         GL11.glRotatef(-20.0F, 0.0F, 0.0F, 1.0F);
         float scale = 1.8F - Mth.abs(Mth.sin((float) (System.currentTimeMillis() % 1000L) / 1000.0F * 3.141593F * 2.0F) * 0.1F);
-        scale = scale * 100.0F / (float) (this.font.width(this.splashMessage) + 32);
+        scale = scale * 100.0F / (float) (this.font.width(this.splash) + 32);
         GL11.glScalef(scale, scale, scale);
-        this.drawCenteredString(this.font, this.splashMessage, 0, -8, 16776960);
+        this.drawCenteredString(this.font, this.splash, 0, -8, 16776960);
         GL11.glPopMatrix();
 
         this.drawString(this.font, AC_Version.version, 2, 2, 5263440);

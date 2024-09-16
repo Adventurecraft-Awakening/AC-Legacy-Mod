@@ -22,7 +22,7 @@ public abstract class MixinSelectWorldScreen extends Screen {
     private Button deleteButton;
 
     @Shadow
-    private SelectWorldScreen.WorldSelectionList worldList;
+    private SelectWorldScreen.WorldSelectionList list;
 
     //@Overwrite TODO: is this needed?
     public void addButtonsX() {
@@ -38,17 +38,17 @@ public abstract class MixinSelectWorldScreen extends Screen {
         method = "buttonClicked",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/Minecraft;openScreen(Lnet/minecraft/client/gui/screen/Screen;)V",
+            target = "Lnet/minecraft/client/Minecraft;setScreen(Lnet/minecraft/client/gui/screens/Screen;)V",
             ordinal = 1))
     private void openAcMapSelect(Minecraft instance, Screen screen) {
         instance.setScreen(new AC_GuiMapSelect(this, ""));
     }
 
     @Redirect(
-        method = "loadWorld",
+        method = "worldSelected",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/Minecraft;openScreen(Lnet/minecraft/client/gui/screen/Screen;)V",
+            target = "Lnet/minecraft/client/Minecraft;setScreen(Lnet/minecraft/client/gui/screens/Screen;)V",
             ordinal = 1))
     private void disableOpenScreen(Minecraft instance, Screen screen) {
     }
@@ -56,7 +56,7 @@ public abstract class MixinSelectWorldScreen extends Screen {
     @Override
     public void mouseEvent() {
         super.mouseEvent();
-        if (this.worldList instanceof ExScrollableBaseWidget scrollable) {
+        if (this.list instanceof ExScrollableBaseWidget scrollable) {
             scrollable.onMouseEvent();
         }
     }

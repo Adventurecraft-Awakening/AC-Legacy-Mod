@@ -13,7 +13,7 @@ import net.minecraft.world.level.tile.IceTile;
 @Mixin(IceTile.class)
 public abstract class MixinIceBlock {
 
-    @Inject(method = "onScheduledTick", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
     private void disableDecay(Level var1, int var2, int var3, int var4, Random var5, CallbackInfo ci) {
         if (!((ExWorldProperties) var1.levelData).getIceMelts()) {
             ci.cancel();

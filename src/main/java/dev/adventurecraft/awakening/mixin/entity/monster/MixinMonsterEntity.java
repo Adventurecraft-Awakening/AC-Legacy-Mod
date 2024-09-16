@@ -14,9 +14,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class MixinMonsterEntity extends MixinMobEntity implements ExMonsterEntity {
 
     @Shadow
-    protected int attackDamage;
+    protected int damage;
 
-    @Inject(method = "damage", at = @At("HEAD"))
+    @Inject(method = "hurt", at = @At("HEAD"))
     private void remindOnHit(Entity var1, int var2, CallbackInfoReturnable<Boolean> cir) {
         this.timeBeforeForget = 40;
     }
@@ -25,9 +25,9 @@ public abstract class MixinMonsterEntity extends MixinMobEntity implements ExMon
     public boolean attackEntityFromMulti(Entity entity, int damage) {
         this.timeBeforeForget = 40;
         if (super.attackEntityFromMulti(entity, damage)) {
-            if (this.passenger != entity && this.vehicle != entity) {
+            if (this.rider != entity && this.riding != entity) {
                 if (entity != (Object) this) {
-                    this.entity = entity;
+                    this.attackTarget = entity;
                 }
             }
             return true;
@@ -38,11 +38,11 @@ public abstract class MixinMonsterEntity extends MixinMobEntity implements ExMon
 
     @Override
     public int getAttackDamage() {
-        return this.attackDamage;
+        return this.damage;
     }
 
     @Override
     public void setAttackDamage(int value) {
-        this.attackDamage = value;
+        this.damage = value;
     }
 }

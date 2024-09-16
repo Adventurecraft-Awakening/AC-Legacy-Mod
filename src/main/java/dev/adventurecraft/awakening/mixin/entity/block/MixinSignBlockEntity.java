@@ -16,7 +16,8 @@ import net.minecraft.world.level.tile.entity.TileEntity;
 public abstract class MixinSignBlockEntity extends TileEntity implements ExSongContainer {
 
     @Shadow
-    public String[] text;
+    public String[] messages;
+    
     public boolean playSong;
     public IInstrumentConfig instrument;
     public int tickSinceStart;
@@ -52,6 +53,6 @@ public abstract class MixinSignBlockEntity extends TileEntity implements ExSongC
     }
 
     public String getSong() {
-        return this.text[0] + this.text[1] + this.text[2] + this.text[3];
+        return this.messages[0] + this.messages[1] + this.messages[2] + this.messages[3];
     }
 }

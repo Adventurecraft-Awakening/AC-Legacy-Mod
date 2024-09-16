@@ -19,7 +19,7 @@ import net.minecraft.world.level.tile.DispenserTile;
 @Mixin(DispenserTile.class)
 public abstract class MixinDispenserBlock {
 
-    @Inject(method = "canUse", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "use", at = @At("HEAD"), cancellable = true)
     private void disableUsageInPlayMode(Level i, int j, int k, int arg2, Player par5, CallbackInfoReturnable<Boolean> cir) {
         if (!AC_DebugMode.active) {
             cir.setReturnValue(false);
@@ -27,10 +27,10 @@ public abstract class MixinDispenserBlock {
     }
 
     @Inject(
-        method = "dispense",
+        method = "dispenseFrom",
         at = @At(
             value = "FIELD",
-            target = "Lnet/minecraft/item/ItemStack;itemId:I",
+            target = "Lnet/minecraft/world/ItemInstance;id:I",
             shift = At.Shift.BEFORE,
             ordinal = 0),
         cancellable = true)

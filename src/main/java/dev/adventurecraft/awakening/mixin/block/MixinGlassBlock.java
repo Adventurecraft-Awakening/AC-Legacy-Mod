@@ -11,7 +11,7 @@ public abstract class MixinGlassBlock {
 
     @Environment(EnvType.CLIENT)
     @Overwrite
-    public int getRenderPass() {
+    public int getRenderLayer() {
         return 1;
     }
 }

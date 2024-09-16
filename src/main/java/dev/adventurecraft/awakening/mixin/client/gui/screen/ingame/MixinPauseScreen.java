@@ -18,7 +18,7 @@ public abstract class MixinPauseScreen extends Screen {
         method = "buttonClicked",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/Minecraft;openScreen(Lnet/minecraft/client/gui/screen/Screen;)V",
+            target = "Lnet/minecraft/client/Minecraft;setScreen(Lnet/minecraft/client/gui/screens/Screen;)V",
             shift = At.Shift.BEFORE,
             ordinal = 1))
     private void resetOnExit(Button button, CallbackInfo ci) {

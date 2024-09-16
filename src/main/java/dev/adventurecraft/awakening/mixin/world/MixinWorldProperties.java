@@ -62,7 +62,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     public boolean originallyFromAC = false;
     public boolean allowsInventoryCrafting = false;
 
-    @Inject(method = "<init>(Lnet/minecraft/util/io/CompoundTag;)V", at = @At("TAIL"))
+    @Inject(method = "<init>(Lnet/minecraft/nbt/CompoundTag;)V", at = @At("TAIL"))
     private void init(CompoundTag tag, CallbackInfo ci) {
         this.tempOffset = tag.getDouble("TemperatureOffset");
         if (tag.hasKey("IsPrecipitating")) {
@@ -175,12 +175,12 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         }
     }
 
-    @Inject(method = "<init>(Lnet/minecraft/world/WorldProperties;)V", at = @At("TAIL"))
+    @Inject(method = "<init>(Lnet/minecraft/world/level/storage/LevelData;)V", at = @At("TAIL"))
     private void init(LevelData var1, CallbackInfo ci) {
         System.arraycopy(((MixinWorldProperties) (Object) var1).brightness, 0, this.brightness, 0, 16);
     }
 
-    @Inject(method = "updateProperties", at = @At("TAIL"))
+    @Inject(method = "save(Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/nbt/CompoundTag;)V", at = @At("TAIL"))
     private void insertWorldPropsForAC(CompoundTag tag, CompoundTag playerTag, CallbackInfo ci) {
         WorldGenProperties wgp = this.worldGenProps;
         tag.putDouble("TemperatureOffset", this.tempOffset);

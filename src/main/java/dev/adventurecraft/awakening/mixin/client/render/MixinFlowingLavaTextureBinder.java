@@ -1,11 +1,9 @@
 package dev.adventurecraft.awakening.mixin.client.render;
 
 import dev.adventurecraft.awakening.common.Vec2;
-import dev.adventurecraft.awakening.extension.world.ExWorld;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-import java.awt.image.BufferedImage;
 import net.minecraft.client.renderer.ptexture.LavaTexture;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
@@ -14,16 +12,16 @@ import net.minecraft.world.level.Level;
 public class MixinFlowingLavaTextureBinder extends MixinTextureBinder {
 
     @Shadow
-    protected float[] field_2701;
+    protected float[] current;
 
     @Shadow
-    protected float[] field_2702;
+    protected float[] next;
 
     @Shadow
-    protected float[] field_2703;
+    protected float[] heat;
 
     @Shadow
-    protected float[] field_2704;
+    protected float[] heata;
 
     @Override
     public void onTick(Vec2 size) {
@@ -61,10 +59,10 @@ public class MixinFlowingLavaTextureBinder extends MixinTextureBinder {
                         for (var11 = 0; var11 < var4; ++var11) {
                             for (var12 = 0; var12 < var4; ++var12) {
                                 var6 = var9 * var4 + var11 + (var8 * var4 + var12) * var2;
-                                this.grid[var6 * 4 + 0] = (byte) (var20 >> 16 & 255);
-                                this.grid[var6 * 4 + 1] = (byte) (var20 >> 8 & 255);
-                                this.grid[var6 * 4 + 2] = (byte) (var20 & 255);
-                                this.grid[var6 * 4 + 3] = (byte) (var20 >> 24 & 255);
+                                this.pixels[var6 * 4 + 0] = (byte) (var20 >> 16 & 255);
+                                this.pixels[var6 * 4 + 1] = (byte) (var20 >> 8 & 255);
+                                this.pixels[var6 * 4 + 2] = (byte) (var20 & 255);
+                                this.pixels[var6 * 4 + 3] = (byte) (var20 >> 24 & 255);
                             }
                         }
                     }
@@ -87,10 +85,10 @@ public class MixinFlowingLavaTextureBinder extends MixinTextureBinder {
                             }
                         }
 
-                        this.grid[var6 * 4 + 0] = (byte) (var20 / var4 / var4);
-                        this.grid[var6 * 4 + 1] = (byte) (var11 / var4 / var4);
-                        this.grid[var6 * 4 + 2] = (byte) (var12 / var4 / var4);
-                        this.grid[var6 * 4 + 3] = (byte) (var13 / var4 / var4);
+                        this.pixels[var6 * 4 + 0] = (byte) (var20 / var4 / var4);
+                        this.pixels[var6 * 4 + 1] = (byte) (var11 / var4 / var4);
+                        this.pixels[var6 * 4 + 2] = (byte) (var12 / var4 / var4);
+                        this.pixels[var6 * 4 + 3] = (byte) (var13 / var4 / var4);
                         ++var6;
                     }
                 }
@@ -99,11 +97,11 @@ public class MixinFlowingLavaTextureBinder extends MixinTextureBinder {
             curFrame = (curFrame + 1) % numFrames;
         } else {
             var4 = var2 * var3;
-            if (this.field_2701.length != var4) {
-                this.field_2701 = new float[var4];
-                this.field_2702 = new float[var4];
-                this.field_2703 = new float[var4];
-                this.field_2704 = new float[var4];
+            if (this.current.length != var4) {
+                this.current = new float[var4];
+                this.next = new float[var4];
+                this.heat = new float[var4];
+                this.heata = new float[var4];
             }
 
             var5 = (int) Math.sqrt((double) (var2 / 16));
@@ -121,29 +119,29 @@ public class MixinFlowingLavaTextureBinder extends MixinTextureBinder {
                         for (var14 = var9 - var6; var14 <= var9 + var6; ++var14) {
                             var15 = var13 + var11 & var2 - 1;
                             var16 = var14 + var12 & var3 - 1;
-                            var10 += this.field_2701[var15 + var16 * var2];
+                            var10 += this.current[var15 + var16 * var2];
                         }
                     }
 
-                    this.field_2702[var8 + var9 * var2] = var10 / var7 + (this.field_2703[(var8 + 0 & var2 - 1) + (var9 + 0 & var3 - 1) * var2] + this.field_2703[(var8 + 1 & var2 - 1) + (var9 + 0 & var3 - 1) * var2] + this.field_2703[(var8 + 1 & var2 - 1) + (var9 + 1 & var3 - 1) * var2] + this.field_2703[(var8 + 0 & var2 - 1) + (var9 + 1 & var3 - 1) * var2]) / 4.0F * 0.8F;
-                    this.field_2703[var8 + var9 * var2] += this.field_2704[var8 + var9 * var2] * 0.01F;
-                    if (this.field_2703[var8 + var9 * var2] < 0.0F) {
-                        this.field_2703[var8 + var9 * var2] = 0.0F;
+                    this.next[var8 + var9 * var2] = var10 / var7 + (this.heat[(var8 + 0 & var2 - 1) + (var9 + 0 & var3 - 1) * var2] + this.heat[(var8 + 1 & var2 - 1) + (var9 + 0 & var3 - 1) * var2] + this.heat[(var8 + 1 & var2 - 1) + (var9 + 1 & var3 - 1) * var2] + this.heat[(var8 + 0 & var2 - 1) + (var9 + 1 & var3 - 1) * var2]) / 4.0F * 0.8F;
+                    this.heat[var8 + var9 * var2] += this.heata[var8 + var9 * var2] * 0.01F;
+                    if (this.heat[var8 + var9 * var2] < 0.0F) {
+                        this.heat[var8 + var9 * var2] = 0.0F;
                     }
 
-                    this.field_2704[var8 + var9 * var2] -= 0.06F;
+                    this.heata[var8 + var9 * var2] -= 0.06F;
                     if (Math.random() < 0.005D) {
-                        this.field_2704[var8 + var9 * var2] = 1.5F;
+                        this.heata[var8 + var9 * var2] = 1.5F;
                     }
                 }
             }
 
-            float[] var19 = this.field_2702;
-            this.field_2702 = this.field_2701;
-            this.field_2701 = var19;
+            float[] var19 = this.next;
+            this.next = this.current;
+            this.current = var19;
 
             for (var9 = 0; var9 < var4; ++var9) {
-                var10 = this.field_2701[var9] * 2.0F;
+                var10 = this.current[var9] * 2.0F;
                 if (var10 > 1.0F) {
                     var10 = 1.0F;
                 }
@@ -155,7 +153,7 @@ public class MixinFlowingLavaTextureBinder extends MixinTextureBinder {
                 var12 = (int) (var10 * 100.0F + 155.0F);
                 var13 = (int) (var10 * var10 * 255.0F);
                 var14 = (int) (var10 * var10 * var10 * var10 * 128.0F);
-                if (this.render3d) {
+                if (this.anaglyph3d) {
                     var15 = (var12 * 30 + var13 * 59 + var14 * 11) / 100;
                     var16 = (var12 * 30 + var13 * 70) / 100;
                     int var17 = (var12 * 30 + var14 * 70) / 100;
@@ -164,10 +162,10 @@ public class MixinFlowingLavaTextureBinder extends MixinTextureBinder {
                     var14 = var17;
                 }
 
-                this.grid[var9 * 4 + 0] = (byte) var12;
-                this.grid[var9 * 4 + 1] = (byte) var13;
-                this.grid[var9 * 4 + 2] = (byte) var14;
-                this.grid[var9 * 4 + 3] = -1;
+                this.pixels[var9 * 4 + 0] = (byte) var12;
+                this.pixels[var9 * 4 + 1] = (byte) var13;
+                this.pixels[var9 * 4 + 2] = (byte) var14;
+                this.pixels[var9 * 4 + 3] = -1;
             }
 
         }

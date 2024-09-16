@@ -39,17 +39,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
 
     @Shadow
-    private Minecraft client;
+    private Minecraft mc;
     @Shadow
-    private TileRenderer blockRenderer;
+    private TileRenderer tileRenderer;
     @Shadow
-    private float field_2403;
+    private float height;
     @Shadow
-    private float field_2404;
+    private float oHeight;
     @Shadow
-    private MapRenderer field_2406;
+    private MapRenderer mapRenderer;
     @Shadow
-    private ItemInstance heldItem;
+    private ItemInstance selectedItem;
 
     private boolean itemRotate;
     public ModelPart powerGlove;
@@ -57,10 +57,10 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
     private HumanoidModel refBiped;
 
     @Shadow
-    protected abstract void method_1867(float f);
+    protected abstract void renderFire(float f);
 
     @Shadow
-    protected abstract void method_1861(float f, int i);
+    protected abstract void renderTex(float f, int i);
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(Minecraft var1, CallbackInfo ci) {
@@ -75,17 +75,17 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
     }
 
     @Overwrite
-    public void render(LivingEntity var1, ItemInstance var2) {
+    public void renderItem(LivingEntity var1, ItemInstance var2) {
         GL11.glPushMatrix();
         if (var2.id < 256 && TileRenderer.canRender(Tile.tiles[var2.id].getRenderShape())) {
             int var24 = ((ExBlock) Tile.tiles[var2.id]).getTextureNum();
             if (var24 == 0) {
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.client.textures.loadTexture("/terrain.png"));
+                GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.textures.loadTexture("/terrain.png"));
             } else {
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.client.textures.loadTexture(String.format("/terrain%d.png", var24)));
+                GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.textures.loadTexture(String.format("/terrain%d.png", var24)));
             }
 
-            this.blockRenderer.renderTile(Tile.tiles[var2.id], var2.getAuxValue(), var1.getBrightness(1.0F));
+            this.tileRenderer.renderTile(Tile.tiles[var2.id], var2.getAuxValue(), var1.getBrightness(1.0F));
             GL11.glPopMatrix();
             return;
         }
@@ -100,8 +100,8 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
             }
         }
 
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.client.textures.loadTexture(var3));
-        Vec2 var25 = ((ExTextureManager) this.client.textures).getTextureResolution(var3);
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.textures.loadTexture(var3));
+        Vec2 var25 = ((ExTextureManager) this.mc.textures).getTextureResolution(var3);
         int var5 = var25.x / 16;
         int var6 = var25.y / 16;
         float var7 = 0.5F / (float) var25.x;
@@ -208,64 +208,64 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
         GL11.glPopMatrix();
     }
 
-    @Inject(method = "method_1861", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "renderTex", at = @At("HEAD"), cancellable = true)
     private void disableItemRender(float var1, int var2, CallbackInfo ci) {
-        if (this.client.player.noPhysics) {
+        if (this.mc.player.noPhysics) {
             ci.cancel();
         }
     }
 
     @Overwrite
-    public void method_1864(float var1) {
+    public void renderScreenEffect(float var1) {
         GL11.glDisable(GL11.GL_ALPHA_TEST);
         int var2;
-        if (!((ExMinecraft) this.client).isCameraActive() && this.client.player.displayFireAnimation()) {
-            var2 = this.client.textures.loadTexture("/terrain.png");
+        if (!((ExMinecraft) this.mc).isCameraActive() && this.mc.player.displayFireAnimation()) {
+            var2 = this.mc.textures.loadTexture("/terrain.png");
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, var2);
-            this.method_1867(var1);
+            this.renderFire(var1);
         }
 
-        if (this.client.cameraEntity.isInWall()) {
-            var2 = Mth.floor(this.client.cameraEntity.x);
-            int var3 = Mth.floor(this.client.cameraEntity.y);
-            int var4 = Mth.floor(this.client.cameraEntity.z);
-            int var5 = this.client.textures.loadTexture("/terrain.png");
+        if (this.mc.cameraEntity.isInWall()) {
+            var2 = Mth.floor(this.mc.cameraEntity.x);
+            int var3 = Mth.floor(this.mc.cameraEntity.y);
+            int var4 = Mth.floor(this.mc.cameraEntity.z);
+            int var5 = this.mc.textures.loadTexture("/terrain.png");
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, var5);
-            int var6 = this.client.level.getTile(var2, var3, var4);
-            if (this.client.level.isSolidBlockingTile(var2, var3, var4) && this.client.level.isSolidTile(var2, var3, var4)) {
-                this.method_1861(var1, Tile.tiles[var6].getTexture(2));
+            int var6 = this.mc.level.getTile(var2, var3, var4);
+            if (this.mc.level.isSolidBlockingTile(var2, var3, var4) && this.mc.level.isSolidTile(var2, var3, var4)) {
+                this.renderTex(var1, Tile.tiles[var6].getTexture(2));
             } else {
                 for (int var7 = 0; var7 < 8; ++var7) {
-                    float var8 = ((float) ((var7 >> 0) % 2) - 0.5F) * this.client.player.bbWidth * 0.9F;
-                    float var9 = ((float) ((var7 >> 1) % 2) - 0.5F) * this.client.player.bbHeight * 0.2F;
-                    float var10 = ((float) ((var7 >> 2) % 2) - 0.5F) * this.client.player.bbWidth * 0.9F;
+                    float var8 = ((float) ((var7 >> 0) % 2) - 0.5F) * this.mc.player.bbWidth * 0.9F;
+                    float var9 = ((float) ((var7 >> 1) % 2) - 0.5F) * this.mc.player.bbHeight * 0.2F;
+                    float var10 = ((float) ((var7 >> 2) % 2) - 0.5F) * this.mc.player.bbWidth * 0.9F;
                     int var11 = Mth.floor((float) var2 + var8);
                     int var12 = Mth.floor((float) var3 + var9);
                     int var13 = Mth.floor((float) var4 + var10);
-                    if (this.client.level.isSolidBlockingTile(var11, var12, var13)) {
-                        var6 = this.client.level.getTile(var11, var12, var13);
+                    if (this.mc.level.isSolidBlockingTile(var11, var12, var13)) {
+                        var6 = this.mc.level.getTile(var11, var12, var13);
                     }
                 }
             }
 
             if (Tile.tiles[var6] != null) {
-                this.method_1861(var1, Tile.tiles[var6].getTexture(2));
+                this.renderTex(var1, Tile.tiles[var6].getTexture(2));
             }
         }
 
-        if (this.client.cameraEntity.isUnderLiquid(Material.WATER)) {
-            var2 = this.client.textures.loadTexture("/misc/water.png");
+        if (this.mc.cameraEntity.isUnderLiquid(Material.WATER)) {
+            var2 = this.mc.textures.loadTexture("/misc/water.png");
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, var2);
-            this.method_1866(var1);
+            this.renderWater(var1);
         }
 
         GL11.glEnable(GL11.GL_ALPHA_TEST);
     }
 
     @Overwrite
-    private void method_1866(float var1) {
+    private void renderWater(float var1) {
         Tesselator var2 = Tesselator.instance;
-        float var3 = this.client.cameraEntity.getBrightness(var1);
+        float var3 = this.mc.cameraEntity.getBrightness(var1);
         GL11.glColor4f(var3, var3, var3, 0.5F);
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
@@ -276,8 +276,8 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
         float var7 = -1.0F;
         float var8 = 1.0F;
         float var9 = -0.5F;
-        float var10 = -this.client.cameraEntity.yRot / 64.0F;
-        float var11 = this.client.cameraEntity.xRot / 64.0F;
+        float var10 = -this.mc.cameraEntity.yRot / 64.0F;
+        float var11 = this.mc.cameraEntity.xRot / 64.0F;
         var2.begin();
         var2.vertexUV(var5, var7, var9, var4 + var10, var4 + var11);
         var2.vertexUV(var6, var7, var9, 0.0F + var10, var4 + var11);
@@ -316,16 +316,16 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
 
     @Override
     public void renderItemInFirstPerson(float var1, float var2, float var3) {
-        float var4 = this.field_2404 + (this.field_2403 - this.field_2404) * var1;
-        LocalPlayer var5 = this.client.player;
+        float var4 = this.oHeight + (this.height - this.oHeight) * var1;
+        LocalPlayer var5 = this.mc.player;
         float var6 = var5.xRotO + (var5.xRot - var5.xRotO) * var1;
         GL11.glPushMatrix();
         GL11.glRotatef(var6, 1.0F, 0.0F, 0.0F);
         GL11.glRotatef(var5.yRotO + (var5.yRot - var5.yRotO) * var1, 0.0F, 1.0F, 0.0F);
         Lighting.turnOn();
         GL11.glPopMatrix();
-        ItemInstance var7 = this.heldItem;
-        float var8 = this.client.level.getBrightness(Mth.floor(var5.x), Mth.floor(var5.y), Mth.floor(var5.z));
+        ItemInstance var7 = this.selectedItem;
+        float var8 = this.mc.level.getBrightness(Mth.floor(var5.x), Mth.floor(var5.y), Mth.floor(var5.z));
         float var10;
         float var11;
         float var12;
@@ -361,7 +361,7 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
             GL11.glRotatef(90.0F, 0.0F, 1.0F, 0.0F);
             GL11.glRotatef(var10 * -85.0F, 0.0F, 0.0F, 1.0F);
             GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.client.textures.loadHttpTexture(this.client.player.customTextureUrl, this.client.player.getTexture()));
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.textures.loadHttpTexture(this.mc.player.customTextureUrl, this.mc.player.getTexture()));
 
             for (var11 = 0.0F; var11 < 2.0F; ++var11) {
                 var12 = var11 * 2.0F - 1.0F;
@@ -371,7 +371,7 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
                 GL11.glRotatef(-90.0F, 0.0F, 0.0F, 1.0F);
                 GL11.glRotatef(59.0F, 0.0F, 0.0F, 1.0F);
                 GL11.glRotatef(-65.0F * var12, 0.0F, 1.0F, 0.0F);
-                EntityRenderer var19 = EntityRenderDispatcher.INSTANCE.getRenderer(this.client.player);
+                EntityRenderer var19 = EntityRenderDispatcher.INSTANCE.getRenderer(this.mc.player);
                 PlayerRenderer var14 = (PlayerRenderer) var19;
                 float var15 = 1.0F;
                 GL11.glScalef(var15, var15, var15);
@@ -392,7 +392,7 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
             GL11.glTranslatef(-1.0F, -1.0F, 0.0F);
             var12 = 0.015625F;
             GL11.glScalef(var12, var12, var12);
-            this.client.textures.bind(this.client.textures.loadTexture("/misc/mapbg.png"));
+            this.mc.textures.bind(this.mc.textures.loadTexture("/misc/mapbg.png"));
             Tesselator var21 = Tesselator.instance;
             GL11.glNormal3f(0.0F, 0.0F, -1.0F);
             var21.begin();
@@ -402,8 +402,8 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
             var21.vertexUV(128 + var22, 0 - var22, 0.0D, 1.0D, 0.0D);
             var21.vertexUV(0 - var22, 0 - var22, 0.0D, 0.0D, 0.0D);
             var21.end();
-            MapItemSavedData var16 = Item.MAP.getMapSaveData(var7, this.client.level);
-            this.field_2406.render(this.client.player, this.client.textures, var16);
+            MapItemSavedData var16 = Item.MAP.getMapSaveData(var7, this.mc.level);
+            this.mapRenderer.render(this.mc.player, this.mc.textures, var16);
             GL11.glPopMatrix();
         } else {
             PlayerRenderer var13;
@@ -428,7 +428,7 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
                         GL11.glRotatef(180.0F, 0.0F, 1.0F, 0.0F);
                     }
 
-                    this.render(var5, var7);
+                    this.renderItem(var5, var7);
                     GL11.glPopMatrix();
                 } else if (var7.id == AC_Items.powerGlove.id) {
                     GL11.glPushMatrix();
@@ -443,17 +443,17 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
                     var11 = Mth.sin(Mth.sqrt(var2) * 3.141593F);
                     GL11.glRotatef(var11 * 70.0F, 0.0F, 1.0F, 0.0F);
                     GL11.glRotatef(-var10 * 20.0F, 0.0F, 0.0F, 1.0F);
-                    GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.client.textures.loadHttpTexture(this.client.player.customTextureUrl, this.client.player.getTexture()));
+                    GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.textures.loadHttpTexture(this.mc.player.customTextureUrl, this.mc.player.getTexture()));
                     GL11.glTranslatef(-1.0F, 3.6F, 3.5F);
                     GL11.glRotatef(120.0F, 0.0F, 0.0F, 1.0F);
                     GL11.glRotatef(200.0F, 1.0F, 0.0F, 0.0F);
                     GL11.glRotatef(-135.0F, 0.0F, 1.0F, 0.0F);
                     GL11.glScalef(1.0F, 1.0F, 1.0F);
                     GL11.glTranslatef(5.6F, 0.0F, 0.0F);
-                    var18 = EntityRenderDispatcher.INSTANCE.getRenderer(this.client.player);
+                    var18 = EntityRenderDispatcher.INSTANCE.getRenderer(this.mc.player);
                     var13 = (PlayerRenderer) var18;
                     var13.renderHand();
-                    GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.client.textures.loadTexture("/mob/powerGlove.png"));
+                    GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.textures.loadTexture("/mob/powerGlove.png"));
                     this.refBiped.attackTime = 0.0F;
                     this.refBiped.setupAnim(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 1.0F / 16.0F);
                     this.powerGlove.x = this.refBiped.rightArm.x;
@@ -487,14 +487,14 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
                 var11 = Mth.sin(Mth.sqrt(var2) * 3.141593F);
                 GL11.glRotatef(var11 * 70.0F, 0.0F, 1.0F, 0.0F);
                 GL11.glRotatef(-var10 * 20.0F, 0.0F, 0.0F, 1.0F);
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.client.textures.loadHttpTexture(this.client.player.customTextureUrl, this.client.player.getTexture()));
+                GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.textures.loadHttpTexture(this.mc.player.customTextureUrl, this.mc.player.getTexture()));
                 GL11.glTranslatef(-1.0F, 3.6F, 3.5F);
                 GL11.glRotatef(120.0F, 0.0F, 0.0F, 1.0F);
                 GL11.glRotatef(200.0F, 1.0F, 0.0F, 0.0F);
                 GL11.glRotatef(-135.0F, 0.0F, 1.0F, 0.0F);
                 GL11.glScalef(1.0F, 1.0F, 1.0F);
                 GL11.glTranslatef(5.6F, 0.0F, 0.0F);
-                var18 = EntityRenderDispatcher.INSTANCE.getRenderer(this.client.player);
+                var18 = EntityRenderDispatcher.INSTANCE.getRenderer(this.mc.player);
                 var13 = (PlayerRenderer) var18;
                 var13.renderHand();
                 GL11.glPopMatrix();
@@ -506,9 +506,9 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
     }
 
     private void renderShield(float var1, float var2, float var3) {
-        float var4 = this.field_2404 + (this.field_2403 - this.field_2404) * var1;
-        LocalPlayer var5 = this.client.player;
-        float var6 = this.client.level.getBrightness(Mth.floor(var5.x), Mth.floor(var5.y), Mth.floor(var5.z));
+        float var4 = this.oHeight + (this.height - this.oHeight) * var1;
+        LocalPlayer var5 = this.mc.player;
+        float var6 = this.mc.level.getBrightness(Mth.floor(var5.x), Mth.floor(var5.y), Mth.floor(var5.z));
         GL11.glColor4f(var6, var6, var6, 1.0F);
         ItemInstance var7 = new ItemInstance(AC_Items.woodenShield);
         GL11.glPushMatrix();
@@ -531,13 +531,13 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
         GL11.glEnable(GL12.GL_RESCALE_NORMAL);
         GL11.glScalef(0.6F, 0.6F, 0.6F);
         this.itemRotate = false;
-        this.render(var5, var7);
+        this.renderItem(var5, var7);
         this.itemRotate = true;
         GL11.glPopMatrix();
     }
 
     @Override
     public boolean hasItem() {
-        return this.heldItem != null;
+        return this.selectedItem != null;
     }
 }

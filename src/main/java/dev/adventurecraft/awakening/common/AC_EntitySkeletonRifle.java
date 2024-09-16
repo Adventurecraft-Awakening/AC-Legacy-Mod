@@ -49,7 +49,7 @@ public class AC_EntitySkeletonRifle extends Skeleton {
     public void tick() {
         super.tick();
 
-        var heldItem = (ExItemStack) ((ExLivingEntity) this).getHeldItem();
+        var heldItem = (ExItemStack) ((ExLivingEntity) this).getSelectedItem();
         if (this.health <= 0) {
             heldItem.setTimeLeft(0);
             return;

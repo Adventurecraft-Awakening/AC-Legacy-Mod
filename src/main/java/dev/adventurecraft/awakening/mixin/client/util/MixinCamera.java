@@ -14,16 +14,17 @@ public abstract class MixinCamera implements ExCameraView {
     @Shadow
     private FrustumData frustum;
     @Shadow
-    private double x;
+    private double xOff;
     @Shadow
-    private double y;
+    private double yOff;
     @Shadow
-    private double z;
+    private double zOff;
 
     public boolean isBoxInFrustumFully(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
-        return ((ExFrustum) this.frustum).isBoxInFrustumFully(minX - this.x, minY - this.y, minZ - this.z, maxX - this.x, maxY - this.y, maxZ - this.z);
+        return ((ExFrustum) this.frustum).isBoxInFrustumFully(minX - this.xOff, minY - this.yOff, minZ - this.zOff, maxX - this.xOff, maxY - this.yOff, maxZ - this.zOff);
     }
 
+    @Override
     public boolean isBoundingBoxInFrustumFully(AABB var1) {
         return this.isBoxInFrustumFully(var1.x0, var1.y0, var1.z0, var1.x1, var1.y1, var1.z1);
     }

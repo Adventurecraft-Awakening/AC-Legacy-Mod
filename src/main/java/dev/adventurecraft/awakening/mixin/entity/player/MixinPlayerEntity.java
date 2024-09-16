@@ -34,13 +34,13 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
     public Inventory inventory;
 
     @Shadow
-    public AbstractContainerMenu playerContainer;
+    public AbstractContainerMenu inventoryMenu;
 
     @Shadow
-    public int handSwingTicks;
+    public int swingTime;
 
     @Shadow
-    public boolean handSwinging;
+    public boolean swinging;
 
     public boolean isSwingingOffhand;
     public int swingProgressIntOffhand;
@@ -52,22 +52,22 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
     private boolean allowsCrafting;
 
     @Shadow
-    public abstract ItemInstance getHeldItem();
+    public abstract ItemInstance getSelectedItem();
 
     @Shadow
-    public abstract void breakHeldItem();
+    public abstract void removeSelectedItem();
 
     @Shadow
     protected abstract void method_510(LivingEntity arg, boolean bl);
 
     @Shadow
-    public abstract void increaseStat(Stat arg, int i);
+    public abstract void awardStat(Stat arg, int i);
 
     @Shadow
-    public abstract boolean isLyingOnBed();
+    public abstract boolean isSleeping();
 
     @Shadow
-    public abstract void getOutOfBed(boolean bl, boolean bl2, boolean bl3);
+    public abstract void stopSleepInBed(boolean bl, boolean bl2, boolean bl3);
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(Level var1, CallbackInfo ci) {
@@ -76,31 +76,31 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
         this.updateContainer();
     }
 
-    @ModifyConstant(method = "afterSpawn", constant = @Constant(intValue = 20))
+    @ModifyConstant(method = "resetPos", constant = @Constant(intValue = 20))
     private int useMaxHealth0(int constant) {
         return this.maxHealth;
     }
 
-    @Inject(method = "afterSpawn", at = @At("TAIL"))
+    @Inject(method = "resetPos", at = @At("TAIL"))
     private void resetAfterSpawn(CallbackInfo ci) {
         AC_Items.hookshot.resetPlayerHookshotState();
         this.removed = false;
-        this.fireTicks = -this.field_1646;
+        this.onFire = -this.flameTime;
     }
 
     @Overwrite
-    public void tickHandSwing() {
-        if (this.handSwinging) {
-            ++this.handSwingTicks;
-            if (this.handSwingTicks == 8) {
-                this.handSwingTicks = 0;
-                this.handSwinging = false;
+    public void serverAiStep() {
+        if (this.swinging) {
+            ++this.swingTime;
+            if (this.swingTime == 8) {
+                this.swingTime = 0;
+                this.swinging = false;
             }
         } else {
-            this.handSwingTicks = 0;
+            this.swingTime = 0;
         }
 
-        this.handSwingProgress = (float) this.handSwingTicks / 8.0F;
+        this.attackAnim = (float) this.swingTime / 8.0F;
         if (this.isSwingingOffhand) {
             ++this.swingProgressIntOffhand;
             if (this.swingProgressIntOffhand == 8) {
@@ -122,20 +122,20 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
     }
 
     private void updateContainer() {
-        if (playerContainer instanceof ExPlayerContainer exContainer) {
+        if (inventoryMenu instanceof ExPlayerContainer exContainer) {
             boolean allowsCrafting = ((ExWorldProperties) Minecraft.instance.level.levelData).getAllowsInventoryCrafting();
             exContainer.setAllowsCrafting(allowsCrafting);
         }
     }
 
     @ModifyConstant(
-        method = "updateDespawnCounter",
+        method = "aiStep",
         constant = @Constant(intValue = 20, ordinal = 0))
     private int useMaxHealth1(int constant) {
         return this.maxHealth;
     }
 
-    @Inject(method = "updateDespawnCounter", at = @At("TAIL"))
+    @Inject(method = "aiStep", at = @At("TAIL"))
     private void updateLantern(CallbackInfo ci) {
         ItemInstance handItem = this.inventory.getSelected();
         ItemInstance offhandItem = ((ExPlayerInventory) this.inventory).getOffhandItemStack();
@@ -151,14 +151,14 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
         if (!emitLight &&
             (handItem == null || handItem.id != Tile.TORCH.id && handItem.id != AC_Blocks.lights1.id) &&
             (offhandItem == null || offhandItem.id != Tile.TORCH.id && offhandItem.id != AC_Blocks.lights1.id)) {
-            AC_PlayerTorch.setTorchState(this.world, false);
+            AC_PlayerTorch.setTorchState(this.level, false);
         } else {
-            AC_PlayerTorch.setTorchState(this.world, true);
-            AC_PlayerTorch.setTorchPos(this.world, (float) this.x, (float) this.y, (float) this.z);
+            AC_PlayerTorch.setTorchState(this.level, true);
+            AC_PlayerTorch.setTorchPos(this.level, (float) this.x, (float) this.y, (float) this.z);
         }
 
-        if (this.yVelocity < -0.2D && this.isUsingUmbrella()) {
-            this.yVelocity = -0.2D;
+        if (this.yd < -0.2D && this.isUsingUmbrella()) {
+            this.yd = -0.2D;
         }
 
         if (!this.onGround) {
@@ -182,8 +182,8 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
 
         if (item.getAuxValue() < item.getMaxDamage()) {
             item.setDamage(item.getAuxValue() + 1);
-            AC_PlayerTorch.setTorchState(this.world, true);
-            AC_PlayerTorch.setTorchPos(this.world, (float) this.x, (float) this.y, (float) this.z);
+            AC_PlayerTorch.setTorchState(this.level, true);
+            AC_PlayerTorch.setTorchPos(this.level, (float) this.x, (float) this.y, (float) this.z);
         }
 
         if (item.getAuxValue() == item.getMaxDamage()) {
@@ -198,14 +198,14 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
     }
 
     @Redirect(
-        method = "onKilledBy",
+        method = "die",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/inventory/PlayerInventory;dropInventory()V"))
+            target = "Lnet/minecraft/world/entity/player/Inventory;dropAll()V"))
     private void keepInventoryOnDeath(Inventory instance) {
     }
 
-    @Inject(method = "readAdditional", at = @At("TAIL"))
+    @Inject(method = "readAdditionalSaveData", at = @At("TAIL"))
     private void readAdditionalAC(CompoundTag var1, CallbackInfo ci) {
         this.numHeartPieces = var1.getInt("NumHeartPieces");
         if (this.maxHealth < 12) {
@@ -214,41 +214,41 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
         }
     }
 
-    @Inject(method = "writeAdditional", at = @At("TAIL"))
+    @Inject(method = "addAdditionalSaveData", at = @At("TAIL"))
     private void writeAdditionalAC(CompoundTag var1, CallbackInfo ci) {
         var1.putInt("NumHeartPieces", this.numHeartPieces);
     }
 
     @Redirect(
-        method = "damage",
+        method = "hurt",
         at = @At(
             value = "FIELD",
-            target = "Lnet/minecraft/world/World;isClient:Z"))
+            target = "Lnet/minecraft/world/level/Level;isClientSide:Z"))
     private boolean alwaysGetOutOfBedOnDamage(Level instance) {
         return false;
     }
 
     @Override
     public boolean attackEntityFromMulti(Entity entity, int damage) {
-        this.despawnCounter = 0;
+        this.noActionTime = 0;
         if (this.health <= 0) {
             return false;
         }
 
-        if (this.isLyingOnBed()) {
-            this.getOutOfBed(true, true, false);
+        if (this.isSleeping()) {
+            this.stopSleepInBed(true, true, false);
         }
 
         if (entity instanceof Monster || entity instanceof Arrow) {
-            if (this.world.difficulty == 0) {
+            if (this.level.difficulty == 0) {
                 damage = 0;
             }
 
-            if (this.world.difficulty == 1) {
+            if (this.level.difficulty == 1) {
                 damage = damage / 3 + 1;
             }
 
-            if (this.world.difficulty == 3) {
+            if (this.level.difficulty == 3) {
                 damage = damage * 3 / 2;
             }
         }
@@ -266,11 +266,11 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
             this.method_510(livingOwner, false);
         }
 
-        this.increaseStat(Stats.DAMAGE_TAKEN, damage);
+        this.awardStat(Stats.DAMAGE_TAKEN, damage);
         return super.attackEntityFromMulti(entity, damage);
     }
 
-    @Inject(method = "applyDamage", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "actuallyHurt", at = @At("HEAD"), cancellable = true)
     private void noDamageInDebugMode(int var1, CallbackInfo ci) {
         if (AC_DebugMode.active) {
             ci.cancel();
@@ -278,14 +278,14 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
     }
 
     @Redirect(
-        method = "applyDamage",
+        method = "actuallyHurt",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/inventory/PlayerInventory;damageArmor(I)V"))
+            target = "Lnet/minecraft/world/entity/player/Inventory;hurtArmor(I)V"))
     private void noDamageToArmor(Inventory instance, int i) {
     }
 
-    @Inject(method = "dropSelectedItem", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "drop()V", at = @At("HEAD"), cancellable = true)
     private void noThrownBoomerangDrop(CallbackInfo ci) {
         if (this.inventory.getSelected() != null && this.inventory.getSelected().id == AC_Items.boomerang.id && this.inventory.getSelected().getAuxValue() == 1) {
             ci.cancel();
@@ -293,29 +293,29 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
     }
 
     @Overwrite
-    public void interactWith(Entity entity) {
+    public void interact(Entity entity) {
         if (entity.interact((Player) (Object) this)) {
             return;
         }
 
-        ItemInstance heldItem = this.getHeldItem();
+        ItemInstance heldItem = this.getSelectedItem();
         if (heldItem != null && entity instanceof LivingEntity) {
             heldItem.interactEnemy((LivingEntity) entity);
 
             if (heldItem.count == 0) {
                 heldItem.snap((Player) (Object) this);
-                this.breakHeldItem();
+                this.removeSelectedItem();
             }
         }
     }
 
     @Overwrite
-    public void swingHand() {
+    public void swing() {
         if (this.swappedItems) {
             this.swingOffhandItem();
         } else {
-            this.handSwingTicks = -1;
-            this.handSwinging = true;
+            this.swingTime = -1;
+            this.swinging = true;
         }
     }
 
@@ -326,18 +326,18 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
             return;
         }
 
-        if (this.yVelocity < 0.0D) {
+        if (this.yd < 0.0D) {
             ++attackDamage;
         }
 
         entity.hurt((Entity) (Object) this, attackDamage);
-        ItemInstance heldItem = this.getHeldItem();
+        ItemInstance heldItem = this.getSelectedItem();
         if (heldItem != null && entity instanceof LivingEntity) {
             heldItem.hurtEnemy((LivingEntity) entity, (Player) (Object) this);
 
             if (heldItem.count == 0) {
                 heldItem.snap((Player) (Object) this);
-                this.breakHeldItem();
+                this.removeSelectedItem();
             }
         }
 
@@ -346,7 +346,7 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
                 this.method_510((LivingEntity) entity, true);
             }
 
-            this.increaseStat(Stats.DAMAGE_DEALT, attackDamage);
+            this.awardStat(Stats.DAMAGE_DEALT, attackDamage);
         }
     }
 

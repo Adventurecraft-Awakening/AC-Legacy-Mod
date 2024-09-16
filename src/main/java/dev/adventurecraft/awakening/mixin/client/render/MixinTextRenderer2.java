@@ -5,7 +5,6 @@ import dev.adventurecraft.awakening.common.TextRect;
 import dev.adventurecraft.awakening.common.TextRendererState;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -26,10 +25,10 @@ import net.minecraft.client.renderer.Textures;
 public abstract class MixinTextRenderer2 implements ExTextRenderer {
 
     @Shadow
-    private int[] field_2462;
+    private int[] charWidths;
 
     @Shadow
-    public int field_2461;
+    public int fontTexture;
 
     @Unique
     private float[] colorBuffer;
@@ -77,7 +76,7 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
     }
 
     @Overwrite
-    public void drawTextWithShadow(String text, int x, int y, int color) {
+    public void drawShadow(String text, int x, int y, int color) {
         if (text == null) {
             return;
         }
@@ -87,7 +86,7 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
     }
 
     @Overwrite
-    public void drawText(String text, int x, int y, int color) {
+    public void draw(String text, int x, int y, int color) {
         if (text == null) {
             return;
         }
@@ -97,7 +96,7 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
     }
 
     @Overwrite
-    public void drawText(String text, int x, int y, int color, boolean shadow) {
+    public void draw(String text, int x, int y, int color, boolean shadow) {
         if (text == null) {
             return;
         }
@@ -131,15 +130,15 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
     }
 
     @Overwrite
-    public int getTextWidth(String text) {
+    public int width(String text) {
         var rect = this.getTextWidth(text, 0);
         return rect.width();
     }
 
     @Override
     public TextRendererState createState() {
-        var state = new TextRendererState(this.colorBuffer, this.field_2462);
-        state.setTexture(this.field_2461);
+        var state = new TextRendererState(this.colorBuffer, this.charWidths);
+        state.setTexture(this.fontTexture);
         return state;
     }
 
@@ -165,9 +164,9 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
 
             int index = SharedConstants.acceptableLetters.indexOf(c);
             if (index >= 0 && c < 176) {
-                width += this.field_2462[index + 32];
+                width += this.charWidths[index + 32];
             } else if (c < 256) {
-                width += this.field_2462[c];
+                width += this.charWidths[c];
             }
 
             if (width > maxWidth || (newLines && c == '\n')) {

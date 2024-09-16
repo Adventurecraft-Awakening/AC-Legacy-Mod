@@ -19,7 +19,7 @@ public abstract class MixinFireballEntity extends MixinEntity implements ExFireb
 
     private float radius = 1.0F;
 
-    @Inject(method = "initDataTracker", at = @At("TAIL"))
+    @Inject(method = "defineSynchedData", at = @At("TAIL"))
     private void init(CallbackInfo ci) {
         this.collidesWithClipBlocks = false;
     }
@@ -28,16 +28,16 @@ public abstract class MixinFireballEntity extends MixinEntity implements ExFireb
         method = "tick",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/World;method_160(Lnet/minecraft/util/math/Vec3d;Lnet/minecraft/util/math/Vec3d;)Lnet/minecraft/util/hit/HitResult;"))
+            target = "Lnet/minecraft/world/level/Level;clip(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/HitResult;"))
     private HitResult useRayTrace2(Level instance, Vec3 var1, Vec3 var2) {
-        return ((ExWorld) this.world).rayTraceBlocks2(var1, var2, false, true, false);
+        return ((ExWorld) this.level).rayTraceBlocks2(var1, var2, false, true, false);
     }
 
     @ModifyArg(
         method = "tick",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/World;createExplosion(Lnet/minecraft/entity/Entity;DDDFZ)Lnet/minecraft/world/explosion/Explosion;"),
+            target = "Lnet/minecraft/world/level/Level;explode(Lnet/minecraft/world/entity/Entity;DDDFZ)Lnet/minecraft/world/level/Explosion;"),
         index = 4)
     private float useExplosionRadius(float g) {
         return this.radius;

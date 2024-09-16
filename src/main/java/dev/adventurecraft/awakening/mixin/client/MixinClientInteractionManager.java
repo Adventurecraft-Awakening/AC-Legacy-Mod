@@ -12,14 +12,14 @@ public abstract class MixinClientInteractionManager implements ExInteractionMana
 
     @Shadow
     @Final
-    protected Minecraft client;
+    protected Minecraft minecraft;
 
     private int destroyExtraWidth;
 
     private int destroyExtraDepth;
 
     @Shadow
-    public boolean breakBlock(int i, int j, int k, int l) {
+    public boolean destroyBlock(int i, int j, int k, int l) {
         throw new AssertionError();
     }
 

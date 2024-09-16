@@ -14,31 +14,31 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public abstract class MixinDispenserBlockEntity extends TileEntity {
 
     @Shadow
-    private ItemInstance[] contents;
+    private ItemInstance[] items;
 
     @Overwrite
-    public ItemInstance takeInventoryItem(int slot, int count) {
+    public ItemInstance removeItem(int slot, int count) {
         return this.takeInventoryItem(slot, count, false);
     }
 
     @Unique
     private ItemInstance takeInventoryItem(int slot, int count, boolean dispense) {
-        if (this.contents[slot] == null) {
+        if (this.items[slot] == null) {
             return null;
         }
 
         ItemInstance stack;
-        if (this.contents[slot].count <= count && !dispense) {
-            stack = this.contents[slot];
-            this.contents[slot] = null;
+        if (this.items[slot].count <= count && !dispense) {
+            stack = this.items[slot];
+            this.items[slot] = null;
             this.setChanged();
-        } else if (this.contents[slot].count < 0) {
-            stack = this.contents[slot].copy();
+        } else if (this.items[slot].count < 0) {
+            stack = this.items[slot].copy();
             stack.count = 1;
         } else {
-            stack = this.contents[slot].shrink(count);
-            if (this.contents[slot].count == 0) {
-                this.contents[slot] = null;
+            stack = this.items[slot].shrink(count);
+            if (this.items[slot].count == 0) {
+                this.items[slot] = null;
             }
             this.setChanged();
         }
@@ -46,10 +46,10 @@ public abstract class MixinDispenserBlockEntity extends TileEntity {
     }
 
     @Redirect(
-        method = "getItemToDispense",
+        method = "removeRandomItem",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/block/DispenserBlockEntity;takeInventoryItem(II)Lnet/minecraft/item/ItemStack;"))
+            target = "Lnet/minecraft/world/level/tile/entity/DispenserTileEntity;removeItem(II)Lnet/minecraft/world/ItemInstance;"))
     private ItemInstance takeItemToDispense(DispenserTileEntity instance, int j, int i) {
         return ((MixinDispenserBlockEntity) (Object) instance).takeInventoryItem(j, i, true);
     }

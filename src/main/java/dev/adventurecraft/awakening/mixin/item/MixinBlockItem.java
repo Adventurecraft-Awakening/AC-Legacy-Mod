@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(TileItem.class)
 public abstract class MixinBlockItem {
 
-    @Inject(method = "useOnBlock", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "useOn", at = @At("HEAD"), cancellable = true)
     private void disableUsageInDebugMode(ItemInstance var1, Player var2, Level var3, int var4, int var5, int var6, int var7, CallbackInfoReturnable<Boolean> cir) {
         if (!AC_DebugMode.active) {
             cir.setReturnValue(false);

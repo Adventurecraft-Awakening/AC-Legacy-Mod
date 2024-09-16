@@ -13,7 +13,7 @@ public abstract class MixinDeathScreen {
         method = "render",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/gui/screen/ingame/DeathScreen;drawTextWithShadowCentred(Lnet/minecraft/client/render/TextRenderer;Ljava/lang/String;III)V",
+            target = "Lnet/minecraft/client/gui/screens/DeathScreen;drawCenteredString(Lnet/minecraft/client/gui/Font;Ljava/lang/String;III)V",
             ordinal = 1))
     private void removeScoreText(DeathScreen instance, Font textRenderer, String var1, int var2, int var3, int var4) {
     }

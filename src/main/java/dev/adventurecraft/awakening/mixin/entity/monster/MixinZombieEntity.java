@@ -9,9 +9,12 @@ import org.spongepowered.asm.mixin.injection.At;
 @Mixin(Zombie.class)
 public abstract class MixinZombieEntity extends MixinMonsterEntity {
 
-    @ModifyExpressionValue(method = "updateDespawnCounter", at = @At(value = "INVOKE",
-        target = "Lnet/minecraft/world/World;isDaylight()Z"))
+    @ModifyExpressionValue(
+        method = "aiStep",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/level/Level;isDay()Z"))
     private boolean conditionalMobBurn(boolean value) {
-        return value && ((ExWorldProperties) this.world.levelData).getMobsBurn();
+        return value && ((ExWorldProperties) this.level.levelData).getMobsBurn();
     }
 }

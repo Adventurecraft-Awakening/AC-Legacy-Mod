@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 public abstract class MixinPistonRenderer {
 
     @ModifyConstant(
-        method = "render(Lnet/minecraft/entity/block/PistonBlockEntity;DDDF)V",
+        method = "render(Lnet/minecraft/world/level/tile/piston/PistonMovingTileEntity;DDDF)V",
         constant = @Constant(stringValue = "/terrain.png"))
     private String useTerrainTexture(String constant, @Local Tile block) {
         int texture = ((ExBlock) block).getTextureNum();

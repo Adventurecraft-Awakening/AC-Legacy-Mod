@@ -13,10 +13,10 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class MixinContainerScreen extends MixinScreen {
 
     @WrapOperation(
-        method = "render",
+        method = "render(IIF)V",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/gui/screen/container/ContainerScreen;isMouseOverSlot(Lnet/minecraft/container/slot/Slot;II)Z"))
+            target = "Lnet/minecraft/client/gui/screens/inventory/AbstractContainerScreen;isHovering(Lnet/minecraft/world/inventory/Slot;II)Z"))
     private boolean wrapSlotHover(AbstractContainerScreen instance, Slot slot, int x, int y, Operation<Boolean> original) {
         if (((ExSlot) slot).getEnabled()) {
             return original.call(instance, slot, x, y);

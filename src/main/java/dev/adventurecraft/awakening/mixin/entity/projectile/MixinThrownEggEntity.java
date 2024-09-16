@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ThrownEgg.class)
 public abstract class MixinThrownEggEntity extends MixinEntity {
 
-    @Inject(method = "initDataTracker", at = @At("TAIL"))
+    @Inject(method = "defineSynchedData", at = @At("TAIL"))
     private void init(CallbackInfo ci) {
         this.collidesWithClipBlocks = false;
     }
@@ -24,8 +24,8 @@ public abstract class MixinThrownEggEntity extends MixinEntity {
         method = "tick",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/World;method_160(Lnet/minecraft/util/math/Vec3d;Lnet/minecraft/util/math/Vec3d;)Lnet/minecraft/util/hit/HitResult;"))
+            target = "Lnet/minecraft/world/level/Level;clip(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/HitResult;"))
     private HitResult useRayTrace2(Level instance, Vec3 var1, Vec3 var2) {
-        return ((ExWorld) this.world).rayTraceBlocks2(var1, var2, false, true, false);
+        return ((ExWorld) this.level).rayTraceBlocks2(var1, var2, false, true, false);
     }
 }

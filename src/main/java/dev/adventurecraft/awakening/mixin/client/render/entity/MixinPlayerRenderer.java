@@ -20,17 +20,17 @@ public abstract class MixinPlayerRenderer extends LivingEntityRenderer {
     }
 
     @ModifyExpressionValue(
-        method = "method_827(Lnet/minecraft/entity/player/PlayerEntity;F)V",
+        method = "additionalRendering(Lnet/minecraft/world/entity/player/Player;F)V",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/render/entity/PlayerRenderer;method_2027(Ljava/lang/String;Ljava/lang/String;)Z",
+            target = "Lnet/minecraft/client/renderer/entity/PlayerRenderer;bindTexture(Ljava/lang/String;Ljava/lang/String;)Z",
             ordinal = 1))
     private boolean canRenderCustomCape(boolean value, @Local(argsOnly = true) Player var1) {
         return ((ExPlayerEntity) var1).getCloakTexture() != null || value;
     }
 
     @Inject(
-        method = "method_827(Lnet/minecraft/entity/player/PlayerEntity;F)V",
+        method = "additionalRendering(Lnet/minecraft/world/entity/player/Player;F)V",
         at = @At(
             value = "INVOKE",
             target = "Lorg/lwjgl/opengl/GL11;glPushMatrix()V",

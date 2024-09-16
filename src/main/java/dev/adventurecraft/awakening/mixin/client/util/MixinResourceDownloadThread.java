@@ -18,16 +18,16 @@ import java.io.File;
 public abstract class MixinResourceDownloadThread implements ExResourceDownloadThread {
 
     @Shadow
-    private Minecraft client;
+    private Minecraft minecraft;
 
     @Shadow
-    public abstract void method_107();
+    public abstract void forceReload();
 
     @WrapWithCondition(
-        method = "method_108",
+        method = "loadAll",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/Minecraft;loadSoundFromDir(Ljava/lang/String;Ljava/io/File;)V"))
+            target = "Lnet/minecraft/client/Minecraft;fileDownloaded(Ljava/lang/String;Ljava/io/File;)V"))
     private boolean onlyLoadOggs(Minecraft instance, String id, File file) {
         String fileName = file.getName();
         return fileName.toLowerCase().endsWith(".ogg");
@@ -35,15 +35,16 @@ public abstract class MixinResourceDownloadThread implements ExResourceDownloadT
 
     @Overwrite
     public void run() {
-        method_107();
+        forceReload();
     }
 
     @Inject(
-        method = "method_107",
+        method = "forceReload",
         at = @At(
-            value = "INVOKE", target = "Lnet/minecraft/client/util/ResourceDownloadThread;method_108(Ljava/io/File;Ljava/lang/String;)V",
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/BackgroundDownloader;loadAll(Ljava/io/File;Ljava/lang/String;)V",
             shift = At.Shift.AFTER))
     private void loadAtStartup(CallbackInfo ci) {
-        ExResourceDownloadThread.loadSoundsFromResources(this.client, ACMod.class, ACMod.getResourceName(""));
+        ExResourceDownloadThread.loadSoundsFromResources(this.minecraft, ACMod.class, ACMod.getResourceName(""));
     }
 }

@@ -12,13 +12,13 @@ import net.minecraft.world.level.biome.Biome;
 public abstract class MixinBiome {
 
     @Shadow
-    protected List creatures;
+    protected List friendlies;
 
     @Shadow
-    protected List monsters;
+    protected List enemies;
 
     @Shadow
-    protected List waterCreatures;
+    protected List waterFriendlies;
 
     @Redirect(
         method = "<init>",
@@ -26,9 +26,9 @@ public abstract class MixinBiome {
             value = "INVOKE",
             target = "Ljava/util/List;add(Ljava/lang/Object;)Z"))
     private boolean removeCreatures(List instance, Object o) {
-        if (instance == this.monsters ||
-            instance == this.creatures ||
-            instance == this.waterCreatures) {
+        if (instance == this.enemies ||
+            instance == this.friendlies ||
+            instance == this.waterFriendlies) {
             return true;
         }
         instance.add(o);

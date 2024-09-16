@@ -23,7 +23,7 @@ public abstract class MixinSlot implements ExSlot {
         this.enabled = value;
     }
 
-    @Inject(method = "canInsert", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "mayPlace", at = @At("HEAD"), cancellable = true)
     private void cancelCanInsert(ItemInstance item, CallbackInfoReturnable<Boolean> cir) {
         if (!this.enabled) {
             cir.setReturnValue(false);

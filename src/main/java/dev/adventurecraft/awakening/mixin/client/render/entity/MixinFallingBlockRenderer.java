@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.Shadow;
 public abstract class MixinFallingBlockRenderer extends EntityRenderer {
 
     @Shadow
-    private TileRenderer field_857;
+    private TileRenderer tileRenderer;
 
     @Overwrite
     public void render(FallingTile entity, double rX, double rY, double rZ, float var8, float var9) {
@@ -42,7 +42,7 @@ public abstract class MixinFallingBlockRenderer extends EntityRenderer {
         int meta = world.getData(bX, bY, bZ);
         int entityMeta = ((ExFallingBlockEntity) entity).getMetadata();
         ((ExWorld) world).setBlockAndMetadataTemp(bX, bY, bZ, entity.tileId, entityMeta);
-        this.field_857.renderBlock(block, world, bX, bY, bZ);
+        this.tileRenderer.renderBlock(block, world, bX, bY, bZ);
         ((ExWorld) world).setBlockAndMetadataTemp(bX, bY, bZ, id, meta);
         GL11.glEnable(GL11.GL_LIGHTING);
         GL11.glPopMatrix();

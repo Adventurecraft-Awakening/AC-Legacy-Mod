@@ -35,47 +35,47 @@ import java.util.List;
 public abstract class MixinClass_66 implements ExClass_66 {
 
     @Shadow
-    public Level world;
+    public Level level;
     @Shadow
-    private int field_225;
+    private int lists;
     @Shadow
     private static Tesselator tesselator;
     @Shadow
-    public int field_231;
+    public int x;
     @Shadow
-    public int field_232;
+    public int y;
     @Shadow
-    public int field_233;
+    public int z;
     @Shadow
-    public int field_234;
+    public int xs;
     @Shadow
-    public int field_235;
+    public int ys;
     @Shadow
-    public int field_236;
+    public int zs;
     @Shadow
-    public int field_240;
+    public int xRenderOffs;
     @Shadow
-    public int field_241;
+    public int yRenderOffs;
     @Shadow
-    public int field_242;
+    public int zRenderOffs;
     @Shadow
-    public boolean field_243;
+    public boolean visible;
     @Shadow
-    public boolean[] field_244;
+    public boolean[] empty;
     @Shadow
-    public boolean field_249;
+    public boolean dirty;
     @Shadow
-    public AABB field_250;
+    public AABB bb;
     @Shadow
-    public boolean field_252;
+    public boolean occlusion_visible;
     @Shadow
-    public boolean field_223;
+    public boolean skyLit;
     @Shadow
-    private boolean field_227;
+    private boolean compiled;
     @Shadow
-    public List<TileEntity> field_224;
+    public List<TileEntity> renderableTileEntities;
     @Shadow
-    private List<TileEntity> field_228;
+    private List<TileEntity> globalRenderableTileEntities;
 
     public boolean isVisibleFromPosition = false;
     public double visibleFromX;
@@ -85,56 +85,55 @@ public abstract class MixinClass_66 implements ExClass_66 {
     public boolean isInFrustrumFully = false;
 
     @Shadow
-    public abstract void method_305();
+    public abstract void setDirty();
 
-    @Shadow
-    protected abstract void method_306();
-
-    @Inject(method = "method_298", at = @At(
-        value = "INVOKE_ASSIGN",
-        target = "Lnet/minecraft/util/math/AxixAlignedBoundingBox;create(DDDDDD)Lnet/minecraft/util/math/AxixAlignedBoundingBox;",
-        shift = At.Shift.BEFORE),
-        cancellable = true)
+    @Inject(
+        method = "setPos",
+        at = @At(
+            value = "INVOKE_ASSIGN",
+            target = "Lnet/minecraft/world/phys/AABB;create(DDDDDD)Lnet/minecraft/world/phys/AABB;",
+            shift = At.Shift.BEFORE),
+            cancellable = true)
     public void setNeedsBoxUpdate(int i, int j, int k, CallbackInfo ci) {
-        this.field_250 = AABB.create((float) i, (float) j, (float) k, (float) (i + this.field_234), (float) (j + this.field_235), (float) (k + this.field_236));
+        this.bb = AABB.create((float) i, (float) j, (float) k, (float) (i + this.xs), (float) (j + this.ys), (float) (k + this.zs));
         this.needsBoxUpdate = true;
-        this.method_305();
+        this.setDirty();
         this.isVisibleFromPosition = false;
         ci.cancel();
     }
 
     @Overwrite
-    public void method_296() {
-        if (!this.field_249) {
+    public void rebuild() {
+        if (!this.dirty) {
             return;
         }
         ++Chunk.updates;
         if (this.needsBoxUpdate) {
-            GL11.glNewList(this.field_225 + 2, GL11.GL_COMPILE);
-            ItemRenderer.renderFlat(AABB.newTemp((float) this.field_240, (float) this.field_241, (float) this.field_242, (float) (this.field_240 + this.field_234), (float) (this.field_241 + this.field_235), (float) (this.field_242 + this.field_236)));
+            GL11.glNewList(this.lists + 2, GL11.GL_COMPILE);
+            ItemRenderer.renderFlat(AABB.newTemp((float) this.xRenderOffs, (float) this.yRenderOffs, (float) this.zRenderOffs, (float) (this.xRenderOffs + this.xs), (float) (this.yRenderOffs + this.ys), (float) (this.zRenderOffs + this.zs)));
             GL11.glEndList();
             this.needsBoxUpdate = false;
         }
 
-        this.field_252 = true;
+        this.occlusion_visible = true;
         this.isVisibleFromPosition = false;
-        int startX = this.field_231;
-        int startY = this.field_232;
-        int startZ = this.field_233;
-        int width = this.field_231 + this.field_234;
-        int height = this.field_232 + this.field_235;
-        int depth = this.field_233 + this.field_236;
+        int startX = this.x;
+        int startY = this.y;
+        int startZ = this.z;
+        int width = this.x + this.xs;
+        int height = this.y + this.ys;
+        int depth = this.z + this.zs;
 
         for (int var7 = 0; var7 < 2; ++var7) {
-            this.field_244[var7] = true;
+            this.empty[var7] = true;
         }
 
         LevelChunk.touchedSky = false;
         HashSet<TileEntity> var23 = new HashSet<>();
-        var23.addAll(this.field_224);
-        this.field_224.clear();
+        var23.addAll(this.renderableTileEntities);
+        this.renderableTileEntities.clear();
         byte var8 = 1;
-        Region region = new Region(this.world, startX - var8, startY - var8, startZ - var8, width + var8, height + var8, depth + var8);
+        Region region = new Region(this.level, startX - var8, startY - var8, startZ - var8, width + var8, height + var8, depth + var8);
         TileRenderer blockRenderer = new TileRenderer(region);
         Textures texMan = Minecraft.instance.textures;
 
@@ -162,7 +161,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
                             if (blockId > 0 && texId == ((ExBlock) Tile.tiles[blockId]).getTextureNum()) {
                                 if (!var14) {
                                     var14 = true;
-                                    GL11.glNewList(this.field_225 + renderPass, GL11.GL_COMPILE);
+                                    GL11.glNewList(this.lists + renderPass, GL11.GL_COMPILE);
 
                                     //GL11.glPushMatrix();
                                     //this.method_306();
@@ -184,7 +183,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
                                 if (renderPass == 0 && Tile.isEntityTile[blockId]) {
                                     TileEntity entity = region.getTileEntity(x, y, z);
                                     if (TileEntityRenderDispatcher.instance.hasTileEntityRenderer(entity)) {
-                                        this.field_224.add(entity);
+                                        this.renderableTileEntities.add(entity);
                                     }
                                 }
 
@@ -216,7 +215,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
             }
 
             if (var13) {
-                this.field_244[renderPass] = false;
+                this.empty[renderPass] = false;
             }
 
             if (!var12) {
@@ -225,23 +224,23 @@ public abstract class MixinClass_66 implements ExClass_66 {
         }
 
         HashSet<TileEntity> var24 = new HashSet<>();
-        var24.addAll(this.field_224);
+        var24.addAll(this.renderableTileEntities);
         var24.removeAll(var23);
-        this.field_228.addAll(var24);
+        this.globalRenderableTileEntities.addAll(var24);
 
-        var23.removeAll(this.field_224);
-        this.field_228.removeAll(var23);
-        this.field_223 = LevelChunk.touchedSky;
-        this.field_227 = true;
+        var23.removeAll(this.renderableTileEntities);
+        this.globalRenderableTileEntities.removeAll(var23);
+        this.skyLit = LevelChunk.touchedSky;
+        this.compiled = true;
 
         AC_LightCache.cache.clear();
         AC_CoordBlock.resetPool();
     }
 
-    @Inject(method = "method_300", at = @At("TAIL"))
+    @Inject(method = "cull", at = @At("TAIL"))
     private void fancyOcclusionCulling(Culler var1, CallbackInfo ci) {
-        if (this.field_243 && ((ExGameOptions) Minecraft.instance.options).isOcclusionFancy()) {
-            this.isInFrustrumFully = ((ExCameraView) var1).isBoundingBoxInFrustumFully(this.field_250);
+        if (this.visible && ((ExGameOptions) Minecraft.instance.options).isOcclusionFancy()) {
+            this.isInFrustrumFully = ((ExCameraView) var1).isBoundingBoxInFrustumFully(this.bb);
         } else {
             this.isInFrustrumFully = false;
         }

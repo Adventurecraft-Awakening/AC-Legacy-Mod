@@ -19,36 +19,32 @@ import net.minecraft.world.level.tile.Tile;
 public abstract class MixinOverworldWorldSource implements ExOverworldWorldSource {
 
     @Shadow
-    private Random rand;
+    private Random random;
     @Shadow
-    private PerlinNoise beachNoise;
+    private PerlinNoise perlinNoise2;
     @Shadow
-    private PerlinNoise surfaceDepthNoise;
+    private PerlinNoise perlinNoise3;
     @Shadow
-    private double[] noises;
+    private double[] buffer;
     @Shadow
-    private double[] sandNoises;
+    private double[] sandBuffer;
     @Shadow
-    private double[] gravelNoises;
+    private double[] gravelBuffer;
     @Shadow
-    private double[] surfaceDepthNoises;
-    @Shadow
-    double[] upperInterpolationNoises;
-    @Shadow
-    double[] lowerInterpolationNoises;
+    private double[] depthBuffer;
 
     private WorldGenProperties props;
 
     @Shadow
-    protected abstract double[] calculateNoise(double[] ds, int i, int j, int k, int l, int m, int n);
+    protected abstract double[] getHeights(double[] ds, int i, int j, int k, int l, int m, int n);
 
     @Overwrite
-    public void shapeChunk(int var1, int var2, byte[] var3, Biome[] var4, double[] var5) {
+    public void prepareHeights(int var1, int var2, byte[] var3, Biome[] var4, double[] var5) {
         byte var6 = 4;
         int var7 = var6 + 1;
         byte var8 = 17;
         int var9 = var6 + 1;
-        this.noises = this.calculateNoise(this.noises, var1 * var6, 0, var2 * var6, var7, var8, var9);
+        this.buffer = this.getHeights(this.buffer, var1 * var6, 0, var2 * var6, var7, var8, var9);
 
         for (int var10 = 0; var10 < var6; ++var10) {
             for (int var11 = 0; var11 < var6; ++var11) {
@@ -58,14 +54,14 @@ public abstract class MixinOverworldWorldSource implements ExOverworldWorldSourc
                     int noise2 = (var10 * var9 + var11 + 1) * var8 + var12;
                     int noise3 = ((var10 + 1) * var9 + var11) * var8 + var12;
                     int noise4 = ((var10 + 1) * var9 + var11 + 1) * var8 + var12;
-                    double var15 = this.noises[noise1];
-                    double var23 = (this.noises[noise1 + 1] - var15) * var13;
-                    double var17 = this.noises[noise2];
-                    double var25 = (this.noises[noise2 + 1] - var17) * var13;
-                    double var19 = this.noises[noise3];
-                    double var27 = (this.noises[noise3 + 1] - var19) * var13;
-                    double var21 = this.noises[noise4];
-                    double var29 = (this.noises[noise4 + 1] - var21) * var13;
+                    double var15 = this.buffer[noise1];
+                    double var23 = (this.buffer[noise1 + 1] - var15) * var13;
+                    double var17 = this.buffer[noise2];
+                    double var25 = (this.buffer[noise2 + 1] - var17) * var13;
+                    double var19 = this.buffer[noise3];
+                    double var27 = (this.buffer[noise3 + 1] - var19) * var13;
+                    double var21 = this.buffer[noise4];
+                    double var29 = (this.buffer[noise4 + 1] - var21) * var13;
 
                     for (int var31 = 0; var31 < 8; ++var31) {
                         double var32 = 0.25D;
@@ -119,18 +115,18 @@ public abstract class MixinOverworldWorldSource implements ExOverworldWorldSourc
     }
 
     @Overwrite
-    public void buildSurface(int var1, int var2, byte[] var3, Biome[] var4) {
+    public void buildSurfaces(int var1, int var2, byte[] var3, Biome[] var4) {
         double var5 = 1.0D / 32.0D;
-        this.sandNoises = this.beachNoise.getRegion(this.sandNoises, var1 * 16, var2 * 16, 0.0D, 16, 16, 1, var5, var5, 1.0D);
-        this.gravelNoises = this.beachNoise.getRegion(this.gravelNoises, var1 * 16, 109.0134D, var2 * 16, 16, 1, 16, var5, 1.0D, var5);
-        this.surfaceDepthNoises = this.surfaceDepthNoise.getRegion(this.surfaceDepthNoises, var1 * 16, var2 * 16, 0.0D, 16, 16, 1, var5 * 2.0D, var5 * 2.0D, var5 * 2.0D);
+        this.sandBuffer = this.perlinNoise2.getRegion(this.sandBuffer, var1 * 16, var2 * 16, 0.0D, 16, 16, 1, var5, var5, 1.0D);
+        this.gravelBuffer = this.perlinNoise2.getRegion(this.gravelBuffer, var1 * 16, 109.0134D, var2 * 16, 16, 1, 16, var5, 1.0D, var5);
+        this.depthBuffer = this.perlinNoise3.getRegion(this.depthBuffer, var1 * 16, var2 * 16, 0.0D, 16, 16, 1, var5 * 2.0D, var5 * 2.0D, var5 * 2.0D);
 
         for (int var7 = 0; var7 < 16; ++var7) {
             for (int var8 = 0; var8 < 16; ++var8) {
                 Biome var9 = var4[var7 + var8 * 16];
-                boolean var10 = this.sandNoises[var7 + var8 * 16] + this.rand.nextDouble() * 0.2D > 0.0D;
-                boolean var11 = this.gravelNoises[var7 + var8 * 16] + this.rand.nextDouble() * 0.2D > 3.0D;
-                int var12 = (int) (this.surfaceDepthNoises[var7 + var8 * 16] / 3.0D + 3.0D + this.rand.nextDouble() * 0.25D);
+                boolean var10 = this.sandBuffer[var7 + var8 * 16] + this.random.nextDouble() * 0.2D > 0.0D;
+                boolean var11 = this.gravelBuffer[var7 + var8 * 16] + this.random.nextDouble() * 0.2D > 3.0D;
+                int var12 = (int) (this.depthBuffer[var7 + var8 * 16] / 3.0D + 3.0D + this.random.nextDouble() * 0.25D);
                 int var13 = -1;
                 byte var14 = var9.topMaterial;
                 byte var15 = var9.material;
@@ -179,7 +175,7 @@ public abstract class MixinOverworldWorldSource implements ExOverworldWorldSourc
                             --var13;
                             var3[var17] = var15;
                             if (var13 == 0 && var15 == Tile.SAND.id) {
-                                var13 = this.rand.nextInt(4);
+                                var13 = this.random.nextInt(4);
                                 var15 = (byte) Tile.SANDSTONE.id;
                             }
                         }
@@ -195,21 +191,21 @@ public abstract class MixinOverworldWorldSource implements ExOverworldWorldSourc
     }
 
     @ModifyConstant(
-        method = "calculateNoise",
+        method = "getHeights",
         constant = @Constant(doubleValue = 684.412D, ordinal = 0))
     private double modifyFractureHorizontal(double constant) {
         return constant * this.props.fractureHorizontal;
     }
 
     @ModifyConstant(
-        method = "calculateNoise",
+        method = "getHeights",
         constant = @Constant(doubleValue = 684.412D, ordinal = 1))
     private double modifyFractureVertical(double constant) {
         return constant * this.props.fractureVertical;
     }
 
     @ModifyVariable(
-        method = "calculateNoise",
+        method = "getHeights",
         at = @At(
             value = "CONSTANT",
             args = "doubleValue=1.4",
@@ -220,7 +216,7 @@ public abstract class MixinOverworldWorldSource implements ExOverworldWorldSourc
     }
 
     @ModifyVariable(
-        method = "calculateNoise",
+        method = "getHeights",
         at = @At(
             value = "CONSTANT",
             args = "doubleValue=8.0",
@@ -231,34 +227,34 @@ public abstract class MixinOverworldWorldSource implements ExOverworldWorldSourc
     }
 
     @Redirect(
-        method = "calculateNoise",
+        method = "getHeights",
         at = @At(
             value = "FIELD",
-            target = "Lnet/minecraft/world/source/OverworldWorldSource;upperInterpolationNoises:[D",
+            target = "Lnet/minecraft/world/level/levelgen/RandomLevelSource;ar:[D",
             args = "array=get"))
     private double multiplyVolatility1(double[] array, int index) {
         return array[index] * this.props.volatility1;
     }
 
     @Redirect(
-        method = "calculateNoise",
+        method = "getHeights",
         at = @At(
             value = "FIELD",
-            target = "Lnet/minecraft/world/source/OverworldWorldSource;lowerInterpolationNoises:[D",
+            target = "Lnet/minecraft/world/level/levelgen/RandomLevelSource;br:[D",
             args = "array=get"))
     private double multiplyVolatility2(double[] array, int index) {
         return array[index] * this.props.volatility2;
     }
 
     @ModifyConstant(
-        method = "calculateNoise",
+        method = "getHeights",
         constant = @Constant(doubleValue = 0.0D, ordinal = 7))
     private double modifyVolatilityWeight1(double constant) {
         return this.props.volatilityWeight1;
     }
 
     @ModifyConstant(
-        method = "calculateNoise",
+        method = "getHeights",
         constant = @Constant(doubleValue = 1.0D, ordinal = 7))
     private double modifyVolatilityWeight2(double constant) {
         return this.props.volatilityWeight2;

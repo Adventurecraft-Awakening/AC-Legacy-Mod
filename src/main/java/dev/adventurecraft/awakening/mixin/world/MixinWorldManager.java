@@ -16,16 +16,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(OldChunkStorage.class)
 public abstract class MixinWorldManager {
 
-    @Inject(method = "method_1480", at = @At("TAIL"))
+    @Inject(method = "save(Lnet/minecraft/world/level/chunk/LevelChunk;Lnet/minecraft/world/level/Level;Lnet/minecraft/nbt/CompoundTag;)V", at = @At("TAIL"))
     private static void markAsAC(LevelChunk chunk, Level world, CompoundTag tag, CallbackInfo ci) {
         tag.putInt("acVersion", 0);
     }
 
     @Inject(
-        method = "method_1479",
+        method = "load(Lnet/minecraft/world/level/Level;Lnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/world/level/chunk/LevelChunk;",
         at = @At(
             value = "FIELD",
-            target = "Lnet/minecraft/world/chunk/Chunk;blocks:[B",
+            target = "Lnet/minecraft/world/level/chunk/LevelChunk;blocks:[B",
             shift = At.Shift.AFTER,
             ordinal = 0))
     private static void importBlocksFromAC(

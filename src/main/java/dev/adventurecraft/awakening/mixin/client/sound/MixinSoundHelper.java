@@ -30,24 +30,24 @@ public abstract class MixinSoundHelper implements ExSoundHelper {
     @Shadow
     private SoundRepository sounds;
     @Shadow
-    private SoundRepository streaming;
+    private SoundRepository streamingSounds;
     @Shadow
-    private SoundRepository music;
+    private SoundRepository songs;
     @Shadow
-    private Options gameOptions;
+    private Options options;
     @Shadow
-    private static boolean initialized;
+    private static boolean loaded;
 
     @Unique
     private String currentSoundName;
 
-    @Inject(method = "handleBackgroundMusic", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "playMusicTick", at = @At("HEAD"), cancellable = true)
     private void disableRandomBackgroundMusic(CallbackInfo ci) {
         ci.cancel();
     }
 
     @Inject(
-        method = "setSoundPosition",
+        method = "update",
         at = @At(
             value = "INVOKE",
             target = "Lpaulscode/sound/SoundSystem;setListenerOrientation(FFFFFF)V",
@@ -77,7 +77,7 @@ public abstract class MixinSoundHelper implements ExSoundHelper {
 
     @Override
     public void playMusicFromStreaming(String id, int var2, int var3) {
-        if (!initialized) {
+        if (!loaded) {
             return;
         }
 
@@ -85,7 +85,7 @@ public abstract class MixinSoundHelper implements ExSoundHelper {
             this.stopMusic();
         }
 
-        Sound entry = this.streaming.get(id);
+        Sound entry = this.streamingSounds.get(id);
         if (entry == null) {
             return;
         }
@@ -104,7 +104,7 @@ public abstract class MixinSoundHelper implements ExSoundHelper {
             soundSystem.backgroundMusic("BgMusic", entry.url, entry.name, true);
         }
 
-        soundSystem.setVolume("BgMusic", this.gameOptions.music);
+        soundSystem.setVolume("BgMusic", this.options.music);
         soundSystem.play("BgMusic");
         this.currentSoundName = entry.name;
         if (Minecraft.instance.level != null) {
@@ -114,7 +114,7 @@ public abstract class MixinSoundHelper implements ExSoundHelper {
 
     @Override
     public void stopMusic() {
-        if (!initialized) {
+        if (!loaded) {
             return;
         }
 
@@ -133,16 +133,16 @@ public abstract class MixinSoundHelper implements ExSoundHelper {
 
     @Override
     public void addStreaming(String id, URL url) {
-        ((ExSoundMap) this.streaming).addSound(id, url);
+        ((ExSoundMap) this.streamingSounds).addSound(id, url);
     }
 
     @Override
     public void addMusic(String id, URL url) {
-        ((ExSoundMap) this.music).addSound(id, url);
+        ((ExSoundMap) this.songs).addSound(id, url);
     }
 
     @ModifyArgs(
-        method = "playSound*",
+        method = "play*", // TODO: check what this actually applies to
         at = @At(
             value = "INVOKE",
             target = "Lpaulscode/sound/SoundSystem;newSource(ZLjava/lang/String;Ljava/net/URL;Ljava/lang/String;ZFFFIF)V"))

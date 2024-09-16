@@ -27,15 +27,15 @@ public abstract class MixinSlimeEntity extends MixinLivingEntity implements ExSl
     }
 
     @Inject(
-        method = "tickHandSwing",
+        method = "serverAiStep",
         at = @At(
             value = "FIELD",
-            target = "Lnet/minecraft/entity/monster/SlimeEntity;forwardVelocity:F",
+            target = "Lnet/minecraft/world/entity/monster/Slime;zza:F",
             shift = At.Shift.AFTER))
     private void reduceVelocity(CallbackInfo ci) {
-        float var2 = (float) Math.sqrt(this.horizontalVelocity * this.horizontalVelocity + this.forwardVelocity * this.forwardVelocity);
-        this.horizontalVelocity /= var2;
-        this.forwardVelocity /= var2;
+        float var2 = (float) Math.sqrt(this.xxa * this.xxa + this.zza * this.zza);
+        this.xxa /= var2;
+        this.zza /= var2;
     }
 
     @Inject(method = "remove", at = @At("HEAD"), cancellable = true)
@@ -45,7 +45,7 @@ public abstract class MixinSlimeEntity extends MixinLivingEntity implements ExSl
     }
 
     @Overwrite
-    public void onPlayerCollision(Player var1) {
+    public void playerTouch(Player var1) {
         int size = this.getSize();
         int strength = size;
         if (this.attackStrength != -1) {
@@ -53,15 +53,15 @@ public abstract class MixinSlimeEntity extends MixinLivingEntity implements ExSl
         }
 
         if ((size > 1 || this.attackStrength != -1) &&
-            this.method_928(var1) &&
+            this.canSee(var1) &&
             this.distanceTo(var1) < 0.6D * size &&
             var1.hurt((Entity) (Object) this, strength)) {
 
-            this.world.playSound(
+            this.level.playSound(
                 (Entity) (Object) this,
                 "mob.slimeattack",
                 1.0F,
-                (this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F + 1.0F);
+                (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F);
         }
     }
 

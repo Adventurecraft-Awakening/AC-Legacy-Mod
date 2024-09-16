@@ -22,7 +22,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock, AC_IBlockColor, AC_TexturedBlock {
 
     @Override
-    public int getTextureForSide(LevelSource view, int x, int y, int z, int side) {
+    public int getTexture(LevelSource view, int x, int y, int z, int side) {
         return (int) getTextureForSideEx(view, x, y, z, side);
     }
 
@@ -38,13 +38,13 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
     }
 
     @Override
-    public int getBaseColor(int meta) {
+    public int getColor(int meta) {
         return ExGrassColor.getBaseColor(meta);
     }
 
     private int getTopTexture(LevelSource view, int x, int y, int z) {
         int meta = view.getData(x, y, z);
-        return getTextureForSide(0, meta);
+        return getTexture(0, meta);
     }
 
     private long getSideTexture(LevelSource view, int x, int y, int z, int side) {
@@ -95,9 +95,9 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
         return (long) getTopTexture(view, x, y, z) | (1L << 32);
     }
 
-    @Redirect(method = "onScheduledTick", at = @At(
+    @Redirect(method = "tick", at = @At(
         value = "INVOKE",
-        target = "Lnet/minecraft/world/World;setBlock(IIII)Z"))
+        target = "Lnet/minecraft/world/level/Level;setTile(IIII)Z"))
     private boolean setChunkPopulatingOnSetBlock(Level instance, int j, int k, int l, int i) {
         ACMod.chunkIsNotPopulating = false;
         boolean result = instance.setTile(j, k, l, i);
@@ -106,13 +106,13 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
     }
 
     @Override
-    public int getTextureForSide(int var1, int meta) {
+    public int getTexture(int var1, int meta) {
         return meta == 0 ? 0 : 232 + meta - 1;
     }
 
     @Override
-    public int getRenderType() {
-        return ((ExGameOptions) Minecraft.instance.options).isGrass3d() ? 30 : super.getRenderType();
+    public int getRenderShape() {
+        return ((ExGameOptions) Minecraft.instance.options).isGrass3d() ? 30 : super.getRenderShape();
     }
 
     @Override

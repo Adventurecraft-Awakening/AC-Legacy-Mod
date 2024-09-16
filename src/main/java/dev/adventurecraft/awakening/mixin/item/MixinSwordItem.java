@@ -12,10 +12,10 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public abstract class MixinSwordItem extends MixinItem implements AC_ILeftClickItem {
 
     @Redirect(
-        method = {"postHit", "postMine"},
+        method = {"hurtEnemy", "mineBlock"},
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/item/ItemStack;applyDamage(ILnet/minecraft/entity/Entity;)V"))
+            target = "Lnet/minecraft/world/ItemInstance;hurtAndBreak(ILnet/minecraft/world/entity/Entity;)V"))
     private void disableItemDamage(ItemInstance instance, int arg, Entity entity) {
     }
 

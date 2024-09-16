@@ -22,11 +22,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinVideoSettingsScreen extends Screen implements OptionTooltipProvider {
 
     @Shadow
-    private Screen parent;
+    private Screen lastScreen;
     @Shadow
     protected String title;
     @Shadow
-    private Options options;
+    private Options config;
     @Shadow
     private static Option[] OPTIONS;
 
@@ -64,12 +64,12 @@ public abstract class MixinVideoSettingsScreen extends Screen implements OptionT
             int y = this.height / 6 + 24 * (index / 2);
 
             int id = option.getId();
-            String text = this.options.getMessage(option);
+            String text = this.config.getMessage(option);
 
             if (!option.isProgress()) {
                 this.buttons.add(new OptionButton(id, x, y, option, text));
             } else {
-                this.buttons.add(new SliderButton(id, x, y, option, text, this.options.getProgressValue(option)));
+                this.buttons.add(new SliderButton(id, x, y, option, text, this.config.getProgressValue(option)));
             }
 
             ++index;
@@ -93,30 +93,30 @@ public abstract class MixinVideoSettingsScreen extends Screen implements OptionT
         }
 
         if (button.id < 100 && button instanceof OptionButton) {
-            this.options.toggle(((OptionButton) button).getOption(), 1);
-            button.message = this.options.getMessage(Option.getItem(button.id));
+            this.config.toggle(((OptionButton) button).getOption(), 1);
+            button.message = this.config.getMessage(Option.getItem(button.id));
         }
 
         if (button.id == 200) {
             this.minecraft.options.save();
-            this.minecraft.setScreen(this.parent);
+            this.minecraft.setScreen(this.lastScreen);
         }
 
         if (button.id == 100) {
             this.minecraft.options.save();
-            var var2 = new GuiTextureSettingsOF(this, this.options);
+            var var2 = new GuiTextureSettingsOF(this, this.config);
             this.minecraft.setScreen(var2);
         }
 
         if (button.id == 101) {
             this.minecraft.options.save();
-            var var5 = new GuiDetailSettingsOF(this, this.options);
+            var var5 = new GuiDetailSettingsOF(this, this.config);
             this.minecraft.setScreen(var5);
         }
 
         if (button.id == 102) {
             this.minecraft.options.save();
-            var var7 = new GuiOtherSettingsOF(this, this.options);
+            var var7 = new GuiOtherSettingsOF(this, this.config);
             this.minecraft.setScreen(var7);
         }
 

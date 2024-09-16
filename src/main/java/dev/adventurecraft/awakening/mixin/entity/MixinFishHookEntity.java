@@ -13,12 +13,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinFishHookEntity {
 
     @Shadow
-    public Player user;
+    public Player owner;
 
     @Inject(method = "tick", at = @At("HEAD"))
     private void assignHook(CallbackInfo ci) {
-        if (this.user == null) {
-            this.user = Minecraft.instance.player;
+        if (this.owner == null) {
+            this.owner = Minecraft.instance.player;
             Minecraft.instance.player.fishing = (FishingHook) (Object) this;
         }
     }

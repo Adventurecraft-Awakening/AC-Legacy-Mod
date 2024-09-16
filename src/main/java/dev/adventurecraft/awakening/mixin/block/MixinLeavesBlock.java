@@ -13,7 +13,7 @@ import net.minecraft.world.level.tile.LeafTile;
 @Mixin(LeafTile.class)
 public abstract class MixinLeavesBlock {
 
-    @Inject(method = "onScheduledTick", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
     private void disableDecay(Level world, int x, int y, int z, Random rand, CallbackInfo ci) {
         if (!((ExWorldProperties) world.levelData).getLeavesDecay()) {
             ci.cancel();

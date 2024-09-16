@@ -21,20 +21,20 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class MixinDimension {
 
     @Shadow
-    public Level world;
+    public Level level;
 
-    @Inject(method = "createWorldSource", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "createRandomLevelSource", at = @At("HEAD"), cancellable = true)
     private void injectHeightMapGenerator(CallbackInfoReturnable<ChunkSource> cir) {
-        if (((ExWorldProperties) this.world.levelData).getWorldGenProps().useImages) {
-            var generator = new AC_ChunkProviderHeightMapGenerate(this.world, this.world.getSeed());
+        if (((ExWorldProperties) this.level.levelData).getWorldGenProps().useImages) {
+            var generator = new AC_ChunkProviderHeightMapGenerate(this.level, this.level.getSeed());
             cir.setReturnValue(generator);
         }
     }
 
-    @Inject(method = "createWorldSource", at = @At(value = "RETURN"))
+    @Inject(method = "createRandomLevelSource", at = @At(value = "RETURN"))
     public void createWorldSource(CallbackInfoReturnable<ChunkSource> cir) {
         var propCopy = new WorldGenProperties();
-        WorldGenProperties props = ((ExWorldProperties) this.world.levelData).getWorldGenProps();
+        WorldGenProperties props = ((ExWorldProperties) this.level.levelData).getWorldGenProps();
         props.copyTo(propCopy);
 
         var source = (RandomLevelSource) cir.getReturnValue();
@@ -42,8 +42,8 @@ public abstract class MixinDimension {
     }
 
     @Overwrite
-    public boolean canSpawnOn(int var1, int var2) {
-        int id = this.world.getTopTile(var1, var2);
+    public boolean isValidSpawn(int var1, int var2) {
+        int id = this.level.getTopTile(var1, var2);
         return id != 0 && Tile.tiles[id] != null && !(Tile.tiles[id] instanceof LiquidTile);
     }
 }

@@ -16,27 +16,27 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinEntityRegistry implements ExEntityRegistry {
 
     @Shadow
-    private static void register(Class<?> type, String name, int id) {
+    private static void setId(Class<?> type, String name, int id) {
         throw new AssertionError();
     }
 
     @Inject(method = "<clinit>", at = @At("TAIL"))
     private static void init(CallbackInfo ci) {
-        register(ThrownEgg.class, "Egg", 12);
-        register(Fireball.class, "Fireball", 13);
-        register(FishingHook.class, "FishingRod", 14);
-        register(AC_EntitySkeletonSword.class, "SkeletonSword", 58);
-        register(AC_EntitySkeletonBoss.class, "SkeletonBoss", 59);
-        register(AC_EntityBat.class, "Bat", 60);
-        register(AC_EntityRat.class, "Rat", 61);
-        register(AC_EntityNPC.class, "NPC", 62);
-        register(AC_EntitySkeletonRifle.class, "SkeletonRifle", 63);
-        register(AC_EntitySkeletonShotgun.class, "SkeletonShotgun", 64);
-        register(AC_EntityZombiePistol.class, "ZombiePistol", 65);
-        register(AC_EntityBomb.class, "Bomb", 1000);
-        register(AC_EntityBoomerang.class, "Boomerang", 1001);
-        register(AC_EntityArrowBomb.class, "Bomb Arrow", 1002);
-        register(AC_EntityHookshot.class, "Hookshot", 1003);
-        register(AC_EntityLivingScript.class, "Script", 1004);
+        setId(ThrownEgg.class, "Egg", 12);
+        setId(Fireball.class, "Fireball", 13);
+        setId(FishingHook.class, "FishingRod", 14);
+        setId(AC_EntitySkeletonSword.class, "SkeletonSword", 58);
+        setId(AC_EntitySkeletonBoss.class, "SkeletonBoss", 59);
+        setId(AC_EntityBat.class, "Bat", 60);
+        setId(AC_EntityRat.class, "Rat", 61);
+        setId(AC_EntityNPC.class, "NPC", 62);
+        setId(AC_EntitySkeletonRifle.class, "SkeletonRifle", 63);
+        setId(AC_EntitySkeletonShotgun.class, "SkeletonShotgun", 64);
+        setId(AC_EntityZombiePistol.class, "ZombiePistol", 65);
+        setId(AC_EntityBomb.class, "Bomb", 1000);
+        setId(AC_EntityBoomerang.class, "Boomerang", 1001);
+        setId(AC_EntityArrowBomb.class, "Bomb Arrow", 1002);
+        setId(AC_EntityHookshot.class, "Hookshot", 1003);
+        setId(AC_EntityLivingScript.class, "Script", 1004);
     }
 }

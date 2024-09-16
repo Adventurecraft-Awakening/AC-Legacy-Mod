@@ -17,10 +17,10 @@ public abstract class MixinItemStack implements ExItemStack {
     private boolean justReloaded;
 
     @Shadow
-    public int itemId;
+    public int id;
 
     @Shadow
-    private int meta;
+    private int auxValue;
 
     @Shadow
     public int count;
@@ -29,21 +29,21 @@ public abstract class MixinItemStack implements ExItemStack {
     public abstract Item getItem();
 
     @Overwrite
-    public CompoundTag writeNBT(CompoundTag tag) {
-        tag.putShort("id", (short) this.itemId);
+    public CompoundTag save(CompoundTag tag) {
+        tag.putShort("id", (short) this.id);
         tag.putInt("Count", this.count);
-        tag.putShort("Damage", (short) this.meta);
+        tag.putShort("Damage", (short) this.auxValue);
         return tag;
     }
 
     @Overwrite
-    public void readNBT(CompoundTag tag) {
-        this.itemId = tag.getShort("id");
+    public void load(CompoundTag tag) {
+        this.id = tag.getShort("id");
         this.count = tag.getInt("Count");
-        this.meta = tag.getShort("Damage");
+        this.auxValue = tag.getShort("Damage");
 
-        if (this.itemId == AC_Items.boomerang.id) {
-            this.meta = 0;
+        if (this.id == AC_Items.boomerang.id) {
+            this.auxValue = 0;
         }
     }
 

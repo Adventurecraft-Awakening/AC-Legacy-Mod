@@ -6,7 +6,7 @@ import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.block.*;
+//import net.minecraft.block.*;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
@@ -29,15 +29,15 @@ public abstract class MixinBlock implements ExBlock {
 
     @Shadow
     @Final
-    public static SoundType PISTON_SOUNDS;
+    public static SoundType SOUND_STONE;
 
     @Shadow
     @Final
-    public static Tile[] BY_ID;
+    public static Tile[] tiles;
 
     @Shadow
     @Final
-    public static int[] EMITTANCE;
+    public static int[] lightEmission;
 
     @Shadow
     @Final
@@ -59,7 +59,7 @@ public abstract class MixinBlock implements ExBlock {
 
     @Shadow
     @Final
-    public static Tile STILL_WATER;
+    public static Tile WATER;
 
     @Shadow
     @Final
@@ -67,7 +67,7 @@ public abstract class MixinBlock implements ExBlock {
 
     @Shadow
     @Final
-    public static Tile STILL_LAVA;
+    public static Tile LAVA;
 
     @Shadow
     @Final
@@ -75,67 +75,67 @@ public abstract class MixinBlock implements ExBlock {
 
     @Shadow
     @Final
-    public static TallGrassTile TALLGRASS;
+    public static TallGrassTile TALL_GRASS;
 
     @Shadow
     @Final
     public int id;
 
     @Shadow
-    public double minX;
+    public double xx0;
 
     @Shadow
-    public double minY;
+    public double yy0;
 
     @Shadow
-    public double minZ;
+    public double zz0;
 
     @Shadow
-    public double maxX;
+    public double xx1;
 
     @Shadow
-    public double maxY;
+    public double yy1;
 
     @Shadow
-    public double maxZ;
+    public double zz1;
 
     @Shadow
-    public abstract int getTextureForSide(int j, int l);
+    public abstract int getTexture(int j, int l);
 
     @Shadow
-    public abstract int getTextureForSide(LevelSource arg, int i, int j, int k, int l);
+    public abstract int getTexture(LevelSource arg, int i, int j, int k, int l);
     
     @Shadow
-    public int getBaseColor(int meta) {
+    public int getColor(int meta) {
         throw new AssertionError();
     }
 
     @Shadow
-    public int getRenderType() {
+    public int getRenderShape() {
         throw new AssertionError();
     }
 
     @Inject(method = "<clinit>", at = @At(
         value = "FIELD",
-        target = "Lnet/minecraft/item/Item;byId:[Lnet/minecraft/item/Item;",
+        target = "Lnet/minecraft/world/item/Item;items:[Lnet/minecraft/world/item/Item;",
         shift = At.Shift.BEFORE,
         ordinal = 0))
     private static void changeBlocksAndItems(CallbackInfo ci) {
-        BY_ID[1] = null;
-        BY_ID[4] = null;
+        tiles[1] = null;
+        tiles[4] = null;
 
-        STONE = (new StoneTile(1, 215)).setDestroyTime(1.5F).setExplodeable(10.0F).setSoundType(PISTON_SOUNDS).setDescriptionId("stone");
+        STONE = (new StoneTile(1, 215)).setDestroyTime(1.5F).setExplodeable(10.0F).setSoundType(SOUND_STONE).setDescriptionId("stone");
         ((ExBlock) GRASS).setSubTypes(5);
-        COBBLESTONE = (new AC_BlockColor(4, 214, Material.STONE)).setDestroyTime(2.0F).setExplodeable(10.0F).setSoundType(PISTON_SOUNDS).setDescriptionId("stonebrick");
+        COBBLESTONE = (new AC_BlockColor(4, 214, Material.STONE)).setDestroyTime(2.0F).setExplodeable(10.0F).setSoundType(SOUND_STONE).setDescriptionId("stonebrick");
         FLOWING_WATER.setDestroyTime(0.5F);
-        STILL_WATER.setDestroyTime(0.5F);
+        WATER.setDestroyTime(0.5F);
         FLOWING_LAVA.setDestroyTime(0.5F);
-        STILL_LAVA.setDestroyTime(0.5F);
+        LAVA.setDestroyTime(0.5F);
         ((ExBlock) SAND).setSubTypes(4);
 
         Item.items[GRASS.id] = (new AC_ItemSubtypes(GRASS.id - 256)).setDescriptionId("grass");
         Item.items[SAND.id] = (new AC_ItemSubtypes(SAND.id - 256)).setDescriptionId("sand");
-        Item.items[TALLGRASS.id] = (new AC_ItemSubtypes(TALLGRASS.id - 256)).setDescriptionId("tallgrass");
+        Item.items[TALL_GRASS.id] = (new AC_ItemSubtypes(TALL_GRASS.id - 256)).setDescriptionId("tallgrass");
     }
 
     @Environment(value = EnvType.CLIENT)
@@ -145,31 +145,31 @@ public abstract class MixinBlock implements ExBlock {
     }
 
     @Overwrite
-    public void onBlockRemoved(Level var1, int var2, int var3, int var4) {
+    public void onRemove(Level var1, int var2, int var3, int var4) {
         ((ExWorld) var1).getTriggerManager().removeArea(var2, var3, var4);
     }
 
     @Overwrite
-    public void beforeDestroyedByExplosion(Level var1, int var2, int var3, int var4, int var5, float var6) {
+    public void dropResources(Level var1, int var2, int var3, int var4, int var5, float var6) {
     }
 
     @Overwrite
-    public void drop(Level var1, int var2, int var3, int var4, ItemInstance var5) {
+    public void popResource(Level var1, int var2, int var3, int var4, ItemInstance var5) {
     }
 
     @Override
     public int getBlockLightValue(LevelSource view, int x, int y, int z) {
-        return EMITTANCE[this.id];
+        return lightEmission[this.id];
     }
 
     @Override
     public void setBoundingBox(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
-        this.minX = minX;
-        this.minY = minY;
-        this.minZ = minZ;
-        this.maxX = maxX;
-        this.maxY = maxY;
-        this.maxZ = maxZ;
+        this.xx0 = minX;
+        this.yy0 = minY;
+        this.zz0 = minZ;
+        this.xx1 = maxX;
+        this.yy1 = maxY;
+        this.zz1 = maxZ;
     }
 
     @Override
@@ -191,6 +191,6 @@ public abstract class MixinBlock implements ExBlock {
 
     @Override
     public long getTextureForSideEx(LevelSource view, int x, int y, int z, int side) {
-        return this.getTextureForSide(view, x, y, z, side);
+        return this.getTexture(view, x, y, z, side);
     }
 }

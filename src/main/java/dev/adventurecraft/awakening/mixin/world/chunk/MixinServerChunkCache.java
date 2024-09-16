@@ -20,14 +20,14 @@ import net.minecraft.world.level.levelgen.ServerChunkCache;
 public abstract class MixinServerChunkCache {
 
     @Shadow
-    private Set<Integer> dropSet;
+    private Set<Integer> toDrop;
 
     @Shadow
-    private Map<Integer, LevelChunk> serverChunkCache;
+    private Map<Integer, LevelChunk> cache;
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(Level var1, ChunkStorage var2, ChunkSource var3, CallbackInfo ci) {
-        this.dropSet = new IntOpenHashSet();
-        this.serverChunkCache = new Int2ObjectOpenHashMap<>();
+        this.toDrop = new IntOpenHashSet();
+        this.cache = new Int2ObjectOpenHashMap<>();
     }
 }

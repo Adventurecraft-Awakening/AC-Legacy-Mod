@@ -16,14 +16,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinChatScreen {
 
     @Shadow
-    protected String getText;
+    protected String message;
 
     @Shadow
-    private int ticksRan;
+    private int frame;
 
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
     private void cancelFirstTick(CallbackInfo ci) {
-        if (this.ticksRan < 1) {
+        if (this.frame < 1) {
             ci.cancel();
         }
     }
@@ -36,12 +36,12 @@ public abstract class MixinChatScreen {
             Keyboard.isKeyDown(Keyboard.KEY_RMETA)) {
 
             if (key == Keyboard.KEY_V) {
-                this.getText = ClipboardHandler.getClipboard();
+                this.message = ClipboardHandler.getClipboard();
                 ci.cancel();
             }
 
             if (key == Keyboard.KEY_C) {
-                ClipboardHandler.setClipboard(this.getText);
+                ClipboardHandler.setClipboard(this.message);
                 ci.cancel();
             }
         }
@@ -51,7 +51,7 @@ public abstract class MixinChatScreen {
         method = "keyPressed",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/Minecraft;openScreen(Lnet/minecraft/client/gui/screen/Screen;)V",
+            target = "Lnet/minecraft/client/Minecraft;setScreen(Lnet/minecraft/client/gui/screens/Screen;)V",
             ordinal = 1))
     private boolean closeIfChat(Minecraft instance, Screen screen) {
         return instance.screen instanceof ChatScreen;

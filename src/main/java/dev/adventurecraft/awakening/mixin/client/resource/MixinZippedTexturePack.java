@@ -11,7 +11,7 @@ import net.minecraft.client.skins.TexturePack;
 @Mixin(FileTexturePack.class)
 public abstract class MixinZippedTexturePack extends TexturePack {
 
-    @Redirect(method = "getResourceAsStream", at = @At(
+    @Redirect(method = "getResource", at = @At(
         value = "INVOKE",
         target = "Ljava/lang/Class;getResourceAsStream(Ljava/lang/String;)Ljava/io/InputStream;",
         remap = false))

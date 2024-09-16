@@ -20,12 +20,12 @@ public abstract class MixinEntityPath implements ExEntityPath {
     private Node clearSize;
 
     @Shadow
-    public int field_2690;
+    public int length;
 
     @Shadow
-    public Node[] field_2691;
+    public Node[] nodes;
 
-    @Inject(method = "method_2040", at = @At("TAIL"))
+    @Inject(method = "next", at = @At("TAIL"))
     private void simplify(CallbackInfo ci) {
         if (this.navigator != null) {
             ((ExPathNodeNavigator) this.navigator).simplifyPath((Path) (Object) this, this.clearSize);
@@ -34,10 +34,10 @@ public abstract class MixinEntityPath implements ExEntityPath {
 
     @Override
     public boolean needNewPath(Entity var1) {
-        if (this.field_2690 > 0) {
-            double var2 = var1.x - (double) this.field_2691[this.field_2690 - 1].x - 0.5D;
-            double var4 = var1.y - (double) var1.heightOffset - (double) this.field_2691[this.field_2690 - 1].y;
-            double var6 = var1.z - (double) this.field_2691[this.field_2690 - 1].z - 0.5D;
+        if (this.length > 0) {
+            double var2 = var1.x - (double) this.nodes[this.length - 1].x - 0.5D;
+            double var4 = var1.y - (double) var1.heightOffset - (double) this.nodes[this.length - 1].y;
+            double var6 = var1.z - (double) this.nodes[this.length - 1].z - 0.5D;
             return var2 * var2 + var4 * var4 + var6 * var6 > 6.0D;
         } else {
             return false;

@@ -1,6 +1,5 @@
 package dev.adventurecraft.awakening.mixin.world;
 
-import ;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.ACMainThread;
@@ -30,7 +29,7 @@ import dev.adventurecraft.awakening.script.ScriptModel;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.render.*;
+//import net.minecraft.client.render.*;
 import net.minecraft.client.renderer.ptexture.FireTexture;
 import net.minecraft.client.renderer.ptexture.LavaSideTexture;
 import net.minecraft.client.renderer.ptexture.LavaTexture;
@@ -40,7 +39,6 @@ import net.minecraft.client.renderer.ptexture.WaterTexture;
 import net.minecraft.locale.I18n;
 import net.minecraft.util.Mth;
 import net.minecraft.util.ProgressListener;
-import net.minecraft.world.*;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.global.LightningBolt;
 import net.minecraft.world.entity.player.Player;
@@ -78,22 +76,21 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.*;
-import java.util.Map.Entry;
 
 @Mixin(Level.class)
 public abstract class MixinWorld implements ExWorld, LevelSource {
 
     @Shadow
-    static int field_179;
+    static int maxLoop;
 
     @Shadow
-    public LevelData properties;
+    public LevelData levelData;
 
     @Shadow
-    public DimensionDataStorage mapTracker;
+    public DimensionDataStorage dataStorage;
 
     @Shadow
-    public boolean field_221;
+    public boolean isFindingSpawn;
 
     @Shadow
     @Final
@@ -101,101 +98,101 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     public Dimension dimension;
 
     @Shadow
-    public Random rand;
+    public Random random;
 
     @Shadow
-    public ChunkSource worldSource;
+    public ChunkSource chunkSource;
 
     @Shadow
     @Final
     @Mutable
-    protected LevelIO dimensionData;
+    protected LevelIO levelIo;
 
     @Shadow
-    public int field_202;
+    public int skyDarken;
 
     @Shadow
-    private ArrayList<AABB> field_189;
+    private ArrayList<AABB> boxes;
 
     @Shadow
-    private Set<TickNextTickData> field_184;
+    private Set<TickNextTickData> tickNextTickSet;
 
     @Shadow
-    protected List<LevelListener> worldListeners;
+    protected List<LevelListener> listeners;
 
     @Shadow
-    public int autoSaveInterval;
+    public int saveInterval;
 
     @Shadow
-    protected float prevRainGradient;
+    protected float oRainLevel;
 
     @Shadow
-    protected float rainGradient;
+    protected float rainLevel;
 
     @Shadow
-    protected float prevThunderGradient;
+    protected float oThunderLevel;
 
     @Shadow
-    protected float thunderGradient;
+    protected float thunderLevel;
 
     @Shadow
     public List<Player> players;
 
     @Shadow
-    public boolean isClient;
+    public boolean isClientSide;
 
     @Shadow
-    private int field_195;
+    private int delayUntilNextMoodSound;
 
     @Shadow
-    protected int field_203;
+    protected int randValue;
 
     @Shadow
-    protected int field_209;
+    protected int lightingCooldown;
 
     @Shadow
-    public boolean field_215;
+    public boolean isNew;
 
     @Shadow
-    private TreeSet<TickNextTickData> treeSet;
+    private TreeSet<TickNextTickData> tickNextTickList;
 
     @Shadow
     public List<Entity> entities;
 
     @Shadow
-    private List<LightUpdate> lightingUpdates;
+    private List<LightUpdate> lightUpdates;
 
     @Shadow
     @Final
     @Mutable
-    protected int unusedIncrement;
+    protected int addend;
 
     @Shadow
-    private List unloadedEntities;
+    private List entitiesToRemove;
 
     @Shadow
-    public List blockEntities;
+    public List tileEntityList;
 
     @Shadow
-    private List field_185;
+    private List pendingTileEntities;
 
     @Shadow
-    public List weatherEntities;
+    public List globalEntities;
 
     @Shadow
-    private long field_186;
+    private long cloudColor;
 
     @Shadow
-    private List field_196;
+    private List es;
 
     @Shadow
-    private boolean field_193;
+    private boolean spawnFriendlies;
 
     @Shadow
-    private boolean field_192;
+    private boolean spawnEnemies;
 
     @Shadow
-    private long time;
+    private long sessionId;
 
     public File levelDir;
     private int[] coordOrder;
@@ -220,49 +217,49 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     public abstract int getTile(int i, int j, int k);
 
     @Shadow
-    public abstract boolean isAir(int i, int j, int k);
-
-    @Shadow
-    public abstract LevelChunk getChunkFromCache(int i, int j);
-
-    @Shadow
-    public abstract int placeBlock(int i, int j, int k);
-
-    @Shadow
-    public abstract boolean isBlockLoaded(int i, int j, int k);
-
-    @Shadow
-    public abstract boolean isAboveGround(int i, int j, int k);
-
-    @Shadow
-    public abstract int method_164(LightLayer arg, int i, int j, int k);
-
-    @Shadow
-    public abstract void method_166(LightLayer arg, int i, int j, int k, int l, int m, int n);
+    public abstract boolean isEmptyTile(int i, int j, int k);
 
     @Shadow
     public abstract LevelChunk getChunk(int i, int j);
 
     @Shadow
-    public abstract boolean method_155(int i, int j, int k, int l, int m, int n);
+    public abstract int getLightLevel(int i, int j, int k);
 
     @Shadow
-    protected abstract boolean isChunkLoaded(int i, int j);
+    public abstract boolean hasChunkAt(int i, int j, int k);
 
     @Shadow
-    public abstract void method_241(Entity arg);
+    public abstract boolean isSkyLit(int i, int j, int k);
 
     @Shadow
-    public abstract void removeBlockEntity(int i, int j, int k);
+    public abstract int getBrightness(LightLayer arg, int i, int j, int k);
 
     @Shadow
-    public abstract int method_151(float f);
+    public abstract void updateLight(LightLayer arg, int i, int j, int k, int l, int m, int n);
 
     @Shadow
-    public abstract void saveLevel(boolean bl, ProgressListener arg);
+    public abstract LevelChunk getChunkAt(int i, int j);
 
     @Shadow
-    public abstract long getWorldTime();
+    public abstract boolean hasChunksAt(int i, int j, int k, int l, int m, int n);
+
+    @Shadow
+    protected abstract boolean hasChunk(int i, int j);
+
+    @Shadow
+    public abstract void tick(Entity arg);
+
+    @Shadow
+    public abstract void removeTileEntity(int i, int j, int k);
+
+    @Shadow
+    public abstract int getSkyDarken(float f);
+
+    @Shadow
+    public abstract void save(boolean bl, ProgressListener arg);
+
+    @Shadow
+    public abstract long getTime();
 
     @Shadow
     public abstract boolean isRaining();
@@ -271,24 +268,24 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     public abstract boolean isThundering();
 
     @Shadow
-    public abstract boolean canRainAt(int i, int j, int k);
+    public abstract boolean isRainingAt(int i, int j, int k);
 
     @Shadow
-    public abstract boolean summonWeatherEntity(Entity arg);
+    public abstract boolean addGlobalEntity(Entity arg);
 
     @Shadow
-    public abstract boolean setBlock(int i, int j, int k, int l);
+    public abstract boolean setTile(int i, int j, int k, int l);
 
     @Shadow
-    public abstract void method_237();
+    public abstract void updateSkyBrightness();
 
     @Shadow
-    protected abstract void method_212();
+    protected abstract void setInitialSpawn();
 
     @Override
     public void initWorld(
         String mapName, LevelIO dimData, String saveName, long seed, Dimension dimension, ProgressListener progressListener) {
-        this.unusedIncrement = 1013904223;
+        this.addend = 1013904223;
         this.fogColorOverridden = false;
         this.fogDensityOverridden = false;
         this.firstTick = true;
@@ -306,61 +303,61 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         ((ExTranslationStorage) I18n.getInstance()).loadMapTranslation(levelDir);
         this.mapHandler = new McRegionLevelStorageSource(mapsDir, mapName, false);
         this.levelDir = levelDir;
-        this.lightingUpdates = new ArrayList<>();
+        this.lightUpdates = new ArrayList<>();
         this.entities = new ArrayList<>();
-        this.unloadedEntities = new ArrayList<>();
-        this.treeSet = new TreeSet<>();
-        this.field_184 = new HashSet<>();
-        this.blockEntities = new ArrayList<>();
-        this.field_185 = new ArrayList<>();
+        this.entitiesToRemove = new ArrayList<>();
+        this.tickNextTickList = new TreeSet<>();
+        this.tickNextTickSet = new HashSet<>();
+        this.tileEntityList = new ArrayList<>();
+        this.pendingTileEntities = new ArrayList<>();
         this.players = new ArrayList<>();
-        this.weatherEntities = new ArrayList<>();
-        this.field_186 = 16777215L;
-        this.field_203 = (new Random()).nextInt();
-        this.time = System.currentTimeMillis();
-        this.autoSaveInterval = 40;
-        this.rand = new Random();
-        this.worldListeners = new ArrayList<>();
-        this.field_189 = new ArrayList<>();
-        this.field_192 = true;
-        this.field_193 = true;
-        this.field_195 = this.rand.nextInt(12000);
-        this.field_196 = new ArrayList<>();
-        this.dimensionData = dimData;
+        this.globalEntities = new ArrayList<>();
+        this.cloudColor = 16777215L;
+        this.randValue = (new Random()).nextInt();
+        this.sessionId = System.currentTimeMillis();
+        this.saveInterval = 40;
+        this.random = new Random();
+        this.listeners = new ArrayList<>();
+        this.boxes = new ArrayList<>();
+        this.spawnEnemies = true;
+        this.spawnFriendlies = true;
+        this.delayUntilNextMoodSound = this.random.nextInt(12000);
+        this.es = new ArrayList<>();
+        this.levelIo = dimData;
         if (dimData != null) {
-            this.mapTracker = new DimensionDataStorage(dimData);
-            this.properties = dimData.getLevelData();
+            this.dataStorage = new DimensionDataStorage(dimData);
+            this.levelData = dimData.getLevelData();
         } else {
-            this.mapTracker = new DimensionDataStorage(this.mapHandler);
+            this.dataStorage = new DimensionDataStorage(this.mapHandler);
         }
 
-        if (this.properties == null) {
+        if (this.levelData == null) {
             this.newSave = true;
-            this.properties = this.mapHandler.getLevelData();
+            this.levelData = this.mapHandler.getLevelData();
         }
 
         if (!AC_TerrainImage.loadMap(levelDir)) {
             AC_TerrainImage.loadMap(new File(new File(gameDir, "saves"), saveName));
         }
 
-        this.field_215 = this.properties == null;
+        this.isNew = this.levelData == null;
         if (dimension != null) {
             this.dimension = dimension;
-        } else if (this.properties != null && this.properties.getDimension() == -1) {
+        } else if (this.levelData != null && this.levelData.getDimension() == -1) {
             this.dimension = Dimension.getNew(-1);
         } else {
             this.dimension = Dimension.getNew(0);
         }
 
         boolean newProps = false;
-        if (this.properties == null) {
-            this.properties = new LevelData(seed, saveName);
+        if (this.levelData == null) {
+            this.levelData = new LevelData(seed, saveName);
             newProps = true;
         } else {
-            this.properties.setLevelName(saveName);
+            this.levelData.setLevelName(saveName);
         }
 
-        var props = (ExWorldProperties) this.properties;
+        var props = (ExWorldProperties) this.levelData;
         // Load current hud status
         ((ExInGameHud)Minecraft.instance.gui).setHudEnabled(props.getHudEnabled());
 
@@ -371,23 +368,23 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
 
         this.dimension.setLevel((Level) (Object) this);
         this.loadBrightness();
-        this.worldSource = this.getChunkCache();
+        this.chunkSource = this.createLevelSource();
         if (newProps) {
-            this.method_212();
-            this.field_221 = true;
+            this.setInitialSpawn();
+            this.isFindingSpawn = true;
             int var11 = 0;
 
             int var12;
-            for (var12 = 0; !this.dimension.isValidSpawn(var11, var12); var12 += this.rand.nextInt(64) - this.rand.nextInt(64)) {
-                var11 += this.rand.nextInt(64) - this.rand.nextInt(64);
+            for (var12 = 0; !this.dimension.isValidSpawn(var11, var12); var12 += this.random.nextInt(64) - this.random.nextInt(64)) {
+                var11 += this.random.nextInt(64) - this.random.nextInt(64);
             }
 
-            this.properties.setSpawnXYZ(var11, this.getSurfaceBlockId(var11, var12), var12);
-            this.field_221 = false;
+            this.levelData.setSpawnXYZ(var11, this.getTopTile(var11, var12), var12);
+            this.isFindingSpawn = false;
         }
 
-        this.method_237();
-        this.initWeatherGradients();
+        this.updateSkyBrightness();
+        this.prepareWeather();
 
         this.loadMapMusic();
         this.loadMapSounds();
@@ -444,7 +441,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         AC_TextureBinder.loadImages(texManager, WaterSideTexture.class, world);
         ExGrassColor.loadGrass("/misc/grasscolor.png", world);
         ExFoliageColor.loadFoliage("/misc/foliagecolor.png", world);
-        ((ExWorldProperties) this.properties).loadTextureReplacements(world);
+        ((ExWorldProperties) this.levelData).loadTextureReplacements(world);
     }
 
     private void loadTextureAnimations() {
@@ -503,16 +500,16 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
 
     @Override
     public void updateChunkProvider() {
-        this.worldSource = this.getChunkCache();
+        this.chunkSource = this.createLevelSource();
     }
 
     @Overwrite
-    public ChunkSource getChunkCache() {
+    public ChunkSource createLevelSource() {
         ChunkStorage io;
-        if (this.dimensionData == null) {
+        if (this.levelIo == null) {
             io = this.mapHandler.readDimension(this.dimension);
         } else {
-            io = this.dimensionData.readDimension(this.dimension);
+            io = this.levelIo.readDimension(this.dimension);
             if (this.mapHandler != null) {
                 io = new MapChunkLoader(this.mapHandler.readDimension(this.dimension), io);
             }
@@ -527,50 +524,50 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         }
     }
 
-    @Redirect(method = "method_212", at = @At(
+    @Redirect(method = "setInitialSpawn", at = @At(
         value = "INVOKE",
-        target = "Lnet/minecraft/world/WorldProperties;setSpawnPosition(III)V"))
+        target = "Lnet/minecraft/world/level/storage/LevelData;setSpawnXYZ(III)V"))
     private void spawnAtUncoveredBlock(LevelData instance, int x, int y, int z) {
-        this.properties.setSpawnXYZ(x, this.getFirstUncoveredBlockY(x, z), z);
+        this.levelData.setSpawnXYZ(x, this.getFirstUncoveredBlockY(x, z), z);
     }
 
-    @Inject(method = "initSpawnPoint", at = @At(
+    @Inject(method = "validateSpawn", at = @At(
         value = "INVOKE",
-        target = "Lnet/minecraft/world/WorldProperties;setSpawnZ(I)V",
+        target = "Lnet/minecraft/world/level/storage/LevelData;setSpawnZ(I)V",
         shift = At.Shift.AFTER),
         locals = LocalCapture.CAPTURE_FAILHARD)
     private void spawnAtUncoveredBlock(CallbackInfo ci, int x, int z) {
-        this.properties.setSpawnY(this.getFirstUncoveredBlockY(x, z));
+        this.levelData.setSpawnY(this.getFirstUncoveredBlockY(x, z));
     }
 
     public int getFirstUncoveredBlockY(int x, int z) {
         int y = 127;
-        while (this.isAir(x, y, z) && y > 0) {
+        while (this.isEmptyTile(x, y, z) && y > 0) {
             --y;
         }
         return y;
     }
 
     @Overwrite
-    public int getSurfaceBlockId(int x, int z) {
+    public int getTopTile(int x, int z) {
         int y = this.getFirstUncoveredBlockY(x, z);
         return this.getTile(x, y, z);
     }
 
-    @Redirect(method = "method_271", at = @At(
+    @Redirect(method = "saveLevel", at = @At(
         value = "INVOKE",
-        target = "Lnet/minecraft/world/dimension/DimensionData;saveWorldDataOnServer(Lnet/minecraft/world/WorldProperties;Ljava/util/List;)V"))
+        target = "Lnet/minecraft/world/level/storage/LevelIO;saveWithPlayers(Lnet/minecraft/world/level/storage/LevelData;Ljava/util/List;)V"))
     private void modifySave(LevelIO instance, LevelData worldProperties, List<Player> list) {
         var exProps = (ExWorldProperties) worldProperties;
         exProps.setGlobalScope(ScopeTag.getTagFromScope(this.script.globalScope));
         exProps.setWorldScope(ScopeTag.getTagFromScope(this.scope));
         exProps.setMusicScope(ScopeTag.getTagFromScope(this.musicScripts.scope));
 
-        if (this.dimensionData != null) {
-            this.dimensionData.saveWithPlayers(worldProperties, list);
+        if (this.levelIo != null) {
+            this.levelIo.saveWithPlayers(worldProperties, list);
         }
 
-        if (AC_DebugMode.levelEditing || this.dimensionData == null) {
+        if (AC_DebugMode.levelEditing || this.levelIo == null) {
             this.mapHandler.saveWithPlayers(worldProperties, list);
         }
     }
@@ -585,13 +582,13 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         } else if (y >= 128) {
             return false;
         } else {
-            LevelChunk chunk = this.getChunkFromCache(x >> 4, z >> 4);
+            LevelChunk chunk = this.getChunk(x >> 4, z >> 4);
             return ((ExChunk) chunk).setBlockIDWithMetadataTemp(x & 15, y, z & 15, id, meta);
         }
     }
 
     @Overwrite
-    public int placeBlock(int x, int y, int z, boolean var4) {
+    public int getRawBrightness(int x, int y, int z, boolean var4) {
         if (x < -32000000 || z < -32000000 || x >= 32000000 || z > 32000000) {
             return 15;
         }
@@ -599,11 +596,11 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         if (var4) {
             int id = this.getTile(x, y, z);
             if (id != 0 && (id == Tile.SLAB.id || id == Tile.FARMLAND.id || id == Tile.COBBLESTONE_STAIRS.id || id == Tile.WOOD_STAIRS.id || Tile.tiles[id] instanceof AC_BlockStairMulti)) {
-                int topId = this.placeBlock(x, y + 1, z, false);
-                int rightId = this.placeBlock(x + 1, y, z, false);
-                int leftId = this.placeBlock(x - 1, y, z, false);
-                int frontId = this.placeBlock(x, y, z + 1, false);
-                int backId = this.placeBlock(x, y, z - 1, false);
+                int topId = this.getRawBrightness(x, y + 1, z, false);
+                int rightId = this.getRawBrightness(x + 1, y, z, false);
+                int leftId = this.getRawBrightness(x - 1, y, z, false);
+                int frontId = this.getRawBrightness(x, y, z + 1, false);
+                int backId = this.getRawBrightness(x, y, z - 1, false);
                 if (rightId > topId) {
                     topId = rightId;
                 }
@@ -632,20 +629,20 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             y = 127;
         }
 
-        LevelChunk chunk = this.getChunkFromCache(x >> 4, z >> 4);
+        LevelChunk chunk = this.getChunk(x >> 4, z >> 4);
         x &= 15;
         z &= 15;
-        return chunk.getRawBrightness(x, y, z, this.field_202);
+        return chunk.getRawBrightness(x, y, z, this.skyDarken);
     }
 
     @Overwrite
-    public void method_165(LightLayer lightType, int x, int y, int z, int value) {
+    public void updateLightIfOtherThan(LightLayer lightType, int x, int y, int z, int value) {
         if (this.dimension.hasCeiling && lightType == LightLayer.SKY) {
             return;
         }
-        if (this.isBlockLoaded(x, y, z)) {
+        if (this.hasChunkAt(x, y, z)) {
             if (lightType == LightLayer.SKY) {
-                if (this.isAboveGround(x, y, z)) {
+                if (this.isSkyLit(x, y, z)) {
                     value = 15;
                 }
             } else if (lightType == LightLayer.BLOCK) {
@@ -655,15 +652,15 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
                 }
             }
 
-            if (this.method_164(lightType, x, y, z) != value) {
-                this.method_166(lightType, x, y, z, x, y, z);
+            if (this.getBrightness(lightType, x, y, z) != value) {
+                this.updateLight(lightType, x, y, z, x, y, z);
             }
         }
     }
 
     @Override
     public float getLightValue(int x, int y, int z) {
-        int var4 = this.placeBlock(x, y, z);
+        int var4 = this.getLightLevel(x, y, z);
         float var5 = AC_PlayerTorch.getTorchLight((Level) (Object) this, x, y, z);
         return (float) var4 < var5 ? Math.min(var5, 15.0F) : (float) var4;
     }
@@ -697,12 +694,12 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     }
 
     public float getDayLight() {
-        int var1 = 15 - this.field_202;
+        int var1 = 15 - this.skyDarken;
         return this.dimension.brightnessRamp[var1];
     }
 
     @Overwrite
-    public HitResult method_162(Vec3 pointA, Vec3 pointB, boolean var3, boolean var4) {
+    public HitResult clip(Vec3 pointA, Vec3 pointB, boolean var3, boolean var4) {
         return this.rayTraceBlocks2(pointA, pointB, var3, var4, true);
     }
 
@@ -891,7 +888,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         return null;
     }
 
-    @Redirect(method = "spawnEntity", at = @At(
+    @Redirect(method = "addEntity", at = @At(
         value = "INVOKE",
         target = "Ljava/util/List;add(Ljava/lang/Object;)Z",
         ordinal = 1))
@@ -903,10 +900,10 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     }
 
     @Redirect(
-        method = "method_190",
+        method = "getCubes",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/block/Block;doesBoxCollide(Lnet/minecraft/world/World;IIILnet/minecraft/util/math/AxixAlignedBoundingBox;Ljava/util/ArrayList;)V"))
+            target = "Lnet/minecraft/world/level/tile/Tile;addAABBs(Lnet/minecraft/world/level/Level;IIILnet/minecraft/world/phys/AABB;Ljava/util/ArrayList;)V"))
     private void guardBoxCollide(Tile block, Level world, int x, int y, int z, AABB aabb, ArrayList<AABB> output, @Local(argsOnly = true) Entity entity) {
         if ((((ExEntity) entity).getCollidesWithClipBlocks() || block.id != AC_Blocks.clipBlock.id && !ExLadderBlock.isLadderID(block.id))) {
             block.addAABBs(world, x, y, z, aabb, output);
@@ -914,7 +911,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     }
 
     @Inject(
-        method = "method_190",
+        method = "getCubes",
         at = @At("RETURN"))
     private void recordCollision(Entity entity, AABB aabb, CallbackInfoReturnable<List> cir) {
         if (!AC_DebugMode.renderCollisions) {
@@ -945,15 +942,15 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     }
 
     @Overwrite
-    public float method_198(float var1) {
-        ExWorldProperties props = (ExWorldProperties) this.properties;
+    public float getTimeOfDay(float var1) {
+        ExWorldProperties props = (ExWorldProperties) this.levelData;
         return this.dimension.getTimeOfDay(props.getTimeOfDay(), var1 * props.getTimeRate());
     }
 
-    @Inject(method = "method_284", at = @At("RETURN"))
+    @Inject(method = "getFogColor", at = @At("RETURN"))
     private void changeFogColor(float var1, CallbackInfoReturnable<Vec3> cir) {
         Vec3 var3 = cir.getReturnValue();
-        ExWorldProperties props = (ExWorldProperties) this.properties;
+        ExWorldProperties props = (ExWorldProperties) this.levelData;
         if (props.isOverrideFogColor()) {
             if (this.fogColorOverridden) {
                 var3.x = props.getFogR();
@@ -968,8 +965,8 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     }
 
     @Overwrite
-    public int method_228(int x, int z) {
-        LevelChunk chunk = this.getChunk(x, z);
+    public int getTopSolidBlock(int x, int z) {
+        LevelChunk chunk = this.getChunkAt(x, z);
 
         int y = 127;
         while (this.getMaterial(x, y, z).blocksMotion() && y > 0) {
@@ -992,7 +989,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     }
 
     @Inject(
-        method = "method_227",
+        method = "tickEntities",
         at = @At("HEAD"))
     private void clearCollisionList(CallbackInfo ci) {
         this.collisionDebugLists.clear();
@@ -1000,10 +997,10 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
 
     // This injection will be inverted at the target since the expression only captured the field access
     @ModifyExpressionValue(
-        method = "method_227",
+        method = "tickEntities",
         at = @At(
             value = "FIELD",
-            target = "Lnet/minecraft/entity/Entity;removed:Z",
+            target = "Lnet/minecraft/world/entity/Entity;removed:Z",
             ordinal = 2))
     private boolean fixupRemoveCondition(boolean value, @Local Entity entity) {
         ExMinecraft mc = (ExMinecraft) Minecraft.instance;
@@ -1011,34 +1008,34 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     }
 
     @Inject(
-        method = "method_227",
+        method = "tickEntities",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/World;method_241(Lnet/minecraft/entity/Entity;)V",
+            target = "Lnet/minecraft/world/level/Level;tick(Lnet/minecraft/world/entity/Entity;)V",
             shift = At.Shift.AFTER))
     private void fixupBoundingBox(CallbackInfo ci) {
         AABB.resetPool();
     }
 
     @Redirect(
-        method = "method_227",
+        method = "tickEntities",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/World;getChunkFromCache(II)Lnet/minecraft/world/chunk/Chunk;"))
+            target = "Lnet/minecraft/world/level/Level;getChunk(II)Lnet/minecraft/world/level/chunk/LevelChunk;"))
     private LevelChunk ignoreIfKilledOnSave(Level instance, int j, int i, @Local TileEntity var5) {
         if (((ExBlockEntity) var5).isKilledFromSaving()) {
             return null;
         }
-        LevelChunk chunk = this.getChunkFromCache(var5.x >> 4, var5.z >> 4);
+        LevelChunk chunk = this.getChunk(var5.x >> 4, var5.z >> 4);
         return chunk;
     }
 
     @Overwrite
-    public void method_193(Entity entity, boolean var2) {
+    public void tick(Entity entity, boolean var2) {
         int eX = Mth.floor(entity.x);
         int eZ = Mth.floor(entity.z);
         int var5 = 32;
-        if (!var2 || this.method_155(eX - var5, 0, eZ - var5, eX + var5, 128, eZ + var5)) {
+        if (!var2 || this.hasChunksAt(eX - var5, 0, eZ - var5, eX + var5, 128, eZ + var5)) {
             entity.xOld = entity.x;
             entity.yOld = entity.y;
             entity.zOld = entity.z;
@@ -1079,13 +1076,13 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             int ecY = Mth.floor(entity.y / 16.0D);
             int ecZ = Mth.floor(entity.z / 16.0D);
             if (!entity.inChunk || entity.xChunk != ecX || entity.yChunk != ecY || entity.zChunk != ecZ) {
-                if (entity.inChunk && this.isChunkLoaded(entity.xChunk, entity.zChunk)) {
-                    this.getChunkFromCache(entity.xChunk, entity.zChunk).removeEntity(entity, entity.yChunk);
+                if (entity.inChunk && this.hasChunk(entity.xChunk, entity.zChunk)) {
+                    this.getChunk(entity.xChunk, entity.zChunk).removeEntity(entity, entity.yChunk);
                 }
 
-                if (this.isChunkLoaded(ecX, ecZ)) {
+                if (this.hasChunk(ecX, ecZ)) {
                     entity.inChunk = true;
-                    this.getChunkFromCache(ecX, ecZ).addEntity(entity);
+                    this.getChunk(ecX, ecZ).addEntity(entity);
                 } else {
                     entity.inChunk = false;
                 }
@@ -1093,7 +1090,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
 
             if (var2 && entity.inChunk && entity.rider != null) {
                 if (!entity.rider.removed && entity.rider.riding == entity) {
-                    this.method_241(entity.rider);
+                    this.tick(entity.rider);
                 } else {
                     entity.rider.riding = null;
                     entity.rider = null;
@@ -1102,69 +1099,69 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         }
     }
 
-    @Inject(method = "setBlockEntity", at = @At(
+    @Inject(method = "setTileEntity", at = @At(
         value = "FIELD",
-        target = "Lnet/minecraft/world/World;field_190:Z",
+        target = "Lnet/minecraft/world/level/Level;updatingTileEntities:Z",
         shift = At.Shift.BEFORE))
     private void removeBlockEntityOnSet(int x, int y, int z, TileEntity var4, CallbackInfo ci) {
-        this.removeBlockEntity(x, y, z);
+        this.removeTileEntity(x, y, z);
     }
 
-    @Redirect(method = "removeBlockEntity", at = @At(
+    @Redirect(method = "removeTileEntity", at = @At(
         value = "INVOKE",
-        target = "Lnet/minecraft/world/World;getBlockEntity(III)Lnet/minecraft/entity/BlockEntity;"))
+        target = "Lnet/minecraft/world/level/Level;getTileEntity(III)Lnet/minecraft/world/level/tile/entity/TileEntity;"))
     private TileEntity removeBlockEntityDontCreate(Level instance, int x, int y, int z) {
         return this.getBlockTileEntityDontCreate(x, y, z);
     }
 
     @Overwrite
-    public void method_167(LightLayer lightType, int var2, int var3, int var4, int var5, int var6, int var7, boolean var8) {
+    public void updateLight(LightLayer lightType, int var2, int var3, int var4, int var5, int var6, int var7, boolean var8) {
         if (this.dimension.hasCeiling && lightType == LightLayer.SKY) {
             return;
         }
-        ++field_179;
+        ++maxLoop;
 
         try {
-            if (field_179 == 50) {
+            if (maxLoop == 50) {
                 return;
             }
 
             int x = (var5 + var2) / 2;
             int z = (var7 + var4) / 2;
-            if (!this.isBlockLoaded(x, 64, z)) {
+            if (!this.hasChunkAt(x, 64, z)) {
                 return;
             }
 
-            if (this.getChunk(x, z).isEmpty()) {
+            if (this.getChunkAt(x, z).isEmpty()) {
                 return;
             }
 
             if (var8) {
-                int count = Math.min(this.lightingUpdates.size(), 5);
+                int count = Math.min(this.lightUpdates.size(), 5);
                 for (int i = 0; i < count; ++i) {
-                    LightUpdate var14 = this.lightingUpdates.get(this.lightingUpdates.size() - i - 1);
+                    LightUpdate var14 = this.lightUpdates.get(this.lightUpdates.size() - i - 1);
                     if (var14.type == lightType && var14.expandToContain(var2, var3, var4, var5, var6, var7)) {
                         return;
                     }
                 }
             }
 
-            this.lightingUpdates.add(new LightUpdate(lightType, var2, var3, var4, var5, var6, var7));
+            this.lightUpdates.add(new LightUpdate(lightType, var2, var3, var4, var5, var6, var7));
 
             final int maxUpdates = 1000000;
-            if (this.lightingUpdates.size() > maxUpdates) {
+            if (this.lightUpdates.size() > maxUpdates) {
                 System.out.println("More than " + maxUpdates + " updates, aborting lighting updates");
-                this.lightingUpdates.clear();
+                this.lightUpdates.clear();
             }
         } finally {
-            --field_179;
+            --maxLoop;
         }
     }
 
     @Override
     public void ac$preTick() {
         if (this.firstTick) {
-            var props = (ExWorldProperties) this.properties;
+            var props = (ExWorldProperties) this.levelData;
 
             if (this.newSave && !props.getOnNewSaveScript().equals("")) {
                 this.scriptHandler.runScript(props.getOnNewSaveScript(), this.scope);
@@ -1179,8 +1176,8 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     }
 
     @Overwrite
-    public void method_242() {
-        var props = (ExWorldProperties) this.properties;
+    public void tick() {
+        var props = (ExWorldProperties) this.levelData;
 
         ScriptModel.updateAll();
         if (!props.getOnUpdateScript().equals("")) {
@@ -1189,27 +1186,27 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
 
         this.fogColorOverridden = props.isOverrideFogColor();
         this.fogDensityOverridden = props.isOverrideFogDensity();
-        this.method_245();
-        this.worldSource.tick();
-        int var1 = this.method_151(1.0F);
-        if (var1 != this.field_202) {
-            this.field_202 = var1;
+        this.tickWeather();
+        this.chunkSource.tick();
+        int var1 = this.getSkyDarken(1.0F);
+        if (var1 != this.skyDarken) {
+            this.skyDarken = var1;
 
-            for (LevelListener worldListener : this.worldListeners) {
+            for (LevelListener worldListener : this.listeners) {
                 worldListener.skyColorChanged();
             }
         }
 
-        long var4 = this.properties.getTime() + 1L;
-        if (var4 % (long) this.autoSaveInterval == 0L) {
-            this.saveLevel(false, null);
+        long var4 = this.levelData.getTime() + 1L;
+        if (var4 % (long) this.saveInterval == 0L) {
+            this.save(false, null);
         }
 
-        this.properties.setTime(var4);
+        this.levelData.setTime(var4);
         props.addToTimeOfDay(props.getTimeRate());
-        this.method_194(false);
-        this.method_248();
-        if (this.properties.isRaining()) {
+        this.tickPendingTicks(false);
+        this.tickTiles();
+        if (this.levelData.isRaining()) {
             this.DoSnowModUpdate();
         }
 
@@ -1217,58 +1214,58 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     }
 
     @Overwrite
-    private void initWeatherGradients() {
-        if (this.properties.isRaining()) {
-            this.rainGradient = 1.0F;
-            if (this.properties.isThundering()) {
-                this.thunderGradient = 1.0F;
+    private void prepareWeather() {
+        if (this.levelData.isRaining()) {
+            this.rainLevel = 1.0F;
+            if (this.levelData.isThundering()) {
+                this.thunderLevel = 1.0F;
             }
         }
     }
 
     @Overwrite
-    public void method_245() {
+    public void tickWeather() {
         if (this.dimension.hasCeiling) {
             return;
         }
 
-        if (this.field_209 > 0) {
-            --this.field_209;
+        if (this.lightingCooldown > 0) {
+            --this.lightingCooldown;
         }
 
-        this.prevRainGradient = this.rainGradient;
-        if (this.properties.isRaining()) {
-            this.rainGradient = (float) ((double) this.rainGradient + 0.01D);
+        this.oRainLevel = this.rainLevel;
+        if (this.levelData.isRaining()) {
+            this.rainLevel = (float) ((double) this.rainLevel + 0.01D);
         } else {
-            this.rainGradient = (float) ((double) this.rainGradient - 0.01D);
+            this.rainLevel = (float) ((double) this.rainLevel - 0.01D);
         }
 
-        if (this.rainGradient < 0.0F) {
-            this.rainGradient = 0.0F;
+        if (this.rainLevel < 0.0F) {
+            this.rainLevel = 0.0F;
         }
 
-        if (this.rainGradient > 1.0F) {
-            this.rainGradient = 1.0F;
+        if (this.rainLevel > 1.0F) {
+            this.rainLevel = 1.0F;
         }
 
-        this.prevThunderGradient = this.thunderGradient;
-        if (this.properties.isThundering()) {
-            this.thunderGradient = (float) ((double) this.thunderGradient + 0.01D);
+        this.oThunderLevel = this.thunderLevel;
+        if (this.levelData.isThundering()) {
+            this.thunderLevel = (float) ((double) this.thunderLevel + 0.01D);
         } else {
-            this.thunderGradient = (float) ((double) this.thunderGradient - 0.01D);
+            this.thunderLevel = (float) ((double) this.thunderLevel - 0.01D);
         }
 
-        if (this.thunderGradient < 0.0F) {
-            this.thunderGradient = 0.0F;
+        if (this.thunderLevel < 0.0F) {
+            this.thunderLevel = 0.0F;
         }
 
-        if (this.thunderGradient > 1.0F) {
-            this.thunderGradient = 1.0F;
+        if (this.thunderLevel > 1.0F) {
+            this.thunderLevel = 1.0F;
         }
     }
 
     @Overwrite
-    public void method_248() {
+    public void tickTiles() {
         for (Player var2 : this.players) {
             int var3 = Mth.floor(var2.x / 16.0D);
             int var4 = Mth.floor(var2.z / 16.0D);
@@ -1281,89 +1278,89 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             }
         }
 
-        if (this.field_195 > 0) {
-            --this.field_195;
+        if (this.delayUntilNextMoodSound > 0) {
+            --this.delayUntilNextMoodSound;
         }
     }
 
     protected void updateChunk(int var1, int var2) {
-        LevelChunk var3 = this.getChunkFromCache(var1, var2);
-        if (((ExChunk) var3).getLastUpdated() == this.getWorldTime()) {
+        LevelChunk var3 = this.getChunk(var1, var2);
+        if (((ExChunk) var3).getLastUpdated() == this.getTime()) {
             return;
         }
 
         int var4 = var1 * 16;
         int var5 = var2 * 16;
-        ((ExChunk) var3).setLastUpdated(this.getWorldTime());
+        ((ExChunk) var3).setLastUpdated(this.getTime());
         int var6;
         int var7;
         int var8;
         int var9;
-        if (this.rand.nextInt(100000) == 0 && this.isRaining() && this.isThundering()) {
-            this.field_203 = this.field_203 * 3 + 1013904223;
-            var6 = this.field_203 >> 2;
+        if (this.random.nextInt(100000) == 0 && this.isRaining() && this.isThundering()) {
+            this.randValue = this.randValue * 3 + 1013904223;
+            var6 = this.randValue >> 2;
             var7 = var4 + (var6 & 15);
             var8 = var5 + (var6 >> 8 & 15);
-            var9 = this.method_228(var7, var8);
-            if (this.canRainAt(var7, var9, var8)) {
-                this.summonWeatherEntity(new LightningBolt((Level) (Object) this, var7, var9, var8));
-                this.field_209 = 2;
+            var9 = this.getTopSolidBlock(var7, var8);
+            if (this.isRainingAt(var7, var9, var8)) {
+                this.addGlobalEntity(new LightningBolt((Level) (Object) this, var7, var9, var8));
+                this.lightingCooldown = 2;
             }
         }
 
         for (var6 = 0; var6 < 80; ++var6) {
-            this.field_203 = this.field_203 * 3 + 1013904223;
-            var7 = this.field_203 >> 2;
+            this.randValue = this.randValue * 3 + 1013904223;
+            var7 = this.randValue >> 2;
             var8 = var7 & 15;
             var9 = var7 >> 8 & 15;
             int var10 = var7 >> 16 & 127;
             int var11 = var3.blocks[var8 << 11 | var9 << 7 | var10] & 255;
             if (Tile.shouldTick[var11]) {
-                Tile.tiles[var11].tick((Level) (Object) this, var8 + var4, var10, var9 + var5, this.rand);
+                Tile.tiles[var11].tick((Level) (Object) this, var8 + var4, var10, var9 + var5, this.random);
             }
         }
     }
 
     @Overwrite
-    public boolean method_194(boolean var1) {
-        int var2 = this.treeSet.size();
+    public boolean tickPendingTicks(boolean var1) {
+        int var2 = this.tickNextTickList.size();
         if (var2 > 1000) {
             var2 = 1000;
         }
 
         for (int var3 = 0; var3 < var2; ++var3) {
-            TickNextTickData var4 = this.treeSet.first();
-            if (!var1 && var4.delay > this.properties.getTime()) {
+            TickNextTickData var4 = this.tickNextTickList.first();
+            if (!var1 && var4.delay > this.levelData.getTime()) {
                 break;
             }
 
-            this.treeSet.remove(var4);
-            if (this.field_184.remove(var4)) {
+            this.tickNextTickList.remove(var4);
+            if (this.tickNextTickSet.remove(var4)) {
                 byte var5 = 8;
-                if (this.method_155(var4.x - var5, var4.y - var5, var4.z - var5, var4.x + var5, var4.y + var5, var4.z + var5)) {
+                if (this.hasChunksAt(var4.x - var5, var4.y - var5, var4.z - var5, var4.x + var5, var4.y + var5, var4.z + var5)) {
                     int var6 = this.getTile(var4.x, var4.y, var4.z);
                     if (var6 == var4.priority && var6 > 0) {
-                        Tile.tiles[var6].tick((Level) (Object) this, var4.x, var4.y, var4.z, this.rand);
+                        Tile.tiles[var6].tick((Level) (Object) this, var4.x, var4.y, var4.z, this.random);
                         AABB.resetPool();
                     }
                 }
             }
         }
 
-        return this.treeSet.size() != 0;
+        return this.tickNextTickList.size() != 0;
     }
 
     @Overwrite
-    public void checkSessionLock() {
-        if (this.dimensionData != null) {
-            this.dimensionData.checkSession();
+    public void checkSession() {
+        if (this.levelIo != null) {
+            this.levelIo.checkSession();
         } else {
             this.mapHandler.checkSession();
         }
     }
 
     private void DoSnowModUpdate() {
-        if (this.isClient) {
+        if (this.isClientSide) {
             return;
         }
 
@@ -1378,8 +1375,8 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
 
             for (int var7 = -var6; var7 <= var6; ++var7) {
                 for (int var8 = -var6; var8 <= var6; ++var8) {
-                    long var9 = (long) (var7 + var8 * 2) + this.getWorldTime();
-                    if (var9 % 14L == 0L && this.isChunkLoaded(var7 + var4, var8 + var5)) {
+                    long var9 = (long) (var7 + var8 * 2) + this.getTime();
+                    if (var9 % 14L == 0L && this.hasChunk(var7 + var4, var8 + var5)) {
                         var9 /= 14L;
                         int var11 = var7 + var4;
                         int var12 = var8 + var5;
@@ -1395,14 +1392,14 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     }
 
     public boolean SnowModUpdate(int var1, int var2) {
-        int var3 = this.method_228(var1, var2);
+        int var3 = this.getTopSolidBlock(var1, var2);
         if (var3 < 0) {
             var3 = 0;
         }
 
         int var4 = this.getTile(var1, var3 - 1, var2);
         if (this.getTemperatureValue(var1, var2) < 0.5D) {
-            if (!this.isAir(var1, var3, var2)) {
+            if (!this.isEmptyTile(var1, var3, var2)) {
                 return false;
             } else {
                 if (var4 != 0 && Tile.tiles[var4].isSolidRender()) {
@@ -1410,17 +1407,17 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
                         return false;
                     }
 
-                    if (this.method_164(LightLayer.BLOCK, var1, var3, var2) > 11) {
+                    if (this.getBrightness(LightLayer.BLOCK, var1, var3, var2) > 11) {
                         return false;
                     }
 
-                    this.setBlock(var1, var3, var2, Tile.SNOW_LAYER.id);
+                    this.setTile(var1, var3, var2, Tile.SNOW_LAYER.id);
                 } else if (var4 == Tile.FLOWING_WATER.id && this.getData(var1, var3 - 1, var2) == 0) {
-                    if (this.method_164(LightLayer.BLOCK, var1, var3, var2) > 11) {
+                    if (this.getBrightness(LightLayer.BLOCK, var1, var3, var2) > 11) {
                         return false;
                     }
 
-                    this.setBlock(var1, var3 - 1, var2, Tile.ICE.id);
+                    this.setTile(var1, var3 - 1, var2, Tile.ICE.id);
                 }
 
                 return true;
@@ -1428,13 +1425,13 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         } else {
             int var5 = this.getTile(var1, var3, var2);
             if (var5 == Tile.SNOW_LAYER.id) {
-                this.setBlock(var1, var3, var2, 0);
+                this.setTile(var1, var3, var2, 0);
                 return true;
             } else if (var4 == Tile.SNOW.id) {
-                this.setBlock(var1, var3 - 1, var2, Tile.SNOW_LAYER.id);
+                this.setTile(var1, var3 - 1, var2, Tile.SNOW_LAYER.id);
                 return true;
             } else if (var4 == Tile.ICE.id) {
-                this.setBlock(var1, var3 - 1, var2, Tile.FLOWING_WATER.id);
+                this.setTile(var1, var3 - 1, var2, Tile.FLOWING_WATER.id);
                 return true;
             } else {
                 return false;
@@ -1445,7 +1442,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     @Override
     public void cancelBlockUpdate(int x, int y, int z, int id) {
         TickNextTickData entry = new TickNextTickData(x, y, z, id);
-        this.field_184.remove(entry);
+        this.tickNextTickSet.remove(entry);
     }
 
     @Override
@@ -1467,7 +1464,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             }
         }
 
-        String playingMusic = ((ExWorldProperties) this.properties).getPlayingMusic();
+        String playingMusic = ((ExWorldProperties) this.levelData).getPlayingMusic();
         if (!playingMusic.equals("")) {
             ((ExSoundHelper) Minecraft.instance.soundEngine).playMusicFromStreaming(playingMusic, 0, 0);
         }
@@ -1507,7 +1504,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     @Override
     public void loadBrightness() {
         // TODO: add brightness control per dimension
-        float[] dimBrightness = ((ExWorldProperties) this.properties).getBrightness().clone();
+        float[] dimBrightness = ((ExWorldProperties) this.levelData).getBrightness().clone();
         float[] lightTable = new float[dimBrightness.length];
         float baseValue = 0.05F; // TODO: based on dimension
 
@@ -1536,7 +1533,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
 
     @Override
     public float getFogStart(float start, float deltaTime) {
-        var props = (ExWorldProperties) this.properties;
+        var props = (ExWorldProperties) this.levelData;
         if (props.isOverrideFogDensity()) {
             if (this.fogDensityOverridden) {
                 return props.getFogStart();
@@ -1548,7 +1545,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
 
     @Override
     public float getFogEnd(float end, float deltaTime) {
-        var props = (ExWorldProperties) this.properties;
+        var props = (ExWorldProperties) this.levelData;
         if (props.isOverrideFogDensity()) {
             if (this.fogDensityOverridden) {
                 return props.getFogEnd();
@@ -1560,7 +1557,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
 
     @Override
     public TileEntity getBlockTileEntityDontCreate(int x, int y, int z) {
-        LevelChunk chunk = this.getChunkFromCache(x >> 4, z >> 4);
+        LevelChunk chunk = this.getChunk(x >> 4, z >> 4);
         if (chunk != null) {
             return ((ExChunk) chunk).getChunkBlockTileEntityDontCreate(x & 15, y, z & 15);
         }
@@ -1570,9 +1567,9 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     @Override
     public double getTemperatureValue(int x, int z) {
         if (x >= -32000000 && z >= -32000000 && x < 32000000 && z <= 32000000) {
-            var chunk = (ExChunk) this.getChunkFromCache(x >> 4, z >> 4);
+            var chunk = (ExChunk) this.getChunk(x >> 4, z >> 4);
             double tempValue = chunk.getTemperatureValue(x & 15, z & 15);
-            double tempOffset = ((ExWorldProperties) this.properties).getTempOffset();
+            double tempOffset = ((ExWorldProperties) this.levelData).getTempOffset();
             return tempValue + tempOffset;
         }
         return 0.0D;
@@ -1581,7 +1578,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     @Override
     public void setTemperatureValue(int x, int z, double value) {
         if (x >= -32000000 && z >= -32000000 && x < 32000000 && z <= 32000000) {
-            var chunk = (ExChunk) this.getChunkFromCache(x >> 4, z >> 4);
+            var chunk = (ExChunk) this.getChunk(x >> 4, z >> 4);
             if (chunk.getTemperatureValue(x & 15, z & 15) != value) {
                 chunk.setTemperatureValue(x & 15, z & 15, value);
             }
@@ -1595,7 +1592,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
 
     private void initCoordOrder() {
         Random var1 = new Random();
-        var1.setSeed(this.getWorldTime());
+        var1.setSeed(this.getTime());
         this.coordOrder = new int[256];
 
         int var2 = 0;
@@ -1623,22 +1620,22 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
 
     @Override
     public float getTimeOfDay() {
-        return (float) ((ExWorldProperties) this.properties).getTimeOfDay();
+        return (float) ((ExWorldProperties) this.levelData).getTimeOfDay();
     }
 
     @Override
     public void setTimeOfDay(long value) {
-        ((ExWorldProperties) this.properties).setTimeOfDay((float) value);
+        ((ExWorldProperties) this.levelData).setTimeOfDay((float) value);
     }
 
     @Override
     public float getSpawnYaw() {
-        return ((ExWorldProperties) this.properties).getSpawnYaw();
+        return ((ExWorldProperties) this.levelData).getSpawnYaw();
     }
 
     @Override
     public void setSpawnYaw(float value) {
-        ((ExWorldProperties) this.properties).setSpawnYaw(value);
+        ((ExWorldProperties) this.levelData).setSpawnYaw(value);
     }
 
     @Override

@@ -24,13 +24,13 @@ import java.util.ArrayList;
 public abstract class MixinPathNodeNavigator implements ExPathNodeNavigator {
 
     @Shadow
-    private LevelSource block;
+    private LevelSource level;
 
     @Shadow
-    protected abstract int method_404(Entity arg, int i, int j, int k, Node arg2);
+    protected abstract int isFree(Entity arg, int i, int j, int k, Node arg2);
 
     @ModifyConstant(
-        method = "findPathTo(Lnet/minecraft/entity/Entity;DDDF)Lnet/minecraft/entity/ai/pathing/EntityPath;",
+        method = "findPath(Lnet/minecraft/world/entity/Entity;DDDF)Lnet/minecraft/world/level/pathfinder/Path;",
         constant = {
             @Constant(floatValue = 1.0F, ordinal = 0),
             @Constant(floatValue = 1.0F, ordinal = 2)})
@@ -39,17 +39,17 @@ public abstract class MixinPathNodeNavigator implements ExPathNodeNavigator {
     }
 
     @ModifyReturnValue(
-        method = "findPathTo(Lnet/minecraft/entity/Entity;DDDF)Lnet/minecraft/entity/ai/pathing/EntityPath;",
+        method = "findPath(Lnet/minecraft/world/entity/Entity;DDDF)Lnet/minecraft/world/level/pathfinder/Path;",
         at = @At("RETURN"))
     private Path simplifyOnFind(Path path, @Local(ordinal = 2) Node node) {
         return this.simplifyPath(path, node);
     }
 
     @Inject(
-        method = "method_404",
+        method = "isFree",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/BlockView;getBlockId(III)I",
+            target = "Lnet/minecraft/world/level/LevelSource;getTile(III)I",
             shift = At.Shift.BEFORE),
         cancellable = true)
     private void returnOnFence(
@@ -58,14 +58,14 @@ public abstract class MixinPathNodeNavigator implements ExPathNodeNavigator {
         @Local(ordinal = 4) int y,
         @Local(ordinal = 5) int z) {
         if (y > 1) {
-            int id = this.block.getTile(x, y - 1, z);
+            int id = this.level.getTile(x, y - 1, z);
             if (id == Tile.OAK_FENCE.id) {
                 cir.setReturnValue(0);
             }
         }
     }
 
-    @Redirect(method = "method_404", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/material/Material;blocksMovement()Z"))
+    @Redirect(method = "isFree", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/material/Material;blocksMotion()Z"))
     private boolean refinedMoveBlockCheck(
         Material instance,
         @Local(ordinal = 3) int x,
@@ -132,12 +132,12 @@ public abstract class MixinPathNodeNavigator implements ExPathNodeNavigator {
                         }
 
                         for (var18 = 1; var18 < Math.abs(var14); ++var18) {
-                            if (this.method_404(null, var4.x + (int) var15, var4.y, var4.z + var18 * var17, var2) == 1 &&
-                                this.method_404(null, var4.x + (int) var15, var4.y - 1, var4.z + var18 * var17, var2) != 1 &&
-                                this.method_404(null, var4.x + (int) var15 + 1, var4.y, var4.z + var18 * var17, var2) == 1 &&
-                                this.method_404(null, var4.x + (int) var15 + 1, var4.y - 1, var4.z + var18 * var17, var2) != 1 &&
-                                this.method_404(null, var4.x + (int) var15 - 1, var4.y, var4.z + var18 * var17, var2) == 1 &&
-                                this.method_404(null, var4.x + (int) var15 - 1, var4.y - 1, var4.z + var18 * var17, var2) != 1) {
+                            if (this.isFree(null, var4.x + (int) var15, var4.y, var4.z + var18 * var17, var2) == 1 &&
+                                this.isFree(null, var4.x + (int) var15, var4.y - 1, var4.z + var18 * var17, var2) != 1 &&
+                                this.isFree(null, var4.x + (int) var15 + 1, var4.y, var4.z + var18 * var17, var2) == 1 &&
+                                this.isFree(null, var4.x + (int) var15 + 1, var4.y - 1, var4.z + var18 * var17, var2) != 1 &&
+                                this.isFree(null, var4.x + (int) var15 - 1, var4.y, var4.z + var18 * var17, var2) == 1 &&
+                                this.isFree(null, var4.x + (int) var15 - 1, var4.y - 1, var4.z + var18 * var17, var2) != 1) {
                                 var15 += var16;
                             } else {
                                 var3.add(var5);
@@ -154,12 +154,12 @@ public abstract class MixinPathNodeNavigator implements ExPathNodeNavigator {
                         }
 
                         for (var18 = 1; var18 < Math.abs(var13); ++var18) {
-                            if (this.method_404(null, var4.x + var18 * var17, var4.y, var4.z + (int) var15, var2) == 1 &&
-                                this.method_404(null, var4.x + var18 * var17, var4.y - 1, var4.z + (int) var15, var2) != 1 &&
-                                this.method_404(null, var4.x + var18 * var17, var4.y, var4.z + (int) var15 + 1, var2) == 1 &&
-                                this.method_404(null, var4.x + var18 * var17, var4.y - 1, var4.z + (int) var15 + 1, var2) != 1 &&
-                                this.method_404(null, var4.x + var18 * var17, var4.y, var4.z + (int) var15 - 1, var2) == 1 &&
-                                this.method_404(null, var4.x + var18 * var17, var4.y - 1, var4.z + (int) var15 - 1, var2) != 1) {
+                            if (this.isFree(null, var4.x + var18 * var17, var4.y, var4.z + (int) var15, var2) == 1 &&
+                                this.isFree(null, var4.x + var18 * var17, var4.y - 1, var4.z + (int) var15, var2) != 1 &&
+                                this.isFree(null, var4.x + var18 * var17, var4.y, var4.z + (int) var15 + 1, var2) == 1 &&
+                                this.isFree(null, var4.x + var18 * var17, var4.y - 1, var4.z + (int) var15 + 1, var2) != 1 &&
+                                this.isFree(null, var4.x + var18 * var17, var4.y, var4.z + (int) var15 - 1, var2) == 1 &&
+                                this.isFree(null, var4.x + var18 * var17, var4.y - 1, var4.z + (int) var15 - 1, var2) != 1) {
                                 var15 += var16;
                             } else {
                                 var4 = var5;

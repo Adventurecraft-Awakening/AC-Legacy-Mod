@@ -22,7 +22,7 @@ public abstract class MixinZombiePigmanEntity extends MixinZombieEntity {
 
     @Environment(value = EnvType.CLIENT)
     @Overwrite
-    public ItemInstance getMonsterHeldItem() {
-        return this.getHeldItem();
+    public ItemInstance getCarriedItem() {
+        return this.getSelectedItem();
     }
 }

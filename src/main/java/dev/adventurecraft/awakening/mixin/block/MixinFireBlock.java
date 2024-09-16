@@ -13,7 +13,7 @@ import net.minecraft.world.level.tile.FireTile;
 @Mixin(FireTile.class)
 public abstract class MixinFireBlock {
 
-    @Inject(method = "onScheduledTick", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
     private void disableTickInDebugMode(Level i, int j, int k, int random, Random par5, CallbackInfo ci) {
         if (AC_DebugMode.active) {
             ci.cancel();

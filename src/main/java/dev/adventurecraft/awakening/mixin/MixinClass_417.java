@@ -14,10 +14,10 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public abstract class MixinClass_417 {
 
     @Redirect(
-        method = "method_1402",
+        method = "update",
         at = @At(
             value = "FIELD",
-            target = "Lnet/minecraft/block/Block;EMITTANCE:[I",
+            target = "Lnet/minecraft/world/level/tile/Tile;lightEmission:[I",
             opcode = Opcodes.GETSTATIC,
             args = "array=get"))
     private int useBlockLightValue(

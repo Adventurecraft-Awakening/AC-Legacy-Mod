@@ -13,16 +13,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(LadderTile.class)
 public abstract class MixinLadderBlock {
 
-    @Redirect(method = {"getCollisionShape", "getOutlineShape"}, at = @At(
+    @Redirect(method = {"getAABB", "getTileAABB"}, at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/World;getBlockMeta(III)I"))
+            target = "Lnet/minecraft/world/level/Level;getData(III)I"))
     private int redirectBlockMeta(Level world, int x, int y, int z) {
         return world.getData(x, y, z) % 4 + 2;
     }
 
-    @Inject(method = "canPlaceAt", at = @At(
+    @Inject(method = "mayPlace", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/World;canSuffocate(III)Z",
+            target = "Lnet/minecraft/world/level/Level;isSolidBlockingTile(III)Z",
             shift = At.Shift.BEFORE,
             ordinal = 3),
             cancellable = true)
@@ -34,7 +34,7 @@ public abstract class MixinLadderBlock {
     }
 
     @Overwrite
-    public void onBlockPlaced(Level var1, int var2, int var3, int var4, int var5) {
+    public void setPlacedOnFace(Level var1, int var2, int var3, int var4, int var5) {
         int var6 = var1.getData(var2, var3, var4);
         if (var6 == 0 && ExLadderBlock.isLadderID(var1.getTile(var2, var3 - 1, var4))) {
             var6 = var1.getData(var2, var3 - 1, var4) % 4 + 2;
@@ -64,6 +64,6 @@ public abstract class MixinLadderBlock {
     }
 
     @Overwrite
-    public void onAdjacentBlockUpdate(Level arg, int i, int j, int k, int l) {
+    public void neighborChanged(Level arg, int i, int j, int k, int l) {
     }
 }

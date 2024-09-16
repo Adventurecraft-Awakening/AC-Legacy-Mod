@@ -13,16 +13,16 @@ public abstract class MixinCreeperEntity extends MixinMonsterEntity {
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(Level var1, CallbackInfo ci) {
-        this.attackDamage = 3;
+        this.damage = 3;
     }
 
     @ModifyArg(
-        method = "tryAttack",
+        method = "checkHurtTarget",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/World;createExplosion(Lnet/minecraft/entity/Entity;DDDF)Lnet/minecraft/world/explosion/Explosion;"),
+            target = "Lnet/minecraft/world/level/Level;explode(Lnet/minecraft/world/entity/Entity;DDDF)Lnet/minecraft/world/level/Explosion;"),
         index = 4)
     private float modifyAttackStrength(float i) {
-        return i / 3.0F * (float) this.attackDamage;
+        return i / 3.0F * (float) this.damage;
     }
 }

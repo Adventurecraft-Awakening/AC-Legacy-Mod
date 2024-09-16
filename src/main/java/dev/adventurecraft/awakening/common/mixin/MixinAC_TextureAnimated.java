@@ -41,7 +41,7 @@ public abstract class MixinAC_TextureAnimated extends MixinTextureBinder {
             this.imageData.clear();
             swapBgra(this.imageData);
             this.hasImages = true;
-            this.grid = new byte[0];
+            this.pixels = new byte[0];
         }
     }
 }

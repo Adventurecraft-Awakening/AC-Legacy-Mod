@@ -19,16 +19,16 @@ public abstract class MixinBoatEntity extends Entity {
         super(arg);
     }
 
-    @Redirect(method = "damage", at = @At(
+    @Redirect(method = "hurt", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/BoatEntity;dropItem(IIF)Lnet/minecraft/entity/ItemEntity;"))
+            target = "Lnet/minecraft/world/entity/item/Boat;spawnAtLocation(IIF)Lnet/minecraft/world/entity/item/ItemEntity;"))
     private ItemEntity disableDropItemOnDamage(Boat instance, int var1, int var2, float var3) {
         return null;
     }
 
-    @Inject(method = "damage", at = @At(
+    @Inject(method = "hurt", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/BoatEntity;remove()V",
+            target = "Lnet/minecraft/world/entity/item/Boat;remove()V",
             shift = At.Shift.AFTER))
     private void dropBoatItemOnDamage(Entity var1, int var2, CallbackInfoReturnable<Boolean> cir) {
         this.dropBoatItem();
@@ -36,14 +36,14 @@ public abstract class MixinBoatEntity extends Entity {
 
     @Redirect(method = "tick", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/BoatEntity;dropItem(IIF)Lnet/minecraft/entity/ItemEntity;"))
+            target = "Lnet/minecraft/world/entity/item/Boat;spawnAtLocation(IIF)Lnet/minecraft/world/entity/item/ItemEntity;"))
     private ItemEntity disableDropItemOnTick(Boat instance, int var1, int var2, float var3) {
         return null;
     }
 
     @Inject(method = "tick", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/BoatEntity;remove()V",
+            target = "Lnet/minecraft/world/entity/item/Boat;remove()V",
             shift = At.Shift.AFTER))
     private void dropBoatItemOnTick(CallbackInfo ci) {
         this.dropBoatItem();

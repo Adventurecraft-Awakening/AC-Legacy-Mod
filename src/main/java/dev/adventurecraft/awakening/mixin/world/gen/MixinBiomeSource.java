@@ -17,27 +17,27 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinBiomeSource {
 
     @Shadow
-    private PerlinSimplexNoise temperatureNoise;
+    private PerlinSimplexNoise temperatureMap;
     @Shadow
-    private PerlinSimplexNoise rainfallNoise;
+    private PerlinSimplexNoise downfallMap;
     @Shadow
-    private PerlinSimplexNoise detailNoise;
+    private PerlinSimplexNoise noiseMap;
     @Shadow
-    public double[] temperatureNoises;
+    public double[] temperatures;
     @Shadow
-    public double[] rainfallNoises;
+    public double[] downfalls;
     @Shadow
-    public double[] detailNoises;
+    public double[] noises;
 
     private Level world;
 
-    @Inject(method = "<init>(Lnet/minecraft/world/World;)V", at = @At("TAIL"))
+    @Inject(method = "<init>(Lnet/minecraft/world/level/Level;)V", at = @At("TAIL"))
     private void init(Level world, CallbackInfo ci) {
         this.world = world;
     }
 
     @Overwrite
-    public double[] getTemperatures(double[] var1, int var2, int var3, int var4, int var5) {
+    public double[] getTemperatureBlock(double[] var1, int var2, int var3, int var4, int var5) {
         if (var1 == null || var1.length < var4 * var5) {
             var1 = new double[var4 * var5];
         }
@@ -45,8 +45,8 @@ public abstract class MixinBiomeSource {
         boolean useImages = ((ExWorldProperties) this.world.levelData).getWorldGenProps().useImages;
 
         if (!useImages) {
-            var1 = this.temperatureNoise.getRegion(var1, var2, var3, var4, var5, 0.025F, 0.025F, 0.25D);
-            this.detailNoises = this.detailNoise.getRegion(this.detailNoises, var2, var3, var4, var5, 0.25D, 0.25D, 0.5882352941176471D);
+            var1 = this.temperatureMap.getRegion(var1, var2, var3, var4, var5, 0.025F, 0.025F, 0.25D);
+            this.noises = this.noiseMap.getRegion(this.noises, var2, var3, var4, var5, 0.25D, 0.25D, 0.5882352941176471D);
         }
 
         int var6 = 0;
@@ -58,7 +58,7 @@ public abstract class MixinBiomeSource {
                     int var10 = var3 + var8;
                     var1[var6] = AC_TerrainImage.getTerrainTemperature(var9, var10);
                 } else {
-                    double var17 = this.detailNoises[var6] * 1.1D + 0.5D;
+                    double var17 = this.noises[var6] * 1.1D + 0.5D;
                     double var11 = 0.01D;
                     double var13 = 1.0D - var11;
                     double var15 = (var1[var6] * 0.15D + 0.7D) * var13 + var17 * var11;
@@ -82,16 +82,16 @@ public abstract class MixinBiomeSource {
     }
 
     @Overwrite
-    public Biome[] getBiomes(Biome[] var1, int var2, int var3, int var4, int var5) {
+    public Biome[] getBiomeBlock(Biome[] var1, int var2, int var3, int var4, int var5) {
         if (var1 == null || var1.length < var4 * var5) {
             var1 = new Biome[var4 * var5];
         }
 
         boolean useImages = ((ExWorldProperties) this.world.levelData).getWorldGenProps().useImages;
 
-        this.temperatureNoises = this.temperatureNoise.getRegion(this.temperatureNoises, var2, var3, var4, var4, 0.025F, 0.025F, 0.25D);
-        this.rainfallNoises = this.rainfallNoise.getRegion(this.rainfallNoises, var2, var3, var4, var4, 0.05F, 0.05F, 1.0D / 3.0D);
-        this.detailNoises = this.detailNoise.getRegion(this.detailNoises, var2, var3, var4, var4, 0.25D, 0.25D, 0.5882352941176471D);
+        this.temperatures = this.temperatureMap.getRegion(this.temperatures, var2, var3, var4, var4, 0.025F, 0.025F, 0.25D);
+        this.downfalls = this.downfallMap.getRegion(this.downfalls, var2, var3, var4, var4, 0.05F, 0.05F, 1.0D / 3.0D);
+        this.noises = this.noiseMap.getRegion(this.noises, var2, var3, var4, var4, 0.25D, 0.25D, 0.5882352941176471D);
         int var6 = 0;
         double var7;
         double var9;
@@ -104,13 +104,13 @@ public abstract class MixinBiomeSource {
                     var7 = AC_TerrainImage.getTerrainTemperature(var13, var14);
                     var9 = AC_TerrainImage.getTerrainHumidity(var13, var14);
                 } else {
-                    double var19 = this.detailNoises[var6] * 1.1D + 0.5D;
+                    double var19 = this.noises[var6] * 1.1D + 0.5D;
                     double var15 = 0.01D;
                     double var17 = 1.0D - var15;
-                    var7 = (this.temperatureNoises[var6] * 0.15D + 0.7D) * var17 + var19 * var15;
+                    var7 = (this.temperatures[var6] * 0.15D + 0.7D) * var17 + var19 * var15;
                     var15 = 0.002D;
                     var17 = 1.0D - var15;
-                    var9 = (this.rainfallNoises[var6] * 0.15D + 0.5D) * var17 + var19 * var15;
+                    var9 = (this.downfalls[var6] * 0.15D + 0.5D) * var17 + var19 * var15;
                     var7 = 1.0D - (1.0D - var7) * (1.0D - var7);
                     if (var7 < 0.0D) {
                         var7 = 0.0D;
@@ -129,8 +129,8 @@ public abstract class MixinBiomeSource {
                     }
                 }
 
-                this.temperatureNoises[var6] = var7;
-                this.rainfallNoises[var6] = var9;
+                this.temperatures[var6] = var7;
+                this.downfalls[var6] = var9;
                 var1[var6++] = Biome.getBiome(var7, var9);
             }
         }

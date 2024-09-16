@@ -19,16 +19,16 @@ public abstract class MixinBlockEntity implements ExBlockEntity {
     private boolean killedFromSaving;
 
     @Shadow
-    private static Map<Class<?>, String> CLASS_TO_ID;
+    private static Map<Class<?>, String> classIdMap;
 
     @Shadow
-    private static void register(Class<?> type, String string) {
+    private static void setId(Class<?> type, String string) {
         throw new AssertionError();
     }
 
     @Override
     public String getClassName() {
-        return CLASS_TO_ID.get(this.getClass());
+        return classIdMap.get(this.getClass());
     }
 
     @Override
@@ -48,25 +48,25 @@ public abstract class MixinBlockEntity implements ExBlockEntity {
 
     @Inject(method = "<clinit>", at = @At("TAIL"))
     private static void registerACEntities(CallbackInfo ci) {
-        register(AC_TileEntityMobSpawner.class, "MobSpawnerNew");
-        register(AC_TileEntityTrigger.class, "Trigger");
-        register(AC_TileEntityTriggerInverter.class, "TriggerInverter");
-        register(AC_TileEntityTriggerMemory.class, "TriggerMemory");
-        register(AC_TileEntityRedstoneTrigger.class, "RedstoneTrigger");
-        register(AC_TileEntityWeather.class, "Weather");
-        register(AC_TileEntityMusic.class, "Music");
-        register(AC_TileEntityTimer.class, "Timer");
-        register(AC_TileEntityMessage.class, "Message");
-        register(AC_TileEntityCamera.class, "Camera");
-        register(AC_TileEntityTriggerPushable.class, "TriggerPushable");
-        register(AC_TileEntityStorage.class, "Storage");
-        register(AC_TileEntityHealDamage.class, "HealDamage");
-        register(AC_TileEntityTeleport.class, "Teleport");
-        register(AC_TileEntityTree.class, "Tree");
-        register(AC_TileEntityScript.class, "Script");
-        register(AC_TileEntityStore.class, "Store");
-        register(AC_TileEntityEffect.class, "Effect");
-        register(AC_TileEntityUrl.class, "Url");
-        register(AC_TileEntityNpcPath.class, "NpcPath");
+        setId(AC_TileEntityMobSpawner.class, "MobSpawnerNew");
+        setId(AC_TileEntityTrigger.class, "Trigger");
+        setId(AC_TileEntityTriggerInverter.class, "TriggerInverter");
+        setId(AC_TileEntityTriggerMemory.class, "TriggerMemory");
+        setId(AC_TileEntityRedstoneTrigger.class, "RedstoneTrigger");
+        setId(AC_TileEntityWeather.class, "Weather");
+        setId(AC_TileEntityMusic.class, "Music");
+        setId(AC_TileEntityTimer.class, "Timer");
+        setId(AC_TileEntityMessage.class, "Message");
+        setId(AC_TileEntityCamera.class, "Camera");
+        setId(AC_TileEntityTriggerPushable.class, "TriggerPushable");
+        setId(AC_TileEntityStorage.class, "Storage");
+        setId(AC_TileEntityHealDamage.class, "HealDamage");
+        setId(AC_TileEntityTeleport.class, "Teleport");
+        setId(AC_TileEntityTree.class, "Tree");
+        setId(AC_TileEntityScript.class, "Script");
+        setId(AC_TileEntityStore.class, "Store");
+        setId(AC_TileEntityEffect.class, "Effect");
+        setId(AC_TileEntityUrl.class, "Url");
+        setId(AC_TileEntityNpcPath.class, "NpcPath");
     }
 }

@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 public abstract class MixinDiggingParticleEntity extends Particle {
 
     @Shadow
-    private Tile block;
+    private Tile tile;
 
     public MixinDiggingParticleEntity(Level world, double x, double y, double z, double vX, double vY, double vZ) {
         super(world, x, y, z, vX, vY, vZ);
@@ -28,8 +28,8 @@ public abstract class MixinDiggingParticleEntity extends Particle {
     }
 
     @Overwrite
-    public TerrainParticle multiplyColor(int x, int y, int z) {
-        int n = this.block.getFoliageColor(this.level, x, y, z);
+    public TerrainParticle init(int x, int y, int z) {
+        int n = this.tile.getFoliageColor(this.level, x, y, z);
         this.rCol *= (float) (n >> 16 & 0xFF) / 255.0f;
         this.gCol *= (float) (n >> 8 & 0xFF) / 255.0f;
         this.bCol *= (float) (n & 0xFF) / 255.0f;
@@ -38,7 +38,7 @@ public abstract class MixinDiggingParticleEntity extends Particle {
 
     @Overwrite
     public int getParticleTexture() {
-        int texture = ((ExBlock) this.block).getTextureNum();
+        int texture = ((ExBlock) this.tile).getTextureNum();
         return texture == 2 ? 3 : (texture == 3 ? 4 : 1);
     }
 }

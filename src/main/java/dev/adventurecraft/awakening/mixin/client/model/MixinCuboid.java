@@ -16,13 +16,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinCuboid implements ExCuboid {
 
     @Shadow
-    private Vertex[] corners;
+    private Vertex[] vertices;
     @Shadow
-    private Polygon[] faces;
+    private Polygon[] polygons;
     @Shadow
-    private int textureOffsetX;
+    private int xTexOffs;
     @Shadow
-    private int textureOffsetY;
+    private int yTexOffs;
     @Shadow
     public boolean mirror;
 
@@ -36,10 +36,10 @@ public abstract class MixinCuboid implements ExCuboid {
     }
 
     @Redirect(
-        method = "method_1818",
+        method = "addBox(FFFIIIF)V",
         at = @At(
             value = "NEW",
-            target = "([Lnet/minecraft/client/render/QuadPoint;IIII)Lnet/minecraft/client/render/TexturedQuad;"))
+            target = "([Lnet/minecraft/client/model/Vertex;IIII)Lnet/minecraft/client/model/Polygon;"))
     private Polygon createQuadsWithSize(Vertex[] var1, int var2, int var3, int var4, int var5) {
         return ExTexturedQuad.create(var1, var2, var3, var4, var5, tWidth, tHeight);
     }
@@ -58,29 +58,29 @@ public abstract class MixinCuboid implements ExCuboid {
             offsetX = var11;
         }
 
-        this.corners = new Vertex[8];
-        this.corners[0] = new Vertex(offsetX, offsetY, offsetZ, 0.0F, 0.0F);
-        this.corners[1] = new Vertex(offsetMaxX, offsetY, offsetZ, 0.0F, 8.0F);
-        this.corners[2] = new Vertex(offsetMaxX, offsetMaxY, offsetZ, 8.0F, 8.0F);
-        this.corners[3] = new Vertex(offsetX, offsetMaxY, offsetZ, 8.0F, 0.0F);
-        this.corners[4] = new Vertex(offsetX, offsetY, offsetMaxZ, 0.0F, 0.0F);
-        this.corners[5] = new Vertex(offsetMaxX, offsetY, offsetMaxZ, 0.0F, 8.0F);
-        this.corners[6] = new Vertex(offsetMaxX, offsetMaxY, offsetMaxZ, 8.0F, 8.0F);
-        this.corners[7] = new Vertex(offsetX, offsetMaxY, offsetMaxZ, 8.0F, 0.0F);
+        this.vertices = new Vertex[8];
+        this.vertices[0] = new Vertex(offsetX, offsetY, offsetZ, 0.0F, 0.0F);
+        this.vertices[1] = new Vertex(offsetMaxX, offsetY, offsetZ, 0.0F, 8.0F);
+        this.vertices[2] = new Vertex(offsetMaxX, offsetMaxY, offsetZ, 8.0F, 8.0F);
+        this.vertices[3] = new Vertex(offsetX, offsetMaxY, offsetZ, 8.0F, 0.0F);
+        this.vertices[4] = new Vertex(offsetX, offsetY, offsetMaxZ, 0.0F, 0.0F);
+        this.vertices[5] = new Vertex(offsetMaxX, offsetY, offsetMaxZ, 0.0F, 8.0F);
+        this.vertices[6] = new Vertex(offsetMaxX, offsetMaxY, offsetMaxZ, 8.0F, 8.0F);
+        this.vertices[7] = new Vertex(offsetX, offsetMaxY, offsetMaxZ, 8.0F, 0.0F);
 
         int w = this.tWidth;
         int h = this.tHeight;
 
-        this.faces = new Polygon[6];
-        this.faces[0] = ExTexturedQuad.create(new Vertex[]{this.corners[5], this.corners[1], this.corners[2], this.corners[6]}, this.textureOffsetX + length + width + length, this.textureOffsetY + length + height, this.textureOffsetX + length + width, this.textureOffsetY + length, w, h);
-        this.faces[1] = ExTexturedQuad.create(new Vertex[]{this.corners[0], this.corners[4], this.corners[7], this.corners[3]}, this.textureOffsetX + length, this.textureOffsetY + length + height, this.textureOffsetX, this.textureOffsetY + length, w, h);
-        this.faces[2] = ExTexturedQuad.create(new Vertex[]{this.corners[5], this.corners[4], this.corners[0], this.corners[1]}, this.textureOffsetX + length + width + width, this.textureOffsetY, this.textureOffsetX + length + width, this.textureOffsetY + length, w, h);
-        this.faces[3] = ExTexturedQuad.create(new Vertex[]{this.corners[2], this.corners[3], this.corners[7], this.corners[6]}, this.textureOffsetX + length + width, this.textureOffsetY, this.textureOffsetX + length, this.textureOffsetY + length, w, h);
-        this.faces[4] = ExTexturedQuad.create(new Vertex[]{this.corners[1], this.corners[0], this.corners[3], this.corners[2]}, this.textureOffsetX + length + width + length + width, this.textureOffsetY + length + height, this.textureOffsetX + length + width + length, this.textureOffsetY + length, w, h);
-        this.faces[5] = ExTexturedQuad.create(new Vertex[]{this.corners[4], this.corners[5], this.corners[6], this.corners[7]}, this.textureOffsetX + length + width, this.textureOffsetY + length + height, this.textureOffsetX + length, this.textureOffsetY + length, w, h);
+        this.polygons = new Polygon[6];
+        this.polygons[0] = ExTexturedQuad.create(new Vertex[]{this.vertices[5], this.vertices[1], this.vertices[2], this.vertices[6]}, this.xTexOffs + length + width + length, this.yTexOffs + length + height, this.xTexOffs + length + width, this.yTexOffs + length, w, h);
+        this.polygons[1] = ExTexturedQuad.create(new Vertex[]{this.vertices[0], this.vertices[4], this.vertices[7], this.vertices[3]}, this.xTexOffs + length, this.yTexOffs + length + height, this.xTexOffs, this.yTexOffs + length, w, h);
+        this.polygons[2] = ExTexturedQuad.create(new Vertex[]{this.vertices[5], this.vertices[4], this.vertices[0], this.vertices[1]}, this.xTexOffs + length + width + width, this.yTexOffs, this.xTexOffs + length + width, this.yTexOffs + length, w, h);
+        this.polygons[3] = ExTexturedQuad.create(new Vertex[]{this.vertices[2], this.vertices[3], this.vertices[7], this.vertices[6]}, this.xTexOffs + length + width, this.yTexOffs, this.xTexOffs + length, this.yTexOffs + length, w, h);
+        this.polygons[4] = ExTexturedQuad.create(new Vertex[]{this.vertices[1], this.vertices[0], this.vertices[3], this.vertices[2]}, this.xTexOffs + length + width + length + width, this.yTexOffs + length + height, this.xTexOffs + length + width + length, this.yTexOffs + length, w, h);
+        this.polygons[5] = ExTexturedQuad.create(new Vertex[]{this.vertices[4], this.vertices[5], this.vertices[6], this.vertices[7]}, this.xTexOffs + length + width, this.yTexOffs + length + height, this.xTexOffs + length, this.yTexOffs + length, w, h);
 
         if (this.mirror) {
-            for (Polygon face : this.faces) {
+            for (Polygon face : this.polygons) {
                 face.mirror();
             }
         }

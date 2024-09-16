@@ -15,15 +15,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinItemEntity extends Entity {
 
     @Shadow
-    public ItemInstance stack;
+    public ItemInstance item;
 
     public MixinItemEntity(Level arg) {
         super(arg);
     }
 
-    @Inject(method = "<init>(Lnet/minecraft/world/World;DDDLnet/minecraft/item/ItemStack;)V", at = @At("TAIL"))
+    @Inject(method = "<init>(Lnet/minecraft/world/level/Level;DDDLnet/minecraft/world/ItemInstance;)V", at = @At("TAIL"))
     private void removeIfEmpty(Level d, double e, double f, double arg2, ItemInstance par5, CallbackInfo ci) {
-        if (Item.items[this.stack.id] == null) {
+        if (Item.items[this.item.id] == null) {
             this.remove();
         }
     }

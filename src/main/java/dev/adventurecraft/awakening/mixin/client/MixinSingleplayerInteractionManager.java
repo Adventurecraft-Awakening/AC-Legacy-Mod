@@ -18,8 +18,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinSingleplayerInteractionManager extends MixinClientInteractionManager {
 
     @Overwrite
-    public boolean breakBlock(int x, int y, int z, int side) {
-        AC_UndoStack undoStack = ((ExWorld) this.client.level).getUndoStack();
+    public boolean destroyBlock(int x, int y, int z, int side) {
+        AC_UndoStack undoStack = ((ExWorld) this.minecraft.level).getUndoStack();
         boolean hasRecording = false;
         if (!undoStack.isRecording()) {
             undoStack.startRecording();
@@ -57,40 +57,40 @@ public abstract class MixinSingleplayerInteractionManager extends MixinClientInt
     }
 
     private boolean _sendBlockRemoved(int x, int y, int z, int side) {
-        int id = this.client.level.getTile(x, y, z);
+        int id = this.minecraft.level.getTile(x, y, z);
         if (id == 0) {
             return false;
         }
 
-        int meta = this.client.level.getData(x, y, z);
-        boolean broken = super.breakBlock(x, y, z, side);
-        ItemInstance heldItem = this.client.player.getSelectedItem();
-        boolean canBreak = this.client.player.canDestroy(Tile.tiles[id]);
+        int meta = this.minecraft.level.getData(x, y, z);
+        boolean broken = super.destroyBlock(x, y, z, side);
+        ItemInstance heldItem = this.minecraft.player.getSelectedItem();
+        boolean canBreak = this.minecraft.player.canDestroy(Tile.tiles[id]);
         if (heldItem != null) {
-            heldItem.mineBlock(id, x, y, z, this.client.player);
+            heldItem.mineBlock(id, x, y, z, this.minecraft.player);
             if (heldItem.count == 0) {
-                heldItem.snap(this.client.player);
-                this.client.player.removeSelectedItem();
+                heldItem.snap(this.minecraft.player);
+                this.minecraft.player.removeSelectedItem();
             }
         }
 
         if (broken && canBreak) {
-            Tile.tiles[id].playerDestroy(this.client.level, this.client.player, x, y, z, meta);
+            Tile.tiles[id].playerDestroy(this.minecraft.level, this.minecraft.player, x, y, z, meta);
         }
 
         return broken;
     }
 
     @WrapWithCondition(
-        method = "destroyFireAndBreakBlock",
+        method = "startDestroyBlock",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/SingleplayerInteractionManager;breakBlock(IIII)Z"))
+            target = "Lnet/minecraft/client/gamemode/SurvivalGameMode;destroyBlock(IIII)Z"))
     private boolean onlyBreakBlockInDebugMode(SurvivalGameMode instance, int var1, int var2, int var3, int var4) {
         return AC_DebugMode.active;
     }
 
-    @Inject(method = "dig", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "continueDestroyBlock", at = @At("HEAD"), cancellable = true)
     private void onlyDigInDebugMode(int var1, int var2, int var3, int var4, CallbackInfo ci) {
         if (!AC_DebugMode.active) {
             ci.cancel();
@@ -98,8 +98,8 @@ public abstract class MixinSingleplayerInteractionManager extends MixinClientInt
     }
 
     @Overwrite
-    public float getBlockReachDistance() {
-        ItemInstance heldItem = this.client.player.getSelectedItem();
+    public float getPickRange() {
+        ItemInstance heldItem = this.minecraft.player.getSelectedItem();
         if (heldItem != null && heldItem.id == AC_Items.quill.id) {
             return 500.0F;
         }

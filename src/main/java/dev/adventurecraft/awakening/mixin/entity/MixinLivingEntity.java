@@ -33,70 +33,67 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class MixinLivingEntity extends MixinEntity implements ExLivingEntity {
 
     @Shadow
-    public int field_1009;
+    public int invulnerableDuration;
 
     @Shadow
-    protected String texture;
+    protected String textureName;
 
     @Shadow
-    protected String type;
-
-    @Shadow
-    public float handSwingProgress;
+    public float attackAnim;
 
     @Shadow
     public int health;
 
     @Shadow
-    public int prevHealth;
+    public int lastHealth;
 
     @Shadow
     public int hurtTime;
 
     @Shadow
-    public int field_1039;
+    public int hurtDuration;
 
     @Shadow
-    public float field_1040;
+    public float hurtDir;
 
     @Shadow
-    public float field_1048;
+    public float walkAnimSpeedO;
 
     @Shadow
-    public float limbDistance;
+    public float walkAnimSpeed;
 
     @Shadow
-    public float field_1050;
+    public float walkAnimPos;
 
     @Shadow
-    public int field_1058;
+    public int lastHurt;
 
     @Shadow
-    protected int despawnCounter;
+    protected int noActionTime;
 
     @Shadow
-    protected float horizontalVelocity;
+    protected float xxa;
 
     @Shadow
-    protected float forwardVelocity;
+    protected float zza;
 
     @Shadow
-    protected float field_1030;
+    protected float yRotA;
 
     @Shadow
     public boolean jumping;
 
     @Shadow
-    protected float field_1032;
+    protected float defaultLookAngle;
 
     @Shadow
-    protected float movementSpeed;
+    protected float runSpeed;
 
     @Shadow
-    public Entity target;
+    public Entity lookAt;
 
     @Shadow
-    protected int field_1034;
+    protected int lookTime;
 
     public boolean canGetFallDamage = true;
     public void setCanGetFallDamage(boolean arg){this.canGetFallDamage = arg;};
@@ -124,26 +121,26 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
     public int randomLookRateVariation = 40;
 
     @Shadow
-    public abstract void lookAt(Entity arg, float f, float g);
+    public abstract void setLookAt(Entity arg, float f, float g);
 
     @Shadow
-    public void writeAdditional(CompoundTag arg) {
+    public void readAdditionalSaveData(CompoundTag arg) {
         throw new AssertionError();
     }
 
     @Shadow
-    public void readAdditional(CompoundTag arg) {
+    public void addAdditionalSaveData(CompoundTag arg) {
         throw new AssertionError();
     }
 
     @Shadow
-    public abstract float getStandingEyeHeight();
+    public abstract float getHeadHeight();
 
     @Shadow
-    protected abstract void applyDamage(int i);
+    protected abstract void actuallyHurt(int i);
 
     @Shadow
-    public abstract void method_925(Entity arg, int i, double d, double e);
+    public abstract void knockback(Entity arg, int i, double d, double e);
 
     @Shadow
     protected abstract String getDeathSound();
@@ -155,16 +152,16 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
     protected abstract String getHurtSound();
 
     @Shadow
-    public abstract void onKilledBy(Entity killer);
+    public abstract void die(Entity killer);
 
     @Shadow
-    protected abstract void tryDespawn();
+    protected abstract void checkDespawn();
 
     @Shadow
-    protected abstract int getLookPitchSpeed();
+    protected abstract int getMaxHeadXRot();
 
     @Shadow
-    public abstract float getHandSwingProgress(float f);
+    public abstract float getAttackAnim(float f);
 
     @Shadow
     public void baseTick() {
@@ -172,10 +169,10 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
     }
 
     @Overwrite
-    public boolean method_928(Entity entity) {
+    public boolean canSee(Entity entity) {
         double entityYaw = -180.0D * Math.atan2(entity.x - this.x, entity.z - this.z) / Math.PI;
 
-        double viewYaw = entityYaw - this.yaw;
+        double viewYaw = entityYaw - this.yRot;
         while (viewYaw < -180.0D) {
             viewYaw += 360.0D;
         }
@@ -188,18 +185,18 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
             return false;
         }
 
-        Vec3 start = Vec3.newTemp(this.x, this.y + this.getStandingEyeHeight(), this.z);
+        Vec3 start = Vec3.newTemp(this.x, this.y + this.getHeadHeight(), this.z);
         Vec3 end = Vec3.newTemp(entity.x, entity.y + entity.getHeadHeight(), entity.z);
-        return this.world.clip(start, end) == null;
+        return this.level.clip(start, end) == null;
     }
 
     @ModifyExpressionValue(
         method = "baseTick",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/LivingEntity;isInsideWall()Z"))
+            target = "Lnet/minecraft/world/entity/LivingEntity;isInWall()Z"))
     private boolean damageIfNotCondition(boolean value) {
-        return value && !this.field_1642;
+        return value && !this.noPhysics;
     }
 
     @Inject(method = "baseTick", at = @At("TAIL"))
@@ -212,56 +209,56 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         }
     }
 
-    @ModifyConstant(method = "addHealth", constant = @Constant(intValue = 20))
+    @ModifyConstant(method = "heal", constant = @Constant(intValue = 20))
     private int useMaxHealth(int constant) {
         return this.maxHealth;
     }
 
     @Inject(
-        method = "damage",
+        method = "hurt",
         at = @At(
             value = "FIELD",
-            target = "Lnet/minecraft/entity/LivingEntity;hurtTime:I",
+            target = "Lnet/minecraft/world/entity/LivingEntity;hurtTime:I",
             shift = At.Shift.AFTER))
     private void setHurtTickOnDamage(Entity entity, int damage, CallbackInfoReturnable<Boolean> cir) {
-        this.hurtTick = this.world.getTime();
+        this.hurtTick = this.level.getTime();
     }
 
     @Overwrite
-    public boolean damage(Entity entity, int damage) {
-        if (this.world.isClientSide) {
+    public boolean hurt(Entity entity, int damage) {
+        if (this.level.isClientSide) {
             return false;
         }
 
-        this.despawnCounter = 0;
+        this.noActionTime = 0;
         if (this.health <= 0) {
             return false;
         }
 
         this.extraFov = 180.0F;
-        this.limbDistance = 1.5F;
+        this.walkAnimSpeed = 1.5F;
         boolean attacked = true;
-        if ((float) this.field_1613 > (float) this.field_1009 / 2.0F && this.hurtTime > 0) {
-            if (damage <= this.field_1058) {
+        if ((float) this.invulnerableTime > (float) this.invulnerableDuration / 2.0F && this.hurtTime > 0) {
+            if (damage <= this.lastHurt) {
                 return false;
             }
 
-            this.applyDamage(damage - this.field_1058);
-            this.field_1058 = damage;
+            this.actuallyHurt(damage - this.lastHurt);
+            this.lastHurt = damage;
             attacked = false;
         } else {
-            this.field_1058 = damage;
-            this.prevHealth = this.health;
-            this.field_1613 = this.field_1009;
-            this.applyDamage(damage);
-            this.hurtTime = this.field_1039 = 10;
-            this.hurtTick = this.world.getTime();
+            this.lastHurt = damage;
+            this.lastHealth = this.health;
+            this.invulnerableTime = this.invulnerableDuration;
+            this.actuallyHurt(damage);
+            this.hurtTime = this.hurtDuration = 10;
+            this.hurtTick = this.level.getTime();
         }
 
-        this.field_1040 = 0.0F;
+        this.hurtDir = 0.0F;
         if (attacked) {
-            this.world.broadcastEntityEvent((Entity) (Object) this, (byte) 2);
-            this.setAttacked();
+            this.level.broadcastEntityEvent((Entity) (Object) this, (byte) 2);
+            this.markHurt();
             if (entity != null) {
                 double dX = entity.x - this.x;
                 double dZ = entity.z - this.z;
@@ -270,21 +267,21 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
                     dZ = (Math.random() - Math.random()) * 0.01D;
                 }
 
-                this.field_1040 = (float) (Math.atan2(dZ, dX) * 180.0D / Math.PI) - this.yaw;
-                this.method_925(entity, damage, dX, dZ);
+                this.hurtDir = (float) (Math.atan2(dZ, dX) * 180.0D / Math.PI) - this.yRot;
+                this.knockback(entity, damage, dX, dZ);
             } else {
-                this.field_1040 = (float) ((int) (Math.random() * 2.0D) * 180);
+                this.hurtDir = (float) ((int) (Math.random() * 2.0D) * 180);
             }
         }
 
         if (this.health <= 0) {
             if (attacked) {
-                this.world.playSound((Entity) (Object) this, this.getDeathSound(), this.getSoundVolume(), (this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F + 1.0F);
+                this.level.playSound((Entity) (Object) this, this.getDeathSound(), this.getSoundVolume(), (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F);
             }
 
-            this.onKilledBy(entity);
+            this.die(entity);
         } else if (attacked) {
-            this.world.playSound((Entity) (Object) this, this.getHurtSound(), this.getSoundVolume(), (this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F + 1.0F);
+            this.level.playSound((Entity) (Object) this, this.getHurtSound(), this.getSoundVolume(), (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F);
         }
 
         return true;
@@ -292,39 +289,39 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
 
     @Override
     public boolean attackEntityFromMulti(Entity entity, int damage) {
-        if (this.world.isClientSide) {
+        if (this.level.isClientSide) {
             return false;
         }
 
-        this.despawnCounter = 0;
+        this.noActionTime = 0;
         if (this.health <= 0) {
             return false;
         }
 
         this.extraFov = 180.0F;
-        this.limbDistance = 1.5F;
+        this.walkAnimSpeed = 1.5F;
         boolean attacked = true;
-        if ((float) this.field_1613 > (float) this.field_1009 / 2.0F && this.hurtTick != this.world.getTime()) {
-            if (damage <= this.field_1058) {
+        if ((float) this.invulnerableTime > (float) this.invulnerableDuration / 2.0F && this.hurtTick != this.level.getTime()) {
+            if (damage <= this.lastHurt) {
                 return false;
             }
 
-            this.applyDamage(damage - this.field_1058);
-            this.field_1058 = damage;
+            this.actuallyHurt(damage - this.lastHurt);
+            this.lastHurt = damage;
             attacked = false;
         } else {
-            this.field_1058 = damage;
-            this.prevHealth = this.health;
-            this.field_1613 = this.field_1009;
-            this.applyDamage(damage);
-            this.hurtTime = this.field_1039 = 10;
-            this.hurtTick = this.world.getTime();
+            this.lastHurt = damage;
+            this.lastHealth = this.health;
+            this.invulnerableTime = this.invulnerableDuration;
+            this.actuallyHurt(damage);
+            this.hurtTime = this.hurtDuration = 10;
+            this.hurtTick = this.level.getTime();
         }
 
-        this.field_1040 = 0.0F;
+        this.hurtDir = 0.0F;
         if (attacked) {
-            this.world.broadcastEntityEvent((Entity) (Object) this, (byte) 2);
-            this.setAttacked();
+            this.level.broadcastEntityEvent((Entity) (Object) this, (byte) 2);
+            this.markHurt();
             if (entity != null) {
                 double dX = entity.x - this.x;
                 double dZ = entity.z - this.z;
@@ -333,28 +330,28 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
                     dZ = (Math.random() - Math.random()) * 0.01D;
                 }
 
-                this.field_1040 = (float) (Math.atan2(dZ, dX) * 180.0D / Math.PI) - this.yaw;
-                this.method_925(entity, damage, dX, dZ);
+                this.hurtDir = (float) (Math.atan2(dZ, dX) * 180.0D / Math.PI) - this.yRot;
+                this.knockback(entity, damage, dX, dZ);
             } else {
-                this.field_1040 = (float) ((int) (Math.random() * 2.0D) * 180);
+                this.hurtDir = (float) ((int) (Math.random() * 2.0D) * 180);
             }
         }
 
         if (this.health <= 0) {
             if (attacked) {
-                this.world.playSound((Entity) (Object) this, this.getDeathSound(), this.getSoundVolume(), (this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F + 1.0F);
+                this.level.playSound((Entity) (Object) this, this.getDeathSound(), this.getSoundVolume(), (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F);
             }
 
-            this.onKilledBy(entity);
+            this.die(entity);
         } else if (attacked) {
-            this.world.playSound((Entity) (Object) this, this.getHurtSound(), this.getSoundVolume(), (this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F + 1.0F);
+            this.level.playSound((Entity) (Object) this, this.getHurtSound(), this.getSoundVolume(), (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F);
         }
 
         return true;
     }
 
     @Overwrite
-    public void handleFallDamage(float var1) {
+    public void causeFallDamage(float var1) {
         if(!this.canGetFallDamage) {
             return;
         }
@@ -366,16 +363,16 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         float amount = Math.max(var1 - 0.8F, 0.0F) / 0.08F;
         int ceilAmount = (int) Math.ceil(Math.pow(amount, 1.5D));
         if (ceilAmount > 0) {
-            this.damage(null, ceilAmount);
+            this.hurt(null, ceilAmount);
 
-            int id = this.world.getTile(
+            int id = this.level.getTile(
                 Mth.floor(this.x),
-                Mth.floor(this.y - 0.2 - this.standingEyeHeight),
+                Mth.floor(this.y - 0.2 - this.heightOffset),
                 Mth.floor(this.z));
 
             if (id > 0) {
                 SoundType block = Tile.tiles[id].soundType;
-                this.world.playSound((Entity) (Object) this, block.getStepSound(), block.getVolume() * 0.5F, block.getPitch() * (12.0F / 16.0F));
+                this.level.playSound((Entity) (Object) this, block.getStepSound(), block.getVolume() * 0.5F, block.getPitch() * (12.0F / 16.0F));
             }
         }
     }
@@ -384,137 +381,137 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
     public void travel(float xInput, float zInput) {
         if (this.handleFlying()) {
             double speed = Math.sqrt(xInput * xInput + zInput * zInput);
-            double yVel = (double) (-0.1F * zInput) * Math.sin(this.pitch * Math.PI / 180.0);
+            double yVel = (double) (-0.1F * zInput) * Math.sin(this.xRot * Math.PI / 180.0);
             if (speed < 1.0D) {
                 yVel *= speed;
             }
 
-            this.yVelocity += yVel;
-            float inputSpeed = (float) (0.1 * (Math.abs(zInput * Math.cos(this.pitch * Math.PI / 180.0)) + Math.abs(xInput)));
-            this.movementInputToVelocity(xInput, zInput, inputSpeed);
-            this.move(this.xVelocity, this.yVelocity, this.zVelocity);
+            this.yd += yVel;
+            float inputSpeed = (float) (0.1 * (Math.abs(zInput * Math.cos(this.xRot * Math.PI / 180.0)) + Math.abs(xInput)));
+            this.moveRelative(xInput, zInput, inputSpeed);
+            this.move(this.xd, this.yd, this.zd);
             this.fallDistance = 0.0F;
-            this.xVelocity *= 0.8D;
-            this.yVelocity *= 0.8D;
-            this.zVelocity *= 0.8D;
-            if (Math.abs(this.xVelocity) < 0.01D) {
-                this.xVelocity = 0.0D;
+            this.xd *= 0.8D;
+            this.yd *= 0.8D;
+            this.zd *= 0.8D;
+            if (Math.abs(this.xd) < 0.01D) {
+                this.xd = 0.0D;
             }
 
-            if (Math.abs(this.yVelocity) < 0.01D) {
-                this.yVelocity = 0.0D;
+            if (Math.abs(this.yd) < 0.01D) {
+                this.yd = 0.0D;
             }
 
-            if (Math.abs(this.zVelocity) < 0.01D) {
-                this.zVelocity = 0.0D;
+            if (Math.abs(this.zd) < 0.01D) {
+                this.zd = 0.0D;
             }
-        } else if (this.method_1334()) {
-            if (this.yVelocity < -0.4D) {
-                this.yVelocity *= 0.8D;
-            }
-
-            double lastY = this.y;
-            this.movementInputToVelocity(xInput, zInput, 0.02F);
-            this.move(this.xVelocity, this.yVelocity, this.zVelocity);
-            this.xVelocity *= 0.8F;
-            this.yVelocity *= 0.8F;
-            this.zVelocity *= 0.8F;
-            this.yVelocity -= 0.25D * this.getGravity();
-            if (this.field_1624 && this.method_1344(this.xVelocity, this.yVelocity + (double) 0.6F - this.y + lastY, this.zVelocity)) {
-                this.yVelocity = 0.3F;
-            }
-        } else if (this.method_1335()) {
-            if (this.yVelocity < -0.4D) {
-                this.yVelocity *= 0.5D;
+        } else if (this.isInWater()) {
+            if (this.yd < -0.4D) {
+                this.yd *= 0.8D;
             }
 
             double lastY = this.y;
-            this.movementInputToVelocity(xInput, zInput, 0.02F);
-            this.move(this.xVelocity, this.yVelocity, this.zVelocity);
-            this.xVelocity *= 0.5D;
-            this.yVelocity *= 0.5D;
-            this.zVelocity *= 0.5D;
-            this.yVelocity -= 0.25D * this.getGravity();
-            if (this.field_1624 && this.method_1344(this.xVelocity, this.yVelocity + (double) 0.6F - this.y + lastY, this.zVelocity)) {
-                this.yVelocity = 0.3F;
+            this.moveRelative(xInput, zInput, 0.02F);
+            this.move(this.xd, this.yd, this.zd);
+            this.xd *= 0.8F;
+            this.yd *= 0.8F;
+            this.zd *= 0.8F;
+            this.yd -= 0.25D * this.getGravity();
+            if (this.horizontalCollision && this.isFree(this.xd, this.yd + (double) 0.6F - this.y + lastY, this.zd)) {
+                this.yd = 0.3F;
+            }
+        } else if (this.isInLava()) {
+            if (this.yd < -0.4D) {
+                this.yd *= 0.5D;
+            }
+
+            double lastY = this.y;
+            this.moveRelative(xInput, zInput, 0.02F);
+            this.move(this.xd, this.yd, this.zd);
+            this.xd *= 0.5D;
+            this.yd *= 0.5D;
+            this.zd *= 0.5D;
+            this.yd -= 0.25D * this.getGravity();
+            if (this.horizontalCollision && this.isFree(this.xd, this.yd + (double) 0.6F - this.y + lastY, this.zd)) {
+                this.yd = 0.3F;
             }
         } else {
             float slipperiness = 0.91F;
             if (this.onGround) {
                 slipperiness = 0.5460001F;
-                int id = this.world.getTile(Mth.floor(this.x), Mth.floor(this.boundingBox.y0) - 1, Mth.floor(this.z));
+                int id = this.level.getTile(Mth.floor(this.x), Mth.floor(this.bb.y0) - 1, Mth.floor(this.z));
                 if (id > 0) {
                     slipperiness = Tile.tiles[id].friction * 0.91F;
                 }
             }
 
             float inputFactor = 0.1627714F / (slipperiness * slipperiness * slipperiness);
-            this.movementInputToVelocity(xInput, zInput, this.onGround ? 0.1F * inputFactor : 0.1F * this.airControl * inputFactor);
+            this.moveRelative(xInput, zInput, this.onGround ? 0.1F * inputFactor : 0.1F * this.airControl * inputFactor);
             slipperiness = 0.91F;
             if (this.onGround) {
                 slipperiness = 0.5460001F;
-                int id = this.world.getTile(Mth.floor(this.x), Mth.floor(this.boundingBox.y0) - 1, Mth.floor(this.z));
+                int id = this.level.getTile(Mth.floor(this.x), Mth.floor(this.bb.y0) - 1, Mth.floor(this.z));
                 if (id > 0) {
                     slipperiness = Tile.tiles[id].friction * 0.91F;
                 }
             }
 
-            if (this.method_932()) {
+            if (this.onLadder()) {
                 double deceleration = 0.15F;
-                if (this.xVelocity < -deceleration) {
-                    this.xVelocity = -deceleration;
+                if (this.xd < -deceleration) {
+                    this.xd = -deceleration;
                 }
 
-                if (this.xVelocity > deceleration) {
-                    this.xVelocity = deceleration;
+                if (this.xd > deceleration) {
+                    this.xd = deceleration;
                 }
 
-                if (this.zVelocity < -deceleration) {
-                    this.zVelocity = -deceleration;
+                if (this.zd < -deceleration) {
+                    this.zd = -deceleration;
                 }
 
-                if (this.zVelocity > deceleration) {
-                    this.zVelocity = deceleration;
+                if (this.zd > deceleration) {
+                    this.zd = deceleration;
                 }
 
                 this.fallDistance = 0.0F;
-                if (this.yVelocity < -0.15D) {
-                    this.yVelocity = -0.15D;
+                if (this.yd < -0.15D) {
+                    this.yd = -0.15D;
                 }
 
-                if (this.method_1373() && this.yVelocity < 0.0D) {
-                    this.yVelocity = 0.0D;
+                if (this.isSneaking() && this.yd < 0.0D) {
+                    this.yd = 0.0D;
                 }
             }
 
-            this.move(this.xVelocity, this.yVelocity, this.zVelocity);
-            if ((this.field_1624 || this.jumping) && this.method_932()) {
-                this.yVelocity = 0.2D;
+            this.move(this.xd, this.yd, this.zd);
+            if ((this.horizontalCollision || this.jumping) && this.onLadder()) {
+                this.yd = 0.2D;
             }
 
-            this.yVelocity -= this.getGravity();
-            this.yVelocity *= 0.98F;
-            this.xVelocity *= slipperiness;
-            this.zVelocity *= slipperiness;
+            this.yd -= this.getGravity();
+            this.yd *= 0.98F;
+            this.xd *= slipperiness;
+            this.zd *= slipperiness;
         }
 
-        this.field_1048 = this.limbDistance;
-        double dX = this.x - this.prevX;
-        double dZ = this.z - this.prevZ;
+        this.walkAnimSpeedO = this.walkAnimSpeed;
+        double dX = this.x - this.xo;
+        double dZ = this.z - this.zo;
         float limbChange = (float) Math.min(Math.sqrt(dX * dX + dZ * dZ) * 4.0D, 1.0D);
-        this.limbDistance += (limbChange - this.limbDistance) * 0.4F;
-        this.field_1050 += this.limbDistance;
+        this.walkAnimSpeed += (limbChange - this.walkAnimSpeed) * 0.4F;
+        this.walkAnimPos += this.walkAnimSpeed;
     }
 
     @Overwrite
-    public boolean method_932() {
+    public boolean onLadder() {
         int x = Mth.floor(this.x);
-        int y = Mth.floor(this.boundingBox.y0);
+        int y = Mth.floor(this.bb.y0);
         int z = Mth.floor(this.z);
-        if (isClimbable(this.world, x, y, z)) {
+        if (isClimbable(this.level, x, y, z)) {
             return true;
         }
-        if (isClimbable(this.world, x, y + 1, z)) {
+        if (isClimbable(this.level, x, y + 1, z)) {
             return true;
         }
         return false;
@@ -538,10 +535,10 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         return false;
     }
 
-    @Inject(method = "writeAdditional", at = @At("TAIL"))
+    @Inject(method = "readAdditionalSaveData", at = @At("TAIL"))
     private void writeAdditionalAC(CompoundTag tag, CallbackInfo ci) {
         tag.putShort("MaxHealth", (short) this.maxHealth);
-        tag.putInt("EntityID", this.entityId);
+        tag.putInt("EntityID", this.id);
         tag.putInt("timesCanJumpInAir", this.timesCanJumpInAir);
         tag.putBoolean("canWallJump", this.canWallJump);
         tag.putFloat("fov", this.fov);
@@ -552,7 +549,7 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         tag.putBoolean("canGetFallDamage", this.canGetFallDamage);
     }
 
-    @Inject(method = "readAdditional", at = @At("TAIL"))
+    @Inject(method = "addAdditionalSaveData", at = @At("TAIL"))
     private void readAdditionalAC(CompoundTag tag, CallbackInfo ci) {
         if (!tag.hasKey("MaxHealth")) {
             this.maxHealth = 10;
@@ -562,7 +559,7 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
 
         //noinspection ConstantValue
         if (tag.hasKey("EntityID") && !(((Object) this instanceof Player))) {
-            this.entityId = tag.getInt("EntityID");
+            this.id = tag.getInt("EntityID");
         }
 
         this.timesCanJumpInAir = tag.getInt("timesCanJumpInAir");
@@ -593,10 +590,10 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
     }
 
     @Inject(
-        method = "updateDespawnCounter",
+        method = "aiStep",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/LivingEntity;method_1335()Z",
+            target = "Lnet/minecraft/world/entity/LivingEntity;isInLava()Z",
             shift = At.Shift.AFTER))
     private void fixupYaw(CallbackInfo ci) {
         if (this.onGround) {
@@ -606,12 +603,12 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         if (this.moveYawOffset != 0.0F) {
             if (this.moveYawOffset > 40.0F) {
                 this.moveYawOffset -= 40.0F;
-                this.yaw += 40.0F;
+                this.yRot += 40.0F;
             } else if (this.moveYawOffset < -40.0F) {
                 this.moveYawOffset += 40.0F;
-                this.yaw -= 40.0F;
+                this.yRot -= 40.0F;
             } else {
-                this.yaw += this.moveYawOffset;
+                this.yRot += this.moveYawOffset;
                 this.moveYawOffset = 0.0F;
             }
         }
@@ -619,24 +616,24 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
 
     @SuppressWarnings("StatementWithEmptyBody")
     @Inject(
-        method = "updateDespawnCounter",
+        method = "aiStep",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/LivingEntity;method_1335()Z",
+            target = "Lnet/minecraft/world/entity/LivingEntity;isInLava()Z",
             shift = At.Shift.AFTER))
     private void doWallJump(CallbackInfo ci) {
         if (!this.jumping) {
         } else if (this.onGround) {
-        } else if (this.method_1334()) {
-        } else if (this.method_1335()) {
-        } else if (this.world.getTime() >= this.tickBeforeNextJump) {
+        } else if (this.isInWater()) {
+        } else if (this.isInLava()) {
+        } else if (this.level.getTime() >= this.tickBeforeNextJump) {
             if (this.canWallJump && (this.collisionX != 0 || this.collisionZ != 0)) {
-                this.jump();
-                this.yVelocity *= this.jumpWallMultiplier;
-                this.xVelocity += (double) (-this.collisionX) * 0.325D;
-                this.zVelocity += (double) (-this.collisionZ) * 0.325D;
+                this.jumpFromGround();
+                this.yd *= this.jumpWallMultiplier;
+                this.xd += (double) (-this.collisionX) * 0.325D;
+                this.zd += (double) (-this.collisionZ) * 0.325D;
 
-                this.moveYawOffset = (float) (180.0D * Math.atan2(-this.xVelocity, this.zVelocity) / Math.PI) - this.yaw;
+                this.moveYawOffset = (float) (180.0D * Math.atan2(-this.xd, this.zd) / Math.PI) - this.yRot;
                 while ((double) this.moveYawOffset >= 180.0D) {
                     this.moveYawOffset = (float) ((double) this.moveYawOffset - 360.0D);
                 }
@@ -645,97 +642,97 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
                 }
 
                 for (int i = 0; i < 10; ++i) {
-                    this.world.addParticle("reddust", this.x + (this.rand.nextFloat() * this.width * 2.0F) - this.width, this.y - 0.2, this.z + (this.rand.nextFloat() * this.width * 2.0F) - this.width, 2.5D, 2.5D, 2.5D);
+                    this.level.addParticle("reddust", this.x + (this.random.nextFloat() * this.bbWidth * 2.0F) - this.bbWidth, this.y - 0.2, this.z + (this.random.nextFloat() * this.bbWidth * 2.0F) - this.bbWidth, 2.5D, 2.5D, 2.5D);
                 }
             } else if (this.jumpsLeft > 0) {
                 --this.jumpsLeft;
-                this.jump();
-                this.yVelocity *= this.jumpInAirMultiplier;
+                this.jumpFromGround();
+                this.yd *= this.jumpInAirMultiplier;
 
                 for (int i = 0; i < 10; ++i) {
-                    this.world.addParticle("reddust", this.x + (this.rand.nextFloat() * this.width * 2.0F) - this.width, this.y - 0.2, this.z + (this.rand.nextFloat() * this.width * 2.0F) - this.width, 2.5D, 2.5D, 2.5D);
+                    this.level.addParticle("reddust", this.x + (this.random.nextFloat() * this.bbWidth * 2.0F) - this.bbWidth, this.y - 0.2, this.z + (this.random.nextFloat() * this.bbWidth * 2.0F) - this.bbWidth, 2.5D, 2.5D, 2.5D);
                 }
             }
         }
     }
 
     @Overwrite
-    public void jump() {
-        this.tickBeforeNextJump = this.world.getTime() + 5L;
-        this.yVelocity = this.jumpVelocity;
+    public void jumpFromGround() {
+        this.tickBeforeNextJump = this.level.getTime() + 5L;
+        this.yd = this.jumpVelocity;
     }
 
     @Overwrite
-    public void tickHandSwing() {
-        ++this.despawnCounter;
+    public void serverAiStep() {
+        ++this.noActionTime;
 
-        this.tryDespawn();
-        this.horizontalVelocity = 0.0F;
-        this.forwardVelocity = 0.0F;
+        this.checkDespawn();
+        this.xxa = 0.0F;
+        this.zza = 0.0F;
         double searchDist = 8.0F;
-        if (this.rand.nextFloat() < 0.02F) {
-            Player player = this.world.getNearestPlayer((Entity) (Object) this, searchDist);
-            if (player != null && this.method_928(player)) {
-                this.target = player;
-                this.field_1034 = 10 + this.rand.nextInt(20);
+        if (this.random.nextFloat() < 0.02F) {
+            Player player = this.level.getNearestPlayer((Entity) (Object) this, searchDist);
+            if (player != null && this.canSee(player)) {
+                this.lookAt = player;
+                this.lookTime = 10 + this.random.nextInt(20);
             }
         }
 
-        if (this.target != null) {
-            this.lookAt(this.target, 10.0F, (float) this.getLookPitchSpeed());
-            if (this.field_1034-- <= 0 || this.target.removed || this.target.distanceToSqr((Entity) (Object) this) > (searchDist * searchDist)) {
-                this.target = null;
+        if (this.lookAt != null) {
+            this.setLookAt(this.lookAt, 10.0F, (float) this.getMaxHeadXRot());
+            if (this.lookTime-- <= 0 || this.lookAt.removed || this.lookAt.distanceToSqr((Entity) (Object) this) > (searchDist * searchDist)) {
+                this.lookAt = null;
             }
         } else if (this.canLookRandomly) {
             if (this.randomLookNext-- <= 0) {
-                float rngLook = this.rand.nextFloat();
+                float rngLook = this.random.nextFloat();
                 if (rngLook < 0.5F) {
-                    this.field_1030 = -this.randomLookVelocity * (rngLook + 0.5F);
+                    this.yRotA = -this.randomLookVelocity * (rngLook + 0.5F);
                 } else {
-                    this.field_1030 = this.randomLookVelocity * rngLook;
+                    this.yRotA = this.randomLookVelocity * rngLook;
                 }
 
-                this.randomLookNext = this.randomLookRate + this.rand.nextInt(this.randomLookRateVariation);
+                this.randomLookNext = this.randomLookRate + this.random.nextInt(this.randomLookRateVariation);
             }
 
-            this.yaw += this.field_1030;
-            this.pitch = this.field_1032;
-            this.field_1030 *= 0.95F;
-            if (Math.abs(this.field_1030) < 1.0F) {
-                this.field_1030 = 0.0F;
+            this.yRot += this.yRotA;
+            this.xRot = this.defaultLookAngle;
+            this.yRotA *= 0.95F;
+            if (Math.abs(this.yRotA) < 1.0F) {
+                this.yRotA = 0.0F;
             }
         }
 
-        boolean var6 = this.method_1334();
-        boolean var4 = this.method_1335();
+        boolean var6 = this.isInWater();
+        boolean var4 = this.isInLava();
         if (var6 || var4) {
-            this.jumping = this.rand.nextFloat() < 0.8F;
+            this.jumping = this.random.nextFloat() < 0.8F;
         }
     }
 
     @Inject(
-        method = "onKilledBy",
+        method = "die",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/LivingEntity;getDrops()V",
+            target = "Lnet/minecraft/world/entity/LivingEntity;dropDeathLoot()V",
             shift = At.Shift.AFTER))
     private void dropHeartsOnDeath(Entity killer, CallbackInfo ci) {
         if (killer instanceof LivingEntity livingKiller) {
-            if (livingKiller.health < ((ExLivingEntity) livingKiller).getMaxHealth() && this.rand.nextInt(3) != 0) {
-                var item = new ItemEntity(this.world, this.x, this.y, this.z, new ItemInstance(AC_Items.heart.id, 1, 0));
-                this.world.addEntity(item);
+            if (livingKiller.health < ((ExLivingEntity) livingKiller).getMaxHealth() && this.random.nextInt(3) != 0) {
+                var item = new ItemEntity(this.level, this.x, this.y, this.z, new ItemInstance(AC_Items.heart.id, 1, 0));
+                this.level.addEntity(item);
             }
         }
     }
 
     @Environment(EnvType.CLIENT)
     @Overwrite
-    public ItemInstance getMonsterHeldItem() {
+    public ItemInstance getCarriedItem() {
         return this.ac$heldItem;
     }
 
     @Overwrite
-    public Vec3 getRotation(float deltaTime) {
+    public Vec3 getViewVector(float deltaTime) {
         return super.getRotation(deltaTime);
     }
 
@@ -746,7 +743,7 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
 
     @Override
     public boolean protectedByShield(double x, double y, double z) {
-        if (!this.protectedByShield() || !(this.getHandSwingProgress(1.0F) <= 0.0F)) {
+        if (!this.protectedByShield() || !(this.getAttackAnim(1.0F) <= 0.0F)) {
             return false;
         }
 
@@ -754,7 +751,7 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         double dZ = this.z - z;
         float shieldYaw = (float) (-57.29578D * Math.atan2(dX, dZ) + 180.0D);
 
-        float protectYaw = Math.abs(shieldYaw - this.yaw);
+        float protectYaw = Math.abs(shieldYaw - this.yRot);
         while (protectYaw > 180.0F) {
             protectYaw -= 360.0F;
         }
@@ -787,7 +784,7 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
     }
 
     @Override
-    public ItemInstance getHeldItem() {
+    public ItemInstance getSelectedItem() {
         return this.ac$heldItem;
     }
 
@@ -818,7 +815,7 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
 
     @Override
     public void setTexture(String value) {
-        this.texture = value;
+        this.textureName = value;
     }
 
     @Override
@@ -843,12 +840,12 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
 
     @Override
     public float getMovementSpeed() {
-        return movementSpeed;
+        return runSpeed;
     }
 
     @Override
     public void setMovementSpeed(float value) {
-        this.movementSpeed = value;
+        this.runSpeed = value;
     }
 
     @Override

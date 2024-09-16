@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(OptionsScreen.class)
 public abstract class MixinOptionsScreen extends Screen implements OptionTooltipProvider {
 
-    @Inject(method = "initVanillaScreen", at = @At("TAIL"))
+    @Inject(method = "init", at = @At("TAIL"))
     private void addWorldSettings(CallbackInfo ci) {
         I18n ts = I18n.getInstance();
 

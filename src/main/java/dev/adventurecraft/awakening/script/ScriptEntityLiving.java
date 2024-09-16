@@ -85,7 +85,7 @@ public class ScriptEntityLiving extends ScriptEntity {
     }
 
     public ScriptItem getHeldItem() {
-        return new ScriptItem(((ExLivingEntity) this.entityLiving).getHeldItem());
+        return new ScriptItem(((ExLivingEntity) this.entityLiving).getSelectedItem());
     }
 
     public void setHeldItem(ScriptItem item) {

@@ -21,7 +21,7 @@ import net.minecraft.world.phys.AABB;
 public abstract class MixinParticleManager implements ExParticleManager {
 
     @Shadow
-    private List<Particle>[] field_270;
+    private List<Particle>[] particles;
 
     @Shadow
     private Textures textureManager;
@@ -30,30 +30,30 @@ public abstract class MixinParticleManager implements ExParticleManager {
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(Level var1, Textures var2, CallbackInfo ci) {
-        this.field_270 = new List[6];
-        this.bufferLists = new ObjectArrayList[field_270.length];
+        this.particles = new List[6];
+        this.bufferLists = new ObjectArrayList[particles.length];
 
-        for (int i = 0; i < this.field_270.length; ++i) {
-            this.field_270[i] = new ObjectArrayList<>();
+        for (int i = 0; i < this.particles.length; ++i) {
+            this.particles[i] = new ObjectArrayList<>();
             this.bufferLists[i] = new ObjectArrayList<>();
         }
     }
 
     @Overwrite
-    public void addParticle(Particle particle) {
+    public void add(Particle particle) {
         int n = particle.getParticleTexture();
         ObjectArrayList<Particle> list = this.bufferLists[n];
         list.add(particle);
     }
 
-    @Inject(method = "method_320", at = @At("HEAD"))
+    @Inject(method = "tick", at = @At("HEAD"))
     private void flushParticleBuffers(CallbackInfo ci) {
         this.flushParticleBuffers();
     }
 
     private void flushParticleBuffers() {
-        for (int i = 0; i < this.field_270.length; ++i) {
-            var dst = (ObjectArrayList<Particle>) this.field_270[i];
+        for (int i = 0; i < this.particles.length; ++i) {
+            var dst = (ObjectArrayList<Particle>) this.particles[i];
             var src = this.bufferLists[i];
 
             int toRemove = (dst.size() + src.size()) - 4000;
@@ -72,14 +72,14 @@ public abstract class MixinParticleManager implements ExParticleManager {
         }
     }
 
-    @Inject(method = "method_323", at = @At("HEAD"))
+    @Inject(method = "setLevel", at = @At("HEAD"))
     private void clearParticleBuffers(Level world, CallbackInfo ci) {
         for (ObjectArrayList<Particle> bufferList : this.bufferLists) {
             bufferList.clear();
         }
     }
 
-    @ModifyConstant(method = "method_324", constant = @Constant(intValue = 0, ordinal = 1))
+    @ModifyConstant(method = "render", constant = @Constant(intValue = 0, ordinal = 1))
     private int bindTerrainTextures(int constant, @Local int i) {
         if (i == 3) {
             return this.textureManager.loadTexture("/terrain2.png");
@@ -90,20 +90,20 @@ public abstract class MixinParticleManager implements ExParticleManager {
         return constant;
     }
 
-    @ModifyConstant(method = {"method_320", "method_323"}, constant = @Constant(intValue = 4))
+    @ModifyConstant(method = {"tick", "setLevel"}, constant = @Constant(intValue = 4))
     private int returnListCount(int constant) {
-        return this.field_270.length;
+        return this.particles.length;
     }
 
-    @ModifyConstant(method = "method_327", constant = @Constant(intValue = 3))
+    @ModifyConstant(method = "renderLit", constant = @Constant(intValue = 3))
     private int updateLastParticleType(int constant) {
         return 5;
     }
 
     @Overwrite
-    public String method_326() {
+    public String countParticles() {
         int particleCount = 0;
-        for (List<Particle> particles : this.field_270) {
+        for (List<Particle> particles : this.particles) {
             particleCount += particles.size();
         }
         return String.valueOf(particleCount);
@@ -113,7 +113,7 @@ public abstract class MixinParticleManager implements ExParticleManager {
     public void getEffectsWithinAABB(AABB aabb, List<Entity> destination) {
         this.flushParticleBuffers();
 
-        for (List<Particle> list : this.field_270) {
+        for (List<Particle> list : this.particles) {
             for (Particle entity : list) {
                 if (aabb.x0 <= entity.x &&
                     aabb.x1 >= entity.x &&

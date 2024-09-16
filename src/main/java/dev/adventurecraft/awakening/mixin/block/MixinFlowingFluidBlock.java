@@ -13,7 +13,7 @@ import net.minecraft.world.level.tile.LiquidTileDynamic;
 @Mixin(LiquidTileDynamic.class)
 public abstract class MixinFlowingFluidBlock {
 
-    @Inject(method = "onScheduledTick", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
     private void disableTickInDebugMode(Level i, int j, int k, int random, Random par5, CallbackInfo ci) {
         if (AC_DebugMode.active) {
             ci.cancel();

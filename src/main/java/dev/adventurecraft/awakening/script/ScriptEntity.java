@@ -1,13 +1,11 @@
 package dev.adventurecraft.awakening.script;
 
-import ;
 import dev.adventurecraft.awakening.common.AC_EntityLivingScript;
 import dev.adventurecraft.awakening.common.AC_EntityNPC;
 import dev.adventurecraft.awakening.common.AC_Particle;
 import dev.adventurecraft.awakening.common.AC_UtilBullet;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.extension.entity.ExEntityRegistry;
-import net.minecraft.entity.*;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.FlyingMob;
 import net.minecraft.world.entity.LivingEntity;

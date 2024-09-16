@@ -12,7 +12,7 @@ import net.minecraft.world.level.tile.CactusTile;
 @Mixin(CactusTile.class)
 public abstract class MixinCactusBlock {
 
-    @Inject(method = "onScheduledTick", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
     private void disableTick(Level i, int j, int k, int random, Random par5, CallbackInfo ci) {
         ci.cancel();
     }

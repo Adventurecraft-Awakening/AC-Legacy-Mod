@@ -20,11 +20,13 @@ public abstract class MixinItem implements AC_ISlotCallbackItem {
     public int id;
 
     @Shadow
-    public abstract boolean usesMeta();
+    public abstract boolean isStackedByData();
 
-    @Redirect(method = "getTexturePosition(Lnet/minecraft/item/ItemStack;)I", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/item/ItemStack;getMeta()I"))
+    @Redirect(
+        method = "getIcon(Lnet/minecraft/world/ItemInstance;)I",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/ItemInstance;getAuxValue()I"))
     private int defaultMetaForTexPos(ItemInstance instance) {
         if (instance != null) {
             return instance.getAuxValue();
@@ -37,7 +39,7 @@ public abstract class MixinItem implements AC_ISlotCallbackItem {
         var world = (ExWorld) player.level;
         Scriptable scope = world.getScope();
         scope.put("slotID", scope, slotId);
-        if (this.usesMeta()) {
+        if (this.isStackedByData()) {
             world.getScriptHandler().runScript(String.format("item_onAddToSlot_%d_%d.js", this.id, stack.getAuxValue()), scope, false);
         } else {
             world.getScriptHandler().runScript(String.format("item_onAddToSlot_%d.js", this.id), scope, false);
@@ -49,7 +51,7 @@ public abstract class MixinItem implements AC_ISlotCallbackItem {
         var world = (ExWorld) player.level;
         Scriptable scope = world.getScope();
         scope.put("slotID", scope, slotId);
-        if (this.usesMeta()) {
+        if (this.isStackedByData()) {
             world.getScriptHandler().runScript(String.format("item_onRemovedFromSlot_%d_%d.js", this.id, stack.getAuxValue()), scope, false);
         } else {
             world.getScriptHandler().runScript(String.format("item_onRemovedFromSlot_%d.js", this.id), scope, false);

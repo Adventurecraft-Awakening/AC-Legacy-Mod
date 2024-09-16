@@ -20,10 +20,10 @@ public abstract class MixinPlayerInventoryScreen extends AbstractContainerScreen
     }
 
     @WrapWithCondition(
-        method = "renderForeground",
+        method = "renderLabels",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/render/TextRenderer;drawText(Ljava/lang/String;III)V"))
+            target = "Lnet/minecraft/client/gui/Font;draw(Ljava/lang/String;III)V"))
     private boolean renderCraftingLabel(Font renderer, String string, int i, int j, int k) {
         if (menu instanceof ExPlayerContainer exContainer) {
             return exContainer.getAllowsCrafting();
@@ -32,10 +32,10 @@ public abstract class MixinPlayerInventoryScreen extends AbstractContainerScreen
     }
 
     @Inject(
-        method = "renderContainerBackground",
+        method = "render(F)V",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/gui/screen/container/PlayerInventoryScreen;blit(IIIIII)V",
+            target = "Lnet/minecraft/client/gui/screens/inventory/InventoryScreen;blit(IIIIII)V",
             shift = At.Shift.AFTER))
     private void renderHeartPieces(float var1, CallbackInfo ci) {
         int x = (this.width - this.imageWidth) / 2;
