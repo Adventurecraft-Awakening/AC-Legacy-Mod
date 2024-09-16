@@ -15,7 +15,7 @@ public abstract class ScriptModelBase {
 
     protected final List<Cuboid> boxes = new LinkedList<>();
     public ScriptEntity attachedTo;
-    public ScriptModel modelAttachment;
+    public ScriptModelBase modelAttachment;
     public String texture;
     public double prevX;
     public double prevY;
@@ -23,12 +23,24 @@ public abstract class ScriptModelBase {
     public float prevYaw;
     public float prevPitch;
     public float prevRoll;
+    public float prevScaleX;
+    public float prevScaleY;
+    public float prevScaleZ;
     public double x;
     public double y;
     public double z;
     public float yaw;
     public float pitch;
     public float roll;
+    public float scaleX = 1.0F;
+    public float scaleY = 1.0F;
+    public float scaleZ = 1.0F;
+    public float sizeX = 0.0F;
+    public float sizeY = 0.0F;
+    public float sizeZ = 0.0F;
+    public float pivotX = 0.0F;
+    public float pivotY = 0.0F;
+    public float pivotZ = 0.0F;
     public int modes = 0;
     public float colorRed = 1.0F;
     public float colorGreen = 1.0F;
