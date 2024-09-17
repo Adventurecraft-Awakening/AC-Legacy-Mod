@@ -1,11 +1,10 @@
 package dev.adventurecraft.awakening.extension.client.particle;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.AxixAlignedBoundingBox;
-
 import java.util.List;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.AABB;
 
 public interface ExParticleManager {
 
-    void getEffectsWithinAABB(AxixAlignedBoundingBox var1, List<Entity> destination);
+    void getEffectsWithinAABB(AABB var1, List<Entity> destination);
 }

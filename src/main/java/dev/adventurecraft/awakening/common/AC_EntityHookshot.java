@@ -2,19 +2,18 @@ package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
-import net.minecraft.block.Block;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.hit.HitType;
-import net.minecraft.util.io.CompoundTag;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
-
 import java.util.List;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.tile.Tile;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.HitType;
+import net.minecraft.world.phys.Vec3;
 
 public class AC_EntityHookshot extends Entity {
 
@@ -24,9 +23,9 @@ public class AC_EntityHookshot extends Entity {
     public boolean mainHand;
     LivingEntity returnsTo;
     Entity entityGrabbed;
-    ItemStack itemStack;
+    ItemInstance itemStack;
 
-    public AC_EntityHookshot(World world) {
+    public AC_EntityHookshot(Level world) {
         super(world);
         this.setSize(0.5F, 0.5F);
         this.turningAround = true;
@@ -34,20 +33,20 @@ public class AC_EntityHookshot extends Entity {
         ((ExEntity) this).setCollidesWithClipBlocks(false);
     }
 
-    public AC_EntityHookshot(World world, LivingEntity entity, boolean mainHand, ItemStack stack) {
+    public AC_EntityHookshot(Level world, LivingEntity entity, boolean mainHand, ItemInstance stack) {
         this(world);
         this.mainHand = mainHand;
-        this.setRotation(entity.yaw, entity.pitch);
-        double xVel = -Math.sin(entity.yaw * Math.PI / 180.0D);
-        double zVel = Math.cos(entity.yaw * Math.PI / 180.0D);
-        this.xVelocity = xVel * Math.cos(entity.pitch / 180.0D * Math.PI);
-        this.yVelocity = -Math.sin(entity.pitch / 180.0D * Math.PI);
-        this.zVelocity = zVel * Math.cos(entity.pitch / 180.0D * Math.PI);
+        this.setRot(entity.yRot, entity.xRot);
+        double xVel = -Math.sin(entity.yRot * Math.PI / 180.0D);
+        double zVel = Math.cos(entity.yRot * Math.PI / 180.0D);
+        this.xd = xVel * Math.cos(entity.xRot / 180.0D * Math.PI);
+        this.yd = -Math.sin(entity.xRot / 180.0D * Math.PI);
+        this.zd = zVel * Math.cos(entity.xRot / 180.0D * Math.PI);
         this.setHeading();
-        this.setPosition(entity.x, entity.y, entity.z);
-        this.prevX = this.x;
-        this.prevY = this.y;
-        this.prevZ = this.z;
+        this.setPos(entity.x, entity.y, entity.z);
+        this.xo = this.x;
+        this.yo = this.y;
+        this.zo = this.z;
         this.timeBeforeTurnAround = 20;
         this.turningAround = false;
         this.returnsTo = entity;
@@ -56,21 +55,21 @@ public class AC_EntityHookshot extends Entity {
     }
 
     public void setHeading() {
-        double speed = Math.sqrt(this.xVelocity * this.xVelocity + this.zVelocity * this.zVelocity);
-        this.prevYaw = this.yaw = (float) (Math.atan2(this.xVelocity, this.zVelocity) * 180.0D / Math.PI);
-        this.prevPitch = this.pitch = (float) (Math.atan2(this.yVelocity, speed) * 180.0D / Math.PI);
+        double speed = Math.sqrt(this.xd * this.xd + this.zd * this.zd);
+        this.yRotO = this.yRot = (float) (Math.atan2(this.xd, this.zd) * 180.0D / Math.PI);
+        this.xRotO = this.xRot = (float) (Math.atan2(this.yd, speed) * 180.0D / Math.PI);
     }
 
     public void setHeadingReverse() {
-        double speed = Math.sqrt(this.xVelocity * this.xVelocity + this.zVelocity * this.zVelocity);
-        this.prevYaw = this.yaw = (float) (Math.atan2(-this.xVelocity, -this.zVelocity) * 180.0D / Math.PI);
-        this.prevPitch = this.pitch = (float) (Math.atan2(-this.yVelocity, speed) * 180.0D / Math.PI);
+        double speed = Math.sqrt(this.xd * this.xd + this.zd * this.zd);
+        this.yRotO = this.yRot = (float) (Math.atan2(-this.xd, -this.zd) * 180.0D / Math.PI);
+        this.xRotO = this.xRot = (float) (Math.atan2(-this.yd, speed) * 180.0D / Math.PI);
     }
 
     @Override
     public void tick() {
-        if (this.itemStack != null && this.returnsTo instanceof PlayerEntity player) {
-            if (this.mainHand && this.itemStack != player.inventory.getHeldItem()) {
+        if (this.itemStack != null && this.returnsTo instanceof Player player) {
+            if (this.mainHand && this.itemStack != player.inventory.getSelected()) {
                 AC_Items.hookshot.releaseHookshot(this);
             }
 
@@ -79,38 +78,38 @@ public class AC_EntityHookshot extends Entity {
             }
         }
 
-        this.prevX = this.x;
-        this.prevY = this.y;
-        this.prevZ = this.z;
-        this.prevYaw = this.yaw;
-        this.prevPitch = this.pitch;
+        this.xo = this.x;
+        this.yo = this.y;
+        this.zo = this.z;
+        this.yRotO = this.yRot;
+        this.xRotO = this.xRot;
 
         double xVel;
         double yVel;
         double zVel;
         if (!this.turningAround) {
-            xVel = this.xVelocity;
-            yVel = this.yVelocity;
-            zVel = this.zVelocity;
-            this.move(this.xVelocity, this.yVelocity, this.zVelocity);
-            if (this.xVelocity == xVel && this.yVelocity == yVel && this.zVelocity == zVel) {
+            xVel = this.xd;
+            yVel = this.yd;
+            zVel = this.zd;
+            this.move(this.xd, this.yd, this.zd);
+            if (this.xd == xVel && this.yd == yVel && this.zd == zVel) {
                 if (this.timeBeforeTurnAround-- <= 0) {
                     this.turningAround = true;
                 }
             } else {
-                Vec3d prevPos = Vec3d.create(this.prevX, this.prevY, this.prevZ);
-                Vec3d nextPos = Vec3d.create(this.prevX + 10.0D * xVel, this.prevY + 10.0D * yVel, this.prevZ + 10.0D * zVel);
-                HitResult hit = this.world.method_160(prevPos, nextPos);
-                if (hit != null && hit.type == HitType.field_789) {
-                    int id = this.world.getBlockId(hit.x, hit.y, hit.z);
-                    if (id != Block.LOG.id && id != Block.WOOD.id && id != AC_Blocks.woodBlocks.id && id != AC_Blocks.halfSteps3.id) {
+                Vec3 prevPos = Vec3.create(this.xo, this.yo, this.zo);
+                Vec3 nextPos = Vec3.create(this.xo + 10.0D * xVel, this.yo + 10.0D * yVel, this.zo + 10.0D * zVel);
+                HitResult hit = this.level.clip(prevPos, nextPos);
+                if (hit != null && hit.hitType == HitType.TILE) {
+                    int id = this.level.getTile(hit.x, hit.y, hit.z);
+                    if (id != Tile.LOG.id && id != Tile.WOOD.id && id != AC_Blocks.woodBlocks.id && id != AC_Blocks.halfSteps3.id) {
                         if (id != 0) {
-                            this.world.playSound(this, Block.BY_ID[id].sounds.getWalkSound(), 1.0F, 1.2F / (this.rand.nextFloat() * 0.2F + 0.9F));
+                            this.level.playSound(this, Tile.tiles[id].soundType.getStepSound(), 1.0F, 1.2F / (this.random.nextFloat() * 0.2F + 0.9F));
                         }
                     } else {
                         this.attachedToSurface = true;
-                        this.setPosition(hit.field_1988.x, hit.field_1988.y, hit.field_1988.z);
-                        this.world.playSound(this, "random.drr", 1.0F, 1.2F / (this.rand.nextFloat() * 0.2F + 0.9F));
+                        this.setPos(hit.pos.x, hit.pos.y, hit.pos.z);
+                        this.level.playSound(this, "random.drr", 1.0F, 1.2F / (this.random.nextFloat() * 0.2F + 0.9F));
                     }
                 }
 
@@ -126,22 +125,22 @@ public class AC_EntityHookshot extends Entity {
             yVel = this.returnsTo.y - this.y;
             zVel = this.returnsTo.z - this.z;
             double speedSqr = Math.sqrt(xVel * xVel + yVel * yVel + zVel * zVel);
-            this.xVelocity = 0.75D * xVel / speedSqr;
-            this.yVelocity = 0.75D * yVel / speedSqr;
-            this.zVelocity = 0.75D * zVel / speedSqr;
+            this.xd = 0.75D * xVel / speedSqr;
+            this.yd = 0.75D * yVel / speedSqr;
+            this.zd = 0.75D * zVel / speedSqr;
             if (this.attachedToSurface) {
                 if (speedSqr > 1.2D) {
-                    this.returnsTo.accelerate(-0.15D * this.xVelocity, -0.15D * this.yVelocity, -0.15D * this.zVelocity);
+                    this.returnsTo.push(-0.15D * this.xd, -0.15D * this.yd, -0.15D * this.zd);
                     this.returnsTo.fallDistance = 0.0F;
                 } else {
-                    this.returnsTo.setVelocity(0.0D, 0.0D, 0.0D);
+                    this.returnsTo.lerpMotion(0.0D, 0.0D, 0.0D);
                 }
             } else {
                 if (speedSqr <= 1.2D) {
                     this.remove();
                 }
 
-                this.setPosition(this.x + this.xVelocity, this.y + this.yVelocity, this.z + this.zVelocity);
+                this.setPos(this.x + this.xd, this.y + this.yd, this.z + this.zd);
                 this.setHeadingReverse();
             }
         } else {
@@ -149,14 +148,14 @@ public class AC_EntityHookshot extends Entity {
         }
 
         if (!this.turningAround) {
-            var entities = (List<Entity>) this.world.getEntities(this, this.boundingBox.expand(0.5D, 0.5D, 0.5D));
+            var entities = (List<Entity>) this.level.getEntities(this, this.bb.inflate(0.5D, 0.5D, 0.5D));
             for (Entity entity : entities) {
                 boolean isItem = entity instanceof ItemEntity;
                 if (isItem || entity instanceof LivingEntity && entity != this.returnsTo) {
                     if (isItem) {
-                        this.world.playSound(this, "damage.fallsmall", 1.0F, 1.2F / (this.rand.nextFloat() * 0.2F + 0.9F));
+                        this.level.playSound(this, "damage.fallsmall", 1.0F, 1.2F / (this.random.nextFloat() * 0.2F + 0.9F));
                     } else {
-                        this.world.playSound(this, "damage.hurtflesh", 1.0F, 1.2F / (this.rand.nextFloat() * 0.2F + 0.9F));
+                        this.level.playSound(this, "damage.hurtflesh", 1.0F, 1.2F / (this.random.nextFloat() * 0.2F + 0.9F));
                     }
 
                     this.entityGrabbed = entity;
@@ -168,36 +167,36 @@ public class AC_EntityHookshot extends Entity {
 
         if (this.entityGrabbed != null && !this.entityGrabbed.removed) {
             this.entityGrabbed.fallDistance = 0.0F;
-            this.entityGrabbed.setPosition(this.x, this.y, this.z);
+            this.entityGrabbed.setPos(this.x, this.y, this.z);
         }
     }
 
     @Override
-    protected void writeAdditional(CompoundTag tag) {
+    protected void readAdditionalSaveData(CompoundTag tag) {
     }
 
     @Override
-    public void readAdditional(CompoundTag tag) {
+    public void addAdditionalSaveData(CompoundTag tag) {
         this.remove();
     }
 
     @Override
-    public void onPlayerCollision(PlayerEntity compound) {
+    public void playerTouch(Player compound) {
     }
 
     @Override
-    public boolean damage(Entity entity, int damage) {
+    public boolean hurt(Entity entity, int damage) {
         return false;
     }
 
     @Override
-    protected void initDataTracker() {
+    protected void defineSynchedData() {
     }
 
     @Override
     public void remove() {
         if (this.itemStack != null) {
-            this.itemStack.setMeta(0);
+            this.itemStack.setDamage(0);
         }
 
         super.remove();

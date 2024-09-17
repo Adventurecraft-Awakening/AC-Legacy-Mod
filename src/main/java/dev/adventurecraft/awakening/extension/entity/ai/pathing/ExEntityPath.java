@@ -1,18 +1,18 @@
 package dev.adventurecraft.awakening.extension.entity.ai.pathing;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ai.pathing.PathNode;
-import net.minecraft.entity.ai.pathing.PathNodeNavigator;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.pathfinder.Node;
+import net.minecraft.world.level.pathfinder.PathFinder;
 
 public interface ExEntityPath {
 
     boolean needNewPath(Entity var1);
 
-    PathNodeNavigator getNavigator();
+    PathFinder getNavigator();
 
-    void setNavigator(PathNodeNavigator value);
+    void setNavigator(PathFinder value);
 
-    PathNode getClearSize();
+    Node getClearSize();
 
-    void setClearSize(PathNode value);
+    void setClearSize(Node value);
 }

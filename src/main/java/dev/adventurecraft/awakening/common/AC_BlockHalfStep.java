@@ -1,9 +1,9 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.block.Block;
-import net.minecraft.util.math.AxixAlignedBoundingBox;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.World;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelSource;
+import net.minecraft.world.level.tile.Tile;
+import net.minecraft.world.phys.AABB;
 
 public class AC_BlockHalfStep extends AC_BlockSolid {
 
@@ -23,10 +23,10 @@ public class AC_BlockHalfStep extends AC_BlockSolid {
 	}
 
     @Override
-	public int getTextureForSide(int var1, int var2) {
+	public int getTexture(int var1, int var2) {
         setBoundingBox(var2);
         var2 = 2 * (var2 / 2);
-        int texture = this.texture + var2;
+        int texture = this.tex + var2;
         if (var1 <= 1) {
             return texture + 1;
         }
@@ -34,16 +34,16 @@ public class AC_BlockHalfStep extends AC_BlockSolid {
 	}
 
     @Override
-    public boolean isSideRendered(BlockView blockView, int x, int y, int z, int textureSide) {
+    public boolean shouldRenderFace(LevelSource blockView, int x, int y, int z, int textureSide) {
         updateBlockBounds(blockView,x,y,z);
         if (textureSide >= TEXTURE_SIDE_COORDINATION.length) {
-            return super.isSideRendered(blockView, x, y, z, textureSide);
+            return super.shouldRenderFace(blockView, x, y, z, textureSide);
         }
         int[] coordination = TEXTURE_SIDE_COORDINATION[textureSide];
-        int meta = blockView.getBlockMeta(x + coordination[0], y + coordination[1], z + coordination[2]);
+        int meta = blockView.getData(x + coordination[0], y + coordination[1], z + coordination[2]);
 
-        int idNeighbor = blockView.getBlockId(x, y, z);
-        int metaNeighbor = blockView.getBlockMeta(x, y, z);
+        int idNeighbor = blockView.getTile(x, y, z);
+        int metaNeighbor = blockView.getData(x, y, z);
 
         if (idNeighbor >= 215 && idNeighbor <= 217) {
             boolean sameMeta = meta % 2 == metaNeighbor % 2;
@@ -56,44 +56,44 @@ public class AC_BlockHalfStep extends AC_BlockSolid {
             }
         }
         if (meta % 2 == 0 && textureSide == 0) {
-            Block block = Block.BY_ID[idNeighbor];
+            Tile block = Tile.tiles[idNeighbor];
             if (block != null) {
-                return !block.isFullOpaque();
+                return !block.isSolidRender();
             }
         } else if (meta % 2 == 1 && textureSide == 1) {
-            Block block = Block.BY_ID[idNeighbor];
+            Tile block = Tile.tiles[idNeighbor];
             if (block != null) {
-                return !block.isFullOpaque();
+                return !block.isSolidRender();
             }
         }
         return true;
 	}
 
     @Override
-    public AxixAlignedBoundingBox getCollisionShape(World var1, int x, int y, int z) {
+    public AABB getAABB(Level var1, int x, int y, int z) {
         updateBlockBounds(var1,x,y,z);
-        return super.getCollisionShape(var1, x, y, z);
+        return super.getAABB(var1, x, y, z);
     }
 
     @Override
-    public void updateBoundingBox(BlockView arg, int i, int j, int k) {
+    public void updateShape(LevelSource arg, int i, int j, int k) {
         updateBlockBounds(arg,i,j,k);
     }
 
-    private void updateBlockBounds(BlockView var1, int x, int y, int z) {
-        int meta = var1.getBlockMeta(x, y, z);
+    private void updateBlockBounds(LevelSource var1, int x, int y, int z) {
+        int meta = var1.getData(x, y, z);
         setBoundingBox(meta);
 	}
 
     private void setBoundingBox(int meta) {
         if (meta % 2 == 0) {
-            this.setBoundingBox(0.0F, 0.0F, 0.0F, 1.0F, 0.5F, 1.0F);
+            this.setShape(0.0F, 0.0F, 0.0F, 1.0F, 0.5F, 1.0F);
         } else {
-            this.setBoundingBox(0.0F, 0.5F, 0.0F, 1.0F, 1.0F, 1.0F);
+            this.setShape(0.0F, 0.5F, 0.0F, 1.0F, 1.0F, 1.0F);
         }
     }
     @Override
-	public boolean isFullOpaque() {
+	public boolean isSolidRender() {
 		return false;
 	}
 }

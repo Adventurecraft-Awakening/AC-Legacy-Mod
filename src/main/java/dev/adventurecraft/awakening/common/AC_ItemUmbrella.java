@@ -5,14 +5,14 @@ import java.util.List;
 
 import dev.adventurecraft.awakening.extension.client.particle.ExParticleManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.FallingBlockEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.AxixAlignedBoundingBox;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.FallingTile;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 class AC_ItemUmbrella extends Item {
 
@@ -22,24 +22,24 @@ class AC_ItemUmbrella extends Item {
     }
 
     @Override
-    public void inventoryTick(ItemStack stack, World world, Entity entity, int i, boolean bl) {
-        if (stack.getMeta() > 0) {
-            stack.setMeta(stack.getMeta() - 1);
+    public void inventoryTick(ItemInstance stack, Level world, Entity entity, int i, boolean bl) {
+        if (stack.getAuxValue() > 0) {
+            stack.setDamage(stack.getAuxValue() - 1);
         }
     }
 
-    public int getTexturePosition(int var1) {
-        return var1 > 0 ? this.texturePosition - 1 : this.texturePosition;
+    public int getIcon(int var1) {
+        return var1 > 0 ? this.texture - 1 : this.texture;
     }
 
-    public ItemStack use(ItemStack stack, World world, PlayerEntity player) {
-        if (!player.onGround || stack.getMeta() > 0) {
+    public ItemInstance use(ItemInstance stack, Level world, Player player) {
+        if (!player.onGround || stack.getAuxValue() > 0) {
             return stack;
         }
 
-        Vec3d var4 = player.getRotation();
-        var4.method_1296();
-        AxixAlignedBoundingBox var5 = AxixAlignedBoundingBox.createAndAddToList(player.x, player.y, player.z, player.x, player.y, player.z).expand(6.0D, 6.0D, 6.0D);
+        Vec3 var4 = player.getLookAngle();
+        var4.normalize();
+        AABB var5 = AABB.newTemp(player.x, player.y, player.z, player.x, player.y, player.z).inflate(6.0D, 6.0D, 6.0D);
         List<Entity> var6 = (List<Entity>) world.getEntities(player, var5);
         Iterator<Entity> var7 = var6.iterator();
 
@@ -50,8 +50,8 @@ class AC_ItemUmbrella extends Item {
         double var18;
         while (var7.hasNext()) {
             Entity var9 = var7.next();
-            var10 = var9.method_1352(player);
-            if (var10 < 36.0D && !(var9 instanceof FallingBlockEntity)) {
+            var10 = var9.distanceToSqr(player);
+            if (var10 < 36.0D && !(var9 instanceof FallingTile)) {
                 var12 = var9.x - player.x;
                 var14 = var9.y - player.y;
                 var16 = var9.z - player.z;
@@ -62,18 +62,18 @@ class AC_ItemUmbrella extends Item {
                 var18 = var12 * var4.x + var14 * var4.y + var16 * var4.z;
                 if (var18 > 0.0D && Math.acos(var18) < Math.PI * 0.5D) {
                     var10 = Math.max(var10, 3.0D);
-                    var9.accelerate(3.0D * var12 / var10, 3.0D * var14 / var10, 3.0D * var16 / var10);
+                    var9.push(3.0D * var12 / var10, 3.0D * var14 / var10, 3.0D * var16 / var10);
                 }
             }
         }
 
         var6.clear();
-        ((ExParticleManager) Minecraft.instance.particleManager).getEffectsWithinAABB(var5, var6);
+        ((ExParticleManager) Minecraft.instance.particleEngine).getEffectsWithinAABB(var5, var6);
         var7 = var6.iterator();
 
         while (var7.hasNext()) {
             Entity var9 = var7.next();
-            var10 = var9.method_1352(player);
+            var10 = var9.distanceToSqr(player);
             if (var10 < 36.0D) {
                 var12 = var9.x - player.x;
                 var14 = var9.y - player.y;
@@ -84,21 +84,21 @@ class AC_ItemUmbrella extends Item {
                 var16 /= var10;
                 var18 = var12 * var4.x + var14 * var4.y + var16 * var4.z;
                 if (var18 > 0.0D && Math.acos(var18) < Math.PI * 0.5D) {
-                    var9.accelerate(6.0D * var12 / var10, 6.0D * var14 / var10, 6.0D * var16 / var10);
+                    var9.push(6.0D * var12 / var10, 6.0D * var14 / var10, 6.0D * var16 / var10);
                 }
             }
         }
 
         for (int var20 = 0; var20 < 25; ++var20) {
             AC_EntityAirFX var21 = new AC_EntityAirFX(world, player.x, player.y, player.z);
-            var21.xVelocity = var4.x * (1.0D + 0.05D * world.rand.nextGaussian()) + 0.2D * world.rand.nextGaussian();
-            var21.yVelocity = var4.y * (1.0D + 0.05D * world.rand.nextGaussian()) + 0.2D * world.rand.nextGaussian();
-            var21.zVelocity = var4.z * (1.0D + 0.05D * world.rand.nextGaussian()) + 0.2D * world.rand.nextGaussian();
-            Minecraft.instance.particleManager.addParticle(var21);
+            var21.xd = var4.x * (1.0D + 0.05D * world.random.nextGaussian()) + 0.2D * world.random.nextGaussian();
+            var21.yd = var4.y * (1.0D + 0.05D * world.random.nextGaussian()) + 0.2D * world.random.nextGaussian();
+            var21.zd = var4.z * (1.0D + 0.05D * world.random.nextGaussian()) + 0.2D * world.random.nextGaussian();
+            Minecraft.instance.particleEngine.add(var21);
         }
 
-        player.swingHand();
-        stack.setMeta(10);
+        player.swing();
+        stack.setDamage(10);
         return stack;
     }
 }

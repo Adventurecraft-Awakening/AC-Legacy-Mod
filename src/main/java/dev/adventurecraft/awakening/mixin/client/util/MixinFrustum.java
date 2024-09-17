@@ -1,19 +1,19 @@
 package dev.adventurecraft.awakening.mixin.client.util;
 
 import dev.adventurecraft.awakening.extension.client.util.ExFrustum;
-import net.minecraft.client.util.Frustum;
+import net.minecraft.client.renderer.culling.FrustumData;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 
-@Mixin(Frustum.class)
+@Mixin(FrustumData.class)
 public abstract class MixinFrustum implements ExFrustum {
 
     @Shadow
-    public float[][] matrix;
+    public float[][] m_Frustum;
 
     @Overwrite
-    public boolean isInside(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+    public boolean cubeInFrustum(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
         float aX = (float) minX;
         float aY = (float) minY;
         float aZ = (float) minZ;
@@ -22,7 +22,7 @@ public abstract class MixinFrustum implements ExFrustum {
         float bZ = (float) maxZ;
 
         for (int i = 0; i < 6; ++i) {
-            float[] mat = this.matrix[i];
+            float[] mat = this.m_Frustum[i];
             float m0 = mat[0];
             float m1 = mat[1];
             float m2 = mat[2];
@@ -61,7 +61,7 @@ public abstract class MixinFrustum implements ExFrustum {
         float bZ = (float) maxZ;
 
         for (int i = 0; i < 6; ++i) {
-            float[] mat = this.matrix[i];
+            float[] mat = this.m_Frustum[i];
             float m0 = mat[0];
             float m1 = mat[1];
             float m2 = mat[2];

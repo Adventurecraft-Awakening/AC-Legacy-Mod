@@ -1,22 +1,22 @@
 package dev.adventurecraft.awakening.mixin.item;
 
 import dev.adventurecraft.awakening.common.AC_ILeftClickItem;
-import net.minecraft.entity.Entity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.SwordItem;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.WeaponItem;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(SwordItem.class)
+@Mixin(WeaponItem.class)
 public abstract class MixinSwordItem extends MixinItem implements AC_ILeftClickItem {
 
     @Redirect(
-        method = {"postHit", "postMine"},
+        method = {"hurtEnemy", "mineBlock"},
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/item/ItemStack;applyDamage(ILnet/minecraft/entity/Entity;)V"))
-    private void disableItemDamage(ItemStack instance, int arg, Entity entity) {
+            target = "Lnet/minecraft/world/ItemInstance;hurtAndBreak(ILnet/minecraft/world/entity/Entity;)V"))
+    private void disableItemDamage(ItemInstance instance, int arg, Entity entity) {
     }
 
     @Override

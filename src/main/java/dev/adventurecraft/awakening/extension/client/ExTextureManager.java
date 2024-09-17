@@ -2,16 +2,15 @@ package dev.adventurecraft.awakening.extension.client;
 
 import dev.adventurecraft.awakening.common.AC_TextureAnimated;
 import dev.adventurecraft.awakening.common.Vec2;
-import net.minecraft.client.render.TextureBinder;
-
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.stream.Stream;
+import net.minecraft.client.renderer.ptexture.DynamicTexture;
 
 public interface ExTextureManager {
 
-    <T extends TextureBinder> Stream<T> getTextureBinders(Class<T> type);
+    <T extends DynamicTexture> Stream<T> getTextureBinders(Class<T> type);
 
     BufferedImage getTextureImage(String name) throws IOException;
 

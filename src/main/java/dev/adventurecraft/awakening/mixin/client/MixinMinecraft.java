@@ -22,44 +22,44 @@ import dev.adventurecraft.awakening.script.ScriptEntity;
 import dev.adventurecraft.awakening.script.ScriptItem;
 import dev.adventurecraft.awakening.script.ScriptVec3;
 import net.fabricmc.loader.impl.util.Arguments;
-import net.minecraft.block.Block;
-import net.minecraft.client.ClientInteractionManager;
-import net.minecraft.client.CreativeClientInteractionManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.MovementManager;
-import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
-import net.minecraft.client.gui.InGameHud;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.container.PlayerInventoryScreen;
-import net.minecraft.client.gui.screen.ingame.ChatScreen;
-import net.minecraft.client.gui.screen.ingame.DeathScreen;
-import net.minecraft.client.gui.screen.ingame.SleepingScreen;
-import net.minecraft.client.options.GameOptions;
-import net.minecraft.client.options.Option;
-import net.minecraft.client.particle.ParticleManager;
-import net.minecraft.client.render.GameRenderer;
-import net.minecraft.client.render.WorldEventRenderer;
-import net.minecraft.client.sound.SoundHelper;
-import net.minecraft.client.texture.TextureManager;
-import net.minecraft.client.util.ScreenScaler;
-import net.minecraft.client.util.Session;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.stat.Stats;
-import net.minecraft.util.ProgressListenerImpl;
+import net.minecraft.client.Option;
+import net.minecraft.client.Options;
+import net.minecraft.client.ProgressRenderer;
+import net.minecraft.client.ScreenSizeCalculator;
+import net.minecraft.client.User;
+import net.minecraft.client.gamemode.CreativeMode;
+import net.minecraft.client.gamemode.GameMode;
+import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.client.gui.screens.DeathScreen;
+import net.minecraft.client.gui.screens.InBedChatScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.particle.ParticleEngine;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.player.input.KeyboardInput;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.Textures;
+import net.minecraft.client.sounds.SoundEngine;
+import net.minecraft.stats.Stats;
+import net.minecraft.stats.StatsCounter;
+import net.minecraft.util.Mth;
 import net.minecraft.util.Vec3i;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.hit.HitType;
-import net.minecraft.util.io.StatsFileWriter;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
-import net.minecraft.world.chunk.ChunkCache;
-import net.minecraft.world.dimension.DimensionData;
-import net.minecraft.world.source.WorldSource;
-import net.minecraft.world.storage.WorldStorage;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.chunk.ChunkCache;
+import net.minecraft.world.level.chunk.ChunkSource;
+import net.minecraft.world.level.storage.LevelFormat;
+import net.minecraft.world.level.storage.LevelIO;
+import net.minecraft.world.level.tile.Tile;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.HitType;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.input.Keyboard;
@@ -85,140 +85,134 @@ import java.net.URL;
 public abstract class MixinMinecraft implements ExMinecraft {
 
     @Shadow
-    private int width;
+    private int orgWidth;
     @Shadow
-    private int height;
+    private int orgHeight;
     @Shadow
-    private boolean isFullscreen;
+    private boolean fullscreen;
     @Shadow
-    public int actualWidth;
+    public int width;
     @Shadow
-    public int actualHeight;
+    public int height;
 
     @Shadow
-    protected abstract void updateScreenResolution(int i, int j);
+    protected abstract void resize(int i, int j);
 
     @Shadow
     public GameRenderer gameRenderer;
 
     @Shadow
-    public InGameHud overlay;
+    public Gui gui;
 
     @Shadow
-    public AbstractClientPlayerEntity player;
+    public LocalPlayer player;
 
     @Shadow
-    public World world;
+    public Level level;
 
     @Shadow
-    public volatile boolean paused;
+    public volatile boolean pause;
 
     @Shadow
-    public ClientInteractionManager interactionManager;
+    public GameMode gameMode;
 
     @Shadow
-    public TextureManager textureManager;
+    public Textures textures;
 
     @Shadow
-    public Screen currentScreen;
+    public Screen screen;
 
     @Shadow
-    public abstract void openScreen(Screen arg);
+    public abstract void setScreen(Screen arg);
 
     @Shadow
-    private int mouseTicksProcessed;
+    private int lastClickTick;
 
     @Shadow
-    private int ticksPlayed;
+    private int ticks;
 
     @Shadow
-    private int attackCooldown;
+    private int missTime;
 
     @Shadow
-    protected abstract void method_2110(int i, boolean bl);
+    protected abstract void handleMouseDown(int i, boolean bl);
 
     @Shadow
-    public abstract void toggleFullscreen();
+    public abstract void toggleFullScreen();
 
     @Shadow
-    public abstract void openPauseMenu();
+    public abstract void pauseGame();
 
     @Shadow
-    protected abstract void forceResourceReload();
+    protected abstract void reloadSound();
 
     @Shadow
-    public GameOptions options;
+    public Options options;
 
     @Shadow
-    public WorldEventRenderer worldRenderer;
+    public LevelRenderer levelRenderer;
 
     @Shadow
-    public abstract boolean hasWorld();
+    public abstract boolean isOnline();
 
     @Shadow
     long lastTickTime;
 
     @Shadow
-    public boolean hasFocus;
+    public boolean mouseGrabbed;
 
     @Shadow
-    public abstract void lockCursor();
+    public abstract void grabMouse();
 
     @Shadow
-    protected abstract void method_2103();
+    protected abstract void pickBlock();
 
     @Shadow
-    private int spawnMobCounter;
+    private int recheckPlayerIn;
 
     @Shadow
-    public ParticleManager particleManager;
+    public ParticleEngine particleEngine;
 
-    @Shadow
+    @Shadow(remap = false, aliases = "method_2104")
     protected abstract void startLoginThread();
 
     @Shadow
-    public abstract void switchDimension();
+    public abstract void toggleDimension();
 
     @Shadow
-    public LivingEntity viewEntity;
+    public LivingEntity cameraEntity;
 
     @Shadow
-    protected abstract void loadIntoWorld(String string);
+    protected abstract void prepareLevel(String string);
 
     @Shadow
-    public abstract WorldStorage getWorldStorage();
+    public abstract LevelFormat getLevelSource();
 
     @Shadow
-    public abstract void setWorld(World arg);
+    public abstract void setLevel(Level arg);
 
     @Shadow
-    public static File getGameDirectory() {
+    public static File getWorkingDirectory() {
         return null;
     }
 
     @Shadow
-    protected abstract void convertWorldFormat(String string, String string2);
+    protected abstract void convertWorld(String string, String string2);
 
     @Shadow
     public HitResult hitResult;
 
     @Shadow
-    private File gameDir;
+    public StatsCounter statManager;
 
     @Shadow
-    public static int frameRenderTimesAmount;
+    public abstract void setLevel(Level arg, String string);
 
     @Shadow
-    public StatsFileWriter statFileWriter;
+    public ProgressRenderer progressRenderer;
 
     @Shadow
-    public abstract void notifyStatus(World arg, String string);
-
-    @Shadow
-    public ProgressListenerImpl progressListener;
-
-    @Shadow
-    public SoundHelper soundHelper;
+    public SoundEngine soundEngine;
 
     private long previousNanoTime;
     private double deltaTime;
@@ -230,7 +224,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
     public boolean cameraPause = true;
     public LivingEntity cutsceneCameraEntity;
     public AC_GuiStore storeGUI = new AC_GuiStore();
-    ItemStack lastItemUsed;
+    ItemInstance lastItemUsed;
     Entity lastEntityHit;
     ScriptVec3 lastBlockHit;
 
@@ -251,7 +245,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
             sessionId = arguments.getExtraArgs().get(1);
         }
 
-        ACMainThread.gameDirectory = new File(arguments.getOrDefault("gameDir", "."));
+        ACMainThread.workDir = new File(arguments.getOrDefault("gameDir", "."));
 
         if (arguments.containsKey("mapsDir")) {
             ACMainThread.mapsDirectory = new File(arguments.get("mapsDir"));
@@ -270,14 +264,14 @@ public abstract class MixinMinecraft implements ExMinecraft {
         int height = Integer.parseInt(arguments.getOrDefault("height", "480"));
 
         var acThread = new ACMainThread(width, height, fullscreen);
-        acThread.minecraftUrl = "www.minecraft.net";
-        acThread.session = new Session(username, sessionId);
+        acThread.host = "www.minecraft.net";
+        acThread.user = new User(username, sessionId);
 
         boolean doConnect = arguments.containsKey("server") && arguments.containsKey("port");
         if (doConnect) {
             String host = arguments.get("server");
             String port = arguments.get("port");
-            acThread.setIpPort(host, Integer.parseInt(port));
+            acThread.connectTo(host, Integer.parseInt(port));
         }
 
         Thread thread = Thread.currentThread();
@@ -293,7 +287,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
     @Inject(method = "init", at = @At("HEAD"))
     private void init_makeResizable(CallbackInfo ci) {
-        this.width = this.actualWidth;
+        this.orgWidth = this.width;
         Display.setResizable(true);
     }
 
@@ -311,7 +305,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         method = "init",
         at = @At(
             value = "FIELD",
-            target = "Lnet/minecraft/client/Minecraft;options:Lnet/minecraft/client/options/GameOptions;",
+            target = "Lnet/minecraft/client/Minecraft;options:Lnet/minecraft/client/Options;",
             shift = At.Shift.AFTER,
             ordinal = 0))
     private void init_createDisplay(CallbackInfo ci) throws LWJGLException {
@@ -373,7 +367,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         method = "init",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/TexturePackManager;<init>(Lnet/minecraft/client/Minecraft;Ljava/io/File;)V",
+            target = "Lnet/minecraft/client/skins/TexturePackRepository;<init>(Lnet/minecraft/client/Minecraft;Ljava/io/File;)V",
             shift = At.Shift.AFTER))
     private void init_createMapList(CallbackInfo ci) {
         this.mapList = new AC_MapList();
@@ -383,10 +377,10 @@ public abstract class MixinMinecraft implements ExMinecraft {
         method = "init",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/texture/TextureManager;addTextureBinder(Lnet/minecraft/client/render/TextureBinder;)V",
+            target = "Lnet/minecraft/client/renderer/Textures;addDynamicTexture(Lnet/minecraft/client/renderer/ptexture/DynamicTexture;)V",
             ordinal = 0))
     private void init_addFanTextureBinder(CallbackInfo ci) {
-        this.textureManager.addTextureBinder(new AC_TextureFanFX());
+        this.textures.addDynamicTexture(new AC_TextureFanFX());
     }
 
     @Inject(
@@ -399,9 +393,9 @@ public abstract class MixinMinecraft implements ExMinecraft {
             ordinal = 0,
             remap = false))
     private void run_setup(CallbackInfo ci) {
-        this.textureManager.getTextureId("/terrain.png");
-        this.textureManager.getTextureId("/terrain2.png");
-        this.textureManager.getTextureId("/terrain3.png");
+        this.textures.loadTexture("/terrain.png");
+        this.textures.loadTexture("/terrain2.png");
+        this.textures.loadTexture("/terrain3.png");
         ContextFactory.initGlobal(new ContextFactory());
     }
 
@@ -409,7 +403,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         method = "run",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/util/math/AxixAlignedBoundingBox;method_85()V",
+            target = "Lnet/minecraft/world/phys/AABB;resetPool()V",
             shift = At.Shift.BEFORE))
     private void run_updateDeltaTime(CallbackInfo ci) {
         long nanoTime = System.nanoTime();
@@ -421,12 +415,12 @@ public abstract class MixinMinecraft implements ExMinecraft {
         method = "run",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/sound/SoundHelper;setSoundPosition(Lnet/minecraft/entity/LivingEntity;F)V"))
-    private void run_setSoundListenerPos(SoundHelper instance, LivingEntity f, float v) {
+            target = "Lnet/minecraft/client/sounds/SoundEngine;update(Lnet/minecraft/world/entity/LivingEntity;F)V"))
+    private void run_setSoundListenerPos(SoundEngine instance, LivingEntity f, float v) {
         if (this.cameraActive) {
-            instance.setSoundPosition(this.cutsceneCameraEntity, v);
+            instance.update(this.cutsceneCameraEntity, v);
         } else {
-            instance.setSoundPosition(f, v);
+            instance.update(f, v);
         }
     }
 
@@ -445,21 +439,21 @@ public abstract class MixinMinecraft implements ExMinecraft {
         method = "run",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/Minecraft;checkTakingScreenshot()V",
+            target = "Lnet/minecraft/client/Minecraft;checkScreenshot()V",
             shift = At.Shift.AFTER))
     private void fix_resize(CallbackInfo ci) {
-        if (!this.isFullscreen && (Display.getWidth() != this.actualWidth || Display.getHeight() != this.actualHeight)) {
-            this.actualWidth = Display.getWidth();
-            this.actualHeight = Display.getHeight();
-            if (this.actualWidth <= 0) {
-                this.actualWidth = 1;
+        if (!this.fullscreen && (Display.getWidth() != this.width || Display.getHeight() != this.height)) {
+            this.width = Display.getWidth();
+            this.height = Display.getHeight();
+            if (this.width <= 0) {
+                this.width = 1;
             }
 
-            if (this.actualHeight <= 0) {
-                this.actualHeight = 1;
+            if (this.height <= 0) {
+                this.height = 1;
             }
 
-            this.updateScreenResolution(this.actualWidth, this.actualHeight);
+            this.resize(this.width, this.height);
         }
     }
 
@@ -489,7 +483,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         remap = false,
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/Minecraft;method_2111(J)V"))
+            target = "Lnet/minecraft/client/Minecraft;renderFpsMeter(J)V"))
     private boolean renderFrameTimeGraph(Minecraft instance, long time) {
         return !((ExGameOptions) this.options).ofFastDebugInfo();
     }
@@ -499,7 +493,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         remap = false,
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/Minecraft;method_2131()V",
+            target = "Lnet/minecraft/client/Minecraft;emergencySave()V",
             shift = At.Shift.AFTER,
             ordinal = 0))
     private void printStackOnOutOfMem(CallbackInfo ci, @Local OutOfMemoryError error) {
@@ -507,37 +501,37 @@ public abstract class MixinMinecraft implements ExMinecraft {
     }
 
     @Redirect(
-        method = "toggleFullscreen",
+        method = "toggleFullScreen",
         at = @At(
             value = "FIELD",
-            target = "Lnet/minecraft/client/Minecraft;width:I"))
+            target = "Lnet/minecraft/client/Minecraft;orgWidth:I"))
     private int fix_getWidthAfterFullscreen(Minecraft instance) {
         return Display.getWidth();
     }
 
     @Redirect(
-        method = "toggleFullscreen",
+        method = "toggleFullScreen",
         at = @At(
             value = "FIELD",
-            target = "Lnet/minecraft/client/Minecraft;height:I"))
+            target = "Lnet/minecraft/client/Minecraft;orgHeight:I"))
     private int fix_getHeightAfterFullscreen(Minecraft instance) {
         return Display.getHeight();
     }
 
     @Inject(
-        method = "toggleFullscreen",
+        method = "toggleFullScreen",
         at = @At(
             value = "INVOKE",
             target = "Lorg/lwjgl/opengl/Display;setFullscreen(Z)V",
             remap = false,
             shift = At.Shift.AFTER))
     private void fix_restoreSizeAfterFullscreen(CallbackInfo ci) throws LWJGLException {
-        if (!this.isFullscreen && !Display.isMaximized()) {
-            Display.setDisplayMode(new DisplayMode(this.width, this.height));
+        if (!this.fullscreen && !Display.isMaximized()) {
+            Display.setDisplayMode(new DisplayMode(this.orgWidth, this.orgHeight));
         }
     }
 
-    @Inject(method = "updateScreenResolution", at = @At("TAIL"))
+    @Inject(method = "resize", at = @At("TAIL"))
     private void updateStoreGuiOnResize(int var1, int var2, CallbackInfo ci) {
         updateStoreGUI();
     }
@@ -549,61 +543,61 @@ public abstract class MixinMinecraft implements ExMinecraft {
      */
     @Overwrite
     public void tick() {
-        if (this.ticksPlayed == 6000) {
+        if (this.ticks == 6000) {
             this.startLoginThread();
         }
 
-        this.overlay.runTick();
-        this.gameRenderer.method_1838(1.0F);
+        this.gui.tick();
+        this.gameRenderer.pick(1.0F);
 
         if (this.player != null) {
-            WorldSource worldSource = this.world.getCache();
+            ChunkSource worldSource = this.level.getChunkSource();
             if (worldSource instanceof ChunkCache chunkCache) {
-                int chunkX = MathHelper.floor((float) ((int) this.player.x)) >> 4;
-                int chunkZ = MathHelper.floor((float) ((int) this.player.z)) >> 4;
-                chunkCache.method_1242(chunkX, chunkZ);
+                int chunkX = Mth.floor((float) ((int) this.player.x)) >> 4;
+                int chunkZ = Mth.floor((float) ((int) this.player.z)) >> 4;
+                chunkCache.centerOn(chunkX, chunkZ);
             }
             // Bed safety leave
-            if(this.player.isLyingOnBed() && this.player.getSleepTimer()>= 100)
+            if(this.player.isSleeping() && this.player.getSleepTimer()>= 100)
             {
-                if(((ExWorldProperties) this.world.properties).getTimeRate()==0){
-                    this.player.getOutOfBed(true,false,false);
+                if(((ExWorldProperties) this.level.levelData).getTimeRate()==0){
+                    this.player.stopSleepInBed(true,false,false);
                 } else {
-                    ((ExWorld) this.world).setTimeOfDay(10000);
+                    ((ExWorld) this.level).setTimeOfDay(10000);
                 }
             }
         }
 
-        if (!this.paused && this.world != null) {
-            this.interactionManager.tick();
+        if (!this.pause && this.level != null) {
+            this.gameMode.tick();
         }
 
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.textureManager.getTextureId("/terrain.png"));
-        if (!this.paused) {
-            this.textureManager.tick();
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.textures.loadTexture("/terrain.png"));
+        if (!this.pause) {
+            this.textures.tick();
         }
 
-        if (this.currentScreen == null && this.player != null) {
+        if (this.screen == null && this.player != null) {
             if (this.player.health <= 0) {
-                this.openScreen(null);
-            } else if (this.player.isLyingOnBed() && this.world != null && this.world.isClient) {
-                this.openScreen(new SleepingScreen());
+                this.setScreen(null);
+            } else if (this.player.isSleeping() && this.level != null && this.level.isClientSide) {
+                this.setScreen(new InBedChatScreen());
             }
-        } else if (this.currentScreen != null && this.currentScreen instanceof SleepingScreen && !this.player.isLyingOnBed()) {
-            this.openScreen(null);
+        } else if (this.screen != null && this.screen instanceof InBedChatScreen && !this.player.isSleeping()) {
+            this.setScreen(null);
         }
 
-        if (this.currentScreen != null && !((ExScreen) this.currentScreen).isDisabledInputGrabbing()) {
-            this.mouseTicksProcessed = this.ticksPlayed + 10000;
+        if (this.screen != null && !((ExScreen) this.screen).isDisabledInputGrabbing()) {
+            this.lastClickTick = this.ticks + 10000;
 
-            this.currentScreen.method_130();
-            if (this.currentScreen != null) {
-                this.currentScreen.smokeRenderer.render();
-                this.currentScreen.tick();
+            this.screen.updateEvents();
+            if (this.screen != null) {
+                this.screen.particles.tick();
+                this.screen.tick();
             }
         }
 
-        if (this.currentScreen == null || this.currentScreen.passEvents || ((ExScreen) this.currentScreen).isDisabledInputGrabbing()) {
+        if (this.screen == null || this.screen.passEvents || ((ExScreen) this.screen).isDisabledInputGrabbing()) {
             label405:
             while (true) {
                 while (true) {
@@ -614,29 +608,29 @@ public abstract class MixinMinecraft implements ExMinecraft {
                             continue;
                         }
 
-                        if (this.attackCooldown > 0) {
-                            --this.attackCooldown;
+                        if (this.missTime > 0) {
+                            --this.missTime;
                         }
 
                         while (true) {
 
                             do {
                                 if (!Keyboard.next()) {
-                                    if (this.currentScreen == null || ((ExScreen) this.currentScreen).isDisabledInputGrabbing()) {
-                                        if (Mouse.isButtonDown(0) && (float) (this.ticksPlayed - this.mouseTicksProcessed) >= 0.0F && this.hasFocus) {
-                                            this.method_2107(0);
+                                    if (this.screen == null || ((ExScreen) this.screen).isDisabledInputGrabbing()) {
+                                        if (Mouse.isButtonDown(0) && (float) (this.ticks - this.lastClickTick) >= 0.0F && this.mouseGrabbed) {
+                                            this.handleMouseClick(0);
                                         }
 
-                                        if (Mouse.isButtonDown(1) && (float) (this.ticksPlayed - this.rightMouseTicksRan) >= 0.0F && this.hasFocus) {
-                                            this.method_2107(1);
+                                        if (Mouse.isButtonDown(1) && (float) (this.ticks - this.rightMouseTicksRan) >= 0.0F && this.mouseGrabbed) {
+                                            this.handleMouseClick(1);
                                         }
                                     }
 
-                                    this.method_2110(0, (this.currentScreen == null || ((ExScreen) this.currentScreen).isDisabledInputGrabbing()) && Mouse.isButtonDown(0) && this.hasFocus);
+                                    this.handleMouseDown(0, (this.screen == null || ((ExScreen) this.screen).isDisabledInputGrabbing()) && Mouse.isButtonDown(0) && this.mouseGrabbed);
                                     break label405;
                                 }
 
-                                this.player.method_136(Keyboard.getEventKey(), Keyboard.getEventKeyState());
+                                this.player.setKey(Keyboard.getEventKey(), Keyboard.getEventKeyState());
                             } while (!Keyboard.getEventKeyState());
 
                             int eventKey = Keyboard.getEventKey();
@@ -644,64 +638,64 @@ public abstract class MixinMinecraft implements ExMinecraft {
                             boolean isControlPressed = Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL);
 
                             if (eventKey == Keyboard.KEY_F11) {
-                                this.toggleFullscreen();
+                                this.toggleFullScreen();
                             } else {
-                                if (this.currentScreen != null && !((ExScreen) this.currentScreen).isDisabledInputGrabbing()) {
+                                if (this.screen != null && !((ExScreen) this.screen).isDisabledInputGrabbing()) {
                                     // TODO: fix doubled events (one for key press, one for text input)
-                                    this.currentScreen.onKeyboardEvent();
+                                    this.screen.keyboardEvent();
                                 } else {
                                     // Not compile time constants, else-if is a must.
                                     // Trust me, I tried to use a switch here.
                                     if (eventKey == Keyboard.KEY_ESCAPE) {
-                                        this.openPauseMenu();
+                                        this.pauseGame();
 
                                     } else if (eventKey == Keyboard.KEY_S && Keyboard.isKeyDown(Keyboard.KEY_F3)) {
-                                        this.forceResourceReload();
+                                        this.reloadSound();
 
                                     } else if (eventKey == Keyboard.KEY_F1) {
-                                        this.options.hideHud = !this.options.hideHud;
+                                        this.options.hideGui = !this.options.hideGui;
 
                                     } else if (eventKey == Keyboard.KEY_F3) {
-                                        this.options.debugHud = !this.options.debugHud;
+                                        this.options.renderDebug = !this.options.renderDebug;
 
                                     } else if (eventKey == Keyboard.KEY_F4) {
                                         AC_DebugMode.active = !AC_DebugMode.active;
                                         if (AC_DebugMode.active) {
-                                            this.overlay.addChatMessage("Debug Mode Active");
+                                            this.gui.addMessage("Debug Mode Active");
                                         } else {
-                                            this.overlay.addChatMessage("Debug Mode Deactivated");
+                                            this.gui.addMessage("Debug Mode Deactivated");
                                         }
-                                        ((ExWorldEventRenderer) this.worldRenderer).updateAllTheRenderers();
+                                        ((ExWorldEventRenderer) this.levelRenderer).updateAllTheRenderers();
 
                                     } else if (eventKey == Keyboard.KEY_F5) {
-                                        this.options.thirdPerson = !this.options.thirdPerson;
+                                        this.options.thirdPersonView = !this.options.thirdPersonView;
 
                                     } else if (eventKey == Keyboard.KEY_F6) {
                                         if (AC_DebugMode.active) {
-                                            ((ExWorldEventRenderer) this.worldRenderer).resetAll();
-                                            this.overlay.addChatMessage("Resetting all blocks in loaded chunks");
+                                            ((ExWorldEventRenderer) this.levelRenderer).resetAll();
+                                            this.gui.addMessage("Resetting all blocks in loaded chunks");
                                         }
 
-                                    } else if (eventKey == Keyboard.KEY_F7 || (eventKey == this.options.inventoryKey.key && isShiftPressed)) {
+                                    } else if (eventKey == Keyboard.KEY_F7 || (eventKey == this.options.keyInventory.key && isShiftPressed)) {
                                         ((ExAbstractClientPlayerEntity) this.player).displayGUIPalette();
 
-                                    } else if (eventKey == this.options.inventoryKey.key) {
-                                        this.openScreen(new PlayerInventoryScreen(this.player));
+                                    } else if (eventKey == this.options.keyInventory.key) {
+                                        this.setScreen(new InventoryScreen(this.player));
 
-                                    } else if (eventKey == this.options.dropKey.key) {
-                                        this.player.dropSelectedItem();
+                                    } else if (eventKey == this.options.keyDrop.key) {
+                                        this.player.drop();
 
-                                    } else if ((this.hasWorld() || AC_DebugMode.active) && eventKey == this.options.chatKey.key) {
-                                        this.openScreen(new ChatScreen());
+                                    } else if ((this.isOnline() || AC_DebugMode.active) && eventKey == this.options.keyChat.key) {
+                                        this.setScreen(new ChatScreen());
 
                                     } else if (AC_DebugMode.active && isControlPressed) {
                                         if (eventKey == Keyboard.KEY_Z) { // Undo
                                             ServerCommands.cmdUndo(new ServerCommandSource(
-                                                (Minecraft) (Object) this, this.world, this.player), null);
+                                                (Minecraft) (Object) this, this.level, this.player), null);
 
                                         } else if (eventKey == Keyboard.KEY_Y) { // Redo
                                             ServerCommands.cmdRedo(new ServerCommandSource(
-                                                (Minecraft) (Object) this, this.world, this.player), null);
+                                                (Minecraft) (Object) this, this.level, this.player), null);
                                         }
                                     }
                                 }
@@ -710,8 +704,8 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
                                 while (true) {
                                     if (currentSlot >= 9) {
-                                        if (eventKey == this.options.fogKey.key) {
-                                            this.options.setIntOption(Option.RENDER_DISTANCE, !isShiftPressed ? 1 : -1);
+                                        if (eventKey == this.options.keyFog.key) {
+                                            this.options.toggle(Option.RENDER_DISTANCE, !isShiftPressed ? 1 : -1);
                                         }
                                         break;
                                     }
@@ -719,13 +713,13 @@ public abstract class MixinMinecraft implements ExMinecraft {
                                     if (eventKey == Keyboard.KEY_1 + currentSlot) {
                                         if (!isControlPressed) {
                                             if (currentSlot == ((ExPlayerInventory) this.player.inventory).getOffhandItem()) {
-                                                ((ExPlayerInventory) this.player.inventory).setOffhandItem(this.player.inventory.selectedHotBarSlot);
+                                                ((ExPlayerInventory) this.player.inventory).setOffhandItem(this.player.inventory.selected);
                                             }
 
-                                            this.player.inventory.selectedHotBarSlot = currentSlot;
+                                            this.player.inventory.selected = currentSlot;
                                         } else {
-                                            if (currentSlot == this.player.inventory.selectedHotBarSlot) {
-                                                this.player.inventory.selectedHotBarSlot = ((ExPlayerInventory) this.player.inventory).getOffhandItem();
+                                            if (currentSlot == this.player.inventory.selected) {
+                                                this.player.inventory.selected = ((ExPlayerInventory) this.player.inventory).getOffhandItem();
                                             }
 
                                             ((ExPlayerInventory) this.player.inventory).setOffhandItem(currentSlot);
@@ -736,8 +730,8 @@ public abstract class MixinMinecraft implements ExMinecraft {
                                 }
                             }
 
-                            if (this.world != null) {
-                                ((ExWorld) this.world).getScript().keyboard.processKeyPress(eventKey);
+                            if (this.level != null) {
+                                ((ExWorld) this.level).getScript().keyboard.processKeyPress(eventKey);
                             }
                         }
 
@@ -758,98 +752,98 @@ public abstract class MixinMinecraft implements ExMinecraft {
                         if (AC_DebugMode.active && menuDown) {
                             AC_DebugMode.reachDistance += wheelDelta;
                             AC_DebugMode.reachDistance = Math.min(Math.max(AC_DebugMode.reachDistance, 2), 100);
-                            this.overlay.addChatMessage(String.format("Reach Changed to %d", AC_DebugMode.reachDistance));
+                            this.gui.addMessage(String.format("Reach Changed to %d", AC_DebugMode.reachDistance));
                         } else {
                             if (ctrlDown) {
-                                int selectedSlot = this.player.inventory.selectedHotBarSlot;
-                                this.player.inventory.selectedHotBarSlot = ((ExPlayerInventory) this.player.inventory).getOffhandItem();
+                                int selectedSlot = this.player.inventory.selected;
+                                this.player.inventory.selected = ((ExPlayerInventory) this.player.inventory).getOffhandItem();
                                 ((ExPlayerInventory) this.player.inventory).setOffhandItem(selectedSlot);
                             }
 
-                            this.player.inventory.scrollInHotBar(wheelDelta);
+                            this.player.inventory.swapPaint(wheelDelta);
                             if (ctrlDown) {
-                                int selectedSlot = this.player.inventory.selectedHotBarSlot;
-                                this.player.inventory.selectedHotBarSlot = ((ExPlayerInventory) this.player.inventory).getOffhandItem();
+                                int selectedSlot = this.player.inventory.selected;
+                                this.player.inventory.selected = ((ExPlayerInventory) this.player.inventory).getOffhandItem();
                                 ((ExPlayerInventory) this.player.inventory).setOffhandItem(selectedSlot);
                             }
 
-                            if (this.options.field_1445) {
-                                this.options.field_1448 += (float) wheelDelta * 0.25F;
+                            if (this.options.discreteMouseScroll) {
+                                this.options.accumulatedScroll += (float) wheelDelta * 0.25F;
                             }
                         }
                     }
 
-                    if (this.currentScreen != null && !((ExScreen) this.currentScreen).isDisabledInputGrabbing()) {
-                        if (this.currentScreen != null) {
-                            this.currentScreen.onMouseEvent();
+                    if (this.screen != null && !((ExScreen) this.screen).isDisabledInputGrabbing()) {
+                        if (this.screen != null) {
+                            this.screen.mouseEvent();
                         }
-                    } else if (!this.hasFocus && Mouse.getEventButtonState()) {
-                        this.lockCursor();
+                    } else if (!this.mouseGrabbed && Mouse.getEventButtonState()) {
+                        this.grabMouse();
                     } else {
                         if (Mouse.getEventButton() == 0 && Mouse.getEventButtonState()) {
-                            this.method_2107(0);
+                            this.handleMouseClick(0);
                         }
 
                         if (Mouse.getEventButton() == 1 && Mouse.getEventButtonState()) {
-                            this.method_2107(1);
+                            this.handleMouseClick(1);
                         }
 
                         if (Mouse.getEventButton() == 2 && Mouse.getEventButtonState()) {
-                            this.method_2103();
+                            this.pickBlock();
                         }
                     }
                 }
             }
         }
 
-        if (this.world != null) {
+        if (this.level != null) {
             if (this.player != null) {
-                ++this.spawnMobCounter;
-                if (this.spawnMobCounter == 30) {
-                    this.spawnMobCounter = 0;
-                    this.world.method_287(this.player);
+                ++this.recheckPlayerIn;
+                if (this.recheckPlayerIn == 30) {
+                    this.recheckPlayerIn = 0;
+                    this.level.ensureAdded(this.player);
                 }
             }
 
-            this.world.difficulty = this.options.difficulty;
-            if (this.world.isClient) {
-                this.world.difficulty = 3;
+            this.level.difficulty = this.options.difficulty;
+            if (this.level.isClientSide) {
+                this.level.difficulty = 3;
             }
 
-            if (!this.paused) {
-                this.gameRenderer.method_1837();
+            if (!this.pause) {
+                this.gameRenderer.tick();
             }
 
-            if (!this.paused) {
-                this.worldRenderer.method_1557();
+            if (!this.pause) {
+                this.levelRenderer.tick();
             }
 
-            if (!this.paused || this.hasWorld()) {
-                ((ExWorld) this.world).ac$preTick();
+            if (!this.pause || this.isOnline()) {
+                ((ExWorld) this.level).ac$preTick();
             }
 
-            if (!this.paused) {
-                if (this.world.field_210 > 0) {
-                    --this.world.field_210;
+            if (!this.pause) {
+                if (this.level.skyFlashTime > 0) {
+                    --this.level.skyFlashTime;
                 }
 
-                this.world.method_227();
+                this.level.tickEntities();
             }
 
-            if (!this.paused || this.hasWorld()) {
-                this.world.method_196(this.options.difficulty > 0, true);
-                this.world.method_242();
+            if (!this.pause || this.isOnline()) {
+                this.level.setSpawnSettings(this.options.difficulty > 0, true);
+                this.level.tick();
             }
 
-            if (!this.paused && this.world != null) {
-                this.world.method_294(
-                    MathHelper.floor(this.player.x),
-                    MathHelper.floor(this.player.y),
-                    MathHelper.floor(this.player.z));
+            if (!this.pause && this.level != null) {
+                this.level.animateTick(
+                    Mth.floor(this.player.x),
+                    Mth.floor(this.player.y),
+                    Mth.floor(this.player.z));
             }
 
-            if (!this.paused) {
-                this.particleManager.method_320();
+            if (!this.pause) {
+                this.particleEngine.tick();
             }
         }
 
@@ -857,27 +851,27 @@ public abstract class MixinMinecraft implements ExMinecraft {
     }
 
     @Redirect(
-        method = {"method_2110", "lockCursor"},
+        method = {"handleMouseDown", "grabMouse"},
         at = @At(
             value = "FIELD",
-            target = "Lnet/minecraft/client/Minecraft;attackCooldown:I",
+            target = "Lnet/minecraft/client/Minecraft;missTime:I",
             ordinal = 0))
     private void keepAttackCooldown(Minecraft instance, int value) {
     }
 
     @Overwrite
-    private void method_2107(int mouseButton) {
-        if (mouseButton == 0 && this.attackCooldown > 0) {
+    private void handleMouseClick(int mouseButton) {
+        if (mouseButton == 0 && this.missTime > 0) {
             return;
         }
 
-        var exWorld = (ExWorld) this.world;
+        var exWorld = (ExWorld) this.level;
         if (AC_DebugMode.active) {
             exWorld.getUndoStack().startRecording();
         }
 
         boolean swapOffhand = false;
-        ItemStack stack = this.player.inventory.getHeldItem();
+        ItemInstance stack = this.player.inventory.getSelected();
         if (!AC_DebugMode.active) {
             if (mouseButton == 0) {
                 stack = ((ExPlayerInventory) this.player.inventory).getOffhandItemStack();
@@ -887,73 +881,73 @@ public abstract class MixinMinecraft implements ExMinecraft {
             }
 
             int useDelay = 5;
-            if (stack != null && Item.byId[stack.itemId] instanceof AC_IUseDelayItem useDelayItem) {
+            if (stack != null && Item.items[stack.id] instanceof AC_IUseDelayItem useDelayItem) {
                 useDelay = useDelayItem.getItemUseDelay();
             }
 
             if (mouseButton == 0) {
-                this.mouseTicksProcessed = this.ticksPlayed + useDelay;
+                this.lastClickTick = this.ticks + useDelay;
             } else {
-                this.rightMouseTicksRan = this.ticksPlayed + useDelay;
+                this.rightMouseTicksRan = this.ticks + useDelay;
             }
 
             if (stack != null &&
-                (Item.byId[stack.itemId] instanceof AC_ILeftClickItem leftClickItem) &&
+                (Item.items[stack.id] instanceof AC_ILeftClickItem leftClickItem) &&
                 leftClickItem.mainActionLeftClick()) {
                 mouseButton = 0;
             } else {
                 mouseButton = 1;
             }
         } else {
-            this.mouseTicksProcessed = this.ticksPlayed + 5;
-            this.rightMouseTicksRan = this.ticksPlayed + 5;
+            this.lastClickTick = this.ticks + 5;
+            this.rightMouseTicksRan = this.ticks + 5;
         }
 
         if (mouseButton == 0) {
-            this.player.swingHand();
+            this.player.swing();
         }
 
         boolean useOnBlock = true;
         if (this.hitResult == null) {
-            if (mouseButton == 0 && !(this.interactionManager instanceof CreativeClientInteractionManager)) {
-                this.attackCooldown = 10;
+            if (mouseButton == 0 && !(this.gameMode instanceof CreativeMode)) {
+                this.missTime = 10;
             }
-        } else if (this.hitResult.type == HitType.field_790) {
+        } else if (this.hitResult.hitType == HitType.ENTITY) {
             if (mouseButton == 0) {
-                this.interactionManager.attack(this.player, this.hitResult.field_1989);
+                this.gameMode.attack(this.player, this.hitResult.entity);
             }
 
             if (mouseButton == 1) {
-                this.interactionManager.method_1714(this.player, this.hitResult.field_1989);
+                this.gameMode.interact(this.player, this.hitResult.entity);
             }
-        } else if (this.hitResult.type == HitType.field_789) {
+        } else if (this.hitResult.hitType == HitType.TILE) {
             int bX = this.hitResult.x;
             int bY = this.hitResult.y;
             int bZ = this.hitResult.z;
-            int bSide = this.hitResult.field_1987;
-            Block block = Block.BY_ID[this.world.getBlockId(bX, bY, bZ)];
+            int bSide = this.hitResult.face;
+            Tile block = Tile.tiles[this.level.getTile(bX, bY, bZ)];
             if (block != null) {
-                if (!AC_DebugMode.active && (block.id == Block.CHEST.id || block.id == AC_Blocks.store.id)) {
+                if (!AC_DebugMode.active && (block.id == Tile.CHEST.id || block.id == AC_Blocks.store.id)) {
                     mouseButton = 1;
                 }
 
                 if (!AC_DebugMode.active) {
-                    int var11 = ((ExBlock) block).alwaysUseClick(this.world, bX, bY, bZ);
+                    int var11 = ((ExBlock) block).alwaysUseClick(this.level, bX, bY, bZ);
                     if (var11 != -1) {
                         mouseButton = var11;
                     }
                 }
 
                 if (mouseButton == 0) {
-                    this.interactionManager.destroyFireAndBreakBlock(bX, bY, bZ, this.hitResult.field_1987);
-                    if (stack != null && Item.byId[stack.itemId] instanceof AC_ILeftClickItem leftClickItem) {
-                        leftClickItem.onItemUseLeftClick(stack, this.player, this.world, bX, bY, bZ, bSide);
+                    this.gameMode.startDestroyBlock(bX, bY, bZ, this.hitResult.face);
+                    if (stack != null && Item.items[stack.id] instanceof AC_ILeftClickItem leftClickItem) {
+                        leftClickItem.onItemUseLeftClick(stack, this.player, this.level, bX, bY, bZ, bSide);
                     }
                 } else {
                     int count = stack == null ? 0 : stack.count;
-                    if (this.interactionManager.useItemOnBlock(this.player, this.world, stack, bX, bY, bZ, bSide)) {
+                    if (this.gameMode.useItemOn(this.player, this.level, stack, bX, bY, bZ, bSide)) {
                         useOnBlock = false;
-                        this.player.swingHand();
+                        this.player.swing();
                     }
 
                     if (stack == null) {
@@ -961,23 +955,23 @@ public abstract class MixinMinecraft implements ExMinecraft {
                             exWorld.getUndoStack().stopRecording();
                         }
                         //return;
-                    } else if (stack.count == 0 && stack == this.player.inventory.main[this.player.inventory.selectedHotBarSlot]) {
-                        this.player.inventory.main[this.player.inventory.selectedHotBarSlot] = null;
+                    } else if (stack.count == 0 && stack == this.player.inventory.items[this.player.inventory.selected]) {
+                        this.player.inventory.items[this.player.inventory.selected] = null;
                     } else if (stack.count != count) {
-                        this.gameRenderer.heldItemRenderer.method_1863();
+                        this.gameRenderer.itemInHandRenderer.itemPlaced();
                     }
                 }
             }
         }
 
         if (useOnBlock && mouseButton == 0 && stack != null) {
-            if (Item.byId[stack.itemId] instanceof AC_ILeftClickItem leftClickItem) {
-                leftClickItem.onItemLeftClick(stack, this.world, this.player);
+            if (Item.items[stack.id] instanceof AC_ILeftClickItem leftClickItem) {
+                leftClickItem.onItemLeftClick(stack, this.level, this.player);
             }
         }
 
-        if (useOnBlock && mouseButton == 1 && stack != null && this.interactionManager.method_1712(this.player, this.world, stack)) {
-            this.gameRenderer.heldItemRenderer.method_1865();
+        if (useOnBlock && mouseButton == 1 && stack != null && this.gameMode.useItem(this.player, this.level, stack)) {
+            this.gameRenderer.itemInHandRenderer.itemUsed();
         }
         // Hitblock and hitEntity sets
         Scriptable globalScope = exWorld.getScript().globalScope;
@@ -1008,11 +1002,11 @@ public abstract class MixinMinecraft implements ExMinecraft {
                 var tmp = Context.javaToJS(null, globalScope);
                 ScriptableObject.putProperty(globalScope, "hitBlock", tmp);
             }
-        } else if (this.hitResult.type == HitType.field_790) {
+        } else if (this.hitResult.hitType == HitType.ENTITY) {
             // Hit an entity
-            if (this.lastEntityHit != this.hitResult.field_1989) {
-                this.lastEntityHit = this.hitResult.field_1989;
-                var tmp = Context.javaToJS(ScriptEntity.getEntityClass(this.hitResult.field_1989), globalScope);
+            if (this.lastEntityHit != this.hitResult.entity) {
+                this.lastEntityHit = this.hitResult.entity;
+                var tmp = Context.javaToJS(ScriptEntity.getEntityClass(this.hitResult.entity), globalScope);
                 ScriptableObject.putProperty(globalScope, "hitEntity", tmp);
             }
 
@@ -1021,7 +1015,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
                 var tmp = Context.javaToJS(null, globalScope);
                 ScriptableObject.putProperty(globalScope, "hitBlock", tmp);
             }
-        } else if (this.hitResult.type != HitType.field_789) {
+        } else if (this.hitResult.hitType != HitType.TILE) {
             // Hit ???
             if (this.lastEntityHit != null) {
                 this.lastEntityHit = null;
@@ -1055,9 +1049,9 @@ public abstract class MixinMinecraft implements ExMinecraft {
         // Trigger item scripts
         String scriptName;
         if(stack != null) {
-            scriptName = stack.usesMeta()
-                ? String.format("item_%d_%d.js", stack.itemId, stack.getMeta())
-                : String.format("item_%d.js", stack.itemId);
+            scriptName = stack.isStackedByData()
+                ? String.format("item_%d_%d.js", stack.id, stack.getAuxValue())
+                : String.format("item_%d.js", stack.id);
         }
         else {
             scriptName = "item_0.js";
@@ -1075,137 +1069,137 @@ public abstract class MixinMinecraft implements ExMinecraft {
     }
 
     @Inject(
-        method = "initWorld",
+        method = "setLevel(Lnet/minecraft/world/level/Level;Ljava/lang/String;Lnet/minecraft/world/entity/player/Player;)V",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/ClientInteractionManager;onInitWorld(Lnet/minecraft/world/World;)V",
+            target = "Lnet/minecraft/client/gamemode/GameMode;initLevel(Lnet/minecraft/world/level/Level;)V",
             shift = At.Shift.BEFORE))
-    private void loadMapTexOnInit(World var1, String var2, PlayerEntity var3, CallbackInfo ci) {
-        ((ExWorld) this.world).loadMapTextures();
+    private void loadMapTexOnInit(Level var1, String var2, Player var3, CallbackInfo ci) {
+        ((ExWorld) this.level).loadMapTextures();
     }
 
     @Inject(
-        method = "initWorld",
+        method = "setLevel(Lnet/minecraft/world/level/Level;Ljava/lang/String;Lnet/minecraft/world/entity/player/Player;)V",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/ClientInteractionManager;rotatePlayer(Lnet/minecraft/entity/player/PlayerEntity;)V",
+            target = "Lnet/minecraft/client/gamemode/GameMode;initPlayer(Lnet/minecraft/world/entity/player/Player;)V",
             shift = At.Shift.AFTER))
-    private void initPlayerOnInit(World var1, String var2, PlayerEntity var3, CallbackInfo ci) {
-        this.cutsceneCameraEntity = this.interactionManager.method_1717(var1);
-        ((ExWorld) this.world).getScript().initPlayer(this.player);
+    private void initPlayerOnInit(Level var1, String var2, Player var3, CallbackInfo ci) {
+        this.cutsceneCameraEntity = this.gameMode.createPlayer(var1);
+        ((ExWorld) this.level).getScript().initPlayer(this.player);
     }
 
     @Redirect(
-        method = "loadIntoWorld",
+        method = "prepareLevel",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/util/ProgressListenerImpl;progressStagePercentage(I)V"))
+            target = "Lnet/minecraft/client/ProgressRenderer;progressStagePercentage(I)V"))
     private void reportPreciseTerrainProgress(
-        ProgressListenerImpl instance,
+        ProgressRenderer instance,
         int i,
         @Local(ordinal = 1) int count,
         @Local(ordinal = 2) int max) {
 
         String stage = String.format("%4d / %4d", count, max);
-        ((ExProgressListener) this.progressListener).notifyProgress(
+        ((ExProgressListener) this.progressRenderer).notifyProgress(
             stage, count / (double) max, false);
     }
 
     @Overwrite
-    public void spawn(boolean var1, int var2) {
-        if (!this.world.isClient && !this.world.dimension.canPlayerSleep()) {
-            this.switchDimension();
+    public void respawnPlayer(boolean var1, int var2) {
+        if (!this.level.isClientSide && !this.level.dimension.mayRespawn()) {
+            this.toggleDimension();
         }
 
-        WorldSource worldSource = this.world.getCache();
+        ChunkSource worldSource = this.level.getChunkSource();
         if (worldSource instanceof ChunkCache chunkCache) {
-            Vec3i spawnPos = this.world.getSpawnPosition();
-            chunkCache.method_1242(spawnPos.x >> 4, spawnPos.z >> 4);
+            Vec3i spawnPos = this.level.getSpawnPos();
+            chunkCache.centerOn(spawnPos.x >> 4, spawnPos.z >> 4);
         }
 
-        this.world.method_295();
+        this.level.removeAllPendingEntityRemovals();
         int playerId = 0;
         if (this.player != null) {
-            playerId = this.player.entityId;
-            this.world.removeEntity(this.player);
+            playerId = this.player.id;
+            this.level.removeEntity(this.player);
         } else {
-            this.player = (AbstractClientPlayerEntity) this.interactionManager.method_1717(this.world);
-            ((ExWorld) this.world).getScript().initPlayer(this.player);
+            this.player = (LocalPlayer) this.gameMode.createPlayer(this.level);
+            ((ExWorld) this.level).getScript().initPlayer(this.player);
         }
 
-        ((ExWorldEventRenderer) this.worldRenderer).resetForDeath();
-        Vec3i spawnPos = this.world.getSpawnPosition();
-        this.player.afterSpawn();
-        this.player.setPositionAndAngles((double) spawnPos.x + 0.5D, spawnPos.y, (double) spawnPos.z + 0.5D, 0.0F, 0.0F);
-        this.viewEntity = this.player;
-        this.player.afterSpawn();
-        this.interactionManager.rotatePlayer(this.player);
-        this.world.addPlayer(this.player);
-        this.player.playerKeypressManager = new MovementManager(this.options);
-        this.player.entityId = playerId;
+        ((ExWorldEventRenderer) this.levelRenderer).resetForDeath();
+        Vec3i spawnPos = this.level.getSpawnPos();
+        this.player.resetPos();
+        this.player.moveTo((double) spawnPos.x + 0.5D, spawnPos.y, (double) spawnPos.z + 0.5D, 0.0F, 0.0F);
+        this.cameraEntity = this.player;
+        this.player.resetPos();
+        this.gameMode.initPlayer(this.player);
+        this.level.loadPlayer(this.player);
+        this.player.input = new KeyboardInput(this.options);
+        this.player.id = playerId;
         this.player.method_494();
-        this.player.setRotation(((ExWorld) this.world).getSpawnYaw(), 0.0F);
-        this.interactionManager.setDefaultHotbar(this.player);
-        this.loadIntoWorld("Respawning");
-        if (this.currentScreen instanceof DeathScreen) {
-            this.openScreen(null);
+        this.player.setRot(((ExWorld) this.level).getSpawnYaw(), 0.0F);
+        this.gameMode.adjustPlayer(this.player);
+        this.prepareLevel("Respawning");
+        if (this.screen instanceof DeathScreen) {
+            this.setScreen(null);
         }
     }
 
     @Overwrite
-    public void createOrLoadWorld(String var1, String saveName, long seed) {
+    public void selectLevel(String var1, String saveName, long seed) {
         String mapName = this.getMapUsed(var1);
-        if (MathHelper.isStringEmpty(mapName)) {
-            this.openScreen(new AC_GuiMapSelect(null, var1));
+        if (Mth.isStringInvalid(mapName)) {
+            this.setScreen(new AC_GuiMapSelect(null, var1));
         } else {
             this.startWorld(var1, saveName, seed, mapName);
         }
     }
 
     @Override
-    public World getWorld(String saveName, long seed, String mapName) {
-        this.setWorld(null);
-        DimensionData dimData = this.getWorldStorage().method_1009(saveName, false);
-        World world = ExWorld.createWorld(mapName, dimData, saveName, seed, this.progressListener);
+    public Level getWorld(String saveName, long seed, String mapName) {
+        this.setLevel(null);
+        LevelIO dimData = this.getLevelSource().method_1009(saveName, false);
+        Level world = ExWorld.createWorld(mapName, dimData, saveName, seed, this.progressRenderer);
         return world;
     }
 
     @Override
     public void startWorld(String worldName, String saveName, long seed, String mapName) {
-        this.setWorld(null);
+        this.setLevel(null);
         System.gc();
-        if (worldName != null && this.getWorldStorage().isOld(worldName)) {
-            this.convertWorldFormat(worldName, saveName);
+        if (worldName != null && this.getLevelSource().requiresConversion(worldName)) {
+            this.convertWorld(worldName, saveName);
         } else {
             // TODO: reset global state in consistent matter
             AC_DebugMode.active = false;
             AC_DebugMode.levelEditing = false;
-            DimensionData dimData = null;
+            LevelIO dimData = null;
             if (worldName != null) {
-                dimData = this.getWorldStorage().method_1009(worldName, false);
+                dimData = this.getLevelSource().method_1009(worldName, false);
             }
 
             if (saveName == null) {
                 saveName = "Map Editing";
             }
 
-            World world = ExWorld.createWorld(mapName, dimData, saveName, seed, this.progressListener);
-            if (world.field_215) {
-                this.statFileWriter.incrementStat(Stats.createWorld, 1);
-                this.statFileWriter.incrementStat(Stats.startGame, 1);
-                this.notifyStatus(world, "Generating level");
+            Level world = ExWorld.createWorld(mapName, dimData, saveName, seed, this.progressRenderer);
+            if (world.isNew) {
+                this.statManager.addStat(Stats.CREATE_WORLD, 1);
+                this.statManager.addStat(Stats.START_GAME, 1);
+                this.setLevel(world, "Generating level");
             } else {
-                this.statFileWriter.incrementStat(Stats.loadWorld, 1);
-                this.statFileWriter.incrementStat(Stats.startGame, 1);
-                this.notifyStatus(world, "Loading level");
+                this.statManager.addStat(Stats.LOAD_WORLD, 1);
+                this.statManager.addStat(Stats.START_GAME, 1);
+                this.setLevel(world, "Loading level");
             }
         }
 
-        this.openScreen(null);
+        this.setScreen(null);
     }
 
     private File getWorldFolder(String worldName) {
-        File gameFolder = getGameDirectory();
+        File gameFolder = getWorkingDirectory();
         File savesFolder = new File(gameFolder, "saves");
         File worldFolder = new File(savesFolder, worldName);
         return worldFolder;
@@ -1250,7 +1244,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         String firstDir = path.substring(0, n);
         String id = path.substring(n + 1);
 
-        var sound = (ExSoundHelper) this.soundHelper;
+        var sound = (ExSoundHelper) this.soundEngine;
         if (firstDir.equalsIgnoreCase("sound")) {
             sound.addSound(id, url);
         } else if (firstDir.equalsIgnoreCase("newsound")) {
@@ -1271,9 +1265,9 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
     @Override
     public void updateStoreGUI() {
-        var scaler = new ScreenScaler(this.options, this.actualWidth, this.actualHeight);
-        int width = scaler.getScaledWidth();
-        int height = scaler.getScaledHeight();
+        var scaler = new ScreenSizeCalculator(this.options, this.width, this.height);
+        int width = scaler.getWidth();
+        int height = scaler.getHeight();
         this.storeGUI.init((Minecraft) (Object) this, width, height);
     }
 

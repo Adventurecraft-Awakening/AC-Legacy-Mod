@@ -7,7 +7,7 @@ public class AC_BlockChain extends AC_BlockRope {
 	}
 
     @Override
-	public int getTextureForSide(int var1, int var2) {
-		return this.texture + var1 % 2 + var2 / 3 * 2;
+	public int getTexture(int var1, int var2) {
+		return this.tex + var1 % 2 + var2 / 3 * 2;
 	}
 }

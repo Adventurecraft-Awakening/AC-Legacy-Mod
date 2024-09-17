@@ -2,14 +2,14 @@ package dev.adventurecraft.awakening.mixin.item;
 
 import dev.adventurecraft.awakening.common.AC_Items;
 import dev.adventurecraft.awakening.extension.item.ExItemStack;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.io.CompoundTag;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.item.Item;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 
-@Mixin(ItemStack.class)
+@Mixin(ItemInstance.class)
 public abstract class MixinItemStack implements ExItemStack {
 
     private int timeLeft;
@@ -17,10 +17,10 @@ public abstract class MixinItemStack implements ExItemStack {
     private boolean justReloaded;
 
     @Shadow
-    public int itemId;
+    public int id;
 
     @Shadow
-    private int meta;
+    private int auxValue;
 
     @Shadow
     public int count;
@@ -29,21 +29,21 @@ public abstract class MixinItemStack implements ExItemStack {
     public abstract Item getItem();
 
     @Overwrite
-    public CompoundTag writeNBT(CompoundTag tag) {
-        tag.put("id", (short) this.itemId);
-        tag.put("Count", this.count);
-        tag.put("Damage", (short) this.meta);
+    public CompoundTag save(CompoundTag tag) {
+        tag.putShort("id", (short) this.id);
+        tag.putInt("Count", this.count);
+        tag.putShort("Damage", (short) this.auxValue);
         return tag;
     }
 
     @Overwrite
-    public void readNBT(CompoundTag tag) {
-        this.itemId = tag.getShort("id");
+    public void load(CompoundTag tag) {
+        this.id = tag.getShort("id");
         this.count = tag.getInt("Count");
-        this.meta = tag.getShort("Damage");
+        this.auxValue = tag.getShort("Damage");
 
-        if (this.itemId == AC_Items.boomerang.id) {
-            this.meta = 0;
+        if (this.id == AC_Items.boomerang.id) {
+            this.auxValue = 0;
         }
     }
 

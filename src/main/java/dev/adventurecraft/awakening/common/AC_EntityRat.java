@@ -1,27 +1,27 @@
 package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.monster.MonsterEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 
-public class AC_EntityRat extends MonsterEntity {
+public class AC_EntityRat extends Monster {
 
-    public AC_EntityRat(World var1) {
+    public AC_EntityRat(Level var1) {
         super(var1);
-        this.texture = "/mob/rat.png";
-        this.movementSpeed = 0.5F;
-        this.attackDamage = 1;
+        this.textureName = "/mob/rat.png";
+        this.runSpeed = 0.5F;
+        this.damage = 1;
         this.setSize(0.6F, 0.6F);
         this.health = 6;
         ((ExLivingEntity) this).setMaxHealth(6);
     }
 
     @Override
-    protected Entity getAttackTarget() {
-        PlayerEntity var1 = this.world.getClosestPlayerTo(this, 5.0D);
-        return var1 != null && this.method_928(var1) ? var1 : null;
+    protected Entity findAttackTarget() {
+        Player var1 = this.level.getNearestPlayer(this, 5.0D);
+        return var1 != null && this.canSee(var1) ? var1 : null;
     }
 
     @Override

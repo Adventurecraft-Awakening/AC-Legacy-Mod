@@ -2,9 +2,9 @@ package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.TextRenderer;
-import net.minecraft.client.texture.TextureManager;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.Tesselator;
+import net.minecraft.client.renderer.Textures;
 import org.lwjgl.opengl.GL11;
 
 @SuppressWarnings("unused")
@@ -23,7 +23,7 @@ public class ScriptUISprite extends UIElement {
     public float alpha;
 
     public ScriptUISprite(String var1, float var2, float var3, float var4, float var5, double var6, double var8) {
-        this(var1, var2, var3, var4, var5, var6, var8, ((ExInGameHud) Minecraft.instance.overlay).getScriptUI());
+        this(var1, var2, var3, var4, var5, var6, var8, ((ExInGameHud) Minecraft.instance.gui).getScriptUI());
     }
 
     public ScriptUISprite(String var1, float var2, float var3, float var4, float var5, double var6, double var8, ScriptUIContainer var10) {
@@ -47,11 +47,11 @@ public class ScriptUISprite extends UIElement {
     }
 
     @Override
-    public void render(TextRenderer var1, TextureManager var2, float var3) {
+    public void render(Font var1, Textures var2, float var3) {
         if (this.texture.startsWith("http")) {
-            var2.bindTexture(var2.getSkinTextureId(this.texture, "./pack.png"));
+            var2.bind(var2.loadHttpTexture(this.texture, "./pack.png"));
         } else {
-            var2.bindTexture(var2.getTextureId(this.texture));
+            var2.bind(var2.loadTexture(this.texture));
         }
 
         GL11.glColor4f(this.red, this.green, this.blue, this.alpha);
@@ -59,12 +59,12 @@ public class ScriptUISprite extends UIElement {
         float var5 = this.getYAtTime(var3);
         float var6 = 1.0F / this.imageWidth;
         float var7 = 1.0F / this.imageHeight;
-        Tessellator var8 = Tessellator.INSTANCE;
-        var8.start();
-        var8.vertex(var4, var5 + this.height, 0.0D, this.u * (double) var6, (this.v + (double) this.height) * (double) var7);
-        var8.vertex(var4 + this.width, var5 + this.height, 0.0D, (float) (this.u + (double) this.width) * var6, (float) (this.v + (double) this.height) * var7);
-        var8.vertex(var4 + this.width, var5, 0.0D, (float) (this.u + (double) this.width) * var6, this.v * (double) var7);
-        var8.vertex(var4, var5, 0.0D, this.u * (double) var6, this.v * (double) var7);
-        var8.tessellate();
+        Tesselator var8 = Tesselator.instance;
+        var8.begin();
+        var8.vertexUV(var4, var5 + this.height, 0.0D, this.u * (double) var6, (this.v + (double) this.height) * (double) var7);
+        var8.vertexUV(var4 + this.width, var5 + this.height, 0.0D, (float) (this.u + (double) this.width) * var6, (float) (this.v + (double) this.height) * var7);
+        var8.vertexUV(var4 + this.width, var5, 0.0D, (float) (this.u + (double) this.width) * var6, this.v * (double) var7);
+        var8.vertexUV(var4, var5, 0.0D, this.u * (double) var6, this.v * (double) var7);
+        var8.end();
     }
 }

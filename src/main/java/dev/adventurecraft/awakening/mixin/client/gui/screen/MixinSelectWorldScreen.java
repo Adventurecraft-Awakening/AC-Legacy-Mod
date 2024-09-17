@@ -3,10 +3,10 @@ package dev.adventurecraft.awakening.mixin.client.gui.screen;
 import dev.adventurecraft.awakening.common.AC_GuiMapSelect;
 import dev.adventurecraft.awakening.extension.client.gui.widget.ExScrollableBaseWidget;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.SelectWorldScreen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.resource.language.TranslationStorage;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.SelectWorldScreen;
+import net.minecraft.locale.I18n;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -16,20 +16,20 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public abstract class MixinSelectWorldScreen extends Screen {
 
     @Shadow
-    private ButtonWidget selectButton;
+    private Button selectButton;
 
     @Shadow
-    private ButtonWidget deleteButton;
+    private Button deleteButton;
 
     @Shadow
-    private SelectWorldScreen.WorldList worldList;
+    private SelectWorldScreen.WorldSelectionList list;
 
     //@Overwrite TODO: is this needed?
     public void addButtonsX() {
-        TranslationStorage var1 = TranslationStorage.getInstance();
-        this.buttons.add(this.selectButton = new ButtonWidget(1, this.width / 2 - 152, this.height - 28, 100, 20, "Load Save"));
-        this.buttons.add(this.deleteButton = new ButtonWidget(2, this.width / 2 - 50, this.height - 28, 100, 20, var1.translate("selectWorld.delete")));
-        this.buttons.add(new ButtonWidget(0, this.width / 2 + 52, this.height - 28, 100, 20, var1.translate("gui.cancel")));
+        I18n var1 = I18n.getInstance();
+        this.buttons.add(this.selectButton = new Button(1, this.width / 2 - 152, this.height - 28, 100, 20, "Load Save"));
+        this.buttons.add(this.deleteButton = new Button(2, this.width / 2 - 50, this.height - 28, 100, 20, var1.get("selectWorld.delete")));
+        this.buttons.add(new Button(0, this.width / 2 + 52, this.height - 28, 100, 20, var1.get("gui.cancel")));
         this.selectButton.active = false;
         this.deleteButton.active = false;
     }
@@ -38,25 +38,25 @@ public abstract class MixinSelectWorldScreen extends Screen {
         method = "buttonClicked",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/Minecraft;openScreen(Lnet/minecraft/client/gui/screen/Screen;)V",
+            target = "Lnet/minecraft/client/Minecraft;setScreen(Lnet/minecraft/client/gui/screens/Screen;)V",
             ordinal = 1))
     private void openAcMapSelect(Minecraft instance, Screen screen) {
-        instance.openScreen(new AC_GuiMapSelect(this, ""));
+        instance.setScreen(new AC_GuiMapSelect(this, ""));
     }
 
     @Redirect(
-        method = "loadWorld",
+        method = "worldSelected",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/Minecraft;openScreen(Lnet/minecraft/client/gui/screen/Screen;)V",
+            target = "Lnet/minecraft/client/Minecraft;setScreen(Lnet/minecraft/client/gui/screens/Screen;)V",
             ordinal = 1))
     private void disableOpenScreen(Minecraft instance, Screen screen) {
     }
 
     @Override
-    public void onMouseEvent() {
-        super.onMouseEvent();
-        if (this.worldList instanceof ExScrollableBaseWidget scrollable) {
+    public void mouseEvent() {
+        super.mouseEvent();
+        if (this.list instanceof ExScrollableBaseWidget scrollable) {
             scrollable.onMouseEvent();
         }
     }

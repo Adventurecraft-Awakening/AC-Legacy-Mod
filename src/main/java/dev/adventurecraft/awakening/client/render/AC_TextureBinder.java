@@ -2,11 +2,10 @@ package dev.adventurecraft.awakening.client.render;
 
 import dev.adventurecraft.awakening.common.Vec2;
 import dev.adventurecraft.awakening.extension.client.ExTextureManager;
-import net.minecraft.client.render.TextureBinder;
-import net.minecraft.world.World;
-
 import java.awt.image.BufferedImage;
 import java.nio.IntBuffer;
+import net.minecraft.client.renderer.ptexture.DynamicTexture;
+import net.minecraft.world.level.Level;
 
 public interface AC_TextureBinder {
 
@@ -14,7 +13,7 @@ public interface AC_TextureBinder {
 
     void onTick(Vec2 size);
 
-    void loadImage(String name, World world);
+    void loadImage(String name, Level world);
 
     void loadImage(String name, BufferedImage image);
 
@@ -30,11 +29,11 @@ public interface AC_TextureBinder {
 
     int getHeight();
 
-    static <T extends TextureBinder> void loadImages(ExTextureManager texManager, Class<T> type, World world) {
+    static <T extends DynamicTexture> void loadImages(ExTextureManager texManager, Class<T> type, Level world) {
         AC_TextureBinder.loadImages(texManager, type, null, world);
     }
 
-    static <T extends TextureBinder> void loadImages(ExTextureManager texManager, Class<T> type, String name, World world) {
+    static <T extends DynamicTexture> void loadImages(ExTextureManager texManager, Class<T> type, String name, Level world) {
         texManager.getTextureBinders(type).forEach(b -> ((AC_TextureBinder) b).loadImage(name, world));
     }
 }

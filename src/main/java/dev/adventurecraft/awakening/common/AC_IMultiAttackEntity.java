@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.entity.Entity;
+import net.minecraft.world.entity.Entity;
 
 public interface AC_IMultiAttackEntity {
 

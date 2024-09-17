@@ -8,26 +8,26 @@ import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.block.ExGrassBlock;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.render.block.ExGrassColor;
-import net.minecraft.block.Block;
-import net.minecraft.block.GrassBlock;
-import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.World;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelSource;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.tile.GrassTile;
+import net.minecraft.world.level.tile.Tile;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(GrassBlock.class)
+@Mixin(GrassTile.class)
 public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock, AC_IBlockColor, AC_TexturedBlock {
 
     @Override
-    public int getTextureForSide(BlockView view, int x, int y, int z, int side) {
+    public int getTexture(LevelSource view, int x, int y, int z, int side) {
         return (int) getTextureForSideEx(view, x, y, z, side);
     }
 
     @Override
-    public long getTextureForSideEx(BlockView view, int x, int y, int z, int side) {
+    public long getTextureForSideEx(LevelSource view, int x, int y, int z, int side) {
         if (side == 1) {
             return getTopTexture(view, x, y, z);
         } else if (side == 0) {
@@ -38,20 +38,20 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
     }
 
     @Override
-    public int getBaseColor(int meta) {
+    public int getColor(int meta) {
         return ExGrassColor.getBaseColor(meta);
     }
 
-    private int getTopTexture(BlockView view, int x, int y, int z) {
-        int meta = view.getBlockMeta(x, y, z);
-        return getTextureForSide(0, meta);
+    private int getTopTexture(LevelSource view, int x, int y, int z) {
+        int meta = view.getData(x, y, z);
+        return getTexture(0, meta);
     }
 
-    private long getSideTexture(BlockView view, int x, int y, int z, int side) {
+    private long getSideTexture(LevelSource view, int x, int y, int z, int side) {
         ConnectedGrassOption option = ((ExGameOptions) Minecraft.instance.options).ofConnectedGrass();
 
         Material material = view.getMaterial(x, y + 1, z);
-        if (material == Material.SNOW || material == Material.SNOW_BLOCK) {
+        if (material == Material.TOP_SNOW || material == Material.SNOW) {
             if (option == ConnectedGrassOption.OFF) {
                 return 68;
             }
@@ -65,8 +65,8 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
                     case 5 -> ++nX;
                 }
 
-                int id = view.getBlockId(nX, y, nZ);
-                if (id != Block.SNOW.id && id != Block.SNOW_BLOCK.id) {
+                int id = view.getTile(nX, y, nZ);
+                if (id != Tile.SNOW_LAYER.id && id != Tile.SNOW.id) {
                     return 68;
                 }
             }
@@ -87,7 +87,7 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
                 case 5 -> ++nX;
             }
 
-            int id = view.getBlockId(nX, nY, nZ);
+            int id = view.getTile(nX, nY, nZ);
             if (id != GRASS.id) {
                 return 3;
             }
@@ -95,24 +95,24 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
         return (long) getTopTexture(view, x, y, z) | (1L << 32);
     }
 
-    @Redirect(method = "onScheduledTick", at = @At(
+    @Redirect(method = "tick", at = @At(
         value = "INVOKE",
-        target = "Lnet/minecraft/world/World;setBlock(IIII)Z"))
-    private boolean setChunkPopulatingOnSetBlock(World instance, int j, int k, int l, int i) {
+        target = "Lnet/minecraft/world/level/Level;setTile(IIII)Z"))
+    private boolean setChunkPopulatingOnSetBlock(Level instance, int j, int k, int l, int i) {
         ACMod.chunkIsNotPopulating = false;
-        boolean result = instance.setBlock(j, k, l, i);
+        boolean result = instance.setTile(j, k, l, i);
         ACMod.chunkIsNotPopulating = true;
         return result;
     }
 
     @Override
-    public int getTextureForSide(int var1, int meta) {
+    public int getTexture(int var1, int meta) {
         return meta == 0 ? 0 : 232 + meta - 1;
     }
 
     @Override
-    public int getRenderType() {
-        return ((ExGameOptions) Minecraft.instance.options).isGrass3d() ? 30 : super.getRenderType();
+    public int getRenderShape() {
+        return ((ExGameOptions) Minecraft.instance.options).isGrass3d() ? 30 : super.getRenderShape();
     }
 
     @Override

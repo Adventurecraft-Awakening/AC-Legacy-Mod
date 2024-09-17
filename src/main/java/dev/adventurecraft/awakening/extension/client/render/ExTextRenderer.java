@@ -2,13 +2,13 @@ package dev.adventurecraft.awakening.extension.client.render;
 
 import dev.adventurecraft.awakening.common.TextRect;
 import dev.adventurecraft.awakening.common.TextRendererState;
-import net.minecraft.client.options.GameOptions;
-import net.minecraft.client.texture.TextureManager;
+import net.minecraft.client.Options;
+import net.minecraft.client.renderer.Textures;
 import org.jetbrains.annotations.NotNull;
 
 public interface ExTextRenderer {
 
-    void init(GameOptions var1, String var2, TextureManager var3);
+    void init(Options var1, String var2, Textures var3);
 
     static int getShadowColor(int color) {
         int tmp = color & 0xff000000;

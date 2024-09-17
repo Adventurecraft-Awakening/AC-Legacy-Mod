@@ -1,31 +1,31 @@
 package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.extension.client.sound.ExSoundHelper;
-import net.minecraft.client.sound.SoundHelper;
+import net.minecraft.client.sounds.SoundEngine;
 
 @SuppressWarnings("unused")
 public class ScriptSound {
 
-    SoundHelper soundMgr;
+    SoundEngine soundMgr;
 
-    ScriptSound(SoundHelper var1) {
+    ScriptSound(SoundEngine var1) {
         this.soundMgr = var1;
     }
 
     public void playSoundUI(String var1) {
-        this.soundMgr.playSound(var1.toLowerCase(), 1.0F, 1.0F);
+        this.soundMgr.playUI(var1.toLowerCase(), 1.0F, 1.0F);
     }
 
     public void playSoundUI(String var1, float var2, float var3) {
-        this.soundMgr.playSound(var1.toLowerCase(), var2, var3);
+        this.soundMgr.playUI(var1.toLowerCase(), var2, var3);
     }
 
     public void playSound3D(String var1, float var2, float var3, float var4) {
-        this.soundMgr.playSound(var1.toLowerCase(), var2, var3, var4, 1.0F, 1.0F);
+        this.soundMgr.play(var1.toLowerCase(), var2, var3, var4, 1.0F, 1.0F);
     }
 
     public void playSound3D(String var1, float var2, float var3, float var4, float var5, float var6) {
-        this.soundMgr.playSound(var1.toLowerCase(), var2, var3, var4, var5, var6);
+        this.soundMgr.play(var1.toLowerCase(), var2, var3, var4, var5, var6);
     }
 
     public void playMusic(String var1) {

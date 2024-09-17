@@ -1,12 +1,12 @@
 package dev.adventurecraft.awakening.common;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 public class AC_ItemPaste extends Item {
 
@@ -15,7 +15,7 @@ public class AC_ItemPaste extends Item {
     }
 
     @Override
-    public ItemStack use(ItemStack item, World world, PlayerEntity player) {
+    public ItemInstance use(ItemInstance item, Level world, Player player) {
         if (!AC_ItemCursor.bothSet) {
             return item;
         }
@@ -26,8 +26,8 @@ public class AC_ItemPaste extends Item {
         int maxX = AC_ItemCursor.maxX;
         int maxY = AC_ItemCursor.maxY;
         int maxZ = AC_ItemCursor.maxZ;
-        LivingEntity entity = Minecraft.instance.viewEntity;
-        Vec3d rot = entity.getRotation();
+        LivingEntity entity = Minecraft.instance.cameraEntity;
+        Vec3 rot = entity.getLookAngle();
         int width = maxX - minX + 1;
         int height = maxY - minY + 1;
         int depth = maxZ - minZ + 1;
@@ -37,8 +37,8 @@ public class AC_ItemPaste extends Item {
         for (int x = 0; x < width; ++x) {
             for (int y = 0; y < height; ++y) {
                 for (int z = 0; z < depth; ++z) {
-                    int id = world.getBlockId(x + minX, y + minY, z + minZ);
-                    int meta = world.getBlockMeta(x + minX, y + minY, z + minZ);
+                    int id = world.getTile(x + minX, y + minY, z + minZ);
+                    int meta = world.getData(x + minX, y + minY, z + minZ);
                     int i = depth * (height * x + y) + z;
                     idArray[i] = id;
                     metaArray[i] = meta;
@@ -56,7 +56,7 @@ public class AC_ItemPaste extends Item {
                     int i = depth * (height * x + y) + z;
                     int id = idArray[i];
                     int meta = metaArray[i];
-                    world.setBlockWithMetadata(baseX + x, baseY + y, baseZ + z, id, meta);
+                    world.setTileAndDataNoUpdate(baseX + x, baseY + y, baseZ + z, id, meta);
                 }
             }
         }
@@ -65,7 +65,7 @@ public class AC_ItemPaste extends Item {
             for (int y = 0; y < height; ++y) {
                 for (int z = 0; z < depth; ++z) {
                     int id = idArray[depth * (height * x + y) + z];
-                    world.notifyOfNeighborChange(baseX + x, baseY + y, baseZ + z, id);
+                    world.tileUpdated(baseX + x, baseY + y, baseZ + z, id);
                 }
             }
         }

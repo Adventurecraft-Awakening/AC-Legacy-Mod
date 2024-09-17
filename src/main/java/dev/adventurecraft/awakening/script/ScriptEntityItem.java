@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.script;
 
-import net.minecraft.entity.ItemEntity;
+import net.minecraft.world.entity.item.ItemEntity;
 
 @SuppressWarnings("unused")
 public class ScriptEntityItem extends ScriptEntity {
@@ -29,18 +29,18 @@ public class ScriptEntityItem extends ScriptEntity {
     }
 
     public ScriptItem getItem() {
-        return new ScriptItem(this.entityItem.stack);
+        return new ScriptItem(this.entityItem.item);
     }
 
     public void setItem(ScriptItem item) {
-        this.entityItem.stack = item.item;
+        this.entityItem.item = item.item;
     }
 
     public int getPickupDelay() {
-        return this.entityItem.pickupDelay;
+        return this.entityItem.throwTime;
     }
 
     public void setPickupDelay(int value) {
-        this.entityItem.pickupDelay = value;
+        this.entityItem.throwTime = value;
     }
 }

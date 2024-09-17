@@ -5,8 +5,8 @@ import java.util.ArrayList;
 
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
 
 public class AC_GuiEffect extends Screen {
     private AC_TileEntityEffect effect;
@@ -36,12 +36,12 @@ public class AC_GuiEffect extends Screen {
         this.effect = var1;
     }
 
-    public void initVanillaScreen() {
+    public void init() {
         int var1 = (this.width - 16) / 4;
-        this.buttons.add(new ButtonWidget(-1, 4, 0, var1, 18, "Particles"));
-        this.buttons.add(new ButtonWidget(-2, 4 + 4 + var1, 0, var1, 18, "Fog"));
-        this.buttons.add(new ButtonWidget(-3, 4 + (4 + var1) * 2, 0, var1, 18, "Overlay"));
-        this.buttons.add(new ButtonWidget(-4, 4 + (4 + var1) * 3, 0, var1, 18, "Replacements"));
+        this.buttons.add(new Button(-1, 4, 0, var1, 18, "Particles"));
+        this.buttons.add(new Button(-2, 4 + 4 + var1, 0, var1, 18, "Fog"));
+        this.buttons.add(new Button(-3, 4 + (4 + var1) * 2, 0, var1, 18, "Overlay"));
+        this.buttons.add(new Button(-4, 4 + (4 + var1) * 3, 0, var1, 18, "Replacements"));
         var1 = (this.width - 16) / 3;
         if (this.page == 0) {
             this.particlesPerSpawn = new GuiSlider2(200, 4, 20, 10, String.format("Particles Per Spawn: %d", this.effect.particlesPerSpawn), (float) (this.effect.particlesPerSpawn - 1) / 49.0F);
@@ -86,21 +86,21 @@ public class AC_GuiEffect extends Screen {
             this.floatRand3 = new GuiSlider2(203, 4 + 2 * (4 + var1), 100, 10, String.format("Rand Arg 3: %.2f", this.effect.floatRand3), this.effect.floatRand3);
             this.floatRand3.width = var1;
             this.buttons.add(this.floatRand3);
-            this.buttons.add(new ButtonWidget(0, 4, 120, var1, 18, "No Particles"));
+            this.buttons.add(new Button(0, 4, 120, var1, 18, "No Particles"));
             int var2 = 1;
 
             for (String var4 : particleTypes) {
-                this.buttons.add(new ButtonWidget(var2, 4 + var2 % 3 * (4 + var1), 120 + var2 / 3 * 20, var1, 18, var4));
+                this.buttons.add(new Button(var2, 4 + var2 % 3 * (4 + var1), 120 + var2 / 3 * 20, var1, 18, var4));
                 ++var2;
             }
         } else {
-            ButtonWidget var9;
+            Button var9;
             if (this.page == 1) {
-                var9 = new ButtonWidget(0, 4, 20, var1, 18, "Don\'t Change Fog Color");
+                var9 = new Button(0, 4, 20, var1, 18, "Don\'t Change Fog Color");
                 if (this.effect.changeFogColor == 1) {
-                    var9.text = "Change Fog Color";
+                    var9.message = "Change Fog Color";
                 } else if (this.effect.changeFogColor == 2) {
-                    var9.text = "Revert Fog Color To Normal";
+                    var9.message = "Revert Fog Color To Normal";
                 }
 
                 this.buttons.add(var9);
@@ -113,11 +113,11 @@ public class AC_GuiEffect extends Screen {
                 this.fogB = new GuiSlider2(203, 4 + 2 * (4 + var1), 40, 10, String.format("Blue: %.2f", this.effect.fogB), this.effect.fogB);
                 this.fogB.width = var1;
                 this.buttons.add(this.fogB);
-                var9 = new ButtonWidget(1, 4, 60, var1, 18, "Don\'t Change Fog Density");
+                var9 = new Button(1, 4, 60, var1, 18, "Don\'t Change Fog Density");
                 if (this.effect.changeFogDensity == 1) {
-                    var9.text = "Change Fog Density";
+                    var9.message = "Change Fog Density";
                 } else if (this.effect.changeFogDensity == 2) {
-                    var9.text = "Revert Fog Density To Normal";
+                    var9.message = "Revert Fog Density To Normal";
                 }
 
                 this.buttons.add(var9);
@@ -135,43 +135,43 @@ public class AC_GuiEffect extends Screen {
                 int var10;
                 File var11;
                 if (this.page == 2) {
-                    var9 = new ButtonWidget(0, 4, 20, var1, 18, "Change Overlay");
+                    var9 = new Button(0, 4, 20, var1, 18, "Change Overlay");
                     if (!this.effect.setOverlay) {
-                        var9.text = "Don\'t Change Overlay";
+                        var9.message = "Don\'t Change Overlay";
                     }
 
                     this.buttons.add(var9);
-                    this.buttons.add(new ButtonWidget(1, 4, 40, var1, 18, "Remove Overlay"));
+                    this.buttons.add(new Button(1, 4, 40, var1, 18, "Remove Overlay"));
                     var10 = 1;
-                    var11 = new File(((ExWorld)this.effect.world).getLevelDir(), "overlays");
+                    var11 = new File(((ExWorld)this.effect.level).getLevelDir(), "overlays");
                     if (var11.exists() && var11.isDirectory()) {
                         var5 = var11.listFiles();
                         var6 = var5.length;
 
                         for (var7 = 0; var7 < var6; ++var7) {
                             var8 = var5[var7];
-                            this.buttons.add(new ButtonWidget(1 + var10, 4 + var10 % 3 * (4 + var1), 40 + var10 / 3 * 20, var1, 18, var8.getName()));
+                            this.buttons.add(new Button(1 + var10, 4 + var10 % 3 * (4 + var1), 40 + var10 / 3 * 20, var1, 18, var8.getName()));
                             ++var10;
                         }
                     }
                 } else if (this.page == 3) {
-                    var9 = new ButtonWidget(0, 4, 20, var1, 18, "Replace Textures");
+                    var9 = new Button(0, 4, 20, var1, 18, "Replace Textures");
                     if (!this.effect.replaceTextures && this.effect.revertTextures) {
-                        var9.text = "Revert Replacements";
+                        var9.message = "Revert Replacements";
                     } else if (!this.effect.replaceTextures) {
-                        var9.text = "Do Nothing";
+                        var9.message = "Do Nothing";
                     }
 
                     this.buttons.add(var9);
                     var10 = 0;
-                    var11 = new File(((ExWorld)this.effect.world).getLevelDir(), "textureReplacement");
+                    var11 = new File(((ExWorld)this.effect.level).getLevelDir(), "textureReplacement");
                     if (var11.exists() && var11.isDirectory()) {
                         var5 = var11.listFiles();
                         var6 = var5.length;
 
                         for (var7 = 0; var7 < var6; ++var7) {
                             var8 = var5[var7];
-                            this.buttons.add(new ButtonWidget(1 + var10, 4 + var10 % 3 * (4 + var1), 40 + var10 / 3 * 20, var1, 18, var8.getName()));
+                            this.buttons.add(new Button(1 + var10, 4 + var10 % 3 * (4 + var1), 40 + var10 / 3 * 20, var1, 18, var8.getName()));
                             ++var10;
                         }
                     }
@@ -181,11 +181,11 @@ public class AC_GuiEffect extends Screen {
 
     }
 
-    protected void buttonClicked(ButtonWidget var1) {
+    protected void buttonClicked(Button var1) {
         if (var1.id < 0) {
             this.page = -var1.id - 1;
             this.buttons.clear();
-            this.initVanillaScreen();
+            this.init();
         } else {
             if (this.page == 0) {
                 if (var1.id == 0) {
@@ -197,52 +197,52 @@ public class AC_GuiEffect extends Screen {
                 if (var1.id == 0) {
                     this.effect.changeFogColor = (this.effect.changeFogColor + 1) % 3;
                     if (this.effect.changeFogColor == 1) {
-                        var1.text = "Change Fog Color";
+                        var1.message = "Change Fog Color";
                     } else if (this.effect.changeFogColor == 2) {
-                        var1.text = "Revert Fog Color To Normal";
+                        var1.message = "Revert Fog Color To Normal";
                     } else {
-                        var1.text = "Don\'t Change Fog Color";
+                        var1.message = "Don\'t Change Fog Color";
                     }
                 } else if (var1.id == 1) {
                     this.effect.changeFogDensity = (this.effect.changeFogDensity + 1) % 3;
                     if (this.effect.changeFogDensity == 1) {
-                        var1.text = "Change Fog Density";
+                        var1.message = "Change Fog Density";
                     } else if (this.effect.changeFogDensity == 2) {
-                        var1.text = "Revert Fog Density To Normal";
+                        var1.message = "Revert Fog Density To Normal";
                     } else {
-                        var1.text = "Don\'t Change Fog Density";
+                        var1.message = "Don\'t Change Fog Density";
                     }
                 }
             } else if (this.page == 2) {
                 if (var1.id == 0) {
                     this.effect.setOverlay = !this.effect.setOverlay;
                     if (this.effect.setOverlay) {
-                        var1.text = "Change Overlay";
+                        var1.message = "Change Overlay";
                     } else {
-                        var1.text = "Don\'t Change Overlay";
+                        var1.message = "Don\'t Change Overlay";
                     }
                 } else if (var1.id == 1) {
                     this.effect.overlay = "";
                 } else {
-                    this.effect.overlay = var1.text;
+                    this.effect.overlay = var1.message;
                 }
             } else if (this.page == 3) {
                 if (var1.id == 0) {
                     if (this.effect.replaceTextures) {
                         this.effect.replaceTextures = false;
                         this.effect.revertTextures = true;
-                        var1.text = "Revert Replacements";
+                        var1.message = "Revert Replacements";
                     } else if (this.effect.revertTextures) {
                         this.effect.replaceTextures = false;
                         this.effect.revertTextures = false;
-                        var1.text = "Do Nothing";
+                        var1.message = "Do Nothing";
                     } else {
                         this.effect.replaceTextures = true;
                         this.effect.revertTextures = false;
-                        var1.text = "Replace Textures";
+                        var1.message = "Replace Textures";
                     }
                 } else {
-                    this.effect.textureReplacement = var1.text;
+                    this.effect.textureReplacement = var1.message;
                 }
             }
 
@@ -253,57 +253,57 @@ public class AC_GuiEffect extends Screen {
         this.fill(0, 0, this.width, this.height, Integer.MIN_VALUE);
         if (this.page == 0) {
             this.effect.offsetX = this.offsetX.sliderValue * 8.0F;
-            this.offsetX.text = String.format("Offset X: %.2f", this.effect.offsetX);
+            this.offsetX.message = String.format("Offset X: %.2f", this.effect.offsetX);
             this.effect.offsetY = this.offsetY.sliderValue * 8.0F;
-            this.offsetY.text = String.format("Offset Y: %.2f", this.effect.offsetY);
+            this.offsetY.message = String.format("Offset Y: %.2f", this.effect.offsetY);
             this.effect.offsetZ = this.offsetZ.sliderValue * 8.0F;
-            this.offsetZ.text = String.format("Offset Z: %.2f", this.effect.offsetZ);
+            this.offsetZ.message = String.format("Offset Z: %.2f", this.effect.offsetZ);
             this.effect.randX = this.randX.sliderValue * 8.0F;
-            this.randX.text = String.format("Rand X: %.2f", this.effect.randX);
+            this.randX.message = String.format("Rand X: %.2f", this.effect.randX);
             this.effect.randY = this.randY.sliderValue * 8.0F;
-            this.randY.text = String.format("Rand Y: %.2f", this.effect.randY);
+            this.randY.message = String.format("Rand Y: %.2f", this.effect.randY);
             this.effect.randZ = this.randZ.sliderValue * 8.0F;
-            this.randZ.text = String.format("Rand Z: %.2f", this.effect.randZ);
+            this.randZ.message = String.format("Rand Z: %.2f", this.effect.randZ);
             this.effect.floatArg1 = this.floatArg1.sliderValue * 2.0F - 1.0F;
-            this.floatArg1.text = String.format("Arg 1: %.2f", this.effect.floatArg1);
+            this.floatArg1.message = String.format("Arg 1: %.2f", this.effect.floatArg1);
             this.effect.floatArg2 = this.floatArg2.sliderValue * 2.0F - 1.0F;
-            this.floatArg2.text = String.format("Arg 2: %.2f", this.effect.floatArg2);
+            this.floatArg2.message = String.format("Arg 2: %.2f", this.effect.floatArg2);
             this.effect.floatArg3 = this.floatArg3.sliderValue * 2.0F - 1.0F;
-            this.floatArg3.text = String.format("Arg 3: %.2f", this.effect.floatArg3);
+            this.floatArg3.message = String.format("Arg 3: %.2f", this.effect.floatArg3);
             this.effect.floatRand1 = this.floatRand1.sliderValue;
-            this.floatRand1.text = String.format("Rand 1: %.2f", this.effect.floatRand1);
+            this.floatRand1.message = String.format("Rand 1: %.2f", this.effect.floatRand1);
             this.effect.floatRand2 = this.floatRand2.sliderValue;
-            this.floatRand2.text = String.format("Rand 2: %.2f", this.effect.floatRand2);
+            this.floatRand2.message = String.format("Rand 2: %.2f", this.effect.floatRand2);
             this.effect.floatRand3 = this.floatRand3.sliderValue;
-            this.floatRand3.text = String.format("Rand 3: %.2f", this.effect.floatRand3);
+            this.floatRand3.message = String.format("Rand 3: %.2f", this.effect.floatRand3);
             this.effect.ticksBetweenParticles = (int) (this.ticksBetweenParticles.sliderValue * 100.0F + 0.5F);
-            this.ticksBetweenParticles.text = String.format("Ticks Between: %d", this.effect.ticksBetweenParticles);
+            this.ticksBetweenParticles.message = String.format("Ticks Between: %d", this.effect.ticksBetweenParticles);
             this.effect.particlesPerSpawn = (int) (this.particlesPerSpawn.sliderValue * 49.0F + 1.5F);
-            this.particlesPerSpawn.text = String.format("Particles Per Spawn: %d", this.effect.particlesPerSpawn);
-            this.textRenderer.drawTextWithShadow("Particle Type: " + this.effect.particleType, 2 * this.width / 3, 25, -1);
+            this.particlesPerSpawn.message = String.format("Particles Per Spawn: %d", this.effect.particlesPerSpawn);
+            this.font.drawShadow("Particle Type: " + this.effect.particleType, 2 * this.width / 3, 25, -1);
         } else if (this.page == 1) {
             this.effect.fogR = this.fogR.sliderValue;
-            this.fogR.text = String.format("Red: %.2f", this.effect.fogR);
+            this.fogR.message = String.format("Red: %.2f", this.effect.fogR);
             this.effect.fogG = this.fogG.sliderValue;
-            this.fogG.text = String.format("Green: %.2f", this.effect.fogG);
+            this.fogG.message = String.format("Green: %.2f", this.effect.fogG);
             this.effect.fogB = this.fogB.sliderValue;
-            this.fogB.text = String.format("Blue: %.2f", this.effect.fogB);
+            this.fogB.message = String.format("Blue: %.2f", this.effect.fogB);
             this.effect.fogStart = this.fogStart.sliderValue * 512.0F;
-            this.fogStart.text = String.format("Start: %.1f", this.effect.fogStart);
+            this.fogStart.message = String.format("Start: %.1f", this.effect.fogStart);
             this.effect.fogEnd = this.fogEnd.sliderValue * 512.0F;
-            this.fogEnd.text = String.format("End: %.1f", this.effect.fogEnd);
+            this.fogEnd.message = String.format("End: %.1f", this.effect.fogEnd);
         } else if (this.page == 2) {
-            this.textRenderer.drawTextWithShadow("Overlay: " + this.effect.overlay, this.width / 3, 25, -1);
+            this.font.drawShadow("Overlay: " + this.effect.overlay, this.width / 3, 25, -1);
         } else if (this.page == 3) {
-            this.textRenderer.drawTextWithShadow("Replacement: " + this.effect.textureReplacement, this.width / 3, 25, -1);
+            this.font.drawShadow("Replacement: " + this.effect.textureReplacement, this.width / 3, 25, -1);
         }
 
         super.render(var1, var2, var3);
-        this.effect.world.getChunk(this.effect.x, this.effect.z).method_885();
+        this.effect.level.getChunkAt(this.effect.x, this.effect.z).markUnsaved();
     }
 
     public static void showUI(AC_TileEntityEffect var0) {
-        Minecraft.instance.openScreen(new AC_GuiEffect(var0));
+        Minecraft.instance.setScreen(new AC_GuiEffect(var0));
     }
 
     public boolean isPauseScreen() {

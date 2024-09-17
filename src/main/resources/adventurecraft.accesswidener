@@ -1,92 +1,88 @@
 accessWidener v1 named
 
-accessible field net/minecraft/client/Minecraft gameDirectory Ljava/io/File;
+accessible field net/minecraft/client/Minecraft workDir Ljava/io/File;
 accessible field net/minecraft/client/Minecraft instance Lnet/minecraft/client/Minecraft;
-accessible field net/minecraft/client/Minecraft resourceDownloadThread Lnet/minecraft/client/util/ResourceDownloadThread;
+accessible field net/minecraft/client/Minecraft bgLoader Lnet/minecraft/client/BackgroundDownloader;
 
-accessible method net/minecraft/client/util/ResourceDownloadThread method_108 (Ljava/io/File;Ljava/lang/String;)V
+accessible method net/minecraft/client/BackgroundDownloader loadAll (Ljava/io/File;Ljava/lang/String;)V
 
-accessible field net/minecraft/client/gui/widget/ButtonWidget width I
-accessible field net/minecraft/client/gui/widget/ButtonWidget height I
+accessible field net/minecraft/client/gui/components/Button width I
+accessible field net/minecraft/client/gui/components/Button height I
 
-accessible field net/minecraft/block/Block resistance F
-accessible method net/minecraft/block/Block <init> (IILnet/minecraft/block/material/Material;)V
-accessible method net/minecraft/block/Block init ()V
-accessible method net/minecraft/block/Block setLightOpacity (I)Lnet/minecraft/block/Block;
-accessible method net/minecraft/block/Block setHardness (F)Lnet/minecraft/block/Block;
-accessible method net/minecraft/block/Block setBlastResistance (F)Lnet/minecraft/block/Block;
-accessible method net/minecraft/block/Block setLightEmittance (F)Lnet/minecraft/block/Block;
-accessible method net/minecraft/block/Block setSounds (Lnet/minecraft/block/BlockSounds;)Lnet/minecraft/block/Block;
-extendable method net/minecraft/block/Block drop (Lnet/minecraft/world/World;IIII)V
-accessible method net/minecraft/block/Block isInsideYZ (Lnet/minecraft/util/math/Vec3d;)Z
-accessible method net/minecraft/block/Block isInsideXZ (Lnet/minecraft/util/math/Vec3d;)Z
-accessible method net/minecraft/block/Block isInsideXY (Lnet/minecraft/util/math/Vec3d;)Z
+accessible field net/minecraft/world/level/tile/Tile explosionResistance F
+accessible method net/minecraft/world/level/tile/Tile <init> (IILnet/minecraft/world/level/material/Material;)V
+accessible method net/minecraft/world/level/tile/Tile registerBurnables ()V
+accessible method net/minecraft/world/level/tile/Tile setLightBlock (I)Lnet/minecraft/world/level/tile/Tile;
+accessible method net/minecraft/world/level/tile/Tile setDestroyTime (F)Lnet/minecraft/world/level/tile/Tile;
+accessible method net/minecraft/world/level/tile/Tile setExplodeable (F)Lnet/minecraft/world/level/tile/Tile;
+accessible method net/minecraft/world/level/tile/Tile setLightEmission (F)Lnet/minecraft/world/level/tile/Tile;
+accessible method net/minecraft/world/level/tile/Tile setSoundType (Lnet/minecraft/world/level/tile/SoundType;)Lnet/minecraft/world/level/tile/Tile;
+extendable method net/minecraft/world/level/tile/Tile dropResources (Lnet/minecraft/world/level/Level;IIII)V
+accessible method net/minecraft/world/level/tile/Tile containsX (Lnet/minecraft/world/phys/Vec3;)Z
+accessible method net/minecraft/world/level/tile/Tile containsY (Lnet/minecraft/world/phys/Vec3;)Z
+accessible method net/minecraft/world/level/tile/Tile containsZ (Lnet/minecraft/world/phys/Vec3;)Z
 
-accessible method net/minecraft/item/Item <init> (I)V
-accessible method net/minecraft/item/Item setDurability (I)Lnet/minecraft/item/Item;
+accessible method net/minecraft/world/item/Item <init> (I)V
+accessible method net/minecraft/world/item/Item setMaxDamage (I)Lnet/minecraft/world/item/Item;
 
-extendable class net/minecraft/item/ItemStack
+extendable class net/minecraft/world/ItemInstance
 
-accessible field net/minecraft/world/World autoSaveInterval I
-accessible field net/minecraft/world/World worldSource Lnet/minecraft/world/source/WorldSource;
-accessible field net/minecraft/world/World properties Lnet/minecraft/world/WorldProperties;
-accessible method net/minecraft/world/World notifyOfNeighborChange (IIII)V
+accessible field net/minecraft/world/level/Level saveInterval I
+accessible field net/minecraft/world/level/Level chunkSource Lnet/minecraft/world/level/chunk/ChunkSource;
+accessible field net/minecraft/world/level/Level levelData Lnet/minecraft/world/level/storage/LevelData;
+accessible method net/minecraft/world/level/Level tileUpdated (IIII)V
 
-accessible field net/minecraft/entity/Entity field_1590 I
-accessible field net/minecraft/entity/Entity field_1611 I
-accessible field net/minecraft/entity/Entity fallDistance F
-accessible field net/minecraft/entity/Entity immuneToFire Z
-accessible field net/minecraft/entity/Entity field_1648 I
-accessible method net/minecraft/entity/Entity setRotation (FF)V
+accessible field net/minecraft/world/entity/Entity ENTITY_COUNTER I # field_1590
+accessible field net/minecraft/world/entity/Entity nextStep I
+accessible field net/minecraft/world/entity/Entity fallDistance F
+accessible field net/minecraft/world/entity/Entity fireImmune Z
+accessible field net/minecraft/world/entity/Entity maxAirSupply I
+accessible method net/minecraft/world/entity/Entity setRot (FF)V
 
-accessible field net/minecraft/entity/EntityRegistry CLASS_TO_STRING_ID Ljava/util/Map;
+accessible field net/minecraft/world/entity/EntityIO classIdMap Ljava/util/Map;
 
-accessible field net/minecraft/entity/ai/pathing/EntityPath field_2690 I
-mutable field net/minecraft/entity/ai/pathing/EntityPath field_2690 I
-accessible field net/minecraft/entity/ai/pathing/EntityPath field_2691 [Lnet/minecraft/entity/ai/pathing/PathNode;
-mutable field net/minecraft/entity/ai/pathing/EntityPath field_2691 [Lnet/minecraft/entity/ai/pathing/PathNode;
-accessible field net/minecraft/entity/ai/pathing/EntityPath field_2692 I
+accessible field net/minecraft/world/level/pathfinder/Path length I # field_2690
+mutable field net/minecraft/world/level/pathfinder/Path length I # field_2690
+accessible field net/minecraft/world/level/pathfinder/Path nodes [Lnet/minecraft/world/level/pathfinder/Node; # field_2691
+mutable field net/minecraft/world/level/pathfinder/Path nodes [Lnet/minecraft/world/level/pathfinder/Node; # field_2691
+accessible field net/minecraft/world/level/pathfinder/Path pos I # field_2692
 
-accessible field net/minecraft/entity/LivingEntity jumping Z
-accessible field net/minecraft/entity/LivingEntity field_1058 I
-accessible field net/minecraft/entity/LivingEntity target Lnet/minecraft/entity/Entity;
+accessible field net/minecraft/world/entity/LivingEntity jumping Z
+accessible field net/minecraft/world/entity/LivingEntity lastHurt I # field_1058
+accessible field net/minecraft/world/entity/LivingEntity lookAt Lnet/minecraft/world/entity/Entity;
 
-accessible method net/minecraft/entity/player/PlayerEntity applyDamage (I)V
+accessible method net/minecraft/world/entity/player/Player actuallyHurt (I)V
 
-accessible method net/minecraft/entity/animal/WolfEntity spawnBoneParticles (Z)V
+accessible method net/minecraft/world/entity/animal/Wolf spawnTamingParticles (Z)V
 
-accessible method net/minecraft/inventory/PlayerInventory getSlotWithItem (I)I
+accessible method net/minecraft/world/entity/player/Inventory getSlot (I)I
 
-accessible method net/minecraft/container/Container addSlot (Lnet/minecraft/container/slot/Slot;)V
+accessible method net/minecraft/world/inventory/AbstractContainerMenu addSlot (Lnet/minecraft/world/inventory/Slot;)V
 
-accessible field net/minecraft/entity/projectile/ArrowEntity blockX I
-accessible field net/minecraft/entity/projectile/ArrowEntity blockY I
-accessible field net/minecraft/entity/projectile/ArrowEntity blockZ I
-accessible field net/minecraft/entity/projectile/ArrowEntity inBlock I
-accessible field net/minecraft/entity/projectile/ArrowEntity ticksFlying I
+accessible field net/minecraft/world/entity/projectile/Arrow xTile I
+accessible field net/minecraft/world/entity/projectile/Arrow yTile I
+accessible field net/minecraft/world/entity/projectile/Arrow zTile I
+accessible field net/minecraft/world/entity/projectile/Arrow inTile I
+accessible field net/minecraft/world/entity/projectile/Arrow flightTime I
 
-accessible field net/minecraft/entity/ItemEntity health I
+accessible field net/minecraft/world/entity/item/ItemEntity health I
 
-accessible field net/minecraft/client/render/block/BlockRenderer blockView Lnet/minecraft/world/BlockView;
+accessible field net/minecraft/client/renderer/TileRenderer level Lnet/minecraft/world/level/LevelSource;
 
-accessible field net/minecraft/client/render/GameRenderer field_2365 F
+accessible field net/minecraft/client/renderer/GameRenderer fov F # field_2365
 
-accessible field net/minecraft/client/render/block/GrassColor map [I
-accessible field net/minecraft/client/render/block/FoliageColor map [I
+accessible field net/minecraft/world/level/GrassColor pixels [I
+accessible field net/minecraft/world/level/FoliageColor pixels [I
 
-accessible field net/minecraft/client/texture/TextureManager textures Ljava/util/HashMap;
-accessible field net/minecraft/client/texture/TextureManager texturePackManager Lnet/minecraft/client/TexturePackManager;
+accessible field net/minecraft/client/renderer/Textures idMap Ljava/util/HashMap;
+accessible field net/minecraft/client/renderer/Textures skins Lnet/minecraft/client/skins/TexturePackRepository;
 
-accessible field net/minecraft/client/gui/screen/Screen buttons Ljava/util/List;
-accessible field net/minecraft/client/gui/screen/Screen textRenderer Lnet/minecraft/client/render/TextRenderer;
-accessible field net/minecraft/client/gui/screen/Screen lastClickedButton Lnet/minecraft/client/gui/widget/ButtonWidget;
+accessible field net/minecraft/client/gui/screens/Screen buttons Ljava/util/List;
+accessible field net/minecraft/client/gui/screens/Screen font Lnet/minecraft/client/gui/Font;
+accessible field net/minecraft/client/gui/screens/Screen clickedButton Lnet/minecraft/client/gui/components/Button;
 
-accessible class net/minecraft/client/gui/screen/SelectWorldScreen$WorldList
+accessible class net/minecraft/client/gui/screens/SelectWorldScreen$WorldSelectionList
 
-accessible method net/minecraft/client/gui/GuiElement fillGradient (IIIIII)V
+accessible method net/minecraft/client/gui/GuiComponent fillGradient (IIIIII)V
 
-accessible field net/minecraft/client/gui/widgets/SliderWidget option Lnet/minecraft/client/options/Option;
-
-# net/minecraft/client/gui/screen/SelectWorldScreen$class_569
-# net/minecraft/item/ItemInstance
-# net/minecraft/tile/Tile drop(Lnet/minecraft/level/Level;IIII)V
+accessible field net/minecraft/client/gui/components/SliderButton option Lnet/minecraft/client/Option;

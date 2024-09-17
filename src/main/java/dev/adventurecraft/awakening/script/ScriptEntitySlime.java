@@ -1,14 +1,14 @@
 package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.extension.entity.monster.ExSlimeEntity;
-import net.minecraft.entity.monster.SlimeEntity;
+import net.minecraft.world.entity.monster.Slime;
 
 @SuppressWarnings("unused")
 public class ScriptEntitySlime extends ScriptEntityLiving {
 
-    SlimeEntity entitySlime;
+    Slime entitySlime;
 
-    ScriptEntitySlime(SlimeEntity var1) {
+    ScriptEntitySlime(Slime var1) {
         super(var1);
         this.entitySlime = var1;
     }

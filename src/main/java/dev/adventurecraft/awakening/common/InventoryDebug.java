@@ -1,16 +1,16 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.block.Block;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.Container;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.tile.Tile;
 
-public class InventoryDebug implements Inventory {
+public class InventoryDebug implements Container {
 
     private String inventoryTitle;
     private int size;
-    private ItemStack[] inventoryContents;
+    private ItemInstance[] inventoryContents;
     public int firstItem;
     public int lastItem;
     public boolean atEnd;
@@ -18,45 +18,45 @@ public class InventoryDebug implements Inventory {
     public InventoryDebug(String var1, int var2) {
         this.inventoryTitle = var1;
         this.size = var2;
-        this.inventoryContents = new ItemStack[var2];
+        this.inventoryContents = new ItemInstance[var2];
     }
 
     private int getID(int var1) {
         int var2;
         for (var2 = 0; var2 < 4; ++var2) {
-            if (var1 > Block.GRASS.id) {
+            if (var1 > Tile.GRASS.id) {
                 --var1;
             }
         }
 
         for (var2 = 0; var2 < 3; ++var2) {
-            if (var1 > Block.SAND.id) {
+            if (var1 > Tile.SAND.id) {
                 --var1;
             }
         }
 
-        if (var1 > Block.LOG.id) {
+        if (var1 > Tile.LOG.id) {
             --var1;
         }
 
-        if (var1 > Block.LOG.id) {
+        if (var1 > Tile.LOG.id) {
             --var1;
         }
 
         for (var2 = 0; var2 < 2; ++var2) {
-            if (var1 > Block.TALLGRASS.id) {
+            if (var1 > Tile.TALL_GRASS.id) {
                 --var1;
             }
         }
 
         for (var2 = 0; var2 < 15; ++var2) {
-            if (var1 > Block.WOOL.id) {
+            if (var1 > Tile.CLOTH.id) {
                 --var1;
             }
         }
 
         for (var2 = 0; var2 < 3; ++var2) {
-            if (var1 > Block.STONE_SLAB.id) {
+            if (var1 > Tile.SLAB.id) {
                 --var1;
             }
         }
@@ -272,7 +272,7 @@ public class InventoryDebug implements Inventory {
         }
 
         for (var2 = 0; var2 < 15; ++var2) {
-            if (var1 > Item.DYE_POWDER.id) {
+            if (var1 > Item.DYE.id) {
                 --var1;
             }
         }
@@ -285,71 +285,71 @@ public class InventoryDebug implements Inventory {
 
         int var3;
         for (var3 = 0; var3 < 4; ++var3) {
-            if (var1 > Block.GRASS.id) {
+            if (var1 > Tile.GRASS.id) {
                 --var1;
                 ++var2;
             }
         }
 
-        if (var1 > Block.GRASS.id) {
+        if (var1 > Tile.GRASS.id) {
             var2 = 0;
         }
 
         for (var3 = 0; var3 < 3; ++var3) {
-            if (var1 > Block.SAND.id) {
+            if (var1 > Tile.SAND.id) {
                 --var1;
                 ++var2;
             }
         }
 
-        if (var1 > Block.SAND.id) {
+        if (var1 > Tile.SAND.id) {
             var2 = 0;
         }
 
-        if (var1 > Block.LOG.id) {
+        if (var1 > Tile.LOG.id) {
             --var1;
             ++var2;
         }
 
-        if (var1 > Block.LOG.id) {
+        if (var1 > Tile.LOG.id) {
             --var1;
             ++var2;
         }
 
-        if (var1 > Block.LOG.id) {
+        if (var1 > Tile.LOG.id) {
             var2 = 0;
         }
 
         for (var3 = 0; var3 < 2; ++var3) {
-            if (var1 > Block.TALLGRASS.id) {
+            if (var1 > Tile.TALL_GRASS.id) {
                 --var1;
                 ++var2;
             }
         }
 
-        if (var1 > Block.TALLGRASS.id) {
+        if (var1 > Tile.TALL_GRASS.id) {
             var2 = 0;
         }
 
         for (var3 = 0; var3 < 15; ++var3) {
-            if (var1 > Block.WOOL.id) {
+            if (var1 > Tile.CLOTH.id) {
                 --var1;
                 ++var2;
             }
         }
 
-        if (var1 > Block.WOOL.id) {
+        if (var1 > Tile.CLOTH.id) {
             var2 = 0;
         }
 
         for (var3 = 0; var3 < 3; ++var3) {
-            if (var1 > Block.STONE_SLAB.id) {
+            if (var1 > Tile.SLAB.id) {
                 --var1;
                 ++var2;
             }
         }
 
-        if (var1 > Block.STONE_SLAB.id) {
+        if (var1 > Tile.SLAB.id) {
             var2 = 0;
         }
 
@@ -739,13 +739,13 @@ public class InventoryDebug implements Inventory {
         }
 
         for (var3 = 0; var3 < 15; ++var3) {
-            if (var1 > Item.DYE_POWDER.id) {
+            if (var1 > Item.DYE.id) {
                 --var1;
                 ++var2;
             }
         }
 
-        if (var1 > Item.DYE_POWDER.id) {
+        if (var1 > Item.DYE.id) {
             var2 = 0;
         }
 
@@ -758,10 +758,10 @@ public class InventoryDebug implements Inventory {
 
         for (int relativeBlockID = 0; relativeBlockID < this.size; ++relativeBlockID) {
             int currentBlockID = this.getID(relativeBlockID + firstBlockID);
-            Item currentBlockItem = Item.byId[currentBlockID];
+            Item currentBlockItem = Item.items[currentBlockID];
             if (currentBlockItem != null) {
-                this.inventoryContents[relativeBlockID] = new ItemStack(currentBlockItem, -64);
-                this.inventoryContents[relativeBlockID].setMeta(this.getSubtype(relativeBlockID + firstBlockID));
+                this.inventoryContents[relativeBlockID] = new ItemInstance(currentBlockItem, -64);
+                this.inventoryContents[relativeBlockID].setDamage(this.getSubtype(relativeBlockID + firstBlockID));
                 this.lastItem = relativeBlockID + firstBlockID;
                 if (!firstItemSet) {
                     this.firstItem = relativeBlockID + firstBlockID;
@@ -789,9 +789,9 @@ public class InventoryDebug implements Inventory {
 
         for (int var3 = 0; var3 < this.size; ++var3) {
             int var4 = this.getID(var1 - var3);
-            if (var4 > 0 && Item.byId[var4] != null) {
-                this.inventoryContents[this.size - var3 - 1] = new ItemStack(Item.byId[var4], -64);
-                this.inventoryContents[this.size - var3 - 1].setMeta(this.getSubtype(var1 - var3));
+            if (var4 > 0 && Item.items[var4] != null) {
+                this.inventoryContents[this.size - var3 - 1] = new ItemInstance(Item.items[var4], -64);
+                this.inventoryContents[this.size - var3 - 1].setDamage(this.getSubtype(var1 - var3));
                 this.firstItem = var1 - var3;
                 if (!var2) {
                     this.lastItem = var1 - var3;
@@ -814,37 +814,37 @@ public class InventoryDebug implements Inventory {
 
     }
 
-    public ItemStack getInventoryItem(int var1) {
+    public ItemInstance getItem(int var1) {
         return this.inventoryContents[var1];
     }
 
-    public ItemStack takeInventoryItem(int var1, int var2) {
+    public ItemInstance removeItem(int var1, int var2) {
         return this.inventoryContents[var1] != null ? this.inventoryContents[var1].copy() : null;
     }
 
-    public void setInventoryItem(int var1, ItemStack var2) {
+    public void setItem(int var1, ItemInstance var2) {
         if (this.inventoryContents[var1] != null) {
             this.inventoryContents[var1] = this.inventoryContents[var1].copy();
         }
 
     }
 
-    public int getInventorySize() {
+    public int getContainerSize() {
         return this.size;
     }
 
-    public String getContainerName() {
+    public String getName() {
         return this.inventoryTitle;
     }
 
-    public int getMaxItemCount() {
+    public int getMaxStackSize() {
         return 64;
     }
 
-    public void markDirty() {
+    public void setChanged() {
     }
 
-    public boolean canPlayerUse(PlayerEntity var1) {
+    public boolean stillValid(Player var1) {
         return true;
     }
 }

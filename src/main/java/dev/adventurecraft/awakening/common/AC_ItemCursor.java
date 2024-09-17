@@ -1,10 +1,10 @@
 package dev.adventurecraft.awakening.common;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
 
 public class AC_ItemCursor extends Item implements AC_ILeftClickItem {
 
@@ -28,12 +28,12 @@ public class AC_ItemCursor extends Item implements AC_ILeftClickItem {
     }
 
     @Override
-    public boolean onItemUseLeftClick(ItemStack stack, PlayerEntity player, World world, int x, int y, int z, int side) {
-        return this.useOnBlock(stack, player, world, x, y, z, side);
+    public boolean onItemUseLeftClick(ItemInstance stack, Player player, Level world, int x, int y, int z, int side) {
+        return this.useOn(stack, player, world, x, y, z, side);
     }
 
     @Override
-    public boolean useOnBlock(ItemStack stack, PlayerEntity player, World world, int x, int y, int z, int side) {
+    public boolean useOn(ItemInstance stack, Player player, Level world, int x, int y, int z, int side) {
         int positionIndex;
         if (firstPosition) {
             oneX = x;
@@ -66,7 +66,7 @@ public class AC_ItemCursor extends Item implements AC_ILeftClickItem {
             message += String.format("\nCursor Volume [%d, %d, %d]: %d blocks", width, height, depth, blockCount);
         }
 
-        Minecraft.instance.overlay.addChatMessage(message);
+        Minecraft.instance.gui.addMessage(message);
         return false;
     }
 }

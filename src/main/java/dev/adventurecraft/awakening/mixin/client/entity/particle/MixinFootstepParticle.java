@@ -1,14 +1,14 @@
 package dev.adventurecraft.awakening.mixin.client.entity.particle;
 
-import net.minecraft.client.entity.particle.FootstepParticle;
+import net.minecraft.client.particle.FootprintParticle;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
-@Mixin(FootstepParticle.class)
+@Mixin(FootprintParticle.class)
 public abstract class MixinFootstepParticle {
 
     @Overwrite
-    public int method_2003() {
+    public int getParticleTexture() {
         return 5;
     }
 }

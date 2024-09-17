@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.client.options;
 
 import com.chocohead.mm.api.ClassTinkerers;
-import net.minecraft.client.options.Option;
+import net.minecraft.client.Option;
 
 public final class OptionOF {
 

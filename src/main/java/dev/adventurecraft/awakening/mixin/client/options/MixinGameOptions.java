@@ -7,15 +7,15 @@ import dev.adventurecraft.awakening.client.options.OptionOF;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.render.ExWorldEventRenderer;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import net.minecraft.block.Block;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.options.GameOptions;
-import net.minecraft.client.options.KeyBinding;
-import net.minecraft.client.options.Option;
-import net.minecraft.client.resource.language.Internationalization;
-import net.minecraft.client.resource.language.TranslationStorage;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.source.WorldSource;
+import net.minecraft.client.Option;
+import net.minecraft.client.Options;
+import net.minecraft.locale.I18n;
+import net.minecraft.util.Language;
+import net.minecraft.world.level.chunk.ChunkSource;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.tile.Tile;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GLContext;
@@ -37,30 +37,23 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@Mixin(GameOptions.class)
+@Mixin(Options.class)
 public abstract class MixinGameOptions implements ExGameOptions {
 
-    private static final int DEFAULT = 0;
-    private static final int FAST = 1;
-    private static final int FANCY = 2;
-    private static final int OFF = 3;
-    private static final int ANIM_ON = 0;
-    private static final int ANIM_GENERATED = 1;
-    private static final int ANIM_OFF = 2;
     private static final int MAX_CHAT_BUFFER_LIMIT = 10000;
 
     @Final
     @Shadow
-    private static String[] renderDistanceTranslationKeys;
+    private static String[] RENDER_DISTANCES;
     @Final
     @Shadow
-    private static String[] difficultyTranslationKeys;
+    private static String[] DIFFICULTIES;
     @Final
     @Shadow
-    private static String[] guiScaleTranslationKeys;
+    private static String[] GUI_SCALES;
     @Final
     @Shadow
-    private static String[] performanceTranslationKeys;
+    private static String[] PERFORMANCE_OPTIONS;
 
     @Shadow
     public int viewDistance;
@@ -73,27 +66,27 @@ public abstract class MixinGameOptions implements ExGameOptions {
     @Shadow
     public boolean ao;
     @Shadow
-    public KeyBinding forwardKey;
+    public KeyMapping keyUp;
     @Shadow
-    public KeyBinding leftKey;
+    public KeyMapping keyLeft;
     @Shadow
-    public KeyBinding backKey;
+    public KeyMapping keyDown;
     @Shadow
-    public KeyBinding rightKey;
+    public KeyMapping keyRight;
     @Shadow
-    public KeyBinding jumpKey;
+    public KeyMapping keyJump;
     @Shadow
-    public KeyBinding inventoryKey;
+    public KeyMapping keyInventory;
     @Shadow
-    public KeyBinding dropKey;
+    public KeyMapping keyDrop;
     @Shadow
-    public KeyBinding chatKey;
+    public KeyMapping keyChat;
     @Shadow
-    public KeyBinding fogKey;
+    public KeyMapping keyFog;
     @Shadow
-    public KeyBinding sneakKey;
+    public KeyMapping keySneak;
     @Shadow
-    protected Minecraft client;
+    protected Minecraft minecraft;
     @Shadow
     public int difficulty;
     @Shadow
@@ -137,14 +130,14 @@ public abstract class MixinGameOptions implements ExGameOptions {
     public boolean ofAnimatedExplosion = true;
     public boolean ofAnimatedFlame = true;
     public boolean ofAnimatedSmoke = true;
-    public KeyBinding ofKeyBindZoom;
-    public List<KeyBinding> keyBindings;
+    public KeyMapping ofKeyBindZoom;
+    public List<KeyMapping> keyBindings;
     public boolean autoFarClip = false;
     public boolean grass3d = true;
     public int chatMessageBufferLimit = 100;
 
     @Shadow
-    public abstract float getFloatValue(Option option);
+    public abstract float getProgressValue(Option option);
 
     @Shadow
     public abstract boolean getBooleanValue(Option option);
@@ -161,22 +154,22 @@ public abstract class MixinGameOptions implements ExGameOptions {
 
     private void sharedInit() {
         this.keyBindings = new ArrayList<>();
-        this.ofKeyBindZoom = new KeyBinding("key.ofZoom", 46);
+        this.ofKeyBindZoom = new KeyMapping("key.ofZoom", 46);
 
-        this.keyBindings.add(this.forwardKey);
-        this.keyBindings.add(this.leftKey);
-        this.keyBindings.add(this.backKey);
-        this.keyBindings.add(this.rightKey);
-        this.keyBindings.add(this.jumpKey);
-        this.keyBindings.add(this.sneakKey);
-        this.keyBindings.add(this.dropKey);
-        this.keyBindings.add(this.inventoryKey);
-        this.keyBindings.add(this.chatKey);
-        this.keyBindings.add(this.fogKey);
+        this.keyBindings.add(this.keyUp);
+        this.keyBindings.add(this.keyLeft);
+        this.keyBindings.add(this.keyDown);
+        this.keyBindings.add(this.keyRight);
+        this.keyBindings.add(this.keyJump);
+        this.keyBindings.add(this.keySneak);
+        this.keyBindings.add(this.keyDrop);
+        this.keyBindings.add(this.keyInventory);
+        this.keyBindings.add(this.keyChat);
+        this.keyBindings.add(this.keyFog);
         this.keyBindings.add(this.ofKeyBindZoom);
     }
 
-    @Inject(method = "setFloatOption", at = @At("TAIL"))
+    @Inject(method = "set", at = @At("TAIL"))
     private void setFloatOptionOF(Option option, float value, CallbackInfo ci) {
         if (option == OptionOF.BRIGHTNESS) {
             this.ofBrightness = value;
@@ -186,16 +179,16 @@ public abstract class MixinGameOptions implements ExGameOptions {
         } else if (option == OptionOF.AO_LEVEL) {
             this.ofAoLevel = value;
             this.ao = this.ofAoLevel > 0.0F;
-            this.client.worldRenderer.method_1537();
+            this.minecraft.levelRenderer.allChanged();
         } else if (option == OptionOF.CHAT_MESSAGE_BUFFER_LIMIT) {
             this.chatMessageBufferLimit = (int) (value * (MAX_CHAT_BUFFER_LIMIT - 1)) + 1;
         }
     }
 
     private void updateWorldLightLevels() {
-        if (this.client.world != null) {
-            ((ExWorld) this.client.world).loadBrightness();
-            ((ExWorldEventRenderer) this.client.worldRenderer).updateAllTheRenderers();
+        if (this.minecraft.level != null) {
+            ((ExWorld) this.minecraft.level).loadBrightness();
+            ((ExWorldEventRenderer) this.minecraft.levelRenderer).updateAllTheRenderers();
         }
     }
 
@@ -205,42 +198,42 @@ public abstract class MixinGameOptions implements ExGameOptions {
             waterOpacity = 1;
         }
 
-        Block.STILL_WATER.setLightOpacity(waterOpacity);
-        Block.FLOWING_WATER.setLightOpacity(waterOpacity);
+        Tile.WATER.setLightBlock(waterOpacity);
+        Tile.FLOWING_WATER.setLightBlock(waterOpacity);
 
-        if (this.client.world == null) {
+        if (this.minecraft.level == null) {
             return;
         }
-        WorldSource source = this.client.world.worldSource;
+        ChunkSource source = this.minecraft.level.chunkSource;
         if (source == null) {
             return;
         }
         for (int x = -512; x < 512; ++x) {
             for (int z = -512; z < 512; ++z) {
-                if (source.isChunkLoaded(x, z)) {
-                    Chunk chunk = source.getChunk(x, z);
+                if (source.hasChunk(x, z)) {
+                    LevelChunk chunk = source.getChunk(x, z);
                     if (chunk != null) {
-                        byte[] var6 = chunk.field_958.field_2103;
+                        byte[] var6 = chunk.skyLight.data;
 
                         Arrays.fill(var6, (byte) 0);
 
-                        chunk.generateHeightmap();
+                        chunk.recalcHeightmap();
                     }
                 }
             }
         }
 
-        this.client.worldRenderer.method_1537();
+        this.minecraft.levelRenderer.allChanged();
     }
 
     @Redirect(
-        method = "setIntOption",
+        method = "toggle",
         at = @At(
             value = "FIELD",
             opcode = Opcodes.PUTFIELD,
-            target = "Lnet/minecraft/client/options/GameOptions;advancedOpengl:Z",
+            target = "Lnet/minecraft/client/Options;advancedOpengl:Z",
             ordinal = 0))
-    private void setIntOptionOF_ADVANCED_OPENGL(GameOptions instance, boolean value) {
+    private void setIntOptionOF_ADVANCED_OPENGL(Options instance, boolean value) {
         if (!GLContext.getCapabilities().GL_ARB_occlusion_query) {
             this.ofOcclusionFancy = false;
             this.advancedOpengl = false;
@@ -254,26 +247,26 @@ public abstract class MixinGameOptions implements ExGameOptions {
             this.advancedOpengl = false;
         }
 
-        ((ExWorldEventRenderer) this.client.worldRenderer).setAllRenderersVisible();
+        ((ExWorldEventRenderer) this.minecraft.levelRenderer).setAllRenderersVisible();
     }
 
     @Redirect(
-        method = "setIntOption",
+        method = "toggle",
         at = @At(
             value = "FIELD",
             opcode = Opcodes.PUTFIELD,
-            target = "Lnet/minecraft/client/options/GameOptions;fpsLimit:I",
+            target = "Lnet/minecraft/client/Options;fpsLimit:I",
             ordinal = 0))
-    private void setIntOptionPutFpsLimit(GameOptions instance, int value, @Local(argsOnly = true) int i) {
+    private void setIntOptionPutFpsLimit(Options instance, int value, @Local(argsOnly = true) int i) {
         this.fpsLimit = (this.fpsLimit + i) % 4;
         Display.setVSyncEnabled(this.fpsLimit == 3);
     }
 
     @Inject(
-        method = "setIntOption",
+        method = "toggle",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/options/GameOptions;saveOptions()V",
+            target = "Lnet/minecraft/client/Options;save()V",
             shift = At.Shift.BEFORE))
     private void setIntOptionOF(Option option, int value, CallbackInfo ci) {
         if (option == OptionOF.FOG_FANCY) {
@@ -297,17 +290,17 @@ public abstract class MixinGameOptions implements ExGameOptions {
                 this.ofMipmapLevel = 0;
             }
 
-            this.client.textureManager.reloadTexturesFromTexturePack();
+            this.minecraft.textures.reloadAll();
         }
 
         if (option == OptionOF.MIPMAP_TYPE) {
             this.ofMipmapLinear = !this.ofMipmapLinear;
-            this.client.textureManager.reloadTexturesFromTexturePack();
+            this.minecraft.textures.reloadAll();
         }
 
         if (option == OptionOF.LOAD_FAR) {
             this.ofLoadFar = !this.ofLoadFar;
-            this.client.worldRenderer.method_1537();
+            this.minecraft.levelRenderer.allChanged();
         }
 
         if (option == OptionOF.PRELOADED_CHUNKS) {
@@ -316,7 +309,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
                 this.ofPreloadedChunks = 0;
             }
 
-            this.client.worldRenderer.method_1537();
+            this.minecraft.levelRenderer.allChanged();
         }
 
         if (option == OptionOF.SMOOTH_FPS) {
@@ -340,7 +333,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
                 this.ofTrees = 0;
             }
 
-            this.client.worldRenderer.method_1537();
+            this.minecraft.levelRenderer.allChanged();
         }
 
         if (option == OptionOF.GRASS) {
@@ -349,7 +342,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
                 this.ofGrass = 0;
             }
 
-            this.client.worldRenderer.method_1537();
+            this.minecraft.levelRenderer.allChanged();
         }
 
         if (option == OptionOF.RAIN) {
@@ -372,7 +365,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
                 this.ofAnimatedWater = 0;
             }
 
-            this.client.textureManager.reloadTexturesFromTexturePack();
+            this.minecraft.textures.reloadAll();
         }
 
         if (option == OptionOF.ANIMATED_LAVA) {
@@ -381,17 +374,17 @@ public abstract class MixinGameOptions implements ExGameOptions {
                 this.ofAnimatedLava = 0;
             }
 
-            this.client.textureManager.reloadTexturesFromTexturePack();
+            this.minecraft.textures.reloadAll();
         }
 
         if (option == OptionOF.ANIMATED_FIRE) {
             this.ofAnimatedFire = !this.ofAnimatedFire;
-            this.client.textureManager.reloadTexturesFromTexturePack();
+            this.minecraft.textures.reloadAll();
         }
 
         if (option == OptionOF.ANIMATED_PORTAL) {
             this.ofAnimatedPortal = !this.ofAnimatedPortal;
-            this.client.textureManager.reloadTexturesFromTexturePack();
+            this.minecraft.textures.reloadAll();
         }
 
         if (option == OptionOF.ANIMATED_REDSTONE) {
@@ -427,7 +420,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
                 case FAST -> ConnectedGrassOption.FANCY;
                 case FANCY -> ConnectedGrassOption.OFF;
             };
-            this.client.worldRenderer.method_1537();
+            this.minecraft.levelRenderer.allChanged();
         }
 
         if (option == OptionOF.WEATHER) {
@@ -455,7 +448,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
 
         if (option == OptionOF.FAR_VIEW) {
             this.ofFarView = !this.ofFarView;
-            this.client.worldRenderer.method_1537();
+            this.minecraft.levelRenderer.allChanged();
         }
 
         if (option == OptionOF.TIME) {
@@ -494,7 +487,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
             }
 
             this.ofAfLevel = Config.limit(this.ofAfLevel, 1, 16);
-            this.client.textureManager.reloadTexturesFromTexturePack();
+            this.minecraft.textures.reloadAll();
         }
 
 
@@ -504,11 +497,11 @@ public abstract class MixinGameOptions implements ExGameOptions {
 
         if (option == OptionOF.GRASS_3D) {
             this.grass3d = !this.grass3d;
-            this.client.worldRenderer.method_1537();
+            this.minecraft.levelRenderer.allChanged();
         }
     }
 
-    @Inject(method = "getFloatValue", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "getProgressValue", at = @At("HEAD"), cancellable = true)
     private void getFloatValueOF(Option option, CallbackInfoReturnable<Float> cir) {
         if (option == OptionOF.BRIGHTNESS) {
             cir.setReturnValue(this.ofBrightness);
@@ -531,28 +524,28 @@ public abstract class MixinGameOptions implements ExGameOptions {
     }
 
     @Overwrite
-    public String getTranslatedValue(Option option) {
-        TranslationStorage ts = TranslationStorage.getInstance();
-        String name = ts.translate(option.getTranslationKey());
+    public String getMessage(Option option) {
+        I18n ts = I18n.getInstance();
+        String name = ts.get(option.getCaptionId());
         if (name == null) {
-            name = option.getTranslationKey();
+            name = option.getCaptionId();
         }
 
         String prefix = name + ": ";
-        if (option.isSlider()) {
-            float value = this.getFloatValue(option);
+        if (option.isProgress()) {
+            float value = this.getProgressValue(option);
             if (option == OptionOF.CHAT_MESSAGE_BUFFER_LIMIT) {
                 return prefix + (int) (value * (double) (MAX_CHAT_BUFFER_LIMIT - 1));
             }
             if (option == Option.SENSITIVITY) {
                 if (value == 0.0F)
-                    return prefix + ts.translate("options.sensitivity.min");
+                    return prefix + ts.get("options.sensitivity.min");
                 if (value == 1.0F)
-                    return prefix + ts.translate("options.sensitivity.max");
+                    return prefix + ts.get("options.sensitivity.max");
                 return prefix + (int) (value * 200.0F) + "%";
             }
             if (value == 0.0F) {
-                return prefix + ts.translate("options.off");
+                return prefix + ts.get("options.off");
             }
             return prefix + (int) (value * 100.0F) + "%";
         } else if (option == Option.ADVANCED_OPENGL) {
@@ -560,23 +553,23 @@ public abstract class MixinGameOptions implements ExGameOptions {
                 return prefix + "OFF";
             }
             return this.ofOcclusionFancy ? prefix + "Fancy" : prefix + "Fast";
-        } else if (option.isToggle()) {
+        } else if (option.isBoolean()) {
             boolean value = this.getBooleanValue(option);
             if (value) {
-                return prefix + ts.translate("options.on");
+                return prefix + ts.get("options.on");
             }
-            return prefix + ts.translate("options.off");
+            return prefix + ts.get("options.off");
         } else if (option == Option.RENDER_DISTANCE) {
-            return prefix + ts.translate(renderDistanceTranslationKeys[this.viewDistance]);
-        } else if (option == Option.GLOBAL_DIFFICULTY) {
-            return prefix + ts.translate(difficultyTranslationKeys[this.difficulty]);
+            return prefix + ts.get(RENDER_DISTANCES[this.viewDistance]);
+        } else if (option == Option.DIFFICULTY) {
+            return prefix + ts.get(DIFFICULTIES[this.difficulty]);
         } else if (option == Option.GUI_SCALE) {
-            return prefix + ts.translate(guiScaleTranslationKeys[this.guiScale]);
-        } else if (option == Option.LIMIT_FRAMERATE) {
+            return prefix + ts.get(GUI_SCALES[this.guiScale]);
+        } else if (option == Option.FRAMERATE_LIMIT) {
             if (this.fpsLimit == 3) {
                 return prefix + "VSync";
             }
-            return prefix + Internationalization.translate(performanceTranslationKeys[this.fpsLimit]);
+            return prefix + Language.getOrDefault(PERFORMANCE_OPTIONS[this.fpsLimit]);
         } else if (option == OptionOF.FOG_FANCY) {
             return this.ofFogFancy ? prefix + "Fancy" : prefix + "Fast";
         } else if (option == OptionOF.FOG_START) {
@@ -708,11 +701,11 @@ public abstract class MixinGameOptions implements ExGameOptions {
                 }
                 return prefix + this.ofAfLevel;
             }
-            if (option == Option.GRAPHICS_QUALITY) {
+            if (option == Option.GRAPHICS) {
                 if (this.fancyGraphics) {
-                    return prefix + ts.translate("options.graphics.fancy");
+                    return prefix + ts.get("options.graphics.fancy");
                 }
-                return prefix + ts.translate("options.graphics.fast");
+                return prefix + ts.get("options.graphics.fast");
             }
             return prefix;
         }
@@ -720,7 +713,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
 
     @Inject(method = "load", at = @At(
         value = "FIELD",
-        target = "Lnet/minecraft/client/options/GameOptions;fpsLimit:I",
+        target = "Lnet/minecraft/client/Options;fpsLimit:I",
         shift = At.Shift.AFTER))
     private void load_fpsLimit(CallbackInfo ci) {
         Display.setVSyncEnabled(this.fpsLimit == 3);
@@ -728,7 +721,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
 
     @Inject(method = "load", at = @At(
         value = "FIELD",
-        target = "Lnet/minecraft/client/options/GameOptions;ao:Z",
+        target = "Lnet/minecraft/client/Options;ao:Z",
         shift = At.Shift.AFTER))
     private void load_ao(CallbackInfo ci) {
         if (this.ao) {
@@ -882,7 +875,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
         }
     }
 
-    @Inject(method = "saveOptions", at = @At(
+    @Inject(method = "save", at = @At(
         value = "INVOKE",
         target = "Ljava/io/PrintWriter;close()V",
         shift = At.Shift.BEFORE))
@@ -1202,7 +1195,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
     }
 
     @Override
-    public KeyBinding ofKeyBindZoom() {
+    public KeyMapping ofKeyBindZoom() {
         return ofKeyBindZoom;
     }
 

@@ -2,14 +2,14 @@ package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
-import net.minecraft.world.World;
+import net.minecraft.world.level.Level;
 
 @SuppressWarnings("unused")
 public class ScriptTime {
 
-    World world;
+    Level world;
 
-    ScriptTime(World var1) {
+    ScriptTime(Level var1) {
         this.world = var1;
     }
 
@@ -30,15 +30,15 @@ public class ScriptTime {
     }
 
     public float getRate() {
-        return ((ExWorldProperties) this.world.properties).getTimeRate();
+        return ((ExWorldProperties) this.world.levelData).getTimeRate();
     }
 
     public void setRate(float var1) {
-        ((ExWorldProperties) this.world.properties).setTimeRate(var1);
+        ((ExWorldProperties) this.world.levelData).setTimeRate(var1);
     }
 
     public long getTickCount() {
-        return this.world.getWorldTime();
+        return this.world.getTime();
     }
 
     public void sleep(float var1) {

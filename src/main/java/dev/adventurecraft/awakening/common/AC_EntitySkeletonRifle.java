@@ -2,36 +2,36 @@ package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
 import dev.adventurecraft.awakening.extension.item.ExItemStack;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.monster.SkeletonEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.monster.Skeleton;
+import net.minecraft.world.level.Level;
 
-public class AC_EntitySkeletonRifle extends SkeletonEntity {
+public class AC_EntitySkeletonRifle extends Skeleton {
 
     int ammo;
 
-    public AC_EntitySkeletonRifle(World var1) {
+    public AC_EntitySkeletonRifle(Level var1) {
         super(var1);
-        this.attackDamage = 6;
+        this.damage = 6;
         this.ammo = 30;
-        ((ExLivingEntity) this).setHeldItem(new ItemStack(AC_Items.rifle, 1));
+        ((ExLivingEntity) this).setHeldItem(new ItemInstance(AC_Items.rifle, 1));
     }
 
     @Override
-    protected void tryAttack(Entity var1, float var2) {
-        if (!((double) var2 < 15.0D) || !this.rand.nextBoolean()) {
+    protected void checkHurtTarget(Entity var1, float var2) {
+        if (!((double) var2 < 15.0D) || !this.random.nextBoolean()) {
             return;
         }
 
-        this.lookAt(var1, 30.0F, 30.0F);
+        this.setLookAt(var1, 30.0F, 30.0F);
         if (this.attackTime == 0) {
             --this.ammo;
-            this.lookAt(var1, 60.0F, 90.0F);
-            this.yaw = (float) ((double) this.yaw + 10.0D * this.rand.nextGaussian());
-            this.pitch = (float) ((double) this.pitch + 3.0D * this.rand.nextGaussian());
-            this.world.playSound(this, "items.rifle.fire", 1.0F, 1.0F);
-            AC_UtilBullet.fireBullet(this.world, this, 0.07F, this.attackDamage);
+            this.setLookAt(var1, 60.0F, 90.0F);
+            this.yRot = (float) ((double) this.yRot + 10.0D * this.random.nextGaussian());
+            this.xRot = (float) ((double) this.xRot + 3.0D * this.random.nextGaussian());
+            this.level.playSound(this, "items.rifle.fire", 1.0F, 1.0F);
+            AC_UtilBullet.fireBullet(this.level, this, 0.07F, this.damage);
             this.attackTime = 5;
             if (this.ammo == 0) {
                 this.ammo = 30;
@@ -41,15 +41,15 @@ public class AC_EntitySkeletonRifle extends SkeletonEntity {
 
         double var3 = var1.x - this.x;
         double var5 = var1.z - this.z;
-        this.yaw = (float) (Math.atan2(var5, var3) * 180.0D / (double) ((float) Math.PI)) - 90.0F;
-        this.field_663 = true;
+        this.yRot = (float) (Math.atan2(var5, var3) * 180.0D / (double) ((float) Math.PI)) - 90.0F;
+        this.holdGround = true;
     }
 
     @Override
     public void tick() {
         super.tick();
 
-        var heldItem = (ExItemStack) ((ExLivingEntity) this).getHeldItem();
+        var heldItem = (ExItemStack) ((ExLivingEntity) this).getSelectedItem();
         if (this.health <= 0) {
             heldItem.setTimeLeft(0);
             return;
@@ -70,7 +70,7 @@ public class AC_EntitySkeletonRifle extends SkeletonEntity {
     }
 
     @Override
-    protected int getMobDrops() {
+    protected int getDeathLoot() {
         return AC_Items.rifleAmmo.id;
     }
 }

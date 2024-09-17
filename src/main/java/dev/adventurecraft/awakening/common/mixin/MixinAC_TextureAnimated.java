@@ -28,11 +28,11 @@ public abstract class MixinAC_TextureAnimated extends MixinTextureBinder {
         this.curFrame = 0;
 
         if (image == null) {
-            Minecraft.instance.overlay.addChatMessage(String.format("Unable to load texture '%s'", name));
+            Minecraft.instance.gui.addMessage(String.format("Unable to load texture '%s'", name));
         } else if (this.width != image.getWidth()) {
-            Minecraft.instance.overlay.addChatMessage(String.format("Animated texture width of %d didn't match the specified width of %d", image.getWidth(), this.width));
+            Minecraft.instance.gui.addMessage(String.format("Animated texture width of %d didn't match the specified width of %d", image.getWidth(), this.width));
         } else if (0 != image.getHeight() % this.height) {
-            Minecraft.instance.overlay.addChatMessage(String.format("Animated texture height of %d isn't a multiple of the specified height of %d", image.getHeight(), this.height));
+            Minecraft.instance.gui.addMessage(String.format("Animated texture height of %d isn't a multiple of the specified height of %d", image.getHeight(), this.height));
         } else {
             this.numFrames = image.getHeight() / this.height;
             this.imageData = ByteBuffer.allocateDirect(image.getWidth() * image.getHeight() * 4)
@@ -41,7 +41,7 @@ public abstract class MixinAC_TextureAnimated extends MixinTextureBinder {
             this.imageData.clear();
             swapBgra(this.imageData);
             this.hasImages = true;
-            this.grid = new byte[0];
+            this.pixels = new byte[0];
         }
     }
 }

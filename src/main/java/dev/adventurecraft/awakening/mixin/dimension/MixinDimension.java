@@ -4,12 +4,12 @@ import dev.adventurecraft.awakening.common.AC_ChunkProviderHeightMapGenerate;
 import dev.adventurecraft.awakening.common.WorldGenProperties;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.extension.world.source.ExOverworldWorldSource;
-import net.minecraft.block.AbstractFluidBlock;
-import net.minecraft.block.Block;
-import net.minecraft.world.World;
-import net.minecraft.world.dimension.Dimension;
-import net.minecraft.world.source.OverworldWorldSource;
-import net.minecraft.world.source.WorldSource;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.chunk.ChunkSource;
+import net.minecraft.world.level.dimension.Dimension;
+import net.minecraft.world.level.levelgen.RandomLevelSource;
+import net.minecraft.world.level.tile.LiquidTile;
+import net.minecraft.world.level.tile.Tile;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -21,29 +21,29 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class MixinDimension {
 
     @Shadow
-    public World world;
+    public Level level;
 
-    @Inject(method = "createWorldSource", at = @At("HEAD"), cancellable = true)
-    private void injectHeightMapGenerator(CallbackInfoReturnable<WorldSource> cir) {
-        if (((ExWorldProperties) this.world.properties).getWorldGenProps().useImages) {
-            var generator = new AC_ChunkProviderHeightMapGenerate(this.world, this.world.getSeed());
+    @Inject(method = "createRandomLevelSource", at = @At("HEAD"), cancellable = true)
+    private void injectHeightMapGenerator(CallbackInfoReturnable<ChunkSource> cir) {
+        if (((ExWorldProperties) this.level.levelData).getWorldGenProps().useImages) {
+            var generator = new AC_ChunkProviderHeightMapGenerate(this.level, this.level.getSeed());
             cir.setReturnValue(generator);
         }
     }
 
-    @Inject(method = "createWorldSource", at = @At(value = "RETURN"))
-    public void createWorldSource(CallbackInfoReturnable<WorldSource> cir) {
+    @Inject(method = "createRandomLevelSource", at = @At(value = "RETURN"))
+    public void createWorldSource(CallbackInfoReturnable<ChunkSource> cir) {
         var propCopy = new WorldGenProperties();
-        WorldGenProperties props = ((ExWorldProperties) this.world.properties).getWorldGenProps();
+        WorldGenProperties props = ((ExWorldProperties) this.level.levelData).getWorldGenProps();
         props.copyTo(propCopy);
 
-        var source = (OverworldWorldSource) cir.getReturnValue();
+        var source = (RandomLevelSource) cir.getReturnValue();
         ((ExOverworldWorldSource) source).setWorldGenProps(propCopy);
     }
 
     @Overwrite
-    public boolean canSpawnOn(int var1, int var2) {
-        int id = this.world.getSurfaceBlockId(var1, var2);
-        return id != 0 && Block.BY_ID[id] != null && !(Block.BY_ID[id] instanceof AbstractFluidBlock);
+    public boolean isValidSpawn(int var1, int var2) {
+        int id = this.level.getTopTile(var1, var2);
+        return id != 0 && Tile.tiles[id] != null && !(Tile.tiles[id] instanceof LiquidTile);
     }
 }

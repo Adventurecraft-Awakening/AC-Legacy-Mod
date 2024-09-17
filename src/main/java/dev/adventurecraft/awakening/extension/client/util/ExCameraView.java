@@ -1,8 +1,8 @@
 package dev.adventurecraft.awakening.extension.client.util;
 
-import net.minecraft.util.math.AxixAlignedBoundingBox;
+import net.minecraft.world.phys.AABB;
 
 public interface ExCameraView {
 
-    boolean isBoundingBoxInFrustumFully(AxixAlignedBoundingBox var1);
+    boolean isBoundingBoxInFrustumFully(AABB var1);
 }

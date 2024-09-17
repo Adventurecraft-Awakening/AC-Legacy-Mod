@@ -7,8 +7,8 @@ import java.util.List;
 import javax.swing.SwingUtilities;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.render.TextRenderer;
-import net.minecraft.client.texture.TextureManager;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.Textures;
 import dev.adventurecraft.awakening.script.ScriptUIContainer;
 import dev.adventurecraft.awakening.script.ScriptUILabel;
 import dev.adventurecraft.awakening.script.ScriptUIRect;
@@ -169,7 +169,7 @@ public class AC_GuiMapElement extends ScriptUIContainer {
                 var4 = var8;
             } else {
                 String var9 = var4 + " " + var8;
-                if (Minecraft.instance.textRenderer.getTextWidth(var9) > 100) {
+                if (Minecraft.instance.font.width(var9) > 100) {
                     output.add(var4);
                     var4 = var8;
                 } else {
@@ -196,7 +196,7 @@ public class AC_GuiMapElement extends ScriptUIContainer {
     }
 
     @Override
-    public void render(TextRenderer textRenderer, TextureManager texManager, float deltaTime) {
+    public void render(Font textRenderer, Textures texManager, float deltaTime) {
         if (this.fadeIn || this.fadeOut) {
             long var4 = System.nanoTime();
             long var6 = var4 - this.fadeTimePrev;
@@ -255,7 +255,7 @@ public class AC_GuiMapElement extends ScriptUIContainer {
 
     public void setAsDownloaded() {
         if (!this.downloaded) {
-            int var1 = Minecraft.instance.textRenderer.getTextWidth("Downloaded");
+            int var1 = Minecraft.instance.font.width("Downloaded");
             new ScriptUIRect(0.0F, 0.0F, 100.0F, 100.0F, 0.0F, 0.0F, 0.0F, 0.5F, this);
             new ScriptUILabel("Downloaded", (float) (50 - var1 / 2), 46.0F, this);
             this.downloaded = true;

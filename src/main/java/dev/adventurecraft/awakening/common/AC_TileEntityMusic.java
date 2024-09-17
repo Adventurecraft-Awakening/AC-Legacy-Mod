@@ -1,27 +1,27 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.entity.BlockEntity;
-import net.minecraft.util.io.CompoundTag;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.tile.entity.TileEntity;
 
-public class AC_TileEntityMusic extends BlockEntity {
+public class AC_TileEntityMusic extends TileEntity {
 	public String musicName = "";
 	public int fadeOut = 500;
 	public int fadeIn = 500;
 
-	public void readNBT(CompoundTag var1) {
-		super.readNBT(var1);
+	public void load(CompoundTag var1) {
+		super.load(var1);
 		this.musicName = var1.getString("musicName");
 		this.fadeOut = var1.getInt("fadeOut");
 		this.fadeIn = var1.getInt("fadeIn");
 	}
 
-	public void writeNBT(CompoundTag var1) {
-		super.writeNBT(var1);
+	public void save(CompoundTag var1) {
+		super.save(var1);
 		if(this.musicName != null && !this.musicName.equals("")) {
-			var1.put("musicName", this.musicName);
+			var1.putString("musicName", this.musicName);
 		}
 
-		var1.put("fadeOut", this.fadeOut);
-		var1.put("fadeIn", this.fadeIn);
+		var1.putInt("fadeOut", this.fadeOut);
+		var1.putInt("fadeIn", this.fadeIn);
 	}
 }

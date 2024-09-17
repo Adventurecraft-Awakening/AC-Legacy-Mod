@@ -2,9 +2,9 @@ package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.TextRenderer;
-import net.minecraft.client.texture.TextureManager;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.Tesselator;
+import net.minecraft.client.renderer.Textures;
 import org.lwjgl.opengl.GL11;
 
 @SuppressWarnings("unused")
@@ -18,7 +18,7 @@ public class ScriptUIRect extends UIElement {
     public float alpha;
 
     public ScriptUIRect(float var1, float var2, float var3, float var4, float var5, float var6, float var7, float var8) {
-        this(var1, var2, var3, var4, var5, var6, var7, var8, ((ExInGameHud) Minecraft.instance.overlay).getScriptUI());
+        this(var1, var2, var3, var4, var5, var6, var7, var8, ((ExInGameHud) Minecraft.instance.gui).getScriptUI());
     }
 
     public ScriptUIRect(float var1, float var2, float var3, float var4, float var5, float var6, float var7, float var8, ScriptUIContainer var9) {
@@ -40,18 +40,18 @@ public class ScriptUIRect extends UIElement {
     }
 
     @Override
-    public void render(TextRenderer var1, TextureManager var2, float var3) {
+    public void render(Font var1, Textures var2, float var3) {
         float var4 = this.getXAtTime(var3);
         float var5 = this.getYAtTime(var3);
-        Tessellator var6 = Tessellator.INSTANCE;
+        Tesselator var6 = Tesselator.instance;
         GL11.glDisable(GL11.GL_TEXTURE_2D);
         GL11.glColor4f(this.red, this.green, this.blue, this.alpha);
-        var6.start();
-        var6.addVertex(var4, var5 + this.height, 0.0D);
-        var6.addVertex(var4 + this.width, var5 + this.height, 0.0D);
-        var6.addVertex(var4 + this.width, var5, 0.0D);
-        var6.addVertex(var4, var5, 0.0D);
-        var6.tessellate();
+        var6.begin();
+        var6.vertex(var4, var5 + this.height, 0.0D);
+        var6.vertex(var4 + this.width, var5 + this.height, 0.0D);
+        var6.vertex(var4 + this.width, var5, 0.0D);
+        var6.vertex(var4, var5, 0.0D);
+        var6.end();
         GL11.glEnable(GL11.GL_TEXTURE_2D);
     }
 }

@@ -1,14 +1,14 @@
 package dev.adventurecraft.awakening.mixin.entity.decoration.painting;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
-import net.minecraft.entity.decoration.painting.PaintingEntity;
+import net.minecraft.world.entity.item.Painting;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(PaintingEntity.class)
+@Mixin(Painting.class)
 public abstract class MixinPaintingEntity {
 
     @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
@@ -17,9 +17,10 @@ public abstract class MixinPaintingEntity {
     }
 
     // Only breakable in debug mode!
-    @Inject(method = "damage", at = @At("HEAD"), cancellable = true)
-    private void disableHurt(CallbackInfoReturnable ci) {
-        if(!AC_DebugMode.active)
-            ci.cancel();
+    @Inject(method = "hurt", at = @At("HEAD"), cancellable = true)
+    private void disableHurt(CallbackInfoReturnable<Boolean> ci) {
+        if (!AC_DebugMode.active) {
+            ci.setReturnValue(false);
+        }
     }
 }

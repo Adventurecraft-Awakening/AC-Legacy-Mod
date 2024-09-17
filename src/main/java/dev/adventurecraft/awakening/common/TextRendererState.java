@@ -1,14 +1,14 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.util.CharacterUtils;
+import net.minecraft.SharedConstants;
+import net.minecraft.client.renderer.Tesselator;
 import org.lwjgl.opengl.GL11;
 
 public class TextRendererState {
 
     private final float[] colorPalette;
     private final int[] widthLookup;
-    private Tessellator ts;
+    private Tesselator ts;
     private int texture;
 
     private float r, g, b, a;
@@ -25,17 +25,17 @@ public class TextRendererState {
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.texture);
     }
 
-    public void begin(Tessellator tessallator) {
+    public void begin(Tesselator tessallator) {
         if (tessallator == null) {
             throw new IllegalArgumentException();
         }
         this.ts = tessallator;
 
-        ts.start();
+        ts.begin();
     }
 
     public void end() {
-        this.ts.tessellate();
+        this.ts.end();
     }
 
     public void drawText(CharSequence text, int start, int end, float x, float y) {
@@ -77,7 +77,7 @@ public class TextRendererState {
                 continue;
             }
 
-            int charIndex = CharacterUtils.validCharacters.indexOf(c);
+            int charIndex = SharedConstants.acceptableLetters.indexOf(c);
             int ch;
             if (charIndex >= 0 && c < 176) {
                 ch = charIndex + 32;
@@ -144,14 +144,14 @@ public class TextRendererState {
         this.texture = textureId;
     }
 
-    private static void drawChar(Tessellator ts, int column, int row, float x, float y) {
+    private static void drawChar(Tesselator ts, int column, int row, float x, float y) {
         float f = 7.99f;
         float f2 = 0.0f;
         float f3 = 0.0f;
-        ts.vertex(x, y + f, 0.0, (float) column / 128.0f + f2, ((float) row + f) / 128.0f + f3);
-        ts.vertex(x + f, y + f, 0.0, ((float) column + f) / 128.0f + f2, ((float) row + f) / 128.0f + f3);
-        ts.vertex(x + f, y, 0.0, ((float) column + f) / 128.0f + f2, (float) row / 128.0f + f3);
-        ts.vertex(x, y, 0.0, (float) column / 128.0f + f2, (float) row / 128.0f + f3);
+        ts.vertexUV(x, y + f, 0.0, (float) column / 128.0f + f2, ((float) row + f) / 128.0f + f3);
+        ts.vertexUV(x + f, y + f, 0.0, ((float) column + f) / 128.0f + f2, ((float) row + f) / 128.0f + f3);
+        ts.vertexUV(x + f, y, 0.0, ((float) column + f) / 128.0f + f2, (float) row / 128.0f + f3);
+        ts.vertexUV(x, y, 0.0, (float) column / 128.0f + f2, (float) row / 128.0f + f3);
     }
 
     public static void validateCharSequence(CharSequence text, int start, int end) {

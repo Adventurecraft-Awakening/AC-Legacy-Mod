@@ -6,8 +6,9 @@ import dev.adventurecraft.awakening.extension.util.ExProgressListener;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ProgressListener;
-import net.minecraft.world.World;
+import net.minecraft.world.level.Level;
 import org.mozilla.javascript.RhinoException;
+import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
 
 import java.io.File;
@@ -21,11 +22,11 @@ import java.util.stream.Stream;
 
 public class AC_JScriptHandler {
 
-    World world;
+    Level world;
     File scriptDir;
     public HashMap<String, AC_JScriptInfo> scripts;
 
-    public AC_JScriptHandler(World var1, File var2) {
+    public AC_JScriptHandler(Level var1, File var2) {
         this.world = var1;
         this.scriptDir = new File(var2, "scripts");
         this.scripts = new HashMap<>();
@@ -57,7 +58,7 @@ public class AC_JScriptHandler {
             this.scripts.clear();
 
             if (progressListener != null)
-                progressListener.notifyIgnoreGameRunning("Loading scripts");
+                progressListener.progressStart("Loading scripts");
 
             File[] files;
             try {
@@ -86,10 +87,10 @@ public class AC_JScriptHandler {
                         var script = ((ExWorld) this.world).getScript().compileReader(reader, fileName);
                         this.scripts.put(name, new AC_JScriptInfo(fileName, script));
                     } catch (IOException e) {
-                        Minecraft.instance.overlay.addChatMessage("JS: " + e.getMessage());
+                        Minecraft.instance.gui.addMessage("JS: " + e.getMessage());
                         ACMod.LOGGER.error("Failed to read script file \"{}\".", fileName, e);
                     } catch (RhinoException e) {
-                        Minecraft.instance.overlay.addChatMessage("JS: " + e.getMessage());
+                        Minecraft.instance.gui.addMessage("JS: " + e.getMessage());
                         ACMod.LOGGER.error("Failed to parse script file \"{}\".", fileName, e);
                     }
                 }
@@ -122,7 +123,7 @@ public class AC_JScriptHandler {
         AC_JScriptInfo scriptInfo = this.scripts.get(name.toLowerCase());
         if (scriptInfo == null) {
             if (printMissing) {
-                Minecraft.instance.overlay.addChatMessage(String.format("(JS) Missing '%s'", name));
+                Minecraft.instance.gui.addMessage(String.format("(JS) Missing '%s'", name));
             }
             return null;
         }

@@ -3,9 +3,6 @@ package dev.adventurecraft.awakening.mixin.client.render;
 import dev.adventurecraft.awakening.client.render.AC_TextureBinder;
 import dev.adventurecraft.awakening.common.Vec2;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import net.minecraft.client.render.TextureBinder;
-import net.minecraft.client.texture.TextureManager;
-import net.minecraft.world.World;
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -19,18 +16,21 @@ import java.awt.image.WritableRaster;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
+import net.minecraft.client.renderer.Textures;
+import net.minecraft.client.renderer.ptexture.DynamicTexture;
+import net.minecraft.world.level.Level;
 
-@Mixin(TextureBinder.class)
+@Mixin(DynamicTexture.class)
 public abstract class MixinTextureBinder implements AC_TextureBinder {
 
     @Shadow
-    public byte[] grid;
+    public byte[] pixels;
     @Shadow
-    public int index;
+    public int tex;
     @Shadow
-    public boolean render3d;
+    public boolean anaglyph3d;
     @Shadow
-    public int renderMode;
+    public int textureId;
 
     @Unique
     public IntBuffer imageData;
@@ -53,13 +53,13 @@ public abstract class MixinTextureBinder implements AC_TextureBinder {
     }
 
     @Shadow
-    public void updateTexture() {
+    public void tick() {
         throw new AssertionError();
     }
 
     @Overwrite
-    public void bindTexture(TextureManager var1) {
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, var1.getTextureId(this.getTexture()));
+    public void bind(Textures var1) {
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, var1.loadTexture(this.getTexture()));
     }
 
     @Override
@@ -72,12 +72,12 @@ public abstract class MixinTextureBinder implements AC_TextureBinder {
 
     @Override
     public void onTick(Vec2 size) {
-        this.updateTexture();
+        this.tick();
     }
 
     @Override
     public String getTexture() {
-        if (this.renderMode == 0) return "/terrain.png";
+        if (this.textureId == 0) return "/terrain.png";
         //if (this.renderMode == 1) return "/gui/items.png";
         return "/gui/items.png";
     }
@@ -99,7 +99,7 @@ public abstract class MixinTextureBinder implements AC_TextureBinder {
     }
 
     @Override
-    public void loadImage(String name, World world) {
+    public void loadImage(String name, Level world) {
         BufferedImage image = null;
         if (world instanceof ExWorld exWorld) {
             image = exWorld.loadMapTexture(name);
@@ -121,7 +121,7 @@ public abstract class MixinTextureBinder implements AC_TextureBinder {
             getRgb(image, 0, 0, image.getWidth(), image.getHeight(), imageData, image.getWidth());
             this.imageData.clear();
             this.hasImages = true;
-            this.grid = new byte[width * width * 4];
+            this.pixels = new byte[width * width * 4];
         }
     }
 

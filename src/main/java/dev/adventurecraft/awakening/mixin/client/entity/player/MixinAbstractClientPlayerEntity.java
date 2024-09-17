@@ -8,12 +8,12 @@ import dev.adventurecraft.awakening.extension.client.entity.player.ExAbstractCli
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.PlayerKeypressManager;
-import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
-import net.minecraft.client.util.Session;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.world.World;
+import net.minecraft.client.User;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.player.input.Input;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -22,23 +22,23 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(AbstractClientPlayerEntity.class)
-public abstract class MixinAbstractClientPlayerEntity extends PlayerEntity implements ExAbstractClientPlayerEntity {
+@Mixin(LocalPlayer.class)
+public abstract class MixinAbstractClientPlayerEntity extends Player implements ExAbstractClientPlayerEntity {
 
     private CommandDispatcher<ServerCommandSource> commandDispatcher;
     private CommandDescriptions commandDescriptions;
 
     @Shadow
-    protected Minecraft client;
+    protected Minecraft minecraft;
 
-    public MixinAbstractClientPlayerEntity(World arg) {
+    public MixinAbstractClientPlayerEntity(Level arg) {
         super(arg);
     }
 
     @Inject(method = "<init>", at = @At("TAIL"))
-    private void init(Minecraft minecraft, World world, Session session, int dimensionId, CallbackInfo ci) {
-        this.name = ((ExWorldProperties) world.properties).getPlayerName();
-        this.movementSpeed = 1.0f;
+    private void init(Minecraft minecraft, Level world, User session, int dimensionId, CallbackInfo ci) {
+        this.name = ((ExWorldProperties) world.levelData).getPlayerName();
+        this.runSpeed = 1.0f;
 
         this.commandDispatcher = new CommandDispatcher<>();
         this.commandDescriptions = new CommandDescriptions();
@@ -46,73 +46,73 @@ public abstract class MixinAbstractClientPlayerEntity extends PlayerEntity imple
         ServerCommands.registerCommandsWithArgs(this.commandDispatcher, this.commandDescriptions);
     }
 
-    @Redirect(method = "tickHandSwing", at = @At(
+    @Redirect(method = "serverAiStep", at = @At(
         value = "FIELD",
-        target = "Lnet/minecraft/client/PlayerKeypressManager;perpendicularMovement:F"))
-    private float multiplyPerpendicularMovementBySpeed(PlayerKeypressManager instance) {
-        return this.movementSpeed * instance.perpendicularMovement;
+        target = "Lnet/minecraft/client/player/input/Input;leftImpulse:F"))
+    private float multiplyPerpendicularMovementBySpeed(Input instance) {
+        return this.runSpeed * instance.leftImpulse;
     }
 
     @Redirect(
-        method = "tickHandSwing",
+        method = "serverAiStep",
         at = @At(
             value = "FIELD",
-            target = "Lnet/minecraft/client/PlayerKeypressManager;parallelMovement:F"))
-    private float multiplyParallelMovementBySpeed(PlayerKeypressManager instance) {
-        return this.movementSpeed * instance.parallelMovement;
+            target = "Lnet/minecraft/client/player/input/Input;forwardImpulse:F"))
+    private float multiplyParallelMovementBySpeed(Input instance) {
+        return this.runSpeed * instance.forwardImpulse;
     }
 
     @Redirect(
-        method = "updateDespawnCounter",
+        method = "aiStep",
         at = @At(
             value = "FIELD",
-            target = "Lnet/minecraft/world/World;isClient:Z",
+            target = "Lnet/minecraft/world/level/Level;isClientSide:Z",
             ordinal = 1))
-    private boolean disableDimensionSwitch(World instance) {
+    private boolean disableDimensionSwitch(Level instance) {
         return true;
     }
 
     @Redirect(
-        method = "updateDespawnCounter",
+        method = "aiStep",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/entity/player/AbstractClientPlayerEntity;method_1372(DDD)Z"))
-    private boolean disableMethod_1372(AbstractClientPlayerEntity instance, double e, double f, double v) {
+            target = "Lnet/minecraft/client/player/LocalPlayer;checkInBlock(DDD)Z"))
+    private boolean disableMethod_1372(LocalPlayer instance, double e, double f, double v) {
         return false;
     }
 
-    @Inject(method = "method_136", at = @At(value = "HEAD"), cancellable = true)
+    @Inject(method = "setKey", at = @At(value = "HEAD"), cancellable = true)
     private void redirectMethod136ToScript(int var1, boolean var2, CallbackInfo ci) {
-        boolean press = ((ExWorld) this.world).getScript().keyboard.processPlayerKeyPress(var1, var2);
+        boolean press = ((ExWorld) this.level).getScript().keyboard.processPlayerKeyPress(var1, var2);
         if (!press) {
             ci.cancel();
         }
     }
 
     @Redirect(
-        method = "method_1373",
+        method = "isSneaking",
         at = @At(
             value = "FIELD",
-            target = "Lnet/minecraft/client/PlayerKeypressManager;sneak:Z"))
-    private boolean defaultSneakIfNullKeyManager(PlayerKeypressManager instance) {
+            target = "Lnet/minecraft/client/player/input/Input;isSneaking:Z"))
+    private boolean defaultSneakIfNullKeyManager(Input instance) {
         if (instance == null) {
             return false;
         }
-        return instance.sneak;
+        return instance.isSneaking;
     }
 
     @Override
     public void displayGUIPalette() {
-        var debugInventory = new InventoryDebug("Palette", Item.byId.length);
+        var debugInventory = new InventoryDebug("Palette", Item.items.length);
         debugInventory.fillInventory(1);
 
-        this.client.openScreen(new AC_GuiPalette(this.inventory, debugInventory, 18, 6));
+        this.minecraft.setScreen(new AC_GuiPalette(this.inventory, debugInventory, 18, 6));
     }
 
     @Overwrite
-    public void sendChatMessage(String message) {
+    public void chat(String message) {
         if (message.startsWith("/")) {
-            var source = new ServerCommandSource(this.client, this.world, this);
+            var source = new ServerCommandSource(this.minecraft, this.level, this);
             var reader = new StringReader(message.substring(1));
             var parsed = commandDispatcher.parse(reader, source);
             /*if (parsed.getReader().canRead() || parsed.getExceptions().size() > 0) {
@@ -122,13 +122,13 @@ public abstract class MixinAbstractClientPlayerEntity extends PlayerEntity imple
                 try {
                     commandDispatcher.execute(parsed);
                 } catch (CommandSyntaxException ex) {
-                    this.client.overlay.addChatMessage("§c" + ex.getMessage());
+                    this.minecraft.gui.addMessage("§c" + ex.getMessage());
                 }
             }
         } else {
-            String result = ((ExWorld) this.world).getScript().runString(message);
+            String result = ((ExWorld) this.level).getScript().runString(message);
             if (result != null) {
-                this.client.overlay.addChatMessage("JS: " + result);
+                this.minecraft.gui.addMessage("JS: " + result);
             }
         }
     }

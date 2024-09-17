@@ -5,11 +5,11 @@ import dev.adventurecraft.awakening.extension.client.sound.ExSoundHelper;
 import dev.adventurecraft.awakening.extension.client.sound.ExSoundMap;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.options.GameOptions;
-import net.minecraft.client.sound.SoundEntry;
-import net.minecraft.client.sound.SoundHelper;
-import net.minecraft.client.sound.SoundMap;
-import net.minecraft.entity.LivingEntity;
+import net.minecraft.client.Options;
+import net.minecraft.client.sounds.Sound;
+import net.minecraft.client.sounds.SoundEngine;
+import net.minecraft.client.sounds.SoundRepository;
+import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -22,32 +22,32 @@ import paulscode.sound.SoundSystem;
 
 import java.net.URL;
 
-@Mixin(SoundHelper.class)
+@Mixin(SoundEngine.class)
 public abstract class MixinSoundHelper implements ExSoundHelper {
 
     @Shadow
     private static SoundSystem soundSystem;
     @Shadow
-    private SoundMap sounds;
+    private SoundRepository sounds;
     @Shadow
-    private SoundMap streaming;
+    private SoundRepository streamingSounds;
     @Shadow
-    private SoundMap music;
+    private SoundRepository songs;
     @Shadow
-    private GameOptions gameOptions;
+    private Options options;
     @Shadow
-    private static boolean initialized;
+    private static boolean loaded;
 
     @Unique
     private String currentSoundName;
 
-    @Inject(method = "handleBackgroundMusic", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "playMusicTick", at = @At("HEAD"), cancellable = true)
     private void disableRandomBackgroundMusic(CallbackInfo ci) {
         ci.cancel();
     }
 
     @Inject(
-        method = "setSoundPosition",
+        method = "update",
         at = @At(
             value = "INVOKE",
             target = "Lpaulscode/sound/SoundSystem;setListenerOrientation(FFFFFF)V",
@@ -64,9 +64,9 @@ public abstract class MixinSoundHelper implements ExSoundHelper {
     }
 
     public String getMusicFromStreaming() {
-        if (Minecraft.instance.world != null) {
+        if (Minecraft.instance.level != null) {
             // getPlayingMusic with substring 6 to get rid of "music." at the beginning the music name
-            String curMusic = ((ExWorldProperties) Minecraft.instance.world.properties).getPlayingMusic();
+            String curMusic = ((ExWorldProperties) Minecraft.instance.level.levelData).getPlayingMusic();
             curMusic = curMusic.length() <= 0 ? "" : curMusic.substring(6);
             return curMusic;
         }
@@ -77,7 +77,7 @@ public abstract class MixinSoundHelper implements ExSoundHelper {
 
     @Override
     public void playMusicFromStreaming(String id, int var2, int var3) {
-        if (!initialized) {
+        if (!loaded) {
             return;
         }
 
@@ -85,43 +85,43 @@ public abstract class MixinSoundHelper implements ExSoundHelper {
             this.stopMusic();
         }
 
-        SoundEntry entry = this.streaming.getRandomSoundForId(id);
+        Sound entry = this.streamingSounds.get(id);
         if (entry == null) {
             return;
         }
 
         if (soundSystem.playing("BgMusic")) {
-            if (this.currentSoundName.equals(entry.soundName)) {
+            if (this.currentSoundName.equals(entry.name)) {
                 return;
             }
             // In case there is no fadeIn and fadeOut value, just start playing the music (fadeOutIn doesn't work with 0 values)
             if(var2 == 0 && var3 == 0){
-                soundSystem.backgroundMusic("BgMusic", entry.soundUrl, entry.soundName, true);
+                soundSystem.backgroundMusic("BgMusic", entry.url, entry.name, true);
             } else {
-                soundSystem.fadeOutIn("BgMusic", entry.soundUrl, entry.soundName, var2, var3);
+                soundSystem.fadeOutIn("BgMusic", entry.url, entry.name, var2, var3);
             }
         } else {
-            soundSystem.backgroundMusic("BgMusic", entry.soundUrl, entry.soundName, true);
+            soundSystem.backgroundMusic("BgMusic", entry.url, entry.name, true);
         }
 
-        soundSystem.setVolume("BgMusic", this.gameOptions.musicVolume);
+        soundSystem.setVolume("BgMusic", this.options.music);
         soundSystem.play("BgMusic");
-        this.currentSoundName = entry.soundName;
-        if (Minecraft.instance.world != null) {
-            ((ExWorldProperties) Minecraft.instance.world.properties).setPlayingMusic(id);
+        this.currentSoundName = entry.name;
+        if (Minecraft.instance.level != null) {
+            ((ExWorldProperties) Minecraft.instance.level.levelData).setPlayingMusic(id);
         }
     }
 
     @Override
     public void stopMusic() {
-        if (!initialized) {
+        if (!loaded) {
             return;
         }
 
         if (soundSystem != null && soundSystem.playing("BgMusic")) {
             soundSystem.stop("BgMusic");
-            if (Minecraft.instance.world != null) {
-                ((ExWorldProperties) Minecraft.instance.world.properties).setPlayingMusic("");
+            if (Minecraft.instance.level != null) {
+                ((ExWorldProperties) Minecraft.instance.level.levelData).setPlayingMusic("");
             }
         }
     }
@@ -133,16 +133,16 @@ public abstract class MixinSoundHelper implements ExSoundHelper {
 
     @Override
     public void addStreaming(String id, URL url) {
-        ((ExSoundMap) this.streaming).addSound(id, url);
+        ((ExSoundMap) this.streamingSounds).addSound(id, url);
     }
 
     @Override
     public void addMusic(String id, URL url) {
-        ((ExSoundMap) this.music).addSound(id, url);
+        ((ExSoundMap) this.songs).addSound(id, url);
     }
 
     @ModifyArgs(
-        method = "playSound*",
+        method = "play*", // TODO: check what this actually applies to
         at = @At(
             value = "INVOKE",
             target = "Lpaulscode/sound/SoundSystem;newSource(ZLjava/lang/String;Ljava/net/URL;Ljava/lang/String;ZFFFIF)V"))

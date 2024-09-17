@@ -5,18 +5,19 @@ import dev.adventurecraft.awakening.common.instruments.IInstrumentConfig;
 import dev.adventurecraft.awakening.common.instruments.Note;
 import dev.adventurecraft.awakening.common.instruments.Song;
 import dev.adventurecraft.awakening.extension.entity.block.ExSongContainer;
-import net.minecraft.entity.BlockEntity;
-import net.minecraft.entity.block.SignBlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 import java.util.Iterator;
+import net.minecraft.world.level.tile.entity.SignTileEntity;
+import net.minecraft.world.level.tile.entity.TileEntity;
 
-@Mixin(SignBlockEntity.class)
-public abstract class MixinSignBlockEntity extends BlockEntity implements ExSongContainer {
+@Mixin(SignTileEntity.class)
+public abstract class MixinSignBlockEntity extends TileEntity implements ExSongContainer {
 
     @Shadow
-    public String[] text;
+    public String[] messages;
+    
     public boolean playSong;
     public IInstrumentConfig instrument;
     public int tickSinceStart;
@@ -34,7 +35,7 @@ public abstract class MixinSignBlockEntity extends BlockEntity implements ExSong
             else {
                 Note currentNote = songIterator.next();
                 if (currentNote != null)
-                    MusicPlayer.playNote(this.world, this.x, this.y, this.z, this.instrument, currentNote, 1.0F);
+                    MusicPlayer.playNote(this.level, this.x, this.y, this.z, this.instrument, currentNote, 1.0F);
             }
         }
 
@@ -52,6 +53,6 @@ public abstract class MixinSignBlockEntity extends BlockEntity implements ExSong
     }
 
     public String getSong() {
-        return this.text[0] + this.text[1] + this.text[2] + this.text[3];
+        return this.messages[0] + this.messages[1] + this.messages[2] + this.messages[3];
     }
 }

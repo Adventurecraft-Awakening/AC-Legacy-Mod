@@ -2,8 +2,8 @@ package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.render.TextRenderer;
-import net.minecraft.client.texture.TextureManager;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.Textures;
 
 @SuppressWarnings("unused")
 public class UIElement {
@@ -15,8 +15,8 @@ public class UIElement {
     protected ScriptUIContainer parent;
 
     public void addToScreen() {
-        if (Minecraft.instance.overlay != null) {
-            ((ExInGameHud) Minecraft.instance.overlay).getScriptUI().add(this);
+        if (Minecraft.instance.gui != null) {
+            ((ExInGameHud) Minecraft.instance.gui).getScriptUI().add(this);
         }
     }
 
@@ -38,7 +38,7 @@ public class UIElement {
         }
     }
 
-    public void render(TextRenderer var1, TextureManager var2, float var3) {
+    public void render(Font var1, Textures var2, float var3) {
     }
 
     public void onUpdate() {

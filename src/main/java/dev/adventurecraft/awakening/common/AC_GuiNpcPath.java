@@ -1,9 +1,9 @@
 package dev.adventurecraft.awakening.common;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widgets.OptionButtonWidget;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.OptionButton;
+import net.minecraft.client.gui.screens.Screen;
 
 public class AC_GuiNpcPath extends Screen {
 
@@ -18,20 +18,20 @@ public class AC_GuiNpcPath extends Screen {
     }
 
     @Override
-    public void initVanillaScreen() {
+    public void init() {
         String var1 = "<Unselected>";
         AC_EntityNPC var2 = AC_TileEntityNpcPath.lastEntity;
         if (var2 != null) {
             var1 = var2.npcName;
         }
 
-        this.buttons.add(new OptionButtonWidget(0, 4, 20, String.format("Set Path NPC: %s", var1)));
-        this.buttons.add(new OptionButtonWidget(1, 4, 80, "Use Current Selection"));
-        this.buttons.add(new OptionButtonWidget(2, 4, 100, "Reset Target"));
+        this.buttons.add(new OptionButton(0, 4, 20, String.format("Set Path NPC: %s", var1)));
+        this.buttons.add(new OptionButton(1, 4, 80, "Use Current Selection"));
+        this.buttons.add(new OptionButton(2, 4, 100, "Reset Target"));
     }
 
     @Override
-    protected void buttonClicked(ButtonWidget var1) {
+    protected void buttonClicked(Button var1) {
         if (var1.id == 0) {
             this.path.setEntityToLastSelected();
         } else if (var1.id == 1) {
@@ -50,7 +50,7 @@ public class AC_GuiNpcPath extends Screen {
             this.path.maxZ = 0;
         }
 
-        this.client.world.getChunk(this.path.x, this.path.y).method_885();
+        this.minecraft.level.getChunkAt(this.path.x, this.path.y).markUnsaved();
     }
 
     @Override
@@ -62,14 +62,14 @@ public class AC_GuiNpcPath extends Screen {
             var4 = var5.npcName;
         }
 
-        this.drawTextWithShadow(this.textRenderer, String.format("NPC: %s", var4), 4, 4, 14737632);
-        this.drawTextWithShadow(this.textRenderer, String.format("Min: (%d, %d, %d)", this.path.minX, this.path.minY, this.path.minZ), 4, 44, 14737632);
-        this.drawTextWithShadow(this.textRenderer, String.format("Max: (%d, %d, %d)", this.path.maxX, this.path.maxY, this.path.maxZ), 4, 64, 14737632);
+        this.drawString(this.font, String.format("NPC: %s", var4), 4, 4, 14737632);
+        this.drawString(this.font, String.format("Min: (%d, %d, %d)", this.path.minX, this.path.minY, this.path.minZ), 4, 44, 14737632);
+        this.drawString(this.font, String.format("Max: (%d, %d, %d)", this.path.maxX, this.path.maxY, this.path.maxZ), 4, 64, 14737632);
         super.render(var1, var2, var3);
     }
 
     public static void showUI(AC_TileEntityNpcPath var0) {
-        Minecraft.instance.openScreen(new AC_GuiNpcPath(var0));
+        Minecraft.instance.setScreen(new AC_GuiNpcPath(var0));
     }
 
     @Override

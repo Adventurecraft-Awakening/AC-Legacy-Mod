@@ -1,10 +1,10 @@
 package dev.adventurecraft.awakening.common;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
 
 public class AC_ItemEraser extends Item {
 
@@ -13,7 +13,7 @@ public class AC_ItemEraser extends Item {
     }
 
     @Override
-    public boolean useOnBlock(ItemStack item, PlayerEntity player, World world, int x, int y, int z, int side) {
+    public boolean useOn(ItemInstance item, Player player, Level world, int x, int y, int z, int side) {
         if (!AC_ItemCursor.bothSet) {
             return false;
         }
@@ -29,12 +29,12 @@ public class AC_ItemEraser extends Item {
         int height = maxY - minY + 1;
         int depth = maxZ - minZ + 1;
         int blockCount = width * height * depth;
-        Minecraft.instance.overlay.addChatMessage(String.format("Erasing Area (%d blocks)", blockCount));
+        Minecraft.instance.gui.addMessage(String.format("Erasing Area (%d blocks)", blockCount));
 
         for (int bX = minX; bX <= maxX; ++bX) {
             for (int bY = minY; bY <= maxY; ++bY) {
                 for (int bZ = minZ; bZ <= maxZ; ++bZ) {
-                    world.setBlock(bX, bY, bZ, 0);
+                    world.setTile(bX, bY, bZ, 0);
                 }
             }
         }

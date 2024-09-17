@@ -3,46 +3,46 @@ package dev.adventurecraft.awakening.mixin.client.gui.screen.container;
 import com.llamalad7.mixinextras.injector.WrapWithCondition;
 import dev.adventurecraft.awakening.extension.container.ExPlayerContainer;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
-import net.minecraft.client.gui.screen.container.ContainerScreen;
-import net.minecraft.client.gui.screen.container.PlayerInventoryScreen;
-import net.minecraft.client.render.TextRenderer;
-import net.minecraft.container.Container;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(PlayerInventoryScreen.class)
-public abstract class MixinPlayerInventoryScreen extends ContainerScreen {
+@Mixin(InventoryScreen.class)
+public abstract class MixinPlayerInventoryScreen extends AbstractContainerScreen {
 
-    public MixinPlayerInventoryScreen(Container arg) {
+    public MixinPlayerInventoryScreen(AbstractContainerMenu arg) {
         super(arg);
     }
 
     @WrapWithCondition(
-        method = "renderForeground",
+        method = "renderLabels",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/render/TextRenderer;drawText(Ljava/lang/String;III)V"))
-    private boolean renderCraftingLabel(TextRenderer renderer, String string, int i, int j, int k) {
-        if (container instanceof ExPlayerContainer exContainer) {
+            target = "Lnet/minecraft/client/gui/Font;draw(Ljava/lang/String;III)V"))
+    private boolean renderCraftingLabel(Font renderer, String string, int i, int j, int k) {
+        if (menu instanceof ExPlayerContainer exContainer) {
             return exContainer.getAllowsCrafting();
         }
         return true;
     }
 
     @Inject(
-        method = "renderContainerBackground",
+        method = "render(F)V",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/gui/screen/container/PlayerInventoryScreen;blit(IIIIII)V",
+            target = "Lnet/minecraft/client/gui/screens/inventory/InventoryScreen;blit(IIIIII)V",
             shift = At.Shift.AFTER))
     private void renderHeartPieces(float var1, CallbackInfo ci) {
-        int x = (this.width - this.containerWidth) / 2;
-        int y = (this.height - this.containerHeight) / 2;
-        int texId = this.client.textureManager.getTextureId("/gui/heartPiece.png");
-        this.client.textureManager.bindTexture(texId);
-        int heartPieces = ((ExPlayerEntity) this.client.player).getHeartPiecesCount();
+        int x = (this.width - this.imageWidth) / 2;
+        int y = (this.height - this.imageHeight) / 2;
+        int texId = this.minecraft.textures.loadTexture("/gui/heartPiece.png");
+        this.minecraft.textures.bind(texId);
+        int heartPieces = ((ExPlayerEntity) this.minecraft.player).getHeartPiecesCount();
         this.blit(x + 89, y + 6, heartPieces * 32, 0, 32, 32);
     }
 }

@@ -1,62 +1,62 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.StairsBlock;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.World;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelSource;
+import net.minecraft.world.level.tile.StairsTile;
+import net.minecraft.world.level.tile.Tile;
 
-public class AC_BlockStairMulti extends StairsBlock implements AC_IBlockColor {
+public class AC_BlockStairMulti extends StairsTile implements AC_IBlockColor {
 
-    protected AC_BlockStairMulti(int id, Block template, int texture) {
+    protected AC_BlockStairMulti(int id, Tile template, int texture) {
         super(id, template);
-        this.texture = texture;
+        this.tex = texture;
     }
 
     @Override
-    public int getRenderType() {
+    public int getRenderShape() {
         return 10;
     }
 
     @Override
-    public boolean isSideRendered(BlockView view, int x, int y, int z, int side) {
-        return super.isSideRendered(view, x, y, z, side);
+    public boolean shouldRenderFace(LevelSource view, int x, int y, int z, int side) {
+        return super.shouldRenderFace(view, x, y, z, side);
     }
 
     @Override
-    public int getTextureForSide(int var1, int var2) {
-        return this.texture + (var2 >> 2);
+    public int getTexture(int var1, int var2) {
+        return this.tex + (var2 >> 2);
     }
 
     @Override
-    public int getTextureForSide(int i) {
-        return this.texture;
+    public int getTexture(int i) {
+        return this.tex;
     }
 
     @Override
-    public int getTextureForSide(BlockView arg, int i, int j, int k, int l) {
-        return this.getTextureForSide(l, arg.getBlockMeta(i, j, k));
+    public int getTexture(LevelSource arg, int i, int j, int k, int l) {
+        return this.getTexture(l, arg.getData(i, j, k));
     }
 
     @Override
-    public void afterPlaced(World world, int x, int y, int z, LivingEntity placer) {
-        int meta = world.getBlockMeta(x, y, z);
-        int direction = MathHelper.floor((double) (placer.yaw * 4.0F / 360.0F) + 0.5D) & 3;
+    public void setPlacedBy(Level world, int x, int y, int z, LivingEntity placer) {
+        int meta = world.getData(x, y, z);
+        int direction = Mth.floor((double) (placer.yRot * 4.0F / 360.0F) + 0.5D) & 3;
         if (direction == 0) {
-            world.setBlockMeta(x, y, z, 2 + meta);
+            world.setData(x, y, z, 2 + meta);
         }
 
         if (direction == 1) {
-            world.setBlockMeta(x, y, z, 1 + meta);
+            world.setData(x, y, z, 1 + meta);
         }
 
         if (direction == 2) {
-            world.setBlockMeta(x, y, z, 3 + meta);
+            world.setData(x, y, z, 3 + meta);
         }
 
         if (direction == 3) {
-            world.setBlockMeta(x, y, z, 0 + meta);
+            world.setData(x, y, z, 0 + meta);
         }
     }
 
@@ -66,17 +66,17 @@ public class AC_BlockStairMulti extends StairsBlock implements AC_IBlockColor {
     }
 
     @Override
-    public int getColorMultiplier(BlockView view, int x, int y, int z) {
+    public int getFoliageColor(LevelSource view, int x, int y, int z) {
         return 0xFFFFFF;
     }
 
     @Override
-    public int getColorMeta(BlockView view, int x, int y, int z) {
-        return view.getBlockMeta(x, y, z) >> 2;
+    public int getColorMeta(LevelSource view, int x, int y, int z) {
+        return view.getData(x, y, z) >> 2;
     }
 
     @Override
-    public void setColorMeta(World world, int x, int y, int z, int meta) {
-        world.setBlockMeta(x, y, z, world.getBlockMeta(x, y, z) & 3 | meta << 2);
+    public void setColorMeta(Level world, int x, int y, int z, int meta) {
+        world.setData(x, y, z, world.getData(x, y, z) & 3 | meta << 2);
     }
 }

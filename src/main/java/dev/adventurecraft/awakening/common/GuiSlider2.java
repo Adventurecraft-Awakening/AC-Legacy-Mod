@@ -1,10 +1,10 @@
 package dev.adventurecraft.awakening.common;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.gui.components.Button;
 import org.lwjgl.opengl.GL11;
 
-public class GuiSlider2 extends ButtonWidget {
+public class GuiSlider2 extends Button {
 
     public static int DEFAULT_WIDTH = 150;
     public static int DEFAULT_HEIGHT = 20;
@@ -16,11 +16,11 @@ public class GuiSlider2 extends ButtonWidget {
 		this.sliderValue = sliderValue;
 	}
 
-	protected int getHoverState(boolean var1) {
+	protected int getYImage(boolean var1) {
 		return 0;
 	}
 
-	protected void postRender(Minecraft var1, int var2, int var3) {
+	protected void renderBg(Minecraft var1, int var2, int var3) {
 		if(this.visible) {
 			if(this.dragging) {
 				this.sliderValue = (float)(var2 - (this.x + 4)) / (float)(this.width - 8);

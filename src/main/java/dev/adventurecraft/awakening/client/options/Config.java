@@ -4,7 +4,7 @@ import dev.adventurecraft.awakening.ACMainThread;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.options.GameOptions;
+import net.minecraft.client.Options;
 import org.lwjgl.Sys;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.MemoryUtil;
@@ -190,7 +190,7 @@ public class Config {
             String.join(",", list));
     }
 
-    private static GameOptions getOptions() {
+    private static Options getOptions() {
         var instance = Minecraft.instance;
         if (instance == null) {
             return null;

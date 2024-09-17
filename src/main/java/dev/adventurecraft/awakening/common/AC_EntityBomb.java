@@ -1,13 +1,13 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.block.Block;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.io.CompoundTag;
-import net.minecraft.util.math.AxixAlignedBoundingBox;
-import net.minecraft.world.World;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.tile.Tile;
+import net.minecraft.world.phys.AABB;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -21,30 +21,30 @@ public class AC_EntityBomb extends ItemEntity {
     private int fuse;
     private Entity parentEntity;
 
-    public AC_EntityBomb(World var1) {
+    public AC_EntityBomb(Level var1) {
         super(var1);
         this.setSize(0.5F, 0.5F);
-        this.stack = new ItemStack(AC_Items.bomb);
+        this.item = new ItemInstance(AC_Items.bomb);
         this.fuse = BOMB_FUSE;
     }
 
-    public AC_EntityBomb(World world, Entity entity) {
+    public AC_EntityBomb(Level world, Entity entity) {
         this(world);
         this.parentEntity = entity;
-        this.setRotation(entity.yaw, entity.pitch);
-        this.xVelocity = 0.3D * -Math.sin(this.yaw / 180.0F * 3.141593F) * Math.cos(this.pitch / 180.0F * 3.141593F);
-        this.zVelocity = 0.3D * Math.cos(this.yaw / 180.0F * 3.141593F) * Math.cos(this.pitch / 180.0F * 3.141593F);
-        this.yVelocity = 0.3D * -Math.sin(this.pitch / 180.0F * 3.141593F) + (double) 0.1F;
-        this.setPosition(entity.x, entity.y, entity.z);
-        this.prevX = this.x;
-        this.prevY = this.y;
-        this.prevZ = this.z;
+        this.setRot(entity.yRot, entity.xRot);
+        this.xd = 0.3D * -Math.sin(this.yRot / 180.0F * 3.141593F) * Math.cos(this.xRot / 180.0F * 3.141593F);
+        this.zd = 0.3D * Math.cos(this.yRot / 180.0F * 3.141593F) * Math.cos(this.xRot / 180.0F * 3.141593F);
+        this.yd = 0.3D * -Math.sin(this.xRot / 180.0F * 3.141593F) + (double) 0.1F;
+        this.setPos(entity.x, entity.y, entity.z);
+        this.xo = this.x;
+        this.yo = this.y;
+        this.zo = this.z;
     }
 
     public void tick() {
         super.tick();
         if (this.fuse == 45) {
-            this.world.playSound(this, "random.fuse", 1.0F, 1.0F);
+            this.level.playSound(this, "random.fuse", 1.0F, 1.0F);
         }
 
         --this.fuse;
@@ -53,11 +53,11 @@ public class AC_EntityBomb extends ItemEntity {
         double flameSourceMod = 0.2D * fuseRemaining;
 
         if (this.fuse == 0) {
-            explode(this, this.parentEntity, this.world, this.x, this.y, this.z);
+            explode(this, this.parentEntity, this.level, this.x, this.y, this.z);
         } else if (this.fuse % 2 == 0) {
-            this.world.addParticle("smoke", this.x, this.y + 0.675D + flameSourceMod, this.z, 0.0D, 0.0D, 0.0D);
+            this.level.addParticle("smoke", this.x, this.y + 0.675D + flameSourceMod, this.z, 0.0D, 0.0D, 0.0D);
         } else {
-            this.world.addParticle("flame", this.x, this.y + 0.675D + flameSourceMod, this.z, 0.0D, 0.0D, 0.0D);
+            this.level.addParticle("flame", this.x, this.y + 0.675D + flameSourceMod, this.z, 0.0D, 0.0D, 0.0D);
         }
 
     }
@@ -68,13 +68,13 @@ public class AC_EntityBomb extends ItemEntity {
      * @param exploder The entity that will explode
      * @param explosionParent The owner of the explosive (the owner of the damage)
      */
-    private static void harmEntitiesAround(World world, Entity exploder, Entity explosionParent) {
+    private static void harmEntitiesAround(Level world, Entity exploder, Entity explosionParent) {
         double x = exploder.x;
         double y = exploder.y;
         double z = exploder.z;
         var victims = world.getEntities(
             exploder,
-            AxixAlignedBoundingBox.createAndAddToList(
+            AABB.newTemp(
                 Math.floor(x - BOMB_RANGE),
                 Math.floor(y - BOMB_RANGE),
                 Math.floor(z - BOMB_RANGE),
@@ -102,8 +102,8 @@ public class AC_EntityBomb extends ItemEntity {
                 double xForce = victim.x - x;
                 double yForce = victim.y - y;
                 double zForce = victim.z - z;
-                victim.accelerate(distanceFromExplosion * xForce, distanceFromExplosion * yForce, distanceFromExplosion * zForce);
-                victim.damage(explosionParent, (int) Math.ceil(distanceFromExplosion * BOMB_DAMAGE));
+                victim.push(distanceFromExplosion * xForce, distanceFromExplosion * yForce, distanceFromExplosion * zForce);
+                victim.hurt(explosionParent, (int) Math.ceil(distanceFromExplosion * BOMB_DAMAGE));
                 appliedForceOnEntity.add(victim);
             }
         }
@@ -117,7 +117,7 @@ public class AC_EntityBomb extends ItemEntity {
      * @param y The source of the explosion's Y position.
      * @param z The source of the explosion's Z position.
      */
-    private static void destroyBombableBlocksAround(World world, int x, int y, int z) {
+    private static void destroyBombableBlocksAround(Level world, int x, int y, int z) {
 
         int bombDestroyRange = (int) BOMB_DESTROY_RANGE;
         // Look for blocks in a volume centered on the explosion's center block's origin corner.
@@ -126,10 +126,10 @@ public class AC_EntityBomb extends ItemEntity {
                 for (int blockOffsetZ = -bombDestroyRange; blockOffsetZ <= bombDestroyRange; ++blockOffsetZ) {
                     double distanceSquared = (double) blockOffsetX * (double) blockOffsetX + (double) (blockOffsetY * blockOffsetY) + (double) (blockOffsetZ * blockOffsetZ);
                     if (distanceSquared <= 9.0D) {
-                        int blockAtOffset = world.getBlockId(x + blockOffsetX, y + blockOffsetY, z + blockOffsetZ);
+                        int blockAtOffset = world.getTile(x + blockOffsetX, y + blockOffsetY, z + blockOffsetZ);
                         // Remove bombable tiles
-                        if (Block.BY_ID[blockAtOffset] instanceof AC_BlockBombable) {
-                            world.setBlock(x + blockOffsetX, y + blockOffsetY, z + blockOffsetZ, 0);
+                        if (Tile.tiles[blockAtOffset] instanceof AC_BlockBombable) {
+                            world.setTile(x + blockOffsetX, y + blockOffsetY, z + blockOffsetZ, 0);
                         }
                     }
                 }
@@ -144,9 +144,9 @@ public class AC_EntityBomb extends ItemEntity {
      * @param y The source of the particles' Y position.
      * @param z The source of the particles' Z position.
      */
-    private static void displayExplosionParticles(World world, double x, double y, double z) {
+    private static void displayExplosionParticles(Level world, double x, double y, double z) {
         Random rng = new Random();
-        rng.setSeed(world.getWorldTime());
+        rng.setSeed(world.getTime());
 
         // This is for the smoke coming out of the explosion.
         for (int xDirectionForce = -3; xDirectionForce <= 3; ++xDirectionForce) { // Used for X
@@ -168,7 +168,7 @@ public class AC_EntityBomb extends ItemEntity {
         }
     }
 
-    public static void explode(Entity exploder, Entity parent, World world, double x, double y, double z) {
+    public static void explode(Entity exploder, Entity parent, Level world, double x, double y, double z) {
         exploder.remove();
         world.playSound(x, y, z, "random.explode", 4.0F, 1.0F);
 
@@ -180,25 +180,25 @@ public class AC_EntityBomb extends ItemEntity {
 
     }
 
-    public boolean damage(Entity var1, int var2) {
+    public boolean hurt(Entity var1, int var2) {
         if (!this.removed) {
-            this.setAttacked();
-            explode(this, this.parentEntity, this.world, this.x, this.y, this.z);
+            this.markHurt();
+            explode(this, this.parentEntity, this.level, this.x, this.y, this.z);
         }
 
         return false;
     }
 
-    public void writeAdditional(CompoundTag var1) {
-        super.writeAdditional(var1);
-        var1.put("Fuse", (byte) this.fuse);
+    public void readAdditionalSaveData(CompoundTag var1) {
+        super.readAdditionalSaveData(var1);
+        var1.putByte("Fuse", (byte) this.fuse);
     }
 
-    public void readAdditional(CompoundTag var1) {
-        super.readAdditional(var1);
+    public void addAdditionalSaveData(CompoundTag var1) {
+        super.addAdditionalSaveData(var1);
         this.fuse = var1.getByte("Fuse");
     }
 
-    public void onPlayerCollision(PlayerEntity var1) {
+    public void playerTouch(Player var1) {
     }
 }

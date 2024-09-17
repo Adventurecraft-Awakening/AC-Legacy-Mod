@@ -1,20 +1,20 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.entity.BlockEntity;
-import net.minecraft.util.io.CompoundTag;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.tile.entity.TileEntity;
 
-public class AC_TileEntityUrl extends BlockEntity {
+public class AC_TileEntityUrl extends TileEntity {
 	public String url = "";
 
-	public void readNBT(CompoundTag var1) {
-		super.readNBT(var1);
+	public void load(CompoundTag var1) {
+		super.load(var1);
 		this.url = var1.getString("url");
 	}
 
-	public void writeNBT(CompoundTag var1) {
-		super.writeNBT(var1);
+	public void save(CompoundTag var1) {
+		super.save(var1);
 		if(this.url != null && !this.url.equals("")) {
-			var1.put("url", this.url);
+			var1.putString("url", this.url);
 		}
 
 	}

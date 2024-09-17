@@ -1,12 +1,12 @@
 package dev.adventurecraft.awakening.extension.world.chunk;
 
-import net.minecraft.entity.BlockEntity;
+import net.minecraft.world.level.tile.entity.TileEntity;
 
 public interface ExChunk {
 
     boolean setBlockIDWithMetadataTemp(int x, int y, int z, int id, int meta);
 
-    BlockEntity getChunkBlockTileEntityDontCreate(int x, int y, int z);
+    TileEntity getChunkBlockTileEntityDontCreate(int x, int y, int z);
 
     double getTemperatureValue(int x, int z);
 

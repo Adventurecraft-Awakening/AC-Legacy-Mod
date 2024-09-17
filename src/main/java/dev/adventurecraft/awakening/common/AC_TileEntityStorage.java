@@ -6,8 +6,8 @@ import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.BlockEntity;
-import net.minecraft.util.io.CompoundTag;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.tile.entity.TileEntity;
 
 public class AC_TileEntityStorage extends AC_TileEntityMinMax {
 
@@ -42,14 +42,14 @@ public class AC_TileEntityStorage extends AC_TileEntityMinMax {
         for (int x = this.minX; x <= this.maxX; ++x) {
             for (int z = this.minZ; z <= this.maxZ; ++z) {
                 for (int y = this.minY; y <= this.maxY; ++y) {
-                    int id = this.world.getBlockId(x, y, z);
-                    int meta = this.world.getBlockMeta(x, y, z);
+                    int id = this.level.getTile(x, y, z);
+                    int meta = this.level.getData(x, y, z);
                     this.blockIDs[blockIndex] = (byte) ExChunk.translate128(id);
                     this.metadatas[blockIndex] = (byte) meta;
-                    BlockEntity tileEntity = this.world.getBlockEntity(x, y, z);
+                    TileEntity tileEntity = this.level.getTileEntity(x, y, z);
                     if (tileEntity != null) {
                         var tag = new CompoundTag();
-                        tileEntity.writeNBT(tag);
+                        tileEntity.save(tag);
                         this.tileEntities.add(tag);
                     }
 
@@ -58,7 +58,7 @@ public class AC_TileEntityStorage extends AC_TileEntityMinMax {
             }
         }
 
-        this.world.getChunk(this.x, this.z).method_885();
+        this.level.getChunkAt(this.x, this.z).markUnsaved();
     }
 
     public void loadCurrentArea() {
@@ -71,34 +71,34 @@ public class AC_TileEntityStorage extends AC_TileEntityMinMax {
         for (int x = this.minX; x <= this.maxX; ++x) {
             for (int z = this.minZ; z <= this.maxZ; ++z) {
                 for (int y = this.minY; y <= this.maxY; ++y) {
-                    int id = this.world.getBlockId(x, y, z);
-                    ((ExWorld) this.world).cancelBlockUpdate(x, y, z, id);
+                    int id = this.level.getTile(x, y, z);
+                    ((ExWorld) this.level).cancelBlockUpdate(x, y, z, id);
                     int id256 = ExChunk.translate256(this.blockIDs[blockIndex]);
                     byte meta = this.metadatas[blockIndex];
-                    this.world.placeBlockWithMetaData(x, y, z, id256, meta);
-                    this.world.removeBlockEntity(x, y, z);
+                    this.level.setTileAndData(x, y, z, id256, meta);
+                    this.level.removeTileEntity(x, y, z);
                     ++blockIndex;
                 }
             }
         }
 
         for (CompoundTag tag : this.tileEntities) {
-            BlockEntity tileEntity = ofNBT(tag);
-            this.world.setBlockEntity(tileEntity.x, tileEntity.y, tileEntity.z, tileEntity);
+            TileEntity tileEntity = loadStatic(tag);
+            this.level.setTileEntity(tileEntity.x, tileEntity.y, tileEntity.z, tileEntity);
         }
     }
 
-    public void readNBT(CompoundTag tag) {
-        super.readNBT(tag);
-        if (tag.containsKey("blockIDs")) {
+    public void load(CompoundTag tag) {
+        super.load(tag);
+        if (tag.hasKey("blockIDs")) {
             this.blockIDs = tag.getByteArray("blockIDs");
         }
 
-        if (tag.containsKey("metadatas")) {
+        if (tag.hasKey("metadatas")) {
             this.metadatas = tag.getByteArray("metadatas");
         }
 
-        if (tag.containsKey("numTiles")) {
+        if (tag.hasKey("numTiles")) {
             this.tileEntities.clear();
             int tileCount = tag.getInt("numTiles");
 
@@ -107,32 +107,32 @@ public class AC_TileEntityStorage extends AC_TileEntityMinMax {
             }
         }
 
-        if (!tag.containsKey("acVersion") && ((ExWorldProperties) Minecraft.instance.world.properties).isOriginallyFromAC()) {
+        if (!tag.hasKey("acVersion") && ((ExWorldProperties) Minecraft.instance.level.levelData).isOriginallyFromAC()) {
             AC_Blocks.convertACVersion(this.blockIDs);
         }
     }
 
-    public void writeNBT(CompoundTag tag) {
-        super.writeNBT(tag);
+    public void save(CompoundTag tag) {
+        super.save(tag);
         if (this.blockIDs != null) {
-            tag.put("blockIDs", this.blockIDs);
+            tag.putByteArray("blockIDs", this.blockIDs);
         }
 
         if (this.metadatas != null) {
-            tag.put("metadatas", this.metadatas);
+            tag.putByteArray("metadatas", this.metadatas);
         }
 
         if (!this.tileEntities.isEmpty()) {
             int tileIndex = 0;
 
             for (CompoundTag tileTag : this.tileEntities) {
-                tag.put(String.format("tile%d", tileIndex), tileTag);
+                tag.putCompoundTag(String.format("tile%d", tileIndex), tileTag);
                 ++tileIndex;
             }
 
-            tag.put("numTiles", tileIndex);
+            tag.putInt("numTiles", tileIndex);
         }
 
-        tag.put("acVersion", 0);
+        tag.putInt("acVersion", 0);
     }
 }

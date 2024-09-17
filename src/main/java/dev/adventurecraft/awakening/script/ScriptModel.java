@@ -2,9 +2,9 @@ package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.extension.client.model.ExCuboid;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.model.Cuboid;
-import net.minecraft.client.texture.TextureManager;
-import net.minecraft.world.World;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.renderer.Textures;
+import net.minecraft.world.level.Level;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
@@ -63,7 +63,7 @@ public class ScriptModel extends ScriptModelBase {
                                int width, int height, int length,
                                int textureOffsetX, int textureOffsetY,
                                float scale) {
-        Cuboid cuboid = new Cuboid(textureOffsetX, textureOffsetY);
+        ModelPart cuboid = new ModelPart(textureOffsetX, textureOffsetY);
         ((ExCuboid) cuboid).setTWidth(this.textureWidth);
         ((ExCuboid) cuboid).setTHeight(this.textureHeight);
         ((ExCuboid) cuboid).addBoxInverted(offsetX, offsetY, offsetZ, width, height, length, scale);
@@ -157,10 +157,10 @@ public class ScriptModel extends ScriptModelBase {
         if (boxes.isEmpty()) {
             return;
         }
-        World world = Minecraft.instance.world;
-        TextureManager var3 = Minecraft.instance.textureManager;
+        Level world = Minecraft.instance.level;
+        Textures var3 = Minecraft.instance.textures;
         if (this.texture != null && !this.texture.isEmpty()) {
-            var3.bindTexture(var3.getTextureId(this.texture));
+            var3.bind(var3.loadTexture(this.texture));
         }
 
         // TODO: clean up?
@@ -183,7 +183,7 @@ public class ScriptModel extends ScriptModelBase {
                 //using the position of the attached entity
                 if (this.attachedTo != null) {
                     var position = this.attachedTo.getPosition();
-                    setBrightness(world.method_1782((int) Math.floor(position.x), (int) Math.floor(position.y), (int) Math.floor(position.z)));
+                    setBrightness(world.getBrightness((int) Math.floor(position.x), (int) Math.floor(position.y), (int) Math.floor(position.z)));
                 }
                 break;
             case 2:
@@ -199,7 +199,7 @@ public class ScriptModel extends ScriptModelBase {
                 break;
             default:
                 //Default lightning values
-                setBrightness(world.method_1782(Math.round(vr.x), Math.round(vr.y), Math.round(vr.z)));
+                setBrightness(world.getBrightness(Math.round(vr.x), Math.round(vr.y), Math.round(vr.z)));
                 break;
         }
         float r = Math.min(this.colorRed, 1.0F);
@@ -216,7 +216,7 @@ public class ScriptModel extends ScriptModelBase {
         GL11.glPushMatrix();
         this.transform(var1);
 
-        for (Cuboid cuboid : this.boxes) {
+        for (ModelPart cuboid : this.boxes) {
             cuboid.render(1.0F / 16.0F);
         }
 

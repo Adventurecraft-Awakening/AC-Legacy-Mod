@@ -1,10 +1,8 @@
 package dev.adventurecraft.awakening.mixin.client.resource.language;
 
-import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.client.resource.language.ExTranslationStorage;
-import net.minecraft.client.resource.language.TranslationStorage;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -17,24 +15,25 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+import net.minecraft.locale.I18n;
 
-@Mixin(TranslationStorage.class)
+@Mixin(I18n.class)
 public abstract class MixinTranslationStorage implements ExTranslationStorage {
 
     private Properties initialTranslations;
 
     @Shadow
-    private Properties translations;
+    private Properties keys;
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void copyInitialTranslations(CallbackInfo ci) {
-        this.initialTranslations = (Properties) this.translations.clone();
+        this.initialTranslations = (Properties) this.keys.clone();
 
         this.loadAcTranslations();
     }
 
     @Redirect(
-        method = "translateNameOrEmpty",
+        method = "getDescriptionString",
         at = @At(
             value = "INVOKE",
             target = "Ljava/util/Properties;getProperty(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;"
@@ -59,7 +58,7 @@ public abstract class MixinTranslationStorage implements ExTranslationStorage {
         try {
             String acName = "/assets/adventurecraft" + name;
             InputStream stream = ACMod.class.getResourceAsStream(acName);
-            this.translations.load(stream);
+            this.keys.load(stream);
         } catch (IOException e) {
             // TODO: ACMod.LOGGER.warn about resource load
             e.printStackTrace();
@@ -71,8 +70,8 @@ public abstract class MixinTranslationStorage implements ExTranslationStorage {
     }
 
     private void reset() {
-        this.translations.clear();
-        this.translations.putAll(this.initialTranslations);
+        this.keys.clear();
+        this.keys.putAll(this.initialTranslations);
 
         this.loadAcTranslations();
     }
@@ -85,7 +84,7 @@ public abstract class MixinTranslationStorage implements ExTranslationStorage {
             File file = new File(mapPath, "/lang/en_US.lang");
             if (file.exists()) {
                 FileInputStream stream = new FileInputStream(file);
-                this.translations.load(stream);
+                this.keys.load(stream);
             }
         } catch (IOException var4) {
             // TODO: ACMod.LOGGER.warn about resource load

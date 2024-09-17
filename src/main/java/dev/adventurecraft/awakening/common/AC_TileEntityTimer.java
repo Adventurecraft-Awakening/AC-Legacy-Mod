@@ -2,7 +2,7 @@ package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import net.minecraft.util.io.CompoundTag;
+import net.minecraft.nbt.CompoundTag;
 
 public class AC_TileEntityTimer extends AC_TileEntityMinMax {
 
@@ -29,9 +29,9 @@ public class AC_TileEntityTimer extends AC_TileEntityMinMax {
             }
 
             if (!this.resetOnTrigger) {
-                ((ExWorld) this.world).getTriggerManager().addArea(this.x, this.y, this.z, new AC_TriggerArea(this.minX, this.minY, this.minZ, this.maxX, this.maxY, this.maxZ));
+                ((ExWorld) this.level).getTriggerManager().addArea(this.x, this.y, this.z, new AC_TriggerArea(this.minX, this.minY, this.minZ, this.maxX, this.maxY, this.maxZ));
             } else {
-                ExBlock.resetArea(this.world, this.minX, this.minY, this.minZ, this.maxX, this.maxY, this.maxZ);
+                ExBlock.resetArea(this.level, this.minX, this.minY, this.minZ, this.maxX, this.maxY, this.maxZ);
             }
         }
 
@@ -41,7 +41,7 @@ public class AC_TileEntityTimer extends AC_TileEntityMinMax {
                 this.canActivate = false;
                 this.ticks = this.timeDeactive;
                 if (!this.resetOnTrigger) {
-                    ((ExWorld) this.world).getTriggerManager().removeArea(this.x, this.y, this.z);
+                    ((ExWorld) this.level).getTriggerManager().removeArea(this.x, this.y, this.z);
                 }
             } else {
                 this.canActivate = true;
@@ -51,8 +51,8 @@ public class AC_TileEntityTimer extends AC_TileEntityMinMax {
         }
     }
 
-    public void readNBT(CompoundTag tag) {
-        super.readNBT(tag);
+    public void load(CompoundTag tag) {
+        super.load(tag);
         this.resetOnTrigger = tag.getBoolean("resetOnTrigger");
         this.timeActive = tag.getInt("timeActive");
         this.timeDeactive = tag.getInt("timeDeactive");
@@ -63,15 +63,15 @@ public class AC_TileEntityTimer extends AC_TileEntityMinMax {
         this.canActivate = tag.getBoolean("canActivate");
     }
 
-    public void writeNBT(CompoundTag tag) {
-        super.writeNBT(tag);
-        tag.put("resetOnTrigger", this.resetOnTrigger);
-        tag.put("timeActive", this.timeActive);
-        tag.put("timeDeactive", this.timeDeactive);
-        tag.put("timeDelay", this.timeDelay);
-        tag.put("ticks", this.ticks);
-        tag.put("ticksDelay", this.ticksDelay);
-        tag.put("active", this.active);
-        tag.put("canActivate", this.canActivate);
+    public void save(CompoundTag tag) {
+        super.save(tag);
+        tag.putBoolean("resetOnTrigger", this.resetOnTrigger);
+        tag.putInt("timeActive", this.timeActive);
+        tag.putInt("timeDeactive", this.timeDeactive);
+        tag.putInt("timeDelay", this.timeDelay);
+        tag.putInt("ticks", this.ticks);
+        tag.putInt("ticksDelay", this.ticksDelay);
+        tag.putBoolean("active", this.active);
+        tag.putBoolean("canActivate", this.canActivate);
     }
 }

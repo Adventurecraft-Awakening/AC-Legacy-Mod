@@ -1,10 +1,10 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.ItemInstance;
 
 public interface AC_IItemLight {
 
-    boolean isLighting(ItemStack stack);
+    boolean isLighting(ItemInstance stack);
 
-    boolean isMuzzleFlash(ItemStack stack);
+    boolean isMuzzleFlash(ItemInstance stack);
 }

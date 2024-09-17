@@ -4,10 +4,10 @@ import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.script.ScriptItem;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -32,21 +32,21 @@ public class AC_ItemCustom extends Item implements AC_IUseDelayItem {
             properties.load(new FileInputStream(file));
             int id = Integer.parseInt(properties.getProperty("itemID", "-1"));
             if (id == -1) {
-                Minecraft.instance.overlay.addChatMessage(String.format("ItemID for %s is unspecified", file.getName()));
+                Minecraft.instance.gui.addMessage(String.format("ItemID for %s is unspecified", file.getName()));
             } else if (id <= 0) {
-                Minecraft.instance.overlay.addChatMessage(String.format("ItemID for %s specifies a negative itemID", file.getName()));
+                Minecraft.instance.gui.addMessage(String.format("ItemID for %s specifies a negative itemID", file.getName()));
             } else {
-                if (Item.byId[id] == null) {
+                if (Item.items[id] == null) {
                     return new AC_ItemCustom(id, file.getName(), properties);
                 }
-                Minecraft.instance.overlay.addChatMessage(String.format("ItemID (%d) for %s is already in use by %s", id, file.getName(), Item.byId[id].toString()));
+                Minecraft.instance.gui.addMessage(String.format("ItemID (%d) for %s is already in use by %s", id, file.getName(), Item.items[id].toString()));
             }
         } catch (FileNotFoundException ex) {
             ex.printStackTrace();
         } catch (IOException ex) {
             ex.printStackTrace();
         } catch (NumberFormatException var5) {
-            Minecraft.instance.overlay.addChatMessage(String.format("ItemID for %s is specified invalidly '%s'", file.getName(), properties.getProperty("itemID")));
+            Minecraft.instance.gui.addMessage(String.format("ItemID for %s is specified invalidly '%s'", file.getName(), properties.getProperty("itemID")));
         }
         return null;
     }
@@ -59,7 +59,7 @@ public class AC_ItemCustom extends Item implements AC_IUseDelayItem {
         if (sIconIndex != null) {
             Integer value = this.loadPropertyInt("iconIndex", sIconIndex);
             if (value != null) {
-                this.setTexturePosition(value);
+                this.texture(value);
             }
         }
 
@@ -67,7 +67,7 @@ public class AC_ItemCustom extends Item implements AC_IUseDelayItem {
         if (sMaxItemDamage != null) {
             Integer value = this.loadPropertyInt("maxItemDamage", sMaxItemDamage);
             if (value != null) {
-                this.setDurability(value);
+                this.setMaxDamage(value);
             }
         }
 
@@ -88,7 +88,7 @@ public class AC_ItemCustom extends Item implements AC_IUseDelayItem {
             }
         }
 
-        this.setTranslationKey(properties.getProperty("name", "Unnamed"));
+        this.setDescriptionId(properties.getProperty("name", "Unnamed"));
         this.onItemUsedScript = properties.getProperty("onItemUsedScript", "");
     }
 
@@ -97,13 +97,13 @@ public class AC_ItemCustom extends Item implements AC_IUseDelayItem {
             Integer parsed = Integer.parseInt(value);
             return parsed;
         } catch (NumberFormatException ex) {
-            Minecraft.instance.overlay.addChatMessage(String.format("Item File '%s' Property '%s' is specified invalidly '%s'", this.fileName, name, value));
+            Minecraft.instance.gui.addMessage(String.format("Item File '%s' Property '%s' is specified invalidly '%s'", this.fileName, name, value));
             return null;
         }
     }
 
     @Override
-    public ItemStack use(ItemStack stack, World world, PlayerEntity player) {
+    public ItemInstance use(ItemInstance stack, Level world, Player player) {
         if (!this.onItemUsedScript.equals("")) {
             ScriptItem scriptItem = new ScriptItem(stack);
             Scriptable scope = ((ExWorld) world).getScope();
@@ -117,7 +117,7 @@ public class AC_ItemCustom extends Item implements AC_IUseDelayItem {
 
     public static void loadItems(File directory) {
         for (int loadedItemID : loadedItemIDs) {
-            Item.byId[loadedItemID] = null;
+            Item.items[loadedItemID] = null;
         }
         loadedItemIDs.clear();
 

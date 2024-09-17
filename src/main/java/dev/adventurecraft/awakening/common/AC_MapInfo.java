@@ -1,9 +1,9 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.client.texture.TextureManager;
 import org.lwjgl.opengl.GL11;
 
 import java.awt.image.BufferedImage;
+import net.minecraft.client.renderer.Textures;
 
 public class AC_MapInfo {
 
@@ -28,15 +28,15 @@ public class AC_MapInfo {
         this.mapThumbnail = thumbnail;
     }
 
-    public void bindTexture(TextureManager textureManager) {
+    public void bindTexture(Textures textureManager) {
         if (this.mapThumbnail != null && this.textureID < 0) {
-            this.textureID = textureManager.getTextureId(this.mapThumbnail);
+            this.textureID = textureManager.getTexture(this.mapThumbnail);
         }
 
         if (this.mapThumbnail != null) {
-            textureManager.bindTexture(this.textureID);
+            textureManager.bind(this.textureID);
         } else {
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureManager.getTextureId("/gui/unknown_pack.png"));
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureManager.loadTexture("/gui/unknown_pack.png"));
         }
     }
 }

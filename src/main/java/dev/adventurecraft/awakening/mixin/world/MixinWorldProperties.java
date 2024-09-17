@@ -7,11 +7,11 @@ import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import net.minecraft.client.Minecraft;
-import net.minecraft.util.io.AbstractTag;
-import net.minecraft.util.io.CompoundTag;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldProperties;
-import net.minecraft.entity.Entity;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.LevelData;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -21,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.HashMap;
 import java.util.Map;
 
-@Mixin(WorldProperties.class)
+@Mixin(LevelData.class)
 public abstract class MixinWorldProperties implements ExWorldProperties {
 
     @Shadow
@@ -62,15 +62,15 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     public boolean originallyFromAC = false;
     public boolean allowsInventoryCrafting = false;
 
-    @Inject(method = "<init>(Lnet/minecraft/util/io/CompoundTag;)V", at = @At("TAIL"))
+    @Inject(method = "<init>(Lnet/minecraft/nbt/CompoundTag;)V", at = @At("TAIL"))
     private void init(CompoundTag tag, CallbackInfo ci) {
         this.tempOffset = tag.getDouble("TemperatureOffset");
-        if (tag.containsKey("IsPrecipitating")) {
+        if (tag.hasKey("IsPrecipitating")) {
             this.raining = tag.getBoolean("IsPrecipitating");
         }
 
-        Entity.field_1590 = tag.getInt("nextEntityID");
-        if (tag.containsKey("useImages")) {
+        Entity.ENTITY_COUNTER = tag.getInt("nextEntityID");
+        if (tag.hasKey("useImages")) {
             WorldGenProperties wgp = this.worldGenProps;
             wgp.useImages = tag.getBoolean("useImages");
             wgp.mapSize = tag.getDouble("mapSize");
@@ -85,81 +85,81 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
             wgp.volatilityWeight2 = tag.getDouble("volatilityWeight2");
         }
 
-        if (tag.containsKey("iceMelts")) {
+        if (tag.hasKey("iceMelts")) {
             this.iceMelts = tag.getBoolean("iceMelts");
         }
 
-        if (tag.containsKey("leavesDecay")) {
+        if (tag.hasKey("leavesDecay")) {
             this.leavesDecay = tag.getBoolean("leavesDecay");
         }
 
-        if (tag.containsKey("triggerAreas")) {
+        if (tag.hasKey("triggerAreas")) {
             this.triggerData = tag.getCompoundTag("triggerAreas");
         }
 
-        if (tag.containsKey("timeRate")) {
+        if (tag.hasKey("timeRate")) {
             this.timeRate = tag.getFloat("timeRate");
         } else {
             this.timeRate = 1.0F;
         }
 
-        if (tag.containsKey("timeOfDay")) {
+        if (tag.hasKey("timeOfDay")) {
             this.timeOfDay = tag.getFloat("timeOfDay");
         } else {
             this.timeOfDay = (float) this.time;
         }
 
         this.playingMusic = tag.getString("playingMusic");
-        if (tag.containsKey("mobsBurn")) {
+        if (tag.hasKey("mobsBurn")) {
             this.mobsBurn = tag.getBoolean("mobsBurn");
         }
 
         this.overlay = tag.getString("overlay");
-        if (tag.containsKey("textureReplacements")) {
+        if (tag.hasKey("textureReplacements")) {
             this.replacementTag = tag.getCompoundTag("textureReplacements");
         }
 
         this.onNewSaveScript = tag.getString("onNewSaveScript");
         this.onLoadScript = tag.getString("onLoadScript");
         this.onUpdateScript = tag.getString("onUpdateScript");
-        if (tag.containsKey("playerName")) {
+        if (tag.hasKey("playerName")) {
             this.playerName = tag.getString("playerName");
         }
 
         for (int i = 0; i < 16; ++i) {
             String id = String.format("brightness%d", i);
-            if (tag.containsKey(id)) {
+            if (tag.hasKey(id)) {
                 this.brightness[i] = tag.getFloat(id);
             } else {
                 this.brightness[i] = LightHelper.getDefaultLightAtIndex(i);
             }
         }
 
-        if (tag.containsKey("globalScope")) {
+        if (tag.hasKey("globalScope")) {
             this.globalScope = tag.getCompoundTag("globalScope");
         }
 
-        if (tag.containsKey("worldScope")) {
+        if (tag.hasKey("worldScope")) {
             this.worldScope = tag.getCompoundTag("worldScope");
         }
 
-        if (tag.containsKey("musicScope")) {
+        if (tag.hasKey("musicScope")) {
             this.musicScope = tag.getCompoundTag("musicScope");
         }
 
-        if (tag.containsKey("originallyFromAC")) {
+        if (tag.hasKey("originallyFromAC")) {
             this.originallyFromAC = tag.getBoolean("originallyFromAC");
         } else {
-            this.originallyFromAC = tag.containsKey("TemperatureOffset");
+            this.originallyFromAC = tag.hasKey("TemperatureOffset");
         }
 
-        if (tag.containsKey("allowsInventoryCrafting")) {
+        if (tag.hasKey("allowsInventoryCrafting")) {
             this.allowsInventoryCrafting = tag.getBoolean("allowsInventoryCrafting");
         } else {
             this.allowsInventoryCrafting = true;
         }
 
-        if (tag.containsKey("hudEnabled")) {
+        if (tag.hasKey("hudEnabled")) {
             this.hudEnabled = tag.getBoolean("hudEnabled");
         } else {
             this.hudEnabled = true;
@@ -175,84 +175,84 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         }
     }
 
-    @Inject(method = "<init>(Lnet/minecraft/world/WorldProperties;)V", at = @At("TAIL"))
-    private void init(WorldProperties var1, CallbackInfo ci) {
+    @Inject(method = "<init>(Lnet/minecraft/world/level/storage/LevelData;)V", at = @At("TAIL"))
+    private void init(LevelData var1, CallbackInfo ci) {
         System.arraycopy(((MixinWorldProperties) (Object) var1).brightness, 0, this.brightness, 0, 16);
     }
 
-    @Inject(method = "updateProperties", at = @At("TAIL"))
+    @Inject(method = "save(Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/nbt/CompoundTag;)V", at = @At("TAIL"))
     private void insertWorldPropsForAC(CompoundTag tag, CompoundTag playerTag, CallbackInfo ci) {
         WorldGenProperties wgp = this.worldGenProps;
-        tag.put("TemperatureOffset", this.tempOffset);
-        tag.put("nextEntityID", Entity.field_1590);
-        tag.put("useImages", wgp.useImages);
-        tag.put("mapSize", wgp.mapSize);
-        tag.put("waterLevel", (short) wgp.waterLevel);
-        tag.put("fractureHorizontal", wgp.fractureHorizontal);
-        tag.put("fractureVertical", wgp.fractureVertical);
-        tag.put("maxAvgDepth", wgp.maxAvgDepth);
-        tag.put("maxAvgHeight", wgp.maxAvgHeight);
-        tag.put("volatility1", wgp.volatility1);
-        tag.put("volatility2", wgp.volatility2);
-        tag.put("volatilityWeight1", wgp.volatilityWeight1);
-        tag.put("volatilityWeight2", wgp.volatilityWeight2);
-        tag.put("iceMelts", this.iceMelts);
-        tag.put("leavesDecay", this.leavesDecay);
-        if (Minecraft.instance.world != null) {
-            ExWorld world = (ExWorld) Minecraft.instance.world;
+        tag.putDouble("TemperatureOffset", this.tempOffset);
+        tag.putInt("nextEntityID", Entity.ENTITY_COUNTER);
+        tag.putBoolean("useImages", wgp.useImages);
+        tag.putDouble("mapSize", wgp.mapSize);
+        tag.putShort("waterLevel", (short) wgp.waterLevel);
+        tag.putDouble("fractureHorizontal", wgp.fractureHorizontal);
+        tag.putDouble("fractureVertical", wgp.fractureVertical);
+        tag.putDouble("maxAvgDepth", wgp.maxAvgDepth);
+        tag.putDouble("maxAvgHeight", wgp.maxAvgHeight);
+        tag.putDouble("volatility1", wgp.volatility1);
+        tag.putDouble("volatility2", wgp.volatility2);
+        tag.putDouble("volatilityWeight1", wgp.volatilityWeight1);
+        tag.putDouble("volatilityWeight2", wgp.volatilityWeight2);
+        tag.putBoolean("iceMelts", this.iceMelts);
+        tag.putBoolean("leavesDecay", this.leavesDecay);
+        if (Minecraft.instance.level != null) {
+            ExWorld world = (ExWorld) Minecraft.instance.level;
             if (world.getTriggerManager() != null) {
-                tag.put("triggerAreas", (AbstractTag) world.getTriggerManager().getTagCompound());
+                tag.putTag("triggerAreas", (Tag) world.getTriggerManager().getTagCompound());
             }
         }
 
-        tag.put("timeOfDay", this.timeOfDay);
-        tag.put("timeRate", this.timeRate);
+        tag.putFloat("timeOfDay", this.timeOfDay);
+        tag.putFloat("timeRate", this.timeRate);
         if (!this.playingMusic.equals("")) {
-            tag.put("playingMusic", this.playingMusic);
+            tag.putString("playingMusic", this.playingMusic);
         }
 
-        tag.put("mobsBurn", this.mobsBurn);
+        tag.putBoolean("mobsBurn", this.mobsBurn);
         if (!this.overlay.equals("")) {
-            tag.put("overlay", this.overlay);
+            tag.putString("overlay", this.overlay);
         }
 
-        tag.put("textureReplacements", this.getTextureReplacementTags());
+        tag.putCompoundTag("textureReplacements", this.getTextureReplacementTags());
         if (!this.onNewSaveScript.equals("")) {
-            tag.put("onNewSaveScript", this.onNewSaveScript);
+            tag.putString("onNewSaveScript", this.onNewSaveScript);
         }
 
         if (!this.onLoadScript.equals("")) {
-            tag.put("onLoadScript", this.onLoadScript);
+            tag.putString("onLoadScript", this.onLoadScript);
         }
 
         if (!this.onUpdateScript.equals("")) {
-            tag.put("onUpdateScript", this.onUpdateScript);
+            tag.putString("onUpdateScript", this.onUpdateScript);
         }
 
         if (!this.playerName.equals("")) {
-            tag.put("playerName", this.playerName);
+            tag.putString("playerName", this.playerName);
         }
 
         for (int var3 = 0; var3 < 16; ++var3) {
             String var4 = String.format("brightness%d", var3);
-            tag.put(var4, this.brightness[var3]);
+            tag.putFloat(var4, this.brightness[var3]);
         }
 
         if (this.globalScope != null) {
-            tag.put("globalScope", (AbstractTag) this.globalScope);
+            tag.putTag("globalScope", (Tag) this.globalScope);
         }
 
         if (this.worldScope != null) {
-            tag.put("worldScope", (AbstractTag) this.worldScope);
+            tag.putTag("worldScope", (Tag) this.worldScope);
         }
 
         if (this.musicScope != null) {
-            tag.put("musicScope", (AbstractTag) this.musicScope);
+            tag.putTag("musicScope", (Tag) this.musicScope);
         }
 
-        tag.put("originallyFromAC", this.originallyFromAC);
-        tag.put("allowsInventoryCrafting", this.allowsInventoryCrafting);
-        tag.put("hudEnabled", this.hudEnabled);
+        tag.putBoolean("originallyFromAC", this.originallyFromAC);
+        tag.putBoolean("allowsInventoryCrafting", this.allowsInventoryCrafting);
+        tag.putBoolean("hudEnabled", this.hudEnabled);
     }
 
     @Override
@@ -360,14 +360,14 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         var tag = new CompoundTag();
 
         for (Map.Entry<String, String> entry : this.replacementTextures.entrySet()) {
-            tag.put(entry.getKey(), entry.getValue());
+            tag.putString(entry.getKey(), entry.getValue());
         }
 
         return tag;
     }
 
     @Override
-    public void loadTextureReplacements(World world) {
+    public void loadTextureReplacements(Level world) {
         if (this.replacementTag != null) {
             this.replacementTextures.clear();
 

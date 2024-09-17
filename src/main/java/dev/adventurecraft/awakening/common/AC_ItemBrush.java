@@ -1,11 +1,11 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.tile.Tile;
 
 public class AC_ItemBrush extends Item {
 
@@ -14,14 +14,14 @@ public class AC_ItemBrush extends Item {
     }
 
     @Override
-    public boolean useOnBlock(ItemStack stack, PlayerEntity player, World world, int x, int y, int z, int side) {
-        Block block = Block.BY_ID[world.getBlockId(x, y, z)];
+    public boolean useOn(ItemInstance stack, Player player, Level world, int x, int y, int z, int side) {
+        Tile block = Tile.tiles[world.getTile(x, y, z)];
         if (block instanceof AC_IBlockColor) {
-            int amount = player.method_1373() ? -1 : 1;
+            int amount = player.isSneaking() ? -1 : 1;
             ((AC_IBlockColor) block).incrementColor(world, x, y, z, amount);
-            world.notifyListeners(x, y, z);
+            world.sendTileUpdated(x, y, z);
         } else {
-            Minecraft.instance.overlay.addChatMessage("Doesn't implement Color :(");
+            Minecraft.instance.gui.addMessage("Doesn't implement Color :(");
         }
         return false;
     }

@@ -2,10 +2,10 @@ package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.BlockEntity;
-import net.minecraft.util.io.CompoundTag;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.tile.entity.TileEntity;
 
-public class AC_TileEntityCamera extends BlockEntity {
+public class AC_TileEntityCamera extends TileEntity {
 
     public String message;
     public String sound;
@@ -31,47 +31,47 @@ public class AC_TileEntityCamera extends BlockEntity {
     }
 
     @Override
-    public void readNBT(CompoundTag tag) {
-        super.readNBT(tag);
+    public void load(CompoundTag tag) {
+        super.load(tag);
         int pointCount = tag.getInt("numPoints");
 
         for (int i = 0; i < pointCount; ++i) {
             this.readPointTag(tag.getCompoundTag(String.format("point%d", i)));
         }
 
-        if (tag.containsKey("type")) {
+        if (tag.hasKey("type")) {
             this.type = AC_CutsceneCameraBlendType.get(tag.getByte("type"));
         }
 
-        if (tag.containsKey("pauseGame")) {
+        if (tag.hasKey("pauseGame")) {
             this.pauseGame = tag.getBoolean("pauseGame");
         }
     }
 
     @Override
-    public void writeNBT(CompoundTag tag) {
-        super.writeNBT(tag);
+    public void save(CompoundTag tag) {
+        super.save(tag);
 
         int pointCount = 0;
         for (AC_CutsceneCameraPoint point : this.camera.cameraPoints) {
-            tag.put(String.format("point%d", pointCount), this.getPointTag(point));
+            tag.putCompoundTag(String.format("point%d", pointCount), this.getPointTag(point));
             ++pointCount;
         }
 
-        tag.put("numPoints", pointCount);
-        tag.put("type", (byte) this.type.value);
-        tag.put("pauseGame", this.pauseGame);
+        tag.putInt("numPoints", pointCount);
+        tag.putByte("type", (byte) this.type.value);
+        tag.putBoolean("pauseGame", this.pauseGame);
     }
 
     private CompoundTag getPointTag(AC_CutsceneCameraPoint point) {
         var tag = new CompoundTag();
-        tag.put("time", point.time);
-        tag.put("posX", point.posX);
-        tag.put("posY", point.posY);
-        tag.put("posZ", point.posZ);
-        tag.put("yaw", point.rotYaw);
-        tag.put("pitch", point.rotPitch);
-        tag.put("type", (byte) point.blendType.value);
+        tag.putFloat("time", point.time);
+        tag.putFloat("posX", point.posX);
+        tag.putFloat("posY", point.posY);
+        tag.putFloat("posZ", point.posZ);
+        tag.putFloat("yaw", point.rotYaw);
+        tag.putFloat("pitch", point.rotPitch);
+        tag.putByte("type", (byte) point.blendType.value);
         return tag;
     }
 
@@ -83,7 +83,7 @@ public class AC_TileEntityCamera extends BlockEntity {
         float yaw = tag.getFloat("yaw");
         float pitch = tag.getFloat("pitch");
         AC_CutsceneCameraBlendType type = AC_CutsceneCameraBlendType.QUADRATIC;
-        if (tag.containsKey("type")) {
+        if (tag.hasKey("type")) {
             type = AC_CutsceneCameraBlendType.get(tag.getByte("type"));
         }
 

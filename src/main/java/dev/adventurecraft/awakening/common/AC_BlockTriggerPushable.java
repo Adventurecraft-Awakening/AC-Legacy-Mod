@@ -2,10 +2,10 @@ package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.BlockEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.tile.entity.TileEntity;
 
 public class AC_BlockTriggerPushable extends AC_BlockColorWithEntity {
 
@@ -14,18 +14,18 @@ public class AC_BlockTriggerPushable extends AC_BlockColorWithEntity {
     }
 
     @Override
-    protected BlockEntity createBlockEntity() {
+    protected TileEntity newTileEntity() {
         return new AC_TileEntityTriggerPushable();
     }
 
-    private boolean checkBlock(World world, int x, int y, int z, int meta) {
-        return world.getBlockId(x, y, z) == AC_Blocks.pushableBlock.id && world.getBlockMeta(x, y, z) == meta;
+    private boolean checkBlock(Level world, int x, int y, int z, int meta) {
+        return world.getTile(x, y, z) == AC_Blocks.pushableBlock.id && world.getData(x, y, z) == meta;
     }
 
     @Override
-    public void onAdjacentBlockUpdate(World world, int x, int y, int z, int id) {
-        var entity = (AC_TileEntityTriggerPushable) world.getBlockEntity(x, y, z);
-        int meta = world.getBlockMeta(x, y, z);
+    public void neighborChanged(Level world, int x, int y, int z, int id) {
+        var entity = (AC_TileEntityTriggerPushable) world.getTileEntity(x, y, z);
+        int meta = world.getData(x, y, z);
         boolean pushable = this.checkBlock(world, x + 1, y, z, meta);
         pushable |= this.checkBlock(world, x - 1, y, z, meta);
         pushable |= this.checkBlock(world, x, y + 1, z, meta);
@@ -47,8 +47,8 @@ public class AC_BlockTriggerPushable extends AC_BlockColorWithEntity {
         }
     }
 
-    public void setTriggerToSelection(World world, int x, int y, int z) {
-        var entity = (AC_TileEntityMinMax) world.getBlockEntity(x, y, z);
+    public void setTriggerToSelection(Level world, int x, int y, int z) {
+        var entity = (AC_TileEntityMinMax) world.getTileEntity(x, y, z);
         entity.minX = AC_ItemCursor.minX;
         entity.minY = AC_ItemCursor.minY;
         entity.minZ = AC_ItemCursor.minZ;
@@ -58,9 +58,9 @@ public class AC_BlockTriggerPushable extends AC_BlockColorWithEntity {
     }
 
     @Override
-    public boolean canUse(World world, int x, int y, int z, PlayerEntity player) {
-        if (AC_DebugMode.active && (player.getHeldItem() == null || player.getHeldItem().itemId == AC_Items.cursor.id)) {
-            var entity = (AC_TileEntityTriggerPushable) world.getBlockEntity(x, y, z);
+    public boolean use(Level world, int x, int y, int z, Player player) {
+        if (AC_DebugMode.active && (player.getSelectedItem() == null || player.getSelectedItem().id == AC_Items.cursor.id)) {
+            var entity = (AC_TileEntityTriggerPushable) world.getTileEntity(x, y, z);
             AC_GuiTriggerPushable.showUI(entity);
             return true;
         } else {
@@ -69,8 +69,8 @@ public class AC_BlockTriggerPushable extends AC_BlockColorWithEntity {
     }
 
     @Override
-    public void incrementColor(World world, int x, int y, int z, int amount) {
+    public void incrementColor(Level world, int x, int y, int z, int amount) {
         super.incrementColor(world, x, y, z, amount);
-        this.onAdjacentBlockUpdate(world, x, y, z, 0);
+        this.neighborChanged(world, x, y, z, 0);
     }
 }

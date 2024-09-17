@@ -2,37 +2,37 @@ package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
-import net.minecraft.block.BlockWithEntity;
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.BlockEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.math.AxixAlignedBoundingBox;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelSource;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.tile.TileEntityTile;
+import net.minecraft.world.level.tile.entity.TileEntity;
+import net.minecraft.world.phys.AABB;
 
-public class AC_BlockWeather extends BlockWithEntity implements AC_ITriggerBlock {
+public class AC_BlockWeather extends TileEntityTile implements AC_ITriggerBlock {
 
     protected AC_BlockWeather(int var1, int var2) {
         super(var1, var2, Material.AIR);
     }
 
     @Override
-    protected BlockEntity createBlockEntity() {
+    protected TileEntity newTileEntity() {
         return new AC_TileEntityWeather();
     }
 
     @Override
-    public boolean isFullOpaque() {
+    public boolean isSolidRender() {
         return false;
     }
 
     @Override
-    public AxixAlignedBoundingBox getCollisionShape(World world, int x, int y, int z) {
+    public AABB getAABB(Level world, int x, int y, int z) {
         return null;
     }
 
     @Override
-    public boolean shouldRender(BlockView view, int x, int y, int z) {
+    public boolean shouldRender(LevelSource view, int x, int y, int z) {
         return AC_DebugMode.active;
     }
 
@@ -42,15 +42,15 @@ public class AC_BlockWeather extends BlockWithEntity implements AC_ITriggerBlock
     }
 
     @Override
-    public void onTriggerActivated(World world, int x, int y, int z) {
-        var entity = (AC_TileEntityWeather) world.getBlockEntity(x, y, z);
+    public void onTriggerActivated(Level world, int x, int y, int z) {
+        var entity = (AC_TileEntityWeather) world.getTileEntity(x, y, z);
         if (entity.changePrecipitate) {
-            world.properties.setRaining(entity.precipitate);
+            world.levelData.setRaining(entity.precipitate);
             ((ExWorld) world).resetCoordOrder();
         }
 
         if (entity.changeTempOffset) {
-            ((ExWorldProperties) world.properties).setTempOffset(entity.tempOffset);
+            ((ExWorldProperties) world.levelData).setTempOffset(entity.tempOffset);
             ((ExWorld) world).resetCoordOrder();
         }
 
@@ -59,18 +59,18 @@ public class AC_BlockWeather extends BlockWithEntity implements AC_ITriggerBlock
         }
 
         if (entity.changeTimeRate) {
-            ((ExWorldProperties) world.properties).setTimeRate(entity.timeRate);
+            ((ExWorldProperties) world.levelData).setTimeRate(entity.timeRate);
         }
     }
 
     @Override
-    public void onTriggerDeactivated(World world, int x, int y, int z) {
+    public void onTriggerDeactivated(Level world, int x, int y, int z) {
     }
 
     @Override
-    public boolean canUse(World world, int x, int y, int z, PlayerEntity player) {
-        if (AC_DebugMode.active && (player.getHeldItem() == null || player.getHeldItem().itemId == AC_Items.cursor.id)) {
-            var entity = (AC_TileEntityWeather) world.getBlockEntity(x, y, z);
+    public boolean use(Level world, int x, int y, int z, Player player) {
+        if (AC_DebugMode.active && (player.getSelectedItem() == null || player.getSelectedItem().id == AC_Items.cursor.id)) {
+            var entity = (AC_TileEntityWeather) world.getTileEntity(x, y, z);
             AC_GuiWeather.showUI(world, entity);
             return true;
         } else {
@@ -79,7 +79,7 @@ public class AC_BlockWeather extends BlockWithEntity implements AC_ITriggerBlock
     }
 
     @Override
-    public boolean isCollidable() {
+    public boolean mayPick() {
         return AC_DebugMode.active;
     }
 }

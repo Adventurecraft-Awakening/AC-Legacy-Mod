@@ -1,10 +1,10 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.block.Block;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.tile.Tile;
 
 public class AC_ItemPaintBucket extends Item {
 
@@ -12,7 +12,7 @@ public class AC_ItemPaintBucket extends Item {
         super(id);
     }
 
-    public boolean useOnBlock(ItemStack stack, PlayerEntity player, World world, int x, int y, int z, int meta) {
+    public boolean useOn(ItemInstance stack, Player player, Level world, int x, int y, int z, int meta) {
         // TODO: use on singular block?
         if (!AC_ItemCursor.bothSet) {
             return false;
@@ -24,15 +24,15 @@ public class AC_ItemPaintBucket extends Item {
         int maxY = Math.max(AC_ItemCursor.oneY, AC_ItemCursor.twoY);
         int minZ = Math.min(AC_ItemCursor.oneZ, AC_ItemCursor.twoZ);
         int maxZ = Math.max(AC_ItemCursor.oneZ, AC_ItemCursor.twoZ);
-        int amount = player.method_1373() ? -1 : 1;
+        int amount = player.isSneaking() ? -1 : 1;
 
         for (int bX = minX; bX <= maxX; ++bX) {
             for (int bY = minY; bY <= maxY; ++bY) {
                 for (int bZ = minZ; bZ <= maxZ; ++bZ) {
-                    Block block = Block.BY_ID[world.getBlockId(bX, bY, bZ)];
+                    Tile block = Tile.tiles[world.getTile(bX, bY, bZ)];
                     if (block instanceof AC_IBlockColor colorBlock) {
                         colorBlock.incrementColor(world, bX, bY, bZ, amount);
-                        world.notifyListeners(bX, bY, bZ);
+                        world.sendTileUpdated(bX, bY, bZ);
                     }
                 }
             }

@@ -1,28 +1,28 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
 
 class AC_ItemBoomerang extends Item {
 
 	public AC_ItemBoomerang(int var1) {
 		super(var1);
-		this.setTexturePosition(144);
+		this.texture(144);
 		this.maxStackSize = 1;
-		this.setDurability(0);
-		this.setHasSubItems(true);
+		this.setMaxDamage(0);
+		this.setStackedByData(true);
 	}
 
-	public int getTexturePosition(int var1) {
-		return var1 == 0 ? this.texturePosition : 165;
+	public int getIcon(int var1) {
+		return var1 == 0 ? this.texture : 165;
 	}
 
-	public ItemStack use(ItemStack itemStack, World world, PlayerEntity playerEntity) {
-		if(itemStack.getMeta() == 0) {
-			world.spawnEntity(new AC_EntityBoomerang(world, playerEntity));
-			itemStack.setMeta(1);
+	public ItemInstance use(ItemInstance itemStack, Level world, Player playerEntity) {
+		if(itemStack.getAuxValue() == 0) {
+			world.addEntity(new AC_EntityBoomerang(world, playerEntity));
+			itemStack.setDamage(1);
 		}
 
 		return itemStack;

@@ -6,7 +6,7 @@ import dev.adventurecraft.awakening.extension.client.gui.screen.ExScreen;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screens.Screen;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 
@@ -91,16 +91,16 @@ public class AC_GuiMusicSheet extends Screen {
                 totalShiftValue += 1;
             noteToPlay = noteToPlay.withShiftedValue(totalShiftValue);
 
-            MusicPlayer.playNoteFromEntity(this.client.player, this.instrument, noteToPlay, 1F);
+            MusicPlayer.playNoteFromEntity(this.minecraft.player, this.instrument, noteToPlay, 1F);
         }
 
-        AC_MusicScriptEntry entry = ((ExWorld) this.client.world).getMusicScripts().executeMusic(this.notesPlayedString);
+        AC_MusicScriptEntry entry = ((ExWorld) this.minecraft.level).getMusicScripts().executeMusic(this.notesPlayedString);
         if (entry != null) {
             this.songPlayed = entry;
             this.timeToFade = 2500L + System.currentTimeMillis();
-            this.client.hasFocus = true;
+            this.minecraft.mouseGrabbed = true;
             ((ExScreen) this).setDisabledInputGrabbing(true);
-            this.client.mouseHelper.grabCursor();
+            this.minecraft.mouseHandler.grab();
         }
     }
 
@@ -116,7 +116,7 @@ public class AC_GuiMusicSheet extends Screen {
                 backColor = (int) (128.0F * fade) << 24;
                 foreColor = (int) (255.0F * fade) << 24;
                 if ((double) fade < 0.004D) {
-                    this.client.openScreen(null);
+                    this.minecraft.setScreen(null);
                     return;
                 }
             }
@@ -127,12 +127,12 @@ public class AC_GuiMusicSheet extends Screen {
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GL11.glDisable(GL11.GL_ALPHA_TEST);
         if (this.songPlayed != null) {
-            this.drawTextWithShadowCentred(this.textRenderer, this.songPlayed.songName, this.width / 2, this.height - 59 - 48, 14737632 + foreColor);
+            this.drawCenteredString(this.font, this.songPlayed.songName, this.width / 2, this.height - 59 - 48, 14737632 + foreColor);
         }
 
-        int backTexId = this.client.textureManager.getTextureId("/gui/musicSheet.png");
+        int backTexId = this.minecraft.textures.loadTexture("/gui/musicSheet.png");
         GL11.glColor4f(0.9F, 0.1F, 0.1F, alpha);
-        this.client.textureManager.bindTexture(backTexId);
+        this.minecraft.textures.bind(backTexId);
         this.blit((this.width - 205) / 2, this.height - 59 - 2 - 48, 0, 0, 205, 59);
         int noteX = 0;
         GL11.glColor4f(1.0F, 1.0F, 1.0F, alpha);
@@ -161,7 +161,7 @@ public class AC_GuiMusicSheet extends Screen {
     }
 
     public static void showUI(IInstrumentConfig instrumentConfig) {
-        Minecraft.instance.openScreen(new AC_GuiMusicSheet(instrumentConfig));
+        Minecraft.instance.setScreen(new AC_GuiMusicSheet(instrumentConfig));
     }
 
     @Override

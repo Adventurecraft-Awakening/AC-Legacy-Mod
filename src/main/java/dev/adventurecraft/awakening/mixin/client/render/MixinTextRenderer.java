@@ -2,14 +2,14 @@ package dev.adventurecraft.awakening.mixin.client.render;
 
 import dev.adventurecraft.awakening.client.options.Config;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
+import net.minecraft.SharedConstants;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.options.GameOptions;
-import net.minecraft.client.render.QuadPoint;
-import net.minecraft.client.render.TextRenderer;
-import net.minecraft.client.render.entity.ChickenRenderer;
-import net.minecraft.client.resource.TexturePack;
-import net.minecraft.client.texture.TextureManager;
-import net.minecraft.util.CharacterUtils;
+import net.minecraft.client.Options;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.model.Vertex;
+import net.minecraft.client.renderer.Textures;
+import net.minecraft.client.renderer.entity.ChickenRenderer;
+import net.minecraft.client.skins.TexturePack;
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -26,7 +26,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Formatter;
 
-@Mixin(TextRenderer.class)
+/**
+ * V1 of mixin, broken.
+ */
+@Deprecated(forRemoval = true)
+@Mixin(Font.class)
 public abstract class MixinTextRenderer implements ExTextRenderer {
 
     private int[] field_22009_h = new int[32];
@@ -36,7 +40,7 @@ public abstract class MixinTextRenderer implements ExTextRenderer {
     private int[] charTexIds = new int[256];
     private int basicTexID;
     private int lastBoundTexID;
-    private TextureManager tex;
+    private Textures tex;
     private float xPos;
     private float yPos;
     private int imgWidth = 128;
@@ -44,10 +48,10 @@ public abstract class MixinTextRenderer implements ExTextRenderer {
     private int b = 8;
     private int charHeight = 8;
     private String textureName;
-    private GameOptions gameSettings;
+    private Options gameSettings;
 
     @Inject(method = "<init>", at = @At("TAIL"))
-    private void init(GameOptions var1, String var2, TextureManager var3, CallbackInfo ci) {
+    private void init(Options var1, String var2, Textures var3, CallbackInfo ci) {
         this.tex = var3;
         this.textureName = var2;
         this.gameSettings = var1;
@@ -60,9 +64,9 @@ public abstract class MixinTextRenderer implements ExTextRenderer {
         try {
             InputStream var2;
             if (Minecraft.instance != null) {
-                TexturePack texturePack = Minecraft.instance.texturePackManager.texturePack;
-                var1 = ImageIO.read(texturePack.getResourceAsStream(this.textureName));
-                var2 = texturePack.getResourceAsStream("/font/glyph_sizes.bin");
+                TexturePack texturePack = Minecraft.instance.skins.selected;
+                var1 = ImageIO.read(texturePack.getResource(this.textureName));
+                var2 = texturePack.getResource("/font/glyph_sizes.bin");
             } else {
                 var1 = ImageIO.read(ChickenRenderer.class.getResourceAsStream(this.textureName));
                 var2 = ChickenRenderer.class.getResourceAsStream("/font/glyph_sizes.bin");
@@ -116,7 +120,7 @@ public abstract class MixinTextRenderer implements ExTextRenderer {
             this.charPixelWidths[var3] = (byte) ((var6 + 2) * 128 / this.imgWidth);
         }
 
-        this.basicTexID = this.tex.getTextureId(var1);
+        this.basicTexID = this.tex.getTexture(var1);
 
         for (var3 = 0; var3 < 32; ++var3) {
             var4 = (var3 >> 3 & 1) * 85;
@@ -176,15 +180,15 @@ public abstract class MixinTextRenderer implements ExTextRenderer {
         BufferedImage var3;
         try {
             if (Minecraft.instance != null) {
-                var3 = ImageIO.read(Minecraft.instance.texturePackManager.texturePack.getResourceAsStream(var2.toString()));
+                var3 = ImageIO.read(Minecraft.instance.skins.selected.getResource(var2.toString()));
             } else {
-                var3 = ImageIO.read(QuadPoint.class.getResourceAsStream(var2.toString()));
+                var3 = ImageIO.read(Vertex.class.getResourceAsStream(var2.toString()));
             }
         } catch (IOException var5) {
             throw new RuntimeException(var5);
         }
 
-        this.charTexIds[var1] = this.tex.getTextureId(var3);
+        this.charTexIds[var1] = this.tex.getTexture(var3);
         this.lastBoundTexID = this.charTexIds[var1];
     }
 
@@ -250,7 +254,7 @@ public abstract class MixinTextRenderer implements ExTextRenderer {
                 GL11.glColor3f((float) (var6 >> 16) / 255.0F, (float) (var6 >> 8 & 255) / 255.0F, (float) (var6 & 255) / 255.0F);
                 ++var3;
             } else {
-                var5 = CharacterUtils.validCharacters.indexOf(var4);
+                var5 = SharedConstants.acceptableLetters.indexOf(var4);
                 if (var4 == 32) {
                     this.xPos += 4.0F;
                 } else if (var5 > 0) {
@@ -297,7 +301,7 @@ public abstract class MixinTextRenderer implements ExTextRenderer {
                 if (var4 == 167) {
                     ++var3;
                 } else {
-                    int var5 = CharacterUtils.validCharacters.indexOf(var4);
+                    int var5 = SharedConstants.acceptableLetters.indexOf(var4);
                     if (var5 >= 0) {
                         var2 += this.charPixelWidths[var5 + 32];
                     } else if (this.unicodeWidth[var4] != 0) {

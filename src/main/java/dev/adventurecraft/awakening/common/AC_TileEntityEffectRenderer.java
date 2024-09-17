@@ -1,10 +1,10 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.client.render.entity.block.BlockEntityRenderer;
-import net.minecraft.entity.BlockEntity;
+import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
+import net.minecraft.world.level.tile.entity.TileEntity;
 import org.lwjgl.opengl.GL11;
 
-public class AC_TileEntityEffectRenderer extends BlockEntityRenderer {
+public class AC_TileEntityEffectRenderer extends TileEntityRenderer {
 	public void render(AC_TileEntityEffect var1, double var2, double var4, double var6, float var8) {
 		if(AC_DebugMode.active) {
 			GL11.glPushMatrix();
@@ -52,7 +52,7 @@ public class AC_TileEntityEffectRenderer extends BlockEntityRenderer {
 
 	}
 
-	public void render(BlockEntity var1, double var2, double var4, double var6, float var8) {
+	public void render(TileEntity var1, double var2, double var4, double var6, float var8) {
 		this.render((AC_TileEntityEffect)var1, var2, var4, var6, var8);
 	}
 }

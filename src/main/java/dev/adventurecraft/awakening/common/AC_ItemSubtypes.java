@@ -1,20 +1,20 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.block.Block;
-import net.minecraft.item.BlockItem;
+import net.minecraft.world.item.TileItem;
+import net.minecraft.world.level.tile.Tile;
 
-public class AC_ItemSubtypes extends BlockItem {
+public class AC_ItemSubtypes extends TileItem {
 	public AC_ItemSubtypes(int var1) {
 		super(var1);
-		this.setDurability(0);
-		this.setHasSubItems(true);
+		this.setMaxDamage(0);
+		this.setStackedByData(true);
 	}
 
-	public int getTexturePosition(int var1) {
-		return Block.BY_ID[this.id].getTextureForSide(0, var1);
+	public int getIcon(int var1) {
+		return Tile.tiles[this.id].getTexture(0, var1);
 	}
 
-	public int getMetaData(int var1) {
+	public int getLevelDataForAuxValue(int var1) {
 		return var1;
 	}
 }

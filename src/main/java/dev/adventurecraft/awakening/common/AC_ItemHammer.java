@@ -1,11 +1,11 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.tile.Tile;
 
 public class AC_ItemHammer extends Item {
 
@@ -14,14 +14,14 @@ public class AC_ItemHammer extends Item {
     }
 
     @Override
-    public boolean useOnBlock(ItemStack item, PlayerEntity player, World world, int bX, int bY, int bZ, int side) {
+    public boolean useOn(ItemInstance item, Player player, Level world, int bX, int bY, int bZ, int side) {
         if (!AC_ItemCursor.bothSet) {
             return false;
         }
 
-        int id = world.getBlockId(bX, bY, bZ);
-        int meta = world.getBlockMeta(bX, bY, bZ);
-        Minecraft.instance.overlay.addChatMessage(String.format("Swapping Area With BlockID %d", id));
+        int id = world.getTile(bX, bY, bZ);
+        int meta = world.getData(bX, bY, bZ);
+        Minecraft.instance.gui.addMessage(String.format("Swapping Area With BlockID %d", id));
         int minX = Math.min(AC_ItemCursor.oneX, AC_ItemCursor.twoX);
         int maxX = Math.max(AC_ItemCursor.oneX, AC_ItemCursor.twoX);
         int minY = Math.min(AC_ItemCursor.oneY, AC_ItemCursor.twoY);
@@ -32,7 +32,7 @@ public class AC_ItemHammer extends Item {
         for (int x = minX; x <= maxX; ++x) {
             for (int y = minY; y <= maxY; ++y) {
                 for (int z = minZ; z <= maxZ; ++z) {
-                    world.placeBlockWithMetaData(x, y, z, id, meta);
+                    world.setTileAndData(x, y, z, id, meta);
                 }
             }
         }
@@ -40,17 +40,17 @@ public class AC_ItemHammer extends Item {
     }
 
     @Override
-    public float getStrengthOnBlock(ItemStack item, Block block) {
+    public float getDestroySpeed(ItemInstance item, Tile block) {
         return 32.0F;
     }
 
     @Override
-    public boolean isEffectiveOn(Block block) {
+    public boolean canDestroySpecial(Tile block) {
         return true;
     }
 
     @Override
-    public boolean shouldSpinWhenRendering() {
+    public boolean isMirroredArt() {
         return true;
     }
 }

@@ -1,12 +1,12 @@
 package dev.adventurecraft.awakening.common;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 public class AC_ItemNudge extends Item implements AC_ILeftClickItem {
 
@@ -15,13 +15,13 @@ public class AC_ItemNudge extends Item implements AC_ILeftClickItem {
     }
 
     @Override
-    public ItemStack use(ItemStack stack, World world, PlayerEntity player) {
+    public ItemInstance use(ItemInstance stack, Level world, Player player) {
         if (!AC_ItemCursor.bothSet) {
             return stack;
         }
 
-        LivingEntity viewEntity = Minecraft.instance.viewEntity;
-        Vec3d viewRot = viewEntity.getRotation();
+        LivingEntity viewEntity = Minecraft.instance.cameraEntity;
+        Vec3 viewRot = viewEntity.getLookAngle();
         int width = AC_ItemCursor.maxX - AC_ItemCursor.minX + 1;
         int height = AC_ItemCursor.maxY - AC_ItemCursor.minY + 1;
         int depth = AC_ItemCursor.maxZ - AC_ItemCursor.minZ + 1;
@@ -31,12 +31,12 @@ public class AC_ItemNudge extends Item implements AC_ILeftClickItem {
         for (int x = 0; x < width; ++x) {
             for (int y = 0; y < height; ++y) {
                 for (int z = 0; z < depth; ++z) {
-                    int id = world.getBlockId(x + AC_ItemCursor.minX, y + AC_ItemCursor.minY, z + AC_ItemCursor.minZ);
-                    int meta = world.getBlockMeta(x + AC_ItemCursor.minX, y + AC_ItemCursor.minY, z + AC_ItemCursor.minZ);
+                    int id = world.getTile(x + AC_ItemCursor.minX, y + AC_ItemCursor.minY, z + AC_ItemCursor.minZ);
+                    int meta = world.getData(x + AC_ItemCursor.minX, y + AC_ItemCursor.minY, z + AC_ItemCursor.minZ);
                     int i = depth * (height * x + y) + z;
                     blockArray[i] = id;
                     metaArray[i] = meta;
-                    world.setBlockInChunk(x + AC_ItemCursor.minX, y + AC_ItemCursor.minY, z + AC_ItemCursor.minZ, 0);
+                    world.setTileNoUpdate(x + AC_ItemCursor.minX, y + AC_ItemCursor.minY, z + AC_ItemCursor.minZ, 0);
                 }
             }
         }
@@ -95,7 +95,7 @@ public class AC_ItemNudge extends Item implements AC_ILeftClickItem {
                     int i = depth * (height * x + y) + z;
                     int id = blockArray[i];
                     int meta = metaArray[i];
-                    world.setBlockWithMetadata(cX + x, cY + y, cZ + z, id, meta);
+                    world.setTileAndDataNoUpdate(cX + x, cY + y, cZ + z, id, meta);
                 }
             }
         }
@@ -106,7 +106,7 @@ public class AC_ItemNudge extends Item implements AC_ILeftClickItem {
                     int i = depth * (height * x + y) + z;
                     int id = blockArray[i];
                     int meta = metaArray[i];
-                    world.setBlockWithMetadata(cX + x, cY + y, cZ + z, id, meta);
+                    world.setTileAndDataNoUpdate(cX + x, cY + y, cZ + z, id, meta);
                 }
             }
         }
@@ -115,7 +115,7 @@ public class AC_ItemNudge extends Item implements AC_ILeftClickItem {
             for (int y = 0; y < height; ++y) {
                 for (int z = 0; z < depth; ++z) {
                     int id = blockArray[depth * (height * x + y) + z];
-                    world.notifyOfNeighborChange(cX + x, cY + y, cZ + z, id);
+                    world.tileUpdated(cX + x, cY + y, cZ + z, id);
                 }
             }
         }
@@ -124,13 +124,13 @@ public class AC_ItemNudge extends Item implements AC_ILeftClickItem {
     }
 
     @Override
-    public void onItemLeftClick(ItemStack stack, World world, PlayerEntity player) {
+    public void onItemLeftClick(ItemInstance stack, Level world, Player player) {
         if (!AC_ItemCursor.bothSet) {
             return;
         }
 
-        LivingEntity viewEntity = Minecraft.instance.viewEntity;
-        Vec3d viewRot = viewEntity.getRotation();
+        LivingEntity viewEntity = Minecraft.instance.cameraEntity;
+        Vec3 viewRot = viewEntity.getLookAngle();
         int width = AC_ItemCursor.maxX - AC_ItemCursor.minX + 1;
         int height = AC_ItemCursor.maxY - AC_ItemCursor.minY + 1;
         int depth = AC_ItemCursor.maxZ - AC_ItemCursor.minZ + 1;
@@ -140,12 +140,12 @@ public class AC_ItemNudge extends Item implements AC_ILeftClickItem {
         for (int x = 0; x < width; ++x) {
             for (int y = 0; y < height; ++y) {
                 for (int z = 0; z < depth; ++z) {
-                    int id = world.getBlockId(x + AC_ItemCursor.minX, y + AC_ItemCursor.minY, z + AC_ItemCursor.minZ);
-                    int meta = world.getBlockMeta(x + AC_ItemCursor.minX, y + AC_ItemCursor.minY, z + AC_ItemCursor.minZ);
+                    int id = world.getTile(x + AC_ItemCursor.minX, y + AC_ItemCursor.minY, z + AC_ItemCursor.minZ);
+                    int meta = world.getData(x + AC_ItemCursor.minX, y + AC_ItemCursor.minY, z + AC_ItemCursor.minZ);
                     int i = depth * (height * x + y) + z;
                     blockArray[i] = id;
                     metaArray[i] = meta;
-                    world.setBlockInChunk(x + AC_ItemCursor.minX, y + AC_ItemCursor.minY, z + AC_ItemCursor.minZ, 0);
+                    world.setTileNoUpdate(x + AC_ItemCursor.minX, y + AC_ItemCursor.minY, z + AC_ItemCursor.minZ, 0);
                 }
             }
         }
@@ -204,7 +204,7 @@ public class AC_ItemNudge extends Item implements AC_ILeftClickItem {
                     int i = depth * (height * x + y) + z;
                     int id = blockArray[i];
                     int meta = metaArray[i];
-                    world.setBlockWithMetadata(minX + x, minY + y, minZ + z, id, meta);
+                    world.setTileAndDataNoUpdate(minX + x, minY + y, minZ + z, id, meta);
                 }
             }
         }
@@ -213,7 +213,7 @@ public class AC_ItemNudge extends Item implements AC_ILeftClickItem {
             for (int y = 0; y < height; ++y) {
                 for (int z = 0; z < depth; ++z) {
                     int id = blockArray[depth * (height * x + y) + z];
-                    world.notifyOfNeighborChange(minX + x, minY + y, minZ + z, id);
+                    world.tileUpdated(minX + x, minY + y, minZ + z, id);
                 }
             }
         }

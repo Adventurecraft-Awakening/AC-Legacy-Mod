@@ -2,21 +2,21 @@ package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
-import net.minecraft.util.io.AbstractTag;
-import net.minecraft.util.io.CompoundTag;
-import net.minecraft.world.World;
-
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.tile.Tile;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map.Entry;
 
 public class AC_TriggerManager {
 
-    public World world;
+    public Level world;
     public HashMap<AC_CoordBlock, Int2ObjectOpenHashMap<AC_TriggerArea>> triggerAreas;
 
-    public AC_TriggerManager(World world) {
+    public AC_TriggerManager(Level world) {
         this.world = world;
         this.triggerAreas = new HashMap<>();
     }
@@ -98,13 +98,13 @@ public class AC_TriggerManager {
     }
 
     public void outputTriggerSources(int x, int y, int z) {
-        Minecraft.instance.overlay.addChatMessage(String.format("Outputting active triggerings for (%d, %d, %d)", x, y, z));
+        Minecraft.instance.gui.addMessage(String.format("Outputting active triggerings for (%d, %d, %d)", x, y, z));
 
         for (var entry : this.triggerAreas.entrySet()) {
             for (AC_TriggerArea area : entry.getValue().values()) {
                 if (area.isPointInside(x, y, z)) {
                     AC_CoordBlock coord = entry.getKey();
-                    Minecraft.instance.overlay.addChatMessage(String.format("Triggered by (%d, %d, %d)", coord.x, coord.y, coord.z));
+                    Minecraft.instance.gui.addMessage(String.format("Triggered by (%d, %d, %d)", coord.x, coord.y, coord.z));
                 }
             }
         }
@@ -128,8 +128,8 @@ public class AC_TriggerManager {
 
     private void activateBlocks(ArrayList<AC_CoordBlock> coords) {
         for (AC_CoordBlock coord : coords) {
-            int id = this.world.getBlockId(coord.x, coord.y, coord.z);
-            var block = (ExBlock) Block.BY_ID[id];
+            int id = this.world.getTile(coord.x, coord.y, coord.z);
+            var block = (ExBlock) Tile.tiles[id];
             if (id != 0 && block.canBeTriggered()) {
                 block.onTriggerActivated(this.world, coord.x, coord.y, coord.z);
             }
@@ -141,8 +141,8 @@ public class AC_TriggerManager {
             for (int y = area.minY; y <= area.maxY; ++y) {
                 for (int z = area.minZ; z <= area.maxZ; ++z) {
                     if (this.getTriggerAmount(x, y, z) == 0) {
-                        int id = this.world.getBlockId(x, y, z);
-                        var block = (ExBlock)Block.BY_ID[id];
+                        int id = this.world.getTile(x, y, z);
+                        var block = (ExBlock)Tile.tiles[id];
                         if (id != 0 && block.canBeTriggered()) {
                             block.onTriggerDeactivated(this.world, x, y, z);
                         }
@@ -159,22 +159,22 @@ public class AC_TriggerManager {
         for (var entry : this.triggerAreas.entrySet()) {
             var coordTag = new CompoundTag();
             AC_CoordBlock coord = entry.getKey();
-            coordTag.put("x", coord.x);
-            coordTag.put("y", coord.y);
-            coordTag.put("z", coord.z);
+            coordTag.putInt("x", coord.x);
+            coordTag.putInt("y", coord.y);
+            coordTag.putInt("z", coord.z);
             int areaCount = 0;
 
             for (var areaEntry : entry.getValue().int2ObjectEntrySet()) {
                 CompoundTag areaTag = areaEntry.getValue().getTagCompound();
-                areaTag.put("areaID", areaEntry.getIntKey());
-                coordTag.put(String.format("area%d", areaCount++), (AbstractTag) areaTag);
+                areaTag.putInt("areaID", areaEntry.getIntKey());
+                coordTag.putTag(String.format("area%d", areaCount++), (Tag) areaTag);
             }
 
-            coordTag.put("numAreas", areaCount);
-            managerTag.put(String.format("coord%d", coordCount++), (AbstractTag) coordTag);
+            coordTag.putInt("numAreas", areaCount);
+            managerTag.putTag(String.format("coord%d", coordCount++), (Tag) coordTag);
         }
 
-        managerTag.put("numCoords", coordCount);
+        managerTag.putInt("numCoords", coordCount);
         return managerTag;
     }
 

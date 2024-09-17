@@ -1,9 +1,9 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.entity.BlockEntity;
-import net.minecraft.util.io.CompoundTag;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.tile.entity.TileEntity;
 
-public class AC_TileEntityWeather extends BlockEntity {
+public class AC_TileEntityWeather extends TileEntity {
 	public boolean changePrecipitate;
 	public boolean precipitate;
 	public boolean changeTempOffset;
@@ -15,8 +15,8 @@ public class AC_TileEntityWeather extends BlockEntity {
 	public boolean thundering;
 	public boolean changeThundering;
 
-	public void readNBT(CompoundTag var1) {
-		super.readNBT(var1);
+	public void load(CompoundTag var1) {
+		super.load(var1);
 		this.changePrecipitate = var1.getBoolean("changePrecipitate");
 		this.precipitate = var1.getBoolean("precipitate");
 		this.changeTempOffset = var1.getBoolean("changeTempOffset");
@@ -29,17 +29,17 @@ public class AC_TileEntityWeather extends BlockEntity {
 		this.thundering = var1.getBoolean("thundering");
 	}
 
-	public void writeNBT(CompoundTag var1) {
-		super.writeNBT(var1);
-		var1.put("changePrecipitate", this.changePrecipitate);
-		var1.put("precipitate", this.precipitate);
-		var1.put("changeTempOffset", this.changeTempOffset);
-		var1.put("tempOffset", this.tempOffset);
-		var1.put("changeTimeOfDay", this.changeTimeOfDay);
-		var1.put("timeOfDay", this.timeOfDay);
-		var1.put("changeTimeRate", this.changeTimeRate);
-		var1.put("timeRate", this.timeRate);
-		var1.put("changeThundering", this.changeThundering);
-		var1.put("thundering", this.thundering);
+	public void save(CompoundTag var1) {
+		super.save(var1);
+		var1.putBoolean("changePrecipitate", this.changePrecipitate);
+		var1.putBoolean("precipitate", this.precipitate);
+		var1.putBoolean("changeTempOffset", this.changeTempOffset);
+		var1.putDouble("tempOffset", this.tempOffset);
+		var1.putBoolean("changeTimeOfDay", this.changeTimeOfDay);
+		var1.putInt("timeOfDay", this.timeOfDay);
+		var1.putBoolean("changeTimeRate", this.changeTimeRate);
+		var1.putFloat("timeRate", this.timeRate);
+		var1.putBoolean("changeThundering", this.changeThundering);
+		var1.putBoolean("thundering", this.thundering);
 	}
 }
