@@ -17,34 +17,20 @@ loom {
 }
 
 babric {
-    disableM1Fixes.set(true) // Disable gambac (M1 colours fix.)
+    disableM1Fixes.set(true) // Disable gambac library (M1 colours fix.)
 }
 
 repositories {
-    // Used for the fabric toolchain in this project.
-    maven {
-        name = 'Babric'
-        url = 'https://maven.glass-launcher.net/babric'
-    }
     // Used for mappings.
     maven {
         name = 'Nostalgia'
         url = 'https://maven.wispforest.io'
     }
-    // Used for projects that do not have a maven repository, but do have a GitHub repository with working build scripts.
+    // Used for projects without a maven, but on GitHub repos with working build scripts.
     maven {
         name = 'Jitpack'
         url = 'https://jitpack.io/'
     }
-    maven {
-        name = 'HalfOf2'
-        url = 'https://storage.googleapis.com/devan-maven/'
-    }
-    maven {
-        name = 'LWJGL3'
-        url = 'https://oss.sonatype.org/content/repositories/releases/'
-    }
-    mavenLocal()
 }
 
 import org.gradle.internal.os.OperatingSystem
