@@ -1,14 +1,16 @@
 pluginManagement {
     repositories {
-        maven {
-            name = 'Fabric'
-            url = 'https://maven.fabricmc.net/'
-        }
-        // Used for Babric Loom Gradle Plugin
-        maven {
-            name = 'Babric'
-            url = 'https://maven.glass-launcher.net/babric'
-        }
         gradlePluginPortal()
+
+        maven {
+            name = "Fabric"
+            url = "https://maven.fabricmc.net/"
+        }
+
+        // Used for Babric Loom Plugin.
+        maven {
+            name = "Babric"
+            url = "https://maven.glass-launcher.net/babric"
+        }
     }
 }
