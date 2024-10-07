@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.mixin.client;
 
-import com.llamalad7.mixinextras.injector.WrapWithCondition;
+import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.ACMainThread;
 import dev.adventurecraft.awakening.ACMod;
@@ -480,7 +480,6 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
     @WrapWithCondition(
         method = "run",
-        remap = false,
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/Minecraft;renderFpsMeter(J)V"))
@@ -490,7 +489,6 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
     @Inject(
         method = "run",
-        remap = false,
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/Minecraft;emergencySave()V",
