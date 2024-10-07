@@ -47,27 +47,26 @@ dependencies {
     mappings "me.alphamode:nostalgia:${project.nostalgia_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
+    // Override ASM to support Java 23
+    implementation "org.ow2.asm:asm:${project.asm_version}"
+    implementation "org.ow2.asm:asm-analysis:${project.asm_version}"
+    implementation "org.ow2.asm:asm-commons:${project.asm_version}"
+    implementation "org.ow2.asm:asm-tree:${project.asm_version}"
+    implementation "org.ow2.asm:asm-util:${project.asm_version}"
+
     // Fabric-ASM allows us to extend enums.
-    implementation "com.github.Chocohead:Fabric-ASM:v2.3"
+    modImplementation "com.github.Chocohead:Fabric-ASM:v2.3"
 
     // FastUtil provides specialized collection types.
     implementation "it.unimi.dsi:fastutil-core:8.5.12"
 
     // Brigadier provides modern command parsing.
-    implementation "com.mojang:brigadier:1.2.9"
-
-    implementation "org.slf4j:slf4j-api:1.8.0-beta4"
-    implementation "org.apache.logging.log4j:log4j-slf4j18-impl:2.16.0"
-
-    implementation "com.google.guava:guava:31.1-jre"
-    implementation "org.apache.commons:commons-lang3:3.12.0"
+    modImplementation "com.mojang:brigadier:1.2.9"
 }
 
 processResources {
-    inputs.property "version", project.version
-
     filesMatching("fabric.mod.json") {
-        expand "version": project.version
+        expand project.properties
     }
 }
 
