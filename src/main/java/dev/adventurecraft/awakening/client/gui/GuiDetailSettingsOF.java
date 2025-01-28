@@ -19,6 +19,7 @@ public class GuiDetailSettingsOF extends GuiBaseSettingsOF {
             OptionOF.FOG_FANCY, OptionOF.FOG_START,
             OptionOF.WATER, OptionOF.RAIN,
             OptionOF.CLEAR_WATER, OptionOF.GRASS_3D,
-            OptionOF.GRASS, OptionOF.CONNECTED_GRASS};
+            OptionOF.GRASS, OptionOF.CONNECTED_GRASS,
+            OptionOF.PARTICLE_LIMIT};
     }
 }

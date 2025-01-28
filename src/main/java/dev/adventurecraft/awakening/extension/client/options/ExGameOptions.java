@@ -113,4 +113,6 @@ public interface ExGameOptions {
     boolean isAutoFarClip();
 
     int getChatMessageBufferLimit();
+
+    int getParticleLimit();
 }

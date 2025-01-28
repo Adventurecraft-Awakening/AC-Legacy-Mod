@@ -9,6 +9,10 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 
 public class AC_GuiEffect extends Screen {
+
+    private static final float MAX_PARTICLES_PER_SPAWN = 1000;
+    private static final float MAX_TICKS_BETWEEN_SPAWNS = 100;
+
     private AC_TileEntityEffect effect;
     private GuiSlider2 ticksBetweenParticles;
     private GuiSlider2 particlesPerSpawn;
@@ -44,10 +48,11 @@ public class AC_GuiEffect extends Screen {
         this.buttons.add(new Button(-4, 4 + (4 + var1) * 3, 0, var1, 18, "Replacements"));
         var1 = (this.width - 16) / 3;
         if (this.page == 0) {
-            this.particlesPerSpawn = new GuiSlider2(200, 4, 20, 10, String.format("Particles Per Spawn: %d", this.effect.particlesPerSpawn), (float) (this.effect.particlesPerSpawn - 1) / 49.0F);
+            this.particlesPerSpawn = new GuiSlider2(
+                200, 4, 20, 10, String.format("Particles Per Spawn: %d", this.effect.particlesPerSpawn), this.effect.particlesPerSpawn / MAX_PARTICLES_PER_SPAWN);
             this.particlesPerSpawn.width = var1;
             this.buttons.add(this.particlesPerSpawn);
-            this.ticksBetweenParticles = new GuiSlider2(200, 4 + 4 + var1, 20, 10, String.format("Ticks Between: %d", this.effect.ticksBetweenParticles), (float) this.effect.ticksBetweenParticles / 100.0F);
+            this.ticksBetweenParticles = new GuiSlider2(200, 4 + 4 + var1, 20, 10, String.format("Ticks Between: %d", this.effect.ticksBetweenParticles), (float) this.effect.ticksBetweenParticles / MAX_TICKS_BETWEEN_SPAWNS);
             this.ticksBetweenParticles.width = var1;
             this.buttons.add(this.ticksBetweenParticles);
             this.offsetX = new GuiSlider2(201, 4, 40, 10, String.format("offset X: %.2f", this.effect.offsetX), this.effect.offsetX / 8.0F);
@@ -143,7 +148,7 @@ public class AC_GuiEffect extends Screen {
                     this.buttons.add(var9);
                     this.buttons.add(new Button(1, 4, 40, var1, 18, "Remove Overlay"));
                     var10 = 1;
-                    var11 = new File(((ExWorld)this.effect.level).getLevelDir(), "overlays");
+                    var11 = new File(((ExWorld) this.effect.level).getLevelDir(), "overlays");
                     if (var11.exists() && var11.isDirectory()) {
                         var5 = var11.listFiles();
                         var6 = var5.length;
@@ -164,7 +169,7 @@ public class AC_GuiEffect extends Screen {
 
                     this.buttons.add(var9);
                     var10 = 0;
-                    var11 = new File(((ExWorld)this.effect.level).getLevelDir(), "textureReplacement");
+                    var11 = new File(((ExWorld) this.effect.level).getLevelDir(), "textureReplacement");
                     if (var11.exists() && var11.isDirectory()) {
                         var5 = var11.listFiles();
                         var6 = var5.length;
@@ -276,9 +281,9 @@ public class AC_GuiEffect extends Screen {
             this.floatRand2.message = String.format("Rand 2: %.2f", this.effect.floatRand2);
             this.effect.floatRand3 = this.floatRand3.sliderValue;
             this.floatRand3.message = String.format("Rand 3: %.2f", this.effect.floatRand3);
-            this.effect.ticksBetweenParticles = (int) (this.ticksBetweenParticles.sliderValue * 100.0F + 0.5F);
+            this.effect.ticksBetweenParticles = Math.round(this.ticksBetweenParticles.sliderValue * MAX_TICKS_BETWEEN_SPAWNS);
             this.ticksBetweenParticles.message = String.format("Ticks Between: %d", this.effect.ticksBetweenParticles);
-            this.effect.particlesPerSpawn = (int) (this.particlesPerSpawn.sliderValue * 49.0F + 1.5F);
+            this.effect.particlesPerSpawn = Math.round(this.particlesPerSpawn.sliderValue * MAX_PARTICLES_PER_SPAWN);
             this.particlesPerSpawn.message = String.format("Particles Per Spawn: %d", this.effect.particlesPerSpawn);
             this.font.drawShadow("Particle Type: " + this.effect.particleType, 2 * this.width / 3, 25, -1);
         } else if (this.page == 1) {

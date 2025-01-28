@@ -45,5 +45,6 @@ public final class OptionOF {
 
     public static final Option AUTO_FAR_CLIP = ClassTinkerers.getEnum(Option.class, "AUTO_FAR_CLIP");
     public static final Option GRASS_3D = ClassTinkerers.getEnum(Option.class, "GRASS_3D");
+    public static final Option PARTICLE_LIMIT = ClassTinkerers.getEnum(Option.class, "PARTICLE_LIMIT");
     public static final Option CHAT_MESSAGE_BUFFER_LIMIT = ClassTinkerers.getEnum(Option.class, "CHAT_MESSAGE_BUFFER_LIMIT");
 }

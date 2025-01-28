@@ -124,6 +124,7 @@
     "item.MixinItemStack",
     "item.MixinRedstoneItem",
     "item.MixinSwordItem",
+    "util.MixinMth",
     "util.io.MixinCompoundTag",
     "world.MixinWorld",
     "world.MixinWorldManager",

@@ -41,6 +41,7 @@ import java.util.List;
 public abstract class MixinGameOptions implements ExGameOptions {
 
     private static final int MAX_CHAT_BUFFER_LIMIT = 10000;
+    private static final int MAX_PARTICLE_LIMIT = 1024 * 32;
 
     @Final
     @Shadow
@@ -135,6 +136,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
     public boolean autoFarClip = false;
     public boolean grass3d = true;
     public int chatMessageBufferLimit = 100;
+    public int particleLimit = 1024 * 4;
 
     @Shadow
     public abstract float getProgressValue(Option option);
@@ -182,6 +184,8 @@ public abstract class MixinGameOptions implements ExGameOptions {
             this.minecraft.levelRenderer.allChanged();
         } else if (option == OptionOF.CHAT_MESSAGE_BUFFER_LIMIT) {
             this.chatMessageBufferLimit = (int) (value * (MAX_CHAT_BUFFER_LIMIT - 1)) + 1;
+        } else if (option == OptionOF.PARTICLE_LIMIT) {
+            this.particleLimit = (int) (value * MAX_PARTICLE_LIMIT);
         }
     }
 
@@ -511,6 +515,8 @@ public abstract class MixinGameOptions implements ExGameOptions {
             cir.setReturnValue(this.ofAoLevel);
         } else if (option == OptionOF.CHAT_MESSAGE_BUFFER_LIMIT) {
             cir.setReturnValue((float) ((double) this.chatMessageBufferLimit / (MAX_CHAT_BUFFER_LIMIT - 1)));
+        } else if (option == OptionOF.PARTICLE_LIMIT) {
+            cir.setReturnValue((float) ((double) this.particleLimit / MAX_PARTICLE_LIMIT));
         }
     }
 
@@ -872,6 +878,10 @@ public abstract class MixinGameOptions implements ExGameOptions {
                 this.chatMessageBufferLimit = Integer.parseInt(value);
                 this.chatMessageBufferLimit = Config.limit(this.chatMessageBufferLimit, 1, MAX_CHAT_BUFFER_LIMIT);
             }
+            case "particleLimit" -> {
+                this.particleLimit = Integer.parseInt(value);
+                this.particleLimit = Config.limit(this.particleLimit, 0, MAX_PARTICLE_LIMIT);
+            }
         }
     }
 
@@ -921,6 +931,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
         writer.println("autoFarClip:" + this.autoFarClip);
         writer.println("grass3d:" + this.grass3d);
         writer.println("chatMessageBufferLimit:" + this.chatMessageBufferLimit);
+        writer.println("particleLimit:" + this.particleLimit);
     }
 
     @Override
@@ -1212,5 +1223,10 @@ public abstract class MixinGameOptions implements ExGameOptions {
     @Override
     public int getChatMessageBufferLimit() {
         return this.chatMessageBufferLimit;
+    }
+
+    @Override
+    public int getParticleLimit() {
+        return this.particleLimit;
     }
 }

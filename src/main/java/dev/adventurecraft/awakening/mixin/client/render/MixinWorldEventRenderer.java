@@ -14,7 +14,6 @@ import dev.adventurecraft.awakening.extension.world.chunk.ExChunkCache;
 import dev.adventurecraft.awakening.script.ScriptModelBase;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
-//import net.minecraft.client.entity.particle.*;
 import net.minecraft.client.particle.BreakingItemParticle;
 import net.minecraft.client.particle.BubbleParticle;
 import net.minecraft.client.particle.ExplosionParticle;

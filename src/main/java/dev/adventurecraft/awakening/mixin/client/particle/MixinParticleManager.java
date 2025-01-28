@@ -1,15 +1,19 @@
 package dev.adventurecraft.awakening.mixin.client.particle;
 
 import com.llamalad7.mixinextras.sugar.Local;
+import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.particle.ExParticleManager;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.minecraft.client.Minecraft;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
+
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.client.renderer.Textures;
@@ -19,6 +23,9 @@ import net.minecraft.world.phys.AABB;
 
 @Mixin(ParticleEngine.class)
 public abstract class MixinParticleManager implements ExParticleManager {
+
+    @Shadow
+    protected Level level;
 
     @Shadow
     private List<Particle>[] particles;
@@ -51,12 +58,15 @@ public abstract class MixinParticleManager implements ExParticleManager {
         this.flushParticleBuffers();
     }
 
+    @Unique
     private void flushParticleBuffers() {
+        int particleLimit = ((ExGameOptions) Minecraft.instance.options).getParticleLimit();
+
         for (int i = 0; i < this.particles.length; ++i) {
             var dst = (ObjectArrayList<Particle>) this.particles[i];
             var src = this.bufferLists[i];
 
-            int toRemove = (dst.size() + src.size()) - 4000;
+            int toRemove = (dst.size() + src.size()) - particleLimit;
             if (toRemove > 0) {
                 int removeFromDst = Math.min(dst.size(), toRemove);
                 dst.removeElements(0, removeFromDst);
