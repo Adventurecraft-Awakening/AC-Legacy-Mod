@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.mixin.entity;
 
 import com.llamalad7.mixinextras.sugar.Local;
+import dev.adventurecraft.awakening.HashCode;
 import dev.adventurecraft.awakening.common.AC_Blocks;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import org.objectweb.asm.Opcodes;
@@ -13,6 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.Level;
@@ -98,7 +100,10 @@ public abstract class MixinEntity implements ExEntity {
     public int collisionZ;
     public float moveYawOffset = 0.0F;
 
-    protected Map<String,String> customData = new HashMap<>();
+    private int cachedBrightnessKey = -1;
+    private float cachedBrightness;
+
+    protected Map<String, String> customData = new HashMap<>();
 
     @Shadow
     protected abstract void causeFallDamage(float f);
@@ -243,6 +248,33 @@ public abstract class MixinEntity implements ExEntity {
         }
     }
 
+    // Level.getBrightness returns the default value of an empty chunk for missing chunks.
+    // The hasChunksAt check almost always returns true anyway.
+    @Redirect(
+        method = "getBrightness",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/level/Level;hasChunksAt(IIIIII)Z"))
+    private boolean alwaysGetBrightness(Level instance, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+        return true;
+    }
+
+    @Redirect(
+        method = "getBrightness",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/level/Level;getBrightness(III)F"))
+    private float cacheGetBrightness(Level instance, int x, int y, int z) {
+        int key = HashCode.combine(x, y, z);
+        if (this.cachedBrightnessKey != key) {
+            this.cachedBrightnessKey = key;
+            // Simple hashcode saves a lot of time for entities that move slowly,
+            // especially relevant for particles.
+            this.cachedBrightness = instance.getBrightness(x, y, z);
+        }
+        return this.cachedBrightness;
+    }
+
     @Redirect(
         method = "push(Lnet/minecraft/world/entity/Entity;)V",
         at = @At(
@@ -347,23 +379,26 @@ public abstract class MixinEntity implements ExEntity {
     }
 
     @Override
-    public void setCustomTagString(String key,String value){
-        this.customData.put(key,value);
+    public void setCustomTagString(String key, String value) {
+        this.customData.put(key, value);
     }
+
     @Override
-    public boolean hasCustomTagString(String key){
+    public boolean hasCustomTagString(String key) {
         return this.customData.containsKey(key);
     }
+
     @Override
-    public String getOrCreateCustomTagString(String key,String defaultValue){
-        if(this.customData.containsKey(key)){
+    public String getOrCreateCustomTagString(String key, String defaultValue) {
+        if (this.customData.containsKey(key)) {
             return this.customData.get(key);
         }
-        this.customData.put(key,defaultValue);
+        this.customData.put(key, defaultValue);
         return defaultValue;
     }
+
     @Override
-    public String getCustomTagString(String key){
+    public String getCustomTagString(String key) {
         return customData.get(key);
     }
 }
