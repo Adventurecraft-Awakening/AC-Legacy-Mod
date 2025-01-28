@@ -136,6 +136,7 @@
     "world.MixinWorldProperties",
     "world.chunk.MixinChunk",
     "world.chunk.MixinServerChunkCache",
+    "world.entity.MixinSynchedEntityData",
     "world.gen.MixinBiomeSource",
     "world.source.MixinOverworldWorldSource",
     "world.world.biome.MixinBiome",
