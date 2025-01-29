@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.mixin.client.render;
 
 import dev.adventurecraft.awakening.common.Vec2;
+import dev.adventurecraft.awakening.image.Rgba;
 import net.minecraft.client.renderer.ptexture.LavaSideTexture;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
@@ -41,62 +42,7 @@ public class MixinFlowingLavaTextureBinder2 extends MixinTextureBinder {
         int var15;
         int var16;
         if (hasImages) {
-            this.imageData.clear();
-
-            var4 = var2 / width;
-            var5 = curFrame * width * width;
-            var6 = 0;
-            boolean var19 = false;
-            if (var4 == 0) {
-                var19 = true;
-                var4 = width / var2;
-            }
-
-            int var21;
-            if (!var19) {
-                for (var8 = 0; var8 < width; ++var8) {
-                    for (var9 = 0; var9 < width; ++var9) {
-                        var10 = this.imageData.get(var9 + var8 * width + var5);
-
-                        for (var21 = 0; var21 < var4; ++var21) {
-                            for (var12 = 0; var12 < var4; ++var12) {
-                                var6 = var9 * var4 + var21 + (var8 * var4 + var12) * var2;
-                                this.pixels[var6 * 4 + 0] = (byte) (var10 >> 16 & 255);
-                                this.pixels[var6 * 4 + 1] = (byte) (var10 >> 8 & 255);
-                                this.pixels[var6 * 4 + 2] = (byte) (var10 & 255);
-                                this.pixels[var6 * 4 + 3] = (byte) (var10 >> 24 & 255);
-                            }
-                        }
-                    }
-                }
-            } else {
-                for (var8 = 0; var8 < var2; ++var8) {
-                    for (var9 = 0; var9 < var2; ++var9) {
-                        var10 = 0;
-                        var21 = 0;
-                        var12 = 0;
-                        var13 = 0;
-
-                        for (var14 = 0; var14 < var4; ++var14) {
-                            for (var15 = 0; var15 < var4; ++var15) {
-                                var16 = this.imageData.get(var9 * var4 + var14 + (var8 * var4 + var15) * width + var5);
-                                var10 += var16 >> 16 & 255;
-                                var21 += var16 >> 8 & 255;
-                                var12 += var16 & 255;
-                                var13 += var16 >> 24 & 255;
-                            }
-                        }
-
-                        this.pixels[var6 * 4 + 0] = (byte) (var10 / var4 / var4);
-                        this.pixels[var6 * 4 + 1] = (byte) (var21 / var4 / var4);
-                        this.pixels[var6 * 4 + 2] = (byte) (var12 / var4 / var4);
-                        this.pixels[var6 * 4 + 3] = (byte) (var13 / var4 / var4);
-                        ++var6;
-                    }
-                }
-            }
-
-            curFrame = (curFrame + 1) % numFrames;
+            this.animate();
         } else {
             var4 = var2 * var3;
             if (this.current.length != var4) {
@@ -104,6 +50,7 @@ public class MixinFlowingLavaTextureBinder2 extends MixinTextureBinder {
                 this.next = new float[var4];
                 this.heat = new float[var4];
                 this.heata = new float[var4];
+                this.imageData = this.allocImageData(var2, var3);
             }
 
             var5 = (int) Math.sqrt((double) (var2 / 16));
@@ -115,10 +62,11 @@ public class MixinFlowingLavaTextureBinder2 extends MixinTextureBinder {
             float var11;
             int var17;
             for (var9 = 0; var9 < var2; ++var9) {
+                var13 = (int) (Mth.sin((float) var9 * 3.141593F * 2.0F / (float) var3) * 1.2F);
+
                 for (var10 = 0; var10 < var3; ++var10) {
                     var11 = 0.0F;
                     var12 = (int) (Mth.sin((float) var10 * 3.141593F * 2.0F / (float) var2) * 1.2F);
-                    var13 = (int) (Mth.sin((float) var9 * 3.141593F * 2.0F / (float) var3) * 1.2F);
 
                     for (var14 = var9 - var5; var14 <= var9 + var5; ++var14) {
                         for (var15 = var10 - var6; var15 <= var10 + var6; ++var15) {
@@ -167,10 +115,8 @@ public class MixinFlowingLavaTextureBinder2 extends MixinTextureBinder {
                     var15 = var18;
                 }
 
-                this.pixels[var10 * 4 + 0] = (byte) var13;
-                this.pixels[var10 * 4 + 1] = (byte) var14;
-                this.pixels[var10 * 4 + 2] = (byte) var15;
-                this.pixels[var10 * 4 + 3] = -1;
+                int color = Rgba.fromRgb8(var13, var14, var15);
+                this.imageData.put(var10, color);
             }
         }
     }

@@ -8,6 +8,7 @@ import dev.adventurecraft.awakening.common.Vec2;
 import dev.adventurecraft.awakening.extension.client.ExTextureManager;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
+import dev.adventurecraft.awakening.image.ResizeUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.MemoryTracker;
 import net.minecraft.client.Minecraft;
@@ -81,7 +82,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
     private BufferedImage missingTex;
 
     private Int2ObjectOpenHashMap<Vec2> textureDimensionsMap = new Int2ObjectOpenHashMap<>();
-    private ByteBuffer[] mipImageDatas;
+    private IntBuffer[] mipImageDatas;
 
     private ArrayList<String> replacedTextures = new ArrayList<>();
     private HashMap<String, AC_TextureAnimated> textureAnimations = new HashMap<>();
@@ -206,7 +207,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
         this.pixels.position(0).limit(dstColors.length);
         GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA, texW, texH, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, this.pixels);
         if (MIPMAP) {
-            this.generateMipMaps(this.pixels, texW, texH);
+            this.generateMipMaps(this.pixels.asIntBuffer(), texW, texH);
         }
     }
 
@@ -331,8 +332,8 @@ public abstract class MixinTextureManager implements ExTextureManager {
         }
     }
 
-    private void generateMipMaps(ByteBuffer image, int width, int height) {
-        ByteBuffer srcImage = image;
+    private void generateMipMaps(IntBuffer image, int width, int height) {
+        IntBuffer srcImage = image;
 
         for (int level = 1; level <= 16; ++level) {
             int prevWidth = width >> (level - 1);
@@ -342,17 +343,17 @@ public abstract class MixinTextureManager implements ExTextureManager {
                 break;
             }
 
-            ByteBuffer dstImage = this.mipImageDatas[level - 1];
+            IntBuffer dstImage = this.mipImageDatas[level - 1];
 
             for (int y = 0; y < levelHeight; ++y) {
                 for (int x = 0; x < levelWidth; ++x) {
-                    int topLeft = srcImage.getInt((x * 2 + 0 + (y * 2 + 0) * prevWidth) * 4);
-                    int topRight = srcImage.getInt((x * 2 + 1 + (y * 2 + 0) * prevWidth) * 4);
-                    int botLeft = srcImage.getInt((x * 2 + 0 + (y * 2 + 1) * prevWidth) * 4);
-                    int botRight = srcImage.getInt((x * 2 + 1 + (y * 2 + 1) * prevWidth) * 4);
+                    int topLeft = srcImage.get((x * 2 + 0 + (y * 2 + 0) * prevWidth));
+                    int topRight = srcImage.get((x * 2 + 1 + (y * 2 + 0) * prevWidth));
+                    int botLeft = srcImage.get((x * 2 + 0 + (y * 2 + 1) * prevWidth));
+                    int botRight = srcImage.get((x * 2 + 1 + (y * 2 + 1) * prevWidth));
 
                     int color = this.weightedAverageColor(topLeft, topRight, botRight, botLeft);
-                    dstImage.putInt((x + y * levelWidth) * 4, color);
+                    dstImage.put((x + y * levelWidth), color);
                 }
             }
 
@@ -380,13 +381,13 @@ public abstract class MixinTextureManager implements ExTextureManager {
         }
 
         this.dynamicTextures.add(binder);
-        this.expandBinderGrid(res, binder);
+        this.checkImageDataSize(res.x, res.y);
         ((AC_TextureBinder) binder).onTick(res);
         ACMod.LOGGER.info("Texture registered: {}, image: {}, index: {}", binder, binder.textureId, binder.tex);
     }
 
-    private void generateMipMapsSub(int subX, int subY, int tileW, int tileH, ByteBuffer image, int texSize, boolean fastColor) {
-        ByteBuffer srcImage = image;
+    private void generateMipMapsSub(int subX, int subY, int tileW, int tileH, IntBuffer image, int texSize, boolean fastColor) {
+        IntBuffer srcImage = image;
 
         for (int level = 1; level <= 16; ++level) {
             int prevWidth = tileW >> level - 1;
@@ -398,14 +399,14 @@ public abstract class MixinTextureManager implements ExTextureManager {
                 break;
             }
 
-            ByteBuffer dstImage = this.mipImageDatas[level - 1];
+            IntBuffer dstImage = this.mipImageDatas[level - 1];
 
             for (int y = 0; y < levelHeight; ++y) {
                 for (int x = 0; x < levelWidth; ++x) {
-                    int topLeft = srcImage.getInt((x * 2 + 0 + (y * 2 + 0) * prevWidth) * 4);
-                    int topRight = srcImage.getInt((x * 2 + 1 + (y * 2 + 0) * prevWidth) * 4);
-                    int botLeft = srcImage.getInt((x * 2 + 0 + (y * 2 + 1) * prevWidth) * 4);
-                    int botRight = srcImage.getInt((x * 2 + 1 + (y * 2 + 1) * prevWidth) * 4);
+                    int topLeft = srcImage.get((x * 2 + 0 + (y * 2 + 0) * prevWidth));
+                    int topRight = srcImage.get((x * 2 + 1 + (y * 2 + 0) * prevWidth));
+                    int botLeft = srcImage.get((x * 2 + 0 + (y * 2 + 1) * prevWidth));
+                    int botRight = srcImage.get((x * 2 + 1 + (y * 2 + 1) * prevWidth));
 
                     int color;
                     if (fastColor) {
@@ -413,7 +414,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
                     } else {
                         color = this.weightedAverageColor(topLeft, topRight, botRight, botLeft);
                     }
-                    dstImage.putInt((x + y * levelWidth) * 4, color);
+                    dstImage.put((x + y * levelWidth), color);
                 }
             }
 
@@ -450,10 +451,16 @@ public abstract class MixinTextureManager implements ExTextureManager {
 
             int tileW = texSize.x / 16;
             int tileH = texSize.y / 16;
-            this.expandBinderGrid(texSize, binder);
+            this.checkImageDataSize(texSize.x, texSize.y);
+            var dstPixels = this.pixels.asIntBuffer();
+
             acBinder.onTick(texSize);
 
-            this.copyScaled(binder.pixels, this.pixels, tileW);
+            var srcPixels = acBinder.getBufferAtCurrentFrame();
+            if (srcPixels.limit() == 0) {
+                continue;
+            }
+            this.copyScaled(srcPixels, dstPixels, tileW);
 
             binder.bind((Textures) (Object) this);
             boolean fastColor = this.scalesWithFastColor(binder);
@@ -462,27 +469,20 @@ public abstract class MixinTextureManager implements ExTextureManager {
                 for (int tileX = 0; tileX < binder.replicate; ++tileX) {
                     int subX = binder.tex % 16 * tileW + tileX * tileW;
                     int subY = binder.tex / 16 * tileH + tileY * tileH;
-                    GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, subX, subY, tileW, tileH, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, this.pixels);
+                    GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, subX, subY, tileW, tileH, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, dstPixels);
 
                     if (MIPMAP && tileX == 0 && tileY == 0) {
-                        this.generateMipMapsSub(subX, subY, tileW, tileH, this.pixels, binder.replicate, fastColor);
+                        this.generateMipMapsSub(subX, subY, tileW, tileH, dstPixels, binder.replicate, fastColor);
                     }
                 }
             }
-        }
 
-        for (DynamicTexture binder : this.dynamicTextures) {
-            if (binder.copyTo <= 0) {
-                continue;
-            }
-
-            this.pixels.clear();
-            this.pixels.put(binder.pixels);
-            this.pixels.position(0).limit(binder.pixels.length);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, binder.copyTo);
-            GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, 16, 16, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, this.pixels);
-            if (MIPMAP) {
-                this.generateMipMapsSub(0, 0, 16, 16, this.pixels, binder.replicate, false);
+            if (binder.copyTo > 0) {
+                GL11.glBindTexture(GL11.GL_TEXTURE_2D, binder.copyTo);
+                GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, 16, 16, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, dstPixels);
+                if (MIPMAP) {
+                    this.generateMipMapsSub(0, 0, 16, 16, srcPixels, binder.replicate, false);
+                }
             }
         }
 
@@ -564,17 +564,6 @@ public abstract class MixinTextureManager implements ExTextureManager {
         return this.textureDimensionsMap.get(var1);
     }
 
-    private void expandBinderGrid(Vec2 size, DynamicTexture binder) {
-        int tileW = size.x / 16;
-        int tileH = size.y / 16;
-        this.checkImageDataSize(size.x, size.y);
-
-        int gridIndex = tileW * tileH * 4;
-        if (binder.pixels == null || (binder.pixels.length != 0 && binder.pixels.length < gridIndex)) {
-            binder.pixels = new byte[gridIndex];
-        }
-    }
-
     private void checkImageDataSize(int width, int height) {
         if (this.pixels != null) {
             int size = width * height * 4;
@@ -582,22 +571,21 @@ public abstract class MixinTextureManager implements ExTextureManager {
                 return;
             }
         }
-
         this.allocateImageData(width, height);
     }
 
     private void allocateImageData(int width, int height) {
         int size = width * height * 4;
         this.pixels = MemoryTracker.createByteBuffer(size);
-        ArrayList<ByteBuffer> mipBuffers = new ArrayList<>();
+        var mipBuffers = new ArrayList<IntBuffer>();
 
         for (int level = Math.max(width, height) / 2; level > 0; level /= 2) {
-            int mipSize = level * level * 4;
-            ByteBuffer mipBuffer = MemoryTracker.createByteBuffer(mipSize);
+            int mipSize = level * level;
+            IntBuffer mipBuffer = MemoryTracker.createIntBuffer(mipSize);
             mipBuffers.add(mipBuffer);
         }
 
-        this.mipImageDatas = mipBuffers.toArray(new ByteBuffer[0]);
+        this.mipImageDatas = mipBuffers.toArray(new IntBuffer[0]);
     }
 
     private int getMaxMipmapLevel(int dim) {
@@ -608,41 +596,17 @@ public abstract class MixinTextureManager implements ExTextureManager {
         return size - 1;
     }
 
-    private void copyScaled(byte[] grid, ByteBuffer dstBuffer, int tileW) {
-        int frameSize = (int) Math.sqrt(grid.length / 4);
-        int ratio = tileW / frameSize;
-        dstBuffer.clear();
-        if (ratio > 1) {
-            byte[] tmp = new byte[4];
-            for (int var8 = 0; var8 < frameSize; ++var8) {
-                int var9 = var8 * frameSize;
-                int var10 = var8 * ratio;
-                int var11 = var10 * tileW;
-
-                for (int var12 = 0; var12 < frameSize; ++var12) {
-                    int var13 = (var12 + var9) * 4;
-                    tmp[0] = grid[var13];
-                    tmp[1] = grid[var13 + 1];
-                    tmp[2] = grid[var13 + 2];
-                    tmp[3] = grid[var13 + 3];
-                    int var14 = var12 * ratio;
-                    int var15 = var14 + var11;
-
-                    for (int var16 = 0; var16 < ratio; ++var16) {
-                        int var17 = var15 + var16 * tileW;
-                        dstBuffer.position(var17 * 4);
-
-                        for (int var18 = 0; var18 < ratio; ++var18) {
-                            dstBuffer.put(tmp);
-                        }
-                    }
-                }
-            }
-        } else {
-            dstBuffer.put(grid);
+    private void copyScaled(IntBuffer srcBuffer, IntBuffer dstBuffer, int tileW) {
+        int srcSize = (int) Math.sqrt(srcBuffer.limit());
+        if (srcSize == 0) {
+            return;
         }
 
-        dstBuffer.position(0).limit(tileW * tileW * 4);
+        ResizeUtil.resizeUint8(
+            srcBuffer, srcSize, srcSize, 0,
+            dstBuffer, tileW, tileW, 0, 4);
+
+        dstBuffer.limit(tileW * tileW);
     }
 
     private boolean scalesWithFastColor(DynamicTexture binder) {
@@ -675,12 +639,14 @@ public abstract class MixinTextureManager implements ExTextureManager {
         for (AC_TextureAnimated acBinder : this.textureAnimations.values()) {
             var tex = (AC_TextureBinder) acBinder;
             IntBuffer imgBuffer = tex.getBufferAtCurrentFrame();
-            if (imgBuffer == null) {
+            if (imgBuffer.limit() == 0) {
                 continue;
             }
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.loadTexture(tex.getTexture()));
+
+            int texId = this.loadTexture(tex.getTexture());
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, texId);
             GL11.glTexSubImage2D(
-                GL11.GL_TEXTURE_2D, 0, tex.getX(), tex.getY(), tex.getWidth(), tex.getHeight(),
+                GL11.GL_TEXTURE_2D, 0, acBinder.x, acBinder.y, tex.getWidth(), tex.getHeight(),
                 GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, imgBuffer);
         }
     }

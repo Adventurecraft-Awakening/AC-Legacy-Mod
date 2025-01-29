@@ -16,15 +16,19 @@ import java.awt.image.WritableRaster;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
+
 import net.minecraft.client.renderer.Textures;
 import net.minecraft.client.renderer.ptexture.DynamicTexture;
 import net.minecraft.world.level.Level;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(DynamicTexture.class)
 public abstract class MixinTextureBinder implements AC_TextureBinder {
 
     @Shadow
-    public byte[] pixels;
+    public byte[] pixels = new byte[0];
     @Shadow
     public int tex;
     @Shadow
@@ -34,10 +38,6 @@ public abstract class MixinTextureBinder implements AC_TextureBinder {
 
     @Unique
     public IntBuffer imageData;
-    @Unique
-    public int x;
-    @Unique
-    public int y;
     @Unique
     public int width;
     @Unique
@@ -52,6 +52,13 @@ public abstract class MixinTextureBinder implements AC_TextureBinder {
     public MixinTextureBinder() {
     }
 
+    @Inject(method = "<init>", at = @At("TAIL"))
+    private void initData(CallbackInfo ci) {
+        this.width = 16;
+        this.height = 16;
+        this.imageData = this.allocImageData(this.width, this.height);
+    }
+
     @Shadow
     public void tick() {
         throw new AssertionError();
@@ -63,16 +70,18 @@ public abstract class MixinTextureBinder implements AC_TextureBinder {
     }
 
     @Override
-    public void setAtlasRect(int x, int y, int width, int height) {
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
+    public void animate() {
+        if (this.numFrames == 0) {
+            this.curFrame = 0;
+        } else {
+            this.curFrame = (this.curFrame + 1) % this.numFrames;
+        }
     }
 
     @Override
     public void onTick(Vec2 size) {
         this.tick();
+        this.animate();
     }
 
     @Override
@@ -84,18 +93,9 @@ public abstract class MixinTextureBinder implements AC_TextureBinder {
 
     @Override
     public IntBuffer getBufferAtCurrentFrame() {
-        if (!this.hasImages) {
-            return null;
-        }
-
-        int frameStart = this.curFrame * this.width * this.height;
-        int frameEnd = frameStart + this.width * this.height;
-
-        this.curFrame = (this.curFrame + 1) % this.numFrames;
-
-        return this.imageData
-            .position(frameStart)
-            .limit(frameEnd);
+        int frameSize = this.width * this.height;
+        int frameStart = this.curFrame * frameSize;
+        return this.imageData.slice(frameStart, frameSize);
     }
 
     @Override
@@ -112,16 +112,22 @@ public abstract class MixinTextureBinder implements AC_TextureBinder {
     public void loadImage(String name, BufferedImage image) {
         this.hasImages = false;
         this.curFrame = 0;
+        this.width = 16;
+        this.height = 16;
 
         if (image != null) {
-            this.width = image.getWidth();
-            this.numFrames = image.getHeight() / image.getWidth();
-            this.imageData = ByteBuffer.allocateDirect(image.getWidth() * image.getHeight() * 4)
-                .order(ByteOrder.nativeOrder()).asIntBuffer();
-            getRgb(image, 0, 0, image.getWidth(), image.getHeight(), imageData, image.getWidth());
+            int imgW = image.getWidth();
+            int imgH = image.getHeight();
+            int minSize = Math.min(imgH, imgW);
+            int maxSize = Math.max(imgH, imgW);
+            this.width = minSize;
+            this.height = minSize;
+            this.numFrames = maxSize / minSize;
+            this.imageData = this.allocImageData(minSize, maxSize);
+            getRgb(image, 0, 0, imgW, imgH, this.imageData, imgW);
             this.imageData.clear();
+            swapBgra(this.imageData);
             this.hasImages = true;
-            this.pixels = new byte[width * width * 4];
         }
     }
 
@@ -171,14 +177,17 @@ public abstract class MixinTextureBinder implements AC_TextureBinder {
         buffer.reset();
     }
 
-    @Override
-    public int getX() {
-        return this.x;
+    @Unique
+    protected IntBuffer allocImageData(int width, int height, int frameCount) {
+        return ByteBuffer.allocateDirect(width * height * frameCount * 4)
+            .order(ByteOrder.nativeOrder())
+            .clear()
+            .asIntBuffer();
     }
 
-    @Override
-    public int getY() {
-        return this.y;
+    @Unique
+    protected IntBuffer allocImageData(int width, int height) {
+        return this.allocImageData(width, height, 1);
     }
 
     @Override
@@ -187,7 +196,17 @@ public abstract class MixinTextureBinder implements AC_TextureBinder {
     }
 
     @Override
+    public void setWidth(int width) {
+        this.width = width;
+    }
+
+    @Override
     public int getHeight() {
         return this.height;
+    }
+
+    @Override
+    public void setHeight(int height) {
+        this.height = height;
     }
 }

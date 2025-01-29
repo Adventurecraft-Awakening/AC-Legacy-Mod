@@ -9,7 +9,7 @@ import net.minecraft.world.level.Level;
 
 public interface AC_TextureBinder {
 
-    void setAtlasRect(int x, int y, int width, int height);
+    void animate();
 
     void onTick(Vec2 size);
 
@@ -21,13 +21,13 @@ public interface AC_TextureBinder {
 
     IntBuffer getBufferAtCurrentFrame();
 
-    int getX();
-
-    int getY();
-
     int getWidth();
 
+    void setWidth(int width);
+
     int getHeight();
+
+    void setHeight(int height);
 
     static <T extends DynamicTexture> void loadImages(ExTextureManager texManager, Class<T> type, Level world) {
         AC_TextureBinder.loadImages(texManager, type, null, world);

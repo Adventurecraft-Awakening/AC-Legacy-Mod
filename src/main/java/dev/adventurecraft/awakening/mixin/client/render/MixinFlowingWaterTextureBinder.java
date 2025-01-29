@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.mixin.client.render;
 
 import dev.adventurecraft.awakening.common.AC_TerrainImage;
 import dev.adventurecraft.awakening.common.Vec2;
+import dev.adventurecraft.awakening.image.Rgba;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
@@ -41,62 +42,7 @@ public class MixinFlowingWaterTextureBinder extends MixinTextureBinder {
         int var15;
         int var16;
         if (hasImages) {
-            this.imageData.clear();
-
-            var4 = var2 / width;
-            var5 = curFrame * width * width;
-            int var18 = 0;
-            boolean var20 = false;
-            if (var4 == 0) {
-                var20 = true;
-                var4 = width / var2;
-            }
-
-            int var22;
-            if (!var20) {
-                for (var8 = 0; var8 < width; ++var8) {
-                    for (var22 = 0; var22 < width; ++var22) {
-                        var10 = this.imageData.get(var22 + var8 * width + var5);
-
-                        for (var11 = 0; var11 < var4; ++var11) {
-                            for (var12 = 0; var12 < var4; ++var12) {
-                                var18 = var22 * var4 + var11 + (var8 * var4 + var12) * var2;
-                                this.pixels[var18 * 4 + 0] = (byte) (var10 >> 16 & 255);
-                                this.pixels[var18 * 4 + 1] = (byte) (var10 >> 8 & 255);
-                                this.pixels[var18 * 4 + 2] = (byte) (var10 & 255);
-                                this.pixels[var18 * 4 + 3] = (byte) (var10 >> 24 & 255);
-                            }
-                        }
-                    }
-                }
-            } else {
-                for (var8 = 0; var8 < var2; ++var8) {
-                    for (var22 = 0; var22 < var2; ++var22) {
-                        var10 = 0;
-                        var11 = 0;
-                        var12 = 0;
-                        var13 = 0;
-
-                        for (var14 = 0; var14 < var4; ++var14) {
-                            for (var15 = 0; var15 < var4; ++var15) {
-                                var16 = this.imageData.get(var22 * var4 + var14 + (var8 * var4 + var15) * width + var5);
-                                var10 += var16 >> 16 & 255;
-                                var11 += var16 >> 8 & 255;
-                                var12 += var16 & 255;
-                                var13 += var16 >> 24 & 255;
-                            }
-                        }
-
-                        this.pixels[var18 * 4 + 0] = (byte) (var10 / var4 / var4);
-                        this.pixels[var18 * 4 + 1] = (byte) (var11 / var4 / var4);
-                        this.pixels[var18 * 4 + 2] = (byte) (var12 / var4 / var4);
-                        this.pixels[var18 * 4 + 3] = (byte) (var13 / var4 / var4);
-                        ++var18;
-                    }
-                }
-            }
-
-            curFrame = (curFrame + 1) % numFrames;
+            this.animate();
         } else {
             var4 = var2 * var3;
             if (this.current.length != var4) {
@@ -104,6 +50,7 @@ public class MixinFlowingWaterTextureBinder extends MixinTextureBinder {
                 this.next = new float[var4];
                 this.heat = new float[var4];
                 this.heata = new float[var4];
+                this.imageData = this.allocImageData(var2, var3);
             }
 
             var5 = (int) Math.sqrt((double) (var3 / 16));
@@ -175,12 +122,9 @@ public class MixinFlowingWaterTextureBinder extends MixinTextureBinder {
                     var13 = var17;
                 }
 
-                this.pixels[var8 * 4 + 0] = (byte) var11;
-                this.pixels[var8 * 4 + 1] = (byte) var12;
-                this.pixels[var8 * 4 + 2] = (byte) var13;
-                this.pixels[var8 * 4 + 3] = (byte) var14;
+                int color = Rgba.fromRgba8(var11, var12, var13, var14);
+                this.imageData.put(var8, color);
             }
-
         }
     }
 

@@ -1,7 +1,6 @@
 package dev.adventurecraft.awakening.common.mixin;
 
 import dev.adventurecraft.awakening.common.AC_TextureFanFX;
-import dev.adventurecraft.awakening.common.Vec2;
 import dev.adventurecraft.awakening.extension.client.ExTextureManager;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.mixin.client.render.MixinTextureBinder;
@@ -34,9 +33,5 @@ public abstract class MixinAC_TextureFanFX extends MixinTextureBinder {
         }
 
         super.loadImage(name, image);
-    }
-
-    @Override
-    public void onTick(Vec2 size) {
     }
 }
