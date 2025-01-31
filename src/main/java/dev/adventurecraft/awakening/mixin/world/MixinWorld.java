@@ -731,6 +731,11 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         this.rayDebugLists.add(list);
     }
 
+    @Unique
+    public boolean isClippingBlock(int id) {
+        return id == AC_Blocks.clipBlock.id || ExLadderBlock.isLadderID(id);
+    }
+
     @Override
     public HitResult rayTraceBlocksCore(Vec3 pointA, Vec3 pointB, boolean blockCollidableFlag, boolean useCollisionShapes, boolean collideWithClip) {
         int bX = Mth.floor(pointB.x);
@@ -744,7 +749,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         AABB aAabb = null;
         if (aBlock != null &&
             (!useCollisionShapes || (aAabb = aBlock.getAABB((Level) (Object) this, aX, aY, aZ)) != null) &&
-            (aId > 0 && (collideWithClip || aId != AC_Blocks.clipBlock.id && !ExLadderBlock.isLadderID(aId)) && aBlock.mayPick(this.getData(aX, aY, aZ), blockCollidableFlag))) {
+            (aId > 0 && (collideWithClip || !this.isClippingBlock(aId)) && aBlock.mayPick(this.getData(aX, aY, aZ), blockCollidableFlag))) {
 
             if (aAabb != null && AC_DebugMode.renderRays) {
                 this.rayCheckedBlocks.add(aAabb);
@@ -874,7 +879,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
                 }
 
                 HitResult hit = block.clip((Level) (Object) this, aX, aY, aZ, pointA, pointB);
-                if (hit != null && (collideWithClip || (block.id != AC_Blocks.clipBlock.id && !ExLadderBlock.isLadderID(block.id)))) {
+                if (hit != null && (collideWithClip || !this.isClippingBlock(block.id))) {
                     return hit;
                 }
             }
@@ -898,16 +903,17 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/level/tile/Tile;addAABBs(Lnet/minecraft/world/level/Level;IIILnet/minecraft/world/phys/AABB;Ljava/util/ArrayList;)V"))
-    private void guardBoxCollide(Tile block, Level world, int x, int y, int z, AABB aabb, ArrayList<AABB> output, @Local(argsOnly = true) Entity entity) {
-        if ((((ExEntity) entity).getCollidesWithClipBlocks() || block.id != AC_Blocks.clipBlock.id && !ExLadderBlock.isLadderID(block.id))) {
+    private void guardBoxCollide(
+        Tile block, Level world, int x, int y, int z, AABB aabb, ArrayList<AABB> output,
+        @Local(argsOnly = true) Entity entity) {
+
+        if (((ExEntity) entity).getCollidesWithClipBlocks() || !this.isClippingBlock(block.id)) {
             block.addAABBs(world, x, y, z, aabb, output);
         }
     }
 
-    @Inject(
-        method = "getCubes",
-        at = @At("RETURN"))
-    private void recordCollision(Entity entity, AABB aabb, CallbackInfoReturnable<List> cir) {
+    @Inject(method = "getCubes", at = @At("RETURN"))
+    private void recordCollision(Entity entity, AABB aabb, CallbackInfoReturnable<List<AABB>> cir) {
         if (!AC_DebugMode.renderCollisions) {
             return;
         }
@@ -937,14 +943,14 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
 
     @Overwrite
     public float getTimeOfDay(float var1) {
-        ExWorldProperties props = (ExWorldProperties) this.levelData;
+        var props = (ExWorldProperties) this.levelData;
         return this.dimension.getTimeOfDay(props.getTimeOfDay(), var1 * props.getTimeRate());
     }
 
     @Inject(method = "getFogColor", at = @At("RETURN"))
     private void changeFogColor(float var1, CallbackInfoReturnable<Vec3> cir) {
         Vec3 var3 = cir.getReturnValue();
-        ExWorldProperties props = (ExWorldProperties) this.levelData;
+        var props = (ExWorldProperties) this.levelData;
         if (props.isOverrideFogColor()) {
             if (this.fogColorOverridden) {
                 var3.x = props.getFogR();

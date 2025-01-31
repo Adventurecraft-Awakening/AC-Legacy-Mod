@@ -34,37 +34,41 @@ public class ScriptModel extends ScriptModelBase {
     }
 
     public void setBrightness(int brightness) {
-        setBrightness(Math.max(brightness,255) / 256.0F);
+        setBrightness(Math.max(brightness, 255) / 256.0F);
     }
 
     //Old method
-    public void addBox(String boxName,
-                       float offsetX, float offsetY, float offsetZ,
-                       int width, int height, int length,
-                       int textureOffsetX, int textureOffsetY) {
+    public void addBox(
+        String boxName,
+        float offsetX, float offsetY, float offsetZ,
+        int width, int height, int length,
+        int textureOffsetX, int textureOffsetY) {
         this.addBoxExpanded(offsetX, offsetY, offsetZ, width, height, length, textureOffsetX, textureOffsetY, 0.0F);
     }
 
-    public void addBox(float offsetX, float offsetY, float offsetZ,
-                       int width, int height, int length,
-                       int textureOffsetX, int textureOffsetY) {
+    public void addBox(
+        float offsetX, float offsetY, float offsetZ,
+        int width, int height, int length,
+        int textureOffsetX, int textureOffsetY) {
         this.addBoxExpanded(offsetX, offsetY, offsetZ, width, height, length, textureOffsetX, textureOffsetY, 0.0F);
     }
 
     //Old legacy method
-    public void addBoxExpanded(String boxName,
-                               float offsetX, float offsetY, float offsetZ,
-                               int width, int height, int length,
-                               int textureOffsetX, int textureOffsetY,
-                               float scale) {
+    public void addBoxExpanded(
+        String boxName,
+        float offsetX, float offsetY, float offsetZ,
+        int width, int height, int length,
+        int textureOffsetX, int textureOffsetY,
+        float scale) {
         this.addBoxExpanded(offsetX, offsetY, offsetZ, width, height, length, textureOffsetX, textureOffsetY, scale);
     }
 
-    public void addBoxExpanded(float offsetX, float offsetY, float offsetZ,
-                               int width, int height, int length,
-                               int textureOffsetX, int textureOffsetY,
-                               float scale) {
-        ModelPart cuboid = new ModelPart(textureOffsetX, textureOffsetY);
+    public void addBoxExpanded(
+        float offsetX, float offsetY, float offsetZ,
+        int width, int height, int length,
+        int textureOffsetX, int textureOffsetY,
+        float scale) {
+        var cuboid = new ModelPart(textureOffsetX, textureOffsetY);
         ((ExCuboid) cuboid).setTWidth(this.textureWidth);
         ((ExCuboid) cuboid).setTHeight(this.textureHeight);
         ((ExCuboid) cuboid).addBoxInverted(offsetX, offsetY, offsetZ, width, height, length, scale);
@@ -154,7 +158,7 @@ public class ScriptModel extends ScriptModelBase {
     }
 
     @Override
-    protected void render(float var1) {
+    protected void render(float partialTick) {
         if (boxes.isEmpty()) {
             return;
         }
@@ -168,7 +172,7 @@ public class ScriptModel extends ScriptModelBase {
         GL11.glPushMatrix();
         GL11.glLoadIdentity();
 
-        this.transform(var1);
+        this.transform(partialTick);
 
         modelView.rewind();
         GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, modelView);
@@ -215,7 +219,7 @@ public class ScriptModel extends ScriptModelBase {
             GL11.glColor3f(r, g, b);
         }
         GL11.glPushMatrix();
-        this.transform(var1);
+        this.transform(partialTick);
 
         for (ModelPart cuboid : this.boxes) {
             cuboid.render(1.0F / 16.0F);

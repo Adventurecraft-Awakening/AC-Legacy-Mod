@@ -21,6 +21,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.HitType;
 import net.minecraft.world.phys.Vec3;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,16 +47,18 @@ public class ScriptEntity {
         if (entity instanceof LivingEntity e) return new ScriptEntityLiving(e);
         if (entity instanceof Arrow e) return new ScriptEntityArrow(e);
         if (entity instanceof ItemEntity e) return new ScriptEntityItem(e);
-        if(entity instanceof AC_Particle e) return new ScriptParticleEntity(e);
+        if (entity instanceof AC_Particle e) return new ScriptParticleEntity(e);
         return new ScriptEntity(entity);
     }
 
-    public void setCanGetFallDamage(boolean arg){
-        ((ExEntity)this.entity).setCanGetFallDamage(arg);
+    public void setCanGetFallDamage(boolean arg) {
+        ((ExEntity) this.entity).setCanGetFallDamage(arg);
     }
-    public boolean getCanGetFallDamage(){
-        return ((ExEntity)this.entity).getCanGetFallDamage();
+
+    public boolean getCanGetFallDamage() {
+        return ((ExEntity) this.entity).getCanGetFallDamage();
     }
+
     public int getEntityID() {
         return this.entity.id;
     }
@@ -64,14 +67,12 @@ public class ScriptEntity {
         return new ScriptVec3(this.entity.x, this.entity.y, this.entity.z);
     }
 
-    @SuppressWarnings("UnnecessaryLocalVariable")
     ScriptVec3 getPosition(float deltaTime) {
-        double dt = deltaTime;
-        double dtSub = 1.0 - dt;
+        float invDelta = 1.0f - deltaTime;
         return new ScriptVec3(
-            dtSub * this.entity.xo + dt * this.entity.x,
-            dtSub * this.entity.yo + dt * this.entity.y,
-            dtSub * this.entity.zo + dt * this.entity.z);
+            invDelta * this.entity.xo + deltaTime * this.entity.x,
+            invDelta * this.entity.yo + deltaTime * this.entity.y,
+            invDelta * this.entity.zo + deltaTime * this.entity.z);
     }
 
     public void setPosition(ScriptVec3 vec) {
@@ -259,13 +260,15 @@ public class ScriptEntity {
     public void setCollidesWithClipBlocks(boolean value) {
         ((ExEntity) this.entity).setCollidesWithClipBlocks(value);
     }
-    public void setIgnoreCobwebCollision(boolean value){
+
+    public void setIgnoreCobwebCollision(boolean value) {
         ((ExEntity) this.entity).setIgnoreCobwebCollision(value);
     }
 
-    public boolean isIgnoreCobwebCollision(){
+    public boolean isIgnoreCobwebCollision() {
         return ((ExEntity) this.entity).isIgnoreCobwebCollision();
     }
+
     public float getHeight() {
         return this.entity.bbHeight;
     }
@@ -323,20 +326,20 @@ public class ScriptEntity {
     }
 
 
-    public void setCustomTagString(String key,String value){
-        ((ExEntity) this.entity).setCustomTagString(key,value);
+    public void setCustomTagString(String key, String value) {
+        ((ExEntity) this.entity).setCustomTagString(key, value);
     }
 
-    public boolean hasCustomTagString(String key){
+    public boolean hasCustomTagString(String key) {
         return ((ExEntity) this.entity).hasCustomTagString(key);
 
     }
 
-    public String getOrCreateCustomTagString(String key,String defaultValue){
-        return ((ExEntity) this.entity).getOrCreateCustomTagString(key,defaultValue);
+    public String getOrCreateCustomTagString(String key, String defaultValue) {
+        return ((ExEntity) this.entity).getOrCreateCustomTagString(key, defaultValue);
     }
 
-    public String getCustomTagString(String key){
+    public String getCustomTagString(String key) {
         return ((ExEntity) this.entity).getCustomTagString(key);
     }
 

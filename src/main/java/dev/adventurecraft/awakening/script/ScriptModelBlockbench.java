@@ -58,7 +58,7 @@ public class ScriptModelBlockbench extends ScriptModelBase {
 
     }
 
-    protected void render(float var1) {
+    protected void render(float partialTick) {
         if (boxes.isEmpty()) {
             return;
         }
@@ -71,7 +71,7 @@ public class ScriptModelBlockbench extends ScriptModelBase {
         GL11.glPushMatrix();
 
         // Initial transformation
-        this.transform(var1);
+        this.transform(partialTick);
 
         // Adjust lighting modes
         switch (this.modes) {

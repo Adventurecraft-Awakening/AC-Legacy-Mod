@@ -4,12 +4,11 @@ import dev.adventurecraft.awakening.extension.block.ExBlock;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.tile.Tile;
+
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map.Entry;
 
 public class AC_TriggerManager {
 
@@ -142,7 +141,7 @@ public class AC_TriggerManager {
                 for (int z = area.minZ; z <= area.maxZ; ++z) {
                     if (this.getTriggerAmount(x, y, z) == 0) {
                         int id = this.world.getTile(x, y, z);
-                        var block = (ExBlock)Tile.tiles[id];
+                        var block = (ExBlock) Tile.tiles[id];
                         if (id != 0 && block.canBeTriggered()) {
                             block.onTriggerDeactivated(this.world, x, y, z);
                         }
@@ -167,11 +166,11 @@ public class AC_TriggerManager {
             for (var areaEntry : entry.getValue().int2ObjectEntrySet()) {
                 CompoundTag areaTag = areaEntry.getValue().getTagCompound();
                 areaTag.putInt("areaID", areaEntry.getIntKey());
-                coordTag.putTag(String.format("area%d", areaCount++), (Tag) areaTag);
+                coordTag.putTag(String.format("area%d", areaCount++), areaTag);
             }
 
             coordTag.putInt("numAreas", areaCount);
-            managerTag.putTag(String.format("coord%d", coordCount++), (Tag) coordTag);
+            managerTag.putTag(String.format("coord%d", coordCount++), coordTag);
         }
 
         managerTag.putInt("numCoords", coordCount);

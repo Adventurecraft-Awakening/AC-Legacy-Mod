@@ -199,9 +199,9 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         tag.putBoolean("iceMelts", this.iceMelts);
         tag.putBoolean("leavesDecay", this.leavesDecay);
         if (Minecraft.instance.level != null) {
-            ExWorld world = (ExWorld) Minecraft.instance.level;
+            var world = (ExWorld) Minecraft.instance.level;
             if (world.getTriggerManager() != null) {
-                tag.putTag("triggerAreas", (Tag) world.getTriggerManager().getTagCompound());
+                tag.putTag("triggerAreas", world.getTriggerManager().getTagCompound());
             }
         }
 
@@ -239,15 +239,15 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         }
 
         if (this.globalScope != null) {
-            tag.putTag("globalScope", (Tag) this.globalScope);
+            tag.putTag("globalScope", this.globalScope);
         }
 
         if (this.worldScope != null) {
-            tag.putTag("worldScope", (Tag) this.worldScope);
+            tag.putTag("worldScope", this.worldScope);
         }
 
         if (this.musicScope != null) {
-            tag.putTag("musicScope", (Tag) this.musicScope);
+            tag.putTag("musicScope", this.musicScope);
         }
 
         tag.putBoolean("originallyFromAC", this.originallyFromAC);

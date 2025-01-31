@@ -31,10 +31,12 @@ public abstract class MixinItemRenderer extends EntityRenderer implements ExItem
 
     public float scale = 1.0F;
 
-    @ModifyArgs(method = "render(Lnet/minecraft/world/entity/item/ItemEntity;DDDFF)V", at = @At(
-        value = "INVOKE",
-        target = "Lorg/lwjgl/opengl/GL11;glScalef(FFF)V",
-        remap = false))
+    @ModifyArgs(
+        method = "render(Lnet/minecraft/world/entity/item/ItemEntity;DDDFF)V",
+        at = @At(
+            value = "INVOKE",
+            target = "Lorg/lwjgl/opengl/GL11;glScalef(FFF)V",
+            remap = false))
     private void useScale(Args args) {
         float x = args.get(0);
         float y = args.get(1);

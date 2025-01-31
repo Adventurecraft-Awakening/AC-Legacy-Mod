@@ -68,13 +68,13 @@ public abstract class ScriptModelBase {
     protected static final Vector4f vr = new Vector4f();
     protected static final LinkedList<ScriptModelBase> activeModels = new LinkedList<>();
 
-    public static void renderAll(float var0) {
+    public static void renderAll(float partialTick) {
         GL11.glEnable(GL12.GL_RESCALE_NORMAL);
         GL11.glDisable(GL11.GL_CULL_FACE);
         GL11.glEnable(GL11.GL_ALPHA_TEST);
 
         for (ScriptModelBase scriptModel : activeModels) {
-            scriptModel.render(var0);
+            scriptModel.render(partialTick);
         }
 
         GL11.glEnable(GL11.GL_CULL_FACE);
