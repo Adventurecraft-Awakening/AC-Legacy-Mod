@@ -1,44 +1,36 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import net.minecraft.SharedConstants;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.Tesselator;
 import org.lwjgl.opengl.GL11;
 
 public class TextRendererState {
 
-    private final float[] colorPalette;
-    private final int[] widthLookup;
-    private Tesselator ts;
-    private int texture;
+    private final Font font;
 
-    private float r, g, b, a;
-    private float sR, sG, sB, sA;
-    private boolean hasShadow;
+    private byte r, g, b, a;
+    private byte sR, sG, sB, sA;
     private float shadowOffsetX, shadowOffsetY;
 
-    public TextRendererState(float[] colorPalette, int[] widthLookup) {
-        this.colorPalette = colorPalette;
-        this.widthLookup = widthLookup;
+    public TextRendererState(Font font) {
+        this.font = font;
     }
 
     public void bindTexture() {
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.texture);
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.font.fontTexture);
     }
 
     public void begin(Tesselator tessallator) {
-        if (tessallator == null) {
-            throw new IllegalArgumentException();
-        }
-        this.ts = tessallator;
-
-        ts.begin();
+        tessallator.begin();
     }
 
-    public void end() {
-        this.ts.end();
+    public void end(Tesselator tessallator) {
+        tessallator.end();
     }
 
-    public void drawText(CharSequence text, int start, int end, float x, float y) {
+    public void drawText(Tesselator ts, CharSequence text, int start, int end, float x, float y) {
         if (text == null) {
             return;
         }
@@ -47,7 +39,13 @@ public class TextRendererState {
         }
         validateCharSequence(text, start, end);
 
-        ts.color(r, g, b, a);
+        if (this.a == 0) {
+            return;
+        }
+        putColor(ts, r, g, b, a);
+
+        var colorPalette = ((ExTextRenderer) this.font).getColorPalette();
+        var widthLookup = ((ExTextRenderer) this.font).getCharWidths();
 
         float xOff = 0;
 
@@ -60,17 +58,17 @@ public class TextRendererState {
                 }
 
                 int rgbIndex = colorIndex * 3;
-                r = this.colorPalette[rgbIndex + 0];
-                g = this.colorPalette[rgbIndex + 1];
-                b = this.colorPalette[rgbIndex + 2];
+                r = colorPalette[rgbIndex + 0];
+                g = colorPalette[rgbIndex + 1];
+                b = colorPalette[rgbIndex + 2];
 
-                if (this.hasShadow) {
+                if (this.hasShadow()) {
                     int shadowRgbIndex = (colorIndex + 16) * 3;
-                    sR = this.colorPalette[shadowRgbIndex + 0];
-                    sG = this.colorPalette[shadowRgbIndex + 1];
-                    sB = this.colorPalette[shadowRgbIndex + 2];
+                    sR = colorPalette[shadowRgbIndex + 0];
+                    sG = colorPalette[shadowRgbIndex + 1];
+                    sB = colorPalette[shadowRgbIndex + 2];
                 } else {
-                    ts.color(r, g, b, a);
+                    putColor(ts, r, g, b, a);
                 }
 
                 i++;
@@ -89,38 +87,32 @@ public class TextRendererState {
 
             int column = ch % 16 * 8;
             int row = ch / 16 * 8;
-            if (this.hasShadow) {
-                ts.color(sR, sG, sB, sA);
+            if (this.hasShadow()) {
+                putColor(ts, sR, sG, sB, sA);
                 drawChar(ts, column, row, xOff + x + this.shadowOffsetX, y + this.shadowOffsetY);
-                ts.color(r, g, b, a);
+                putColor(ts, r, g, b, a);
             }
             drawChar(ts, column, row, xOff + x, y);
-            xOff += this.widthLookup[ch];
+            xOff += widthLookup[ch];
         }
     }
 
     public void setColor(int color) {
-        this.r = (float) (color >> 16 & 255) / 255.0F;
-        this.g = (float) (color >> 8 & 255) / 255.0F;
-        this.b = (float) (color & 255) / 255.0F;
-        this.a = (float) (color >> 24 & 255) / 255.0F;
-        if (this.a == 0.0F) {
-            this.a = 1.0F;
-        }
+        this.r = (byte) (color >>> 16 & 255);
+        this.g = (byte) (color >>> 8 & 255);
+        this.b = (byte) (color & 255);
+        this.a = (byte) (color >>> 24);
     }
 
-    public void setShadowColor(int shadowColor) {
-        this.sR = (float) (shadowColor >> 16 & 255) / 255.0F;
-        this.sG = (float) (shadowColor >> 8 & 255) / 255.0F;
-        this.sB = (float) (shadowColor & 255) / 255.0F;
-        this.sA = (float) (shadowColor >> 24 & 255) / 255.0F;
-        if (this.sA == 0.0F) {
-            this.sA = 1.0F;
-        }
+    public void setShadow(int color) {
+        this.sR = (byte) (color >>> 16 & 255);
+        this.sG = (byte) (color >>> 8 & 255);
+        this.sB = (byte) (color & 255);
+        this.sA = (byte) (color >>> 24);
     }
 
-    public void setShadow(boolean enable) {
-        this.hasShadow = enable;
+    public boolean hasShadow() {
+        return this.sA != 0;
     }
 
     public void setShadowOffsetX(float offsetX) {
@@ -136,12 +128,8 @@ public class TextRendererState {
         this.setShadowOffsetY(offsetY);
     }
 
-    public int getTexture() {
-        return this.texture;
-    }
-
-    public void setTexture(int textureId) {
-        this.texture = textureId;
+    private static void putColor(Tesselator ts, byte r, byte g, byte b, byte a) {
+        ts.color(r & 0xff, g & 0xff, b & 0xff, a & 0xff);
     }
 
     private static void drawChar(Tesselator ts, int column, int row, float x, float y) {

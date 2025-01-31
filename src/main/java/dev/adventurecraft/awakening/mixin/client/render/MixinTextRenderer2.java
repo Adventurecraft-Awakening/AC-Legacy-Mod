@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.common.TextRect;
 import dev.adventurecraft.awakening.common.TextRendererState;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
+import dev.adventurecraft.awakening.image.Rgba;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -15,6 +16,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.io.InputStream;
+
 import net.minecraft.SharedConstants;
 import net.minecraft.client.Options;
 import net.minecraft.client.gui.Font;
@@ -27,11 +29,18 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
     @Shadow
     private int[] charWidths;
 
-    @Shadow
-    public int fontTexture;
-
     @Unique
-    private float[] colorBuffer;
+    private byte[] colorBuffer;
+
+    @Override
+    public int[] getCharWidths() {
+        return this.charWidths;
+    }
+
+    @Override
+    public byte[] getColorPalette() {
+        return this.colorBuffer;
+    }
 
     @Redirect(
         method = "<init>",
@@ -45,7 +54,7 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void initialize(Options arg, String string, Textures arg2, CallbackInfo ci) {
-        this.colorBuffer = new float[32 * 3];
+        this.colorBuffer = new byte[32 * 3];
         for (int i = 0; i < 32; ++i) {
             int n4 = (i >> 3 & 1) * 85;
             int r = (i >> 2 & 1) * 170 + n4;
@@ -69,9 +78,9 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
                 b /= 4;
             }
 
-            this.colorBuffer[i * 3 + 0] = (float) r / 255.0f;
-            this.colorBuffer[i * 3 + 1] = (float) g / 255.0f;
-            this.colorBuffer[i * 3 + 2] = (float) b / 255.0f;
+            this.colorBuffer[i * 3 + 0] = (byte) (r & 0xff);
+            this.colorBuffer[i * 3 + 1] = (byte) (g & 0xff);
+            this.colorBuffer[i * 3 + 2] = (byte) (b & 0xff);
         }
     }
 
@@ -111,22 +120,23 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
     @Override
     public void drawText(
         CharSequence text, int start, int end,
-        float x, float y, int color, boolean shadow, float sX, float sY, int sColor) {
+        float x, float y, int color, boolean hasShadow, float sX, float sY, int shadow) {
         if (text == null || end - start == 0) {
             return;
         }
 
         TextRendererState state = this.createState();
         state.bindTexture();
-        state.setColor(color);
-        if (shadow) {
-            state.setShadow(true);
+        state.setColor(Rgba.alphaOrOpaque(color));
+        if (hasShadow) {
             state.setShadowOffset(sX, sY);
-            state.setShadowColor(sColor);
+            state.setShadow(Rgba.alphaOrOpaque(shadow));
         }
-        state.begin(Tesselator.instance);
-        state.drawText(text, start, end, x, y);
-        state.end();
+
+        var ts = Tesselator.instance;
+        state.begin(ts);
+        state.drawText(ts, text, start, end, x, y);
+        state.end(ts);
     }
 
     @Overwrite
@@ -137,9 +147,7 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
 
     @Override
     public TextRendererState createState() {
-        var state = new TextRendererState(this.colorBuffer, this.charWidths);
-        state.setTexture(this.fontTexture);
-        return state;
+        return new TextRendererState((Font) (Object) this);
     }
 
     @Override
@@ -169,7 +177,9 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
                 width += this.charWidths[c];
             }
 
-            if (width > maxWidth || (newLines && c == '\n')) {
+            if (width > maxWidth) {
+                break;
+            } else if (newLines && c == '\n') {
                 i++;
                 break;
             }

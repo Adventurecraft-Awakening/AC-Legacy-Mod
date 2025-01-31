@@ -10,10 +10,14 @@ public interface ExTextRenderer {
 
     void init(Options var1, String var2, Textures var3);
 
+    int[] getCharWidths();
+
+    byte[] getColorPalette();
+
     static int getShadowColor(int color) {
         int tmp = color & 0xff000000;
         int shadowColor = (color & 0xfcfcfc) >> 2;
-        return shadowColor + tmp;
+        return shadowColor | tmp;
     }
 
     void drawText(

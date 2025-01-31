@@ -10,6 +10,7 @@ import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
+import dev.adventurecraft.awakening.image.Rgba;
 import dev.adventurecraft.awakening.script.ScriptUIContainer;
 import net.minecraft.client.Lighting;
 import net.minecraft.client.Minecraft;
@@ -362,7 +363,10 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
         var exTextRenderer = (ExTextRenderer) this.minecraft.font;
         ArrayDeque<AC_ChatMessage> messages = this.chatMessages;
 
+        final int marginLeft = 1;
+        final int marginRight = 1;
         final int messageSpacing = 2;
+        final int lineHeight = 9;
 
         final int maxChatHeight;
         final boolean isChatOpen;
@@ -386,7 +390,7 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
             }
 
             for (int i = message.lines.size() - 1; i >= 0; i--) {
-                chatHeight += 9;
+                chatHeight += lineHeight;
                 if (chatHeight >= maxChatHeight) {
                     break;
                 }
@@ -405,7 +409,6 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
 
         TextRendererState textState = exTextRenderer.createState();
         textState.bindTexture();
-        textState.setShadow(true);
         textState.setShadowOffset(1, 1);
 
         for (AC_ChatMessage message : messages) {
@@ -418,26 +421,33 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
             }
 
             String text = message.text;
-            int color = 16777215 + (alpha << 24);
+            int color = Rgba.withAlpha(0xffffff, alpha);
             textState.setColor(color);
-            textState.setShadowColor(ExTextRenderer.getShadowColor(color));
+            textState.setShadow(ExTextRenderer.getShadowColor(color));
 
-            int yBase = (screenHeight - 48) - yOffset - (message.lines.size() - 1) * 9;
-            for (int i = 0; i < message.lines.size(); i++) {
-                AC_ChatMessage.Line line = message.lines.get(i);
-                int y = yBase + i * 9;
+            int xStart = x - marginLeft;
+            int xEnd = x + CHAT_WIDTH + marginRight;
 
-                this.fill(x, y - 1, x + CHAT_WIDTH, y + 8, alpha / 2 << 24);
-                GL11.glEnable(GL11.GL_BLEND);
-                textState.begin(Tesselator.instance);
-                textState.drawText(text, line.start(), line.end(), x, y);
-                textState.end();
+            int msgHeight = message.lines.size() * lineHeight;
+            int yBase = (screenHeight - 48) - msgHeight - yOffset;
+            int yEnd = yBase + msgHeight + 1;
+            int y = yBase + 1;
 
-                yOffset += 9;
+            this.fill(xStart, yBase, xEnd, yEnd, alpha / 2 << 24);
+            GL11.glEnable(GL11.GL_BLEND);
+
+            var ts = Tesselator.instance;
+            textState.begin(ts);
+            for (AC_ChatMessage.Line line : message.lines) {
+                textState.drawText(ts, text, line.start(), line.end(), x, y);
+
+                y += lineHeight;
+                yOffset += lineHeight;
                 if (yOffset >= maxChatHeight) {
                     break;
                 }
             }
+            textState.end(ts);
 
             if (yOffset >= maxChatHeight) {
                 break;

@@ -3,6 +3,7 @@ package dev.adventurecraft.awakening.script;
 import dev.adventurecraft.awakening.common.TextRendererState;
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
+import dev.adventurecraft.awakening.image.Rgba;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.Tesselator;
@@ -42,25 +43,27 @@ public class ScriptUILabel extends UIElement {
 
     @Override
     public void render(Font textRenderer, Textures textureManager, float deltaTime) {
-        int color = Math.max(Math.min((int) (this.alpha * 255.0F), 255), 0);
-        if (color == 0) {
+        int alpha = Math.max(Math.min((int) (this.alpha * 255.0F), 255), 0);
+        if (alpha == 0) {
             return;
         }
 
-        color = (color << 8) + Math.max(Math.min((int) (this.red * 255.0F), 255), 0);
-        color = (color << 8) + Math.max(Math.min((int) (this.green * 255.0F), 255), 0);
-        color = (color << 8) + Math.max(Math.min((int) (this.blue * 255.0F), 255), 0);
+        int red = Math.max(Math.min((int) (this.red * 255.0F), 255), 0);
+        int green = Math.max(Math.min((int) (this.green * 255.0F), 255), 0);
+        int blue = Math.max(Math.min((int) (this.blue * 255.0F), 255), 0);
+        int color = Rgba.fromRgba8(red, green, blue, alpha);
+
         float x = this.getXAtTime(deltaTime);
         float y = this.getYAtTime(deltaTime);
         String[] lines = this.textLines;
-        int shadowColor = ExTextRenderer.getShadowColor(color);
+        int shadowColor = this.shadow ? ExTextRenderer.getShadowColor(color) : 0;
 
         TextRendererState state = ((ExTextRenderer) textRenderer).createState();
-        state.setShadow(shadow);
         state.setShadowOffset(1, 1);
 
+        var ts = Tesselator.instance;
         state.bindTexture();
-        state.begin(Tesselator.instance);
+        state.begin(ts);
         for (String line : lines) {
             float lineX = x;
             if (this.centered) {
@@ -68,12 +71,12 @@ public class ScriptUILabel extends UIElement {
             }
 
             state.setColor(color);
-            state.setShadowColor(shadowColor);
-            state.drawText(line, 0, line.length(), lineX, y);
+            state.setShadow(shadowColor);
+            state.drawText(ts, line, 0, line.length(), lineX, y);
 
             y += 9.0F;
         }
-        state.end();
+        state.end(ts);
     }
 
     public String getText() {

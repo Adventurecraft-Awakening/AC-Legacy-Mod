@@ -24,4 +24,16 @@ public final class Rgba {
             ((b & 0xff) << 16) |
             ((a & 0xff) << 24);
     }
+
+    public static int withAlpha(int rgb, int alpha) {
+        int a = (alpha & 0xff) << 24;
+        return (rgb & 0xffffff) | a;
+    }
+
+    public static int alphaOrOpaque(int rgba) {
+        if ((rgba >>> 24) == 0) {
+            rgba |= 0xff000000;
+        }
+        return rgba;
+    }
 }
