@@ -6,15 +6,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.Textures;
 import net.minecraft.world.level.Level;
-import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL12;
 import org.lwjgl.util.vector.Matrix4f;
-import org.lwjgl.util.vector.Vector4f;
-
-import java.nio.FloatBuffer;
-import java.util.LinkedList;
-import java.util.List;
 
 @SuppressWarnings("unused")
 public class ScriptModel extends ScriptModelBase {
@@ -92,17 +85,27 @@ public class ScriptModel extends ScriptModelBase {
     }
 
     public void moveBy(double x, double y, double z) {
-        double yaw = Math.toRadians(this.yaw);
-        double pitch = Math.toRadians(this.pitch);
-        double roll = Math.toRadians(this.roll);
-        double tempY = x * Math.cos(yaw) + z * Math.sin(yaw);
-        z = z * Math.cos(yaw) - x * Math.sin(yaw);
+        float yaw = MathF.toRadians(this.yaw);
+        float pitch = MathF.toRadians(this.pitch);
+        float roll = MathF.toRadians(this.roll);
+
+        float sinYaw = MathF.sin(yaw);
+        float cosYaw = MathF.cos(yaw);
+        double tempY = x * cosYaw + z * sinYaw;
+        z = z * cosYaw - x * sinYaw;
         x = tempY;
-        tempY = z * Math.cos(pitch) + y * Math.sin(pitch);
-        y = y * Math.cos(pitch) - z * Math.sin(pitch);
+
+        float sinPitch = MathF.sin(pitch);
+        float cosPitch = MathF.cos(pitch);
+        tempY = z * cosPitch + y * sinPitch;
+        y = y * cosPitch - z * sinPitch;
         z = tempY;
-        tempY = y * Math.cos(roll) + x * Math.sin(roll);
-        x = x * Math.cos(roll) - y * Math.sin(roll);
+
+        float sinRoll = MathF.sin(roll);
+        float cosRoll = MathF.cos(roll);
+        tempY = y * cosRoll + x * sinRoll;
+        x = x * cosRoll - y * sinRoll;
+
         this.x += x;
         this.y += tempY;
         this.z += z;
@@ -138,23 +141,16 @@ public class ScriptModel extends ScriptModelBase {
 
     @Override
     protected void transform(float deltaTime) {
-        if (this.attachedTo != null) {
-            ScriptVec3 position = this.attachedTo.getPosition(deltaTime);
-            ScriptVecRot rotation = this.attachedTo.getRotation(deltaTime);
-            GL11.glTranslated(position.x, position.y, position.z);
-            GL11.glRotatef((float) (-rotation.yaw), 0.0F, 1.0F, 0.0F);
-            GL11.glRotatef((float) rotation.pitch, 1.0F, 0.0F, 0.0F);
-        } else if (this.modelAttachment != null) {
-            this.modelAttachment.transform(deltaTime);
-        }
-        float deltaTimeTick = 1.0F - deltaTime;
-        double x = (double) deltaTime * this.x + (double) deltaTimeTick * this.prevX;
-        double y = (double) deltaTime * this.y + (double) deltaTimeTick * this.prevY;
-        double z = (double) deltaTime * this.z + (double) deltaTimeTick * this.prevZ;
+        super.transform(deltaTime);
+
+        float invDelta = 1.0F - deltaTime;
+        double x = deltaTime * this.x + invDelta * this.prevX;
+        double y = deltaTime * this.y + invDelta * this.prevY;
+        double z = deltaTime * this.z + invDelta * this.prevZ;
         GL11.glTranslated(x, y, z);
-        GL11.glRotatef(deltaTime * this.yaw + deltaTimeTick * this.prevYaw, 0.0F, 1.0F, 0.0F);
-        GL11.glRotatef(deltaTime * this.pitch + deltaTimeTick * this.prevPitch, 1.0F, 0.0F, 0.0F);
-        GL11.glRotatef(deltaTime * this.roll + deltaTimeTick * this.prevRoll, 0.0F, 0.0F, 1.0F);
+        GL11.glRotatef(deltaTime * this.yaw + invDelta * this.prevYaw, 0.0F, 1.0F, 0.0F);
+        GL11.glRotatef(deltaTime * this.pitch + invDelta * this.prevPitch, 1.0F, 0.0F, 0.0F);
+        GL11.glRotatef(deltaTime * this.roll + invDelta * this.prevRoll, 0.0F, 0.0F, 1.0F);
     }
 
     @Override
@@ -182,13 +178,11 @@ public class ScriptModel extends ScriptModelBase {
         v.set(0.0F, 0.0F, 0.0F, 1.0F);
         Matrix4f.transform(transform, v, vr);
 
-
         switch (this.modes) {
             case 1:
                 //using the position of the attached entity
                 if (this.attachedTo != null) {
-                    var position = this.attachedTo.getPosition();
-                    setBrightness(world.getBrightness((int) Math.floor(position.x), (int) Math.floor(position.y), (int) Math.floor(position.z)));
+                    this.setBrightness(this.attachedTo.entity.getBrightness(partialTick));
                 }
                 break;
             case 2:

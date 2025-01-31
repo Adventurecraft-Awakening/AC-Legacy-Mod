@@ -7,13 +7,13 @@ import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector4f;
 
 import java.nio.FloatBuffer;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.ArrayList;
+
 import net.minecraft.client.model.geom.ModelPart;
 
 public abstract class ScriptModelBase {
 
-    protected final List<ModelPart> boxes = new LinkedList<>();
+    protected final ArrayList<ModelPart> boxes = new ArrayList<>();
     public ScriptEntity attachedTo;
     public ScriptModelBase modelAttachment;
     public String texture;
@@ -49,8 +49,20 @@ public abstract class ScriptModelBase {
     protected int textureWidth = 64;
     protected int textureHeight = 32;
 
-    protected abstract void transform(float deltaTime);
-    protected abstract void render(float var1);
+    protected void transform(float deltaTime) {
+        if (this.attachedTo != null) {
+            ScriptVec3 position = this.attachedTo.getPosition(deltaTime);
+            ScriptVecRot rotation = this.attachedTo.getRotation(deltaTime);
+
+            GL11.glTranslated(position.x, position.y, position.z);
+            GL11.glRotatef((float) (-rotation.yaw), 0.0F, 1.0F, 0.0F);
+            GL11.glRotatef((float) rotation.pitch, 1.0F, 0.0F, 0.0F);
+        } else if (this.modelAttachment != null) {
+            this.modelAttachment.transform(deltaTime);
+        }
+    }
+
+    protected abstract void render(float partialTick);
 
     protected abstract void update();
 
@@ -66,7 +78,7 @@ public abstract class ScriptModelBase {
     protected static final Matrix4f transform = new Matrix4f();
     protected static final Vector4f v = new Vector4f();
     protected static final Vector4f vr = new Vector4f();
-    protected static final LinkedList<ScriptModelBase> activeModels = new LinkedList<>();
+    protected static final ArrayList<ScriptModelBase> activeModels = new ArrayList<>();
 
     public static void renderAll(float partialTick) {
         GL11.glEnable(GL12.GL_RESCALE_NORMAL);
