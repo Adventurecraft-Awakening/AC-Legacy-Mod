@@ -68,9 +68,9 @@ import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -1019,6 +1019,11 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
 
     @Redirect(
         method = "tickEntities",
+        slice = @Slice(
+            from = @At(
+                value = "FIELD",
+                target = "Lnet/minecraft/world/level/Level;tileEntityList:Ljava/util/List;")
+        ),
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/level/Level;getChunk(II)Lnet/minecraft/world/level/chunk/LevelChunk;"))
