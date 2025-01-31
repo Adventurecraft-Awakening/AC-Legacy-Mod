@@ -69,8 +69,7 @@ public abstract class MixinSoundHelper implements ExSoundHelper {
             String curMusic = ((ExWorldProperties) Minecraft.instance.level.levelData).getPlayingMusic();
             curMusic = curMusic.length() <= 0 ? "" : curMusic.substring(6);
             return curMusic;
-        }
-        else {
+        } else {
             return "";
         }
     }
@@ -95,7 +94,7 @@ public abstract class MixinSoundHelper implements ExSoundHelper {
                 return;
             }
             // In case there is no fadeIn and fadeOut value, just start playing the music (fadeOutIn doesn't work with 0 values)
-            if(var2 == 0 && var3 == 0){
+            if (var2 == 0 && var3 == 0) {
                 soundSystem.backgroundMusic("BgMusic", entry.url, entry.name, true);
             } else {
                 soundSystem.fadeOutIn("BgMusic", entry.url, entry.name, var2, var3);
@@ -145,7 +144,8 @@ public abstract class MixinSoundHelper implements ExSoundHelper {
         method = "play*", // TODO: check what this actually applies to
         at = @At(
             value = "INVOKE",
-            target = "Lpaulscode/sound/SoundSystem;newSource(ZLjava/lang/String;Ljava/net/URL;Ljava/lang/String;ZFFFIF)V"))
+            target = "Lpaulscode/sound/SoundSystem;newSource(ZLjava/lang/String;Ljava/net/URL;Ljava/lang/String;ZFFFIF)V",
+            remap = false))
     private void useUrlForSourceName(Args args) {
         URL url = args.get(2);
         args.set(3, url.toString());
