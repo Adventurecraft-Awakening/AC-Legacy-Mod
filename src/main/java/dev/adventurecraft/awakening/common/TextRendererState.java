@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
+import dev.adventurecraft.awakening.util.HexConvert;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.Tesselator;
@@ -52,7 +53,7 @@ public class TextRendererState {
         for (int i = start; i < end; ++i) {
             char c = text.charAt(i);
             if (end > i + 1 && c == '§') {
-                int colorIndex = "0123456789abcdef".indexOf(Character.toLowerCase(text.charAt(i + 1)));
+                int colorIndex = HexConvert.fromHexDigit(text.charAt(i + 1));
                 if (colorIndex < 0 || colorIndex > 15) {
                     colorIndex = 15;
                 }
