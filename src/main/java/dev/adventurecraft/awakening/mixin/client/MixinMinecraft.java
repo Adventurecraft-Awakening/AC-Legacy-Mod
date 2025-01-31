@@ -72,6 +72,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -213,6 +214,9 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
     @Shadow
     public SoundEngine soundEngine;
+
+    @Shadow
+    protected abstract void renderLoadingScreen();
 
     private long previousNanoTime;
     private double deltaTime;
@@ -534,6 +538,28 @@ public abstract class MixinMinecraft implements ExMinecraft {
         updateStoreGUI();
     }
 
+    @Inject(
+        method = "init",
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/client/Minecraft;textures:Lnet/minecraft/client/renderer/Textures;",
+            opcode = Opcodes.PUTFIELD,
+            ordinal = 0,
+            shift = At.Shift.AFTER))
+    private void addEarlierLoadingScreen(CallbackInfo ci) {
+        this.renderLoadingScreen();
+    }
+
+    @Redirect(
+        method = "renderLoadingScreen",
+        at = @At(
+            value = "INVOKE",
+            target = "Lorg/lwjgl/opengl/Display;swapBuffers()V",
+            remap = false))
+    private void updateDisplayAfterLoad() throws LWJGLException {
+        Display.update(false);
+    }
+
     /**
      * @author Cryect
      * (Kiroto added Javadoc)
@@ -556,10 +582,9 @@ public abstract class MixinMinecraft implements ExMinecraft {
                 chunkCache.centerOn(chunkX, chunkZ);
             }
             // Bed safety leave
-            if(this.player.isSleeping() && this.player.getSleepTimer()>= 100)
-            {
-                if(((ExWorldProperties) this.level.levelData).getTimeRate()==0){
-                    this.player.stopSleepInBed(true,false,false);
+            if (this.player.isSleeping() && this.player.getSleepTimer() >= 100) {
+                if (((ExWorldProperties) this.level.levelData).getTimeRate() == 0) {
+                    this.player.stopSleepInBed(true, false, false);
                 } else {
                     ((ExWorld) this.level).setTimeOfDay(10000);
                 }
@@ -980,8 +1005,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
                 ScriptableObject.putProperty(globalScope, "lastItemUsed", tmp);
                 this.lastItemUsed = stack;
             }
-        }
-        else {
+        } else {
             var tmp = Context.javaToJS(null, globalScope);
             ScriptableObject.putProperty(globalScope, "lastItemUsed", tmp);
             this.lastItemUsed = null;
@@ -1023,9 +1047,9 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
             if (this.lastBlockHit != null) {
                 this.lastBlockHit = null;
-                    var tmp = Context.javaToJS(null, globalScope);
-                    ScriptableObject.putProperty(globalScope, "hitBlock", tmp);
-                }
+                var tmp = Context.javaToJS(null, globalScope);
+                ScriptableObject.putProperty(globalScope, "hitBlock", tmp);
+            }
         } else {
             // Hit a block
             if (this.lastBlockHit == null ||
@@ -1046,12 +1070,11 @@ public abstract class MixinMinecraft implements ExMinecraft {
         }
         // Trigger item scripts
         String scriptName;
-        if(stack != null) {
+        if (stack != null) {
             scriptName = stack.isStackedByData()
                 ? String.format("item_%d_%d.js", stack.id, stack.getAuxValue())
                 : String.format("item_%d.js", stack.id);
-        }
-        else {
+        } else {
             scriptName = "item_0.js";
         }
         exWorld.getScriptHandler().runScript(scriptName, exWorld.getScope(), false);
