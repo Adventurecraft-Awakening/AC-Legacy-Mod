@@ -166,11 +166,11 @@ public class AC_TriggerManager {
             for (var areaEntry : entry.getValue().int2ObjectEntrySet()) {
                 CompoundTag areaTag = areaEntry.getValue().getTagCompound();
                 areaTag.putInt("areaID", areaEntry.getIntKey());
-                coordTag.putTag(String.format("area%d", areaCount++), areaTag);
+                coordTag.putTag("area" + (areaCount++), areaTag);
             }
 
             coordTag.putInt("numAreas", areaCount);
-            managerTag.putTag(String.format("coord%d", coordCount++), coordTag);
+            managerTag.putTag("coord" + (coordCount++), coordTag);
         }
 
         managerTag.putInt("numCoords", coordCount);

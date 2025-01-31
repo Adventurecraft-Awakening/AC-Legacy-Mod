@@ -925,10 +925,10 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         shift = At.Shift.AFTER,
         ordinal = 0,
         remap = false))
-    private void renderScriptModels(Vec3 var1, Culler var2, float var3, CallbackInfo ci) {
+    private void renderScriptModels(Vec3 var1, Culler var2, float partialTick, CallbackInfo ci) {
         GL11.glPushMatrix();
         GL11.glTranslated(-EntityRenderDispatcher.xOff, -EntityRenderDispatcher.yOff, -EntityRenderDispatcher.zOff);
-        ScriptModelBase.renderAll(var3);
+        ScriptModelBase.renderAll(partialTick);
         GL11.glPopMatrix();
     }
 

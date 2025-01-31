@@ -119,7 +119,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         target = "Lnet/minecraft/world/entity/LivingEntity;health:I",
         shift = At.Shift.BEFORE))
     private void handleZoom(float var1, CallbackInfoReturnable<Float> cir) {
-        if (Keyboard.isKeyDown(((ExGameOptions) this.mc.options).ofKeyBindZoom().key) && ((ExScreen)this.mc.screen) == null) {
+        if (Keyboard.isKeyDown(((ExGameOptions) this.mc.options).ofKeyBindZoom().key) && this.mc.screen == null) {
             if (!this.zoomMode) {
                 this.zoomMode = true;
                 this.mc.options.smoothCamera = true;
@@ -602,11 +602,13 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         ts.vertex(minX, maxY, maxZ);
     }
 
-    @Inject(method = "render(FJ)V", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/client/renderer/GameRenderer;setupFog(IF)V",
-        shift = At.Shift.BEFORE,
-        ordinal = 6))
+    @Inject(
+        method = "render(FJ)V",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/GameRenderer;setupFog(IF)V",
+            shift = At.Shift.BEFORE,
+            ordinal = 6))
     private void finishDebugModeDecorations(float var1, long var2, CallbackInfo ci) {
         GL11.glPopMatrix();
         this.renderSnowAndRain(var1);

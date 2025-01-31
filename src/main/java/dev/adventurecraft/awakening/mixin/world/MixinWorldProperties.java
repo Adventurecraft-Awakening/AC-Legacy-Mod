@@ -127,7 +127,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         }
 
         for (int i = 0; i < 16; ++i) {
-            String id = String.format("brightness%d", i);
+            String id = "brightness" + i;
             if (tag.hasKey(id)) {
                 this.brightness[i] = tag.getFloat(id);
             } else {
@@ -234,8 +234,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         }
 
         for (int var3 = 0; var3 < 16; ++var3) {
-            String var4 = String.format("brightness%d", var3);
-            tag.putFloat(var4, this.brightness[var3]);
+            tag.putFloat("brightness" + var3, this.brightness[var3]);
         }
 
         if (this.globalScope != null) {
