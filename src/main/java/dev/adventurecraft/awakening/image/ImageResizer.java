@@ -1,13 +1,13 @@
 package dev.adventurecraft.awakening.image;
 
-import dev.adventurecraft.awakening.BufferUtil;
+import dev.adventurecraft.awakening.util.BufferUtil;
 import org.lwjgl.stb.STBImageResize;
 import org.lwjgl.system.Checks;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.Buffer;
 
-public final class ResizeUtil {
+public final class ImageResizer {
 
     public static boolean resizeUint8(
         Buffer src, int srcW, int srcH, int srcByteStride,

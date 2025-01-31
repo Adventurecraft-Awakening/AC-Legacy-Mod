@@ -8,7 +8,7 @@ import dev.adventurecraft.awakening.common.Vec2;
 import dev.adventurecraft.awakening.extension.client.ExTextureManager;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import dev.adventurecraft.awakening.image.ResizeUtil;
+import dev.adventurecraft.awakening.image.*;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.MemoryTracker;
 import net.minecraft.client.Minecraft;
@@ -602,7 +602,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
             return;
         }
 
-        ResizeUtil.resizeUint8(
+        ImageResizer.resizeUint8(
             srcBuffer, srcSize, srcSize, 0,
             dstBuffer, tileW, tileW, 0, 4);
 

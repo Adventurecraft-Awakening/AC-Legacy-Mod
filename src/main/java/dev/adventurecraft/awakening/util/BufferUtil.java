@@ -1,4 +1,4 @@
-package dev.adventurecraft.awakening;
+package dev.adventurecraft.awakening.util;
 
 import java.nio.*;
 

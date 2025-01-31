@@ -11,6 +11,7 @@ import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.image.Rgba;
+import dev.adventurecraft.awakening.util.HexConvert;
 import dev.adventurecraft.awakening.script.ScriptUIContainer;
 import net.minecraft.client.Lighting;
 import net.minecraft.client.Minecraft;
@@ -512,7 +513,7 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
         for (int i = start; i < end; ++i) {
             char c = text.charAt(i);
             if (end > i + 1 && c == '§') {
-                int colorIndex = "0123456789abcdef".indexOf(Character.toLowerCase(text.charAt(i + 1)));
+                int colorIndex = HexConvert.fromHexDigit(text.charAt(i + 1));
                 if (colorIndex < 0 || colorIndex > 15) {
                     colorIndex = 15;
                 }

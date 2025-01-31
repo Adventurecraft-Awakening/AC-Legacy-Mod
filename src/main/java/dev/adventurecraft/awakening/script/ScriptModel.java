@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.script;
 
+import dev.adventurecraft.awakening.util.MathF;
 import dev.adventurecraft.awakening.extension.client.model.ExCuboid;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;

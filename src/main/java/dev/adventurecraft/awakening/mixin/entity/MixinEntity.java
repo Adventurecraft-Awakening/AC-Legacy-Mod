@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.mixin.entity;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import dev.adventurecraft.awakening.HashCode;
+import dev.adventurecraft.awakening.util.HashCode;
 import dev.adventurecraft.awakening.common.AC_Blocks;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import org.objectweb.asm.Opcodes;

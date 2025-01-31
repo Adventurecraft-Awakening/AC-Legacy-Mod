@@ -3,7 +3,7 @@ package dev.adventurecraft.awakening.common;
 import java.util.ArrayList;
 import java.util.List;
 
-import dev.adventurecraft.awakening.MathF;
+import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.Tesselator;

@@ -1,7 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
-import dev.adventurecraft.awakening.ACMod;
-import dev.adventurecraft.awakening.MathF;
+import dev.adventurecraft.awakening.util.MathF;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiComponent;

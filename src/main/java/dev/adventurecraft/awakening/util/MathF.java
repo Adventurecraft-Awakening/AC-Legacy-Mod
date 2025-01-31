@@ -1,4 +1,4 @@
-package dev.adventurecraft.awakening;
+package dev.adventurecraft.awakening.util;
 
 public final class MathF {
 
