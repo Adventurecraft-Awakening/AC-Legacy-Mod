@@ -724,7 +724,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     public void recordRayDebugList(
         double aX, double aY, double aZ, double bX, double bY, double bZ, HitResult hit) {
 
-        var blocksCollisionsArray = saveAsDoubleArray(this.rayCheckedBlocks);
+        var blocksCollisionsArray = saveAsFloatArray(this.rayCheckedBlocks);
         this.rayCheckedBlocks.clear();
 
         var list = new RayDebugList(aX, aY, aZ, bX, bY, bZ, blocksCollisionsArray, hit);
@@ -918,25 +918,26 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             return;
         }
 
-        var collisionsArray = saveAsDoubleArray((List<AABB>) cir.getReturnValue());
+        var collisionsArray = saveAsFloatArray(cir.getReturnValue());
         this.collisionDebugLists.add(new CollisionList(entity, aabb, collisionsArray));
     }
 
-    private static double[] saveAsDoubleArray(List<AABB> boxList) {
+    @Unique
+    private static float[] saveAsFloatArray(List<AABB> boxList) {
         int size = boxList.size();
         if (size == 0) {
             return null;
         }
 
-        var boxArray = new double[size * 6];
+        var boxArray = new float[size * 6];
         for (int i = 0; i < size; i++) {
             AABB box = boxList.get(i);
-            boxArray[i * 6 + 0] = box.x0;
-            boxArray[i * 6 + 1] = box.y0;
-            boxArray[i * 6 + 2] = box.z0;
-            boxArray[i * 6 + 3] = box.x1;
-            boxArray[i * 6 + 4] = box.y1;
-            boxArray[i * 6 + 5] = box.z1;
+            boxArray[i * 6 + 0] = (float) box.x0;
+            boxArray[i * 6 + 1] = (float) box.y0;
+            boxArray[i * 6 + 2] = (float) box.z0;
+            boxArray[i * 6 + 3] = (float) box.x1;
+            boxArray[i * 6 + 4] = (float) box.y1;
+            boxArray[i * 6 + 5] = (float) box.z1;
         }
         return boxArray;
     }

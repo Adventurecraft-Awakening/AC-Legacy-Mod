@@ -548,7 +548,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
     }
 
     private static void drawBoxes(
-        Tesselator ts, double[] collisions, double x1, double y1, double z1, double x2, double y2, double z2) {
+        Tesselator ts, float[] collisions, double x1, double y1, double z1, double x2, double y2, double z2) {
 
         for (int i = 0; i < collisions.length; i += 6) {
             double minX = collisions[i + 0] - x1;
