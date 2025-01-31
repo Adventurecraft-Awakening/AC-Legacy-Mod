@@ -37,6 +37,7 @@
     "client.render.MixinGameRenderer",
     "client.render.MixinHeldItemRenderer",
     "client.render.MixinPortalTextureBinder",
+    "client.render.MixinTesselator",
     "client.render.MixinTextRenderer2",
     "client.render.MixinTextureBinder",
     "client.render.MixinWorldEventRenderer",
