@@ -30,7 +30,7 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
     private int[] charWidths;
 
     @Unique
-    private byte[] colorBuffer;
+    private int[] colorBuffer;
 
     @Override
     public int[] getCharWidths() {
@@ -38,7 +38,7 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
     }
 
     @Override
-    public byte[] getColorPalette() {
+    public int[] getColorPalette() {
         return this.colorBuffer;
     }
 
@@ -54,7 +54,7 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void initialize(Options arg, String string, Textures arg2, CallbackInfo ci) {
-        this.colorBuffer = new byte[32 * 3];
+        var colorBuffer = new int[32];
         for (int i = 0; i < 32; ++i) {
             int n4 = (i >> 3 & 1) * 85;
             int r = (i >> 2 & 1) * 170 + n4;
@@ -63,7 +63,7 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
             if (i == 6) {
                 r += 85;
             }
-            boolean bl = i >= 16;
+
             if (arg.anaglyph3d) {
                 int newR = (r * 30 + g * 59 + b * 11) / 100;
                 int newG = (r * 30 + g * 70) / 100;
@@ -72,16 +72,16 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
                 g = newG;
                 b = newB;
             }
-            if (bl) {
-                r /= 4;
-                g /= 4;
-                b /= 4;
-            }
 
-            this.colorBuffer[i * 3 + 0] = (byte) (r & 0xff);
-            this.colorBuffer[i * 3 + 1] = (byte) (g & 0xff);
-            this.colorBuffer[i * 3 + 2] = (byte) (b & 0xff);
+            boolean shadow = i >= 16;
+            if (shadow) {
+                r >>= 2;
+                g >>= 2;
+                b >>= 2;
+            }
+            colorBuffer[i] = Rgba.fromRgb8(r, g, b);
         }
+        this.colorBuffer = colorBuffer;
     }
 
     @Overwrite
@@ -89,6 +89,7 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
         if (text == null) {
             return;
         }
+        color = Rgba.fromBgra(color);
         this.drawText(
             text, 0, text.length(),
             x, y, color, true, 1, 1, ExTextRenderer.getShadowColor(color));
@@ -99,6 +100,7 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
         if (text == null) {
             return;
         }
+        color = Rgba.fromBgra(color);
         this.drawText(
             text, 0, text.length(),
             (float) x, (float) y, color, false, 0, 0, 0);
@@ -109,6 +111,7 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
         if (text == null) {
             return;
         }
+        color = Rgba.fromBgra(color);
         if (shadow) {
             color = ExTextRenderer.getShadowColor(color);
         }

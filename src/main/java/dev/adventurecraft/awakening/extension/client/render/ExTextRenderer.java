@@ -12,28 +12,28 @@ public interface ExTextRenderer {
 
     int[] getCharWidths();
 
-    byte[] getColorPalette();
+    int[] getColorPalette();
 
     static int getShadowColor(int color) {
-        int tmp = color & 0xff000000;
+        int alpha = color & 0xff000000;
         int shadowColor = (color & 0xfcfcfc) >> 2;
-        return shadowColor | tmp;
+        return shadowColor | alpha;
     }
 
     void drawText(
         CharSequence text, int start, int end,
-        float x, float y, int color, boolean shadow, float sX, float sY, int sColor);
+        float x, float y, int color, boolean hasShadow, float sX, float sY, int shadow);
 
     default void drawString(
         CharSequence text, int start, int end,
-        float x, float y, int color, boolean shadow) {
+        float x, float y, int color, boolean hasShadow) {
         this.drawText(
             text, start, end,
-            x, y, color, shadow, 1.0F, 1.0F, getShadowColor(color));
+            x, y, color, hasShadow, 1.0F, 1.0F, getShadowColor(color));
     }
 
-    default void drawString(CharSequence text, float x, float y, int color, boolean shadow) {
-        this.drawString(text, 0, text.length(), x, y, color, shadow);
+    default void drawString(CharSequence text, float x, float y, int color, boolean hasShadow) {
+        this.drawString(text, 0, text.length(), x, y, color, hasShadow);
     }
 
     TextRendererState createState();

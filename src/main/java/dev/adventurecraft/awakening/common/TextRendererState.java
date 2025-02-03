@@ -1,6 +1,8 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.extension.client.render.ExTesselator;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
+import dev.adventurecraft.awakening.image.Rgba;
 import dev.adventurecraft.awakening.util.HexConvert;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.gui.Font;
@@ -11,8 +13,8 @@ public class TextRendererState {
 
     private final Font font;
 
-    private byte r, g, b, a;
-    private byte sR, sG, sB, sA;
+    private int color;
+    private int shadow;
     private float shadowOffsetX, shadowOffsetY;
 
     public TextRendererState(Font font) {
@@ -40,10 +42,11 @@ public class TextRendererState {
         }
         validateCharSequence(text, start, end);
 
-        if (this.a == 0) {
+        if (Rgba.getAlpha(this.color) == 0) {
             return;
         }
-        putColor(ts, r, g, b, a);
+        var exTs = (ExTesselator) ts;
+        exTs.ac$color(this.color);
 
         var colorPalette = ((ExTextRenderer) this.font).getColorPalette();
         var widthLookup = ((ExTextRenderer) this.font).getCharWidths();
@@ -58,21 +61,14 @@ public class TextRendererState {
                     colorIndex = 15;
                 }
 
-                int rgbIndex = colorIndex * 3;
-                r = colorPalette[rgbIndex + 0];
-                g = colorPalette[rgbIndex + 1];
-                b = colorPalette[rgbIndex + 2];
-
+                this.color = Rgba.withRgb(this.color, colorPalette[colorIndex]);
                 if (this.hasShadow()) {
-                    int shadowRgbIndex = (colorIndex + 16) * 3;
-                    sR = colorPalette[shadowRgbIndex + 0];
-                    sG = colorPalette[shadowRgbIndex + 1];
-                    sB = colorPalette[shadowRgbIndex + 2];
+                    this.shadow = Rgba.withRgb(this.shadow, colorPalette[colorIndex + 16]);
                 } else {
-                    putColor(ts, r, g, b, a);
+                    exTs.ac$color(this.color);
                 }
 
-                i++;
+                i++; // skip the digit
                 continue;
             }
 
@@ -89,9 +85,9 @@ public class TextRendererState {
             int column = ch % 16 * 8;
             int row = ch / 16 * 8;
             if (this.hasShadow()) {
-                putColor(ts, sR, sG, sB, sA);
+                exTs.ac$color(this.shadow);
                 drawChar(ts, column, row, xOff + x + this.shadowOffsetX, y + this.shadowOffsetY);
-                putColor(ts, r, g, b, a);
+                exTs.ac$color(this.color);
             }
             drawChar(ts, column, row, xOff + x, y);
             xOff += widthLookup[ch];
@@ -99,21 +95,15 @@ public class TextRendererState {
     }
 
     public void setColor(int color) {
-        this.r = (byte) (color >>> 16 & 255);
-        this.g = (byte) (color >>> 8 & 255);
-        this.b = (byte) (color & 255);
-        this.a = (byte) (color >>> 24);
+        this.color = color;
     }
 
     public void setShadow(int color) {
-        this.sR = (byte) (color >>> 16 & 255);
-        this.sG = (byte) (color >>> 8 & 255);
-        this.sB = (byte) (color & 255);
-        this.sA = (byte) (color >>> 24);
+        this.shadow = color;
     }
 
     public boolean hasShadow() {
-        return this.sA != 0;
+        return Rgba.getAlpha(this.shadow) != 0;
     }
 
     public void setShadowOffsetX(float offsetX) {
@@ -129,18 +119,15 @@ public class TextRendererState {
         this.setShadowOffsetY(offsetY);
     }
 
-    private static void putColor(Tesselator ts, byte r, byte g, byte b, byte a) {
-        ts.color(r & 0xff, g & 0xff, b & 0xff, a & 0xff);
-    }
-
     private static void drawChar(Tesselator ts, int column, int row, float x, float y) {
+        float u = column / 128f;
+        float v = row / 128f;
         float f = 7.99f;
-        float f2 = 0.0f;
-        float f3 = 0.0f;
-        ts.vertexUV(x, y + f, 0.0, (float) column / 128.0f + f2, ((float) row + f) / 128.0f + f3);
-        ts.vertexUV(x + f, y + f, 0.0, ((float) column + f) / 128.0f + f2, ((float) row + f) / 128.0f + f3);
-        ts.vertexUV(x + f, y, 0.0, ((float) column + f) / 128.0f + f2, (float) row / 128.0f + f3);
-        ts.vertexUV(x, y, 0.0, (float) column / 128.0f + f2, (float) row / 128.0f + f3);
+        float t = f / 128f;
+        ts.vertexUV(x, y + f, 0.0, u, v + t);
+        ts.vertexUV(x + f, y + f, 0.0, u + t, v + t);
+        ts.vertexUV(x + f, y, 0.0, u + t, v);
+        ts.vertexUV(x, y, 0.0, u, v);
     }
 
     public static void validateCharSequence(CharSequence text, int start, int end) {
