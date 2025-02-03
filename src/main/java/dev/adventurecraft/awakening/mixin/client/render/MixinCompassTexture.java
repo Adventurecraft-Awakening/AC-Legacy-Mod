@@ -25,6 +25,7 @@ public class MixinCompassTexture extends MixinTextureBinder {
 
     @Overwrite
     public void tick() {
+        var imageData = this.imageData;
         for (int var1 = 0; var1 < 256; ++var1) {
             int srcColor = this.raw[var1];
             int var2 = srcColor >> 24 & 255;
@@ -41,7 +42,7 @@ public class MixinCompassTexture extends MixinTextureBinder {
             }
 
             int color = Rgba.fromRgba8(var5, var4, var3, var2);
-            this.imageData.put(var1, color);
+            imageData.put(var1, color);
         }
 
         double var20 = 0.0;
@@ -106,7 +107,7 @@ public class MixinCompassTexture extends MixinTextureBinder {
             }
 
             int color = Rgba.fromRgba8(var15, var14, var13, var16);
-            this.imageData.put(var12, color);
+            imageData.put(var12, color);
         }
 
         for (var9 = -8; var9 <= 16; ++var9) {
@@ -127,7 +128,7 @@ public class MixinCompassTexture extends MixinTextureBinder {
             }
 
             int color = Rgba.fromRgba8(var13, var14, var15, var16);
-            this.imageData.put(var12, color);
+            imageData.put(var12, color);
         }
     }
 }

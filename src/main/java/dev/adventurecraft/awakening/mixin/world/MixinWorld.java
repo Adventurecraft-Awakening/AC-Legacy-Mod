@@ -22,6 +22,8 @@ import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunkCache;
+import dev.adventurecraft.awakening.image.ImageBuffer;
+import dev.adventurecraft.awakening.image.ImageLoader;
 import dev.adventurecraft.awakening.script.EntityDescriptions;
 import dev.adventurecraft.awakening.script.ScopeTag;
 import dev.adventurecraft.awakening.script.Script;
@@ -66,8 +68,6 @@ import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.*;
 
@@ -480,12 +480,11 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     }
 
     @Override
-    public BufferedImage loadMapTexture(String name) {
+    public ImageBuffer loadMapTexture(String name) {
         var file = new File(this.levelDir, name);
         if (file.exists()) {
             try {
-                BufferedImage image = ImageIO.read(file);
-                return image;
+                return ImageLoader.load(file, 4);
             } catch (Exception var4) {
             }
         }

@@ -7,15 +7,15 @@ public final class Rgba {
     }
 
     public static int fromRgb8(byte r, byte g, byte b) {
-        return fromRgba8(r, g, b, (byte) 255);
+        return fromRgba8(r, g, b, -1);
     }
 
     public static int fromRgb8(int r, int g, int b) {
-        return fromRgba8(r, g, b, 0xff);
+        return fromRgba8(r, g, b, -1);
     }
 
     public static int fromRgba8(byte r, byte g, byte b, byte a) {
-        return fromRgba8((int) r, g, b, a);
+        return fromRgba8(r & 0xff, g & 0xff, b & 0xff, a & 0xff);
     }
 
     public static int fromRgba8(int r, int g, int b, int a) {
@@ -25,9 +25,13 @@ public final class Rgba {
             ((a & 0xff) << 24);
     }
 
-    public static int withAlpha(int rgb, int alpha) {
+    public static int withRgb(int rgba, int rgb) {
+        return (rgba & 0xff000000) | (rgb & 0xffffff);
+    }
+
+    public static int withAlpha(int rgba, int alpha) {
         int a = (alpha & 0xff) << 24;
-        return (rgb & 0xffffff) | a;
+        return (rgba & 0xffffff) | a;
     }
 
     public static int alphaOrOpaque(int rgba) {
@@ -35,5 +39,9 @@ public final class Rgba {
             rgba |= 0xff000000;
         }
         return rgba;
+    }
+
+    public static int getAlpha(int rgba) {
+        return rgba >>> 24;
     }
 }

@@ -87,6 +87,7 @@ public class MixinFlowingLavaTextureBinder extends MixinTextureBinder {
             this.next = this.current;
             this.current = var19;
 
+            var imageData = this.imageData;
             for (var9 = 0; var9 < var4; ++var9) {
                 float var10 = this.current[var9] * 2.0F;
                 if (var10 > 1.0F) {
@@ -110,7 +111,7 @@ public class MixinFlowingLavaTextureBinder extends MixinTextureBinder {
                 }
 
                 int color = Rgba.fromRgb8(var12, var13, var14);
-                this.imageData.put(var9, color);
+                imageData.put(var9, color);
             }
         }
     }

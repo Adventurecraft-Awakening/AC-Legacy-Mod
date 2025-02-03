@@ -91,6 +91,7 @@ public class MixinFlowingWaterTextureBinder2 extends MixinTextureBinder {
             this.next = this.current;
             this.current = var19;
 
+            var imageData = this.imageData;
             for (var8 = 0; var8 < var4; ++var8) {
                 var9 = this.current[var8];
                 if (var9 > 1.0F) {
@@ -123,7 +124,7 @@ public class MixinFlowingWaterTextureBinder2 extends MixinTextureBinder {
                 }
 
                 int color = Rgba.fromRgba8(var11, var12, var13, var14);
-                this.imageData.put(var8, color);
+                imageData.put(var8, color);
             }
         }
     }

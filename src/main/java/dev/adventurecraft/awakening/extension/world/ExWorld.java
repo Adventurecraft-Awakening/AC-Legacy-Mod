@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.extension.world;
 
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.*;
+import dev.adventurecraft.awakening.image.ImageBuffer;
 import dev.adventurecraft.awakening.script.Script;
 import net.minecraft.util.ProgressListener;
 import net.minecraft.world.entity.Entity;
@@ -13,7 +14,6 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.mozilla.javascript.Scriptable;
 
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
 
@@ -22,7 +22,7 @@ public interface ExWorld {
     void initWorld(
         String mapName, LevelIO dimData, String saveName, long seed, Dimension dimension, ProgressListener progressListener);
 
-    BufferedImage loadMapTexture(String name);
+    ImageBuffer loadMapTexture(String name);
 
     void updateChunkProvider();
 

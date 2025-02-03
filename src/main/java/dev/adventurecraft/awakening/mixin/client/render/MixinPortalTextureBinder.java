@@ -31,7 +31,8 @@ public class MixinPortalTextureBinder extends MixinTextureBinder {
 
     @Unique
     private IntBuffer generatePortalData(int width, int height, int frameCount) {
-        var imageData = this.allocImageData(width, height, frameCount);
+        var rawImageData = this.allocImageData(width, height, frameCount);
+        var imageData = rawImageData;
         Random var3 = new Random(100L);
 
         for (int frameIdx = 0; frameIdx < frameCount; ++frameIdx) {
@@ -81,7 +82,7 @@ public class MixinPortalTextureBinder extends MixinTextureBinder {
                 }
             }
         }
-        return imageData;
+        return rawImageData;
     }
 
     @Override

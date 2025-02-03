@@ -92,6 +92,7 @@ public class MixinFireTextureBinder extends MixinTextureBinder {
                 this.imageData = this.allocImageData(var2, var3);
             }
 
+            var imageData = this.imageData;
             for (var8 = 0; var8 < var7; ++var8) {
                 float var22 = this.current[var8] * 1.8F;
                 if (var22 > 1.0F) {
@@ -121,7 +122,7 @@ public class MixinFireTextureBinder extends MixinTextureBinder {
                 }
 
                 int color = Rgba.fromRgba8(var24, var12, var13, var25);
-                this.imageData.put(var8, color);
+                imageData.put(var8, color);
             }
         }
     }

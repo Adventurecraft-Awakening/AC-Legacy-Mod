@@ -30,12 +30,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -103,6 +99,12 @@ public abstract class MixinTextureManager implements ExTextureManager {
 
     @Overwrite
     public void loadTexture(BufferedImage image, int texId) {
+        var buffer = ImageBuffer.from(image);
+        loadTexture(buffer, texId);
+    }
+
+    @Unique
+    public void loadTexture(ImageBuffer image, int texId) {
         var options = (ExGameOptions) this.options;
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, texId);
         int mipLevel = options.ofMipmapLevel();
@@ -154,60 +156,53 @@ public abstract class MixinTextureManager implements ExTextureManager {
         int texH = image.getHeight();
         this.setTextureDimension(texId, new Vec2(texW, texH));
 
-        int[] srcColors = new int[texW * texH];
-        byte[] dstColors = new byte[texW * texH * 4];
-        image.getRGB(0, 0, texW, texH, srcColors, 0, texW);
+        var colors = BufferUtils.createIntBuffer(texW * texH);
+        image.copyTo(colors, ImageFormat.RGBA_U8);
 
-        boolean hasAvgColor = false;
-        int avgColor = 0;
+        if (ImageFormat.hasAlpha(image.getFormat())) {
+            boolean hasAvgColor = false;
+            int avgColor = 0;
 
-        for (int i = 0; i < srcColors.length; ++i) {
-            int color;
-            int a = srcColors[i] >> 24 & 255;
-            int r = srcColors[i] >> 16 & 255;
-            int g = srcColors[i] >> 8 & 255;
-            int b = srcColors[i] & 255;
+            int colorsLength = colors.limit();
+            for (int i = 0; i < colorsLength; ++i) {
+                int color = colors.get(i);
+                int a = color >>> 24;
 
-            if (this.options != null && this.options.anaglyph3d) {
-                int r3D = (r * 30 + g * 59 + b * 11) / 100;
-                int g3D = (r * 30 + g * 70) / 100;
-                int b3D = (r * 30 + b * 70) / 100;
-                r = r3D;
-                g = g3D;
-                b = b3D;
-            }
+                if (this.options != null && this.options.anaglyph3d) {
+                    int r = color & 255;
+                    int g = color >> 8 & 255;
+                    int b = color >> 16 & 255;
 
-            if (a == 0) {
+                    int r3D = (r * 30 + g * 59 + b * 11) / 100;
+                    int g3D = (r * 30 + g * 70) / 100;
+                    int b3D = (r * 30 + b * 70) / 100;
+                    color = Rgba.fromRgba8(r3D, g3D, b3D, a);
+                }
+
+                if (a == 0) {
                 /* TODO
                 if (texId == this.terrainTextureId || texId == this.guiItemsTextureId) {
                     color = -1;
                 } else*/
-                {
-                    if (!hasAvgColor) {
-                        avgColor = this.getAverageOpaqueColor(srcColors);
-                        hasAvgColor = true;
+                    {
+                        if (!hasAvgColor) {
+                            avgColor = this.getAverageOpaqueColor(colors);
+                            hasAvgColor = true;
+                        }
+                        color = Rgba.withAlpha(avgColor, a);
                     }
-                    color = avgColor;
                 }
 
-                r = color >> 16 & 255;
-                g = color >> 8 & 255;
-                b = color & 255;
+                colors.put(i, color);
             }
-
-            dstColors[i * 4 + 0] = (byte) r;
-            dstColors[i * 4 + 1] = (byte) g;
-            dstColors[i * 4 + 2] = (byte) b;
-            dstColors[i * 4 + 3] = (byte) a;
         }
 
-        this.checkImageDataSize(texW, texH);
-        this.pixels.clear();
-        this.pixels.put(dstColors);
-        this.pixels.position(0).limit(dstColors.length);
-        GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA, texW, texH, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, this.pixels);
+        GL11.glTexImage2D(
+            GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA, texW, texH, 0,
+            GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, colors);
+
         if (MIPMAP) {
-            this.generateMipMaps(this.pixels.asIntBuffer(), texW, texH);
+            this.generateMipMaps(colors, texW, texH);
         }
     }
 
@@ -220,12 +215,12 @@ public abstract class MixinTextureManager implements ExTextureManager {
     }
 
     @Override
-    public BufferedImage getTextureImage(String name) throws IOException {
+    public ImageBuffer getTextureImage(String name) throws IOException {
         InputStream stream = this.skins.selected.getResource(name);
         if (stream == null) {
             throw new FileNotFoundException(name);
         }
-        return this.readImage(stream);
+        return ImageLoader.load(stream, 4);
     }
 
     @Overwrite
@@ -259,7 +254,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
                 name = name.substring(6);
             }
 
-            BufferedImage image = null;
+            ImageBuffer image = null;
             if (Minecraft.instance.level != null) {
                 image = ((ExWorld) Minecraft.instance.level).loadMapTexture(name);
             }
@@ -267,21 +262,22 @@ public abstract class MixinTextureManager implements ExTextureManager {
             if (image == null) {
                 InputStream stream = texPack.getResource(name);
                 if (stream == null) {
-                    File file = new File(name);
+                    var file = new File(name);
                     if (file.exists()) {
-                        image = ImageIO.read(file);
+                        image = ImageLoader.load(file, 4);
                     }
                 } else {
-                    image = this.readImage(stream);
+                    image = ImageLoader.load(stream, 4);
                 }
             }
 
             if (image == null) {
-                image = this.missingTex;
+                image = ImageBuffer.from(this.missingTex);
             }
 
             if (originalName.startsWith("##")) {
-                image = this.makeStrip(image);
+                // TODO:
+                // image = this.makeStrip(image);
             }
 
             this.loadTexture(image, id);
@@ -298,38 +294,34 @@ public abstract class MixinTextureManager implements ExTextureManager {
         }
     }
 
-    private int getAverageOpaqueColor(int[] var1) {
-        long var2 = 0L;
-        long var4 = 0L;
-        long var6 = 0L;
-        long var8 = 0L;
+    private int getAverageOpaqueColor(IntBuffer var1) {
+        long totalR = 0L;
+        long totalG = 0L;
+        long totalB = 0L;
+        long colorCount = 0L;
 
-        int var11;
-        int var12;
-        int var13;
-        for (int i : var1) {
-            var11 = i;
-            var12 = var11 >> 24 & 255;
-            if (var12 != 0) {
-                var13 = var11 >> 16 & 255;
-                int var14 = var11 >> 8 & 255;
-                int var15 = var11 & 255;
-                var2 += var13;
-                var4 += var14;
-                var6 += var15;
-                ++var8;
+        int len = var1.limit();
+        for (int i = 0; i < len; i++) {
+            int color = var1.get(i);
+            int a = color >> 24 & 255;
+            if (a != 0) {
+                int r = color & 255;
+                int g = color >> 8 & 255;
+                int b = color >> 16 & 255;
+                totalR += r;
+                totalG += g;
+                totalB += b;
+                ++colorCount;
             }
         }
 
-        if (var8 <= 0L) {
+        if (colorCount <= 0L) {
             return -1;
-        } else {
-            short var16 = 255;
-            var11 = (int) (var2 / var8);
-            var12 = (int) (var4 / var8);
-            var13 = (int) (var6 / var8);
-            return var16 << 24 | var11 << 16 | var12 << 8 | var13;
         }
+        int var11 = (int) (totalR / colorCount);
+        int var12 = (int) (totalG / colorCount);
+        int var13 = (int) (totalB / colorCount);
+        return Rgba.fromRgb8(var13, var12, var11);
     }
 
     private void generateMipMaps(IntBuffer image, int width, int height) {
@@ -638,12 +630,21 @@ public abstract class MixinTextureManager implements ExTextureManager {
     public void updateTextureAnimations() {
         for (AC_TextureAnimated acBinder : this.textureAnimations.values()) {
             var tex = (AC_TextureBinder) acBinder;
+
+            String texName = tex.getTexture();
+            int texId = this.loadTexture(texName);
+            Vec2 texSize = this.getTextureDimensions(texId);
+            if (texSize == null) {
+                throw new IllegalArgumentException("Unknown dimensions for texture id/name: " + texId + "/" + texName);
+            }
+
+            tex.onTick(texSize);
+
             IntBuffer imgBuffer = tex.getBufferAtCurrentFrame();
             if (imgBuffer.limit() == 0) {
                 continue;
             }
 
-            int texId = this.loadTexture(tex.getTexture());
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, texId);
             GL11.glTexSubImage2D(
                 GL11.GL_TEXTURE_2D, 0, acBinder.x, acBinder.y, tex.getWidth(), tex.getHeight(),
