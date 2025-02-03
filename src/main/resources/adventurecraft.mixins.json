@@ -27,6 +27,7 @@
     "client.model.MixinCuboid",
     "client.options.MixinGameOptions",
     "client.particle.MixinParticleManager",
+    "client.particle.MixinRedDustParticle",
     "client.render.MixinClockTexture",
     "client.render.MixinCompassTexture",
     "client.render.MixinFireTextureBinder",
