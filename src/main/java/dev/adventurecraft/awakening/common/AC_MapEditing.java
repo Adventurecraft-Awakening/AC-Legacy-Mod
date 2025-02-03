@@ -1,8 +1,5 @@
 package dev.adventurecraft.awakening.common;
 
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
-
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.client.render.block.ExBlockRenderer;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
@@ -16,10 +13,10 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.HitType;
 import net.minecraft.world.phys.Vec3;
-import org.lwjgl.BufferUtils;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
+import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.glu.GLU;
 
 public class AC_MapEditing {
@@ -49,19 +46,21 @@ public class AC_MapEditing {
 
         int mouseX = Mouse.getX();
         int mouseY = Mouse.getY();
-        IntBuffer viewport = BufferUtils.createIntBuffer(16);
-        FloatBuffer modelMatrix = BufferUtils.createFloatBuffer(16);
-        FloatBuffer projMatrix = BufferUtils.createFloatBuffer(16);
-        FloatBuffer objPos = BufferUtils.createFloatBuffer(3);
-        GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, modelMatrix);
-        GL11.glGetFloat(GL11.GL_PROJECTION_MATRIX, projMatrix);
-        GL11.glGetInteger(GL11.GL_VIEWPORT, viewport);
-        float mouseXf = (float) mouseX;
-        float mouseYf = (float) mouseY;
-        GLU.gluUnProject(mouseXf, mouseYf, 1.0F, modelMatrix, projMatrix, viewport, objPos);
-        Vec3 start = entity.getPos(deltaTime);
-        Vec3 end = start.add(objPos.get(0) * 1024.0F, objPos.get(1) * 1024.0F, objPos.get(2) * 1024.0F);
-        this.cursor = this.world.clip(start, end);
+        try (var stack = MemoryStack.stackPush()) {
+            var viewport = stack.mallocInt(16);
+            var modelMatrix = stack.mallocFloat(16);
+            var projMatrix = stack.mallocFloat(16);
+            var objPos = stack.mallocFloat(3);
+
+            GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, modelMatrix);
+            GL11.glGetFloat(GL11.GL_PROJECTION_MATRIX, projMatrix);
+            GL11.glGetInteger(GL11.GL_VIEWPORT, viewport);
+            GLU.gluUnProject(mouseX, mouseY, 1.0F, modelMatrix, projMatrix, viewport, objPos);
+
+            Vec3 start = entity.getPos(deltaTime);
+            Vec3 end = start.add(objPos.get(0) * 1024.0F, objPos.get(1) * 1024.0F, objPos.get(2) * 1024.0F);
+            this.cursor = this.world.clip(start, end);
+        }
     }
 
     public void paint() {

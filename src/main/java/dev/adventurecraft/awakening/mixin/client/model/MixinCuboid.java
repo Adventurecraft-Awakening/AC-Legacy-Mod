@@ -5,8 +5,11 @@ import dev.adventurecraft.awakening.extension.client.model.ExTexturedQuad;
 import net.minecraft.client.model.Polygon;
 import net.minecraft.client.model.Vertex;
 import net.minecraft.client.model.geom.ModelPart;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.util.vector.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -23,11 +26,39 @@ public abstract class MixinCuboid implements ExCuboid {
     private int xTexOffs;
     @Shadow
     private int yTexOffs;
+
+    @Shadow
+    public float x;
+    @Shadow
+    public float y;
+    @Shadow
+    public float z;
+
+    @Shadow
+    public float yRot;
+    @Shadow
+    public float xRot;
+    @Shadow
+    public float zRot;
+
+    @Shadow
+    private boolean compiled;
+    @Shadow
+    private int list;
     @Shadow
     public boolean mirror;
+    @Shadow
+    public boolean visible;
+    @Shadow
+    public boolean neverRender;
 
+    @Unique
     private int tWidth;
+    @Unique
     private int tHeight;
+
+    @Shadow
+    protected abstract void compile(float scale);
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(int j, int par2, CallbackInfo ci) {
@@ -94,5 +125,34 @@ public abstract class MixinCuboid implements ExCuboid {
     @Override
     public void setTHeight(int value) {
         this.tHeight = value;
+    }
+
+    @Override
+    public void render() {
+        if (this.neverRender) {
+            return;
+        }
+        if (!this.visible) {
+            return;
+        }
+        if (!this.compiled) {
+            this.compile(1F / 16F);
+        }
+        GL11.glCallList(this.list);
+    }
+
+    @Override
+    public void translateTo(Matrix4f matrix) {
+        matrix.translate(this.x, this.y, this.z);
+
+        if (this.zRot != 0.0F) {
+            matrix.rotateZ(this.zRot);
+        }
+        if (this.yRot != 0.0F) {
+            matrix.rotateY(this.yRot);
+        }
+        if (this.xRot != 0.0F) {
+            matrix.rotateX(this.xRot);
+        }
     }
 }

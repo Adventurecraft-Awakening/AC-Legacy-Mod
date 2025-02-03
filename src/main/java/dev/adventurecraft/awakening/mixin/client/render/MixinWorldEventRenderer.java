@@ -56,6 +56,8 @@ import org.lwjgl.opengl.ARBOcclusionQuery;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GLContext;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.util.vector.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -926,9 +928,21 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         ordinal = 0,
         remap = false))
     private void renderScriptModels(Vec3 var1, Culler var2, float partialTick, CallbackInfo ci) {
+        var transform = new Matrix4f();
+
+        try (var stack = MemoryStack.stackPush()) {
+            var matBuf = stack.mallocFloat(16);
+            GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, matBuf);
+            transform.load(matBuf);
+        }
+
+        transform.translate(
+            (float) -EntityRenderDispatcher.xOff,
+            (float) -EntityRenderDispatcher.yOff,
+            (float) -EntityRenderDispatcher.zOff);
+
         GL11.glPushMatrix();
-        GL11.glTranslated(-EntityRenderDispatcher.xOff, -EntityRenderDispatcher.yOff, -EntityRenderDispatcher.zOff);
-        ScriptModelBase.renderAll(partialTick);
+        ScriptModelBase.renderAll(partialTick, transform);
         GL11.glPopMatrix();
     }
 
@@ -1164,7 +1178,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             case "snowshovel" -> new SnowShovelParticle(this.level, x, y, z, vX, vY, vZ);
             case "slime" -> new BreakingItemParticle(this.level, x, y, z, Item.SLIMEBALL);
             case "heart" -> new HeartParticle(this.level, x, y, z, vX, vY, vZ);
-            case "ac_particle" -> new AC_Particle(this.level,x,y,z, vX, vY, vZ);
+            case "ac_particle" -> new AC_Particle(this.level, x, y, z, vX, vY, vZ);
             default -> null;
         };
 

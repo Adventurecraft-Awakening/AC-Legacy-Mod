@@ -1,14 +1,33 @@
 package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.extension.client.model.ExCuboid;
+import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.Textures;
 import net.minecraft.world.level.Level;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.util.vector.Matrix4f;
 
 public class ScriptModelBlockbench extends ScriptModelBase {
+
     float pixelSize = 0.0625f;
+
+    public float prevScaleX;
+    public float prevScaleY;
+    public float prevScaleZ;
+    public float scaleX = 1.0F;
+    public float scaleY = 1.0F;
+    public float scaleZ = 1.0F;
+
+    public float sizeX = 0.0F;
+    public float sizeY = 0.0F;
+    public float sizeZ = 0.0F;
+
+    public float pivotX = 0.0F;
+    public float pivotY = 0.0F;
+    public float pivotZ = 0.0F;
 
     public ScriptModelBlockbench() {
         this.addToRendering();
@@ -21,98 +40,36 @@ public class ScriptModelBlockbench extends ScriptModelBase {
     }
 
     @Override
-    protected void transform(float deltaTime) {
-        super.transform(deltaTime);
+    protected void transform(float partialTick, Matrix4f matrix) {
+        super.transform(partialTick, matrix);
 
-        float invDelta = 1.0F - deltaTime;
-        double x = deltaTime * this.x + invDelta * this.prevX;
-        double y = deltaTime * this.y + invDelta * this.prevY;
-        double z = deltaTime * this.z + invDelta * this.prevZ;
+        float invDelta = 1.0F - partialTick;
+        double x = partialTick * this.x + invDelta * this.prevX;
+        double y = partialTick * this.y + invDelta * this.prevY;
+        double z = partialTick * this.z + invDelta * this.prevZ;
 
+        float pxSize = this.pixelSize;
         // Move Rotation Origin to given pivot
-        GL11.glTranslatef(-this.pivotX * pixelSize, this.pivotY * pixelSize, -this.pivotZ * pixelSize);
+        matrix.translate(-this.pivotX * pxSize, this.pivotY * pxSize, -this.pivotZ * pxSize);
 
-        GL11.glRotatef(-(deltaTime * this.roll + invDelta * this.prevRoll), 0.0F, 0.0F, 1.0F);
-        GL11.glRotatef(-(deltaTime * this.pitch + invDelta * this.prevPitch), 0.0F, 1.0F, 0.0F);
-        GL11.glRotatef((deltaTime * this.yaw + invDelta * this.prevYaw), 1.0F, 0.0F, 0.0F);
+        float deg = MathF.toRadians(partialTick);
+        float invDeg = MathF.toRadians(invDelta);
+        matrix.rotateZ(-(deg * this.roll + invDeg * this.prevRoll));
+        matrix.rotateY(-(deg * this.pitch + invDeg * this.prevPitch));
+        matrix.rotateX(deg * this.yaw + invDeg * this.prevYaw);
 
         // Apply scaling
-        GL11.glScalef(this.scaleX, this.scaleY, this.scaleZ);
+        matrix.scale(this.scaleX, this.scaleY, this.scaleZ);
 
         // Move Object to intended Position
-        GL11.glTranslated(
-            (-x - this.sizeX + this.pivotX) * pixelSize,
-            (y - this.pivotY) * pixelSize,
-            (-z - this.sizeZ + this.pivotZ) * pixelSize);
-    }
-
-    protected void render(float partialTick) {
-        if (boxes.isEmpty()) {
-            return;
-        }
-        Level world = Minecraft.instance.level;
-        Textures var3 = Minecraft.instance.textures;
-        if (this.texture != null && !this.texture.isEmpty()) {
-            var3.bind(var3.loadTexture(this.texture));
-        }
-
-        GL11.glPushMatrix();
-
-        // Initial transformation
-        this.transform(partialTick);
-
-        // Adjust lighting modes
-        switch (this.modes) {
-            case 1:
-                // Using the position of the attached entity
-                if (this.attachedTo != null) {
-                    setBrightness(this.attachedTo.entity.getBrightness(partialTick));
-                }
-                break;
-            case 2:
-                // Usage for custom RGB Values
-                break;
-            case 3:
-                // Use the lighting value of the attached model
-                if (this.modelAttachment != null) {
-                    this.colorRed = this.modelAttachment.colorRed;
-                    this.colorGreen = this.modelAttachment.colorGreen;
-                    this.colorBlue = this.modelAttachment.colorBlue;
-                }
-                break;
-            default:
-                setBrightness(1);
-                break;
-        }
-
-        // Handle alpha blending
-        if (colorAlpha < 1.0) {
-            GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-            GL11.glEnable(GL11.GL_BLEND);
-        } else {
-            GL11.glDisable(GL11.GL_BLEND);
-        }
-
-        // Set color with alpha
-        GL11.glColor4f(colorRed, colorGreen, colorBlue, colorAlpha);
-
-        // Render each cuboid
-        for (ModelPart cuboid : this.boxes) {
-            cuboid.render(1.0F / 16.0F);
-        }
-
-        GL11.glPopMatrix();
+        matrix.translate(
+            (float) (-x - this.sizeX + this.pivotX) * pxSize,
+            (float) (y - this.pivotY) * pxSize,
+            (float) (-z - this.sizeZ + this.pivotZ) * pxSize);
     }
 
     @Override
     protected void update() {
-        this.prevX = this.x;
-        this.prevY = this.y;
-        this.prevZ = this.z;
-        this.prevRoll = this.roll;
-        this.prevPitch = this.pitch;
-        this.prevYaw = this.yaw;
-
         this.prevScaleX = this.scaleX;
         this.prevScaleY = this.scaleY;
         this.prevScaleZ = this.scaleZ;
@@ -128,26 +85,6 @@ public class ScriptModelBlockbench extends ScriptModelBase {
         ((ExCuboid) cuboid).setTHeight(this.textureHeight);
         ((ExCuboid) cuboid).addBoxInverted(0, 0, 0, width, height, length, 0.0F);
         this.boxes.add(cuboid);
-    }
-
-    public void setBrightness(float brightness) {
-        this.colorRed = this.colorGreen = this.colorBlue = brightness;
-    }
-
-    public void setPosition(double x, double y, double z) {
-        this.prevX = this.x = x;
-        this.prevY = this.y = y;
-        this.prevZ = this.z = z;
-    }
-
-    public void setPosition(ScriptVec3 vec) {
-        this.prevX = this.x = vec.x;
-        this.prevY = this.y = vec.y;
-        this.prevZ = this.z = vec.z;
-    }
-
-    public ScriptVec3 getPosition() {
-        return new ScriptVec3(x, y, z);
     }
 
     public void setRotation(float yaw, float pitch, float roll) {
@@ -166,16 +103,16 @@ public class ScriptModelBlockbench extends ScriptModelBase {
         return new ScriptVec3(-this.yaw, -this.pitch, this.roll);
     }
 
-    public void setScale(float scaleX, float scaleY, float scaleZ) {
-        this.scaleX = scaleX;
-        this.scaleY = scaleY;
-        this.scaleZ = scaleZ;
-    }
-
     public void scaleBy(float factorX, float factorY, float factorZ) {
         this.scaleX += factorX;
         this.scaleY += factorY;
         this.scaleZ += factorZ;
+    }
+
+    public void setScale(float scaleX, float scaleY, float scaleZ) {
+        this.scaleX = scaleX;
+        this.scaleY = scaleY;
+        this.scaleZ = scaleZ;
     }
 
     public ScriptVec3 getScale() {
@@ -206,14 +143,6 @@ public class ScriptModelBlockbench extends ScriptModelBase {
 
     public ScriptVec3 getPivot() {
         return new ScriptVec3(this.pivotX, this.pivotY, this.pivotZ);
-    }
-
-    public void setAlpha(float alpha) {
-        this.colorAlpha = alpha;
-    }
-
-    public float getAlpha() {
-        return this.colorAlpha;
     }
 }
 

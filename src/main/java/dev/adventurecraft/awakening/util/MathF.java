@@ -2,7 +2,8 @@ package dev.adventurecraft.awakening.util;
 
 public final class MathF {
 
-    private static final double DEGREES_TO_RADIANS = 0.017453292519943295;
+    private static final double DEGREES_TO_RADIANS = Math.PI / 180.0;
+    private static final double RADIANS_TO_DEGREES = 180.0 / Math.PI;
 
     public static float cubicInterpolation(float mu, float y0, float y1, float y2, float y3) {
         float mu2 = mu * mu;
@@ -34,5 +35,9 @@ public final class MathF {
 
     public static float toRadians(float degrees) {
         return degrees * (float) DEGREES_TO_RADIANS;
+    }
+
+    public static float toRadians(double degrees) {
+        return (float) (degrees * DEGREES_TO_RADIANS);
     }
 }

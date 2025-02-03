@@ -11,13 +11,11 @@ import net.minecraft.locale.I18n;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
-import org.lwjgl.BufferUtils;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.glu.GLU;
 
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 import java.util.ArrayList;
 
 @Environment(value = EnvType.CLIENT)
@@ -25,11 +23,6 @@ public abstract class ScrollableContainerScreen extends Screen {
 
     public final ScrollableContainer container;
     public final int rowsPerPage;
-
-    private final IntBuffer viewportBuf = BufferUtils.createIntBuffer(16);
-    private final FloatBuffer modelViewMatrixBuf = BufferUtils.createFloatBuffer(16);
-    private final FloatBuffer projMatrixBuf = BufferUtils.createFloatBuffer(16);
-    private final FloatBuffer objPosBuf = BufferUtils.createFloatBuffer(3);
 
     private final ItemRenderer itemRenderer = new ItemRenderer();
     protected int containerWidth = 176;
@@ -92,17 +85,28 @@ public abstract class ScrollableContainerScreen extends Screen {
 
         GL11.glEnable(GL11.GL_SCISSOR_TEST);
 
-        GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, modelViewMatrixBuf);
-        GL11.glGetFloat(GL11.GL_PROJECTION_MATRIX, projMatrixBuf);
-        GL11.glGetInteger(GL11.GL_VIEWPORT, viewportBuf);
+        float sx;
+        float sy;
+        float sx2;
+        float sy2;
+        try (var stack = MemoryStack.stackPush()) {
+            var viewport = stack.mallocInt(16);
+            var modelViewMatrix = stack.mallocFloat(16);
+            var projMatrix = stack.mallocFloat(16);
+            var objPos = stack.mallocFloat(3);
 
-        GLU.gluProject(0, 0, 1.0F, modelViewMatrixBuf, projMatrixBuf, viewportBuf, objPosBuf);
-        float sx = objPosBuf.get(0);
-        float sy = objPosBuf.get(1);
+            GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, modelViewMatrix);
+            GL11.glGetFloat(GL11.GL_PROJECTION_MATRIX, projMatrix);
+            GL11.glGetInteger(GL11.GL_VIEWPORT, viewport);
 
-        GLU.gluProject(1, 1, 1.0F, modelViewMatrixBuf, projMatrixBuf, viewportBuf, objPosBuf);
-        float sx2 = objPosBuf.get(0);
-        float sy2 = objPosBuf.get(1);
+            GLU.gluProject(0, 0, 1.0F, modelViewMatrix, projMatrix, viewport, objPos);
+            sx = objPos.get(0);
+            sy = objPos.get(1);
+
+            GLU.gluProject(1, 1, 1.0F, modelViewMatrix, projMatrix, viewport, objPos);
+            sx2 = objPos.get(0);
+            sy2 = objPos.get(1);
+        }
 
         double sxf = Math.abs(sx2 - sx);
         double syf = Math.abs(sy2 - sy);
@@ -273,16 +277,7 @@ public abstract class ScrollableContainerScreen extends Screen {
     @Environment(value = EnvType.CLIENT)
     public class ItemList extends ScrollableWidget {
 
-        class Row {
-            public final int rowIndex;
-            public final int rowY;
-            public final ArrayList<Slot> slots;
-
-            public Row(int rowIndex, int rowY, ArrayList<Slot> slots) {
-                this.rowIndex = rowIndex;
-                this.rowY = rowY;
-                this.slots = slots;
-            }
+        record Row(int rowIndex, int rowY, ArrayList<Slot> slots) {
         }
 
         private final ArrayList<Row> rows = new ArrayList<>();
