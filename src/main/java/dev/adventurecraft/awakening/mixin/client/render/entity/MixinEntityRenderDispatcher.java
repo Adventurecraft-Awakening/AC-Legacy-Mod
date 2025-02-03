@@ -1,13 +1,13 @@
 package dev.adventurecraft.awakening.mixin.client.render.entity;
 
 import dev.adventurecraft.awakening.common.*;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.HashMap;
 import java.util.Map;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.SkeletonModel;
@@ -19,11 +19,11 @@ import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 public abstract class MixinEntityRenderDispatcher {
 
     @Shadow
-    private Map<Class<?>, EntityRenderer> renderers;
+    private Map<Class<?>, EntityRenderer> renderers = new Object2ObjectOpenHashMap<>(32);
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(CallbackInfo ci) {
-        HashMap<Class<?>, EntityRenderer> map = new HashMap<>();
+        Map<Class<?>, EntityRenderer> map = new Object2ObjectOpenHashMap<>();
         map.put(AC_EntitySkeletonBoss.class, new RenderBipedScaled(new SkeletonModel(), 0.5F, 2.5F));
         map.put(AC_EntityBoomerang.class, new AC_RenderBoomerang());
         map.put(AC_EntityHookshot.class, new AC_RenderHookshot());

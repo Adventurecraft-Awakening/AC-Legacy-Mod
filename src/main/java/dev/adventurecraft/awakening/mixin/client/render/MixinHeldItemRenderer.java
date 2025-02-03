@@ -315,37 +315,34 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
     }
 
     @Override
-    public void renderItemInFirstPerson(float var1, float var2, float var3) {
-        float var4 = this.oHeight + (this.height - this.oHeight) * var1;
+    public void renderItemInFirstPerson(float partialTick, float prog1, float prog2) {
+        float var4 = this.oHeight + (this.height - this.oHeight) * partialTick;
         LocalPlayer var5 = this.mc.player;
-        float var6 = var5.xRotO + (var5.xRot - var5.xRotO) * var1;
+        float var6 = var5.xRotO + (var5.xRot - var5.xRotO) * partialTick;
         GL11.glPushMatrix();
         GL11.glRotatef(var6, 1.0F, 0.0F, 0.0F);
-        GL11.glRotatef(var5.yRotO + (var5.yRot - var5.yRotO) * var1, 0.0F, 1.0F, 0.0F);
+        GL11.glRotatef(var5.yRotO + (var5.yRot - var5.yRotO) * partialTick, 0.0F, 1.0F, 0.0F);
         Lighting.turnOn();
         GL11.glPopMatrix();
-        ItemInstance var7 = this.selectedItem;
-        float var8 = this.mc.level.getBrightness(Mth.floor(var5.x), Mth.floor(var5.y), Mth.floor(var5.z));
-        float var10;
-        float var11;
-        float var12;
-        if (var7 != null && Item.items[var7.id] != null) {
-            int var9 = Item.items[var7.id].getItemColor(var7.getAuxValue());
-            var10 = (float) (var9 >> 16 & 255) / 255.0F;
-            var11 = (float) (var9 >> 8 & 255) / 255.0F;
-            var12 = (float) (var9 & 255) / 255.0F;
-            GL11.glColor4f(var8 * var10, var8 * var11, var8 * var12, 1.0F);
+
+        ItemInstance item = this.selectedItem;
+        float var8 = var5.getBrightness(partialTick);
+        if (item != null && Item.items[item.id] != null) {
+            int var9 = Item.items[item.id].getItemColor(item.getAuxValue());
+            float r = (float) (var9 >> 16 & 255) / 255.0F;
+            float g = (float) (var9 >> 8 & 255) / 255.0F;
+            float b = (float) (var9 & 255) / 255.0F;
+            GL11.glColor4f(var8 * r, var8 * g, var8 * b, 1.0F);
         } else {
             GL11.glColor4f(var8, var8, var8, 1.0F);
         }
 
-        float var17;
-        if (var7 != null && var7.id == Item.MAP.id) {
+        if (item != null && item.id == Item.MAP.id) {
             GL11.glPushMatrix();
-            var17 = 0.8F;
-            var10 = var5.getAttackAnim(var1);
-            var11 = Mth.sin(var10 * 3.141593F);
-            var12 = Mth.sin(Mth.sqrt(var10) * 3.141593F);
+            float var17 = 0.8F;
+            float var10 = var5.getAttackAnim(partialTick);
+            float var11 = Mth.sin(var10 * 3.141593F);
+            float var12 = Mth.sin(Mth.sqrt(var10) * 3.141593F);
             GL11.glTranslatef(-var12 * 0.4F, Mth.sin(Mth.sqrt(var10) * 3.141593F * 2.0F) * 0.2F, -var11 * 0.2F);
             var10 = 1.0F - var6 / 45.0F + 0.1F;
             if (var10 < 0.0F) {
@@ -371,15 +368,15 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
                 GL11.glRotatef(-90.0F, 0.0F, 0.0F, 1.0F);
                 GL11.glRotatef(59.0F, 0.0F, 0.0F, 1.0F);
                 GL11.glRotatef(-65.0F * var12, 0.0F, 1.0F, 0.0F);
-                EntityRenderer var19 = EntityRenderDispatcher.INSTANCE.getRenderer(this.mc.player);
-                PlayerRenderer var14 = (PlayerRenderer) var19;
+                var var19 = EntityRenderDispatcher.INSTANCE.getRenderer(this.mc.player);
+                var var14 = (PlayerRenderer) var19;
                 float var15 = 1.0F;
                 GL11.glScalef(var15, var15, var15);
                 var14.renderHand();
                 GL11.glPopMatrix();
             }
 
-            var11 = var5.getAttackAnim(var1);
+            var11 = var5.getAttackAnim(partialTick);
             var12 = Mth.sin(var11 * var11 * 3.141593F);
             float var20 = Mth.sin(Mth.sqrt(var11) * 3.141593F);
             GL11.glRotatef(-var12 * 20.0F, 0.0F, 1.0F, 0.0F);
@@ -393,7 +390,7 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
             var12 = 0.015625F;
             GL11.glScalef(var12, var12, var12);
             this.mc.textures.bind(this.mc.textures.loadTexture("/misc/mapbg.png"));
-            Tesselator var21 = Tesselator.instance;
+            var var21 = Tesselator.instance;
             GL11.glNormal3f(0.0F, 0.0F, -1.0F);
             var21.begin();
             byte var22 = 7;
@@ -402,45 +399,43 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
             var21.vertexUV(128 + var22, 0 - var22, 0.0D, 1.0D, 0.0D);
             var21.vertexUV(0 - var22, 0 - var22, 0.0D, 0.0D, 0.0D);
             var21.end();
-            MapItemSavedData var16 = Item.MAP.getMapSaveData(var7, this.mc.level);
+            MapItemSavedData var16 = Item.MAP.getMapSaveData(item, this.mc.level);
             this.mapRenderer.render(this.mc.player, this.mc.textures, var16);
             GL11.glPopMatrix();
         } else {
-            PlayerRenderer var13;
-            EntityRenderer var18;
-            if (var7 != null) {
-                if (var7.id != AC_Items.woodenShield.id && var7.id != AC_Items.powerGlove.id) {
+            if (item != null) {
+                if (item.id != AC_Items.woodenShield.id && item.id != AC_Items.powerGlove.id) {
                     GL11.glPushMatrix();
-                    var17 = 0.8F;
-                    var10 = Mth.sin(var2 * 3.141593F);
-                    var11 = Mth.sin(Mth.sqrt(var2) * 3.141593F);
-                    GL11.glTranslatef(-var11 * 0.4F, Mth.sin(Mth.sqrt(var2) * 3.141593F * 2.0F) * 0.2F, -var10 * 0.2F);
+                    float var17 = 0.8F;
+                    float var10 = Mth.sin(prog1 * 3.141593F);
+                    float var11 = Mth.sin(Mth.sqrt(prog1) * 3.141593F);
+                    GL11.glTranslatef(-var11 * 0.4F, Mth.sin(Mth.sqrt(prog1) * 3.141593F * 2.0F) * 0.2F, -var10 * 0.2F);
                     GL11.glTranslatef(0.7F * var17, -0.65F * var17 - (1.0F - var4) * 0.6F, -0.9F * var17);
                     GL11.glRotatef(45.0F, 0.0F, 1.0F, 0.0F);
                     GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-                    var10 = Mth.sin(var2 * var2 * 3.141593F);
-                    var11 = Mth.sin(Mth.sqrt(var2) * 3.141593F);
+                    var10 = Mth.sin(prog1 * prog1 * 3.141593F);
+                    var11 = Mth.sin(Mth.sqrt(prog1) * 3.141593F);
                     GL11.glRotatef(-var10 * 20.0F, 0.0F, 1.0F, 0.0F);
                     GL11.glRotatef(-var11 * 20.0F, 0.0F, 0.0F, 1.0F);
                     GL11.glRotatef(-var11 * 80.0F, 1.0F, 0.0F, 0.0F);
                     GL11.glScalef(0.4F, 0.4F, 0.4F);
-                    if (var7.getItem().isMirroredArt()) {
+                    if (item.getItem().isMirroredArt()) {
                         GL11.glRotatef(180.0F, 0.0F, 1.0F, 0.0F);
                     }
 
-                    this.renderItem(var5, var7);
+                    this.renderItem(var5, item);
                     GL11.glPopMatrix();
-                } else if (var7.id == AC_Items.powerGlove.id) {
+                } else if (item.id == AC_Items.powerGlove.id) {
                     GL11.glPushMatrix();
-                    var17 = 0.8F;
-                    var10 = Mth.sin(var2 * 3.141593F);
-                    var11 = Mth.sin(Mth.sqrt(var2) * 3.141593F);
-                    GL11.glTranslatef(-var11 * 0.3F, Mth.sin(Mth.sqrt(var2) * 3.141593F * 2.0F) * 0.4F, -var10 * 0.4F);
+                    float var17 = 0.8F;
+                    float var10 = Mth.sin(prog1 * 3.141593F);
+                    float var11 = Mth.sin(Mth.sqrt(prog1) * 3.141593F);
+                    GL11.glTranslatef(-var11 * 0.3F, Mth.sin(Mth.sqrt(prog1) * 3.141593F * 2.0F) * 0.4F, -var10 * 0.4F);
                     GL11.glTranslatef(0.8F * var17, -(12.0F / 16.0F) * var17 - (1.0F - var4) * 0.6F, -0.9F * var17);
                     GL11.glRotatef(45.0F, 0.0F, 1.0F, 0.0F);
                     GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-                    var10 = Mth.sin(var2 * var2 * 3.141593F);
-                    var11 = Mth.sin(Mth.sqrt(var2) * 3.141593F);
+                    var10 = Mth.sin(prog1 * prog1 * 3.141593F);
+                    var11 = Mth.sin(Mth.sqrt(prog1) * 3.141593F);
                     GL11.glRotatef(var11 * 70.0F, 0.0F, 1.0F, 0.0F);
                     GL11.glRotatef(-var10 * 20.0F, 0.0F, 0.0F, 1.0F);
                     GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.textures.loadHttpTexture(this.mc.player.customTextureUrl, this.mc.player.getTexture()));
@@ -450,8 +445,8 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
                     GL11.glRotatef(-135.0F, 0.0F, 1.0F, 0.0F);
                     GL11.glScalef(1.0F, 1.0F, 1.0F);
                     GL11.glTranslatef(5.6F, 0.0F, 0.0F);
-                    var18 = EntityRenderDispatcher.INSTANCE.getRenderer(this.mc.player);
-                    var13 = (PlayerRenderer) var18;
+                    var var18 = EntityRenderDispatcher.INSTANCE.getRenderer(this.mc.player);
+                    var var13 = (PlayerRenderer) var18;
                     var13.renderHand();
                     GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.textures.loadTexture("/mob/powerGlove.png"));
                     this.refBiped.attackTime = 0.0F;
@@ -472,19 +467,19 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
                     this.powerGloveRuby.render(1.0F / 16.0F);
                     GL11.glPopMatrix();
                 } else {
-                    this.renderShield(var1, var2, var3);
+                    this.renderShield(item, partialTick, prog1, prog2);
                 }
             } else {
                 GL11.glPushMatrix();
-                var17 = 0.8F;
-                var10 = Mth.sin(var2 * 3.141593F);
-                var11 = Mth.sin(Mth.sqrt(var2) * 3.141593F);
-                GL11.glTranslatef(-var11 * 0.3F, Mth.sin(Mth.sqrt(var2) * 3.141593F * 2.0F) * 0.4F, -var10 * 0.4F);
+                float var17 = 0.8F;
+                float var10 = Mth.sin(prog1 * 3.141593F);
+                float var11 = Mth.sin(Mth.sqrt(prog1) * 3.141593F);
+                GL11.glTranslatef(-var11 * 0.3F, Mth.sin(Mth.sqrt(prog1) * 3.141593F * 2.0F) * 0.4F, -var10 * 0.4F);
                 GL11.glTranslatef(0.8F * var17, -(12.0F / 16.0F) * var17 - (1.0F - var4) * 0.6F, -0.9F * var17);
                 GL11.glRotatef(45.0F, 0.0F, 1.0F, 0.0F);
                 GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-                var10 = Mth.sin(var2 * var2 * 3.141593F);
-                var11 = Mth.sin(Mth.sqrt(var2) * 3.141593F);
+                var10 = Mth.sin(prog1 * prog1 * 3.141593F);
+                var11 = Mth.sin(Mth.sqrt(prog1) * 3.141593F);
                 GL11.glRotatef(var11 * 70.0F, 0.0F, 1.0F, 0.0F);
                 GL11.glRotatef(-var10 * 20.0F, 0.0F, 0.0F, 1.0F);
                 GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.textures.loadHttpTexture(this.mc.player.customTextureUrl, this.mc.player.getTexture()));
@@ -494,8 +489,8 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
                 GL11.glRotatef(-135.0F, 0.0F, 1.0F, 0.0F);
                 GL11.glScalef(1.0F, 1.0F, 1.0F);
                 GL11.glTranslatef(5.6F, 0.0F, 0.0F);
-                var18 = EntityRenderDispatcher.INSTANCE.getRenderer(this.mc.player);
-                var13 = (PlayerRenderer) var18;
+                var var18 = EntityRenderDispatcher.INSTANCE.getRenderer(this.mc.player);
+                var var13 = (PlayerRenderer) var18;
                 var13.renderHand();
                 GL11.glPopMatrix();
             }
@@ -505,25 +500,23 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
         Lighting.turnOff();
     }
 
-    private void renderShield(float var1, float var2, float var3) {
-        float var4 = this.oHeight + (this.height - this.oHeight) * var1;
+    private void renderShield(ItemInstance item, float partialTick, float prog1, float prog2) {
+        float var4 = this.oHeight + (this.height - this.oHeight) * partialTick;
         LocalPlayer var5 = this.mc.player;
-        float var6 = this.mc.level.getBrightness(Mth.floor(var5.x), Mth.floor(var5.y), Mth.floor(var5.z));
+        float var6 = var5.getBrightness(partialTick);
         GL11.glColor4f(var6, var6, var6, 1.0F);
-        ItemInstance var7 = new ItemInstance(AC_Items.woodenShield);
+
         GL11.glPushMatrix();
         float var8 = 0.8F;
-        float var9;
-        float var10;
-        if (var3 == 0.0F) {
-            var9 = Mth.sin(var2 * 3.141593F);
-            var10 = Mth.sin(Mth.sqrt(var2) * 3.141593F);
-            GL11.glTranslatef(-var10 * 0.4F, Mth.sin(Mth.sqrt(var2) * 3.141593F * 2.0F) * 0.2F, -var9 * 0.2F);
+        if (prog2 == 0.0F) {
+            float var9 = Mth.sin(prog1 * 3.141593F);
+            float var10 = Mth.sin(Mth.sqrt(prog1) * 3.141593F);
+            GL11.glTranslatef(-var10 * 0.4F, Mth.sin(Mth.sqrt(prog1) * 3.141593F * 2.0F) * 0.2F, -var9 * 0.2F);
             GL11.glTranslatef(1.0F, -0.65F * var8 - (1.0F - var4) * 0.6F, -0.9F * var8);
         } else {
-            var9 = Mth.sin(var3 * 3.141593F);
-            var10 = Mth.sin(Mth.sqrt(var3) * 3.141593F);
-            GL11.glTranslatef(var10 * 0.4F, Mth.sin(Mth.sqrt(var3) * 3.141593F * 2.0F) * 0.2F, -var9 * 0.2F);
+            float var9 = Mth.sin(prog2 * 3.141593F);
+            float var10 = Mth.sin(Mth.sqrt(prog2) * 3.141593F);
+            GL11.glTranslatef(var10 * 0.4F, Mth.sin(Mth.sqrt(prog2) * 3.141593F * 2.0F) * 0.2F, -var9 * 0.2F);
             GL11.glTranslatef(1.0F, -0.65F * var8 - (1.0F - var4) * 0.6F, -0.9F * var8);
             GL11.glRotatef(-90.0F * var9, 0.0F, 1.0F, 0.0F);
         }
@@ -531,7 +524,7 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
         GL11.glEnable(GL12.GL_RESCALE_NORMAL);
         GL11.glScalef(0.6F, 0.6F, 0.6F);
         this.itemRotate = false;
-        this.renderItem(var5, var7);
+        this.renderItem(var5, item);
         this.itemRotate = true;
         GL11.glPopMatrix();
     }

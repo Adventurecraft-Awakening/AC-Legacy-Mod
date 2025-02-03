@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.mixin.util.io;
 
 import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntTag;
@@ -21,7 +22,7 @@ import java.util.Set;
 public abstract class MixinCompoundTag implements ExCompoundTag {
 
     @Shadow
-    private Map<String, Tag> entries;
+    private Map<String, Tag> entries = new Object2ObjectOpenHashMap<>(4);
 
     @Shadow
     public abstract void putByte(String var1, byte var2);

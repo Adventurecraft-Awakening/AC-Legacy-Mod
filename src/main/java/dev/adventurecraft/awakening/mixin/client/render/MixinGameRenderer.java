@@ -5,7 +5,6 @@ import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.client.options.Config;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
-import dev.adventurecraft.awakening.extension.client.gui.screen.ExScreen;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.render.ExGameRenderer;
 import dev.adventurecraft.awakening.extension.client.render.ExHeldItemRenderer;
@@ -929,16 +928,16 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
     @Redirect(method = "renderItemInHand", at = @At(
         value = "INVOKE",
         target = "Lnet/minecraft/client/renderer/ItemInHandRenderer;render(F)V"))
-    private void renderBothHands(ItemInHandRenderer instance, float v) {
-        float prog1 = this.mc.player.getAttackAnim(v);
-        float prog2 = ((ExPlayerEntity) this.mc.player).getSwingOffhandProgress(v);
+    private void renderBothHands(ItemInHandRenderer instance, float partialTick) {
+        float prog1 = this.mc.player.getAttackAnim(partialTick);
+        float prog2 = ((ExPlayerEntity) this.mc.player).getSwingOffhandProgress(partialTick);
 
-        ((ExHeldItemRenderer) this.itemInHandRenderer).renderItemInFirstPerson(v, prog1, prog2);
+        ((ExHeldItemRenderer) this.itemInHandRenderer).renderItemInFirstPerson(partialTick, prog1, prog2);
 
         if (((ExHeldItemRenderer) this.offHandItemRenderer).hasItem()) {
             GL11.glScalef(-1.0F, 1.0F, 1.0F);
             GL11.glFrontFace(GL11.GL_CW);
-            ((ExHeldItemRenderer) this.offHandItemRenderer).renderItemInFirstPerson(v, prog2, prog1);
+            ((ExHeldItemRenderer) this.offHandItemRenderer).renderItemInFirstPerson(partialTick, prog2, prog1);
             GL11.glFrontFace(GL11.GL_CCW);
         }
     }
