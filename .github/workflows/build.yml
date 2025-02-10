@@ -11,12 +11,10 @@ jobs:
     strategy:
       matrix:
         # Use these Java versions
-        java: [
-          21,    # LTS & minimum supported by Minecraft
-        ]
+        java: [23]
         os: [ubuntu-latest]
         include:
-          - java: 21
+          - java: 23
             os: ubuntu-latest
             artifacts: true
         
@@ -24,16 +22,16 @@ jobs:
     
     steps:
       - name: checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         
       - name: validate gradle wrapper
-        uses: gradle/wrapper-validation-action@v1
+        uses: gradle/actions/wrapper-validation@v3
         
       - name: setup jdk ${{ matrix.java }}
         uses: actions/setup-java@v4
         with:
           java-version: ${{ matrix.java }}
-          distribution: 'microsoft'
+          distribution: 'temurin'
           cache: 'gradle'
           
       - name: make gradle wrapper executable
@@ -45,7 +43,7 @@ jobs:
       
       - name: capture build artifacts
         if: ${{ matrix.artifacts }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Artifacts
           path: build/libs/

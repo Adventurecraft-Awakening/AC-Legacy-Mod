@@ -25,7 +25,7 @@ public final class ImageResizer {
                 dstH * (dstByteStride == 0 ? dstW * dstPxSize : dstByteStride));
         }
 
-        return STBImageResize.nstbir_resize_uint8(
+        return STBImageResize.nstbir_resize_uint8_linear(
             MemoryUtil.memAddress(src), srcW, srcH, srcByteStride,
             MemoryUtil.memAddress(dst), dstW, dstH, dstByteStride, channels) != 0;
     }
