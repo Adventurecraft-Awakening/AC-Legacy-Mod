@@ -70,6 +70,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.io.*;
 import java.util.*;
+import java.util.random.RandomGenerator;
 
 @Mixin(Level.class)
 public abstract class MixinWorld implements ExWorld, LevelSource {
@@ -307,10 +308,10 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         this.players = new ArrayList<>();
         this.globalEntities = new ArrayList<>();
         this.cloudColor = 16777215L;
-        this.randValue = (new Random()).nextInt();
+        this.random = Random.from(RandomGenerator.of("Xoroshiro128PlusPlus"));
+        this.randValue = random.nextInt();
         this.sessionId = System.currentTimeMillis();
         this.saveInterval = 40;
-        this.random = new Random();
         this.listeners = new ArrayList<>();
         this.boxes = new ArrayList<>();
         this.spawnEnemies = true;
