@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.util.HashCode;
 import dev.adventurecraft.awakening.common.AC_Blocks;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
@@ -11,9 +12,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.random.RandomGenerator;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -84,7 +85,7 @@ public abstract class MixinEntity implements ExEntity {
     @Shadow
     public int nextStep;
     @Shadow
-    protected Random random;
+    protected Random random = Random.from(RandomGenerator.of("Xoroshiro128PlusPlus"));;
     @Shadow
     public int flameTime;
     @Shadow
@@ -103,7 +104,7 @@ public abstract class MixinEntity implements ExEntity {
     private int cachedBrightnessKey = -1;
     private float cachedBrightness;
 
-    protected Map<String, String> customData = new HashMap<>();
+    protected final Map<String, String> customData = new Object2ObjectOpenHashMap<>();
 
     @Shadow
     protected abstract void causeFallDamage(float f);
