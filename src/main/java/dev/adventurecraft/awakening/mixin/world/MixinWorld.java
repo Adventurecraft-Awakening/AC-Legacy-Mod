@@ -367,14 +367,14 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         if (newProps) {
             this.setInitialSpawn();
             this.isFindingSpawn = true;
-            int var11 = 0;
 
-            int var12;
-            for (var12 = 0; !this.dimension.isValidSpawn(var11, var12); var12 += this.random.nextInt(64) - this.random.nextInt(64)) {
-                var11 += this.random.nextInt(64) - this.random.nextInt(64);
+            int x = 0;
+            int y;
+            for (y = 0; !this.dimension.isValidSpawn(x, y); y += this.random.nextInt(64) - this.random.nextInt(64)) {
+                x += this.random.nextInt(64) - this.random.nextInt(64);
             }
 
-            this.levelData.setSpawnXYZ(var11, this.getTopTile(var11, var12), var12);
+            this.levelData.setSpawnXYZ(x, this.getTopTile(x, y), y);
             this.isFindingSpawn = false;
         }
 
@@ -634,21 +634,24 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         if (this.dimension.hasCeiling && lightType == LightLayer.SKY) {
             return;
         }
-        if (this.hasChunkAt(x, y, z)) {
-            if (lightType == LightLayer.SKY) {
-                if (this.isSkyLit(x, y, z)) {
-                    value = 15;
-                }
-            } else if (lightType == LightLayer.BLOCK) {
-                int var6 = this.getTile(x, y, z);
-                if (Tile.tiles[var6] != null && ((ExBlock) Tile.tiles[var6]).getBlockLightValue(this, x, y, z) < value) {
-                    value = ((ExBlock) Tile.tiles[var6]).getBlockLightValue(this, x, y, z);
-                }
-            }
 
-            if (this.getBrightness(lightType, x, y, z) != value) {
-                this.updateLight(lightType, x, y, z, x, y, z);
+        if (!this.hasChunkAt(x, y, z)) {
+            return;
+        }
+
+        if (lightType == LightLayer.SKY) {
+            if (this.isSkyLit(x, y, z)) {
+                value = 15;
             }
+        } else if (lightType == LightLayer.BLOCK) {
+            int id = this.getTile(x, y, z);
+            if (Tile.tiles[id] != null && ((ExBlock) Tile.tiles[id]).getBlockLightValue(this, x, y, z) < value) {
+                value = ((ExBlock) Tile.tiles[id]).getBlockLightValue(this, x, y, z);
+            }
+        }
+
+        if (this.getBrightness(lightType, x, y, z) != value) {
+            this.updateLight(lightType, x, y, z, x, y, z);
         }
     }
 
@@ -659,11 +662,11 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         return (float) var4 < var5 ? Math.min(var5, 15.0F) : (float) var4;
     }
 
-    private float getBrightnessLevel(float var1) {
-        int var2 = (int) Math.floor(var1);
-        if ((float) var2 != var1) {
-            int var3 = (int) Math.ceil(var1);
-            float var4 = var1 - (float) var2;
+    private float getBrightnessLevel(float value) {
+        int var2 = (int) Math.floor(value);
+        if ((float) var2 != value) {
+            int var3 = (int) Math.ceil(value);
+            float var4 = value - (float) var2;
             return (1.0F - var4) * this.dimension.brightnessRamp[var2] + var4 * this.dimension.brightnessRamp[var3];
         } else {
             return this.dimension.brightnessRamp[var2];
@@ -672,19 +675,19 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
 
     @Environment(EnvType.CLIENT)
     @Overwrite
-    public float getBrightness(int x, int y, int z, int var4) {
-        float var5 = this.getLightValue(x, y, z);
-        if (var5 < (float) var4) {
-            var5 = (float) var4;
+    public float getBrightness(int x, int y, int z, int max) {
+        float value = this.getLightValue(x, y, z);
+        if (value < (float) max) {
+            value = (float) max;
         }
 
-        return this.getBrightnessLevel(var5);
+        return this.getBrightnessLevel(value);
     }
 
     @Overwrite
     public float getBrightness(int x, int y, int z) {
-        float var4 = this.getLightValue(x, y, z);
-        return this.getBrightnessLevel(var4);
+        float value = this.getLightValue(x, y, z);
+        return this.getBrightnessLevel(value);
     }
 
     public float getDayLight() {
@@ -698,7 +701,8 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     }
 
     @Override
-    public HitResult rayTraceBlocks2(Vec3 pointA, Vec3 pointB, boolean blockCollidableFlag, boolean useCollisionShapes, boolean collideWithClip) {
+    public HitResult rayTraceBlocks2(
+        Vec3 pointA, Vec3 pointB, boolean blockCollidableFlag, boolean useCollisionShapes, boolean collideWithClip) {
         if (Double.isNaN(pointA.x) || Double.isNaN(pointA.y) || Double.isNaN(pointA.z)) {
             return null;
         }
@@ -737,7 +741,8 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     }
 
     @Override
-    public HitResult rayTraceBlocksCore(Vec3 pointA, Vec3 pointB, boolean blockCollidableFlag, boolean useCollisionShapes, boolean collideWithClip) {
+    public HitResult rayTraceBlocksCore(
+        Vec3 pointA, Vec3 pointB, boolean blockCollidableFlag, boolean useCollisionShapes, boolean collideWithClip) {
         int bX = Mth.floor(pointB.x);
         int bY = Mth.floor(pointB.y);
         int bZ = Mth.floor(pointB.z);
@@ -887,10 +892,12 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         return null;
     }
 
-    @Redirect(method = "addEntity", at = @At(
-        value = "INVOKE",
-        target = "Ljava/util/List;add(Ljava/lang/Object;)Z",
-        ordinal = 1))
+    @Redirect(
+        method = "addEntity",
+        at = @At(
+            value = "INVOKE",
+            target = "Ljava/util/List;add(Ljava/lang/Object;)Z",
+            ordinal = 1))
     private <E> boolean spawnIfNotExisting(List<E> instance, E entity) {
         if (!instance.contains(entity)) {
             return instance.add(entity);
@@ -949,18 +956,18 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     }
 
     @Inject(method = "getFogColor", at = @At("RETURN"))
-    private void changeFogColor(float var1, CallbackInfoReturnable<Vec3> cir) {
-        Vec3 var3 = cir.getReturnValue();
+    private void changeFogColor(float dt, CallbackInfoReturnable<Vec3> cir) {
+        Vec3 rgb = cir.getReturnValue();
         var props = (ExWorldProperties) this.levelData;
         if (props.isOverrideFogColor()) {
             if (this.fogColorOverridden) {
-                var3.x = props.getFogR();
-                var3.y = props.getFogG();
-                var3.z = props.getFogB();
+                rgb.x = props.getFogR();
+                rgb.y = props.getFogG();
+                rgb.z = props.getFogB();
             } else {
-                var3.x = (double) (1.0F - var1) * var3.x + (double) (var1 * props.getFogR());
-                var3.y = (double) (1.0F - var1) * var3.y + (double) (var1 * props.getFogG());
-                var3.z = (double) (1.0F - var1) * var3.z + (double) (var1 * props.getFogB());
+                rgb.x = (double) (1.0F - dt) * rgb.x + (double) (dt * props.getFogR());
+                rgb.y = (double) (1.0F - dt) * rgb.y + (double) (dt * props.getFogG());
+                rgb.z = (double) (1.0F - dt) * rgb.z + (double) (dt * props.getFogB());
             }
         }
     }
@@ -1037,91 +1044,97 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     }
 
     @Overwrite
-    public void tick(Entity entity, boolean var2) {
+    public void tick(Entity entity, boolean tick) {
         int eX = Mth.floor(entity.x);
         int eZ = Mth.floor(entity.z);
         int var5 = 32;
-        if (!var2 || this.hasChunksAt(eX - var5, 0, eZ - var5, eX + var5, 128, eZ + var5)) {
-            entity.xOld = entity.x;
-            entity.yOld = entity.y;
-            entity.zOld = entity.z;
-            entity.yRotO = entity.yRot;
-            entity.xRotO = entity.xRot;
-            if (var2 && entity.inChunk) {
-                int stunned = ((ExEntity) entity).getStunned();
-                if (stunned > 0) {
-                    ((ExEntity) entity).setStunned(stunned - 1);
-                } else if (entity.riding != null) {
-                    entity.rideTick();
-                } else {
-                    entity.tick();
-                }
+        if (tick && !this.hasChunksAt(eX - var5, 0, eZ - var5, eX + var5, 128, eZ + var5)) {
+            return;
+        }
+
+        entity.xOld = entity.x;
+        entity.yOld = entity.y;
+        entity.zOld = entity.z;
+        entity.yRotO = entity.yRot;
+        entity.xRotO = entity.xRot;
+        if (tick && entity.inChunk) {
+            int stunned = ((ExEntity) entity).getStunned();
+            if (stunned > 0) {
+                ((ExEntity) entity).setStunned(stunned - 1);
+            } else if (entity.riding != null) {
+                entity.rideTick();
+            } else {
+                entity.tick();
+            }
+        }
+
+        if (Double.isNaN(entity.x) || Double.isInfinite(entity.x)) {
+            entity.x = entity.xOld;
+        }
+
+        if (Double.isNaN(entity.y) || Double.isInfinite(entity.y)) {
+            entity.y = entity.yOld;
+        }
+
+        if (Double.isNaN(entity.z) || Double.isInfinite(entity.z)) {
+            entity.z = entity.zOld;
+        }
+
+        if (Double.isNaN(entity.xRot) || Double.isInfinite(entity.xRot)) {
+            entity.xRot = entity.xRotO;
+        }
+
+        if (Double.isNaN(entity.yRot) || Double.isInfinite(entity.yRot)) {
+            entity.yRot = entity.yRotO;
+        }
+
+        int ecX = (int) Math.floor(entity.x / 16.0D);
+        int ecY = (int) Math.floor(entity.y / 16.0D);
+        int ecZ = (int) Math.floor(entity.z / 16.0D);
+        if (!entity.inChunk || entity.xChunk != ecX || entity.yChunk != ecY || entity.zChunk != ecZ) {
+            if (entity.inChunk && this.hasChunk(entity.xChunk, entity.zChunk)) {
+                this.getChunk(entity.xChunk, entity.zChunk).removeEntity(entity, entity.yChunk);
             }
 
-            if (Double.isNaN(entity.x) || Double.isInfinite(entity.x)) {
-                entity.x = entity.xOld;
+            if (this.hasChunk(ecX, ecZ)) {
+                entity.inChunk = true;
+                this.getChunk(ecX, ecZ).addEntity(entity);
+            } else {
+                entity.inChunk = false;
             }
+        }
 
-            if (Double.isNaN(entity.y) || Double.isInfinite(entity.y)) {
-                entity.y = entity.yOld;
-            }
-
-            if (Double.isNaN(entity.z) || Double.isInfinite(entity.z)) {
-                entity.z = entity.zOld;
-            }
-
-            if (Double.isNaN(entity.xRot) || Double.isInfinite(entity.xRot)) {
-                entity.xRot = entity.xRotO;
-            }
-
-            if (Double.isNaN(entity.yRot) || Double.isInfinite(entity.yRot)) {
-                entity.yRot = entity.yRotO;
-            }
-
-            int ecX = Mth.floor(entity.x / 16.0D);
-            int ecY = Mth.floor(entity.y / 16.0D);
-            int ecZ = Mth.floor(entity.z / 16.0D);
-            if (!entity.inChunk || entity.xChunk != ecX || entity.yChunk != ecY || entity.zChunk != ecZ) {
-                if (entity.inChunk && this.hasChunk(entity.xChunk, entity.zChunk)) {
-                    this.getChunk(entity.xChunk, entity.zChunk).removeEntity(entity, entity.yChunk);
-                }
-
-                if (this.hasChunk(ecX, ecZ)) {
-                    entity.inChunk = true;
-                    this.getChunk(ecX, ecZ).addEntity(entity);
-                } else {
-                    entity.inChunk = false;
-                }
-            }
-
-            if (var2 && entity.inChunk && entity.rider != null) {
-                if (!entity.rider.removed && entity.rider.riding == entity) {
-                    this.tick(entity.rider);
-                } else {
-                    entity.rider.riding = null;
-                    entity.rider = null;
-                }
+        if (tick && entity.inChunk && entity.rider != null) {
+            if (!entity.rider.removed && entity.rider.riding == entity) {
+                this.tick(entity.rider);
+            } else {
+                entity.rider.riding = null;
+                entity.rider = null;
             }
         }
     }
 
-    @Inject(method = "setTileEntity", at = @At(
-        value = "FIELD",
-        target = "Lnet/minecraft/world/level/Level;updatingTileEntities:Z",
-        shift = At.Shift.BEFORE))
+    @Inject(
+        method = "setTileEntity",
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/world/level/Level;updatingTileEntities:Z",
+            shift = At.Shift.BEFORE))
     private void removeBlockEntityOnSet(int x, int y, int z, TileEntity var4, CallbackInfo ci) {
         this.removeTileEntity(x, y, z);
     }
 
-    @Redirect(method = "removeTileEntity", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/world/level/Level;getTileEntity(III)Lnet/minecraft/world/level/tile/entity/TileEntity;"))
+    @Redirect(
+        method = "removeTileEntity",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/level/Level;getTileEntity(III)Lnet/minecraft/world/level/tile/entity/TileEntity;"))
     private TileEntity removeBlockEntityDontCreate(Level instance, int x, int y, int z) {
         return this.getBlockTileEntityDontCreate(x, y, z);
     }
 
     @Overwrite
-    public void updateLight(LightLayer lightType, int var2, int var3, int var4, int var5, int var6, int var7, boolean var8) {
+    public void updateLight(LightLayer lightType, int x0, int y0, int z0, int x1, int y1, int z1, boolean var8) {
         if (this.dimension.hasCeiling && lightType == LightLayer.SKY) {
             return;
         }
@@ -1132,8 +1145,8 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
                 return;
             }
 
-            int x = (var5 + var2) / 2;
-            int z = (var7 + var4) / 2;
+            int x = (x1 + x0) / 2;
+            int z = (z1 + z0) / 2;
             if (!this.hasChunkAt(x, 64, z)) {
                 return;
             }
@@ -1145,14 +1158,14 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             if (var8) {
                 int count = Math.min(this.lightUpdates.size(), 5);
                 for (int i = 0; i < count; ++i) {
-                    LightUpdate var14 = this.lightUpdates.get(this.lightUpdates.size() - i - 1);
-                    if (var14.type == lightType && var14.expandToContain(var2, var3, var4, var5, var6, var7)) {
+                    LightUpdate update = this.lightUpdates.get(this.lightUpdates.size() - i - 1);
+                    if (update.type == lightType && update.expandToContain(x0, y0, z0, x1, y1, z1)) {
                         return;
                     }
                 }
             }
 
-            this.lightUpdates.add(new LightUpdate(lightType, var2, var3, var4, var5, var6, var7));
+            this.lightUpdates.add(new LightUpdate(lightType, x0, y0, z0, x1, y1, z1));
 
             final int maxUpdates = 1000000;
             if (this.lightUpdates.size() > maxUpdates) {
@@ -1194,6 +1207,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         this.fogDensityOverridden = props.isOverrideFogDensity();
         this.tickWeather();
         this.chunkSource.tick();
+
         int var1 = this.getSkyDarken(1.0F);
         if (var1 != this.skyDarken) {
             this.skyDarken = var1;
@@ -1272,14 +1286,14 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
 
     @Overwrite
     public void tickTiles() {
-        for (Player var2 : this.players) {
-            int var3 = Mth.floor(var2.x / 16.0D);
-            int var4 = Mth.floor(var2.z / 16.0D);
-            byte var5 = 9;
+        for (Player player : this.players) {
+            int cX = (int) Math.floor(player.x / 16.0D);
+            int cZ = (int) Math.floor(player.z / 16.0D);
+            int cD = 9;
 
-            for (int var6 = -var5; var6 <= var5; ++var6) {
-                for (int var7 = -var5; var7 <= var5; ++var7) {
-                    this.updateChunk(var6 + var3, var7 + var4);
+            for (int x = -cD; x <= cD; ++x) {
+                for (int z = -cD; z <= cD; ++z) {
+                    this.updateChunk(x + cX, z + cZ);
                 }
             }
         }
@@ -1289,71 +1303,75 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         }
     }
 
-    protected void updateChunk(int var1, int var2) {
-        LevelChunk var3 = this.getChunk(var1, var2);
-        if (((ExChunk) var3).getLastUpdated() == this.getTime()) {
+    protected void updateChunk(int cX, int cZ) {
+        LevelChunk chunk = this.getChunk(cX, cZ);
+        if (((ExChunk) chunk).getLastUpdated() == this.getTime()) {
             return;
         }
 
-        int var4 = var1 * 16;
-        int var5 = var2 * 16;
-        ((ExChunk) var3).setLastUpdated(this.getTime());
-        int var6;
-        int var7;
-        int var8;
-        int var9;
+        int bX = cX * 16;
+        int bZ = cZ * 16;
+        ((ExChunk) chunk).setLastUpdated(this.getTime());
+
         if (this.random.nextInt(100000) == 0 && this.isRaining() && this.isThundering()) {
             this.randValue = this.randValue * 3 + 1013904223;
-            var6 = this.randValue >> 2;
-            var7 = var4 + (var6 & 15);
-            var8 = var5 + (var6 >> 8 & 15);
-            var9 = this.getTopSolidBlock(var7, var8);
-            if (this.isRainingAt(var7, var9, var8)) {
-                this.addGlobalEntity(new LightningBolt((Level) (Object) this, var7, var9, var8));
+            int r = this.randValue >> 2;
+            int lX = bX + (r & 15);
+            int lZ = bZ + (r >> 8 & 15);
+            int lY = this.getTopSolidBlock(lX, lZ);
+            if (this.isRainingAt(lX, lY, lZ)) {
+                this.addGlobalEntity(new LightningBolt((Level) (Object) this, lX, lY, lZ));
                 this.lightingCooldown = 2;
             }
         }
 
-        for (var6 = 0; var6 < 80; ++var6) {
+        for (int i = 0; i < 80; ++i) {
             this.randValue = this.randValue * 3 + 1013904223;
-            var7 = this.randValue >> 2;
-            var8 = var7 & 15;
-            var9 = var7 >> 8 & 15;
-            int var10 = var7 >> 16 & 127;
-            int var11 = var3.blocks[var8 << 11 | var9 << 7 | var10] & 255;
-            if (Tile.shouldTick[var11]) {
-                Tile.tiles[var11].tick((Level) (Object) this, var8 + var4, var10, var9 + var5, this.random);
+            int r = this.randValue >> 2;
+            int lX = r & 15;
+            int lZ = r >> 8 & 15;
+            int lY = r >> 16 & 127;
+            int id = chunk.blocks[lX << 11 | lZ << 7 | lY] & 255;
+            if (Tile.shouldTick[id]) {
+                Tile.tiles[id].tick((Level) (Object) this, lX + bX, lY, lZ + bZ, this.random);
             }
         }
     }
 
     @Overwrite
-    public boolean tickPendingTicks(boolean var1) {
-        int var2 = this.tickNextTickList.size();
-        if (var2 > 1000) {
-            var2 = 1000;
+    public boolean tickPendingTicks(boolean force) {
+        int size = this.tickNextTickList.size();
+        if (size > 1000) {
+            size = 1000;
         }
 
-        for (int var3 = 0; var3 < var2; ++var3) {
-            TickNextTickData var4 = this.tickNextTickList.first();
-            if (!var1 && var4.delay > this.levelData.getTime()) {
+        for (int i = 0; i < size; ++i) {
+            TickNextTickData entry = this.tickNextTickList.first();
+            if (!force && entry.delay > this.levelData.getTime()) {
                 break;
             }
 
-            this.tickNextTickList.remove(var4);
-            if (this.tickNextTickSet.remove(var4)) {
-                byte var5 = 8;
-                if (this.hasChunksAt(var4.x - var5, var4.y - var5, var4.z - var5, var4.x + var5, var4.y + var5, var4.z + var5)) {
-                    int var6 = this.getTile(var4.x, var4.y, var4.z);
-                    if (var6 == var4.priority && var6 > 0) {
-                        Tile.tiles[var6].tick((Level) (Object) this, var4.x, var4.y, var4.z, this.random);
-                        AABB.resetPool();
-                    }
+            this.tickNextTickList.remove(entry);
+            if (!this.tickNextTickSet.remove(entry)) {
+                continue;
+            }
+
+            int eX = entry.x;
+            int eY = entry.y;
+            int eZ = entry.z;
+            int eD = 8;
+            if (this.hasChunksAt(
+                eX - eD, eY - eD, eZ - eD,
+                eX + eD, eY + eD, eZ + eD)) {
+                int id = this.getTile(entry.x, entry.y, entry.z);
+                if (id == entry.priority && id > 0) {
+                    Tile.tiles[id].tick((Level) (Object) this, eX, eY, eZ, this.random);
+                    AABB.resetPool();
                 }
             }
         }
 
-        return this.tickNextTickList.size() != 0;
+        return !this.tickNextTickList.isEmpty();
     }
 
     @Overwrite
@@ -1365,6 +1383,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         }
     }
 
+    @Unique
     private void DoSnowModUpdate() {
         if (this.isClientSide) {
             return;
@@ -1374,80 +1393,75 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             this.initCoordOrder();
         }
 
-        for (Player var3 : this.players) {
-            int var4 = Mth.floor(var3.x / 16.0D);
-            int var5 = Mth.floor(var3.z / 16.0D);
-            byte var6 = 9;
+        for (Player player : this.players) {
+            int pX = Mth.floor(player.x / 16.0D);
+            int pZ = Mth.floor(player.z / 16.0D);
+            int range = 9;
 
-            for (int var7 = -var6; var7 <= var6; ++var7) {
-                for (int var8 = -var6; var8 <= var6; ++var8) {
-                    long var9 = (long) (var7 + var8 * 2) + this.getTime();
-                    if (var9 % 14L == 0L && this.hasChunk(var7 + var4, var8 + var5)) {
-                        var9 /= 14L;
-                        int var11 = var7 + var4;
-                        int var12 = var8 + var5;
-                        var9 += var11 * var11 * 3121 + var11 * 45238971 + var12 * var12 * 418711 + var12 * 13761;
-                        var9 = Math.abs(var9);
-                        int var13 = var11 * 16 + this.coordOrder[(int) (var9 % 256L)] % 16;
-                        int var14 = var12 * 16 + this.coordOrder[(int) (var9 % 256L)] / 16;
-                        this.SnowModUpdate(var13, var14);
+            for (int x = -range; x <= range; ++x) {
+                for (int z = -range; z <= range; ++z) {
+                    long hash = x + z * 2L + this.getTime();
+                    if (hash % 14L != 0L || !this.hasChunk(x + pX, z + pZ)) {
+                        continue;
                     }
+                    hash /= 14L;
+                    int hX = x + pX;
+                    int hZ = z + pZ;
+                    hash += hX * hX * 3121L + hX * 45238971L + hZ * hZ * 418711L + hZ * 13761L;
+                    hash = Math.abs(hash);
+                    int bX = hX * 16 + this.coordOrder[(int) (hash % 256L)] % 16;
+                    int bZ = hZ * 16 + this.coordOrder[(int) (hash % 256L)] / 16;
+                    this.SnowModUpdate(bX, bZ);
                 }
             }
         }
     }
 
-    public boolean SnowModUpdate(int var1, int var2) {
-        int var3 = this.getTopSolidBlock(var1, var2);
-        if (var3 < 0) {
-            var3 = 0;
+    public boolean SnowModUpdate(int x, int z) {
+        int y = this.getTopSolidBlock(x, z);
+        if (y < 0) {
+            y = 0;
         }
 
-        int var4 = this.getTile(var1, var3 - 1, var2);
-        if (this.getTemperatureValue(var1, var2) < 0.5D) {
-            if (!this.isEmptyTile(var1, var3, var2)) {
+        int idDown = this.getTile(x, y - 1, z);
+        if (this.getTemperatureValue(x, z) < 0.5D) {
+            if (!this.isEmptyTile(x, y, z)) {
                 return false;
-            } else {
-                if (var4 != 0 && Tile.tiles[var4].isSolidRender()) {
-                    if (!this.getMaterial(var1, var3 - 1, var2).blocksMotion()) {
-                        return false;
-                    }
-
-                    if (this.getBrightness(LightLayer.BLOCK, var1, var3, var2) > 11) {
-                        return false;
-                    }
-
-                    this.setTile(var1, var3, var2, Tile.SNOW_LAYER.id);
-                } else if (var4 == Tile.FLOWING_WATER.id && this.getData(var1, var3 - 1, var2) == 0) {
-                    if (this.getBrightness(LightLayer.BLOCK, var1, var3, var2) > 11) {
-                        return false;
-                    }
-
-                    this.setTile(var1, var3 - 1, var2, Tile.ICE.id);
+            }
+            if (idDown != 0 && Tile.tiles[idDown].isSolidRender()) {
+                if (!this.getMaterial(x, y - 1, z).blocksMotion()) {
+                    return false;
                 }
-
-                return true;
+                if (this.getBrightness(LightLayer.BLOCK, x, y, z) > 11) {
+                    return false;
+                }
+                this.setTile(x, y, z, Tile.SNOW_LAYER.id);
+            } else if (idDown == Tile.FLOWING_WATER.id && this.getData(x, y - 1, z) == 0) {
+                if (this.getBrightness(LightLayer.BLOCK, x, y, z) > 11) {
+                    return false;
+                }
+                this.setTile(x, y - 1, z, Tile.ICE.id);
             }
-        } else {
-            int var5 = this.getTile(var1, var3, var2);
-            if (var5 == Tile.SNOW_LAYER.id) {
-                this.setTile(var1, var3, var2, 0);
-                return true;
-            } else if (var4 == Tile.SNOW.id) {
-                this.setTile(var1, var3 - 1, var2, Tile.SNOW_LAYER.id);
-                return true;
-            } else if (var4 == Tile.ICE.id) {
-                this.setTile(var1, var3 - 1, var2, Tile.FLOWING_WATER.id);
-                return true;
-            } else {
-                return false;
-            }
+            return true;
         }
+
+        int id = this.getTile(x, y, z);
+        if (id == Tile.SNOW_LAYER.id) {
+            this.setTile(x, y, z, 0);
+            return true;
+        } else if (idDown == Tile.SNOW.id) {
+            this.setTile(x, y - 1, z, Tile.SNOW_LAYER.id);
+            return true;
+        } else if (idDown == Tile.ICE.id) {
+            this.setTile(x, y - 1, z, Tile.FLOWING_WATER.id);
+            return true;
+        }
+        return false;
     }
 
     @Override
     public void cancelBlockUpdate(int x, int y, int z, int id) {
-        TickNextTickData entry = new TickNextTickData(x, y, z, id);
+        var entry = new TickNextTickData(x, y, z, id);
         this.tickNextTickSet.remove(entry);
     }
 
@@ -1596,21 +1610,21 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         this.coordOrder = null;
     }
 
+    @Unique
     private void initCoordOrder() {
-        Random var1 = new Random();
-        var1.setSeed(this.getTime());
+        var rng = new Random(this.getTime());
         this.coordOrder = new int[256];
 
-        int var2 = 0;
-        while (var2 < 256) {
-            this.coordOrder[var2] = var2++;
+        int i = 0;
+        while (i < 256) {
+            this.coordOrder[i] = i++;
         }
 
-        for (var2 = 0; var2 < 255; ++var2) {
-            int var3 = var1.nextInt(256 - var2);
-            int var4 = this.coordOrder[var2];
-            this.coordOrder[var2] = this.coordOrder[var2 + var3];
-            this.coordOrder[var2 + var3] = var4;
+        for (i = 0; i < 255; ++i) {
+            int var3 = rng.nextInt(256 - i);
+            int var4 = this.coordOrder[i];
+            this.coordOrder[i] = this.coordOrder[i + var3];
+            this.coordOrder[i + var3] = var4;
         }
     }
 
