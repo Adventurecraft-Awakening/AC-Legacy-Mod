@@ -4,11 +4,11 @@ import com.google.common.base.Stopwatch;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.util.ExProgressListener;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ProgressListener;
 import net.minecraft.world.level.Level;
 import org.mozilla.javascript.RhinoException;
-import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
 
 import java.io.File;
@@ -17,19 +17,20 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
+import java.util.Collection;
+import java.util.Map;
 import java.util.stream.Stream;
 
 public class AC_JScriptHandler {
 
     Level world;
     File scriptDir;
-    public HashMap<String, AC_JScriptInfo> scripts;
+    private final Map<String, AC_JScriptInfo> scripts;
 
     public AC_JScriptHandler(Level var1, File var2) {
         this.world = var1;
         this.scriptDir = new File(var2, "scripts");
-        this.scripts = new HashMap<>();
+        this.scripts = new Object2ObjectOpenHashMap<>();
     }
 
     public Stream<Path> getFiles() throws IOException {
@@ -136,5 +137,9 @@ public class AC_JScriptHandler {
             scriptInfo.addTime(System.nanoTime() - time);
         }
         return result;
+    }
+
+    public Collection<AC_JScriptInfo> getScripts() {
+        return scripts.values();
     }
 }

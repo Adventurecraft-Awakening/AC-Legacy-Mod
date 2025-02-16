@@ -16,7 +16,7 @@ public class AC_GuiScriptStats extends Screen {
     public AC_GuiScriptStats(Level world) {
         this.scriptInfos = new ArrayList<>();
 
-        var infos = ((ExWorld) world).getScriptHandler().scripts.values();
+        var infos = ((ExWorld) world).getScriptHandler().getScripts();
         for (AC_JScriptInfo info : infos) {
             if (info.count > 0) {
                 this.scriptInfos.add(info);

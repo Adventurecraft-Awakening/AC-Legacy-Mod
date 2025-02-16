@@ -258,7 +258,7 @@ public class ServerCommands {
         var source = context.getSource();
         var world = source.getWorld();
         if (world instanceof ExWorld exWorld) {
-            var infos = exWorld.getScriptHandler().scripts.values();
+            var infos = exWorld.getScriptHandler().getScripts();
             int count = infos.size();
             for (AC_JScriptInfo info : infos) {
                 info.clear();

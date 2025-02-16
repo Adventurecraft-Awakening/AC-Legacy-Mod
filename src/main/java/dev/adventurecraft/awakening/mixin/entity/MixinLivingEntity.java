@@ -101,13 +101,9 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         this.canGetFallDamage = arg;
     }
 
-    ;
-
     public boolean getCanGetFallDamage() {
         return this.canGetFallDamage;
     }
-
-    ;
 
     protected int maxHealth = 10;
     @Unique
