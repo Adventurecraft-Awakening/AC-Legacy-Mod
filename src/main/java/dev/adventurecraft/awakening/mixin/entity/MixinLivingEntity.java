@@ -96,8 +96,18 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
     protected int lookTime;
 
     public boolean canGetFallDamage = true;
-    public void setCanGetFallDamage(boolean arg){this.canGetFallDamage = arg;};
-    public boolean getCanGetFallDamage(){return this.canGetFallDamage;};
+
+    public void setCanGetFallDamage(boolean arg) {
+        this.canGetFallDamage = arg;
+    }
+
+    ;
+
+    public boolean getCanGetFallDamage() {
+        return this.canGetFallDamage;
+    }
+
+    ;
 
     protected int maxHealth = 10;
     @Unique
@@ -352,7 +362,7 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
 
     @Overwrite
     public void causeFallDamage(float var1) {
-        if(!this.canGetFallDamage) {
+        if (!this.canGetFallDamage) {
             return;
         }
 
@@ -692,7 +702,8 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
                     this.yRotA = this.randomLookVelocity * rngLook;
                 }
 
-                this.randomLookNext = this.randomLookRate + this.random.nextInt(this.randomLookRateVariation);
+                int extra = this.randomLookRateVariation > 0 ? this.random.nextInt(this.randomLookRateVariation) : 0;
+                this.randomLookNext = this.randomLookRate + extra;
             }
 
             this.yRot += this.yRotA;
@@ -719,8 +730,9 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
     private void dropHeartsOnDeath(Entity killer, CallbackInfo ci) {
         if (killer instanceof LivingEntity livingKiller) {
             if (livingKiller.health < ((ExLivingEntity) livingKiller).getMaxHealth() && this.random.nextInt(3) != 0) {
-                var item = new ItemEntity(this.level, this.x, this.y, this.z, new ItemInstance(AC_Items.heart.id, 1, 0));
-                this.level.addEntity(item);
+                var instance = new ItemInstance(AC_Items.heart.id, 1, 0);
+                var itemEntity = new ItemEntity(this.level, this.x, this.y, this.z, instance);
+                this.level.addEntity(itemEntity);
             }
         }
     }
@@ -944,6 +956,7 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
 
     @Override
     public void setRandomLookRateVariation(int value) {
+        // TODO: throw on "value <= 0"
         this.randomLookRateVariation = value;
     }
 }
