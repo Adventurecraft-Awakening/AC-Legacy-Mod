@@ -40,7 +40,6 @@ repositories {
 
 import org.gradle.internal.os.OperatingSystem
 
-project.ext.lwjglVersion = "3.3.6"
 switch (OperatingSystem.current()) {
     case OperatingSystem.LINUX:
         project.ext.lwjglNatives = "natives-linux"
@@ -58,12 +57,12 @@ switch (OperatingSystem.current()) {
 
 dependencies {
     // Adds LWJGL3 wrapper
-    implementation("com.github.Adventurecraft-Awakening:AC-LWJGL3-Injector:0.2.3")
+    implementation("com.github.Adventurecraft-Awakening:AC-LWJGL3-Injector:${project.lwjgl_injector_version}")
 
-    implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
+    implementation platform("org.lwjgl:lwjgl-bom:${project.lwjgl_version}")
 
-    implementation "org.lwjgl:lwjgl-glfw:$lwjglVersion"
-    implementation "org.lwjgl:lwjgl-stb:$lwjglVersion"
+    implementation "org.lwjgl:lwjgl-glfw:${project.lwjgl_version}"
+    implementation "org.lwjgl:lwjgl-stb:${project.lwjgl_version}"
 
     runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
     runtimeOnly "org.lwjgl:lwjgl-glfw::$lwjglNatives"
@@ -73,7 +72,7 @@ dependencies {
 
     // Rhino is the JS engine: https://github.com/mozilla/rhino/releases
     // Archived versions: https://www-archive.mozilla.org/rhino/rhino16r2
-    implementation "org.mozilla:rhino:1.7.15"
+    implementation "org.mozilla:rhino:${project.rhino_version}"
 
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings "me.alphamode:nostalgia:${project.nostalgia_mappings}:v2"
@@ -98,8 +97,8 @@ dependencies {
     implementation "org.slf4j:slf4j-api:1.8.0-beta4"
     implementation "org.apache.logging.log4j:log4j-slf4j18-impl:2.16.0"
 
-    implementation 'com.google.guava:guava:31.1-jre'
-    implementation 'org.apache.commons:commons-lang3:3.12.0'
+    implementation "com.google.guava:guava:33.4.0-jre"
+    implementation "org.apache.commons:commons-lang3:3.12.0"
 }
 
 configurations.configureEach {
