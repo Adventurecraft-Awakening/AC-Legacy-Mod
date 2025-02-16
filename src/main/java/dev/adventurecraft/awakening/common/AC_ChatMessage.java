@@ -33,7 +33,13 @@ public class AC_ChatMessage {
                 break;
             }
 
-            lines.add(new Line(offset, offset + rect.charCount(), rect.width()));
+            int lineEnd = offset + rect.charCount();
+            int last = lineEnd - 1;
+            if (last > 0 && last < text.length() && text.charAt(last) == '\n') {
+                lineEnd -= 1;
+            }
+
+            lines.add(new Line(offset, lineEnd, rect.width()));
 
             offset += rect.charCount();
             width = Math.max(rect.width(), width);
