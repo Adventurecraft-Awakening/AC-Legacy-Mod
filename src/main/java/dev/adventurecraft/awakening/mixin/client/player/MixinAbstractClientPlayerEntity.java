@@ -1,4 +1,4 @@
-package dev.adventurecraft.awakening.mixin.client.entity.player;
+package dev.adventurecraft.awakening.mixin.client.player;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.StringReader;

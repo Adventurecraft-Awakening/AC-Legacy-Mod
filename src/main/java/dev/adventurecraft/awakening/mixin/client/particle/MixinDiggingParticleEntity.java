@@ -1,4 +1,4 @@
-package dev.adventurecraft.awakening.mixin.client.entity.particle;
+package dev.adventurecraft.awakening.mixin.client.particle;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.extension.block.ExBlock;

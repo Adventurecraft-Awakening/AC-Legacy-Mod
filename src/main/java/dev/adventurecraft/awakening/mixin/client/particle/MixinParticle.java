@@ -1,15 +1,16 @@
 package dev.adventurecraft.awakening.mixin.client.particle;
 
-import net.minecraft.client.particle.RedDustParticle;
+import dev.adventurecraft.awakening.mixin.entity.MixinEntity;
+import net.minecraft.client.particle.Particle;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(RedDustParticle.class)
-public abstract class MixinRedDustParticle extends MixinParticle {
+@Mixin(Particle.class)
+public abstract class MixinParticle extends MixinEntity {
 
     @Redirect(
-        method = "<init>(Lnet/minecraft/world/level/Level;DDDFFFF)V",
+        method = "<init>(Lnet/minecraft/world/level/Level;DDDDDD)V",
         at = @At(
             value = "INVOKE",
             target = "Ljava/lang/Math;random()D",

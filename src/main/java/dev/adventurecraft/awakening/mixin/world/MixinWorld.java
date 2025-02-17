@@ -28,6 +28,7 @@ import dev.adventurecraft.awakening.script.EntityDescriptions;
 import dev.adventurecraft.awakening.script.ScopeTag;
 import dev.adventurecraft.awakening.script.Script;
 import dev.adventurecraft.awakening.script.ScriptModel;
+import dev.adventurecraft.awakening.util.RandomUtil;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -70,7 +71,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.io.*;
 import java.util.*;
-import java.util.random.RandomGenerator;
 
 @Mixin(Level.class)
 public abstract class MixinWorld implements ExWorld, LevelSource {
@@ -308,7 +308,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         this.players = new ArrayList<>();
         this.globalEntities = new ArrayList<>();
         this.cloudColor = 16777215L;
-        this.random = Random.from(RandomGenerator.of("Xoroshiro128PlusPlus"));
+        this.random = RandomUtil.newXoshiro128PP();
         this.randValue = random.nextInt();
         this.sessionId = System.currentTimeMillis();
         this.saveInterval = 40;

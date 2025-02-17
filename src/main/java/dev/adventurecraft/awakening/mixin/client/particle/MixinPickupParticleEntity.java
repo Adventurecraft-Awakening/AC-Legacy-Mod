@@ -1,4 +1,4 @@
-package dev.adventurecraft.awakening.mixin.client.entity.particle;
+package dev.adventurecraft.awakening.mixin.client.particle;
 
 import net.minecraft.client.particle.TakeAnimationParticle;
 import org.spongepowered.asm.mixin.Mixin;
