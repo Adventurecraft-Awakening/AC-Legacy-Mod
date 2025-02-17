@@ -22,10 +22,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Constant;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyConstant;
+import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -174,6 +171,17 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         throw new AssertionError();
     }
 
+    @Redirect(
+        method = "<init>",
+        at = @At(
+            value = "INVOKE",
+            target = "Ljava/lang/Math;random()D",
+            remap = false
+        ))
+    private double useFastRandomInInit() {
+        return this.random.nextFloat();
+    }
+
     @Overwrite
     public boolean canSee(Entity entity) {
         double entityYaw = -180.0D * Math.atan2(entity.x - this.x, entity.z - this.z) / Math.PI;
@@ -269,14 +277,14 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
                 double dX = entity.x - this.x;
                 double dZ = entity.z - this.z;
                 while (dX * dX + dZ * dZ < 1.0E-4D) {
-                    dX = (Math.random() - Math.random()) * 0.01D;
-                    dZ = (Math.random() - Math.random()) * 0.01D;
+                    dX = (this.random.nextFloat() - this.random.nextFloat()) * 0.01f;
+                    dZ = (this.random.nextFloat() - this.random.nextFloat()) * 0.01f;
                 }
 
                 this.hurtDir = (float) (Math.atan2(dZ, dX) * 180.0D / Math.PI) - this.yRot;
                 this.knockback(entity, damage, dX, dZ);
             } else {
-                this.hurtDir = (float) ((int) (Math.random() * 2.0D) * 180);
+                this.hurtDir = (float) ((int) (this.random.nextFloat() * 2.0F) * 180);
             }
         }
 
