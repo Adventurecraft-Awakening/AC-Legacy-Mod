@@ -4,6 +4,8 @@ import dev.adventurecraft.awakening.extension.client.render.ExTesselator;
 import net.minecraft.client.renderer.Tesselator;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.nio.ByteOrder;
 
@@ -18,6 +20,15 @@ public abstract class MixinTesselator implements ExTesselator {
 
     @Shadow
     private boolean noColor;
+
+    @Redirect(
+        method = "<init>",
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/client/renderer/Tesselator;USE_VBO:Z"))
+    private boolean useVbo() {
+        return true;
+    }
 
     @Override
     public void ac$color(int rgba) {
