@@ -2,14 +2,14 @@ package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.level.Level;
 import org.mozilla.javascript.*;
 
 import java.io.*;
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.*;
 
 @SuppressWarnings("unused")
 public class Script {
@@ -17,58 +17,66 @@ public class Script {
     static final String SCRIPT_PACKAGE = "dev.adventurecraft.awakening.script";
     static final String PREFIXED_SCRIPT_PACKAGE = "Packages." + SCRIPT_PACKAGE;
 
-    public Scriptable globalScope;
+    private static final Set<String> allowedClassNames = new ObjectOpenHashSet<>();
+
+    static {
+        allowedClassNames.add("java.lang.Object");
+        allowedClassNames.add("java.lang.Character");
+        allowedClassNames.add("java.lang.String");
+        allowedClassNames.add("java.lang.Float");
+        allowedClassNames.add("java.lang.Double");
+        allowedClassNames.add("java.lang.Boolean");
+        allowedClassNames.add("java.lang.Byte");
+        allowedClassNames.add("java.lang.Short");
+        allowedClassNames.add("java.lang.Integer");
+        allowedClassNames.add("java.lang.Long");
+        allowedClassNames.add("org.mozilla.javascript.ConsString");
+    }
+
+    public final Scriptable globalScope;
     Scriptable curScope;
-    Scriptable runScope;
-    Context cx = ContextFactory.getGlobal().enterContext();
-    ScriptTime time;
-    ScriptWorld world;
+    final Scriptable runScope;
+    final Context cx;
+    final ScriptTime time;
+    final ScriptWorld world;
     ScriptEntityPlayer player;
-    ScriptChat chat;
-    ScriptWeather weather;
-    ScriptEffect effect;
-    ScriptParticle particle;
-    ScriptSound sound;
-    ScriptUI ui;
-    ScriptRenderer renderer;
-    ScriptScript script;
-    public ScriptKeyboard keyboard;
-    LinkedList<ScriptContinuation> sleepingScripts = new LinkedList<>();
-    LinkedList<ScriptContinuation> removeMe = new LinkedList<>();
+    final ScriptChat chat;
+    final ScriptWeather weather;
+    final ScriptEffect effect;
+    final ScriptParticle particle;
+    final ScriptSound sound;
+    final ScriptUI ui;
+    final ScriptRenderer renderer;
+    final ScriptScript script;
+    public final ScriptKeyboard keyboard;
+    final LinkedList<ScriptContinuation> sleepingScripts = new LinkedList<>();
+    final LinkedList<ScriptContinuation> removeMe = new LinkedList<>();
     static boolean shutterSet = false;
 
-    public Script(Level var1) {
-        this.cx.setLanguageVersion(Context.VERSION_ES6);
-        this.cx.setOptimizationLevel(-1);
+    public Script(Level level) {
+        this.cx = ContextFactory.getGlobal().enterContext();
+        this.cx.setLanguageVersion(Context.VERSION_ECMASCRIPT);
+        this.cx.setInterpretedMode(true);
         if (!shutterSet) {
-            this.cx.setClassShutter(fullClassName -> fullClassName.startsWith(SCRIPT_PACKAGE) ||
-                fullClassName.equals("java.lang.Object") ||
-                fullClassName.equals("java.lang.Character") ||
-                fullClassName.equals("java.lang.String") ||
-                fullClassName.equals("java.lang.Float") ||
-                fullClassName.equals("java.lang.Double") ||
-                fullClassName.equals("java.lang.Boolean") ||
-                fullClassName.equals("java.lang.Byte") ||
-                fullClassName.equals("java.lang.Short") ||
-                fullClassName.equals("java.lang.Integer") ||
-                fullClassName.equals("java.lang.Long") ||
-                fullClassName.equals("org.mozilla.javascript.ConsString"));
+            this.cx.setClassShutter(fullClassName ->
+                fullClassName.startsWith(SCRIPT_PACKAGE) || allowedClassNames.contains(fullClassName));
             shutterSet = true;
         }
 
-        this.globalScope = this.cx.initStandardObjects();
+        this.globalScope = this.cx.initStandardObjects(null, false);
         this.runScope = this.cx.newObject(this.globalScope);
         this.runScope.setParentScope(this.globalScope);
-        this.time = new ScriptTime(var1);
-        this.world = new ScriptWorld(var1);
+
+        this.time = new ScriptTime(level);
+        this.world = new ScriptWorld(level);
         this.chat = new ScriptChat();
-        this.weather = new ScriptWeather(var1);
-        this.effect = new ScriptEffect(var1, Minecraft.instance.levelRenderer);
+        this.weather = new ScriptWeather(level);
+        this.effect = new ScriptEffect(level, Minecraft.instance.levelRenderer);
         this.particle = new ScriptParticle(Minecraft.instance.levelRenderer);
         this.sound = new ScriptSound(Minecraft.instance.soundEngine);
         this.ui = new ScriptUI();
-        this.script = new ScriptScript(var1);
-        this.keyboard = new ScriptKeyboard(var1, Minecraft.instance.options, this.getNewScope());
+        this.script = new ScriptScript(level);
+        this.keyboard = new ScriptKeyboard(level, Minecraft.instance.options, this.getNewScope());
         this.renderer = new ScriptRenderer(Minecraft.instance.levelRenderer);
 
         this.addObject("time", this.time);
@@ -84,7 +92,7 @@ public class Script {
         this.addObject("keyboard", this.keyboard);
         this.addObject("hitEntity", null);
         this.addObject("hitBlock", null);
-        this.addObject("renderer",this.renderer);
+        this.addObject("renderer", this.renderer);
 
         // TODO: make these const
         String initStr = String.join("\n", new String[]{
@@ -154,6 +162,7 @@ public class Script {
     public void setNewCurScope(Scriptable pScope) {
         this.curScope = pScope;
     }
+
     public Scriptable getCurScope() {
         return this.curScope;
     }
