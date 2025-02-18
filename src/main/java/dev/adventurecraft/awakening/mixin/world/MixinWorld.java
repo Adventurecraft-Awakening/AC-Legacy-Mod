@@ -191,19 +191,19 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
 
     public File levelDir;
     private int[] coordOrder;
-    public ArrayList<String> musicList = new ArrayList<>();
-    public ArrayList<String> soundList = new ArrayList<>();
+    public ArrayList<String> musicList;
+    public ArrayList<String> soundList;
     private LevelIO mapHandler;
-    public AC_TriggerManager triggerManager = new AC_TriggerManager((Level) (Object) this);
+    public AC_TriggerManager triggerManager;
     public boolean fogColorOverridden;
     public boolean fogDensityOverridden;
     boolean firstTick = true;
     boolean newSave;
-    public AC_UndoStack undoStack = new AC_UndoStack();
-    private ArrayList<CollisionList> collisionDebugLists = new ArrayList<>();
-    private ArrayList<AABB> rayCheckedBlocks = new ArrayList<>();
-    private ArrayList<RayDebugList> rayDebugLists = new ArrayList<>();
-    public Script script = new Script((Level) (Object) this);
+    public AC_UndoStack undoStack;
+    private ArrayList<CollisionList> collisionDebugLists;
+    private ArrayList<AABB> rayCheckedBlocks;
+    private ArrayList<RayDebugList> rayDebugLists;
+    public Script script;
     public AC_JScriptHandler scriptHandler;
     public AC_MusicScripts musicScripts;
     public Scriptable scope;
