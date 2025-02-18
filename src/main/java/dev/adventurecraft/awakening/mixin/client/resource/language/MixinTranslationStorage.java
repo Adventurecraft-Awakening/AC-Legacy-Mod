@@ -10,11 +10,10 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
+
 import net.minecraft.locale.I18n;
 
 @Mixin(I18n.class)
@@ -58,7 +57,9 @@ public abstract class MixinTranslationStorage implements ExTranslationStorage {
         try {
             String acName = "/assets/adventurecraft" + name;
             InputStream stream = ACMod.class.getResourceAsStream(acName);
-            this.keys.load(stream);
+            if (stream != null) {
+                this.keys.load(new InputStreamReader(stream, StandardCharsets.UTF_8));
+            }
         } catch (IOException e) {
             // TODO: ACMod.LOGGER.warn about resource load
             e.printStackTrace();
@@ -81,10 +82,10 @@ public abstract class MixinTranslationStorage implements ExTranslationStorage {
         this.reset();
 
         try {
-            File file = new File(mapPath, "/lang/en_US.lang");
+            var file = new File(mapPath, "/lang/en_US.lang");
             if (file.exists()) {
-                FileInputStream stream = new FileInputStream(file);
-                this.keys.load(stream);
+                var stream = new FileInputStream(file);
+                this.keys.load(new InputStreamReader(stream, StandardCharsets.ISO_8859_1));
             }
         } catch (IOException var4) {
             // TODO: ACMod.LOGGER.warn about resource load
