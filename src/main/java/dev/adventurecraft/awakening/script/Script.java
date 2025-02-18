@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
+import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -15,7 +16,6 @@ import java.util.*;
 public class Script {
 
     static final String SCRIPT_PACKAGE = "dev.adventurecraft.awakening.script";
-    static final String PREFIXED_SCRIPT_PACKAGE = "Packages." + SCRIPT_PACKAGE;
 
     private static final Set<String> allowedClassNames = new ObjectOpenHashSet<>();
 
@@ -54,6 +54,8 @@ public class Script {
     static boolean shutterSet = false;
 
     public Script(Level level) {
+        var gameOptions = (ExGameOptions) Minecraft.instance.options;
+
         this.cx = ContextFactory.getGlobal().enterContext();
         this.cx.setLanguageVersion(Context.VERSION_ECMASCRIPT);
         this.cx.setInterpretedMode(true);
@@ -63,7 +65,9 @@ public class Script {
             shutterSet = true;
         }
 
-        this.globalScope = this.cx.initStandardObjects(null, false);
+        this.globalScope = gameOptions.getAllowJavaInScript()
+            ? this.cx.initStandardObjects(null, false)
+            : this.cx.initSafeStandardObjects(null, false);
         this.runScope = this.cx.newObject(this.globalScope);
         this.runScope.setParentScope(this.globalScope);
 
@@ -94,20 +98,28 @@ public class Script {
         this.addObject("hitBlock", null);
         this.addObject("renderer", this.renderer);
 
-        // TODO: make these const
-        String initStr = String.join("\n", new String[]{
-            String.format("net = { minecraft: { script: %s } };", PREFIXED_SCRIPT_PACKAGE),
-            String.format("Item = %s.ScriptItem;", PREFIXED_SCRIPT_PACKAGE),
-            String.format("UILabel = %s.ScriptUILabel;", PREFIXED_SCRIPT_PACKAGE),
-            String.format("UISprite = %s.ScriptUISprite;", PREFIXED_SCRIPT_PACKAGE),
-            String.format("UIRect = %s.ScriptUIRect;", PREFIXED_SCRIPT_PACKAGE),
-            String.format("UIContainer = %s.ScriptUIContainer;", PREFIXED_SCRIPT_PACKAGE),
-            String.format("Model = %s.ScriptModel;", PREFIXED_SCRIPT_PACKAGE),
-            String.format("ModelBlockbench = %s.ScriptModelBlockbench;", PREFIXED_SCRIPT_PACKAGE),
-            String.format("Vec3 = %s.ScriptVec3;", PREFIXED_SCRIPT_PACKAGE),
-            String.format("VecRot = %s.ScriptVecRot;", PREFIXED_SCRIPT_PACKAGE)
-        });
-        this.runString(initStr);
+        if (gameOptions.getAllowJavaInScript()) {
+            // Alias our package as `net.minecraft.script` for back-compat.
+            String initStr = String.join("\n", new String[]{
+                String.format("net = { minecraft: { script: Packages.%s } };", SCRIPT_PACKAGE),
+            });
+            this.cx.evaluateString(this.globalScope, initStr, "<init>", 0, null);
+        }
+
+        defineClass("Item", ScriptItem.class);
+        defineClass("UILabel", ScriptUILabel.class);
+        defineClass("UISprite", ScriptUISprite.class);
+        defineClass("UIRect", ScriptUIRect.class);
+        defineClass("UIContainer", ScriptUIContainer.class);
+        defineClass("Model", ScriptModel.class);
+        defineClass("ModelBlockbench", ScriptModelBlockbench.class);
+        defineClass("Vec3", ScriptVec3.class);
+        defineClass("VecRot", ScriptVecRot.class);
+    }
+
+    private <T> void defineClass(String name, Class<T> clazz) {
+        var instance = new NativeJavaClass(this.globalScope, clazz);
+        ScriptableObject.putProperty(this.globalScope, name, instance);
     }
 
     public void addObject(String name, Object value) {

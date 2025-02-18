@@ -2,7 +2,6 @@ package dev.adventurecraft.awakening.extension.client.options;
 
 import dev.adventurecraft.awakening.client.options.ConnectedGrassOption;
 import net.minecraft.client.KeyMapping;
-import org.lwjgl.opengl.GL11;
 
 public interface ExGameOptions {
 
@@ -115,4 +114,6 @@ public interface ExGameOptions {
     int getChatMessageBufferLimit();
 
     int getParticleLimit();
+
+    boolean getAllowJavaInScript();
 }

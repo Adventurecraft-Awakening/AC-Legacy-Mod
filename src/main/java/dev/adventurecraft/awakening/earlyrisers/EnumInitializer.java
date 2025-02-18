@@ -20,6 +20,7 @@ public class EnumInitializer implements Runnable {
         addOptionEnum(type, "GRASS_3D", "options.of.detail.grass3d", false, true);
         addOptionEnum(type, "CHAT_MESSAGE_BUFFER_LIMIT", "options.ac.chatMessageBufferLimit", true, false);
         addOptionEnum(type, "PARTICLE_LIMIT", "options.ac.detail.particleLimit", true, false);
+        addOptionEnum(type, "ALLOW_JAVA_IN_SCRIPT", "options.ac.world.allowJavaInScript", false, true);
     }
 
     private void addOptifineOptions(String type) {

@@ -137,6 +137,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
     public boolean grass3d = true;
     public int chatMessageBufferLimit = 100;
     public int particleLimit = 1024 * 4;
+    public boolean allowJavaInScript = false;
 
     @Shadow
     public abstract float getProgressValue(Option option);
@@ -494,7 +495,6 @@ public abstract class MixinGameOptions implements ExGameOptions {
             this.minecraft.textures.reloadAll();
         }
 
-
         if (option == OptionOF.AUTO_FAR_CLIP) {
             this.autoFarClip = !this.autoFarClip;
         }
@@ -526,6 +526,8 @@ public abstract class MixinGameOptions implements ExGameOptions {
             cir.setReturnValue(this.autoFarClip);
         } else if (option == OptionOF.GRASS_3D) {
             cir.setReturnValue(this.grass3d);
+        } else if (option == OptionOF.ALLOW_JAVA_IN_SCRIPT) {
+            cir.setReturnValue(this.allowJavaInScript);
         }
     }
 
@@ -737,11 +739,13 @@ public abstract class MixinGameOptions implements ExGameOptions {
         }
     }
 
-    @Inject(method = "load", at = @At(
-        value = "INVOKE",
-        target = "Ljava/lang/String;equals(Ljava/lang/Object;)Z",
-        shift = At.Shift.BEFORE,
-        ordinal = 0))
+    @Inject(
+        method = "load",
+        at = @At(
+            value = "INVOKE",
+            target = "Ljava/lang/String;equals(Ljava/lang/Object;)Z",
+            shift = At.Shift.BEFORE,
+            ordinal = 0))
     private void loadOF(
         CallbackInfo ci,
         @Local BufferedReader reader,
@@ -882,13 +886,16 @@ public abstract class MixinGameOptions implements ExGameOptions {
                 this.particleLimit = Integer.parseInt(value);
                 this.particleLimit = Config.limit(this.particleLimit, 0, MAX_PARTICLE_LIMIT);
             }
+            case "allowJavaInScript" -> this.allowJavaInScript = Boolean.parseBoolean(value);
         }
     }
 
-    @Inject(method = "save", at = @At(
-        value = "INVOKE",
-        target = "Ljava/io/PrintWriter;close()V",
-        shift = At.Shift.BEFORE))
+    @Inject(
+        method = "save",
+        at = @At(
+            value = "INVOKE",
+            target = "Ljava/io/PrintWriter;close()V",
+            shift = At.Shift.BEFORE))
     private void saveOptionsOF(CallbackInfo ci, @Local PrintWriter writer) {
         writer.println("ofFogFancy:" + this.ofFogFancy);
         writer.println("ofFogStart:" + this.ofFogStart);
@@ -932,6 +939,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
         writer.println("grass3d:" + this.grass3d);
         writer.println("chatMessageBufferLimit:" + this.chatMessageBufferLimit);
         writer.println("particleLimit:" + this.particleLimit);
+        writer.println("allowJavaInScript:" + this.allowJavaInScript);
     }
 
     @Override
@@ -1228,5 +1236,10 @@ public abstract class MixinGameOptions implements ExGameOptions {
     @Override
     public int getParticleLimit() {
         return this.particleLimit;
+    }
+
+    @Override
+    public boolean getAllowJavaInScript() {
+        return this.allowJavaInScript;
     }
 }

@@ -18,6 +18,7 @@ public class GuiWorldSettingsOF extends GuiBaseSettingsOF {
             OptionOF.CHUNK_UPDATES, OptionOF.CHUNK_UPDATES_DYNAMIC,
             OptionOF.AUTOSAVE_TICKS, OptionOF.TIME,
             OptionOF.WEATHER, OptionOF.FAR_VIEW,
-            OptionOF.CHAT_MESSAGE_BUFFER_LIMIT};
+            OptionOF.CHAT_MESSAGE_BUFFER_LIMIT,
+            OptionOF.ALLOW_JAVA_IN_SCRIPT};
     }
 }
