@@ -76,6 +76,7 @@ import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
@@ -974,11 +975,11 @@ public abstract class MixinMinecraft implements ExMinecraft {
                     }
 
                     if (stack == null) {
-                        if (AC_DebugMode.active) {
-                            exWorld.getUndoStack().stopRecording();
-                        }
-                        //return;
-                    } else if (stack.count == 0 && stack == this.player.inventory.items[this.player.inventory.selected]) {
+                        endMouseClick(swapOffhand, exWorld);
+                        return;
+                    }
+
+                    if (stack.count == 0 && stack == this.player.inventory.items[this.player.inventory.selected]) {
                         this.player.inventory.items[this.player.inventory.selected] = null;
                     } else if (stack.count != count) {
                         this.gameRenderer.itemInHandRenderer.itemPlaced();
@@ -1079,6 +1080,11 @@ public abstract class MixinMinecraft implements ExMinecraft {
         }
         exWorld.getScriptHandler().runScript(scriptName, exWorld.getScope(), false);
 
+        endMouseClick(swapOffhand, exWorld);
+    }
+
+    @Unique
+    private void endMouseClick(boolean swapOffhand, ExWorld exWorld) {
         if (swapOffhand) {
             ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
             ((ExPlayerEntity) this.player).setSwappedItems(false);
