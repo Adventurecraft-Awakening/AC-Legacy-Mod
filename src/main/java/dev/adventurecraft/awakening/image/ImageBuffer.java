@@ -86,16 +86,42 @@ public final class ImageBuffer {
     public void copyTo(IntBuffer dst, Point dstPoint, Point srcPoint, Size size, int dstFormat) {
         var src = this;
         if (src.format == dstFormat) {
-            int dstOffset = dstPoint.y * size.w + dstPoint.x;
-            for (int i = 0; i < size.h; i++) {
-                var srcSpan = src.getRowSlice(i + srcPoint.y).asIntBuffer().slice(srcPoint.x, size.w);
-                var dstSpan = dst.slice(dstOffset, size.w);
-                dstSpan.put(srcSpan);
-                dstOffset += size.w;
+            blitTo(dst, dstPoint, srcPoint, size);
+            return;
+        }
 
+        if (src.format == ImageFormat.RGBA_U8) {
+            if (dstFormat == ImageFormat.BGRA_U8) {
+                rgba8ToBgra8(dst, dstPoint, srcPoint, size);
+                return;
             }
-        } else {
-            throw new NotImplementedException();
+        }
+        throw new NotImplementedException();
+    }
+
+    private void blitTo(IntBuffer dst, Point dstPoint, Point srcPoint, Size size) {
+        var src = this;
+        int dstOffset = dstPoint.y * size.w + dstPoint.x;
+        for (int i = 0; i < size.h; i++) {
+            var srcSpan = src.getRowSlice(i + srcPoint.y).asIntBuffer().slice(srcPoint.x, size.w);
+            var dstSpan = dst.slice(dstOffset, size.w);
+
+            dstSpan.put(srcSpan);
+            dstOffset += size.w;
+        }
+    }
+
+    private void rgba8ToBgra8(IntBuffer dst, Point dstPoint, Point srcPoint, Size size) {
+        var src = this;
+        int dstOffset = dstPoint.y * size.w + dstPoint.x;
+        for (int i = 0; i < size.h; i++) {
+            var srcSpan = src.getRowSlice(i + srcPoint.y).asIntBuffer().slice(srcPoint.x, size.w);
+            var dstSpan = dst.slice(dstOffset, size.w);
+
+            for (int j = 0; j < size.w; j++) {
+                dstSpan.put(j, Rgba.fromBgra(srcSpan.get(j)));
+            }
+            dstOffset += size.w;
         }
     }
 

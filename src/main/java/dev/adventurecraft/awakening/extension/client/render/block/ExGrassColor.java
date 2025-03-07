@@ -28,7 +28,7 @@ public interface ExGrassColor {
         }
 
         if (image != null) {
-            image.copyTo(IntBuffer.wrap(GrassColor.pixels), ImageFormat.RGBA_U8);
+            image.copyTo(IntBuffer.wrap(GrassColor.pixels), ImageFormat.BGRA_U8);
         }
     }
 }

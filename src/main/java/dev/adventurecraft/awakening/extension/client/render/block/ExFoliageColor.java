@@ -24,7 +24,7 @@ public interface ExFoliageColor {
         }
 
         if (image != null) {
-            image.copyTo(IntBuffer.wrap(FoliageColor.pixels), ImageFormat.RGBA_U8);
+            image.copyTo(IntBuffer.wrap(FoliageColor.pixels), ImageFormat.BGRA_U8);
         }
     }
 }
