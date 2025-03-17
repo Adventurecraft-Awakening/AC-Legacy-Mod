@@ -124,7 +124,7 @@ java {
     // If you remove this line, sources will not be generated.
     withSourcesJar()
 
-    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_23
+    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_17
 }
 
 jar {

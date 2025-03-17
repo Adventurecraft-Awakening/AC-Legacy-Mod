@@ -18,15 +18,22 @@ public final class CommandUtils {
     }
 
     public static <T> Class<T> getClass(ArgumentType<T> argumentType) {
-        Class<?> result = switch (argumentType) {
-            case FloatArgumentType _ -> Float.class;
-            case DoubleArgumentType _ -> Double.class;
-            case IntegerArgumentType _ -> Integer.class;
-            case LongArgumentType _ -> Long.class;
-            case BoolArgumentType _ -> Boolean.class;
-            case StringArgumentType _ -> String.class;
-            default -> null;
-        };
+        Class<?> result;
+        if (argumentType instanceof FloatArgumentType) {
+            result = Float.class;
+        } else if (argumentType instanceof DoubleArgumentType) {
+            result = Double.class;
+        } else if (argumentType instanceof IntegerArgumentType) {
+            result = Integer.class;
+        } else if (argumentType instanceof LongArgumentType) {
+            result = Long.class;
+        } else if (argumentType instanceof BoolArgumentType) {
+            result = Boolean.class;
+        } else if (argumentType instanceof StringArgumentType) {
+            result = String.class;
+        } else {
+            result = null;
+        }
         if (result == null) {
             throw new IllegalArgumentException();
         }
