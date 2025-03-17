@@ -11,6 +11,8 @@ public class ACMod implements ModInitializer {
 
     public static final Unsafe UNSAFE;
 
+    public static final String NAMESPACE = "adventurecraft";
+
     public static boolean chunkIsNotPopulating = true;
 
     // This logger is used to write text to the console and the log file.

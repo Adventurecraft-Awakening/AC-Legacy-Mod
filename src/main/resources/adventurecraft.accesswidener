@@ -32,6 +32,8 @@ accessible field net/minecraft/world/level/Level chunkSource Lnet/minecraft/worl
 accessible field net/minecraft/world/level/Level levelData Lnet/minecraft/world/level/storage/LevelData;
 accessible method net/minecraft/world/level/Level tileUpdated (IIII)V
 
+accessible class net/minecraft/world/level/chunk/storage/RegionFile$ChunkBuffer
+
 accessible field net/minecraft/world/entity/Entity ENTITY_COUNTER I # field_1590
 accessible field net/minecraft/world/entity/Entity nextStep I
 accessible field net/minecraft/world/entity/Entity fallDistance F
