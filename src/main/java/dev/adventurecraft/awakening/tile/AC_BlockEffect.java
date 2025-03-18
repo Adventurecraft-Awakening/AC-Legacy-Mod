@@ -14,6 +14,7 @@ import dev.adventurecraft.awakening.extension.client.render.block.ExFoliageColor
 import dev.adventurecraft.awakening.extension.client.render.block.ExGrassColor;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
+import dev.adventurecraft.awakening.tile.entity.AC_TileEntityEffect;
 import net.minecraft.client.Minecraft;
 //import net.minecraft.client.render.*;
 import net.minecraft.client.renderer.ptexture.FireTexture;

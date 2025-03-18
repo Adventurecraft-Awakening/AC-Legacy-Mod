@@ -2,7 +2,7 @@ package dev.adventurecraft.awakening.tile;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.AC_ITriggerBlock;
-import dev.adventurecraft.awakening.common.AC_TileEntityCamera;
+import dev.adventurecraft.awakening.tile.entity.AC_TileEntityCamera;
 import dev.adventurecraft.awakening.common.gui.AC_GuiCameraBlock;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import net.minecraft.client.Minecraft;

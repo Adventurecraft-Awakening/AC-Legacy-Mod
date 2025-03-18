@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.common.gui;
 
-import dev.adventurecraft.awakening.common.AC_TileEntityWeather;
+import dev.adventurecraft.awakening.tile.entity.AC_TileEntityWeather;
 import dev.adventurecraft.awakening.common.GuiSlider2;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;

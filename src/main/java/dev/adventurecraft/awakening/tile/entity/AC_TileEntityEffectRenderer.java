@@ -1,5 +1,6 @@
-package dev.adventurecraft.awakening.common;
+package dev.adventurecraft.awakening.tile.entity;
 
+import dev.adventurecraft.awakening.common.AC_DebugMode;
 import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 import net.minecraft.world.level.tile.entity.TileEntity;
 import org.lwjgl.opengl.GL11;

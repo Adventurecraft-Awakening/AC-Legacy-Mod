@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.common.gui;
 
 import dev.adventurecraft.awakening.common.AC_ItemCursor;
-import dev.adventurecraft.awakening.common.AC_TileEntityTriggerPushable;
+import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTriggerPushable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.OptionButton;

@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.common.gui;
 
-import dev.adventurecraft.awakening.common.AC_TileEntityUrl;
+import dev.adventurecraft.awakening.tile.entity.AC_TileEntityUrl;
 import dev.adventurecraft.awakening.common.ClipboardHandler;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.Minecraft;

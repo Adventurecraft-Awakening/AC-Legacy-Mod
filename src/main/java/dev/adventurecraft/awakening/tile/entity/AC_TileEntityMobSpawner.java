@@ -1,6 +1,8 @@
-package dev.adventurecraft.awakening.common;
+package dev.adventurecraft.awakening.tile.entity;
 
 import java.util.*;
+
+import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.extension.entity.ExFallingBlockEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.world.level.tile.Tile;

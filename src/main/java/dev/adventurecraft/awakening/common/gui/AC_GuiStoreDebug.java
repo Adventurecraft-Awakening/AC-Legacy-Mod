@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.common.gui;
 
 import dev.adventurecraft.awakening.common.AC_ItemCursor;
-import dev.adventurecraft.awakening.common.AC_TileEntityStore;
+import dev.adventurecraft.awakening.tile.entity.AC_TileEntityStore;
 import dev.adventurecraft.awakening.common.AC_TriggerArea;
 import dev.adventurecraft.awakening.common.GuiSlider2;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;

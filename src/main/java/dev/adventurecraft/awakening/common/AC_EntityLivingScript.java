@@ -7,6 +7,7 @@ import dev.adventurecraft.awakening.script.EntityDescriptions;
 import dev.adventurecraft.awakening.script.ScopeTag;
 import dev.adventurecraft.awakening.script.ScriptEntity;
 import dev.adventurecraft.awakening.script.ScriptEntityDescription;
+import dev.adventurecraft.awakening.tile.entity.AC_TileEntityNpcPath;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.util.Mth;
@@ -39,7 +40,7 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
     public float maxPathDistance = 64.0F;
     private int nextPathIn;
     private double prevDistToPoint = 999999.0D;
-    AC_TileEntityNpcPath triggerOnPath = null;
+    private AC_TileEntityNpcPath triggerOnPath = null;
 
     public AC_EntityLivingScript(Level world) {
         super(world);
@@ -224,7 +225,7 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
         this.path = this.level.findPath(this, this.pathToEntity, this.maxPathDistance);
         this.nextPathIn = this.level.random.nextInt(40) + 60;
         this.prevDistToPoint = 999999.0D;
-        this.triggerOnPath = null;
+        this.setTriggerOnPath(null);
     }
 
     public void pathToPosition(int x, int y, int z) {
@@ -233,14 +234,14 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
         this.path = this.level.findPath(this, x, y, z, this.maxPathDistance);
         this.nextPathIn = this.level.random.nextInt(40) + 60;
         this.prevDistToPoint = 999999.0D;
-        this.triggerOnPath = null;
+        this.setTriggerOnPath(null);
     }
 
     public void clearPathing() {
         this.pathToEntity = null;
         this.pathToVec = null;
         this.path = null;
-        this.triggerOnPath = null;
+        this.setTriggerOnPath(null);
         this.zza = 0.0F;
     }
 
@@ -283,8 +284,8 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
                 point = null;
                 this.path = null;
                 this.runPathCompletedScript();
-                if (this.triggerOnPath != null) {
-                    this.triggerOnPath.pathFinished();
+                if (this.getTriggerOnPath() != null) {
+                    this.getTriggerOnPath().pathFinished();
                 }
                 return;
             }
@@ -326,5 +327,13 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
     @Override
     public Path getCurrentPath() {
         return this.path;
+    }
+
+    public AC_TileEntityNpcPath getTriggerOnPath() {
+        return this.triggerOnPath;
+    }
+
+    public void setTriggerOnPath(AC_TileEntityNpcPath path) {
+        this.triggerOnPath = path;
     }
 }

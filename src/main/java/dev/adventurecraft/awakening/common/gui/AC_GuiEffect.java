@@ -3,7 +3,7 @@ package dev.adventurecraft.awakening.common.gui;
 import java.io.File;
 import java.util.ArrayList;
 
-import dev.adventurecraft.awakening.common.AC_TileEntityEffect;
+import dev.adventurecraft.awakening.tile.entity.AC_TileEntityEffect;
 import dev.adventurecraft.awakening.common.GuiSlider2;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.client.Minecraft;

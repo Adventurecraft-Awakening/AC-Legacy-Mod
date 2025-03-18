@@ -1,4 +1,4 @@
-package dev.adventurecraft.awakening.common;
+package dev.adventurecraft.awakening.tile.entity;
 
 import net.minecraft.nbt.CompoundTag;
 

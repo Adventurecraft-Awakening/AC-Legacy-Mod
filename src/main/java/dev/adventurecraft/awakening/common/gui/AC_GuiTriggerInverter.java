@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.common.gui;
 
 import dev.adventurecraft.awakening.tile.AC_Blocks;
-import dev.adventurecraft.awakening.common.AC_TileEntityTriggerInverter;
+import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTriggerInverter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.OptionButton;

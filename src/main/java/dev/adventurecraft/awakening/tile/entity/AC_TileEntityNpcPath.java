@@ -1,5 +1,7 @@
-package dev.adventurecraft.awakening.common;
+package dev.adventurecraft.awakening.tile.entity;
 
+import dev.adventurecraft.awakening.common.AC_EntityNPC;
+import dev.adventurecraft.awakening.common.AC_TriggerArea;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
@@ -50,7 +52,7 @@ public class AC_TileEntityNpcPath extends AC_TileEntityMinMax {
         if (npc != null) {
             this.npc.pathToPosition(this.x, this.y, this.z);
             if (this.isSet()) {
-                this.npc.triggerOnPath = this;
+                this.npc.setTriggerOnPath(this);
             }
         }
     }

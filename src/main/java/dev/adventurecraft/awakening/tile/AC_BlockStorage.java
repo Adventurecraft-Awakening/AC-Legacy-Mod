@@ -2,7 +2,7 @@ package dev.adventurecraft.awakening.tile;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.AC_ITriggerBlock;
-import dev.adventurecraft.awakening.common.AC_TileEntityStorage;
+import dev.adventurecraft.awakening.tile.entity.AC_TileEntityStorage;
 import dev.adventurecraft.awakening.common.gui.AC_GuiStorage;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;

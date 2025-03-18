@@ -5,7 +5,7 @@ import java.util.List;
 import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.AC_ITriggerBlock;
 import dev.adventurecraft.awakening.common.AC_Items;
-import dev.adventurecraft.awakening.common.AC_TileEntityHealDamage;
+import dev.adventurecraft.awakening.tile.entity.AC_TileEntityHealDamage;
 import dev.adventurecraft.awakening.common.gui.AC_GuiHealDamage;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;

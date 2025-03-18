@@ -1,5 +1,8 @@
-package dev.adventurecraft.awakening.common;
+package dev.adventurecraft.awakening.tile.entity;
 
+import dev.adventurecraft.awakening.common.AC_CutsceneCamera;
+import dev.adventurecraft.awakening.common.AC_CutsceneCameraBlendType;
+import dev.adventurecraft.awakening.common.AC_CutsceneCameraPoint;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
@@ -82,7 +85,7 @@ public class AC_TileEntityCamera extends TileEntity {
         float z = tag.getFloat("posZ");
         float yaw = tag.getFloat("yaw");
         float pitch = tag.getFloat("pitch");
-        
+
         var type = AC_CutsceneCameraBlendType.QUADRATIC;
         if (tag.hasKey("type")) {
             type = AC_CutsceneCameraBlendType.get(tag.getByte("type"));

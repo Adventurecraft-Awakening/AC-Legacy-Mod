@@ -4,6 +4,7 @@ import java.util.Random;
 
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.common.gui.AC_GuiTriggerMemory;
+import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTriggerMemory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelSource;
