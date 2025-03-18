@@ -11,7 +11,7 @@ import dev.adventurecraft.awakening.extension.block.ExGrassBlock;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.render.block.ExBlockRenderer;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-//import net.minecraft.block.*;
+import dev.adventurecraft.awakening.util.Xoshiro128PP;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.client.renderer.TileRenderer;
@@ -28,16 +28,16 @@ import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.Slice;
 
-import java.util.Random;
-
 @Mixin(value = TileRenderer.class, priority = 999)
 public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
-    private Random rand = new Random();
+    @Unique
+    private final Xoshiro128PP rand = new Xoshiro128PP();
 
     @Shadow
     public static boolean fancy;

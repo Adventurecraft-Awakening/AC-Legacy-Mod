@@ -16,8 +16,6 @@ import net.minecraft.world.phys.Vec3;
 
 public class AC_UtilBullet {
 
-    static Random rand = new Random();
-
     public static void fireBullet(Level world, LivingEntity caster, float spread, int damage) {
         HitResult hit = findHit(world, caster, spread);
         if (hit == null) {
@@ -39,9 +37,9 @@ public class AC_UtilBullet {
         double dist = 256.0D;
         Vec3 pointA = caster.getPos(1.0F);
         Vec3 dir = caster.getViewVector(1.0F);
-        dir.x += (double) spread * (2.0D * rand.nextDouble() - 1.0D);
-        dir.y += (double) spread * (2.0D * rand.nextDouble() - 1.0D);
-        dir.z += (double) spread * (2.0D * rand.nextDouble() - 1.0D);
+        dir.x += (double) spread * (2.0D * world.random.nextDouble() - 1.0D);
+        dir.y += (double) spread * (2.0D * world.random.nextDouble() - 1.0D);
+        dir.z += (double) spread * (2.0D * world.random.nextDouble() - 1.0D);
         Vec3 pointB = pointA.add(dir.x * dist, dir.y * dist, dir.z * dist);
         if (caster.heightOffset == 0.0F) {
             pointA.y += caster.bbHeight / 2.0F;

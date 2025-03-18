@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.tile.entity;
 
-import java.util.Random;
+import dev.adventurecraft.awakening.util.Xoshiro128PP;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.tile.entity.TileEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
@@ -37,7 +37,7 @@ public class AC_TileEntityEffect extends TileEntity {
     public boolean revertTextures = false;
     public boolean replaceTextures = false;
     public String textureReplacement = "";
-    private static Random rand = new Random();
+    private final Xoshiro128PP rand = new Xoshiro128PP();
 
     @Override
     public void load(CompoundTag tag) {
@@ -77,7 +77,7 @@ public class AC_TileEntityEffect extends TileEntity {
     public void save(CompoundTag tag) {
         super.save(tag);
 
-        if (!this.particleType.equals("")) {
+        if (!this.particleType.isEmpty()) {
             tag.putString("particleType", this.particleType);
         }
 

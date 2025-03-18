@@ -8,6 +8,7 @@ import dev.adventurecraft.awakening.entity.AC_EntitySkeletonSword;
 import dev.adventurecraft.awakening.extension.entity.ExFallingBlockEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
+import dev.adventurecraft.awakening.util.Xoshiro128PP;
 import net.minecraft.world.level.tile.Tile;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
@@ -29,7 +30,7 @@ import org.mozilla.javascript.Scriptable;
 
 public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
 
-    private static final Map<String,String> ALTERNATIVE_NAMES = new HashMap<>();
+    private static final Map<String, String> ALTERNATIVE_NAMES = new HashMap<>();
     public int delay = -1;
     public String entityID = "Pig";
     public int spawnNumber;
@@ -42,7 +43,7 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
     public List<Entity> entitiesLeft;
     public int spawnID;
     public int spawnMeta;
-    Random rand;
+    private final Xoshiro128PP rand;
     public Coord[] minVec;
     public Coord[] maxVec;
     public Coord minSpawnVec;
@@ -66,7 +67,7 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
         this.hasDroppedItem = false;
         this.spawnOnTrigger = true;
         this.spawnOnDetrigger = false;
-        this.rand = new Random();
+        this.rand = new Xoshiro128PP();
         this.minVec = new Coord[8];
         this.maxVec = new Coord[8];
 
@@ -108,7 +109,7 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
     }
 
     private boolean canSpawn(Entity entity) {
-        if(ignoreSpawnConditions){
+        if (ignoreSpawnConditions) {
             return true;
         }
         return this.level.isUnobstructed(entity.bb) &&
@@ -132,9 +133,9 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
         while (true) {
             if (spawnedCount < this.spawnNumber * 6) {
                 String id = this.entityID;
-                if(ALTERNATIVE_NAMES.containsKey(this.entityID)){
+                if (ALTERNATIVE_NAMES.containsKey(this.entityID)) {
                     id = ALTERNATIVE_NAMES.get(this.entityID);
-                } else if(this.entityID.endsWith("(Scripted)")){
+                } else if (this.entityID.endsWith("(Scripted)")) {
                     id = "Script";
                 }
 
@@ -160,12 +161,12 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
                     System.out.println("NULL");
                     return;
                 }
-                switch (id){
+                switch (id) {
                     case "FallingSand":
                         if (this.spawnID >= 256 || Tile.tiles[this.spawnID] == null) {
                             return;
                         }
-                        if(this.spawnID == 0){
+                        if (this.spawnID == 0) {
                             this.spawnID = 12;
                         }
                         ((FallingTile) entity).tileId = this.spawnID;
@@ -178,7 +179,7 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
                         ((ItemEntity) entity).item = new ItemInstance(this.spawnID, 1, this.spawnMeta);
                         break;
                     case "Slime":
-                        if(this.entityID.length() <= 6){
+                        if (this.entityID.length() <= 6) {
                             break;
                         }
                         int size = Integer.parseInt(this.entityID.split(":")[1].trim());
@@ -215,7 +216,7 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
 
                 this.spawnEntity(entity);
 
-                switch (this.entityID){
+                switch (this.entityID) {
                     case "Spider Skeleton":
                         var skeleton = new Skeleton(this.level);
                         skeleton.moveTo(x, y, z, yaw, 0.0F);
@@ -248,7 +249,7 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
                     scripted.setEntityDescription(this.entityID.replace(" (Scripted)", ""));
                 }
 
-                if(showParticles) {
+                if (showParticles) {
                     if (entity instanceof LivingEntity livingEntity) {
                         livingEntity.spawnAnim();
                     }
@@ -314,7 +315,7 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
                     item.throwTime = 10;
                     this.level.addEntity(item);
 
-                    if(this.showParticles){
+                    if (this.showParticles) {
                         for (int i = 0; i < 20; ++i) {
                             double x = this.rand.nextGaussian() * 0.02D;
                             double y = this.rand.nextGaussian() * 0.02D;
@@ -419,10 +420,10 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
         this.hasDroppedItem = tag.getBoolean("HasDroppedItem");
         this.spawnID = tag.getInt("SpawnID");
         this.spawnMeta = tag.getInt("SpawnMeta");
-        if(tag.hasKey("ShowDebugInfo")) {
+        if (tag.hasKey("ShowDebugInfo")) {
             this.showDebugInfo = tag.getBoolean("ShowDebugInfo");
         }
-        if(tag.hasKey("ShowParticles")) {
+        if (tag.hasKey("ShowParticles")) {
             this.showParticles = tag.getBoolean("ShowParticles");
         }
         for (int id = 0; id < 8; ++id) {
@@ -462,8 +463,8 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
         tag.putInt("SpawnMeta", this.spawnMeta);
         tag.putInt("DropItem", this.dropItem);
         tag.putBoolean("HasDroppedItem", this.hasDroppedItem);
-        tag.putBoolean("ShowDebugInfo",this.showDebugInfo);
-        tag.putBoolean("ShowParticles",this.showParticles);
+        tag.putBoolean("ShowDebugInfo", this.showDebugInfo);
+        tag.putBoolean("ShowParticles", this.showParticles);
 
         for (int id = 0; id < 8; ++id) {
             tag.putInt("minX".concat(Integer.toString(id)), this.minVec[id].x);
@@ -520,11 +521,11 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
         ALTERNATIVE_NAMES.put("Spider Skeleton Sword", "Spider");
         ALTERNATIVE_NAMES.put("Wolf (Angry)", "Wolf");
         ALTERNATIVE_NAMES.put("Wolf (Tame)", "Wolf");
-        ALTERNATIVE_NAMES.put("Pig Zombie","PigZombie");
-        ALTERNATIVE_NAMES.put("Skeleton Boss","SkeletonBoss");
-        ALTERNATIVE_NAMES.put("Skeleton Rifle","SkeletonRifle");
-        ALTERNATIVE_NAMES.put("Skeleton Shotgun","SkeletonShotgun");
-        ALTERNATIVE_NAMES.put("Skeleton Sword","SkeletonSword");
-        ALTERNATIVE_NAMES.put("Primed Tnt","PrimedTnt");
+        ALTERNATIVE_NAMES.put("Pig Zombie", "PigZombie");
+        ALTERNATIVE_NAMES.put("Skeleton Boss", "SkeletonBoss");
+        ALTERNATIVE_NAMES.put("Skeleton Rifle", "SkeletonRifle");
+        ALTERNATIVE_NAMES.put("Skeleton Shotgun", "SkeletonShotgun");
+        ALTERNATIVE_NAMES.put("Skeleton Sword", "SkeletonSword");
+        ALTERNATIVE_NAMES.put("Primed Tnt", "PrimedTnt");
     }
 }

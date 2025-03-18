@@ -1,8 +1,5 @@
 package dev.adventurecraft.awakening.util;
 
-import java.nio.ByteBuffer;
-import java.security.SecureRandom;
-
 // xxHash32 is used for the hash code.
 // https://github.com/Cyan4973/xxHash
 
@@ -13,7 +10,7 @@ public final class HashCode {
     private static final int Prime4 = 0x27D4EB2F;
     private static final int Prime5 = 0x165667B1;
 
-    private static final int seed = ByteBuffer.wrap(SecureRandom.getSeed(4)).getInt() ;
+    private static final int seed = (int) RandomUtil.secureNextInt64();
 
     private static int mixEmptyState() {
         return seed + Prime5;

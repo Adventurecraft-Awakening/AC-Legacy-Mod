@@ -23,7 +23,6 @@ public class AC_EntityBat extends FlyingMob implements Enemy {
     public AC_EntityBat(Level var1) {
         super(var1);
         this.textureName = "/mob/bat.png";
-        this.random.setSeed(System.currentTimeMillis() * 10L + (long) this.id);
         this.movingToTarget = false;
         this.setSize(0.5F, 0.5F);
         this.health = 5;
