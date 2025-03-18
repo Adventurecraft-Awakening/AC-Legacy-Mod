@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.common.gui;
 
-import dev.adventurecraft.awakening.common.AC_Items;
+import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityMobSpawner;
 import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.common.GuiSlider2;

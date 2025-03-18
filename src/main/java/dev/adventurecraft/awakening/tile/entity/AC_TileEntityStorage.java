@@ -2,7 +2,7 @@ package dev.adventurecraft.awakening.tile.entity;
 
 import java.util.ArrayList;
 
-import dev.adventurecraft.awakening.common.AC_ItemCursor;
+import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;

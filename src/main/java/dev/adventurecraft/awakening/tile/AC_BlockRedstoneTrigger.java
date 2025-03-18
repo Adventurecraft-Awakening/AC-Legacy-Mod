@@ -4,6 +4,8 @@ import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.common.gui.AC_GuiRedstoneTrigger;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
+import dev.adventurecraft.awakening.item.AC_ItemCursor;
+import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityRedstoneTrigger;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;

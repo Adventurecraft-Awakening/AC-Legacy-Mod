@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.mixin.item;
 
-import dev.adventurecraft.awakening.common.AC_ISlotCallbackItem;
+import dev.adventurecraft.awakening.item.AC_ISlotCallbackItem;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;

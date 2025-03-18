@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.AC_BlockBombable;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.ItemInstance;

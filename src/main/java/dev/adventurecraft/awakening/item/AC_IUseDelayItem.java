@@ -1,4 +1,4 @@
-package dev.adventurecraft.awakening.common;
+package dev.adventurecraft.awakening.item;
 
 public interface AC_IUseDelayItem {
 

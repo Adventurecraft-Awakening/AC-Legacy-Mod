@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.tile;
 
-import dev.adventurecraft.awakening.common.AC_ItemSubtypes;
-import dev.adventurecraft.awakening.common.AC_Items;
+import dev.adventurecraft.awakening.item.AC_ItemSubtypes;
+import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import net.minecraft.world.item.Item;

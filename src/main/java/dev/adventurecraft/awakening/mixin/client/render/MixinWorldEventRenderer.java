@@ -11,6 +11,8 @@ import dev.adventurecraft.awakening.extension.client.render.ExWorldEventRenderer
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunkCache;
+import dev.adventurecraft.awakening.item.AC_ItemCursor;
+import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.script.ScriptModelBase;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;

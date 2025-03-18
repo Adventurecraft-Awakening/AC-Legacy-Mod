@@ -4,6 +4,7 @@ import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import java.util.List;
 
+import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.ItemInstance;
@@ -20,17 +21,17 @@ import net.minecraft.world.phys.Vec3;
 public class AC_EntityHookshot extends Entity {
 
     int timeBeforeTurnAround;
-    boolean turningAround;
+    private boolean turningAround;
     public boolean attachedToSurface;
     public boolean mainHand;
-    LivingEntity returnsTo;
-    Entity entityGrabbed;
+    private LivingEntity returnsTo;
+    private Entity entityGrabbed;
     ItemInstance itemStack;
 
     public AC_EntityHookshot(Level world) {
         super(world);
         this.setSize(0.5F, 0.5F);
-        this.turningAround = true;
+        this.setTurningAround(true);
         this.timeBeforeTurnAround = 0;
         ((ExEntity) this).setCollidesWithClipBlocks(false);
     }
@@ -50,8 +51,8 @@ public class AC_EntityHookshot extends Entity {
         this.yo = this.y;
         this.zo = this.z;
         this.timeBeforeTurnAround = 20;
-        this.turningAround = false;
-        this.returnsTo = entity;
+        this.setTurningAround(false);
+        this.setReturnEntity(entity);
         this.attachedToSurface = false;
         this.itemStack = stack;
     }
@@ -70,7 +71,7 @@ public class AC_EntityHookshot extends Entity {
 
     @Override
     public void tick() {
-        if (this.itemStack != null && this.returnsTo instanceof Player player) {
+        if (this.itemStack != null && this.getReturnEntity() instanceof Player player) {
             if (this.mainHand && this.itemStack != player.inventory.getSelected()) {
                 AC_Items.hookshot.releaseHookshot(this);
             }
@@ -89,14 +90,14 @@ public class AC_EntityHookshot extends Entity {
         double xVel;
         double yVel;
         double zVel;
-        if (!this.turningAround) {
+        if (!this.isTurningAround()) {
             xVel = this.xd;
             yVel = this.yd;
             zVel = this.zd;
             this.move(this.xd, this.yd, this.zd);
             if (this.xd == xVel && this.yd == yVel && this.zd == zVel) {
                 if (this.timeBeforeTurnAround-- <= 0) {
-                    this.turningAround = true;
+                    this.setTurningAround(true);
                 }
             } else {
                 Vec3 prevPos = Vec3.create(this.xo, this.yo, this.zo);
@@ -115,27 +116,28 @@ public class AC_EntityHookshot extends Entity {
                     }
                 }
 
-                this.turningAround = true;
+                this.setTurningAround(true);
             }
-        } else if (this.returnsTo != null) {
-            if (this.returnsTo.removed) {
+        } else if (this.getReturnEntity() != null) {
+            LivingEntity returnsTo = this.getReturnEntity();
+            if (returnsTo.removed) {
                 this.remove();
                 return;
             }
 
-            xVel = this.returnsTo.x - this.x;
-            yVel = this.returnsTo.y - this.y;
-            zVel = this.returnsTo.z - this.z;
+            xVel = returnsTo.x - this.x;
+            yVel = returnsTo.y - this.y;
+            zVel = returnsTo.z - this.z;
             double speedSqr = Math.sqrt(xVel * xVel + yVel * yVel + zVel * zVel);
             this.xd = 0.75D * xVel / speedSqr;
             this.yd = 0.75D * yVel / speedSqr;
             this.zd = 0.75D * zVel / speedSqr;
             if (this.attachedToSurface) {
                 if (speedSqr > 1.2D) {
-                    this.returnsTo.push(-0.15D * this.xd, -0.15D * this.yd, -0.15D * this.zd);
-                    this.returnsTo.fallDistance = 0.0F;
+                    returnsTo.push(-0.15D * this.xd, -0.15D * this.yd, -0.15D * this.zd);
+                    returnsTo.fallDistance = 0.0F;
                 } else {
-                    this.returnsTo.lerpMotion(0.0D, 0.0D, 0.0D);
+                    returnsTo.lerpMotion(0.0D, 0.0D, 0.0D);
                 }
             } else {
                 if (speedSqr <= 1.2D) {
@@ -149,27 +151,28 @@ public class AC_EntityHookshot extends Entity {
             this.remove();
         }
 
-        if (!this.turningAround) {
+        if (!this.isTurningAround()) {
             var entities = (List<Entity>) this.level.getEntities(this, this.bb.inflate(0.5D, 0.5D, 0.5D));
             for (Entity entity : entities) {
                 boolean isItem = entity instanceof ItemEntity;
-                if (isItem || entity instanceof LivingEntity && entity != this.returnsTo) {
+                if (isItem || entity instanceof LivingEntity && entity != this.getReturnEntity()) {
                     if (isItem) {
                         this.level.playSound(this, "damage.fallsmall", 1.0F, 1.2F / (this.random.nextFloat() * 0.2F + 0.9F));
                     } else {
                         this.level.playSound(this, "damage.hurtflesh", 1.0F, 1.2F / (this.random.nextFloat() * 0.2F + 0.9F));
                     }
 
-                    this.entityGrabbed = entity;
-                    this.turningAround = true;
+                    this.setGrabbedEntity(entity);
+                    this.setTurningAround(true);
                     break;
                 }
             }
         }
 
-        if (this.entityGrabbed != null && !this.entityGrabbed.removed) {
-            this.entityGrabbed.fallDistance = 0.0F;
-            this.entityGrabbed.setPos(this.x, this.y, this.z);
+        Entity entityGrabbed = this.getGrabbedEntity();
+        if (entityGrabbed != null && !entityGrabbed.removed) {
+            entityGrabbed.fallDistance = 0.0F;
+            entityGrabbed.setPos(this.x, this.y, this.z);
         }
     }
 
@@ -202,5 +205,29 @@ public class AC_EntityHookshot extends Entity {
         }
 
         super.remove();
+    }
+
+    public boolean isTurningAround() {
+        return turningAround;
+    }
+
+    public void setTurningAround(boolean turningAround) {
+        this.turningAround = turningAround;
+    }
+
+    public LivingEntity getReturnEntity() {
+        return this.returnsTo;
+    }
+
+    public void setReturnEntity(LivingEntity returnsTo) {
+        this.returnsTo = returnsTo;
+    }
+
+    public Entity getGrabbedEntity() {
+        return entityGrabbed;
+    }
+
+    public void setGrabbedEntity(Entity entityGrabbed) {
+        this.entityGrabbed = entityGrabbed;
     }
 }

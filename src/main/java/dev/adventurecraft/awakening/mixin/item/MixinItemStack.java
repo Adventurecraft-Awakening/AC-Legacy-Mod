@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.mixin.item;
 
-import dev.adventurecraft.awakening.common.AC_Items;
+import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.extension.item.ExItemStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.ItemInstance;

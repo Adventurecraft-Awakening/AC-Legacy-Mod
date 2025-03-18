@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.mixin.item;
 
-import dev.adventurecraft.awakening.common.AC_ILeftClickItem;
+import dev.adventurecraft.awakening.item.AC_ILeftClickItem;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.WeaponItem;

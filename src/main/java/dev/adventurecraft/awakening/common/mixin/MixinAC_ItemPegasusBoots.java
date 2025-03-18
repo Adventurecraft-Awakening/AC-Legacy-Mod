@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.common.mixin;
 
-import dev.adventurecraft.awakening.common.AC_ItemPegasusBoots;
-import dev.adventurecraft.awakening.common.AC_ISlotCallbackItem;
+import dev.adventurecraft.awakening.item.AC_ItemPegasusBoots;
+import dev.adventurecraft.awakening.item.AC_ISlotCallbackItem;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.mixin.item.MixinItem;
 import net.minecraft.world.ItemInstance;

@@ -1,4 +1,4 @@
-package dev.adventurecraft.awakening.common;
+package dev.adventurecraft.awakening.item;
 
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;

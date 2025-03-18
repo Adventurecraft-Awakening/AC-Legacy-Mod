@@ -1,6 +1,8 @@
 package dev.adventurecraft.awakening.tile;
 
 import dev.adventurecraft.awakening.common.*;
+import dev.adventurecraft.awakening.item.AC_ItemCursor;
+import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTeleport;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.ItemInstance;

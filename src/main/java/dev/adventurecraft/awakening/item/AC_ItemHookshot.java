@@ -1,5 +1,6 @@
-package dev.adventurecraft.awakening.common;
+package dev.adventurecraft.awakening.item;
 
+import dev.adventurecraft.awakening.common.AC_EntityHookshot;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;
@@ -91,17 +92,19 @@ public class AC_ItemHookshot extends Item {
     }
 
     public void releaseHookshot(AC_EntityHookshot entity) {
-        if (entity != null) {
-            entity.turningAround = true;
-            entity.attachedToSurface = false;
-            entity.entityGrabbed = null;
-            if (entity == this.mainHookshot && this.mainActiveHookshot != null) {
-                this.mainActiveHookshot.setDamage(0);
-                this.mainActiveHookshot = null;
-            } else if (this.offActiveHookshot != null) {
-                this.offActiveHookshot.setDamage(0);
-                this.offActiveHookshot = null;
-            }
+        if (entity == null) {
+            return;
+        }
+
+        entity.setTurningAround(true);
+        entity.attachedToSurface = false;
+        entity.setGrabbedEntity(null);
+        if (entity == this.mainHookshot && this.mainActiveHookshot != null) {
+            this.mainActiveHookshot.setDamage(0);
+            this.mainActiveHookshot = null;
+        } else if (this.offActiveHookshot != null) {
+            this.offActiveHookshot.setDamage(0);
+            this.offActiveHookshot = null;
         }
     }
 }

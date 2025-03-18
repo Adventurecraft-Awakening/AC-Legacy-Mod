@@ -1,9 +1,9 @@
 package dev.adventurecraft.awakening.mixin.inventory;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import dev.adventurecraft.awakening.common.AC_IItemReload;
-import dev.adventurecraft.awakening.common.AC_Items;
-import dev.adventurecraft.awakening.common.AC_ISlotCallbackItem;
+import dev.adventurecraft.awakening.item.AC_IItemReload;
+import dev.adventurecraft.awakening.item.AC_Items;
+import dev.adventurecraft.awakening.item.AC_ISlotCallbackItem;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import dev.adventurecraft.awakening.extension.item.ExArmorItem;

@@ -20,6 +20,8 @@ import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import dev.adventurecraft.awakening.extension.util.ExProgressListener;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
+import dev.adventurecraft.awakening.item.AC_ILeftClickItem;
+import dev.adventurecraft.awakening.item.AC_IUseDelayItem;
 import dev.adventurecraft.awakening.script.ScriptEntity;
 import dev.adventurecraft.awakening.script.ScriptItem;
 import dev.adventurecraft.awakening.script.ScriptVec3;

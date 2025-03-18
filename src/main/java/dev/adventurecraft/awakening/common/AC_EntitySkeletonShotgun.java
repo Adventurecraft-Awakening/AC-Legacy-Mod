@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
 import dev.adventurecraft.awakening.extension.item.ExItemStack;
+import dev.adventurecraft.awakening.item.AC_Items;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.monster.Skeleton;

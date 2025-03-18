@@ -1,5 +1,6 @@
-package dev.adventurecraft.awakening.common;
+package dev.adventurecraft.awakening.item;
 
+import dev.adventurecraft.awakening.common.AC_TriggerArea;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.ItemInstance;

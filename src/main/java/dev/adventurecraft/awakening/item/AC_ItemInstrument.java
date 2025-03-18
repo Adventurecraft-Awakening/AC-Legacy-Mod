@@ -1,4 +1,4 @@
-package dev.adventurecraft.awakening.common;
+package dev.adventurecraft.awakening.item;
 
 import dev.adventurecraft.awakening.common.gui.AC_GuiMusicSheet;
 import dev.adventurecraft.awakening.common.instruments.IInstrumentConfig;

@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.mixin.client.render;
 
-import dev.adventurecraft.awakening.common.AC_IItemLight;
-import dev.adventurecraft.awakening.common.AC_Items;
+import dev.adventurecraft.awakening.item.AC_IItemLight;
+import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.common.Vec2;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
@@ -17,7 +17,6 @@ import net.minecraft.client.renderer.MapRenderer;
 import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.client.renderer.TileRenderer;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
-import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.PlayerRenderer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.ItemInstance;

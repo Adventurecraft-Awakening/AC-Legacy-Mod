@@ -24,6 +24,7 @@ import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunkCache;
 import dev.adventurecraft.awakening.image.ImageBuffer;
 import dev.adventurecraft.awakening.image.ImageLoader;
+import dev.adventurecraft.awakening.item.AC_ItemCustom;
 import dev.adventurecraft.awakening.script.EntityDescriptions;
 import dev.adventurecraft.awakening.script.ScopeTag;
 import dev.adventurecraft.awakening.script.Script;

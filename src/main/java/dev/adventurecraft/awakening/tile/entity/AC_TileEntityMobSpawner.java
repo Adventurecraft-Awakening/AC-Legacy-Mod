@@ -5,6 +5,7 @@ import java.util.*;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.extension.entity.ExFallingBlockEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
+import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import net.minecraft.world.level.tile.Tile;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;

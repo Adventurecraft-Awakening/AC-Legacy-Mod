@@ -1,8 +1,9 @@
-package dev.adventurecraft.awakening.common;
+package dev.adventurecraft.awakening.item;
 
 import java.util.Iterator;
 import java.util.List;
 
+import dev.adventurecraft.awakening.common.AC_EntityAirFX;
 import dev.adventurecraft.awakening.extension.client.particle.ExParticleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.ItemInstance;

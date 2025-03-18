@@ -2,7 +2,7 @@ package dev.adventurecraft.awakening.tile;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.AC_ITriggerBlock;
-import dev.adventurecraft.awakening.common.AC_Items;
+import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityWeather;
 import dev.adventurecraft.awakening.common.gui.AC_GuiWeather;
 import dev.adventurecraft.awakening.extension.world.ExWorld;

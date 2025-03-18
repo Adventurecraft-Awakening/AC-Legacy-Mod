@@ -1,4 +1,4 @@
-package dev.adventurecraft.awakening.common;
+package dev.adventurecraft.awakening.item;
 
 import dev.adventurecraft.awakening.extension.entity.ExFallingBlockEntity;
 import dev.adventurecraft.awakening.tile.AC_Blocks;

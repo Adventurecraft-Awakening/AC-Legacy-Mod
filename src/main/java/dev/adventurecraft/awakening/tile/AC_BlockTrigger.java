@@ -4,6 +4,8 @@ import java.util.Random;
 
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.common.gui.AC_GuiTrigger;
+import dev.adventurecraft.awakening.item.AC_ItemCursor;
+import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityMinMax;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTrigger;
 import net.minecraft.world.entity.Entity;

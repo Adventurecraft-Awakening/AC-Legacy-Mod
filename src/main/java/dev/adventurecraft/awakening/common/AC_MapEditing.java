@@ -3,6 +3,7 @@ package dev.adventurecraft.awakening.common;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.client.render.block.ExBlockRenderer;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
+import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.client.renderer.TileRenderer;

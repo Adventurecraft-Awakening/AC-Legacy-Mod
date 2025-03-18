@@ -2,7 +2,7 @@ package dev.adventurecraft.awakening.mixin.entity;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
-import dev.adventurecraft.awakening.common.AC_Items;
+import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.extension.block.ExLadderBlock;
 import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
 import net.fabricmc.api.EnvType;

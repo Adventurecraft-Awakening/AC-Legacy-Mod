@@ -1,4 +1,4 @@
-package dev.adventurecraft.awakening.common;
+package dev.adventurecraft.awakening.item;
 
 import net.minecraft.world.item.TileItem;
 import net.minecraft.world.level.tile.Tile;

@@ -60,12 +60,12 @@ public class AC_RenderHookshot extends EntityRenderer {
 
         GL11.glDisable(GL12.GL_RESCALE_NORMAL);
         GL11.glPopMatrix();
-        if (entity.returnsTo == null) {
+        if (entity.getReturnEntity() == null) {
             return;
         }
 
-        float yaw = (entity.returnsTo.yRotO + (entity.returnsTo.yRot - entity.returnsTo.yRotO) * deltaTime) * 3.141593F / 180.0F;
-        float pitch = (entity.returnsTo.xRotO + (entity.returnsTo.xRot - entity.returnsTo.xRotO) * deltaTime) * 3.141593F / 180.0F;
+        float yaw = (entity.getReturnEntity().yRotO + (entity.getReturnEntity().yRot - entity.getReturnEntity().yRotO) * deltaTime) * 3.141593F / 180.0F;
+        float pitch = (entity.getReturnEntity().xRotO + (entity.getReturnEntity().xRot - entity.getReturnEntity().xRotO) * deltaTime) * 3.141593F / 180.0F;
         double var23 = Mth.sin(yaw);
         double var25 = Mth.cos(yaw);
         double var27 = Mth.sin(pitch);
@@ -76,16 +76,16 @@ public class AC_RenderHookshot extends EntityRenderer {
             var31 = -var31;
         }
 
-        double retX = entity.returnsTo.xo + (entity.returnsTo.x - entity.returnsTo.xo) * (double) deltaTime - var25 * var31 - var23 * var33 * var29;
-        double retY = entity.returnsTo.yo + (entity.returnsTo.y - entity.returnsTo.yo) * (double) deltaTime - var27 * var33;
-        double retZ = entity.returnsTo.zo + (entity.returnsTo.z - entity.returnsTo.zo) * (double) deltaTime - var23 * var31 + var25 * var33 * var29;
+        double retX = entity.getReturnEntity().xo + (entity.getReturnEntity().x - entity.getReturnEntity().xo) * (double) deltaTime - var25 * var31 - var23 * var33 * var29;
+        double retY = entity.getReturnEntity().yo + (entity.getReturnEntity().y - entity.getReturnEntity().yo) * (double) deltaTime - var27 * var33;
+        double retZ = entity.getReturnEntity().zo + (entity.getReturnEntity().z - entity.getReturnEntity().zo) * (double) deltaTime - var23 * var31 + var25 * var33 * var29;
         if (this.entityRenderDispatcher.options.thirdPersonView || ((ExMinecraft) Minecraft.instance).isCameraActive()) {
-            float var41 = (entity.returnsTo.yHeadRotO + (entity.returnsTo.yHeadRot - entity.returnsTo.yHeadRotO) * deltaTime) * 3.141593F / 180.0F;
+            float var41 = (entity.getReturnEntity().yHeadRotO + (entity.getReturnEntity().yHeadRot - entity.getReturnEntity().yHeadRotO) * deltaTime) * 3.141593F / 180.0F;
             double var42 = Mth.sin(var41);
             double var44 = Mth.cos(var41);
-            retX = entity.returnsTo.xo + (entity.returnsTo.x - entity.returnsTo.xo) * (double) deltaTime - var44 * 0.35D - var42 * 0.85D;
-            retY = entity.returnsTo.yo + (entity.returnsTo.y - entity.returnsTo.yo) * (double) deltaTime - 0.45D;
-            retZ = entity.returnsTo.zo + (entity.returnsTo.z - entity.returnsTo.zo) * (double) deltaTime - var42 * 0.35D + var44 * 0.85D;
+            retX = entity.getReturnEntity().xo + (entity.getReturnEntity().x - entity.getReturnEntity().xo) * (double) deltaTime - var44 * 0.35D - var42 * 0.85D;
+            retY = entity.getReturnEntity().yo + (entity.getReturnEntity().y - entity.getReturnEntity().yo) * (double) deltaTime - 0.45D;
+            retZ = entity.getReturnEntity().zo + (entity.getReturnEntity().z - entity.getReturnEntity().zo) * (double) deltaTime - var42 * 0.35D + var44 * 0.85D;
         }
 
         double prX = entity.xo + (entity.x - entity.xo) * (double) deltaTime;

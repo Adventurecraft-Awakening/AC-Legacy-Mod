@@ -1,5 +1,6 @@
-package dev.adventurecraft.awakening.common;
+package dev.adventurecraft.awakening.item;
 
+import dev.adventurecraft.awakening.common.AC_EntityNPC;
 import dev.adventurecraft.awakening.common.gui.AC_GuiNPC;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.LivingEntity;

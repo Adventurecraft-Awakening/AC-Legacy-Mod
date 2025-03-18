@@ -2,7 +2,7 @@ package dev.adventurecraft.awakening.mixin.client;
 
 import com.llamalad7.mixinextras.injector.WrapWithCondition;
 import dev.adventurecraft.awakening.common.AC_DebugMode;
-import dev.adventurecraft.awakening.common.AC_Items;
+import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.common.AC_UndoStack;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.client.gamemode.SurvivalGameMode;

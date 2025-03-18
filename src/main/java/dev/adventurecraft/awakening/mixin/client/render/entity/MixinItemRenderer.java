@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.mixin.client.render.entity;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import dev.adventurecraft.awakening.common.AC_IItemReload;
+import dev.adventurecraft.awakening.item.AC_IItemReload;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.client.render.entity.ExItemRenderer;
 import net.minecraft.client.gui.Font;

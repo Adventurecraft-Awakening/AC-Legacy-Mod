@@ -1,5 +1,6 @@
-package dev.adventurecraft.awakening.common;
+package dev.adventurecraft.awakening.item;
 
+import dev.adventurecraft.awakening.common.AC_UtilBullet;
 import dev.adventurecraft.awakening.extension.item.ExItemStack;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;

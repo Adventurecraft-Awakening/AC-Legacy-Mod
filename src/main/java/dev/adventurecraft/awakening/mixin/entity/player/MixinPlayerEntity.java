@@ -5,6 +5,8 @@ import dev.adventurecraft.awakening.extension.container.ExPlayerContainer;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
+import dev.adventurecraft.awakening.item.AC_IItemLight;
+import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.mixin.entity.MixinLivingEntity;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
 import net.minecraft.client.Minecraft;

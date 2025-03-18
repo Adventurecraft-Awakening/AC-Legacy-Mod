@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.mixin.block;
 
 import dev.adventurecraft.awakening.tile.AC_BlockColor;
-import dev.adventurecraft.awakening.common.AC_ItemSubtypes;
+import dev.adventurecraft.awakening.item.AC_ItemSubtypes;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.fabricmc.api.EnvType;
