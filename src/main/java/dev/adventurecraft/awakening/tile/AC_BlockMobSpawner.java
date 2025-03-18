@@ -3,7 +3,6 @@ package dev.adventurecraft.awakening.tile;
 import java.util.Random;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
-import dev.adventurecraft.awakening.common.AC_ITriggerBlock;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityMobSpawner;
 import dev.adventurecraft.awakening.common.gui.AC_GuiMobSpawner;
 import net.minecraft.world.entity.player.Player;

@@ -3,7 +3,6 @@ package dev.adventurecraft.awakening.tile;
 import java.util.List;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
-import dev.adventurecraft.awakening.common.AC_ITriggerBlock;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityHealDamage;
 import dev.adventurecraft.awakening.common.gui.AC_GuiHealDamage;

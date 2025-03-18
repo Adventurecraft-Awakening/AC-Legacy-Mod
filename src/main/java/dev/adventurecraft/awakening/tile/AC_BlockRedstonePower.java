@@ -2,7 +2,6 @@ package dev.adventurecraft.awakening.tile;
 
 import java.util.Random;
 
-import dev.adventurecraft.awakening.common.AC_ITriggerBlock;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.level.Level;

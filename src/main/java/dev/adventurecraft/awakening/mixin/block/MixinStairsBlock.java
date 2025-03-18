@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.mixin.block;
 
-import dev.adventurecraft.awakening.common.AC_IBlockColor;
+import dev.adventurecraft.awakening.tile.AC_IBlockColor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;

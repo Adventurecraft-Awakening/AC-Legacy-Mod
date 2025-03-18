@@ -1,7 +1,6 @@
 package dev.adventurecraft.awakening.tile;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
-import dev.adventurecraft.awakening.common.AC_IBlockColor;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTree;
 import dev.adventurecraft.awakening.common.gui.AC_GuiTree;
 import dev.adventurecraft.awakening.extension.block.ExBlock;

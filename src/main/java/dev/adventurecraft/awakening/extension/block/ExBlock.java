@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.extension.block;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
-import dev.adventurecraft.awakening.common.AC_ITriggerBlock;
+import dev.adventurecraft.awakening.tile.AC_ITriggerBlock;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.tile.Tile;
 

@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.mixin.block;
 
-import dev.adventurecraft.awakening.common.AC_IBlockColor;
+import dev.adventurecraft.awakening.tile.AC_IBlockColor;
 import net.minecraft.world.level.LevelSource;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.tile.StoneTile;

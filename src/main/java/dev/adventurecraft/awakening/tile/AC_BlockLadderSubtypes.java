@@ -1,6 +1,5 @@
 package dev.adventurecraft.awakening.tile;
 
-import dev.adventurecraft.awakening.common.AC_IBlockColor;
 import dev.adventurecraft.awakening.extension.block.ExLadderBlock;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.tile.LadderTile;

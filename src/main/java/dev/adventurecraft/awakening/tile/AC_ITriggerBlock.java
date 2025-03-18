@@ -1,4 +1,4 @@
-package dev.adventurecraft.awakening.common;
+package dev.adventurecraft.awakening.tile;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelSource;

@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.mixin.block;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import dev.adventurecraft.awakening.common.AC_IBlockColor;
+import dev.adventurecraft.awakening.tile.AC_IBlockColor;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.entity.ExFallingBlockEntity;
 import net.minecraft.world.entity.item.FallingTile;

@@ -2,7 +2,7 @@ package dev.adventurecraft.awakening.mixin.block;
 
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.client.options.ConnectedGrassOption;
-import dev.adventurecraft.awakening.common.AC_IBlockColor;
+import dev.adventurecraft.awakening.tile.AC_IBlockColor;
 import dev.adventurecraft.awakening.extension.block.AC_TexturedBlock;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.block.ExGrassBlock;

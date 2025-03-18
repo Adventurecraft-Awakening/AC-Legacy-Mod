@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.item;
 
-import dev.adventurecraft.awakening.common.AC_IBlockColor;
+import dev.adventurecraft.awakening.tile.AC_IBlockColor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;

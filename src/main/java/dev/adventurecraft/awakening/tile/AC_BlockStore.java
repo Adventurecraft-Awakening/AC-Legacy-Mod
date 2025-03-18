@@ -1,7 +1,6 @@
 package dev.adventurecraft.awakening.tile;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
-import dev.adventurecraft.awakening.common.AC_ITriggerBlock;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityStore;
 import dev.adventurecraft.awakening.common.gui.AC_GuiStoreDebug;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
