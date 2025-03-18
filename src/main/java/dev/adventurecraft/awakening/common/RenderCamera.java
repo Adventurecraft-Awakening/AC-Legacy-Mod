@@ -13,7 +13,7 @@ public class RenderCamera extends LivingEntityRenderer {
     @Override
     protected void renderNameTags(LivingEntity var1, double var2, double var4, double var6) {
         AC_EntityCamera var8 = (AC_EntityCamera) var1;
-        this.renderNameTag(var1, String.format("%.2f", var8.time), var2, var4 - 1.5D, var6, 64);
+        this.renderNameTag(var1, String.format("%.2f", var8.getTime()), var2, var4 - 1.5D, var6, 64);
     }
 
     @Override

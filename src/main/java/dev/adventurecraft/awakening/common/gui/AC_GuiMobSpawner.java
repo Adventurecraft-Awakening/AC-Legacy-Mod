@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.common.gui;
 
 import dev.adventurecraft.awakening.common.AC_Items;
 import dev.adventurecraft.awakening.common.AC_TileEntityMobSpawner;
+import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.common.GuiSlider2;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.script.EntityDescriptions;
@@ -64,9 +65,7 @@ public class AC_GuiMobSpawner extends Screen {
 
         var button55 = new Button(
             55, this.width / 2, 24, 200, 18,
-            String.format("Spawn: (%d, %d, %d), (%d, %d, %d)",
-                this.mobSpawner.minSpawnVec.x, this.mobSpawner.minSpawnVec.y, this.mobSpawner.minSpawnVec.z,
-                this.mobSpawner.maxSpawnVec.x, this.mobSpawner.maxSpawnVec.y, this.mobSpawner.maxSpawnVec.z));
+            formatSpawnVec(this.mobSpawner.minSpawnVec, this.mobSpawner.maxSpawnVec));
         buttons.add(button55);
 
         int width = (this.width - 16) / 4;
@@ -186,7 +185,7 @@ public class AC_GuiMobSpawner extends Screen {
             }
         } else if (button.id == 55) {
             this.mobSpawner.setSpawnVec();
-            button.message = String.format("Spawn: (%d, %d, %d), (%d, %d, %d)", this.mobSpawner.minSpawnVec.x, this.mobSpawner.minSpawnVec.y, this.mobSpawner.minSpawnVec.z, this.mobSpawner.maxSpawnVec.x, this.mobSpawner.maxSpawnVec.y, this.mobSpawner.maxSpawnVec.z);
+            button.message = formatSpawnVec(this.mobSpawner.minSpawnVec, this.mobSpawner.maxSpawnVec);
         } else if (button.id == 56) {
             if (this.minecraft.player.inventory.getSelected() != null) {
                 this.mobSpawner.spawnID = this.minecraft.player.inventory.getSelected().id;
@@ -292,6 +291,13 @@ public class AC_GuiMobSpawner extends Screen {
         } else if (this.selectedID == 2) {
             this.mobSpawner.onUpdateScriptFile = var1;
         }
+    }
+
+    private static String formatSpawnVec(Coord min, Coord max){
+        return String.format(
+            "Spawn: (%d, %d, %d), (%d, %d, %d)",
+            min.x, min.y, min.z,
+            max.x, max.y, max.z);
     }
 
     static {

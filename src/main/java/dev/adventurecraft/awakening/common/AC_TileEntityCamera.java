@@ -10,12 +10,12 @@ public class AC_TileEntityCamera extends TileEntity {
     public String message;
     public String sound;
     public AC_CutsceneCamera camera = new AC_CutsceneCamera();
-    AC_CutsceneCameraBlendType type = AC_CutsceneCameraBlendType.QUADRATIC;
+    private AC_CutsceneCameraBlendType type = AC_CutsceneCameraBlendType.QUADRATIC;
     public boolean pauseGame = true;
 
     public void loadCamera() {
         this.copyCamera(this.camera, ((ExMinecraft) Minecraft.instance).getCutsceneCamera());
-        ((ExMinecraft) Minecraft.instance).getCutsceneCamera().startType = this.type;
+        ((ExMinecraft) Minecraft.instance).getCutsceneCamera().startType = this.getBlendType();
     }
 
     public void saveCamera() {
@@ -40,7 +40,7 @@ public class AC_TileEntityCamera extends TileEntity {
         }
 
         if (tag.hasKey("type")) {
-            this.type = AC_CutsceneCameraBlendType.get(tag.getByte("type"));
+            this.setBlendType(AC_CutsceneCameraBlendType.get(tag.getByte("type")));
         }
 
         if (tag.hasKey("pauseGame")) {
@@ -59,7 +59,7 @@ public class AC_TileEntityCamera extends TileEntity {
         }
 
         tag.putInt("numPoints", pointCount);
-        tag.putByte("type", (byte) this.type.value);
+        tag.putByte("type", (byte) this.getBlendType().value);
         tag.putBoolean("pauseGame", this.pauseGame);
     }
 
@@ -82,11 +82,20 @@ public class AC_TileEntityCamera extends TileEntity {
         float z = tag.getFloat("posZ");
         float yaw = tag.getFloat("yaw");
         float pitch = tag.getFloat("pitch");
-        AC_CutsceneCameraBlendType type = AC_CutsceneCameraBlendType.QUADRATIC;
+        
+        var type = AC_CutsceneCameraBlendType.QUADRATIC;
         if (tag.hasKey("type")) {
             type = AC_CutsceneCameraBlendType.get(tag.getByte("type"));
         }
 
         this.camera.addCameraPoint(time, x, y, z, yaw, pitch, type);
+    }
+
+    public AC_CutsceneCameraBlendType getBlendType() {
+        return this.type;
+    }
+
+    public void setBlendType(AC_CutsceneCameraBlendType type) {
+        this.type = type;
     }
 }

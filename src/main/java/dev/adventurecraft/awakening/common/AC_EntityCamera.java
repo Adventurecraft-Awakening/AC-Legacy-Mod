@@ -10,9 +10,9 @@ import net.minecraft.world.level.Level;
 
 public class AC_EntityCamera extends LivingEntity {
 
-    float time;
-    AC_CutsceneCameraBlendType type;
-    int cameraID;
+    private float time;
+    private AC_CutsceneCameraBlendType type;
+    private int cameraID;
 
     public AC_EntityCamera(Level world, float time, AC_CutsceneCameraBlendType type, int id) {
         super(world);
@@ -27,7 +27,7 @@ public class AC_EntityCamera extends LivingEntity {
 
     public void deleteCameraPoint() {
         AC_CutsceneCamera activeCamera = ((ExMinecraft) Minecraft.instance).getActiveCutsceneCamera();
-        activeCamera.deletePoint(this.cameraID);
+        activeCamera.deletePoint(this.getCameraId());
         activeCamera.loadCameraEntities();
     }
 
@@ -65,5 +65,29 @@ public class AC_EntityCamera extends LivingEntity {
     public boolean interact(Player var1) {
         AC_GuiCamera.showUI(this);
         return true;
+    }
+
+    public float getTime() {
+        return time;
+    }
+
+    public void setTime(float time) {
+        this.time = time;
+    }
+
+    public AC_CutsceneCameraBlendType getBlendType() {
+        return type;
+    }
+
+    public void setBlendType(AC_CutsceneCameraBlendType type) {
+        this.type = type;
+    }
+
+    public int getCameraId() {
+        return cameraID;
+    }
+
+    public void setCameraId(int cameraID) {
+        this.cameraID = cameraID;
     }
 }

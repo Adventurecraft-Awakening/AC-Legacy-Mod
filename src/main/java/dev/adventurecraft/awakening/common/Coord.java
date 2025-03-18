@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
-class Coord {
+public class Coord {
 	public int x;
 	public int y;
 	public int z;
@@ -9,34 +9,32 @@ class Coord {
 		this.set(0, 0, 0);
 	}
 
-	public Coord(int var1, int var2, int var3) {
-		this.set(var1, var2, var3);
+	public Coord(int x, int y, int z) {
+		this.set(x, y, z);
 	}
 
-	public void set(int var1, int var2, int var3) {
-		this.x = var1;
-		this.y = var2;
-		this.z = var3;
+	public void set(int x, int y, int z) {
+		this.x = x;
+		this.y = y;
+		this.z = z;
 	}
 
-	public boolean equals(Object var1) {
-		if(!(var1 instanceof Coord)) {
-			return false;
-		} else {
-			Coord var2 = (Coord)var1;
-			return this.x == var2.x && this.y == var2.y && this.z == var2.z;
-		}
+	public boolean equals(Object obj) {
+        if (obj instanceof Coord c) {
+            return this.x == c.x && this.y == c.y && this.z == c.z;
+        }
+        return false;
+    }
+
+	public void min(int x, int y, int z) {
+		this.x = Math.min(this.x, x);
+		this.y = Math.min(this.y, y);
+		this.z = Math.min(this.z, z);
 	}
 
-	public void min(int var1, int var2, int var3) {
-		this.x = Math.min(this.x, var1);
-		this.y = Math.min(this.y, var2);
-		this.z = Math.min(this.z, var3);
-	}
-
-	public void max(int var1, int var2, int var3) {
-		this.x = Math.max(this.x, var1);
-		this.y = Math.max(this.y, var2);
-		this.z = Math.max(this.z, var3);
+	public void max(int x, int y, int z) {
+		this.x = Math.max(this.x, x);
+		this.y = Math.max(this.y, y);
+		this.z = Math.max(this.z, z);
 	}
 }

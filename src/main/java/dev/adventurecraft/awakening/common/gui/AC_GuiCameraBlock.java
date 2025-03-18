@@ -18,9 +18,9 @@ public class AC_GuiCameraBlock extends Screen {
     public void init() {
         {
             var button = new Button(0, 4, 4, 160, 18, "Skip to first point");
-            if (this.cam.type == AC_CutsceneCameraBlendType.LINEAR) {
+            if (this.cam.getBlendType() == AC_CutsceneCameraBlendType.LINEAR) {
                 button.message = "Linear Interpolation";
-            } else if (this.cam.type == AC_CutsceneCameraBlendType.QUADRATIC) {
+            } else if (this.cam.getBlendType() == AC_CutsceneCameraBlendType.QUADRATIC) {
                 button.message = "Quadratic Interpolation";
             }
             this.buttons.add(button);
@@ -37,10 +37,11 @@ public class AC_GuiCameraBlock extends Screen {
     @Override
     protected void buttonClicked(Button button) {
         if (button.id == 0) {
-            this.cam.type = AC_CutsceneCameraBlendType.get((this.cam.type.value + 1) % AC_CutsceneCameraBlendType.MAX.value);
-            if (this.cam.type == AC_CutsceneCameraBlendType.LINEAR) {
+            int nextBlendType = (this.cam.getBlendType().value + 1) % AC_CutsceneCameraBlendType.MAX.value;
+            this.cam.setBlendType(AC_CutsceneCameraBlendType.get(nextBlendType));
+            if (this.cam.getBlendType() == AC_CutsceneCameraBlendType.LINEAR) {
                 button.message = "Linear Interpolation";
-            } else if (this.cam.type == AC_CutsceneCameraBlendType.QUADRATIC) {
+            } else if (this.cam.getBlendType() == AC_CutsceneCameraBlendType.QUADRATIC) {
                 button.message = "Quadratic Interpolation";
             } else {
                 button.message = "Skip to first point";

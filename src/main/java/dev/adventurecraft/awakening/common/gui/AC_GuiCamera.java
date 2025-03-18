@@ -27,14 +27,14 @@ public class AC_GuiCamera extends Screen {
         this.buttons.add(button);
 
         button = new Button(1, 4, 24, 160, 18, "No Interpolation");
-        if (this.cam.type == AC_CutsceneCameraBlendType.LINEAR) {
+        if (this.cam.getBlendType() == AC_CutsceneCameraBlendType.LINEAR) {
             button.message = "Linear Interpolation";
-        } else if (this.cam.type == AC_CutsceneCameraBlendType.QUADRATIC) {
+        } else if (this.cam.getBlendType() == AC_CutsceneCameraBlendType.QUADRATIC) {
             button.message = "Quadratic Interpolation";
         }
         this.buttons.add(button);
 
-        this.timerText = new EditBox(this, this.font, 80, 46, 70, 16, String.format("%.2f", this.cam.time));
+        this.timerText = new EditBox(this, this.font, 80, 46, 70, 16, String.format("%.2f", this.cam.getTime()));
     }
 
     @Override
@@ -63,21 +63,22 @@ public class AC_GuiCamera extends Screen {
             this.cam.deleteCameraPoint();
             Minecraft.instance.setScreen(null);
         } else if (button.id == 1) {
-            this.cam.type = AC_CutsceneCameraBlendType.get((this.cam.type.value + 1) % AC_CutsceneCameraBlendType.MAX.value);
-            ((ExMinecraft) this.minecraft).getActiveCutsceneCamera().setPointType(this.cam.cameraID, this.cam.type);
+            int nextBlendType = (this.cam.getBlendType().value + 1) % AC_CutsceneCameraBlendType.MAX.value;
+            this.cam.setBlendType(AC_CutsceneCameraBlendType.get(nextBlendType));
+            ((ExMinecraft) this.minecraft).getActiveCutsceneCamera().setPointType(this.cam.getCameraId(), this.cam.getBlendType());
 
             for (Entity entity : (List<Entity>) this.minecraft.level.entities) {
                 if (entity instanceof AC_EntityCamera camera) {
-                    if (camera.isAlive() && camera.cameraID == this.cam.cameraID) {
+                    if (camera.isAlive() && camera.getCameraId() == this.cam.getCameraId()) {
                         this.cam = camera;
                         break;
                     }
                 }
             }
 
-            if (this.cam.type == AC_CutsceneCameraBlendType.LINEAR) {
+            if (this.cam.getBlendType() == AC_CutsceneCameraBlendType.LINEAR) {
                 button.message = "Linear Interpolation";
-            } else if (this.cam.type == AC_CutsceneCameraBlendType.QUADRATIC) {
+            } else if (this.cam.getBlendType() == AC_CutsceneCameraBlendType.QUADRATIC) {
                 button.message = "Quadratic Interpolation";
             } else {
                 button.message = "No Interpolation";
@@ -91,8 +92,8 @@ public class AC_GuiCamera extends Screen {
 
         try {
             float timerValue = Float.parseFloat(this.timerText.getValue());
-            this.cam.time = timerValue;
-            ((ExMinecraft) this.minecraft).getActiveCutsceneCamera().setPointTime(this.cam.cameraID, timerValue);
+            this.cam.setTime(timerValue);
+            ((ExMinecraft) this.minecraft).getActiveCutsceneCamera().setPointTime(this.cam.getCameraId(), timerValue);
         } catch (NumberFormatException var5) {
         }
 
