@@ -1,6 +1,8 @@
 package dev.adventurecraft.awakening.common;
 
 import java.util.Random;
+
+import dev.adventurecraft.awakening.common.gui.AC_GuiTrigger;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;

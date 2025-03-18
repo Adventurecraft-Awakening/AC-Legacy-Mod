@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.common.gui.AC_GuiTree;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;

@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.mixin.client.gui.screen;
 
-import dev.adventurecraft.awakening.common.AC_GuiMapSelect;
+import dev.adventurecraft.awakening.common.gui.AC_GuiMapSelect;
 import dev.adventurecraft.awakening.extension.client.gui.widget.ExScrollableBaseWidget;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;

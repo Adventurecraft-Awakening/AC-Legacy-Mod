@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.common.gui.AC_GuiMusic;
 import dev.adventurecraft.awakening.extension.client.sound.ExSoundHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;

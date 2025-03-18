@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.mixin.client.gui.screen.menu;
 
-import dev.adventurecraft.awakening.common.AC_GuiMapSelect;
+import dev.adventurecraft.awakening.common.gui.AC_GuiMapSelect;
 import dev.adventurecraft.awakening.common.AC_Version;
 import dev.adventurecraft.awakening.extension.client.sound.ExSoundHelper;
 import dev.adventurecraft.awakening.script.ScriptModel;

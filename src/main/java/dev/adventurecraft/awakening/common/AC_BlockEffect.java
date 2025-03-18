@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.IOException;
 
 import dev.adventurecraft.awakening.client.render.AC_TextureBinder;
+import dev.adventurecraft.awakening.common.gui.AC_GuiEffect;
 import dev.adventurecraft.awakening.extension.client.ExTextureManager;
 import dev.adventurecraft.awakening.extension.client.render.block.ExFoliageColor;
 import dev.adventurecraft.awakening.extension.client.render.block.ExGrassColor;

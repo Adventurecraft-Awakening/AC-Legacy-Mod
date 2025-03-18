@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.common.gui.AC_GuiMusicSheet;
 import dev.adventurecraft.awakening.common.instruments.IInstrumentConfig;
 import dev.adventurecraft.awakening.common.instruments.SimpleInstrumentConfig;
 import dev.adventurecraft.awakening.extension.entity.block.ExSongContainer;

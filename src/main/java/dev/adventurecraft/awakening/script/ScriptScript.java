@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.script;
 
-import dev.adventurecraft.awakening.common.AC_GuiUrlRequest;
+import dev.adventurecraft.awakening.common.gui.AC_GuiUrlRequest;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.world.level.Level;
 
