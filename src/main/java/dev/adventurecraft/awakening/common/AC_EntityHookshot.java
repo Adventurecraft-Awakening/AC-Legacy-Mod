@@ -3,6 +3,8 @@ package dev.adventurecraft.awakening.common;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import java.util.List;
+
+import dev.adventurecraft.awakening.tile.AC_Blocks;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.Entity;

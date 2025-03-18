@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.mixin.world;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import dev.adventurecraft.awakening.common.AC_Blocks;
+import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;

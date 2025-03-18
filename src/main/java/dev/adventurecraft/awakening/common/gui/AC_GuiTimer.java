@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.common.gui;
 
-import dev.adventurecraft.awakening.common.AC_Blocks;
+import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.common.AC_TileEntityTimer;
 import dev.adventurecraft.awakening.common.GuiSlider2;
 import net.minecraft.client.Minecraft;

@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.tile.AC_Blocks;
 import net.minecraft.nbt.CompoundTag;
 
 public class AC_TileEntityTriggerMemory extends AC_TileEntityMinMax {

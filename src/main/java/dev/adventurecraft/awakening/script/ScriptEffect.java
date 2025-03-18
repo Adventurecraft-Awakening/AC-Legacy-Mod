@@ -12,7 +12,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.world.level.Level;
-import dev.adventurecraft.awakening.common.AC_BlockEffect;
+import dev.adventurecraft.awakening.tile.AC_BlockEffect;
 
 @SuppressWarnings("unused")
 public class ScriptEffect {

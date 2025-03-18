@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.mixin.world;
 
-import dev.adventurecraft.awakening.common.AC_BlockEffect;
+import dev.adventurecraft.awakening.tile.AC_BlockEffect;
 import dev.adventurecraft.awakening.common.LightHelper;
 import dev.adventurecraft.awakening.common.WorldGenProperties;
 import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
@@ -8,7 +8,6 @@ import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.LevelData;

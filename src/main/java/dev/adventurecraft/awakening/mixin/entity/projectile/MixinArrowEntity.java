@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.mixin.entity.projectile;
 
-import dev.adventurecraft.awakening.common.AC_Blocks;
+import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.extension.block.ExLadderBlock;
 import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
 import dev.adventurecraft.awakening.extension.entity.projectile.ExArrowEntity;

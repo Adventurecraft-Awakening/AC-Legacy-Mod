@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
+import dev.adventurecraft.awakening.tile.AC_Blocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 

@@ -2,7 +2,7 @@ package dev.adventurecraft.awakening.mixin.entity;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.util.HashCode;
-import dev.adventurecraft.awakening.common.AC_Blocks;
+import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.util.RandomUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;

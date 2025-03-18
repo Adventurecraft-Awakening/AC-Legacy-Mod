@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.mixin.world;
 
-import dev.adventurecraft.awakening.common.AC_BlockStairMulti;
+import dev.adventurecraft.awakening.tile.AC_BlockStairMulti;
 import dev.adventurecraft.awakening.common.AC_LightCache;
 import dev.adventurecraft.awakening.common.AC_PlayerTorch;
 import net.fabricmc.api.EnvType;

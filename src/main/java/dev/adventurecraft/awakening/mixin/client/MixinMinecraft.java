@@ -23,6 +23,7 @@ import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.script.ScriptEntity;
 import dev.adventurecraft.awakening.script.ScriptItem;
 import dev.adventurecraft.awakening.script.ScriptVec3;
+import dev.adventurecraft.awakening.tile.AC_Blocks;
 import net.fabricmc.loader.impl.util.Arguments;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Option;

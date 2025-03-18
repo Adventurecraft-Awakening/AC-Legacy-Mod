@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.common.gui;
 
-import dev.adventurecraft.awakening.common.AC_Blocks;
+import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.common.AC_TileEntityTriggerMemory;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;

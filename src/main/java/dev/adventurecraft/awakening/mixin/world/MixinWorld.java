@@ -28,6 +28,8 @@ import dev.adventurecraft.awakening.script.EntityDescriptions;
 import dev.adventurecraft.awakening.script.ScopeTag;
 import dev.adventurecraft.awakening.script.Script;
 import dev.adventurecraft.awakening.script.ScriptModel;
+import dev.adventurecraft.awakening.tile.AC_BlockStairMulti;
+import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.util.RandomUtil;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;

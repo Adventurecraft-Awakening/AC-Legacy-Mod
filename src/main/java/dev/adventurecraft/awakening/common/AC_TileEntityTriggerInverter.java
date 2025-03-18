@@ -1,5 +1,7 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.tile.AC_Blocks;
+
 public class AC_TileEntityTriggerInverter extends AC_TileEntityMinMax {
 	public void set(int var1, int var2, int var3, int var4, int var5, int var6) {
 		int var7 = this.level.getData(this.x, this.y, this.z);

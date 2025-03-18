@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.extension.block;
 
-import dev.adventurecraft.awakening.common.AC_Blocks;
+import dev.adventurecraft.awakening.tile.AC_Blocks;
 import net.minecraft.world.level.tile.Tile;
 
 public interface ExLadderBlock {
