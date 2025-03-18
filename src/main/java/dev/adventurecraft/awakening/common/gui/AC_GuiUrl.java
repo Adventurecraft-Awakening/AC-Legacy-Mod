@@ -50,7 +50,7 @@ public class AC_GuiUrl extends Screen {
 
     public void render(int mouseX, int mouseY, float tick) {
         this.renderBackground();
-        this.drawString(this.font, String.format("Url: '%s$0'", this.msg.url), 4, 4, 14737632);
+        this.drawString(this.font, String.format("Url: '§3%s§f'", this.msg.url), 4, 4, 14737632);
         super.render(mouseX, mouseY, tick);
     }
 
