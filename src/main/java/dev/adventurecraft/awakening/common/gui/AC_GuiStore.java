@@ -13,102 +13,84 @@ public class AC_GuiStore extends Screen {
     ItemInstance buyItem = new ItemInstance(0, 0, 0);
     ItemInstance sellItem = new ItemInstance(0, 0, 0);
     int supplyLeft;
-    private static ItemRenderer itemRenderer = new ItemRenderer();
+    private final ItemRenderer itemRenderer = new ItemRenderer();
 
-    public void render(int var1, int var2, float var3) {
-        I18n var4 = I18n.getInstance();
-        byte var5 = 64;
+    public void render(int mouseX, int mouseY, float tick) {
+        final I18n i18n = I18n.getInstance();
+
+        final int w0 = this.width / 2;
+        final int h0 = this.height / 2;
+        final int y0 = 64;
+
+        final int textColor = 16777215;
+        final int bgColor = -1433695349;
+
+        final var font = this.font;
+        final var textures = this.minecraft.textures;
+
         if (this.supplyLeft < 0) {
-            this.fill(this.width / 2 - 38, this.height / 2 - 10 - 12 - var5, this.width / 2 + 38, this.height / 2 + 10 - var5, Integer.MIN_VALUE);
+            this.fill(w0 - 38, h0 - 10 - 12 - y0, w0 + 38, h0 + 10 - y0, Integer.MIN_VALUE);
         } else {
-            this.fill(this.width / 2 - 38, this.height / 2 - 10 - 12 - var5, this.width / 2 + 38, this.height / 2 + 10 + 12 - var5, Integer.MIN_VALUE);
+            this.fill(w0 - 38, h0 - 10 - 12 - y0, w0 + 38, h0 + 10 + 12 - y0, Integer.MIN_VALUE);
         }
 
         if (this.buyItem.id != 0 && this.sellItem.id != 0) {
-            this.drawCenteredString(this.font, var4.get("store.trade"), this.width / 2, this.height / 2 - 19 - var5, 16777215);
-            this.drawCenteredString(this.font, var4.get("store.for"), this.width / 2, this.height / 2 - 4 - var5, 16777215);
+            this.drawCenteredString(font, i18n.get("store.trade"), w0, h0 - 19 - y0, textColor);
+            this.drawCenteredString(font, i18n.get("store.for"), w0, h0 - 4 - y0, textColor);
         } else if (this.buyItem.id != 0) {
-            this.drawCenteredString(this.font, var4.get("store.receive"), this.width / 2, this.height / 2 - 19 - var5, 16777215);
+            this.drawCenteredString(font, i18n.get("store.receive"), w0, h0 - 19 - y0, textColor);
         } else if (this.sellItem.id != 0) {
-            this.drawCenteredString(this.font, var4.get("store.insert"), this.width / 2, this.height / 2 - 19 - var5, 16777215);
+            this.drawCenteredString(font, i18n.get("store.insert"), w0, h0 - 19 - y0, textColor);
         }
 
         if (this.supplyLeft > 0) {
-            this.drawCenteredString(this.font, String.format("%s: %d", var4.get("store.tradesLeft"), this.supplyLeft), this.width / 2, this.height / 2 + 11 - var5, 16777215);
+            String str = String.format("%s: %d", i18n.get("store.tradesLeft"), this.supplyLeft);
+            this.drawCenteredString(font, str, w0, h0 + 11 - y0, textColor);
         }
 
         if (this.buyItem.id != 0 && this.sellItem.id != 0) {
-            this.fill(this.width / 2 + 11, this.height / 2 - 9 - var5, this.width / 2 + 29, this.height / 2 + 9 - var5, -1433695349);
-            this.fill(this.width / 2 - 29, this.height / 2 - 9 - var5, this.width / 2 - 11, this.height / 2 + 9 - var5, -1433695349);
-            GL11.glPushMatrix();
-            GL11.glRotatef(120.0F, 1.0F, 0.0F, 0.0F);
-            Lighting.turnOn();
-            GL11.glPopMatrix();
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-            GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-            if (Item.items[this.buyItem.id] != null) {
-                itemRenderer.renderAndDecorateItem(this.font, this.minecraft.textures, this.buyItem, this.width / 2 + 12, this.height / 2 - 8 - var5);
-                itemRenderer.renderGuiItemDecorations(this.font, this.minecraft.textures, this.buyItem, this.width / 2 + 12, this.height / 2 - 8 - var5);
-            }
-
-            if (Item.items[this.sellItem.id] != null) {
-                itemRenderer.renderAndDecorateItem(this.font, this.minecraft.textures, this.sellItem, this.width / 2 - 28, this.height / 2 - 8 - var5);
-                itemRenderer.renderGuiItemDecorations(this.font, this.minecraft.textures, this.sellItem, this.width / 2 - 28, this.height / 2 - 8 - var5);
-            }
-
-            GL11.glDisable(GL12.GL_RESCALE_NORMAL);
-            Lighting.turnOff();
-            GL11.glDisable(GL11.GL_LIGHTING);
-            GL11.glDisable(GL11.GL_DEPTH_TEST);
-        } else if (this.buyItem.id != 0) {
-            this.fill(this.width / 2 - 9, this.height / 2 - 9 - var5, this.width / 2 + 9, this.height / 2 + 9 - var5, -1433695349);
-            if (Item.items[this.buyItem.id] != null) {
-                GL11.glPushMatrix();
-                GL11.glRotatef(120.0F, 1.0F, 0.0F, 0.0F);
-                Lighting.turnOn();
-                GL11.glPopMatrix();
-                GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-                GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-                itemRenderer.renderAndDecorateItem(this.font, this.minecraft.textures, this.buyItem, this.width / 2 - 8, this.height / 2 - 8 - var5);
-                itemRenderer.renderGuiItemDecorations(this.font, this.minecraft.textures, this.buyItem, this.width / 2 - 8, this.height / 2 - 8 - var5);
-                GL11.glDisable(GL12.GL_RESCALE_NORMAL);
-                Lighting.turnOff();
-                GL11.glDisable(GL11.GL_LIGHTING);
-                GL11.glDisable(GL11.GL_DEPTH_TEST);
-            }
-        } else if (this.sellItem.id != 0) {
-            this.fill(this.width / 2 - 9, this.height / 2 - 9 - var5, this.width / 2 + 9, this.height / 2 + 9 - var5, -1433695349);
-            if (Item.items[this.sellItem.id] != null) {
-                GL11.glPushMatrix();
-                GL11.glRotatef(120.0F, 1.0F, 0.0F, 0.0F);
-                Lighting.turnOn();
-                GL11.glPopMatrix();
-                GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-                GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-                itemRenderer.renderAndDecorateItem(this.font, this.minecraft.textures, this.sellItem, this.width / 2 - 8, this.height / 2 - 8 - var5);
-                itemRenderer.renderGuiItemDecorations(this.font, this.minecraft.textures, this.sellItem, this.width / 2 - 8, this.height / 2 - 8 - var5);
-                GL11.glDisable(GL12.GL_RESCALE_NORMAL);
-                Lighting.turnOff();
-                GL11.glDisable(GL11.GL_LIGHTING);
-                GL11.glDisable(GL11.GL_DEPTH_TEST);
-            }
+            this.fill(w0 + 11, h0 - 9 - y0, w0 + 29, h0 + 9 - y0, bgColor);
+            this.fill(w0 - 29, h0 - 9 - y0, w0 - 11, h0 + 9 - y0, bgColor);
+        } else if (this.buyItem.id != 0 || this.sellItem.id != 0) {
+            this.fill(w0 - 9, h0 - 9 - y0, w0 + 9, h0 + 9 - y0, bgColor);
         }
 
+        GL11.glPushMatrix();
+        GL11.glRotatef(120.0F, 1.0F, 0.0F, 0.0F);
+        Lighting.turnOn();
+        GL11.glPopMatrix();
+        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+        GL11.glEnable(GL12.GL_RESCALE_NORMAL);
+
+        if (Item.items[this.buyItem.id] != null) {
+            itemRenderer.renderAndDecorateItem(font, textures, this.buyItem, w0 + 12, h0 - 8 - y0);
+            itemRenderer.renderGuiItemDecorations(font, textures, this.buyItem, w0 + 12, h0 - 8 - y0);
+        }
+
+        if (Item.items[this.sellItem.id] != null) {
+            itemRenderer.renderAndDecorateItem(font, textures, this.sellItem, w0 - 28, h0 - 8 - y0);
+            itemRenderer.renderGuiItemDecorations(font, textures, this.sellItem, w0 - 28, h0 - 8 - y0);
+        }
+
+        GL11.glDisable(GL12.GL_RESCALE_NORMAL);
+        Lighting.turnOff();
+        GL11.glDisable(GL11.GL_LIGHTING);
+        GL11.glDisable(GL11.GL_DEPTH_TEST);
     }
 
-    public void setBuyItem(int var1, int var2, int var3) {
-        this.buyItem.id = var1;
-        this.buyItem.count = var2;
-        this.buyItem.setDamage(var3);
+    public void setBuyItem(int id, int count, int damage) {
+        this.buyItem.id = id;
+        this.buyItem.count = count;
+        this.buyItem.setDamage(damage);
     }
 
-    public void setSellItem(int var1, int var2, int var3) {
-        this.sellItem.id = var1;
-        this.sellItem.count = var2;
-        this.sellItem.setDamage(var3);
+    public void setSellItem(int id, int count, int damage) {
+        this.sellItem.id = id;
+        this.sellItem.count = count;
+        this.sellItem.setDamage(damage);
     }
 
-    public void setSupplyLeft(int var1) {
-        this.supplyLeft = var1;
+    public void setSupplyLeft(int count) {
+        this.supplyLeft = count;
     }
 }
