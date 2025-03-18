@@ -1176,12 +1176,12 @@ public abstract class MixinMinecraft implements ExMinecraft {
     }
 
     @Overwrite
-    public void selectLevel(String var1, String saveName, long seed) {
-        String mapName = this.getMapUsed(var1);
+    public void selectLevel(String worldName, String saveName, long seed) {
+        String mapName = this.getMapUsed(worldName);
         if (Mth.isStringInvalid(mapName)) {
-            this.setScreen(new AC_GuiMapSelect(null, var1));
+            this.setScreen(new AC_GuiMapSelect(null, worldName));
         } else {
-            this.startWorld(var1, saveName, seed, mapName);
+            this.startWorld(worldName, saveName, seed, mapName);
         }
     }
 
