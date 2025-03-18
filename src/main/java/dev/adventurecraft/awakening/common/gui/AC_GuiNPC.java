@@ -40,152 +40,154 @@ public class AC_GuiNPC extends Screen {
     @Override
     public void init() {
         this.buttons.clear();
-        int var1 = (this.width - 16) / 4;
-        this.buttons.add(new Button(-20, 4, 0, var1, 18, "Misc"));
-        this.buttons.add(new Button(-21, 4 + 4 + var1, 0, var1, 18, "Script"));
-        Button var2;
-        int var4;
-        int var6;
-        int var7;
+
+        final int w4 = (this.width - 16) / 4;
+        this.buttons.add(new Button(-20, 4, 0, w4, 18, "Misc"));
+        this.buttons.add(new Button(-21, 4 + 4 + w4, 0, w4, 18, "Script"));
+
         if (this.page == 0) {
             this.npcName = new EditBox(this, this.font, 4, 40, 160, 20, this.npc.npcName);
             this.npcName.active = true;
             this.npcName.setMaxLength(32);
+
             this.chatMsg = new EditBox(this, this.font, 4, 80, 160, 20, this.npc.chatMsg);
             this.chatMsg.active = false;
             this.chatMsg.setMaxLength(32);
-            var2 = new Button(-1, 4, 104, 160, 18, "Delete NPC");
-            this.buttons.add(var2);
-            var2 = new Button(-2, 170, 24, 160, 18, "Path To Home");
-            this.buttons.add(var2);
+
+            this.buttons.add(new Button(-1, 4, 104, 160, 18, "Delete NPC"));
+
+            var pathBtn = new Button(-2, 170, 24, 160, 18, "Path To Home");
+            this.buttons.add(pathBtn);
             if (!this.npc.pathToHome) {
-                var2.message = "Don't Path Home";
+                pathBtn.message = "Don't Path Home";
             }
 
-            var2 = new Button(-3, 170, 42, 160, 18, "Track Player");
-            this.buttons.add(var2);
+            var trackBtn = new Button(-3, 170, 42, 160, 18, "Track Player");
+            this.buttons.add(trackBtn);
             if (!this.npc.trackPlayer) {
-                var2.message = "Don't Track Player";
+                trackBtn.message = "Don't Track Player";
             }
 
-            var2 = new Button(-4, 170, 64, 160, 18, "Can be attacked");
-            this.buttons.add(var2);
+            var attackBtn = new Button(-4, 170, 64, 160, 18, "Can be attacked");
+            this.buttons.add(attackBtn);
             if (!this.npc.isAttackable) {
-                var2.message = "Can't be attacked";
+                attackBtn.message = "Can't be attacked";
             }
 
-            File var3 = new File(((ExWorld) Minecraft.instance.level).getLevelDir(), "npc");
-            var4 = 1;
-            var1 = (this.width - 16) / 3;
-            var2 = new Button(0, 4, 124, var1, 18, "Player Skin");
-            this.buttons.add(var2);
-            if (var3.isDirectory()) {
-                File[] var5 = var3.listFiles();
-                var6 = var5.length;
+            final int w3 = (this.width - 16) / 3;
+            this.buttons.add(new Button(0, 4, 124, w3, 18, "Player Skin"));
 
-                for (var7 = 0; var7 < var6; ++var7) {
-                    File var8 = var5[var7];
-                    var2 = new Button(var4, 4 + (var1 + 4) * (var4 % 3), 124 + var4 / 3 * 20, var1, 18, var8.getName().split("\\.")[0]);
-                    this.buttons.add(var2);
-                    ++var4;
+            File npcDir = new File(((ExWorld) Minecraft.instance.level).getLevelDir(), "npc");
+            if (npcDir.isDirectory()) {
+                File[] files = npcDir.listFiles();
+                if (files != null) {
+                    int count = 1;
+                    for (File file : files) {
+                        int x = 4 + (w3 + 4) * (count % 3);
+                        int y = 124 + count / 3 * 20;
+                        String content = file.getName().split("\\.")[0];
+                        this.buttons.add(new Button(count, x, y, w3, 18, content));
+                        count++;
+                    }
                 }
             }
         } else if (this.page == 1) {
             this.selectedID = 0;
-            this.setOnCreated = new Button(0, 4, 24, "OnCreated (selected): " + this.npc.onCreated);
-            this.setOnUpdate = new Button(1, this.width / 2, 24, "OnUpdate: " + this.npc.onUpdate);
-            this.setOnPathReached = new Button(2, 4, 46, "OnPathReached: " + this.npc.onPathReached);
-            this.setOnAttacked = new Button(3, this.width / 2, 46, "OnAttacked: " + this.npc.onAttacked);
-            this.setOnDeath = new Button(4, 4, 68, "OnDeath: " + this.npc.onDeath);
-            this.setOnInteraction = new Button(5, this.width / 2, 68, "OnInteraction: " + this.npc.onInteraction);
+
+            this.setOnCreated = new Button(0, 4, 24, "");
+            this.setOnUpdate = new Button(1, this.width / 2, 24, "");
+            this.setOnPathReached = new Button(2, 4, 46, "");
+            this.setOnAttacked = new Button(3, this.width / 2, 46, "");
+            this.setOnDeath = new Button(4, 4, 68, "");
+            this.setOnInteraction = new Button(5, this.width / 2, 68, "");
             this.buttons.add(this.setOnCreated);
             this.buttons.add(this.setOnUpdate);
             this.buttons.add(this.setOnPathReached);
             this.buttons.add(this.setOnAttacked);
             this.buttons.add(this.setOnDeath);
             this.buttons.add(this.setOnInteraction);
-            var2 = new Button(6, 4, 90, 200, 20, "Reload Scripts");
-            this.buttons.add(var2);
-            var2 = new Button(7, 4, 112, 160, 18, "None");
-            this.buttons.add(var2);
-            String[] var9 = ((ExWorld) this.minecraft.level).getScriptFiles();
-            if (var9 != null) {
-                var4 = 1;
-                String[] var10 = var9;
-                var6 = var9.length;
+            this.resetScriptNames();
 
-                for (var7 = 0; var7 < var6; ++var7) {
-                    String var11 = var10[var7];
-                    var2 = new Button(7 + var4, 6 + var4 % 3 * this.width / 3, 112 + var4 / 3 * 20, 160, 18, var11);
-                    this.buttons.add(var2);
-                    ++var4;
+            this.buttons.add(new Button(6, 4, 90, 200, 20, "Reload Scripts"));
+            this.buttons.add(new Button(7, 4, 112, 160, 18, "None"));
+
+            String[] files = ((ExWorld) this.minecraft.level).getScriptFiles();
+            if (files != null) {
+                int count = 1;
+                for (String file : files) {
+                    int x = 6 + count % 3 * this.width / 3;
+                    int y = 112 + count / 3 * 20;
+                    this.buttons.add(new Button(7 + count, x, y, 160, 18, file));
+                    count++;
                 }
             }
         }
     }
 
     @Override
-    protected void keyPressed(char var1, int var2) {
+    protected void keyPressed(char ch, int key) {
         if (this.page == 0) {
-            this.npcName.charTyped(var1, var2);
-            this.chatMsg.charTyped(var1, var2);
+            this.npcName.charTyped(ch, key);
+            this.chatMsg.charTyped(ch, key);
         }
 
-        super.keyPressed(var1, var2);
+        super.keyPressed(ch, key);
     }
 
     @Override
-    protected void buttonClicked(Button var1) {
-        if (var1.id <= -20) {
-            this.page = Math.abs(var1.id + 20);
+    protected void buttonClicked(Button btn) {
+        if (btn.id <= -20) {
+            this.page = Math.abs(btn.id + 20);
             this.init();
             return;
         }
 
         if (this.page == 0) {
-            if (var1.id == -1) {
+            if (btn.id == -1) {
                 this.npc.remove();
                 Minecraft.instance.setScreen(null);
-            } else if (var1.id == -2) {
+            } else if (btn.id == -2) {
                 this.npc.pathToHome = !this.npc.pathToHome;
                 if (this.npc.pathToHome) {
-                    var1.message = "Path To Home";
+                    btn.message = "Path To Home";
                 } else {
-                    var1.message = "Don't Path Home";
+                    btn.message = "Don't Path Home";
                 }
-            } else if (var1.id == -3) {
+            } else if (btn.id == -3) {
                 this.npc.trackPlayer = !this.npc.trackPlayer;
                 if (this.npc.trackPlayer) {
-                    var1.message = "Track Player";
+                    btn.message = "Track Player";
                 } else {
                     this.npc.entityToTrack = null;
-                    var1.message = "Don't Track Player";
+                    btn.message = "Don't Track Player";
                 }
-            } else if (var1.id == -4) {
+            } else if (btn.id == -4) {
                 this.npc.isAttackable = !this.npc.isAttackable;
                 if (this.npc.isAttackable) {
-                    var1.message = "Can be attacked";
+                    btn.message = "Can be attacked";
                 } else {
-                    var1.message = "Can't be attacked";
+                    btn.message = "Can't be attacked";
                 }
-            } else if (var1.id == 0) {
+            } else if (btn.id == 0) {
                 ((ExLivingEntity) this.npc).setTexture("/mob/char.png");
-            } else if (var1.id > 0) {
-                File var2 = new File(((ExWorld) Minecraft.instance.level).getLevelDir(), "npc");
-                File[] var3 = var2.listFiles();
-                if (var1.id - 1 < var3.length) {
-                    ((ExLivingEntity) this.npc).setTexture("/npc/" + var3[var1.id - 1].getName());
+            } else if (btn.id > 0) {
+                File npcDir = new File(((ExWorld) Minecraft.instance.level).getLevelDir(), "npc");
+                File[] files = npcDir.listFiles();
+                if (files != null) {
+                    if (btn.id - 1 < files.length) {
+                        ((ExLivingEntity) this.npc).setTexture("/npc/" + files[btn.id - 1].getName());
+                    }
                 }
             }
         } else if (this.page == 1) {
-            if (var1.id < 6) {
-                this.selectedID = var1.id;
-            } else if (var1.id == 6) {
+            if (btn.id < 6) {
+                this.selectedID = btn.id;
+            } else if (btn.id == 6) {
                 ((ExWorld) Minecraft.instance.level).getScriptHandler().loadScripts();
-            } else if (var1.id == 7) {
+            } else if (btn.id == 7) {
                 this.updateScriptFile("");
             } else {
-                this.updateScriptFile(var1.message);
+                this.updateScriptFile(btn.message);
             }
 
             this.resetScriptNames();
@@ -194,43 +196,35 @@ public class AC_GuiNPC extends Screen {
         this.npc.level.getChunkAt((int) this.npc.x, (int) this.npc.z).markUnsaved();
     }
 
-    private void updateScriptFile(String var1) {
-        if (this.selectedID == 0) {
-            this.npc.onCreated = var1;
-            this.npc.runCreatedScript();
-        } else if (this.selectedID == 1) {
-            this.npc.onUpdate = var1;
-        } else if (this.selectedID == 2) {
-            this.npc.onPathReached = var1;
-        } else if (this.selectedID == 3) {
-            this.npc.onAttacked = var1;
-        } else if (this.selectedID == 4) {
-            this.npc.onDeath = var1;
-        } else if (this.selectedID == 5) {
-            this.npc.onInteraction = var1;
+    private void updateScriptFile(String name) {
+        switch (this.selectedID) {
+            case 0 -> {
+                this.npc.onCreated = name;
+                this.npc.runCreatedScript();
+            }
+            case 1 -> this.npc.onUpdate = name;
+            case 2 -> this.npc.onPathReached = name;
+            case 3 -> this.npc.onAttacked = name;
+            case 4 -> this.npc.onDeath = name;
+            case 5 -> this.npc.onInteraction = name;
         }
     }
 
     private void resetScriptNames() {
-        this.setOnCreated.message = "OnNewSave: " + this.npc.onCreated;
-        this.setOnUpdate.message = "OnUpdate: " + this.npc.onUpdate;
-        this.setOnPathReached.message = "OnPathReached: " + this.npc.onPathReached;
-        this.setOnAttacked.message = "OnAttacked: " + this.npc.onAttacked;
-        this.setOnDeath.message = "OnDeath: " + this.npc.onDeath;
-        this.setOnInteraction.message = "OnInteraction: " + this.npc.onInteraction;
-        if (this.selectedID == 0) {
-            this.setOnCreated.message = "OnNewSave (selected): " + this.npc.onCreated;
-        } else if (this.selectedID == 1) {
-            this.setOnUpdate.message = "OnUpdate (selected): " + this.npc.onUpdate;
-        } else if (this.selectedID == 2) {
-            this.setOnPathReached.message = "OnPathReached (selected): " + this.npc.onPathReached;
-        } else if (this.selectedID == 3) {
-            this.setOnAttacked.message = "OnAttacked (selected): " + this.npc.onAttacked;
-        } else if (this.selectedID == 4) {
-            this.setOnDeath.message = "OnDeath (selected): " + this.npc.onDeath;
-        } else if (this.selectedID == 5) {
-            this.setOnInteraction.message = "OnInteraction (selected): " + this.npc.onInteraction;
+        AC_EntityNPC npc = this.npc;
+        this.setMessage(this.setOnCreated, "OnNewSave", npc.onCreated);
+        this.setMessage(this.setOnUpdate, "OnUpdate", npc.onUpdate);
+        this.setMessage(this.setOnPathReached, "OnPathReached", npc.onPathReached);
+        this.setMessage(this.setOnAttacked, "OnAttacked", npc.onAttacked);
+        this.setMessage(this.setOnDeath, "OnDeath", npc.onDeath);
+        this.setMessage(this.setOnInteraction, "OnInteraction", npc.onInteraction);
+    }
+
+    private void setMessage(Button button, String label, String value) {
+        if (button.id == this.selectedID) {
+            label += " (selected)";
         }
+        button.message = String.format("%s: %s", label, value);
     }
 
     @Override
