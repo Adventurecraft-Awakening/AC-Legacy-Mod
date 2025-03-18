@@ -29,7 +29,7 @@ public class AC_GuiUrlRequest extends Screen {
 
     public void init() {
         this.buttons.add(new OptionButton(0, this.width / 2 - 75, this.height / 2 + 10, "Open URL"));
-        this.buttons.add(new OptionButton(1, this.width / 2 - 75, this.height / 2 + 32, "Don\'t Open"));
+        this.buttons.add(new OptionButton(1, this.width / 2 - 75, this.height / 2 + 32, "Don't Open"));
     }
 
     protected void buttonClicked(Button var1) {
@@ -46,14 +46,14 @@ public class AC_GuiUrlRequest extends Screen {
             }
         }
 
-        this.minecraft.setScreen((Screen) null);
+        this.minecraft.setScreen(null);
     }
 
-    public void render(int var1, int var2, float var3) {
+    public void render(int mouseX, int mouseY, float tick) {
         this.fill(0, 0, this.width, this.height, Integer.MIN_VALUE);
-        this.drawString(this.font, this.msg, this.width / 2 - this.font.width(this.msg) / 2, this.height / 2 - 15, 14737632);
-        this.drawString(this.font, this.url, this.width / 2 - this.font.width(this.url) / 2, this.height / 2, 14737632);
-        super.render(var1, var2, var3);
+        this.drawString(this.font, this.msg, this.width / 2 - this.font.width(this.msg) / 2, this.height / 2 - 15, 0xE0E0E0);
+        this.drawString(this.font, this.url, this.width / 2 - this.font.width(this.url) / 2, this.height / 2, 0x6699EE);
+        super.render(mouseX, mouseY, tick);
     }
 
     public static void showUI(String var0) {

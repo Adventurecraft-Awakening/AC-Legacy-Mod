@@ -12,8 +12,8 @@ import net.minecraft.world.phys.AABB;
 
 public class AC_BlockUrl extends TileEntityTile implements AC_ITriggerBlock {
 
-    protected AC_BlockUrl(int var1, int var2) {
-        super(var1, var2, Material.AIR);
+    protected AC_BlockUrl(int id, int tex) {
+        super(id, tex, Material.AIR);
     }
 
     @Override
@@ -44,7 +44,7 @@ public class AC_BlockUrl extends TileEntityTile implements AC_ITriggerBlock {
     @Override
     public void onTriggerActivated(Level world, int x, int y, int z) {
         var entity = (AC_TileEntityUrl) world.getTileEntity(x, y, z);
-        if (entity.url != null && !entity.url.equals("")) {
+        if (entity.url != null && !entity.url.isEmpty()) {
             AC_GuiUrlRequest.showUI(entity.url);
         }
     }
@@ -53,7 +53,7 @@ public class AC_BlockUrl extends TileEntityTile implements AC_ITriggerBlock {
     public boolean use(Level world, int x, int y, int z, Player player) {
         if (AC_DebugMode.active) {
             var entity = (AC_TileEntityUrl) world.getTileEntity(x, y, z);
-            AC_GuiUrl.showUI(world, entity);
+            AC_GuiUrl.showUI(entity);
             return true;
         } else {
             return false;
