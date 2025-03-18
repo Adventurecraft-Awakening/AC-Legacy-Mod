@@ -3,6 +3,8 @@ package dev.adventurecraft.awakening.tile.entity;
 import java.util.*;
 
 import dev.adventurecraft.awakening.common.*;
+import dev.adventurecraft.awakening.entity.AC_EntityLivingScript;
+import dev.adventurecraft.awakening.entity.AC_EntitySkeletonSword;
 import dev.adventurecraft.awakening.extension.entity.ExFallingBlockEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;

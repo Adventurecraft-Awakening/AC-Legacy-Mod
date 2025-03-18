@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.script;
 
-import dev.adventurecraft.awakening.common.AC_EntityNPC;
+import dev.adventurecraft.awakening.entity.AC_EntityNPC;
 
 @SuppressWarnings("unused")
 public class ScriptEntityNPC extends ScriptEntityLivingScript {

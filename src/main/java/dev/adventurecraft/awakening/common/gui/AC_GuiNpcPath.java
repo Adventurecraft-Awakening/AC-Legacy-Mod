@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.common.gui;
 
-import dev.adventurecraft.awakening.common.AC_EntityNPC;
+import dev.adventurecraft.awakening.entity.AC_EntityNPC;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityNpcPath;
 import net.minecraft.client.Minecraft;

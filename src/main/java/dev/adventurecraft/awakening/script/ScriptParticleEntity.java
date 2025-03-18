@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.script;
 
-import dev.adventurecraft.awakening.common.AC_Particle;
+import dev.adventurecraft.awakening.entity.AC_Particle;
 import net.minecraft.client.Minecraft;
 
 public class ScriptParticleEntity extends ScriptEntity {

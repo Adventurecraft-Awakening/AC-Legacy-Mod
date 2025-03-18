@@ -2,7 +2,7 @@ package dev.adventurecraft.awakening.common.gui;
 
 import java.io.File;
 
-import dev.adventurecraft.awakening.common.AC_EntityNPC;
+import dev.adventurecraft.awakening.entity.AC_EntityNPC;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityNpcPath;
 import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;

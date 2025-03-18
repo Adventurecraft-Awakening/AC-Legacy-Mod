@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.common.mixin;
 
-import dev.adventurecraft.awakening.common.AC_EntityNPC;
+import dev.adventurecraft.awakening.entity.AC_EntityNPC;
 import net.minecraft.world.entity.Entity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;

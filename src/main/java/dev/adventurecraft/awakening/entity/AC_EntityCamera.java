@@ -1,5 +1,7 @@
-package dev.adventurecraft.awakening.common;
+package dev.adventurecraft.awakening.entity;
 
+import dev.adventurecraft.awakening.common.AC_CutsceneCamera;
+import dev.adventurecraft.awakening.common.AC_CutsceneCameraBlendType;
 import dev.adventurecraft.awakening.common.gui.AC_GuiCamera;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import net.minecraft.client.Minecraft;

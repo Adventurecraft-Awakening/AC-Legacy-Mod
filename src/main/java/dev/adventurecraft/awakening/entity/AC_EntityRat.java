@@ -1,4 +1,4 @@
-package dev.adventurecraft.awakening.common;
+package dev.adventurecraft.awakening.entity;
 
 import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
 import net.minecraft.world.entity.Entity;

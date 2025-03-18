@@ -1,5 +1,6 @@
-package dev.adventurecraft.awakening.common;
+package dev.adventurecraft.awakening.entity;
 
+import dev.adventurecraft.awakening.common.AC_UtilBullet;
 import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
 import dev.adventurecraft.awakening.extension.item.ExItemStack;
 import dev.adventurecraft.awakening.item.AC_Items;

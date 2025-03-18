@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.item;
 
-import dev.adventurecraft.awakening.common.AC_EntityBomb;
+import dev.adventurecraft.awakening.entity.AC_EntityBomb;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;

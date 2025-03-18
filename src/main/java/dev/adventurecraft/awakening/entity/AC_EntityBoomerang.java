@@ -1,12 +1,10 @@
-package dev.adventurecraft.awakening.common;
+package dev.adventurecraft.awakening.entity;
 
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
-import dev.adventurecraft.awakening.mixin.entity.MixinEntity;
-import org.lwjgl.Sys;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
+
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.Entity;

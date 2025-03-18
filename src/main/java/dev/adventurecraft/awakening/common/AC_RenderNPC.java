@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.entity.AC_EntityNPC;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.world.entity.LivingEntity;

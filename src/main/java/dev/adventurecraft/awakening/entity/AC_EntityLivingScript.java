@@ -1,5 +1,7 @@
-package dev.adventurecraft.awakening.common;
+package dev.adventurecraft.awakening.entity;
 
+import dev.adventurecraft.awakening.common.AC_CoordBlock;
+import dev.adventurecraft.awakening.common.IEntityPather;
 import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
 import dev.adventurecraft.awakening.extension.entity.ai.pathing.ExEntityPath;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
@@ -25,8 +27,8 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
 
     String initDescTo;
     String descriptionName;
-    float prevWidth = 0.6F;
-    float prevHeight = 1.8F;
+    private float prevWidth = 0.6F;
+    private float prevHeight = 1.8F;
     protected Scriptable scope;
     public String onCreated = "";
     public String onUpdate = "";
@@ -335,5 +337,13 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
 
     public void setTriggerOnPath(AC_TileEntityNpcPath path) {
         this.triggerOnPath = path;
+    }
+
+    public float getPrevWidth() {
+        return prevWidth;
+    }
+
+    public float getPrevHeight() {
+        return prevHeight;
     }
 }

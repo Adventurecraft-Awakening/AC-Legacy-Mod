@@ -2,7 +2,7 @@ package dev.adventurecraft.awakening.mixin.block;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.common.AC_DebugMode;
-import dev.adventurecraft.awakening.common.AC_EntityArrowBomb;
+import dev.adventurecraft.awakening.entity.AC_EntityArrowBomb;
 import dev.adventurecraft.awakening.item.AC_Items;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

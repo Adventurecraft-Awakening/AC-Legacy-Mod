@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.mixin.entity;
 
-import dev.adventurecraft.awakening.common.*;
+import dev.adventurecraft.awakening.entity.*;
 import dev.adventurecraft.awakening.extension.entity.ExEntityRegistry;
 import net.minecraft.world.entity.EntityIO;
 import net.minecraft.world.entity.projectile.Fireball;

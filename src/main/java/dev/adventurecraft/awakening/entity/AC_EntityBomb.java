@@ -1,4 +1,4 @@
-package dev.adventurecraft.awakening.common;
+package dev.adventurecraft.awakening.entity;
 
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.AC_BlockBombable;

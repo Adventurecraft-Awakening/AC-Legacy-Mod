@@ -3,7 +3,7 @@ package dev.adventurecraft.awakening.common.gui;
 import java.util.List;
 
 import dev.adventurecraft.awakening.common.AC_CutsceneCameraBlendType;
-import dev.adventurecraft.awakening.common.AC_EntityCamera;
+import dev.adventurecraft.awakening.entity.AC_EntityCamera;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;

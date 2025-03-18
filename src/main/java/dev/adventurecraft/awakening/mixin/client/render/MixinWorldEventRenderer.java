@@ -3,6 +3,7 @@ package dev.adventurecraft.awakening.mixin.client.render;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.common.*;
+import dev.adventurecraft.awakening.entity.AC_Particle;
 import dev.adventurecraft.awakening.extension.ExClass_66;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;

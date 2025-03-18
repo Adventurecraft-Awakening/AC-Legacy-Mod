@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.entity.AC_EntityHookshot;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Tesselator;

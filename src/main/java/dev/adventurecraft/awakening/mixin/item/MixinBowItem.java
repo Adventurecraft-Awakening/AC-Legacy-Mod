@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.mixin.item;
 
-import dev.adventurecraft.awakening.common.AC_EntityArrowBomb;
+import dev.adventurecraft.awakening.entity.AC_EntityArrowBomb;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import net.minecraft.world.ItemInstance;

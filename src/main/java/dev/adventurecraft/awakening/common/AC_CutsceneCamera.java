@@ -3,6 +3,7 @@ package dev.adventurecraft.awakening.common;
 import java.util.ArrayList;
 import java.util.List;
 
+import dev.adventurecraft.awakening.entity.AC_EntityCamera;
 import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;

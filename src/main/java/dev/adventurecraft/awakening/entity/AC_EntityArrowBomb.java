@@ -1,4 +1,4 @@
-package dev.adventurecraft.awakening.common;
+package dev.adventurecraft.awakening.entity;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;

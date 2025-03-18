@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.mixin.client.render.entity;
 
 import dev.adventurecraft.awakening.common.*;
+import dev.adventurecraft.awakening.entity.*;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;

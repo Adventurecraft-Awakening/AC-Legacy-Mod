@@ -1,4 +1,4 @@
-package dev.adventurecraft.awakening.common;
+package dev.adventurecraft.awakening.entity;
 
 import net.minecraft.client.particle.Particle;
 import net.minecraft.world.level.Level;

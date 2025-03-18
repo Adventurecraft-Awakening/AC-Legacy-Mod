@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.common.mixin;
 
-import dev.adventurecraft.awakening.common.AC_EntityLivingScript;
+import dev.adventurecraft.awakening.entity.AC_EntityLivingScript;
 import dev.adventurecraft.awakening.mixin.entity.MixinLivingEntity;
 import dev.adventurecraft.awakening.script.ScriptEntity;
 import net.minecraft.world.entity.Entity;

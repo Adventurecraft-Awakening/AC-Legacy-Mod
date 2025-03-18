@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.entity.AC_EntityBoomerang;
 import dev.adventurecraft.awakening.extension.client.ExTextureManager;
 import dev.adventurecraft.awakening.item.AC_Items;
 import net.minecraft.client.renderer.Tesselator;

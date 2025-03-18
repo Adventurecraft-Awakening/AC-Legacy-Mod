@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.extension.entity;
 
-import dev.adventurecraft.awakening.common.AC_IMultiAttackEntity;
+import dev.adventurecraft.awakening.entity.AC_IMultiAttackEntity;
 import net.minecraft.world.phys.Vec3;
 
 public interface ExEntity extends AC_IMultiAttackEntity {

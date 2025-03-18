@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.item;
 
-import dev.adventurecraft.awakening.common.AC_EntityHookshot;
+import dev.adventurecraft.awakening.entity.AC_EntityHookshot;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;

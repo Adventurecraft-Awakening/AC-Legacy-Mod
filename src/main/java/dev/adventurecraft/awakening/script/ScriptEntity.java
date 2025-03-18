@@ -1,8 +1,8 @@
 package dev.adventurecraft.awakening.script;
 
-import dev.adventurecraft.awakening.common.AC_EntityLivingScript;
-import dev.adventurecraft.awakening.common.AC_EntityNPC;
-import dev.adventurecraft.awakening.common.AC_Particle;
+import dev.adventurecraft.awakening.entity.AC_EntityLivingScript;
+import dev.adventurecraft.awakening.entity.AC_EntityNPC;
+import dev.adventurecraft.awakening.entity.AC_Particle;
 import dev.adventurecraft.awakening.common.AC_UtilBullet;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.extension.entity.ExEntityRegistry;

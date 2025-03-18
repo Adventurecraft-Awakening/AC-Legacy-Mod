@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.entity.AC_EntityCamera;
 import net.minecraft.client.model.Model;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.world.entity.LivingEntity;

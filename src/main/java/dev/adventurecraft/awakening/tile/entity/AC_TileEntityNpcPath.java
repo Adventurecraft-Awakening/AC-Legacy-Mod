@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.tile.entity;
 
-import dev.adventurecraft.awakening.common.AC_EntityNPC;
+import dev.adventurecraft.awakening.entity.AC_EntityNPC;
 import dev.adventurecraft.awakening.common.AC_TriggerArea;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.nbt.CompoundTag;

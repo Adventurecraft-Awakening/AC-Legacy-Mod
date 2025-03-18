@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Random;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
-import dev.adventurecraft.awakening.common.AC_EntityAirFX;
+import dev.adventurecraft.awakening.entity.AC_EntityAirFX;
 import dev.adventurecraft.awakening.extension.client.particle.ExParticleManager;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import net.minecraft.client.Minecraft;
