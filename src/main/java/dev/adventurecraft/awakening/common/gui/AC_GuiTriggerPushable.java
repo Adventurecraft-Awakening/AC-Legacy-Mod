@@ -10,8 +10,8 @@ import net.minecraft.client.gui.screens.Screen;
 public class AC_GuiTriggerPushable extends Screen {
     private AC_TileEntityTriggerPushable trigger;
 
-    public AC_GuiTriggerPushable(AC_TileEntityTriggerPushable var1) {
-        this.trigger = var1;
+    public AC_GuiTriggerPushable(AC_TileEntityTriggerPushable entity) {
+        this.trigger = entity;
     }
 
     public void tick() {
@@ -19,43 +19,48 @@ public class AC_GuiTriggerPushable extends Screen {
 
     public void init() {
         this.buttons.add(new OptionButton(0, 4, 40, "Use Current Selection"));
-        OptionButton var1 = new OptionButton(1, 4, 60, "Trigger Target");
+
+        var var1 = new OptionButton(1, 4, 60, "Trigger Target");
         if (this.trigger.resetOnTrigger) {
             var1.message = "Reset Target";
         }
-
         this.buttons.add(var1);
     }
 
-    protected void buttonClicked(Button var1) {
-        if (var1.id == 0) {
-            this.trigger.minX = AC_ItemCursor.minX;
-            this.trigger.minY = AC_ItemCursor.minY;
-            this.trigger.minZ = AC_ItemCursor.minZ;
-            this.trigger.maxX = AC_ItemCursor.maxX;
-            this.trigger.maxY = AC_ItemCursor.maxY;
-            this.trigger.maxZ = AC_ItemCursor.maxZ;
-        } else if (var1.id == 1) {
-            this.trigger.resetOnTrigger = !this.trigger.resetOnTrigger;
-            if (this.trigger.resetOnTrigger) {
-                var1.message = "Reset Target";
+    protected void buttonClicked(Button btn) {
+        AC_TileEntityTriggerPushable trigger = this.trigger;
+        if (btn.id == 0) {
+            trigger.minX = AC_ItemCursor.minX;
+            trigger.minY = AC_ItemCursor.minY;
+            trigger.minZ = AC_ItemCursor.minZ;
+            trigger.maxX = AC_ItemCursor.maxX;
+            trigger.maxY = AC_ItemCursor.maxY;
+            trigger.maxZ = AC_ItemCursor.maxZ;
+        } else if (btn.id == 1) {
+            trigger.resetOnTrigger = !trigger.resetOnTrigger;
+            if (trigger.resetOnTrigger) {
+                btn.message = "Reset Target";
             } else {
-                var1.message = "Trigger Target";
+                btn.message = "Trigger Target";
             }
         }
 
-        this.trigger.level.getChunkAt(this.trigger.x, this.trigger.z).markUnsaved();
+        this.trigger.setChanged();
     }
 
-    public void render(int var1, int var2, float var3) {
+    public void render(int mouseX, int mouseY, float tick) {
         this.fill(0, 0, this.width, this.height, Integer.MIN_VALUE);
-        this.drawString(this.font, String.format("Min: (%d, %d, %d)", this.trigger.minX, this.trigger.minY, this.trigger.minZ), 4, 4, 14737632);
-        this.drawString(this.font, String.format("Max: (%d, %d, %d)", this.trigger.maxX, this.trigger.maxY, this.trigger.maxZ), 4, 24, 14737632);
-        super.render(var1, var2, var3);
+
+        AC_TileEntityTriggerPushable t = this.trigger;
+        int color = 14737632;
+        this.drawString(this.font, String.format("Min: (%d, %d, %d)", t.minX, t.minY, t.minZ), 4, 4, color);
+        this.drawString(this.font, String.format("Max: (%d, %d, %d)", t.maxX, t.maxY, t.maxZ), 4, 24, color);
+
+        super.render(mouseX, mouseY, tick);
     }
 
-    public static void showUI(AC_TileEntityTriggerPushable var0) {
-        Minecraft.instance.setScreen(new AC_GuiTriggerPushable(var0));
+    public static void showUI(AC_TileEntityTriggerPushable entity) {
+        Minecraft.instance.setScreen(new AC_GuiTriggerPushable(entity));
     }
 
     public boolean isPauseScreen() {
