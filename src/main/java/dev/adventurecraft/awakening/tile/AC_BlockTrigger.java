@@ -146,24 +146,25 @@ public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerBlock 
             return;
         }
 
-        var tileEntity = (AC_TileEntityTrigger) world.getTileEntity(x, y, z);
+        var e = (AC_TileEntityTrigger) world.getTileEntity(x, y, z);
         // Treat trigger blocks with no set as if they are not trigger blocks
-        if(!tileEntity.isSet()){
+        if (!e.isSet()) {
             return;
         }
-        else if (!this.isAlreadyActivated(world, x, y, z)) {
-            if (!tileEntity.resetOnTrigger) {
-                ((ExWorld) world).getTriggerManager().addArea(x, y, z, new AC_TriggerArea(tileEntity.minX, tileEntity.minY, tileEntity.minZ, tileEntity.maxX, tileEntity.maxY, tileEntity.maxZ));
+
+        if (!this.isAlreadyActivated(world, x, y, z)) {
+            if (!e.resetOnTrigger) {
+                ((ExWorld) world).getTriggerManager().addArea(
+                    x, y, z, new AC_TriggerArea(e.minX, e.minY, e.minZ, e.maxX, e.maxY, e.maxZ));
             } else {
-                ExBlock.resetArea(world, tileEntity.minX, tileEntity.minY, tileEntity.minZ, tileEntity.maxX, tileEntity.maxY, tileEntity.maxZ);
+                ExBlock.resetArea(world, e.minX, e.minY, e.minZ, e.maxX, e.maxY, e.maxZ);
             }
         }
         // If player is dead, set activated to 1 so that the triggerArea can be removed in AC_TileEntityTrigger!
-        if (((Player) entity).health <= 0){
-            tileEntity.activated = 1;
-        }
-        else {
-            tileEntity.activated = 2;
+        if (((Player) entity).health <= 0) {
+            e.activated = 1;
+        } else {
+            e.activated = 2;
         }
     }
 
@@ -172,29 +173,29 @@ public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerBlock 
             return;
         }
 
-        AC_TileEntityTrigger tileEntity = (AC_TileEntityTrigger) world.getTileEntity(x, y, z);
-        if (!tileEntity.resetOnTrigger) {
+        var entity = (AC_TileEntityTrigger) world.getTileEntity(x, y, z);
+        if (!entity.resetOnTrigger) {
             this.removeArea(world, x, y, z);
         }
     }
 
     public void setTriggerToSelection(Level world, int x, int y, int z) {
-        AC_TileEntityMinMax tileEntity = (AC_TileEntityMinMax) world.getTileEntity(x, y, z);
-        if (tileEntity.minX == AC_ItemCursor.minX &&
-            tileEntity.minY == AC_ItemCursor.minY &&
-            tileEntity.minZ == AC_ItemCursor.minZ &&
-            tileEntity.maxX == AC_ItemCursor.maxX &&
-            tileEntity.maxY == AC_ItemCursor.maxY &&
-            tileEntity.maxZ == AC_ItemCursor.maxZ) {
+        var e = (AC_TileEntityMinMax) world.getTileEntity(x, y, z);
+        if (e.minX == AC_ItemCursor.minX &&
+            e.minY == AC_ItemCursor.minY &&
+            e.minZ == AC_ItemCursor.minZ &&
+            e.maxX == AC_ItemCursor.maxX &&
+            e.maxY == AC_ItemCursor.maxY &&
+            e.maxZ == AC_ItemCursor.maxZ) {
             return;
         }
 
-        tileEntity.minX = AC_ItemCursor.minX;
-        tileEntity.minY = AC_ItemCursor.minY;
-        tileEntity.minZ = AC_ItemCursor.minZ;
-        tileEntity.maxX = AC_ItemCursor.maxX;
-        tileEntity.maxY = AC_ItemCursor.maxY;
-        tileEntity.maxZ = AC_ItemCursor.maxZ;
+        e.minX = AC_ItemCursor.minX;
+        e.minY = AC_ItemCursor.minY;
+        e.minZ = AC_ItemCursor.minZ;
+        e.maxX = AC_ItemCursor.maxX;
+        e.maxY = AC_ItemCursor.maxY;
+        e.maxZ = AC_ItemCursor.maxZ;
 
         for (int bX = x - 1; bX <= x + 1; ++bX) {
             for (int bZ = z - 1; bZ <= z + 1; ++bZ) {
@@ -227,11 +228,10 @@ public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerBlock 
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active  && (player.getSelectedItem() == null || player.getSelectedItem().id == AC_Items.cursor.id)) {
+        if (AC_DebugMode.active && (player.getSelectedItem() == null || player.getSelectedItem().id == AC_Items.cursor.id)) {
             var entity = (AC_TileEntityTrigger) world.getTileEntity(x, y, z);
-            AC_GuiTrigger.showUI(world, x, y, z, entity);
-        }
-        else {
+            AC_GuiTrigger.showUI(entity);
+        } else {
             return false;
         }
         return true;
