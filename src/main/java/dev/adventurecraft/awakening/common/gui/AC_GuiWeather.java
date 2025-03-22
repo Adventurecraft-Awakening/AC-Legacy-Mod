@@ -14,15 +14,15 @@ public class AC_GuiWeather extends Screen {
     private GuiSlider2 timeOfDay;
     private GuiSlider2 timeRate;
 
-    public AC_GuiWeather(Level var1, AC_TileEntityWeather var2) {
-        this.weather = var2;
+    public AC_GuiWeather(AC_TileEntityWeather entity) {
+        this.weather = entity;
     }
 
     public void tick() {
     }
 
     public void init() {
-        OptionButton var1 = new OptionButton(0, 4, 0, "Don\'t Change Precipitation");
+        OptionButton var1 = new OptionButton(0, 4, 0, "Don't Change Precipitation");
         this.buttons.add(var1);
         if (this.weather.changePrecipitate) {
             if (this.weather.precipitate) {
@@ -32,7 +32,7 @@ public class AC_GuiWeather extends Screen {
             }
         }
 
-        var1 = new OptionButton(1, 4, 22, "Don\'t Change Temperature");
+        var1 = new OptionButton(1, 4, 22, "Don't Change Temperature");
         this.buttons.add(var1);
         if (this.weather.changeTempOffset) {
             var1.message = "Change Temperature";
@@ -40,7 +40,8 @@ public class AC_GuiWeather extends Screen {
 
         this.tempOffset = new GuiSlider2(2, 4, 44, 10, String.format("Temp Offset: %.2f", this.weather.tempOffset), (float) ((this.weather.tempOffset + 1.0D) / 2.0D));
         this.buttons.add(this.tempOffset);
-        var1 = new OptionButton(3, 4, 66, "Don\'t Change Time");
+
+        var1 = new OptionButton(3, 4, 66, "Don't Change Time");
         this.buttons.add(var1);
         if (this.weather.changeTimeOfDay) {
             var1.message = "Change Time";
@@ -48,7 +49,8 @@ public class AC_GuiWeather extends Screen {
 
         this.timeOfDay = new GuiSlider2(4, 4, 88, 10, String.format("Time: %d", this.weather.timeOfDay), (float) this.weather.timeOfDay / 24000.0F);
         this.buttons.add(this.timeOfDay);
-        var1 = new OptionButton(5, 4, 110, "Don\'t Change Time Rate");
+
+        var1 = new OptionButton(5, 4, 110, "Don't Change Time Rate");
         this.buttons.add(var1);
         if (this.weather.changeTimeRate) {
             var1.message = "Change Time Rate";
@@ -56,7 +58,8 @@ public class AC_GuiWeather extends Screen {
 
         this.timeRate = new GuiSlider2(6, 4, 132, 10, String.format("Time Rate: %.2f", this.weather.timeRate), (this.weather.timeRate + 16.0F) / 32.0F);
         this.buttons.add(this.timeRate);
-        var1 = new OptionButton(7, 4, 152, "Don\'t Change Thundering");
+
+        var1 = new OptionButton(7, 4, 152, "Don't Change Thundering");
         this.buttons.add(var1);
         if (this.weather.changeThundering) {
             if (this.weather.thundering) {
@@ -65,88 +68,92 @@ public class AC_GuiWeather extends Screen {
                 var1.message = "Stop Thundering";
             }
         }
-
     }
 
-    protected void buttonClicked(Button var1) {
-        if (var1.id == 0) {
-            if (this.weather.changePrecipitate && this.weather.precipitate) {
-                this.weather.precipitate = false;
-            } else if (this.weather.changePrecipitate && !this.weather.precipitate) {
-                this.weather.changePrecipitate = false;
+    protected void buttonClicked(Button btn) {
+        AC_TileEntityWeather weather = this.weather;
+        if (btn.id == 0) {
+            if (weather.changePrecipitate && weather.precipitate) {
+                weather.precipitate = false;
+            } else if (weather.changePrecipitate && !weather.precipitate) {
+                weather.changePrecipitate = false;
             } else {
-                this.weather.changePrecipitate = true;
-                this.weather.precipitate = true;
+                weather.changePrecipitate = true;
+                weather.precipitate = true;
             }
 
-            if (this.weather.changePrecipitate) {
-                if (this.weather.precipitate) {
-                    var1.message = "Start Precipitation";
+            if (weather.changePrecipitate) {
+                if (weather.precipitate) {
+                    btn.message = "Start Precipitation";
                 } else {
-                    var1.message = "Stop Precipitation";
+                    btn.message = "Stop Precipitation";
                 }
             } else {
-                var1.message = "Don\'t Change Precipitation";
+                btn.message = "Don't Change Precipitation";
             }
         }
 
-        if (var1.id == 7) {
-            if (this.weather.changeThundering && this.weather.thundering) {
-                this.weather.thundering = false;
-            } else if (this.weather.changeThundering && !this.weather.thundering) {
-                this.weather.changeThundering = false;
+        if (btn.id == 7) {
+            if (weather.changeThundering && weather.thundering) {
+                weather.thundering = false;
+            } else if (weather.changeThundering && !weather.thundering) {
+                weather.changeThundering = false;
             } else {
-                this.weather.changeThundering = true;
-                this.weather.thundering = true;
+                weather.changeThundering = true;
+                weather.thundering = true;
             }
 
-            if (this.weather.changeThundering) {
-                if (this.weather.thundering) {
-                    var1.message = "Start Thundering";
+            if (weather.changeThundering) {
+                if (weather.thundering) {
+                    btn.message = "Start Thundering";
                 } else {
-                    var1.message = "Stop Thundering";
+                    btn.message = "Stop Thundering";
                 }
             } else {
-                var1.message = "Don\'t Change Thundering";
+                btn.message = "Don't Change Thundering";
             }
-        } else if (var1.id == 1) {
-            this.weather.changeTempOffset = !this.weather.changeTempOffset;
-            if (this.weather.changeTempOffset) {
-                var1.message = "Change Temperature";
+        } else if (btn.id == 1) {
+            weather.changeTempOffset = !weather.changeTempOffset;
+            if (weather.changeTempOffset) {
+                btn.message = "Change Temperature";
             } else {
-                var1.message = "Don\'t Change Temperature";
+                btn.message = "Don't Change Temperature";
             }
-        } else if (var1.id == 3) {
-            this.weather.changeTimeOfDay = !this.weather.changeTimeOfDay;
-            if (this.weather.changeTimeOfDay) {
-                var1.message = "Change Time";
+        } else if (btn.id == 3) {
+            weather.changeTimeOfDay = !weather.changeTimeOfDay;
+            if (weather.changeTimeOfDay) {
+                btn.message = "Change Time";
             } else {
-                var1.message = "Don\'t Change Time";
+                btn.message = "Don't Change Time";
             }
-        } else if (var1.id == 5) {
-            this.weather.changeTimeRate = !this.weather.changeTimeRate;
-            if (this.weather.changeTimeRate) {
-                var1.message = "Change Time Rate";
+        } else if (btn.id == 5) {
+            weather.changeTimeRate = !weather.changeTimeRate;
+            if (weather.changeTimeRate) {
+                btn.message = "Change Time Rate";
             } else {
-                var1.message = "Don\'t Change Time Rate";
+                btn.message = "Don't Change Time Rate";
             }
         }
 
+        weather.setChanged();
     }
 
-    public void render(int var1, int var2, float var3) {
+    public void render(int mouseX, int mouseY, float tick) {
         this.fill(0, 0, this.width, this.height, Integer.MIN_VALUE);
-        this.weather.tempOffset = (double) this.tempOffset.sliderValue * 2.0D - 1.0D;
-        this.tempOffset.message = String.format("Temp Offset: %.2f", this.weather.tempOffset);
-        this.weather.timeOfDay = (int) (this.timeOfDay.sliderValue * 24000.0F);
-        this.timeOfDay.message = String.format("Time: %d", this.weather.timeOfDay);
-        this.weather.timeRate = this.timeRate.sliderValue * 32.0F - 16.0F;
-        this.timeRate.message = String.format("Time Rate: %.2f", this.weather.timeRate);
-        super.render(var1, var2, var3);
+
+        AC_TileEntityWeather weather = this.weather;
+        weather.tempOffset = (double) this.tempOffset.sliderValue * 2.0D - 1.0D;
+        this.tempOffset.message = String.format("Temp Offset: %.2f", weather.tempOffset);
+        weather.timeOfDay = (int) (this.timeOfDay.sliderValue * 24000.0F);
+        this.timeOfDay.message = String.format("Time: %d", weather.timeOfDay);
+        weather.timeRate = this.timeRate.sliderValue * 32.0F - 16.0F;
+        this.timeRate.message = String.format("Time Rate: %.2f", weather.timeRate);
+
+        super.render(mouseX, mouseY, tick);
     }
 
-    public static void showUI(Level var0, AC_TileEntityWeather var1) {
-        Minecraft.instance.setScreen(new AC_GuiWeather(var0, var1));
+    public static void showUI(AC_TileEntityWeather entity) {
+        Minecraft.instance.setScreen(new AC_GuiWeather(entity));
     }
 
     public boolean isPauseScreen() {
