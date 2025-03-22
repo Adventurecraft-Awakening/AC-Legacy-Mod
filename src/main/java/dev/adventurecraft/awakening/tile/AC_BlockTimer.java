@@ -75,7 +75,7 @@ public class AC_BlockTimer extends TileEntityTile implements AC_ITriggerBlock {
     public boolean use(Level world, int x, int y, int z, Player player) {
         if (AC_DebugMode.active) {
             var entity = (AC_TileEntityTimer) world.getTileEntity(x, y, z);
-            AC_GuiTimer.showUI(world, x, y, z, entity);
+            AC_GuiTimer.showUI(entity);
         }
         return true;
     }

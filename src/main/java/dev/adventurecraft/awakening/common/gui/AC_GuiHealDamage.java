@@ -36,10 +36,16 @@ public class AC_GuiHealDamage extends Screen {
         }
 
         super.render(var1, var2, var3);
-        this.tileEnt.level.getChunkAt(this.tileEnt.x, this.tileEnt.z).markUnsaved();
     }
 
-    public static void showUI(Level var0, AC_TileEntityHealDamage var1) {
+    @Override
+    public void removed() {
+        super.removed();
+
+        this.tileEnt.setChanged();
+    }
+
+    public static void showUI(AC_TileEntityHealDamage var1) {
         Minecraft.instance.setScreen(new AC_GuiHealDamage(var1));
     }
 

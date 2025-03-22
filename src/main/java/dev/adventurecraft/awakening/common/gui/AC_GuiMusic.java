@@ -78,10 +78,18 @@ public class AC_GuiMusic extends Screen {
 
         this.music.fadeOut = (int) (this.fadeOut.sliderValue * 5000.0F + 0.5F);
         this.fadeOut.message = String.format("Fade Out: %d", this.music.fadeOut);
+
         this.music.fadeIn = (int) (this.fadeIn.sliderValue * 5000.0F + 0.5F);
         this.fadeIn.message = String.format("Fade In: %d", this.music.fadeIn);
+        
         super.render(mouseX, mouseY, deltaTime);
-        this.world.getChunkAt(this.music.x, this.music.z).markUnsaved();
+    }
+
+    @Override
+    public void removed() {
+        super.removed();
+
+        this.music.setChanged();
     }
 
     public static void showUI(Level world, AC_TileEntityMusic entity) {

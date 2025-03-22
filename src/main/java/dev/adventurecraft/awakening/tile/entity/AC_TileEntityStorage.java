@@ -60,7 +60,7 @@ public class AC_TileEntityStorage extends AC_TileEntityMinMax {
             }
         }
 
-        this.level.getChunkAt(this.x, this.z).markUnsaved();
+        this.setChanged();
     }
 
     public void loadCurrentArea() {

@@ -13,8 +13,8 @@ import net.minecraft.world.phys.AABB;
 
 public class AC_BlockTree extends TileEntityTile implements AC_IBlockColor {
 
-    protected AC_BlockTree(int var1, int var2) {
-        super(var1, var2, Material.PLANT);
+    protected AC_BlockTree(int id, int tex) {
+        super(id, tex, Material.PLANT);
     }
 
     @Override
@@ -23,8 +23,8 @@ public class AC_BlockTree extends TileEntityTile implements AC_IBlockColor {
     }
 
     @Override
-    public int getTexture(int var1, int var2) {
-        return this.tex + var2;
+    public int getTexture(int side, int meta) {
+        return this.tex + meta;
     }
 
     @Override
@@ -56,7 +56,7 @@ public class AC_BlockTree extends TileEntityTile implements AC_IBlockColor {
     public boolean use(Level world, int x, int y, int z, Player player) {
         if (AC_DebugMode.active) {
             var entity = (AC_TileEntityTree) world.getTileEntity(x, y, z);
-            AC_GuiTree.showUI(world, x, y, z, entity);
+            AC_GuiTree.showUI(entity);
         }
         return true;
     }

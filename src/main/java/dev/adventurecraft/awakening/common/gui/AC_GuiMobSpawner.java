@@ -254,10 +254,18 @@ public class AC_GuiMobSpawner extends Screen {
 
         this.mobSpawner.spawnNumber = (int) (this.spawnCountSlider.sliderValue * 15.0F + 0.5F);
         this.spawnCountSlider.message = String.format("Spawn Count: %d", this.mobSpawner.spawnNumber);
+
         this.mobSpawner.respawnDelay = (int) (this.respawnSlider.sliderValue * 12000.0F + 0.5F);
         this.respawnSlider.message = String.format("Respawn Delay: %.1fs", (float) this.mobSpawner.respawnDelay / 20.0F);
+        
         super.render(mouseX, mouseY, tickTime);
-        this.mobSpawner.level.getChunkAt(this.mobSpawner.x, this.mobSpawner.z).markUnsaved();
+    }
+
+    @Override
+    public void removed() {
+        super.removed();
+
+        this.mobSpawner.setChanged();
     }
 
     public static void showUI(AC_TileEntityMobSpawner entity) {

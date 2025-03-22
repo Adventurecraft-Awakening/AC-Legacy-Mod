@@ -38,15 +38,16 @@ public class AC_BlockRedstoneTrigger extends TileEntityTile implements AC_ITrigg
 
     private void updateBlock(Level world, int x, int y, int z, int side) {
         boolean isActivated = world.hasNeighborSignal(x, y, z);
-        var entity = (AC_TileEntityRedstoneTrigger) world.getTileEntity(x, y, z);
-        if (entity != null && entity.isActivated != isActivated) {
-            entity.isActivated = isActivated;
+        var e = (AC_TileEntityRedstoneTrigger) world.getTileEntity(x, y, z);
+        if (e != null && e.isActivated != isActivated) {
+            e.isActivated = isActivated;
             world.sendTileUpdated(x, y, z);
             if (isActivated) {
-                if (!entity.resetOnTrigger) {
-                    ((ExWorld) world).getTriggerManager().addArea(x, y, z, new AC_TriggerArea(entity.minX, entity.minY, entity.minZ, entity.maxX, entity.maxY, entity.maxZ));
+                if (!e.resetOnTrigger) {
+                    ((ExWorld) world).getTriggerManager().addArea(
+                        x, y, z, new AC_TriggerArea(e.minX, e.minY, e.minZ, e.maxX, e.maxY, e.maxZ));
                 } else {
-                    ExBlock.resetArea(world, entity.minX, entity.minY, entity.minZ, entity.maxX, entity.maxY, entity.maxZ);
+                    ExBlock.resetArea(world, e.minX, e.minY, e.minZ, e.maxX, e.maxY, e.maxZ);
                 }
             } else {
                 ((ExWorld) world).getTriggerManager().removeArea(x, y, z);
@@ -58,7 +59,7 @@ public class AC_BlockRedstoneTrigger extends TileEntityTile implements AC_ITrigg
     public boolean use(Level world, int x, int y, int z, Player player) {
         if (AC_DebugMode.active && (player.getSelectedItem() == null || player.getSelectedItem().id == AC_Items.cursor.id)) {
             var entity = (AC_TileEntityRedstoneTrigger) world.getTileEntity(x, y, z);
-            AC_GuiRedstoneTrigger.showUI(world, x, y, z, entity);
+            AC_GuiRedstoneTrigger.showUI(entity);
             return true;
         } else {
             return false;
@@ -66,20 +67,20 @@ public class AC_BlockRedstoneTrigger extends TileEntityTile implements AC_ITrigg
     }
 
     public void setTriggerToSelection(Level world, int x, int y, int z) {
-        var entity = (AC_TileEntityRedstoneTrigger) world.getTileEntity(x, y, z);
-        if (entity.minX != AC_ItemCursor.minX ||
-            entity.minY != AC_ItemCursor.minY ||
-            entity.minZ != AC_ItemCursor.minZ ||
-            entity.maxX != AC_ItemCursor.maxX ||
-            entity.maxY != AC_ItemCursor.maxY ||
-            entity.maxZ != AC_ItemCursor.maxZ) {
+        var e = (AC_TileEntityRedstoneTrigger) world.getTileEntity(x, y, z);
+        if (e.minX != AC_ItemCursor.minX ||
+            e.minY != AC_ItemCursor.minY ||
+            e.minZ != AC_ItemCursor.minZ ||
+            e.maxX != AC_ItemCursor.maxX ||
+            e.maxY != AC_ItemCursor.maxY ||
+            e.maxZ != AC_ItemCursor.maxZ) {
 
-            entity.minX = AC_ItemCursor.minX;
-            entity.minY = AC_ItemCursor.minY;
-            entity.minZ = AC_ItemCursor.minZ;
-            entity.maxX = AC_ItemCursor.maxX;
-            entity.maxY = AC_ItemCursor.maxY;
-            entity.maxZ = AC_ItemCursor.maxZ;
+            e.minX = AC_ItemCursor.minX;
+            e.minY = AC_ItemCursor.minY;
+            e.minZ = AC_ItemCursor.minZ;
+            e.maxX = AC_ItemCursor.maxX;
+            e.maxY = AC_ItemCursor.maxY;
+            e.maxZ = AC_ItemCursor.maxZ;
         }
     }
 }

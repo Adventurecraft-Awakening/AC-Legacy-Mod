@@ -59,7 +59,7 @@ public class AC_BlockMessage extends TileEntityTile implements AC_ITriggerBlock 
     public boolean use(Level world, int x, int y, int z, Player player) {
         if (AC_DebugMode.active) {
             var entity = (AC_TileEntityMessage) world.getTileEntity(x, y, z);
-            AC_GuiMessage.showUI(world, entity);
+            AC_GuiMessage.showUI(entity);
             return true;
         } else {
             return false;

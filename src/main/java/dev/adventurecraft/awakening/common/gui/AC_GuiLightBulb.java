@@ -36,15 +36,15 @@ public class AC_GuiLightBulb extends Screen {
 
     public void render(int var1, int var2, float var3) {
         this.fill(0, 0, this.width, this.height, Integer.MIN_VALUE);
+
         this.lightValue = (int) (this.lightSlider.sliderValue * 15.0F + 0.5F);
         this.lightSlider.message = String.format("Light Value: %d", this.lightValue);
+
         if (this.lightValue != this.world.getData(this.blockX, this.blockY, this.blockZ)) {
-            this.world.setTileAndData(this.blockX, this.blockY, this.blockZ, 0, 0);
             this.world.setTileAndData(this.blockX, this.blockY, this.blockZ, AC_Blocks.lightBulb.id, this.lightValue);
         }
 
         super.render(var1, var2, var3);
-        this.world.getChunkAt(this.blockX, this.blockZ).markUnsaved();
     }
 
     public static void showUI(Level var0, int var1, int var2, int var3) {

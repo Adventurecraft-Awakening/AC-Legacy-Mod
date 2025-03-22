@@ -94,7 +94,7 @@ public class AC_BlockTriggerInverter extends TileEntityTile implements AC_ITrigg
     public boolean use(Level world, int x, int y, int z, Player player) {
         if (AC_DebugMode.active && (player.getSelectedItem() == null || player.getSelectedItem().id == AC_Items.cursor.id)) {
             var entity = (AC_TileEntityTriggerInverter) world.getTileEntity(x, y, z);
-            AC_GuiTriggerInverter.showUI(world, x, y, z, entity);
+            AC_GuiTriggerInverter.showUI(entity);
             return true;
         } else {
             return false;

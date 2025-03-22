@@ -71,7 +71,7 @@ public class AC_BlockHealDamage extends TileEntityTile implements AC_ITriggerBlo
     public boolean use(Level world, int x, int y, int z, Player player) {
         if (AC_DebugMode.active && (player.getSelectedItem() == null || player.getSelectedItem().id == AC_Items.cursor.id)) {
             var entity = (AC_TileEntityHealDamage) world.getTileEntity(x, y, z);
-            AC_GuiHealDamage.showUI(world, entity);
+            AC_GuiHealDamage.showUI(entity);
             return true;
         } else {
             return false;

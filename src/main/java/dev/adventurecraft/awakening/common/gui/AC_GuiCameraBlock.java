@@ -54,7 +54,7 @@ public class AC_GuiCameraBlock extends Screen {
             }
         }
 
-        this.cam.level.getChunkAt(this.cam.x, this.cam.z).markUnsaved();
+        this.cam.setChanged();
     }
 
     @Override

@@ -8,8 +8,6 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.OptionButton;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.tile.Tile;
 
 public class AC_GuiTimer extends Screen {
     boolean ignoreNext = false;
@@ -84,25 +82,26 @@ public class AC_GuiTimer extends Screen {
     public void render(int var1, int var2, float var3) {
         this.ignoreNext = false;
         this.fill(0, 0, this.width, this.height, Integer.MIN_VALUE);
-        AC_TileEntityTimer timer = this.timer;
 
+        AC_TileEntityTimer t = this.timer;
         int textColor = 14737632;
-        this.drawString(this.font, String.format("Min: (%d, %d, %d)", timer.minX, timer.minY, timer.minZ), 4, 4, textColor);
-        this.drawString(this.font, String.format("Max: (%d, %d, %d)", timer.maxX, timer.maxY, timer.maxZ), 4, 24, textColor);
 
-        if (!timer.active && timer.canActivate) {
+        this.drawString(this.font, String.format("Min: (%d, %d, %d)", t.minX, t.minY, t.minZ), 4, 4, textColor);
+        this.drawString(this.font, String.format("Max: (%d, %d, %d)", t.maxX, t.maxY, t.maxZ), 4, 24, textColor);
+
+        if (!t.active && t.canActivate) {
             this.drawString(this.font, "State: Ready", 4, 164, textColor);
         } else {
-            if (timer.active) {
+            if (t.active) {
                 this.drawString(this.font, "State: Active", 4, 164, textColor);
-            } else if (!timer.canActivate) {
+            } else if (!t.canActivate) {
                 this.drawString(this.font, "State: Deactive", 4, 164, textColor);
             }
 
             if (this.timer.ticksDelay > 0) {
-                this.drawString(this.font, String.format("Delay: %.2f", timer.ticksDelay * 0.05F), 4, 184, textColor);
+                this.drawString(this.font, String.format("Delay: %.2f", t.ticksDelay * 0.05F), 4, 184, textColor);
             } else {
-                this.drawString(this.font, String.format("Time: %.2f", timer.ticks * 0.05F), 4, 184, textColor);
+                this.drawString(this.font, String.format("Time: %.2f", t.ticks * 0.05F), 4, 184, textColor);
             }
         }
 
@@ -111,9 +110,9 @@ public class AC_GuiTimer extends Screen {
             this.timer.timeDeactive = (int) (this.deactiveTime.sliderValue * 60.0F * 20.0F);
             this.timer.timeDelay = (int) (this.delayTime.sliderValue * 60.0F * 20.0F);
 
-            this.delayTime.message = String.format("Delay for: %.2fs", timer.timeDelay / 20.0F);
-            this.activeTime.message = String.format("Active for: %.2fs", timer.timeActive / 20.0F);
-            this.deactiveTime.message = String.format("Deactive for: %.2fs", timer.timeDeactive / 20.0F);
+            this.delayTime.message = String.format("Delay for: %.2fs", t.timeDelay / 20.0F);
+            this.activeTime.message = String.format("Active for: %.2fs", t.timeActive / 20.0F);
+            this.deactiveTime.message = String.format("Deactive for: %.2fs", t.timeDeactive / 20.0F);
         } else {
             this.drawString(this.font, "Delay For:", 4, 84, textColor);
             this.drawString(this.font, "Active For:", 4, 104, textColor);
@@ -125,24 +124,24 @@ public class AC_GuiTimer extends Screen {
 
             try {
                 float var4 = Float.parseFloat(this.activeTimeText.getValue());
-                timer.timeActive = (int) (var4 * 20.0F);
+                t.timeActive = (int) (var4 * 20.0F);
             } catch (NumberFormatException ignored) {
             }
 
             try {
                 float var4 = Float.parseFloat(this.deactiveTimeText.getValue());
-                timer.timeDeactive = (int) (var4 * 20.0F);
+                t.timeDeactive = (int) (var4 * 20.0F);
             } catch (NumberFormatException ignored) {
             }
 
             try {
                 float var4 = Float.parseFloat(this.delayTimeText.getValue());
-                timer.timeDelay = (int) (var4 * 20.0F);
+                t.timeDelay = (int) (var4 * 20.0F);
             } catch (NumberFormatException ignored) {
             }
-
-            timer.setChanged();
         }
+
+        t.setChanged();
 
         super.render(var1, var2, var3);
     }

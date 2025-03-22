@@ -59,7 +59,7 @@ public class AC_BlockWeather extends TileEntityTile implements AC_ITriggerBlock 
         }
 
         if (entity.changeTimeOfDay) {
-            ((ExWorld) world).setTimeOfDay((long) entity.timeOfDay);
+            ((ExWorld) world).setTimeOfDay(entity.timeOfDay);
         }
 
         if (entity.changeTimeRate) {
@@ -75,7 +75,7 @@ public class AC_BlockWeather extends TileEntityTile implements AC_ITriggerBlock 
     public boolean use(Level world, int x, int y, int z, Player player) {
         if (AC_DebugMode.active && (player.getSelectedItem() == null || player.getSelectedItem().id == AC_Items.cursor.id)) {
             var entity = (AC_TileEntityWeather) world.getTileEntity(x, y, z);
-            AC_GuiWeather.showUI(world, entity);
+            AC_GuiWeather.showUI(entity);
             return true;
         } else {
             return false;

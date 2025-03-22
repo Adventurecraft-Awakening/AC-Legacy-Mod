@@ -81,8 +81,9 @@ public class AC_BlockTriggerMemory extends TileEntityTile implements AC_ITrigger
     }
 
     public void triggerActivate(Level world, int x, int y, int z) {
-        var entity = (AC_TileEntityTriggerMemory) world.getTileEntity(x, y, z);
-        ((ExWorld) world).getTriggerManager().addArea(x, y, z, new AC_TriggerArea(entity.minX, entity.minY, entity.minZ, entity.maxX, entity.maxY, entity.maxZ));
+        var e = (AC_TileEntityTriggerMemory) world.getTileEntity(x, y, z);
+        ((ExWorld) world).getTriggerManager().addArea(
+            x, y, z, new AC_TriggerArea(e.minX, e.minY, e.minZ, e.maxX, e.maxY, e.maxZ));
     }
 
     public void triggerDeactivate(Level world, int x, int y, int z) {
@@ -104,14 +105,16 @@ public class AC_BlockTriggerMemory extends TileEntityTile implements AC_ITrigger
     }
 
     public void setTriggerToSelection(Level world, int x, int y, int z) {
-        var entity = (AC_TileEntityTriggerMemory) world.getTileEntity(x, y, z);
-        if (entity.minX != AC_ItemCursor.minX ||
-            entity.minY != AC_ItemCursor.minY ||
-            entity.minZ != AC_ItemCursor.minZ ||
-            entity.maxX != AC_ItemCursor.maxX ||
-            entity.maxY != AC_ItemCursor.maxY ||
-            entity.maxZ != AC_ItemCursor.maxZ) {
-            entity.set(AC_ItemCursor.minX, AC_ItemCursor.minY, AC_ItemCursor.minZ, AC_ItemCursor.maxX, AC_ItemCursor.maxY, AC_ItemCursor.maxZ);
+        var e = (AC_TileEntityTriggerMemory) world.getTileEntity(x, y, z);
+        if (e.minX != AC_ItemCursor.minX ||
+            e.minY != AC_ItemCursor.minY ||
+            e.minZ != AC_ItemCursor.minZ ||
+            e.maxX != AC_ItemCursor.maxX ||
+            e.maxY != AC_ItemCursor.maxY ||
+            e.maxZ != AC_ItemCursor.maxZ) {
+            e.set(
+                AC_ItemCursor.minX, AC_ItemCursor.minY, AC_ItemCursor.minZ,
+                AC_ItemCursor.maxX, AC_ItemCursor.maxY, AC_ItemCursor.maxZ);
         }
     }
 
@@ -119,7 +122,7 @@ public class AC_BlockTriggerMemory extends TileEntityTile implements AC_ITrigger
     public boolean use(Level world, int x, int y, int z, Player player) {
         if (AC_DebugMode.active && (player.getSelectedItem() == null || player.getSelectedItem().id == AC_Items.cursor.id)) {
             var entity = (AC_TileEntityTriggerMemory) world.getTileEntity(x, y, z);
-            AC_GuiTriggerMemory.showUI(world, x, y, z, entity);
+            AC_GuiTriggerMemory.showUI(entity);
             return true;
         } else {
             return false;

@@ -53,7 +53,7 @@ public class AC_GuiNpcPath extends Screen {
             this.path.maxZ = 0;
         }
 
-        this.minecraft.level.getChunkAt(this.path.x, this.path.y).markUnsaved();
+        this.path.setChanged();
     }
 
     @Override
