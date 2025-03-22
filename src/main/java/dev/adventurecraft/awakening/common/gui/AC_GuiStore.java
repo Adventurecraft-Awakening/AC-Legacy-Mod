@@ -48,11 +48,17 @@ public class AC_GuiStore extends Screen {
             this.drawCenteredString(font, str, w0, h0 + 11 - y0, textColor);
         }
 
+        int left = 12;
+        int right = 28;
+        int size = 8;
+        int y1 = h0 - size - y0;
+        int y2 = h0 + size - y0;
+
         if (this.buyItem.id != 0 && this.sellItem.id != 0) {
-            this.fill(w0 + 11, h0 - 9 - y0, w0 + 29, h0 + 9 - y0, bgColor);
-            this.fill(w0 - 29, h0 - 9 - y0, w0 - 11, h0 + 9 - y0, bgColor);
+            this.fill(w0 + left - 1, y1 - 1, w0 + right + 1, y2 + 1, bgColor);
+            this.fill(w0 - right - 1, y1 - 1, w0 - left + 1, y2 + 1, bgColor);
         } else if (this.buyItem.id != 0 || this.sellItem.id != 0) {
-            this.fill(w0 - 9, h0 - 9 - y0, w0 + 9, h0 + 9 - y0, bgColor);
+            this.fill(w0 - size - 1, y1 - 1, w0 + size + 1, y2 + 1, bgColor);
         }
 
         GL11.glPushMatrix();
@@ -63,13 +69,15 @@ public class AC_GuiStore extends Screen {
         GL11.glEnable(GL12.GL_RESCALE_NORMAL);
 
         if (Item.items[this.buyItem.id] != null) {
-            itemRenderer.renderAndDecorateItem(font, textures, this.buyItem, w0 + 12, h0 - 8 - y0);
-            itemRenderer.renderGuiItemDecorations(font, textures, this.buyItem, w0 + 12, h0 - 8 - y0);
+            int x = this.sellItem.id == 0 ? -size : left;
+            itemRenderer.renderAndDecorateItem(font, textures, this.buyItem, w0 + x, y1);
+            itemRenderer.renderGuiItemDecorations(font, textures, this.buyItem, w0 + x, y1);
         }
 
         if (Item.items[this.sellItem.id] != null) {
-            itemRenderer.renderAndDecorateItem(font, textures, this.sellItem, w0 - 28, h0 - 8 - y0);
-            itemRenderer.renderGuiItemDecorations(font, textures, this.sellItem, w0 - 28, h0 - 8 - y0);
+            int x = this.buyItem.id == 0 ? -size : -right;
+            itemRenderer.renderAndDecorateItem(font, textures, this.sellItem, w0 + x, y1);
+            itemRenderer.renderGuiItemDecorations(font, textures, this.sellItem, w0 + x, y1);
         }
 
         GL11.glDisable(GL12.GL_RESCALE_NORMAL);
