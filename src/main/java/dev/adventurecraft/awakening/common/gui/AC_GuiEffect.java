@@ -36,10 +36,11 @@ public class AC_GuiEffect extends Screen {
     private GuiSlider2 fogStart;
     private GuiSlider2 fogEnd;
     private int page = 0;
+
     private static ArrayList<String> particleTypes = new ArrayList<>();
 
-    public AC_GuiEffect(AC_TileEntityEffect var1) {
-        this.effect = var1;
+    public AC_GuiEffect(AC_TileEntityEffect entity) {
+        this.effect = entity;
     }
 
     public void init() {
@@ -103,7 +104,7 @@ public class AC_GuiEffect extends Screen {
         } else {
             Button var9;
             if (this.page == 1) {
-                var9 = new Button(0, 4, 20, var1, 18, "Don\'t Change Fog Color");
+                var9 = new Button(0, 4, 20, var1, 18, "Don't Change Fog Color");
                 if (this.effect.changeFogColor == 1) {
                     var9.message = "Change Fog Color";
                 } else if (this.effect.changeFogColor == 2) {
@@ -120,7 +121,7 @@ public class AC_GuiEffect extends Screen {
                 this.fogB = new GuiSlider2(203, 4 + 2 * (4 + var1), 40, 10, String.format("Blue: %.2f", this.effect.fogB), this.effect.fogB);
                 this.fogB.width = var1;
                 this.buttons.add(this.fogB);
-                var9 = new Button(1, 4, 60, var1, 18, "Don\'t Change Fog Density");
+                var9 = new Button(1, 4, 60, var1, 18, "Don't Change Fog Density");
                 if (this.effect.changeFogDensity == 1) {
                     var9.message = "Change Fog Density";
                 } else if (this.effect.changeFogDensity == 2) {
@@ -144,7 +145,7 @@ public class AC_GuiEffect extends Screen {
                 if (this.page == 2) {
                     var9 = new Button(0, 4, 20, var1, 18, "Change Overlay");
                     if (!this.effect.setOverlay) {
-                        var9.message = "Don\'t Change Overlay";
+                        var9.message = "Don't Change Overlay";
                     }
 
                     this.buttons.add(var9);
@@ -188,129 +189,138 @@ public class AC_GuiEffect extends Screen {
 
     }
 
-    protected void buttonClicked(Button var1) {
-        if (var1.id < 0) {
-            this.page = -var1.id - 1;
+    protected void buttonClicked(Button btn) {
+        AC_TileEntityEffect e = this.effect;
+        if (btn.id < 0) {
+            this.page = -btn.id - 1;
             this.buttons.clear();
             this.init();
         } else {
             if (this.page == 0) {
-                if (var1.id == 0) {
-                    this.effect.particleType = "";
-                } else if (var1.id > 0 && var1.id < 100) {
-                    this.effect.particleType = particleTypes.get(var1.id - 1);
+                if (btn.id == 0) {
+                    e.particleType = "";
+                } else if (btn.id > 0 && btn.id < 100) {
+                    e.particleType = particleTypes.get(btn.id - 1);
                 }
             } else if (this.page == 1) {
-                if (var1.id == 0) {
-                    this.effect.changeFogColor = (this.effect.changeFogColor + 1) % 3;
-                    if (this.effect.changeFogColor == 1) {
-                        var1.message = "Change Fog Color";
-                    } else if (this.effect.changeFogColor == 2) {
-                        var1.message = "Revert Fog Color To Normal";
+                if (btn.id == 0) {
+                    e.changeFogColor = (e.changeFogColor + 1) % 3;
+                    if (e.changeFogColor == 1) {
+                        btn.message = "Change Fog Color";
+                    } else if (e.changeFogColor == 2) {
+                        btn.message = "Revert Fog Color To Normal";
                     } else {
-                        var1.message = "Don\'t Change Fog Color";
+                        btn.message = "Don't Change Fog Color";
                     }
-                } else if (var1.id == 1) {
-                    this.effect.changeFogDensity = (this.effect.changeFogDensity + 1) % 3;
-                    if (this.effect.changeFogDensity == 1) {
-                        var1.message = "Change Fog Density";
-                    } else if (this.effect.changeFogDensity == 2) {
-                        var1.message = "Revert Fog Density To Normal";
+                } else if (btn.id == 1) {
+                    e.changeFogDensity = (e.changeFogDensity + 1) % 3;
+                    if (e.changeFogDensity == 1) {
+                        btn.message = "Change Fog Density";
+                    } else if (e.changeFogDensity == 2) {
+                        btn.message = "Revert Fog Density To Normal";
                     } else {
-                        var1.message = "Don\'t Change Fog Density";
+                        btn.message = "Don't Change Fog Density";
                     }
                 }
             } else if (this.page == 2) {
-                if (var1.id == 0) {
-                    this.effect.setOverlay = !this.effect.setOverlay;
-                    if (this.effect.setOverlay) {
-                        var1.message = "Change Overlay";
+                if (btn.id == 0) {
+                    e.setOverlay = !e.setOverlay;
+                    if (e.setOverlay) {
+                        btn.message = "Change Overlay";
                     } else {
-                        var1.message = "Don\'t Change Overlay";
+                        btn.message = "Don't Change Overlay";
                     }
-                } else if (var1.id == 1) {
-                    this.effect.overlay = "";
+                } else if (btn.id == 1) {
+                    e.overlay = "";
                 } else {
-                    this.effect.overlay = var1.message;
+                    e.overlay = btn.message;
                 }
             } else if (this.page == 3) {
-                if (var1.id == 0) {
-                    if (this.effect.replaceTextures) {
-                        this.effect.replaceTextures = false;
-                        this.effect.revertTextures = true;
-                        var1.message = "Revert Replacements";
-                    } else if (this.effect.revertTextures) {
-                        this.effect.replaceTextures = false;
-                        this.effect.revertTextures = false;
-                        var1.message = "Do Nothing";
+                if (btn.id == 0) {
+                    if (e.replaceTextures) {
+                        e.replaceTextures = false;
+                        e.revertTextures = true;
+                        btn.message = "Revert Replacements";
+                    } else if (e.revertTextures) {
+                        e.replaceTextures = false;
+                        e.revertTextures = false;
+                        btn.message = "Do Nothing";
                     } else {
-                        this.effect.replaceTextures = true;
-                        this.effect.revertTextures = false;
-                        var1.message = "Replace Textures";
+                        e.replaceTextures = true;
+                        e.revertTextures = false;
+                        btn.message = "Replace Textures";
                     }
                 } else {
-                    this.effect.textureReplacement = var1.message;
+                    e.textureReplacement = btn.message;
                 }
             }
 
         }
     }
 
-    public void render(int var1, int var2, float var3) {
+    public void render(int mouseX, int mouseY, float tick) {
         this.fill(0, 0, this.width, this.height, Integer.MIN_VALUE);
-        if (this.page == 0) {
-            this.effect.offsetX = this.offsetX.sliderValue * 8.0F;
-            this.offsetX.message = String.format("Offset X: %.2f", this.effect.offsetX);
-            this.effect.offsetY = this.offsetY.sliderValue * 8.0F;
-            this.offsetY.message = String.format("Offset Y: %.2f", this.effect.offsetY);
-            this.effect.offsetZ = this.offsetZ.sliderValue * 8.0F;
-            this.offsetZ.message = String.format("Offset Z: %.2f", this.effect.offsetZ);
-            this.effect.randX = this.randX.sliderValue * 8.0F;
-            this.randX.message = String.format("Rand X: %.2f", this.effect.randX);
-            this.effect.randY = this.randY.sliderValue * 8.0F;
-            this.randY.message = String.format("Rand Y: %.2f", this.effect.randY);
-            this.effect.randZ = this.randZ.sliderValue * 8.0F;
-            this.randZ.message = String.format("Rand Z: %.2f", this.effect.randZ);
-            this.effect.floatArg1 = this.floatArg1.sliderValue * 2.0F - 1.0F;
-            this.floatArg1.message = String.format("Arg 1: %.2f", this.effect.floatArg1);
-            this.effect.floatArg2 = this.floatArg2.sliderValue * 2.0F - 1.0F;
-            this.floatArg2.message = String.format("Arg 2: %.2f", this.effect.floatArg2);
-            this.effect.floatArg3 = this.floatArg3.sliderValue * 2.0F - 1.0F;
-            this.floatArg3.message = String.format("Arg 3: %.2f", this.effect.floatArg3);
-            this.effect.floatRand1 = this.floatRand1.sliderValue;
-            this.floatRand1.message = String.format("Rand 1: %.2f", this.effect.floatRand1);
-            this.effect.floatRand2 = this.floatRand2.sliderValue;
-            this.floatRand2.message = String.format("Rand 2: %.2f", this.effect.floatRand2);
-            this.effect.floatRand3 = this.floatRand3.sliderValue;
-            this.floatRand3.message = String.format("Rand 3: %.2f", this.effect.floatRand3);
-            this.effect.ticksBetweenParticles = Math.round(this.ticksBetweenParticles.sliderValue * MAX_TICKS_BETWEEN_SPAWNS);
-            this.ticksBetweenParticles.message = String.format("Ticks Between: %d", this.effect.ticksBetweenParticles);
-            this.effect.particlesPerSpawn = Math.round(this.particlesPerSpawn.sliderValue * MAX_PARTICLES_PER_SPAWN);
-            this.particlesPerSpawn.message = String.format("Particles Per Spawn: %d", this.effect.particlesPerSpawn);
-            this.font.drawShadow("Particle Type: " + this.effect.particleType, 2 * this.width / 3, 25, -1);
-        } else if (this.page == 1) {
-            this.effect.fogR = this.fogR.sliderValue;
-            this.fogR.message = String.format("Red: %.2f", this.effect.fogR);
-            this.effect.fogG = this.fogG.sliderValue;
-            this.fogG.message = String.format("Green: %.2f", this.effect.fogG);
-            this.effect.fogB = this.fogB.sliderValue;
-            this.fogB.message = String.format("Blue: %.2f", this.effect.fogB);
-            this.effect.fogStart = this.fogStart.sliderValue * 512.0F;
-            this.fogStart.message = String.format("Start: %.1f", this.effect.fogStart);
-            this.effect.fogEnd = this.fogEnd.sliderValue * 512.0F;
-            this.fogEnd.message = String.format("End: %.1f", this.effect.fogEnd);
-        } else if (this.page == 2) {
-            this.font.drawShadow("Overlay: " + this.effect.overlay, this.width / 3, 25, -1);
-        } else if (this.page == 3) {
-            this.font.drawShadow("Replacement: " + this.effect.textureReplacement, this.width / 3, 25, -1);
-        }
 
-        super.render(var1, var2, var3);
-        this.effect.level.getChunkAt(this.effect.x, this.effect.z).markUnsaved();
+        AC_TileEntityEffect e = this.effect;
+        if (this.page == 0) {
+            e.offsetX = this.offsetX.sliderValue * 8.0F;
+            this.offsetX.message = String.format("Offset X: %.2f", e.offsetX);
+            e.offsetY = this.offsetY.sliderValue * 8.0F;
+            this.offsetY.message = String.format("Offset Y: %.2f", e.offsetY);
+            e.offsetZ = this.offsetZ.sliderValue * 8.0F;
+            this.offsetZ.message = String.format("Offset Z: %.2f", e.offsetZ);
+
+            e.randX = this.randX.sliderValue * 8.0F;
+            this.randX.message = String.format("Rand X: %.2f", e.randX);
+            e.randY = this.randY.sliderValue * 8.0F;
+            this.randY.message = String.format("Rand Y: %.2f", e.randY);
+            e.randZ = this.randZ.sliderValue * 8.0F;
+            this.randZ.message = String.format("Rand Z: %.2f", e.randZ);
+
+            e.floatArg1 = this.floatArg1.sliderValue * 2.0F - 1.0F;
+            this.floatArg1.message = String.format("Arg 1: %.2f", e.floatArg1);
+            e.floatArg2 = this.floatArg2.sliderValue * 2.0F - 1.0F;
+            this.floatArg2.message = String.format("Arg 2: %.2f", e.floatArg2);
+            e.floatArg3 = this.floatArg3.sliderValue * 2.0F - 1.0F;
+            this.floatArg3.message = String.format("Arg 3: %.2f", e.floatArg3);
+
+            e.floatRand1 = this.floatRand1.sliderValue;
+            this.floatRand1.message = String.format("Rand 1: %.2f", e.floatRand1);
+            e.floatRand2 = this.floatRand2.sliderValue;
+            this.floatRand2.message = String.format("Rand 2: %.2f", e.floatRand2);
+            e.floatRand3 = this.floatRand3.sliderValue;
+            this.floatRand3.message = String.format("Rand 3: %.2f", e.floatRand3);
+
+            e.ticksBetweenParticles = Math.round(this.ticksBetweenParticles.sliderValue * MAX_TICKS_BETWEEN_SPAWNS);
+            this.ticksBetweenParticles.message = String.format("Ticks Between: %d", e.ticksBetweenParticles);
+            e.particlesPerSpawn = Math.round(this.particlesPerSpawn.sliderValue * MAX_PARTICLES_PER_SPAWN);
+            this.particlesPerSpawn.message = String.format("Particles Per Spawn: %d", e.particlesPerSpawn);
+
+            this.font.drawShadow("Particle Type: " + e.particleType, 2 * this.width / 3, 25, -1);
+        } else if (this.page == 1) {
+            e.fogR = this.fogR.sliderValue;
+            this.fogR.message = String.format("Red: %.2f", e.fogR);
+            e.fogG = this.fogG.sliderValue;
+            this.fogG.message = String.format("Green: %.2f", e.fogG);
+            e.fogB = this.fogB.sliderValue;
+            this.fogB.message = String.format("Blue: %.2f", e.fogB);
+
+            e.fogStart = this.fogStart.sliderValue * 512.0F;
+            this.fogStart.message = String.format("Start: %.1f", e.fogStart);
+            e.fogEnd = this.fogEnd.sliderValue * 512.0F;
+            this.fogEnd.message = String.format("End: %.1f", e.fogEnd);
+        } else if (this.page == 2) {
+            this.font.drawShadow("Overlay: " + e.overlay, this.width / 3, 25, -1);
+        } else if (this.page == 3) {
+            this.font.drawShadow("Replacement: " + e.textureReplacement, this.width / 3, 25, -1);
+        }
+        e.setChanged();
+
+        super.render(mouseX, mouseY, tick);
     }
 
-    public static void showUI(AC_TileEntityEffect var0) {
-        Minecraft.instance.setScreen(new AC_GuiEffect(var0));
+    public static void showUI(AC_TileEntityEffect entity) {
+        Minecraft.instance.setScreen(new AC_GuiEffect(entity));
     }
 
     public boolean isPauseScreen() {
