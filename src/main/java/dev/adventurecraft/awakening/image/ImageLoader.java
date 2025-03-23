@@ -21,7 +21,7 @@ import java.nio.channels.SeekableByteChannel;
 
 public class ImageLoader {
 
-    public static ImageBuffer load(ReadableByteChannel channel, int desiredChannels)
+    public static ImageBuffer load(ReadableByteChannel channel, ImageLoadOptions options)
         throws IOException {
         var callbacks = STBIIOCallbacks.create().set(
             (user, data, size) -> {
@@ -77,36 +77,39 @@ public class ImageLoader {
         var context = new ChannelContext(channel);
         var user = JNINativeInterface.NewGlobalRef(context);
         try {
+            int targetChannels = options.getTargetChannelCount();
+            int targetBitDepth = options.getTargetBitDepth();
+
             var pixelBuffer = STBImage.stbi_load_from_callbacks(
                 callbacks,
                 user,
                 metaBuffer.slice(0, 1),
                 metaBuffer.slice(1, 1),
                 metaBuffer.slice(2, 1),
-                desiredChannels);
+                targetChannels);
             if (pixelBuffer == null && context.ioe != null) {
                 throw context.ioe;
             }
-            return fromMeta(metaBuffer, pixelBuffer, desiredChannels, 8);
+            return fromMeta(metaBuffer, pixelBuffer, targetChannels, targetBitDepth);
         } finally {
             JNINativeInterface.DeleteGlobalRef(user);
         }
     }
 
-    public static ImageBuffer load(URL url, int desiredChannels)
+    public static ImageBuffer load(URL url, ImageLoadOptions options)
         throws IOException {
-        return load(Channels.newChannel(url.openStream()), desiredChannels);
+        return load(Channels.newChannel(url.openStream()), options);
     }
 
-    public static ImageBuffer load(InputStream stream, int desiredChannels)
+    public static ImageBuffer load(InputStream stream, ImageLoadOptions options)
         throws IOException {
-        return load(Channels.newChannel(stream), desiredChannels);
+        return load(Channels.newChannel(stream), options);
     }
 
-    public static ImageBuffer load(File file, int desiredChannels)
+    public static ImageBuffer load(File file, ImageLoadOptions options)
         throws IOException {
         try (var stream = new FileInputStream(file)) {
-            return load(stream.getChannel(), desiredChannels);
+            return load(stream.getChannel(), options);
         }
     }
 
@@ -119,8 +122,12 @@ public class ImageLoader {
         int height = metaData.get(1);
         int channels = desiredChannels != 0 ? desiredChannels : metaData.get(2);
 
-        int format = ImageFormat.fromStb(channels, bitDepth);
-        int stride = ImageFormat.byteStride(width, format);
+        var format = ImageFormat.fromStb(channels, bitDepth);
+        if (format == null) {
+            throw new RuntimeException("Unsupported image format.");
+        }
+
+        int stride = format.getByteStride(width);
         if (stride * height != pixelData.limit()) {
             throw new RuntimeException("Unexpected pixel buffer size.");
         }

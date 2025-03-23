@@ -44,6 +44,8 @@ import java.util.stream.Stream;
 @Mixin(Textures.class)
 public abstract class MixinTextureManager implements ExTextureManager {
 
+    private static final ImageLoadOptions LOAD_RGBA_U8 = ImageLoadOptions.withFormat(ImageFormat.RGBA_U8);
+
     private static final int GL_TEXTURE_MAX_ANISOTROPY_EXT = 0x84FE;
     private static final int GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT = 0x84FF;
 
@@ -163,7 +165,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
         var colors = BufferUtils.createIntBuffer(texW * texH);
         image.copyTo(colors, ImageFormat.RGBA_U8);
 
-        if (ImageFormat.hasAlpha(image.getFormat())) {
+        if (image.getFormat().hasAlpha()) {
             boolean hasAvgColor = false;
             int avgColor = 0;
 
@@ -239,7 +241,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
         if (stream == null) {
             throw new FileNotFoundException(name);
         }
-        return ImageLoader.load(stream, 4);
+        return ImageLoader.load(stream, LOAD_RGBA_U8);
     }
 
     @Overwrite
@@ -283,10 +285,10 @@ public abstract class MixinTextureManager implements ExTextureManager {
                 if (stream == null) {
                     var file = new File(name);
                     if (file.exists()) {
-                        image = ImageLoader.load(file, 4);
+                        image = ImageLoader.load(file, LOAD_RGBA_U8);
                     }
                 } else {
-                    image = ImageLoader.load(stream, 4);
+                    image = ImageLoader.load(stream, LOAD_RGBA_U8);
                 }
             }
 

@@ -3,6 +3,8 @@ package dev.adventurecraft.awakening.common;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.client.ExTextureManager;
 import dev.adventurecraft.awakening.image.ImageBuffer;
+import dev.adventurecraft.awakening.image.ImageFormat;
+import dev.adventurecraft.awakening.image.ImageLoadOptions;
 import dev.adventurecraft.awakening.image.ImageLoader;
 import dev.adventurecraft.awakening.util.FutureUtil;
 import org.lwjgl.opengl.GL11;
@@ -75,7 +77,8 @@ public class AC_MapInfo {
         this.imageFuture = executor.submit(() -> {
             try {
                 if (thumbnailFile.exists()) {
-                    return ImageLoader.load(thumbnailFile, 4);
+                    return ImageLoader.load(
+                        thumbnailFile, new ImageLoadOptions().withDesiredFormat(ImageFormat.RGBA_U8));
                 }
             } catch (IOException ex) {
                 ACMod.LOGGER.warn("Failed to read map thumbnail \"{}\".", thumbnailFile.getPath(), ex);

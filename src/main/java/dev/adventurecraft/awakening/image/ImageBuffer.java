@@ -14,10 +14,11 @@ public final class ImageBuffer {
     private final int width;
     private final int height;
     private final int stride;
-    private final int format;
+    private final ImageFormat format;
 
-    ImageBuffer(ByteBuffer buffer, int width, int height, int stride, int format) {
-        ImageFormat.check(format);
+    ImageBuffer(ByteBuffer buffer, int width, int height, int stride, ImageFormat format) {
+        if (format == null)
+            throw new IllegalArgumentException();
 
         this.buffer = buffer;
         this.width = width;
@@ -46,7 +47,7 @@ public final class ImageBuffer {
         return this.stride;
     }
 
-    public int getFormat() {
+    public ImageFormat getFormat() {
         return this.format;
     }
 
@@ -61,10 +62,10 @@ public final class ImageBuffer {
     public void copyTo(ImageBuffer dst, Point dstPoint, Point srcPoint, Size size) {
         var src = this;
 
-        int srcStart = ImageFormat.byteStride(srcPoint.x, src.format);
-        int dstStart = ImageFormat.byteStride(dstPoint.x, dst.format);
-        int srcSize = ImageFormat.byteStride(size.w, src.format);
-        int dstSize = ImageFormat.byteStride(size.w, dst.format);
+        int srcStart = src.format.getByteStride(srcPoint.x);
+        int dstStart = dst.format.getByteStride(dstPoint.x);
+        int srcSize = src.format.getByteStride(size.w);
+        int dstSize = dst.format.getByteStride(size.w);
 
         if (src.format == dst.format) {
             for (int y = 0; y < size.h; y++) {
@@ -73,8 +74,8 @@ public final class ImageBuffer {
                 dstSpan.put(srcSpan);
             }
         } else {
-            var srcBuffer = BufferUtils.createByteBuffer(ImageFormat.byteStride(size.w, src.format));
-            var dstBuffer = BufferUtils.createByteBuffer(ImageFormat.byteStride(size.w, dst.format));
+            var srcBuffer = BufferUtils.createByteBuffer(src.format.getByteStride(size.w));
+            var dstBuffer = BufferUtils.createByteBuffer(dst.format.getByteStride(size.w));
             throw new NotImplementedException();
         }
     }
@@ -83,7 +84,7 @@ public final class ImageBuffer {
         copyTo(dst, Point.zero, Point.zero, this.getSize());
     }
 
-    public void copyTo(IntBuffer dst, Point dstPoint, Point srcPoint, Size size, int dstFormat) {
+    public void copyTo(IntBuffer dst, Point dstPoint, Point srcPoint, Size size, ImageFormat dstFormat) {
         var src = this;
         if (src.format == dstFormat) {
             blitTo(dst, dstPoint, srcPoint, size);
@@ -125,18 +126,18 @@ public final class ImageBuffer {
         }
     }
 
-    public void copyTo(IntBuffer dst, int format) {
+    public void copyTo(IntBuffer dst, ImageFormat format) {
         this.copyTo(dst, Point.zero, Point.zero, this.getSize(), format);
     }
 
-    public static ImageBuffer create(int width, int height, int stride, int format) {
+    public static ImageBuffer create(int width, int height, int stride, ImageFormat format) {
         int capacity = stride * height;
         var buffer = BufferUtils.createByteBuffer(capacity).limit(capacity);
         return new ImageBuffer(buffer, width, height, stride, format);
     }
 
-    public static ImageBuffer create(int width, int height, int format) {
-        int stride = ImageFormat.byteStride(width, format);
+    public static ImageBuffer create(int width, int height, ImageFormat format) {
+        int stride = format.getByteStride(width);
         return create(width, height, stride, format);
     }
 
@@ -144,9 +145,9 @@ public final class ImageBuffer {
         int width = image.getWidth();
         int height = image.getHeight();
 
-        int format = ImageFormat.fromAwt(image.getColorModel());
-        if (format != ImageFormat.UNDEFINED) {
-            int stride = ImageFormat.byteStride(width, format);
+        var format = ImageFormat.fromAwt(image.getColorModel());
+        if (format != null) {
+            int stride = format.getByteStride(width);
             var raster = image.getRaster();
             //var rasterBuf = raster.getDataBuffer();
             //if (rasterBuf instanceof DataBufferByte byteBuffer) {
@@ -170,12 +171,12 @@ public final class ImageBuffer {
         return result;
     }
 
-    public static ImageBuffer wrap(ByteBuffer buffer, int width, int height, int stride, int format) {
+    public static ImageBuffer wrap(ByteBuffer buffer, int width, int height, int stride, ImageFormat format) {
         return new ImageBuffer(buffer, width, height, stride, format);
     }
 
-    public static ImageBuffer wrap(ByteBuffer buffer, int width, int height, int format) {
-        int stride = ImageFormat.byteStride(width, format);
+    public static ImageBuffer wrap(ByteBuffer buffer, int width, int height, ImageFormat format) {
+        int stride = format.getByteStride(width);
         return wrap(buffer, width, height, stride, format);
     }
 }

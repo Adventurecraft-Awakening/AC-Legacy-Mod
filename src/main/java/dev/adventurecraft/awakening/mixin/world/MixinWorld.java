@@ -23,6 +23,8 @@ import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunkCache;
 import dev.adventurecraft.awakening.image.ImageBuffer;
+import dev.adventurecraft.awakening.image.ImageFormat;
+import dev.adventurecraft.awakening.image.ImageLoadOptions;
 import dev.adventurecraft.awakening.image.ImageLoader;
 import dev.adventurecraft.awakening.item.AC_ItemCustom;
 import dev.adventurecraft.awakening.script.EntityDescriptions;
@@ -489,8 +491,9 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         var file = new File(this.levelDir, name);
         if (file.exists()) {
             try {
-                return ImageLoader.load(file, 4);
-            } catch (Exception var4) {
+                return ImageLoader.load(file, ImageLoadOptions.withFormat(ImageFormat.RGBA_U8));
+            } catch (Exception ex) {
+                ACMod.LOGGER.error("Failed to load map texture \"{}\":", file.getPath(), ex);
             }
         }
         return null;
