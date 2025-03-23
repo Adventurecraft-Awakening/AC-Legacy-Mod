@@ -84,13 +84,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
     private HashMap<String, AC_TextureAnimated> textureAnimations = new HashMap<>();
 
     @Shadow
-    protected abstract BufferedImage readImage(InputStream inputStream) throws IOException;
-
-    @Shadow
     protected abstract int smoothBlend(int var1, int var2);
-
-    @Shadow
-    protected abstract BufferedImage makeStrip(BufferedImage bufferedImage);
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(TexturePackRepository var1, Options var2, CallbackInfo ci) {
@@ -294,6 +288,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
         }
     }
 
+    @Unique
     private int getAverageOpaqueColor(IntBuffer var1) {
         long totalR = 0L;
         long totalG = 0L;
@@ -324,6 +319,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
         return Rgba.fromRgb8(var13, var12, var11);
     }
 
+    @Unique
     private void generateMipMaps(IntBuffer image, int width, int height) {
         IntBuffer srcImage = image;
 
@@ -378,6 +374,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
         ACMod.LOGGER.info("Texture registered: {}, image: {}, index: {}", binder, binder.textureId, binder.tex);
     }
 
+    @Unique
     private void generateMipMapsSub(int subX, int subY, int tileW, int tileH, IntBuffer image, int texSize, boolean fastColor) {
         IntBuffer srcImage = image;
 
@@ -481,6 +478,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
         this.updateTextureAnimations();
     }
 
+    @Unique
     private int weightedAverageColor(int var1, int var2, int var3, int var4) {
         int var5 = this.crispBlend(var1, var2);
         int var6 = this.crispBlend(var3, var4);
@@ -548,14 +546,17 @@ public abstract class MixinTextureManager implements ExTextureManager {
         }
     }
 
+    @Unique
     private void setTextureDimension(int var1, Vec2 var2) {
         this.textureDimensionsMap.put(var1, var2);
     }
 
+    @Unique
     private Vec2 getTextureDimensions(int var1) {
         return this.textureDimensionsMap.get(var1);
     }
 
+    @Unique
     private void checkImageDataSize(int width, int height) {
         if (this.pixels != null) {
             int size = width * height * 4;
@@ -566,6 +567,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
         this.allocateImageData(width, height);
     }
 
+    @Unique
     private void allocateImageData(int width, int height) {
         int size = width * height * 4;
         this.pixels = MemoryTracker.createByteBuffer(size);
@@ -580,6 +582,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
         this.mipImageDatas = mipBuffers.toArray(new IntBuffer[0]);
     }
 
+    @Unique
     private int getMaxMipmapLevel(int dim) {
         int size;
         for (size = 0; dim > 0; ++size) {
@@ -588,6 +591,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
         return size - 1;
     }
 
+    @Unique
     private void copyScaled(IntBuffer srcBuffer, IntBuffer dstBuffer, int tileW) {
         int srcSize = (int) Math.sqrt(srcBuffer.limit());
         if (srcSize == 0) {
@@ -601,6 +605,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
         dstBuffer.limit(tileW * tileW);
     }
 
+    @Unique
     private boolean scalesWithFastColor(DynamicTexture binder) {
         return !binder.getClass().getName().equals("ModTextureStatic");
     }
