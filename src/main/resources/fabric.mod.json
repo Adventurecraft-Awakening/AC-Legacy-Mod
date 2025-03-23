@@ -22,7 +22,8 @@
       "dev.adventurecraft.awakening.ACMod"
     ],
     "mm:early_risers": [
-      "dev.adventurecraft.awakening.earlyrisers.EnumInitializer"
+      "dev.adventurecraft.awakening.earlyrisers.EnumInitializer",
+      "dev.adventurecraft.awakening.earlyrisers.AppContextSetup"
     ],
     "preLaunch": [
       "dev.adventurecraft.awakening.ACPreLaunchFix"
