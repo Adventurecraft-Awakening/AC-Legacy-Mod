@@ -51,19 +51,26 @@ public class Script {
     public final ScriptKeyboard keyboard;
     final LinkedList<ScriptContinuation> sleepingScripts = new LinkedList<>();
     final LinkedList<ScriptContinuation> removeMe = new LinkedList<>();
-    static boolean shutterSet = false;
+
+    public static final ContextFactory contextFactory = new CustomContextFactory();
+
+    static class CustomContextFactory extends ContextFactory {
+
+        @Override
+        protected Context makeContext() {
+            Context cx = super.makeContext();
+            cx.setLanguageVersion(Context.VERSION_ECMASCRIPT);
+            cx.setInterpretedMode(true);
+            cx.setClassShutter(fullClassName ->
+                fullClassName.startsWith(SCRIPT_PACKAGE) || allowedClassNames.contains(fullClassName));
+            return cx;
+        }
+    }
 
     public Script(Level level) {
         var gameOptions = (ExGameOptions) Minecraft.instance.options;
 
-        this.cx = ContextFactory.getGlobal().enterContext();
-        this.cx.setLanguageVersion(Context.VERSION_ECMASCRIPT);
-        this.cx.setInterpretedMode(true);
-        if (!shutterSet) {
-            this.cx.setClassShutter(fullClassName ->
-                fullClassName.startsWith(SCRIPT_PACKAGE) || allowedClassNames.contains(fullClassName));
-            shutterSet = true;
-        }
+        this.cx = contextFactory.enterContext();
 
         this.globalScope = gameOptions.getAllowJavaInScript()
             ? this.cx.initStandardObjects(null, false)
@@ -115,6 +122,10 @@ public class Script {
         defineClass("ModelBlockbench", ScriptModelBlockbench.class);
         defineClass("Vec3", ScriptVec3.class);
         defineClass("VecRot", ScriptVecRot.class);
+    }
+
+    public Context getContext() {
+        return this.cx;
     }
 
     private <T> void defineClass(String name, Class<T> clazz) {
