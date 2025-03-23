@@ -20,7 +20,7 @@ public abstract class MixinAbstractFluidBlock extends Tile {
     }
 
     public int getFoliageColor(LevelSource var1, int var2, int var3, int var4) {
-        if (AC_TerrainImage.isWaterLoaded) {
+        if (AC_TerrainImage.isWaterLoaded()) {
             if (this.id == Tile.FLOWING_WATER.id || this.id == Tile.WATER.id) {
                 return AC_TerrainImage.getWaterColor(var2, var4);
             }

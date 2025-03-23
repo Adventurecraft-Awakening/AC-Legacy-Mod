@@ -103,7 +103,7 @@ public class MixinFlowingWaterTextureBinder2 extends MixinTextureBinder {
                 }
 
                 float var21 = var9 * var9;
-                if (AC_TerrainImage.isWaterLoaded) {
+                if (AC_TerrainImage.isWaterLoaded()) {
                     var11 = (int) (127.0F + var21 * 128.0F);
                     var12 = (int) (127.0F + var21 * 128.0F);
                     var13 = (int) (127.0F + var21 * 128.0F);
