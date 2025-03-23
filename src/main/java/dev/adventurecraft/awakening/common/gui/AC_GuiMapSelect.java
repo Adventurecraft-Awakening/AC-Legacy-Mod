@@ -18,8 +18,13 @@ import org.lwjgl.opengl.GL11;
 
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class AC_GuiMapSelect extends Screen {
+
+    // TODO: make executor static for loading textures in any Screen?
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     protected Screen parent;
     private String saveName;
@@ -43,6 +48,17 @@ public class AC_GuiMapSelect extends Screen {
         }
 
         this.mapList = new MapList();
+    }
+
+    @Override
+    public void removed() {
+        super.removed();
+
+        this.executor.shutdownNow();
+
+        for (AC_MapInfo info : this.mapList.maps) {
+            info.releaseTexture(this.minecraft.textures);
+        }
     }
 
     @Override
@@ -173,14 +189,15 @@ public class AC_GuiMapSelect extends Screen {
                 GL11.glDisable(GL11.GL_BLEND);
             }
 
-            mapInfo.bindTexture(this.client.textures);
-            ts.begin();
-            ts.color(16777215);
-            ts.vertexUV(iconX, iconY + iconHeight, 0.0D, 0.0D, 1.0D);
-            ts.vertexUV(iconX + iconWidth, iconY + iconHeight, 0.0D, 1.0D, 1.0D);
-            ts.vertexUV(iconX + iconWidth, iconY, 0.0D, 1.0D, 0.0D);
-            ts.vertexUV(iconX, iconY, 0.0D, 0.0D, 0.0D);
-            ts.end();
+            if (mapInfo.bindTexture(this.client.textures, executor)) {
+                ts.begin();
+                ts.color(16777215);
+                ts.vertexUV(iconX, iconY + iconHeight, 0.0D, 0.0D, 1.0D);
+                ts.vertexUV(iconX + iconWidth, iconY + iconHeight, 0.0D, 1.0D, 1.0D);
+                ts.vertexUV(iconX + iconWidth, iconY, 0.0D, 1.0D, 0.0D);
+                ts.vertexUV(iconX, iconY, 0.0D, 0.0D, 0.0D);
+                ts.end();
+            }
 
             int textY = iconY;
             int textX = iconX + iconWidth;

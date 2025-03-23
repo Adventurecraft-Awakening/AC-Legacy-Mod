@@ -3,8 +3,6 @@ package dev.adventurecraft.awakening.common;
 import dev.adventurecraft.awakening.ACMainThread;
 import dev.adventurecraft.awakening.ACMod;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -43,7 +41,7 @@ public class AC_MapList {
             String line1 = "";
             String line2 = "";
 
-            File descFile = new File(file, "description.txt");
+            var descFile = new File(file, "description.txt");
             if (descFile.exists()) {
                 try (var reader = new BufferedReader(new FileReader(descFile))) {
                     line1 = reader.readLine();
@@ -53,17 +51,7 @@ public class AC_MapList {
                 }
             }
 
-            BufferedImage thumbnail = null;
-            File thumbFile = new File(file, "thumbnail.png");
-            if (thumbFile.exists()) {
-                try {
-                    thumbnail = ImageIO.read(thumbFile);
-                } catch (IOException ex) {
-                    ACMod.LOGGER.warn("Failed to read map thumbnail \"{}\".", descFile.getPath(), ex);
-                }
-            }
-
-            this.maps.add(new AC_MapInfo(name, line1, line2, thumbnail));
+            this.maps.add(new AC_MapInfo(name, line1, line2, new File(file, "thumbnail.png")));
         }
     }
 

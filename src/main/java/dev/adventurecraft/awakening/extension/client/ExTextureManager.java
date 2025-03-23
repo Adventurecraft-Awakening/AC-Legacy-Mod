@@ -15,7 +15,11 @@ public interface ExTextureManager {
 
     ImageBuffer getTextureImage(String name) throws IOException;
 
+    void loadTexture(ImageBuffer image, int texId);
+
     void loadTexture(int id, String name);
+
+    int getTexture(ImageBuffer image);
 
     Vec2 getTextureResolution(String name);
 

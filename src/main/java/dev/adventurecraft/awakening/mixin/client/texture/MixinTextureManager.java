@@ -77,11 +77,20 @@ public abstract class MixinTextureManager implements ExTextureManager {
     @Shadow
     private BufferedImage missingTex;
 
+    @Unique
     private Int2ObjectOpenHashMap<Vec2> textureDimensionsMap = new Int2ObjectOpenHashMap<>();
+
+    @Unique
     private IntBuffer[] mipImageDatas;
 
+    @Unique
     private ArrayList<String> replacedTextures = new ArrayList<>();
+
+    @Unique
     private HashMap<String, AC_TextureAnimated> textureAnimations = new HashMap<>();
+
+    @Unique
+    private Int2ObjectOpenHashMap<ImageBuffer> loadedBuffers = new Int2ObjectOpenHashMap<>();
 
     @Shadow
     protected abstract int smoothBlend(int var1, int var2);
@@ -98,6 +107,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
     }
 
     @Unique
+    @Override
     public void loadTexture(ImageBuffer image, int texId) {
         var options = (ExGameOptions) this.options;
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, texId);
@@ -200,6 +210,21 @@ public abstract class MixinTextureManager implements ExTextureManager {
         }
     }
 
+    @Override
+    public int getTexture(ImageBuffer buffer) {
+        this.ib.clear();
+        MemoryTracker.genTextures(this.ib);
+        int id = this.ib.get(0);
+        this.loadTexture(buffer, id);
+        this.loadedBuffers.put(id, buffer);
+        return id;
+    }
+
+    @Inject(method = "releaseTexture", at = @At("HEAD"))
+    private void releaseLoadedBuffer(int id, CallbackInfo ci) {
+        this.loadedBuffers.remove(id);
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public <T extends DynamicTexture> Stream<T> getTextureBinders(Class<T> type) {
@@ -218,18 +243,18 @@ public abstract class MixinTextureManager implements ExTextureManager {
     }
 
     @Overwrite
-    public int loadTexture(String var1) {
-        Integer id = this.idMap.get(var1);
-        if (id != null) {
-            return id;
+    public int loadTexture(String name) {
+        Integer prevId = this.idMap.get(name);
+        if (prevId != null) {
+            return prevId;
         }
 
         this.ib.clear();
         MemoryTracker.genTextures(this.ib);
-        int var4 = this.ib.get(0);
-        this.loadTexture(var4, var1);
-        this.idMap.put(var1, var4);
-        return var4;
+        int id = this.ib.get(0);
+        this.loadTexture(id, name);
+        this.idMap.put(name, id);
+        return id;
     }
 
     @Override
