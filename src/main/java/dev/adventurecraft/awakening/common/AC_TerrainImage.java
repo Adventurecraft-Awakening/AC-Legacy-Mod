@@ -4,6 +4,7 @@ import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.image.*;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.IntBuffer;
 
@@ -89,6 +90,8 @@ public class AC_TerrainImage {
         ImageBuffer image = null;
         try {
             image = ImageLoader.load(file, ImageLoadOptions.withFormat(ImageFormat.RGBA_U8));
+        } catch (FileNotFoundException ex) {
+            ACMod.LOGGER.warn("Missing map texture \"{}\".", file.getPath());
         } catch (IOException ex) {
             ACMod.LOGGER.error("Failed to load map texture \"{}\".", file.getPath(), ex);
         }
@@ -118,11 +121,6 @@ public class AC_TerrainImage {
     }
 
     public static boolean loadWaterMap(File file) {
-        if (!file.exists()) {
-            waterInfo = null;
-            return false;
-        }
-
         ImageBuffer image = loadMapImage(file);
         if (image == null) {
             waterInfo = null;
@@ -163,8 +161,9 @@ public class AC_TerrainImage {
         var biomeFile = new File(levelDir, "biomeMap.png");
         if (loadBiomeMap(biomeFile)) {
             var waterFile = new File(levelDir, "waterMap.png");
-            loadWaterMap(waterFile);
-
+            if (waterFile.exists()) {
+                loadWaterMap(waterFile);
+            }
             isLoaded = true;
             return true;
         }

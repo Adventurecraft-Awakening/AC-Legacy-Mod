@@ -110,8 +110,14 @@ public class AC_BlockEffect extends TileEntityTile implements AC_ITriggerBlock {
         if (needsReloadForRevert) {
             ExGrassColor.loadGrass("/misc/grasscolor.png", world);
             ExFoliageColor.loadFoliage("/misc/foliagecolor.png", world);
-            AC_TerrainImage.loadWaterMap(new File(((ExWorld) world).getLevelDir(), "watermap.png"));
-            AC_TerrainImage.loadBiomeMap(new File(((ExWorld) world).getLevelDir(), "biomemap.png"));
+            var waterFile = new File(((ExWorld) world).getLevelDir(), "waterMap.png");
+            if (waterFile.exists()) {
+                AC_TerrainImage.loadWaterMap(waterFile);
+            }
+            var biomeFile = new File(((ExWorld) world).getLevelDir(), "biomeMap.png");
+            if (biomeFile.exists()) {
+                AC_TerrainImage.loadBiomeMap(biomeFile);
+            }
             Minecraft.instance.levelRenderer.skyColorChanged();
             needsReloadForRevert = false;
         }
