@@ -49,8 +49,8 @@ public class Script {
     final ScriptRenderer renderer;
     final ScriptScript script;
     public final ScriptKeyboard keyboard;
-    final LinkedList<ScriptContinuation> sleepingScripts = new LinkedList<>();
-    final LinkedList<ScriptContinuation> removeMe = new LinkedList<>();
+    final List<ScriptContinuation> sleepingScripts = new ArrayList<>();
+    final List<ScriptContinuation> removeMe = new ArrayList<>();
 
     public static final ContextFactory contextFactory = new CustomContextFactory();
 
@@ -209,19 +209,14 @@ public class Script {
     }
 
     public void wakeupScripts(long currentTime) {
-        Iterator<ScriptContinuation> continuations = this.sleepingScripts.iterator();
 
-        while (continuations.hasNext()) {
-            ScriptContinuation continuation = continuations.next();
+        for (ScriptContinuation continuation : this.sleepingScripts) {
             if (continuation.wakeUp <= currentTime) {
                 this.removeMe.add(continuation);
             }
         }
 
-        continuations = this.removeMe.iterator();
-
-        while (continuations.hasNext()) {
-            ScriptContinuation continuation = continuations.next();
+        for (ScriptContinuation continuation : this.removeMe) {
             this.sleepingScripts.remove(continuation);
 
             try {
