@@ -1642,7 +1642,9 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
 
     @Override
     public String[] getScriptFiles() {
-        return this.scriptHandler.getFileNames();
+        String[] names = this.scriptHandler.getFileNames();
+        Arrays.sort(names);
+        return names;
     }
 
     @Override

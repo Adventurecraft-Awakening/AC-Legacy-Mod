@@ -35,7 +35,9 @@ public class AC_GuiScriptStats extends Screen {
             }
         }
         this.maxSize += 10;
-        this.scriptInfos.sort(Comparator.naturalOrder()); // TODO: sort every few ticks?
+
+        // TODO: sort every few ticks? if so, also add hotkey that stops sorting when held
+        this.scriptInfos.sort(Comparator.comparing(o -> o.totalTime));
     }
 
     @Override

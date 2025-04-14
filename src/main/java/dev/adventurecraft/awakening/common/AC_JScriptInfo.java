@@ -4,7 +4,7 @@ import org.mozilla.javascript.Script;
 
 import java.util.Objects;
 
-public class AC_JScriptInfo implements Comparable<AC_JScriptInfo> {
+public class AC_JScriptInfo {
 
     public String name;
     public Script compiledScript;
@@ -30,10 +30,5 @@ public class AC_JScriptInfo implements Comparable<AC_JScriptInfo> {
         this.totalTime = 0L;
         this.maxTime = 0L;
         this.count = 0;
-    }
-
-    @Override
-    public int compareTo(AC_JScriptInfo info) {
-        return Long.compare(info.totalTime, this.totalTime);
     }
 }
