@@ -139,18 +139,16 @@ public class AC_GuiMobSpawner extends Screen {
             buttons.add(new Button(65, 4, 124, (this.width - 12) / 3, 18, "None"));
 
             String[] scriptFiles = ((ExWorld) this.minecraft.level).getScriptFiles();
-            if (scriptFiles != null) {
-                int id = 0;
-                for (String scriptFile : scriptFiles) {
-                    var button = new Button(
-                        id + scriptIdOffset,
-                        4 + (id + 1) % 3 * (this.width - 8) / 3,
-                        124 + (id + 1) / 3 * 20,
-                        (this.width - 12) / 3, 18,
-                        scriptFile);
-                    buttons.add(button);
-                    ++id;
-                }
+            int id = 1;
+            for (String scriptFile : scriptFiles) {
+                var button = new Button(
+                    id + scriptIdOffset - 1,
+                    4 + id % 3 * (this.width - 8) / 3,
+                    124 + id / 3 * 20,
+                    (this.width - 12) / 3, 18,
+                    scriptFile);
+                buttons.add(button);
+                ++id;
             }
         }
     }
@@ -257,7 +255,7 @@ public class AC_GuiMobSpawner extends Screen {
 
         this.mobSpawner.respawnDelay = (int) (this.respawnSlider.sliderValue * 12000.0F + 0.5F);
         this.respawnSlider.message = String.format("Respawn Delay: %.1fs", (float) this.mobSpawner.respawnDelay / 20.0F);
-        
+
         super.render(mouseX, mouseY, tickTime);
     }
 
@@ -301,7 +299,7 @@ public class AC_GuiMobSpawner extends Screen {
         }
     }
 
-    private static String formatSpawnVec(Coord min, Coord max){
+    private static String formatSpawnVec(Coord min, Coord max) {
         return String.format(
             "Spawn: (%d, %d, %d), (%d, %d, %d)",
             min.x, min.y, min.z,

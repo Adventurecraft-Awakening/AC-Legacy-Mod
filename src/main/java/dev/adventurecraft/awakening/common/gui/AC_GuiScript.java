@@ -26,22 +26,18 @@ public class AC_GuiScript extends Screen {
         this.buttons.add(this.setOnTrigger);
         this.buttons.add(this.setOnDetrigger);
         this.buttons.add(this.setOnUpdate);
-        Button var1 = new Button(3, 4, 70, 200, 20, "Reload Scripts");
-        this.buttons.add(var1);
-        var1 = new Button(4, 4, 92, 160, 18, "None");
-        this.buttons.add(var1);
-        String[] var2 = ((ExWorld) this.minecraft.level).getScriptFiles();
-        if (var2 != null) {
-            int var3 = 1;
-            String[] var4 = var2;
-            int var5 = var2.length;
 
-            for (int var6 = 0; var6 < var5; ++var6) {
-                String var7 = var4[var6];
-                var1 = new Button(4 + var3, 4 + var3 % 3 * this.width / 3, 92 + var3 / 3 * 20, 160, 18, var7);
-                this.buttons.add(var1);
-                ++var3;
-            }
+        this.buttons.add(new Button(3, 4, 70, 200, 20, "Reload Scripts"));
+        this.buttons.add(new Button(4, 4, 92, 160, 18, "None"));
+
+        String[] files = ((ExWorld) this.minecraft.level).getScriptFiles();
+        int id = 1;
+        for (String file : files) {
+            int x = 4 + id % 3 * this.width / 3;
+            int y = 92 + id / 3 * 20;
+            var btn = new Button(4 + id, x, y, 160, 18, file);
+            this.buttons.add(btn);
+            ++id;
         }
     }
 

@@ -112,14 +112,12 @@ public class AC_GuiNPC extends Screen {
             this.buttons.add(new Button(7, 4, 112, 160, 18, "None"));
 
             String[] files = ((ExWorld) this.minecraft.level).getScriptFiles();
-            if (files != null) {
-                int count = 1;
-                for (String file : files) {
-                    int x = 6 + count % 3 * this.width / 3;
-                    int y = 112 + count / 3 * 20;
-                    this.buttons.add(new Button(7 + count, x, y, 160, 18, file));
-                    count++;
-                }
+            int id = 1;
+            for (String file : files) {
+                int x = 6 + id % 3 * this.width / 3;
+                int y = 112 + id / 3 * 20;
+                this.buttons.add(new Button(7 + id, x, y, 160, 18, file));
+                id++;
             }
         }
     }
