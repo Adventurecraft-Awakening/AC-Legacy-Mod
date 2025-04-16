@@ -4,7 +4,7 @@ package dev.adventurecraft.awakening.client.gui;
 import dev.adventurecraft.awakening.common.ScrollableWidget;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.render.Tessellator;
+import net.minecraft.client.renderer.Tesselator;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 
@@ -15,7 +15,7 @@ import java.util.*;
 
 public class FilePickerWidget extends ScrollableWidget {
 
-    public ArrayList<Path> files = new ArrayList<>();
+    public final List<Path> files = new ArrayList<>();
     private int selectedIndex = -1;
     private int hoveredIndex = -1;
 
@@ -43,7 +43,7 @@ public class FilePickerWidget extends ScrollableWidget {
 
     @Override
     protected void renderContentBackground(
-        double left, double right, double top, double bot, double scroll, Tessellator ts) {
+        double left, double right, double top, double bot, double scroll, Tesselator ts) {
         this.fillGradient(
             this.widgetX, this.widgetY,
             this.widgetX + this.width, this.widgetY + this.height,
@@ -51,15 +51,15 @@ public class FilePickerWidget extends ScrollableWidget {
     }
 
     @Override
-    protected void beforeEntryRender(int mouseX, int mouseY, double entryX, double entryY, Tessellator ts) {
+    protected void beforeEntryRender(int mouseX, int mouseY, double entryX, double entryY, Tesselator ts) {
         super.beforeEntryRender(mouseX, mouseY, entryX, entryY, ts);
 
         this.hoveredIndex = this.getEntryUnderPoint(mouseX, mouseY);
     }
 
     @Override
-    protected void renderEntry(int entryIndex, double entryX, double entryY, int entryHeight, Tessellator ts) {
-        var exText = (ExTextRenderer) this.client.textRenderer;
+    protected void renderEntry(int entryIndex, double entryX, double entryY, int entryHeight, Tesselator ts) {
+        var exText = (ExTextRenderer) this.client.font;
         String file = this.files.get(entryIndex).getFileName().toString();
 
         entryX -= 110;
@@ -72,10 +72,10 @@ public class FilePickerWidget extends ScrollableWidget {
 
             GL11.glDisable(GL11.GL_TEXTURE_2D);
             GL11.glEnable(GL11.GL_BLEND);
-            ts.start();
+            ts.begin();
             this.renderContentSelection(
                 entryX - 2, entryY - 2, width, entryHeight, 1, borderColor, backColor, ts);
-            ts.tessellate();
+            ts.end();
             GL11.glEnable(GL11.GL_TEXTURE_2D);
             GL11.glDisable(GL11.GL_BLEND);
         }
@@ -99,7 +99,7 @@ public class FilePickerWidget extends ScrollableWidget {
 
         int contentTop = this.contentTop + this.widgetY;
         int contentBot = this.contentBot + this.widgetY;
-        if (mouseX > contentBot || mouseY + this.entryHeight < contentTop) {
+        if (mouseY > contentBot || mouseY + this.entryHeight < contentTop) {
             return;
         }
 
@@ -128,7 +128,7 @@ public class FilePickerWidget extends ScrollableWidget {
         }
 
         int maxWidth = lines.stream()
-            .mapToInt(line -> this.client.textRenderer.getTextWidth(line))
+            .mapToInt(line -> this.client.font.width(line))
             .max()
             .orElse(0);
         if (maxWidth == 0) {
@@ -145,7 +145,7 @@ public class FilePickerWidget extends ScrollableWidget {
 
         int lineIndex = 0;
         for (String line : lines) {
-            this.client.textRenderer.drawTextWithShadow(line, x + 5, y + 5 + lineIndex++ * 11, 14540253);
+            this.client.font.drawShadow(line, x + 5, y + 5 + lineIndex++ * 11, 14540253);
         }
     }
 
