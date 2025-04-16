@@ -1,42 +1,44 @@
 package dev.adventurecraft.awakening.mixin.entity;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import dev.adventurecraft.awakening.common.AC_Blocks;
+import dev.adventurecraft.awakening.util.HashCode;
+import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.util.math.AxixAlignedBoundingBox;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import dev.adventurecraft.awakening.util.RandomUtil;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.objectweb.asm.Opcodes;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.Map;
 import java.util.Random;
+
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 @Mixin(Entity.class)
 public abstract class MixinEntity implements ExEntity {
 
     @Shadow
-    public int entityId;
+    public int id;
     @Shadow
-    public Entity passenger;
+    public Entity rider;
     @Shadow
-    public Entity vehicle;
+    public Entity riding;
     @Shadow
-    public World world;
+    public Level level;
     @Shadow
-    public double prevX;
+    public double xo;
     @Shadow
-    public double prevY;
+    public double yo;
     @Shadow
-    public double prevZ;
+    public double zo;
     @Shadow
     public double x;
     @Shadow
@@ -44,53 +46,54 @@ public abstract class MixinEntity implements ExEntity {
     @Shadow
     public double z;
     @Shadow
-    public double xVelocity;
+    public double xd;
     @Shadow
-    public double yVelocity;
+    public double yd;
     @Shadow
-    public double zVelocity;
+    public double zd;
     @Shadow
-    public float yaw;
+    public float yRot;
     @Shadow
-    public float pitch;
+    public float xRot;
     @Shadow
-    public float prevYaw;
+    public float yRotO;
     @Shadow
-    public float prevPitch;
+    public float xRotO;
     @Final
     @Shadow
-    public AxixAlignedBoundingBox boundingBox;
+    public AABB bb;
     @Shadow
     public boolean onGround;
     @Shadow
-    public boolean field_1624;
+    public boolean horizontalCollision;
+    @Shadow
+    public boolean stuckInBlock;
     @Shadow
     public boolean removed;
     @Shadow
-    public float standingEyeHeight;
+    public float heightOffset;
     @Shadow
-    public float width;
+    public float bbWidth;
     @Shadow
-    public float height;
+    public float bbHeight;
     @Shadow
-    public float field_1635;
+    public float walkDist;
     @Shadow
-    public boolean field_1642;
+    public boolean noPhysics;
     @Shadow
     public float fallDistance;
     @Shadow
-    public int field_1611;
+    public int nextStep;
     @Shadow
-    protected Random rand;
+    protected Random random = RandomUtil.newXoshiro128PP();
     @Shadow
-    public int field_1646;
+    public int flameTime;
     @Shadow
-    public int fireTicks;
+    public int onFire;
     @Shadow
-    public int field_1613;
-    @Shadow
-    public int air;
+    public int invulnerableTime;
 
+    public boolean ignoreCobwebCollision = false;
     public boolean isFlying;
     public int stunned;
     public boolean collidesWithClipBlocks = true;
@@ -98,14 +101,19 @@ public abstract class MixinEntity implements ExEntity {
     public int collisionZ;
     public float moveYawOffset = 0.0F;
 
-    @Shadow
-    protected abstract void handleFallDamage(float f);
+    private int cachedBrightnessKey = -1;
+    private float cachedBrightness;
+
+    protected final Map<String, String> customData = new Object2ObjectOpenHashMap<>();
 
     @Shadow
-    public abstract void accelerate(double d, double e, double f);
+    protected abstract void causeFallDamage(float f);
 
     @Shadow
-    public abstract boolean damage(Entity arg, int i);
+    public abstract void push(double d, double e, double f);
+
+    @Shadow
+    public abstract boolean hurt(Entity arg, int i);
 
     @Shadow
     public void tick() {
@@ -118,10 +126,10 @@ public abstract class MixinEntity implements ExEntity {
     }
 
     @Shadow
-    public abstract boolean method_1334();
+    public abstract boolean isInWater();
 
     @Shadow
-    public abstract void setPosition(double d, double e, double f);
+    public abstract void setPos(double d, double e, double f);
 
     @Shadow
     protected abstract void setSize(float f, float g);
@@ -129,27 +137,34 @@ public abstract class MixinEntity implements ExEntity {
     @Shadow
     public abstract void move(double d, double e, double f);
 
-    @Shadow
-    public abstract ItemEntity dropItem(int i, int j);
+    @Inject(method = "move", at = @At(value = "HEAD"))
+    private void collideWithCobweb(CallbackInfo ci) {
+        if (this.stuckInBlock && isIgnoreCobwebCollision()) {
+            this.stuckInBlock = false;
+        }
+    }
 
     @Shadow
-    public abstract boolean method_1335();
+    public abstract ItemEntity spawnAtLocation(int i, int j);
 
     @Shadow
-    protected abstract void setAttacked();
+    public abstract boolean isInLava();
 
     @Shadow
-    public abstract boolean method_1344(double d, double e, double f);
+    protected abstract void markHurt();
 
     @Shadow
-    public abstract boolean method_1373();
+    public abstract boolean isFree(double d, double e, double f);
+
+    @Shadow
+    public abstract boolean isSneaking();
 
     @Shadow
     public abstract float distanceTo(Entity arg);
 
     @Inject(method = "move", at = @At(
         value = "FIELD",
-        target = "Lnet/minecraft/entity/Entity;z:D",
+        target = "Lnet/minecraft/world/entity/Entity;z:D",
         shift = At.Shift.AFTER,
         ordinal = 2))
     private void collideInMove(
@@ -163,20 +178,19 @@ public abstract class MixinEntity implements ExEntity {
         @Local(ordinal = 7) double var15) {
         this.collisionX = Double.compare(var11, var1);
 
-        int var22;
-        boolean var38;
-        int var39;
+        int yPos;
+        boolean isCollidingWithBlock = false;
+        int blockId;
         if (this.collisionX != 0) {
-            var38 = false;
-
-            for (var22 = 0; (double) var22 < (double) this.height + this.y - (double) this.standingEyeHeight - Math.floor(this.y - (double) this.standingEyeHeight); ++var22) {
-                var39 = this.world.getBlockId((int) Math.floor(this.x) + this.collisionX, (int) Math.floor(this.y + (double) var22 - (double) this.standingEyeHeight), (int) Math.floor(this.z));
-                if (var39 != 0 && var39 != AC_Blocks.clipBlock.id) {
-                    var38 = true;
+            for (yPos = 0; (double) yPos < (double) this.bbHeight + this.y - (double) this.heightOffset - Math.floor(this.y - (double) this.heightOffset); ++yPos) {
+                blockId = this.level.getTile((int) Math.floor(this.x) + this.collisionX, (int) Math.floor(this.y + (double) yPos - (double) this.heightOffset), (int) Math.floor(this.z));
+                if (blockId != 0 && blockId != AC_Blocks.clipBlock.id) {
+                    isCollidingWithBlock = true;
+                    break;
                 }
             }
 
-            if (!var38) {
+            if (!isCollidingWithBlock) {
                 this.collisionX = 0;
             }
         }
@@ -184,16 +198,17 @@ public abstract class MixinEntity implements ExEntity {
         this.collisionZ = Double.compare(var15, var5);
 
         if (this.collisionZ != 0) {
-            var38 = false;
+            isCollidingWithBlock = false;
 
-            for (var22 = 0; (double) var22 < (double) this.height + this.y - this.standingEyeHeight - Math.floor(this.y - (double) this.standingEyeHeight); ++var22) {
-                var39 = this.world.getBlockId((int) Math.floor(this.x), (int) Math.floor(this.y + (double) var22 - (double) this.standingEyeHeight), (int) Math.floor(this.z) + this.collisionZ);
-                if (var39 != 0 && var39 != AC_Blocks.clipBlock.id) {
-                    var38 = true;
+            for (yPos = 0; (double) yPos < (double) this.bbHeight + this.y - this.heightOffset - Math.floor(this.y - (double) this.heightOffset); ++yPos) {
+                blockId = this.level.getTile((int) Math.floor(this.x), (int) Math.floor(this.y + (double) yPos - (double) this.heightOffset), (int) Math.floor(this.z) + this.collisionZ);
+                if (blockId != 0 && blockId != AC_Blocks.clipBlock.id) {
+                    isCollidingWithBlock = true;
+                    break;
                 }
             }
 
-            if (!var38) {
+            if (!isCollidingWithBlock) {
                 this.collisionZ = 0;
             }
         }
@@ -203,18 +218,18 @@ public abstract class MixinEntity implements ExEntity {
         method = "move",
         at = @At(
             value = "FIELD",
-            target = "Lnet/minecraft/entity/Entity;field_1611:I",
+            target = "Lnet/minecraft/world/entity/Entity;nextStep:I",
             opcode = Opcodes.PUTFIELD,
             ordinal = 0))
     private void moveCeil(Entity instance, int value) {
-        instance.field_1611 = (int) ((double) this.field_1611 + Math.ceil((this.field_1635 - (float) this.field_1611)));
+        instance.nextStep = (int) ((double) this.nextStep + Math.ceil((this.walkDist - (float) this.nextStep)));
     }
 
     @Overwrite
-    public void method_1374(double var1, boolean var3) {
+    public void checkFallDamage(double var1, boolean var3) {
         if (var3) {
-            if (this.yVelocity < 0.0D) {
-                this.handleFallDamage(-((float) this.yVelocity));
+            if (this.yd < 0.0D) {
+                this.causeFallDamage(-((float) this.yd));
             }
         } else if (var1 < 0.0D) {
             this.fallDistance = (float) ((double) this.fallDistance - var1);
@@ -222,51 +237,80 @@ public abstract class MixinEntity implements ExEntity {
     }
 
     @Overwrite
-    public void movementInputToVelocity(float x, float z, float speed) {
+    public void moveRelative(float x, float z, float speed) {
         float inputSqr = x * x + z * z;
         if (inputSqr >= 1.0E-4F) {
             x *= speed;
             z *= speed;
-            double sin = Math.sin((this.yaw + this.moveYawOffset) * Math.PI / 180.0D);
-            double cos = Math.cos((this.yaw + this.moveYawOffset) * Math.PI / 180.0D);
-            this.xVelocity += x * cos - z * sin;
-            this.zVelocity += z * cos + x * sin;
+            double sin = Math.sin((this.yRot + this.moveYawOffset) * Math.PI / 180.0D);
+            double cos = Math.cos((this.yRot + this.moveYawOffset) * Math.PI / 180.0D);
+            this.xd += x * cos - z * sin;
+            this.zd += z * cos + x * sin;
         }
     }
 
-    @Redirect(method = "method_1353", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/entity/Entity;accelerate(DDD)V",
-        ordinal = 1))
+    // Level.getBrightness returns the default value of an empty chunk for missing chunks.
+    // The hasChunksAt check almost always returns true anyway.
+    @Redirect(
+        method = "getBrightness",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/level/Level;hasChunksAt(IIIIII)Z"))
+    private boolean alwaysGetBrightness(Level instance, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+        return true;
+    }
+
+    @Redirect(
+        method = "getBrightness",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/level/Level;getBrightness(III)F"))
+    private float cacheGetBrightness(Level instance, int x, int y, int z) {
+        int key = HashCode.combine(x, y, z);
+        if (this.cachedBrightnessKey != key) {
+            this.cachedBrightnessKey = key;
+            // Simple hashcode saves a lot of time for entities that move slowly,
+            // especially relevant for particles.
+            this.cachedBrightness = instance.getBrightness(x, y, z);
+        }
+        return this.cachedBrightness;
+    }
+
+    @Redirect(
+        method = "push(Lnet/minecraft/world/entity/Entity;)V",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/entity/Entity;push(DDD)V",
+            ordinal = 1))
     private void reverseAccelerateDir(Entity instance, double var2, double var3, double var4) {
-        if (instance.method_1380()) {
-            instance.accelerate(var2, var3, var4);
+        if (instance.isPushable()) {
+            instance.push(var2, var3, var4);
         } else {
-            this.accelerate(-var2, var3, -var4);
+            this.push(-var2, var3, -var4);
         }
     }
 
-    @Redirect(method = "isInsideWall", at = @At(
+    @Redirect(method = "isInWall", at = @At(
         value = "INVOKE",
-        target = "Lnet/minecraft/world/World;canSuffocate(III)Z"))
-    private boolean preventSuffocate(World instance, int x, int y, int z) {
-        return instance.canSuffocate(x, y, z) && instance.method_1783(x, y, z);
+        target = "Lnet/minecraft/world/level/Level;isSolidBlockingTile(III)Z"))
+    private boolean preventSuffocate(Level instance, int x, int y, int z) {
+        return instance.isSolidBlockingTile(x, y, z) && instance.isSolidTile(x, y, z);
     }
 
     @Overwrite
-    public Vec3d getRotation() {
+    public Vec3 getLookAngle() {
         return this.getRotation(1.0f);
     }
 
     @Override
-    public Vec3d getRotation(float deltaTime) {
-        double pitch = this.prevPitch + (this.pitch - this.prevPitch) * deltaTime;
-        double yaw = this.prevYaw + (this.yaw - this.prevYaw) * deltaTime;
+    public Vec3 getRotation(float deltaTime) {
+        double pitch = this.xRotO + (this.xRot - this.xRotO) * deltaTime;
+        double yaw = this.yRotO + (this.yRot - this.yRotO) * deltaTime;
         double yCos = Math.cos(-yaw * (Math.PI / 180) - Math.PI);
         double ySin = Math.sin(-yaw * (Math.PI / 180) - Math.PI);
         double pCos = -Math.cos(-pitch * (Math.PI / 180));
         double pSin = Math.sin(-pitch * (Math.PI / 180));
-        return Vec3d.from(ySin * pCos, pSin, yCos * pCos);
+        return Vec3.newTemp(ySin * pCos, pSin, yCos * pCos);
     }
 
     @Override
@@ -274,15 +318,15 @@ public abstract class MixinEntity implements ExEntity {
         double root = Math.sqrt(x * x + z * z);
         double yDeg = (Math.atan2(z, x) * 180.0 / Math.PI) - 90.0;
         double pDeg = -(Math.atan2(y, root) * 180.0 / Math.PI);
-        this.prevPitch = this.pitch;
-        this.prevYaw = this.yaw;
-        this.pitch = (float) pDeg;
-        this.yaw = (float) yDeg;
+        this.xRotO = this.xRot;
+        this.yRotO = this.yRot;
+        this.xRot = (float) pDeg;
+        this.yRot = (float) yDeg;
     }
 
     @Override
     public boolean attackEntityFromMulti(Entity entity, int damage) {
-        return this.damage(entity, damage);
+        return this.hurt(entity, damage);
     }
 
     @Override
@@ -323,5 +367,39 @@ public abstract class MixinEntity implements ExEntity {
     @Override
     public int getCollisionZ() {
         return this.collisionZ;
+    }
+
+    @Override
+    public void setIgnoreCobwebCollision(boolean value) {
+        this.ignoreCobwebCollision = value;
+    }
+
+    @Override
+    public boolean isIgnoreCobwebCollision() {
+        return ignoreCobwebCollision;
+    }
+
+    @Override
+    public void setCustomTagString(String key, String value) {
+        this.customData.put(key, value);
+    }
+
+    @Override
+    public boolean hasCustomTagString(String key) {
+        return this.customData.containsKey(key);
+    }
+
+    @Override
+    public String getOrCreateCustomTagString(String key, String defaultValue) {
+        if (this.customData.containsKey(key)) {
+            return this.customData.get(key);
+        }
+        this.customData.put(key, defaultValue);
+        return defaultValue;
+    }
+
+    @Override
+    public String getCustomTagString(String key) {
+        return customData.get(key);
     }
 }

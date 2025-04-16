@@ -22,7 +22,8 @@
       "dev.adventurecraft.awakening.ACMod"
     ],
     "mm:early_risers": [
-      "dev.adventurecraft.awakening.earlyrisers.EnumInitializer"
+      "dev.adventurecraft.awakening.earlyrisers.EnumInitializer",
+      "dev.adventurecraft.awakening.earlyrisers.AppContextSetup"
     ],
     "preLaunch": [
       "dev.adventurecraft.awakening.ACPreLaunchFix"
@@ -34,7 +35,8 @@
   ],
   "accessWidener": "adventurecraft.accesswidener",
   "depends": {
-    "fabricloader": ">=0.14.24",
-    "minecraft": "1.0.0-beta.7.3"
+    "fabricloader": ">=${loader_version}",
+    "minecraft": "1.0.0-beta.7.3",
+    "mm": ">=0.2"
   }
 }

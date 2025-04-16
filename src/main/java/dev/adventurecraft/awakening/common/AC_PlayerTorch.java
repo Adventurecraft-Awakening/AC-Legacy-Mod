@@ -1,9 +1,9 @@
 package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
-import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.World;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.tile.Tile;
 
 public class AC_PlayerTorch {
 
@@ -23,14 +23,14 @@ public class AC_PlayerTorch {
         return torchActive;
     }
 
-    public static void setTorchState(World world, boolean active) {
+    public static void setTorchState(Level world, boolean active) {
         if (torchActive != active) {
             torchActive = active;
             markBlocksDirty(world);
         }
     }
 
-    public static void setTorchPos(World world, float x, float y, float z) {
+    public static void setTorchPos(Level world, float x, float y, float z) {
         double avgFrameTime = ((ExMinecraft) Minecraft.instance).getFrameTime();
         int updateRate = 1;
         if (avgFrameTime > 1 / 30.0) {
@@ -43,7 +43,7 @@ public class AC_PlayerTorch {
         float dY = Math.abs(y - posY);
         float dZ = Math.abs(z - posZ);
         if ((dX > moveThreshold || dY > moveThreshold || dZ > moveThreshold) &&
-            (int) world.getWorldTime() % updateRate == 0L) {
+            (int) world.getTime() % updateRate == 0L) {
             posX = x;
             posY = y;
             posZ = z;
@@ -54,7 +54,7 @@ public class AC_PlayerTorch {
         }
     }
 
-    public static float getTorchLight(World world, int x, int y, int z) {
+    public static float getTorchLight(Level world, int x, int y, int z) {
         if (torchActive) {
             int bX = x - iX + torchBrightness;
             int bY = y - iY + torchBrightness;
@@ -67,7 +67,7 @@ public class AC_PlayerTorch {
         return 0.0F;
     }
 
-    private static void markBlocksDirty(World world) {
+    private static void markBlocksDirty(Level world) {
         float baseX = posX - (float) iX;
         float baseY = posY - (float) iY;
         float baseZ = posZ - (float) iZ;
@@ -82,13 +82,13 @@ public class AC_PlayerTorch {
                 for (int rZ = -torchBrightness; rZ <= torchBrightness; ++rZ) {
                     int z = rZ + iZ;
 
-                    int id = world.getBlockId(x, y, z);
+                    int id = world.getTile(x, y, z);
                     float result = 0.0F;
-                    if (id == 0 || !Block.BY_ID[id].isFullOpaque() || id == Block.STONE_SLAB.id || id == Block.FARMLAND.id) {
+                    if (id == 0 || !Tile.tiles[id].isSolidRender() || id == Tile.SLAB.id || id == Tile.FARMLAND.id) {
                         float brightness = (float) (Math.abs((double) rX + 0.5D - (double) baseX) + Math.abs((double) rY + 0.5D - (double) baseY) + Math.abs((double) rZ + 0.5D - (double) baseZ));
                         if (brightness <= (float) torchBrightness) {
-                            if ((float) torchBrightness - brightness > (float) world.placeBlock(x, y, z)) {
-                                world.notifyListeners(x, y, z);
+                            if ((float) torchBrightness - brightness > (float) world.getLightLevel(x, y, z)) {
+                                world.sendTileUpdated(x, y, z);
                             }
 
                             result = (float) torchBrightness - brightness;

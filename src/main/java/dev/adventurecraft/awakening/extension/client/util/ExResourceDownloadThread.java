@@ -45,7 +45,11 @@ public interface ExResourceDownloadThread {
         } catch (IOException ex) {
             ACMod.LOGGER.error("Failed to load sounds from JAR.", ex);
         } catch (ProviderNotFoundException | FileSystemNotFoundException ex) {
-            ACMod.LOGGER.warn("Not loading sounds because JAR filesystem is not available.", ex);
+            RuntimeException logEx = ex;
+            if (logEx instanceof FileSystemNotFoundException notFound && notFound.getMessage() == null) {
+                logEx = null;
+            }
+            ACMod.LOGGER.warn("Not loading sounds from JAR because that filesystem is not available.", logEx);
         }
     }
 

@@ -1,18 +1,17 @@
 package dev.adventurecraft.awakening.common;
 
-import dev.adventurecraft.awakening.ACMod;
-import dev.adventurecraft.awakening.MathF;
+import dev.adventurecraft.awakening.util.MathF;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiElement;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.render.Tessellator;
+import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.renderer.Tesselator;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
 import java.util.List;
 
-public abstract class ScrollableWidget extends GuiElement {
+public abstract class ScrollableWidget extends GuiComponent {
 
     public final Minecraft client;
     public final int width;
@@ -72,16 +71,16 @@ public abstract class ScrollableWidget extends GuiElement {
     }
 
     protected abstract void renderEntry(
-        int entryIndex, double entryX, double entryY, int entryHeight, Tessellator tessellator);
+        int entryIndex, double entryX, double entryY, int entryHeight, Tesselator tessellator);
 
     protected boolean mouseClicked(int mouseX, int mouseY) {
         return false;
     }
 
-    protected void beforeEntryRender(int mouseX, int mouseY, double entryX, double entryY, Tessellator tessellator) {
+    protected void beforeEntryRender(int mouseX, int mouseY, double entryX, double entryY, Tesselator tessellator) {
     }
 
-    protected void afterRender(int mouseX, int mouseY, float tickTime, Tessellator tessellator) {
+    protected void afterRender(int mouseX, int mouseY, float tickTime, Tesselator tessellator) {
     }
 
     public void setContentTopPadding(int value) {
@@ -140,7 +139,6 @@ public abstract class ScrollableWidget extends GuiElement {
             }
         }
         this.targetScrollY += amount;
-        ACMod.LOGGER.info("scroll Y: " + this.targetScrollY + ", amount: " + amount);
     }
 
     private double clampTargetScroll(double value, double totalHeight) {
@@ -163,7 +161,7 @@ public abstract class ScrollableWidget extends GuiElement {
         this.targetScrollY = this.clampTargetScroll(this.targetScrollY, totalHeight);
     }
 
-    public void buttonClicked(ButtonWidget button) {
+    public void buttonClicked(Button button) {
         if (!button.active) {
             return;
         }
@@ -265,7 +263,7 @@ public abstract class ScrollableWidget extends GuiElement {
 
         GL11.glDisable(GL11.GL_LIGHTING);
         GL11.glDisable(GL11.GL_FOG);
-        var ts = Tessellator.INSTANCE;
+        var ts = Tesselator.instance;
         this.renderContentBackground(scrollBackLeft, scrollBackRight, contentTop, contentBot, this.scrollY, ts);
 
         double entryBaseX = center;
@@ -283,32 +281,32 @@ public abstract class ScrollableWidget extends GuiElement {
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GL11.glShadeModel(GL11.GL_SMOOTH);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.client.textureManager.getTextureId("/gui/background.png"));
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.client.textures.loadTexture("/gui/background.png"));
         GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-        ts.start();
+        ts.begin();
         this.renderBackground(this.widgetY, contentTop, 255, 255);
         this.renderBackground(contentBot, this.widgetY + this.height, 255, 255);
-        ts.tessellate();
+        ts.end();
         GL11.glDisable(GL11.GL_ALPHA_TEST);
         GL11.glDisable(GL11.GL_TEXTURE_2D);
 
         if (renderEdgeShadows) {
             int n4 = 4;
-            ts.start();
+            ts.begin();
             ts.color(0, 0);
-            ts.vertex(scrollBackLeft, contentTop + n4, 0.0, 0.0, 1.0);
-            ts.vertex(scrollBackRight, contentTop + n4, 0.0, 1.0, 1.0);
+            ts.vertexUV(scrollBackLeft, contentTop + n4, 0.0, 0.0, 1.0);
+            ts.vertexUV(scrollBackRight, contentTop + n4, 0.0, 1.0, 1.0);
             ts.color(0, 255);
-            ts.vertex(scrollBackRight, contentTop, 0.0, 1.0, 0.0);
-            ts.vertex(scrollBackLeft, contentTop, 0.0, 0.0, 0.0);
+            ts.vertexUV(scrollBackRight, contentTop, 0.0, 1.0, 0.0);
+            ts.vertexUV(scrollBackLeft, contentTop, 0.0, 0.0, 0.0);
 
             ts.color(0, 255);
-            ts.vertex(scrollBackLeft, contentBot, 0.0, 0.0, 1.0);
-            ts.vertex(scrollBackRight, contentBot, 0.0, 1.0, 1.0);
+            ts.vertexUV(scrollBackLeft, contentBot, 0.0, 0.0, 1.0);
+            ts.vertexUV(scrollBackRight, contentBot, 0.0, 1.0, 1.0);
             ts.color(0, 0);
-            ts.vertex(scrollBackRight, contentBot - n4, 0.0, 1.0, 0.0);
-            ts.vertex(scrollBackLeft, contentBot - n4, 0.0, 0.0, 0.0);
-            ts.tessellate();
+            ts.vertexUV(scrollBackRight, contentBot - n4, 0.0, 1.0, 0.0);
+            ts.vertexUV(scrollBackLeft, contentBot - n4, 0.0, 0.0, 0.0);
+            ts.end();
         }
 
         int n3 = totalHeight - (contentBot - contentTop);
@@ -326,25 +324,25 @@ public abstract class ScrollableWidget extends GuiElement {
                 n = contentTop;
             }
 
-            ts.start();
+            ts.begin();
             ts.color(0, 127);
-            ts.vertex(scrollBarLeft, contentBot, 0.0, 0.0, 1.0);
-            ts.vertex(scrollBarRight, contentBot, 0.0, 1.0, 1.0);
-            ts.vertex(scrollBarRight, contentTop, 0.0, 1.0, 0.0);
-            ts.vertex(scrollBarLeft, contentTop, 0.0, 0.0, 0.0);
+            ts.vertexUV(scrollBarLeft, contentBot, 0.0, 0.0, 1.0);
+            ts.vertexUV(scrollBarRight, contentBot, 0.0, 1.0, 1.0);
+            ts.vertexUV(scrollBarRight, contentTop, 0.0, 1.0, 0.0);
+            ts.vertexUV(scrollBarLeft, contentTop, 0.0, 0.0, 0.0);
 
             ts.color(0x808080, 127);
-            ts.vertex(scrollBarLeft, n + n2, 0.0, 0.0, 1.0);
-            ts.vertex(scrollBarRight, n + n2, 0.0, 1.0, 1.0);
-            ts.vertex(scrollBarRight, n, 0.0, 1.0, 0.0);
-            ts.vertex(scrollBarLeft, n, 0.0, 0.0, 0.0);
+            ts.vertexUV(scrollBarLeft, n + n2, 0.0, 0.0, 1.0);
+            ts.vertexUV(scrollBarRight, n + n2, 0.0, 1.0, 1.0);
+            ts.vertexUV(scrollBarRight, n, 0.0, 1.0, 0.0);
+            ts.vertexUV(scrollBarLeft, n, 0.0, 0.0, 0.0);
 
             ts.color(0xC0C0C0, 127);
-            ts.vertex(scrollBarLeft, n + n2 - 1, 0.0, 0.0, 1.0);
-            ts.vertex(scrollBarRight - 1, n + n2 - 1, 0.0, 1.0, 1.0);
-            ts.vertex(scrollBarRight - 1, n, 0.0, 1.0, 0.0);
-            ts.vertex(scrollBarLeft, n, 0.0, 0.0, 0.0);
-            ts.tessellate();
+            ts.vertexUV(scrollBarLeft, n + n2 - 1, 0.0, 0.0, 1.0);
+            ts.vertexUV(scrollBarRight - 1, n + n2 - 1, 0.0, 1.0, 1.0);
+            ts.vertexUV(scrollBarRight - 1, n, 0.0, 1.0, 0.0);
+            ts.vertexUV(scrollBarLeft, n, 0.0, 0.0, 0.0);
+            ts.end();
         }
         this.afterRender(mouseX, mouseY, tickTime, ts);
         GL11.glEnable(GL11.GL_TEXTURE_2D);
@@ -354,47 +352,47 @@ public abstract class ScrollableWidget extends GuiElement {
     }
 
     protected void renderBackground(int topY, int botY, int topAlpha, int botAlpha) {
-        var ts = Tessellator.INSTANCE;
+        var ts = Tesselator.instance;
         float f = 32.0f;
         ts.color(0x404040, topAlpha);
-        ts.vertex(this.widgetX + this.width, topY, 0.0, 0.0, (float) topY / f);
-        ts.vertex(this.widgetX, topY, 0.0, (float) this.width / f, (float) topY / f);
+        ts.vertexUV(this.widgetX + this.width, topY, 0.0, 0.0, (float) topY / f);
+        ts.vertexUV(this.widgetX, topY, 0.0, (float) this.width / f, (float) topY / f);
         ts.color(0x404040, botAlpha);
-        ts.vertex(this.widgetX, botY, 0.0, (float) this.width / f, (float) botY / f);
-        ts.vertex(this.widgetX + this.width, botY, 0.0, 0.0, (float) botY / f);
+        ts.vertexUV(this.widgetX, botY, 0.0, (float) this.width / f, (float) botY / f);
+        ts.vertexUV(this.widgetX + this.width, botY, 0.0, 0.0, (float) botY / f);
     }
 
-    protected void renderContentBackground(double left, double right, double top, double bot, double scroll, Tessellator ts) {
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.client.textureManager.getTextureId("/gui/background.png"));
+    protected void renderContentBackground(double left, double right, double top, double bot, double scroll, Tesselator ts) {
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.client.textures.loadTexture("/gui/background.png"));
         GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
         double f2 = 32.0;
-        ts.start();
+        ts.begin();
         ts.color(0x202020);
-        ts.vertex(left, bot, 0.0, left / f2, (bot + scroll) / f2);
-        ts.vertex(right, bot, 0.0, right / f2, (bot + scroll) / f2);
-        ts.vertex(right, top, 0.0, right / f2, (top + scroll) / f2);
-        ts.vertex(left, top, 0.0, left / f2, (top + scroll) / f2);
-        ts.tessellate();
+        ts.vertexUV(left, bot, 0.0, left / f2, (bot + scroll) / f2);
+        ts.vertexUV(right, bot, 0.0, right / f2, (bot + scroll) / f2);
+        ts.vertexUV(right, top, 0.0, right / f2, (top + scroll) / f2);
+        ts.vertexUV(left, top, 0.0, left / f2, (top + scroll) / f2);
+        ts.end();
     }
 
     public void renderContentSelection(
         double x, double y, double width, double height,
-        double borderSize, int borderColor, int backColor, Tessellator ts) {
+        double borderSize, int borderColor, int backColor, Tesselator ts) {
 
         double left = x;
         double right = x + width;
 
         ts.color(borderColor, (int) ((Integer.toUnsignedLong(borderColor) & 0xff000000L) >> 24));
-        ts.vertex(left, y + height, 0.0, 0.0, 1.0);
-        ts.vertex(right, y + height, 0.0, 1.0, 1.0);
-        ts.vertex(right, y, 0.0, 1.0, 0.0);
-        ts.vertex(left, y, 0.0, 0.0, 0.0);
+        ts.vertexUV(left, y + height, 0.0, 0.0, 1.0);
+        ts.vertexUV(right, y + height, 0.0, 1.0, 1.0);
+        ts.vertexUV(right, y, 0.0, 1.0, 0.0);
+        ts.vertexUV(left, y, 0.0, 0.0, 0.0);
 
         ts.color(backColor, (int) ((Integer.toUnsignedLong(backColor) & 0xff000000L) >> 24));
-        ts.vertex(left + borderSize, y + height - borderSize, 0.0, 0.0, 1.0);
-        ts.vertex(right - borderSize, y + height - borderSize, 0.0, 1.0, 1.0);
-        ts.vertex(right - borderSize, y + borderSize, 0.0, 1.0, 0.0);
-        ts.vertex(left + borderSize, y + borderSize, 0.0, 0.0, 0.0);
+        ts.vertexUV(left + borderSize, y + height - borderSize, 0.0, 0.0, 1.0);
+        ts.vertexUV(right - borderSize, y + height - borderSize, 0.0, 1.0, 1.0);
+        ts.vertexUV(right - borderSize, y + borderSize, 0.0, 1.0, 0.0);
+        ts.vertexUV(left + borderSize, y + borderSize, 0.0, 0.0, 0.0);
     }
 
     public int getContentTop() {

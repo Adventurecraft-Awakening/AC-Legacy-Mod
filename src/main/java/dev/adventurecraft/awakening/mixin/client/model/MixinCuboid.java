@@ -2,32 +2,63 @@ package dev.adventurecraft.awakening.mixin.client.model;
 
 import dev.adventurecraft.awakening.extension.client.model.ExCuboid;
 import dev.adventurecraft.awakening.extension.client.model.ExTexturedQuad;
-import net.minecraft.client.model.Cuboid;
-import net.minecraft.client.render.QuadPoint;
-import net.minecraft.client.render.TexturedQuad;
+import net.minecraft.client.model.Polygon;
+import net.minecraft.client.model.Vertex;
+import net.minecraft.client.model.geom.ModelPart;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.util.vector.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(Cuboid.class)
+@Mixin(ModelPart.class)
 public abstract class MixinCuboid implements ExCuboid {
 
     @Shadow
-    private QuadPoint[] corners;
+    private Vertex[] vertices;
     @Shadow
-    private TexturedQuad[] faces;
+    private Polygon[] polygons;
     @Shadow
-    private int textureOffsetX;
+    private int xTexOffs;
     @Shadow
-    private int textureOffsetY;
+    private int yTexOffs;
+
+    @Shadow
+    public float x;
+    @Shadow
+    public float y;
+    @Shadow
+    public float z;
+
+    @Shadow
+    public float yRot;
+    @Shadow
+    public float xRot;
+    @Shadow
+    public float zRot;
+
+    @Shadow
+    private boolean compiled;
+    @Shadow
+    private int list;
     @Shadow
     public boolean mirror;
+    @Shadow
+    public boolean visible;
+    @Shadow
+    public boolean neverRender;
 
+    @Unique
     private int tWidth;
+    @Unique
     private int tHeight;
+
+    @Shadow
+    protected abstract void compile(float scale);
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(int j, int par2, CallbackInfo ci) {
@@ -36,62 +67,52 @@ public abstract class MixinCuboid implements ExCuboid {
     }
 
     @Redirect(
-        method = "method_1818",
+        method = "addBox(FFFIIIF)V",
         at = @At(
             value = "NEW",
-            target = "([Lnet/minecraft/client/render/QuadPoint;IIII)Lnet/minecraft/client/render/TexturedQuad;"))
-    private TexturedQuad createQuadsWithSize(QuadPoint[] var1, int var2, int var3, int var4, int var5) {
+            target = "([Lnet/minecraft/client/model/Vertex;IIII)Lnet/minecraft/client/model/Polygon;"))
+    private Polygon createQuadsWithSize(Vertex[] var1, int var2, int var3, int var4, int var5) {
         return ExTexturedQuad.create(var1, var2, var3, var4, var5, tWidth, tHeight);
     }
 
     @Override
-    public void addBoxInverted(float var1, float var2, float var3, int var4, int var5, int var6, float var7) {
-        this.corners = new QuadPoint[8];
-        this.faces = new TexturedQuad[6];
-        float var8 = var1 + (float) var4;
-        float var9 = var2 + (float) var5;
-        float var10 = var3 + (float) var6;
-        var1 -= var7;
-        var2 -= var7;
-        var3 -= var7;
-        var8 += var7;
-        var9 += var7;
-        var10 += var7;
+    public void addBoxInverted(float offsetX, float offsetY, float offsetZ, int width, int height, int length, float offsetLength) {
+        float offsetMaxX = offsetX + (float) width + offsetLength;
+        float offsetMaxY = offsetY + (float) height + offsetLength;
+        float offsetMaxZ = offsetZ + (float) length + offsetLength;
+        offsetX -= offsetLength;
+        offsetY -= offsetLength;
+        offsetZ -= offsetLength;
         if (this.mirror) {
-            float var11 = var8;
-            var8 = var1;
-            var1 = var11;
+            float var11 = offsetMaxX;
+            offsetMaxX = offsetX;
+            offsetX = var11;
         }
 
-        QuadPoint var20 = new QuadPoint(var1, var2, var3, 0.0F, 0.0F);
-        QuadPoint var12 = new QuadPoint(var8, var2, var3, 0.0F, 8.0F);
-        QuadPoint var13 = new QuadPoint(var8, var9, var3, 8.0F, 8.0F);
-        QuadPoint var14 = new QuadPoint(var1, var9, var3, 8.0F, 0.0F);
-        QuadPoint var15 = new QuadPoint(var1, var2, var10, 0.0F, 0.0F);
-        QuadPoint var16 = new QuadPoint(var8, var2, var10, 0.0F, 8.0F);
-        QuadPoint var17 = new QuadPoint(var8, var9, var10, 8.0F, 8.0F);
-        QuadPoint var18 = new QuadPoint(var1, var9, var10, 8.0F, 0.0F);
-        this.corners[0] = var20;
-        this.corners[1] = var12;
-        this.corners[2] = var13;
-        this.corners[3] = var14;
-        this.corners[4] = var15;
-        this.corners[5] = var16;
-        this.corners[6] = var17;
-        this.corners[7] = var18;
+        this.vertices = new Vertex[8];
+        this.vertices[0] = new Vertex(offsetX, offsetY, offsetZ, 0.0F, 0.0F);
+        this.vertices[1] = new Vertex(offsetMaxX, offsetY, offsetZ, 0.0F, 8.0F);
+        this.vertices[2] = new Vertex(offsetMaxX, offsetMaxY, offsetZ, 8.0F, 8.0F);
+        this.vertices[3] = new Vertex(offsetX, offsetMaxY, offsetZ, 8.0F, 0.0F);
+        this.vertices[4] = new Vertex(offsetX, offsetY, offsetMaxZ, 0.0F, 0.0F);
+        this.vertices[5] = new Vertex(offsetMaxX, offsetY, offsetMaxZ, 0.0F, 8.0F);
+        this.vertices[6] = new Vertex(offsetMaxX, offsetMaxY, offsetMaxZ, 8.0F, 8.0F);
+        this.vertices[7] = new Vertex(offsetX, offsetMaxY, offsetMaxZ, 8.0F, 0.0F);
 
         int w = this.tWidth;
         int h = this.tHeight;
-        this.faces[0] = ExTexturedQuad.create(new QuadPoint[]{var16, var12, var13, var17}, this.textureOffsetX + var6 + var4 + var6, this.textureOffsetY + var6 + var5, this.textureOffsetX + var6 + var4, this.textureOffsetY + var6, w, h);
-        this.faces[1] = ExTexturedQuad.create(new QuadPoint[]{var20, var15, var18, var14}, this.textureOffsetX + var6, this.textureOffsetY + var6 + var5, this.textureOffsetX, this.textureOffsetY + var6, w, h);
-        this.faces[2] = ExTexturedQuad.create(new QuadPoint[]{var16, var15, var20, var12}, this.textureOffsetX + var6 + var4 + var4, this.textureOffsetY, this.textureOffsetX + var6 + var4, this.textureOffsetY + var6, w, h);
-        this.faces[3] = ExTexturedQuad.create(new QuadPoint[]{var13, var14, var18, var17}, this.textureOffsetX + var6 + var4, this.textureOffsetY, this.textureOffsetX + var6, this.textureOffsetY + var6, w, h);
-        this.faces[4] = ExTexturedQuad.create(new QuadPoint[]{var12, var20, var14, var13}, this.textureOffsetX + var6 + var4 + var6 + var4, this.textureOffsetY + var6 + var5, this.textureOffsetX + var6 + var4 + var6, this.textureOffsetY + var6, w, h);
-        this.faces[5] = ExTexturedQuad.create(new QuadPoint[]{var15, var16, var17, var18}, this.textureOffsetX + var6 + var4, this.textureOffsetY + var6 + var5, this.textureOffsetX + var6, this.textureOffsetY + var6, w, h);
+
+        this.polygons = new Polygon[6];
+        this.polygons[0] = ExTexturedQuad.create(new Vertex[]{this.vertices[5], this.vertices[1], this.vertices[2], this.vertices[6]}, this.xTexOffs + length + width + length, this.yTexOffs + length + height, this.xTexOffs + length + width, this.yTexOffs + length, w, h);
+        this.polygons[1] = ExTexturedQuad.create(new Vertex[]{this.vertices[0], this.vertices[4], this.vertices[7], this.vertices[3]}, this.xTexOffs + length, this.yTexOffs + length + height, this.xTexOffs, this.yTexOffs + length, w, h);
+        this.polygons[2] = ExTexturedQuad.create(new Vertex[]{this.vertices[5], this.vertices[4], this.vertices[0], this.vertices[1]}, this.xTexOffs + length + width + width, this.yTexOffs, this.xTexOffs + length + width, this.yTexOffs + length, w, h);
+        this.polygons[3] = ExTexturedQuad.create(new Vertex[]{this.vertices[2], this.vertices[3], this.vertices[7], this.vertices[6]}, this.xTexOffs + length + width, this.yTexOffs, this.xTexOffs + length, this.yTexOffs + length, w, h);
+        this.polygons[4] = ExTexturedQuad.create(new Vertex[]{this.vertices[1], this.vertices[0], this.vertices[3], this.vertices[2]}, this.xTexOffs + length + width + length + width, this.yTexOffs + length + height, this.xTexOffs + length + width + length, this.yTexOffs + length, w, h);
+        this.polygons[5] = ExTexturedQuad.create(new Vertex[]{this.vertices[4], this.vertices[5], this.vertices[6], this.vertices[7]}, this.xTexOffs + length + width, this.yTexOffs + length + height, this.xTexOffs + length, this.yTexOffs + length, w, h);
 
         if (this.mirror) {
-            for (TexturedQuad face : this.faces) {
-                face.method_1925();
+            for (Polygon face : this.polygons) {
+                face.mirror();
             }
         }
     }
@@ -104,5 +125,34 @@ public abstract class MixinCuboid implements ExCuboid {
     @Override
     public void setTHeight(int value) {
         this.tHeight = value;
+    }
+
+    @Override
+    public void render() {
+        if (this.neverRender) {
+            return;
+        }
+        if (!this.visible) {
+            return;
+        }
+        if (!this.compiled) {
+            this.compile(1F / 16F);
+        }
+        GL11.glCallList(this.list);
+    }
+
+    @Override
+    public void translateTo(Matrix4f matrix) {
+        matrix.translate(this.x, this.y, this.z);
+
+        if (this.zRot != 0.0F) {
+            matrix.rotateZ(this.zRot);
+        }
+        if (this.yRot != 0.0F) {
+            matrix.rotateY(this.yRot);
+        }
+        if (this.xRot != 0.0F) {
+            matrix.rotateX(this.xRot);
+        }
     }
 }

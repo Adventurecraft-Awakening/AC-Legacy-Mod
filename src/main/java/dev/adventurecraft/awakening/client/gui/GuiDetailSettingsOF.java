@@ -1,13 +1,13 @@
 package dev.adventurecraft.awakening.client.gui;
 
 import dev.adventurecraft.awakening.client.options.OptionOF;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.options.GameOptions;
-import net.minecraft.client.options.Option;
+import net.minecraft.client.Option;
+import net.minecraft.client.Options;
+import net.minecraft.client.gui.screens.Screen;
 
 public class GuiDetailSettingsOF extends GuiBaseSettingsOF {
 
-    public GuiDetailSettingsOF(Screen prevScreen, GameOptions options) {
+    public GuiDetailSettingsOF(Screen prevScreen, Options options) {
         super(prevScreen, options, "options.of.detailsTitle");
     }
 
@@ -19,6 +19,7 @@ public class GuiDetailSettingsOF extends GuiBaseSettingsOF {
             OptionOF.FOG_FANCY, OptionOF.FOG_START,
             OptionOF.WATER, OptionOF.RAIN,
             OptionOF.CLEAR_WATER, OptionOF.GRASS_3D,
-            OptionOF.GRASS, OptionOF.CONNECTED_GRASS};
+            OptionOF.GRASS, OptionOF.CONNECTED_GRASS,
+            OptionOF.PARTICLE_LIMIT};
     }
 }

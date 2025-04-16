@@ -2,91 +2,135 @@ package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
+import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
-import net.minecraft.world.World;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.level.Level;
 import org.mozilla.javascript.*;
 
 import java.io.*;
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.*;
 
 @SuppressWarnings("unused")
 public class Script {
 
     static final String SCRIPT_PACKAGE = "dev.adventurecraft.awakening.script";
-    static final String PREFIXED_SCRIPT_PACKAGE = "Packages." + SCRIPT_PACKAGE;
 
-    public Scriptable globalScope;
+    private static final Set<String> allowedClassNames = new ObjectOpenHashSet<>();
+
+    static {
+        allowedClassNames.add("java.lang.Object");
+        allowedClassNames.add("java.lang.Character");
+        allowedClassNames.add("java.lang.String");
+        allowedClassNames.add("java.lang.Float");
+        allowedClassNames.add("java.lang.Double");
+        allowedClassNames.add("java.lang.Boolean");
+        allowedClassNames.add("java.lang.Byte");
+        allowedClassNames.add("java.lang.Short");
+        allowedClassNames.add("java.lang.Integer");
+        allowedClassNames.add("java.lang.Long");
+        allowedClassNames.add("org.mozilla.javascript.ConsString");
+    }
+
+    public final Scriptable globalScope;
     Scriptable curScope;
-    Scriptable runScope;
-    Context cx = ContextFactory.getGlobal().enterContext();
-    ScriptTime time;
-    ScriptWorld world;
+    final Scriptable runScope;
+    final Context cx;
+    final ScriptTime time;
+    final ScriptWorld world;
     ScriptEntityPlayer player;
-    ScriptChat chat;
-    ScriptWeather weather;
-    ScriptEffect effect;
-    ScriptSound sound;
-    ScriptUI ui;
-    ScriptScript script;
-    public ScriptKeyboard keyboard;
-    LinkedList<ScriptContinuation> sleepingScripts = new LinkedList<>();
-    LinkedList<ScriptContinuation> removeMe = new LinkedList<>();
-    static boolean shutterSet = false;
+    final ScriptChat chat;
+    final ScriptWeather weather;
+    final ScriptEffect effect;
+    final ScriptParticle particle;
+    final ScriptSound sound;
+    final ScriptUI ui;
+    final ScriptRenderer renderer;
+    final ScriptScript script;
+    public final ScriptKeyboard keyboard;
+    final List<ScriptContinuation> sleepingScripts = new ArrayList<>();
+    final List<ScriptContinuation> removeMe = new ArrayList<>();
 
-    public Script(World var1) {
-        this.cx.setLanguageVersion(Context.VERSION_ES6);
-        this.cx.setOptimizationLevel(-1);
-        if (!shutterSet) {
-            this.cx.setClassShutter(fullClassName -> fullClassName.startsWith(SCRIPT_PACKAGE) ||
-                fullClassName.equals("java.lang.Object") ||
-                fullClassName.equals("java.lang.String") ||
-                fullClassName.equals("java.lang.Double") ||
-                fullClassName.equals("java.lang.Boolean") ||
-                fullClassName.equals("org.mozilla.javascript.ConsString"));
-            shutterSet = true;
+    public static final ContextFactory contextFactory = new CustomContextFactory();
+
+    static class CustomContextFactory extends ContextFactory {
+
+        @Override
+        protected Context makeContext() {
+            Context cx = super.makeContext();
+            cx.setLanguageVersion(Context.VERSION_ECMASCRIPT);
+            cx.setInterpretedMode(true);
+            cx.setClassShutter(fullClassName ->
+                fullClassName.startsWith(SCRIPT_PACKAGE) || allowedClassNames.contains(fullClassName));
+            return cx;
         }
+    }
 
-        this.globalScope = this.cx.initStandardObjects();
+    public Script(Level level) {
+        var gameOptions = (ExGameOptions) Minecraft.instance.options;
+
+        this.cx = contextFactory.enterContext();
+
+        this.globalScope = gameOptions.getAllowJavaInScript()
+            ? this.cx.initStandardObjects(null, false)
+            : this.cx.initSafeStandardObjects(null, false);
         this.runScope = this.cx.newObject(this.globalScope);
         this.runScope.setParentScope(this.globalScope);
-        this.time = new ScriptTime(var1);
-        this.world = new ScriptWorld(var1);
+
+        this.time = new ScriptTime(level);
+        this.world = new ScriptWorld(level);
         this.chat = new ScriptChat();
-        this.weather = new ScriptWeather(var1);
-        this.effect = new ScriptEffect(var1, Minecraft.instance.worldRenderer);
-        this.sound = new ScriptSound(Minecraft.instance.soundHelper);
+        this.weather = new ScriptWeather(level);
+        this.effect = new ScriptEffect(level, Minecraft.instance.levelRenderer);
+        this.particle = new ScriptParticle(Minecraft.instance.levelRenderer);
+        this.sound = new ScriptSound(Minecraft.instance.soundEngine);
         this.ui = new ScriptUI();
-        this.script = new ScriptScript(var1);
-        this.keyboard = new ScriptKeyboard(var1, Minecraft.instance.options, this.getNewScope());
+        this.script = new ScriptScript(level);
+        this.keyboard = new ScriptKeyboard(level, Minecraft.instance.options, this.getNewScope());
+        this.renderer = new ScriptRenderer(Minecraft.instance.levelRenderer);
 
         this.addObject("time", this.time);
         this.addObject("world", this.world);
         this.addObject("chat", this.chat);
         this.addObject("weather", this.weather);
         this.addObject("effect", this.effect);
+        this.addObject("particle", this.particle);
         this.addObject("sound", this.sound);
         this.addObject("ui", this.ui);
-        this.addObject("screen", ((ExInGameHud) Minecraft.instance.overlay).getScriptUI());
+        this.addObject("screen", ((ExInGameHud) Minecraft.instance.gui).getScriptUI());
         this.addObject("script", this.script);
         this.addObject("keyboard", this.keyboard);
         this.addObject("hitEntity", null);
         this.addObject("hitBlock", null);
+        this.addObject("renderer", this.renderer);
 
-        // TODO: make these const
-        String initStr = String.join("\n", new String[]{
-            String.format("net = { minecraft: { script: %s } };", PREFIXED_SCRIPT_PACKAGE),
-            String.format("Item = %s.ScriptItem;", PREFIXED_SCRIPT_PACKAGE),
-            String.format("UILabel = %s.ScriptUILabel;", PREFIXED_SCRIPT_PACKAGE),
-            String.format("UISprite = %s.ScriptUISprite;", PREFIXED_SCRIPT_PACKAGE),
-            String.format("UIRect = %s.ScriptUIRect;", PREFIXED_SCRIPT_PACKAGE),
-            String.format("UIContainer = %s.ScriptUIContainer;", PREFIXED_SCRIPT_PACKAGE),
-            String.format("Model = %s.ScriptModel;", PREFIXED_SCRIPT_PACKAGE),
-            String.format("Vec3 = %s.ScriptVec3;", PREFIXED_SCRIPT_PACKAGE),
-            String.format("VecRot = %s.ScriptVecRot;", PREFIXED_SCRIPT_PACKAGE)
-        });
-        this.runString(initStr);
+        if (gameOptions.getAllowJavaInScript()) {
+            // Alias our package as `net.minecraft.script` for back-compat.
+            String initStr = String.join("\n", new String[]{
+                String.format("net = { minecraft: { script: Packages.%s } };", SCRIPT_PACKAGE),
+            });
+            this.cx.evaluateString(this.globalScope, initStr, "<init>", 0, null);
+        }
+
+        defineClass("Item", ScriptItem.class);
+        defineClass("UILabel", ScriptUILabel.class);
+        defineClass("UISprite", ScriptUISprite.class);
+        defineClass("UIRect", ScriptUIRect.class);
+        defineClass("UIContainer", ScriptUIContainer.class);
+        defineClass("Model", ScriptModel.class);
+        defineClass("ModelBlockbench", ScriptModelBlockbench.class);
+        defineClass("Vec3", ScriptVec3.class);
+        defineClass("VecRot", ScriptVecRot.class);
+    }
+
+    public Context getContext() {
+        return this.cx;
+    }
+
+    private <T> void defineClass(String name, Class<T> clazz) {
+        var instance = new NativeJavaClass(this.globalScope, clazz);
+        ScriptableObject.putProperty(this.globalScope, name, instance);
     }
 
     public void addObject(String name, Object value) {
@@ -101,7 +145,7 @@ public class Script {
     }
     */
 
-    public void initPlayer(AbstractClientPlayerEntity player) {
+    public void initPlayer(LocalPlayer player) {
         this.player = new ScriptEntityPlayer(player);
         Object tmp = Context.javaToJS(this.player, this.globalScope);
         ScriptableObject.putProperty(this.globalScope, "player", tmp);
@@ -122,7 +166,7 @@ public class Script {
         try {
             return this.cx.compileString(sourceCode, sourceName, 1, null);
         } catch (Exception e) {
-            Minecraft.instance.overlay.addChatMessage("JS Compile: " + e.getMessage());
+            Minecraft.instance.gui.addMessage("JS Compile: " + e.getMessage());
             return null;
         }
     }
@@ -136,6 +180,14 @@ public class Script {
         Scriptable var1 = this.cx.newObject(this.globalScope);
         var1.setParentScope(this.globalScope);
         return var1;
+    }
+
+    public void setNewCurScope(Scriptable pScope) {
+        this.curScope = pScope;
+    }
+
+    public Scriptable getCurScope() {
+        return this.curScope;
     }
 
     public Object runScript(org.mozilla.javascript.Script script, Scriptable scope) {
@@ -157,19 +209,14 @@ public class Script {
     }
 
     public void wakeupScripts(long currentTime) {
-        Iterator<ScriptContinuation> continuations = this.sleepingScripts.iterator();
 
-        while (continuations.hasNext()) {
-            ScriptContinuation continuation = continuations.next();
+        for (ScriptContinuation continuation : this.sleepingScripts) {
             if (continuation.wakeUp <= currentTime) {
                 this.removeMe.add(continuation);
             }
         }
 
-        continuations = this.removeMe.iterator();
-
-        while (continuations.hasNext()) {
-            ScriptContinuation continuation = continuations.next();
+        for (ScriptContinuation continuation : this.removeMe) {
             this.sleepingScripts.remove(continuation);
 
             try {
@@ -198,7 +245,7 @@ public class Script {
 
     private void printRhinoException(RhinoException ex) {
         String message = ex.getMessage();
-        Minecraft.instance.overlay.addChatMessage("JS: " + message);
+        Minecraft.instance.gui.addMessage("JS: " + message);
 
         Exception logEx = ACMod.JS_LOGGER.isTraceEnabled() ? ex : null;
         ACMod.JS_LOGGER.warn("{}\n{}", message, ex.getScriptStackTrace(), logEx);

@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.extension.inventory;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.ItemInstance;
 
 public interface ExPlayerInventory {
 
@@ -10,7 +10,7 @@ public interface ExPlayerInventory {
 
     void setOffhandItem(int value);
 
-    ItemStack getOffhandItemStack();
+    ItemInstance getOffhandItemStack();
 
     void swapOffhandWithMain();
 }

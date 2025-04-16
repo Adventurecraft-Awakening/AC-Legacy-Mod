@@ -1,24 +1,23 @@
 package dev.adventurecraft.awakening.common;
 
 import java.util.Random;
-
+import net.minecraft.client.gamemode.SurvivalGameMode;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.locale.I18n;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.Level;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
-import net.minecraft.client.SingleplayerInteractionManager;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextboxWidget;
-import net.minecraft.client.resource.language.TranslationStorage;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
 import org.lwjgl.input.Keyboard;
 
 public class GuiCreateNewMap extends Screen {
 
     private Screen parent;
-    private TextboxWidget textboxMapName;
-    private TextboxWidget textboxSeed;
+    private EditBox textboxMapName;
+    private EditBox textboxSeed;
     private String folderName;
     private boolean createClicked;
     private WorldGenProperties worldGenProps = new WorldGenProperties();
@@ -44,16 +43,16 @@ public class GuiCreateNewMap extends Screen {
     }
 
     @Override
-    public void initVanillaScreen() {
-        TranslationStorage ts = TranslationStorage.getInstance();
+    public void init() {
+        I18n ts = I18n.getInstance();
         Keyboard.enableRepeatEvents(true);
         this.buttons.clear();
-        this.buttons.add(new ButtonWidget(0, this.width / 2 - 205, 200, "Create Map"));
-        this.buttons.add(new ButtonWidget(1, this.width / 2 + 5, 200, ts.translate("gui.cancel")));
-        this.textboxMapName = new TextboxWidget(this, this.textRenderer, this.width / 2 - 100, 38, 200, 20, ts.translate("selectWorld.newWorld"));
-        this.textboxMapName.selected = true;
+        this.buttons.add(new Button(0, this.width / 2 - 205, 200, "Create Map"));
+        this.buttons.add(new Button(1, this.width / 2 + 5, 200, ts.get("gui.cancel")));
+        this.textboxMapName = new EditBox(this, this.font, this.width / 2 - 100, 38, 200, 20, ts.get("selectWorld.newWorld"));
+        this.textboxMapName.active = true;
         this.textboxMapName.setMaxLength(32);
-        this.textboxSeed = new TextboxWidget(this, this.textRenderer, this.width / 2 - 100, 62, 200, 20, "");
+        this.textboxSeed = new EditBox(this, this.font, this.width / 2 - 100, 62, 200, 20, "");
         int var2 = this.width / 2 - 4 - 150;
         int var3 = this.width / 2 + 4;
         WorldGenProperties wgp = this.worldGenProps;
@@ -92,41 +91,41 @@ public class GuiCreateNewMap extends Screen {
         wgp.volatility2 = (double) this.sliderVolatility2.sliderValue * 5.0D;
         wgp.volatilityWeight1 = (double) this.sliderVolatilityWeight1.sliderValue - 0.5D;
         wgp.volatilityWeight2 = (double) this.sliderVolatilityWeight2.sliderValue + 0.5D;
-        this.sliderMapSize.text = String.format("Map Size: %.1f", wgp.mapSize);
-        this.sliderWaterLevel.text = String.format("Water Level: %d", wgp.waterLevel);
-        this.sliderFracHorizontal.text = String.format("Fracture Horizontal: %.2f", wgp.fractureHorizontal);
-        this.sliderFracVertical.text = String.format("Fracture Vertical: %.2f", wgp.fractureVertical);
-        this.sliderMaxAvgDepth.text = String.format("Max Avg Depth: %.2f", wgp.maxAvgDepth);
-        this.sliderMaxAvgHeight.text = String.format("Max Avg Height: %.2f", wgp.maxAvgHeight);
-        this.sliderVolatility1.text = String.format("Volatility 1: %.2f", wgp.volatility1);
-        this.sliderVolatility2.text = String.format("Volatility 2: %.2f", wgp.volatility2);
-        this.sliderVolatilityWeight1.text = String.format("Volatility Weight 1: %.2f", wgp.volatilityWeight1);
-        this.sliderVolatilityWeight2.text = String.format("Volatility Weight 2: %.2f", wgp.volatilityWeight2);
+        this.sliderMapSize.message = String.format("Map Size: %.1f", wgp.mapSize);
+        this.sliderWaterLevel.message = String.format("Water Level: %d", wgp.waterLevel);
+        this.sliderFracHorizontal.message = String.format("Fracture Horizontal: %.2f", wgp.fractureHorizontal);
+        this.sliderFracVertical.message = String.format("Fracture Vertical: %.2f", wgp.fractureVertical);
+        this.sliderMaxAvgDepth.message = String.format("Max Avg Depth: %.2f", wgp.maxAvgDepth);
+        this.sliderMaxAvgHeight.message = String.format("Max Avg Height: %.2f", wgp.maxAvgHeight);
+        this.sliderVolatility1.message = String.format("Volatility 1: %.2f", wgp.volatility1);
+        this.sliderVolatility2.message = String.format("Volatility 2: %.2f", wgp.volatility2);
+        this.sliderVolatilityWeight1.message = String.format("Volatility Weight 1: %.2f", wgp.volatilityWeight1);
+        this.sliderVolatilityWeight2.message = String.format("Volatility Weight 2: %.2f", wgp.volatilityWeight2);
     }
 
     @Override
-    public void onClose() {
+    public void removed() {
         Keyboard.enableRepeatEvents(false);
     }
 
     @Override
-    protected void buttonClicked(ButtonWidget button) {
+    protected void buttonClicked(Button button) {
         if (!button.active) {
             return;
         }
 
         if (button.id == 1) {
-            this.client.openScreen(this.parent);
+            this.minecraft.setScreen(this.parent);
         } else if (button.id == 0) {
-            this.client.openScreen(null);
+            this.minecraft.setScreen(null);
             if (this.createClicked) {
                 return;
             }
 
             this.createClicked = true;
             long wSeed = (new Random()).nextLong();
-            String wSeedStr = this.textboxSeed.getText();
-            if (!MathHelper.isStringEmpty(wSeedStr)) {
+            String wSeedStr = this.textboxSeed.getValue();
+            if (!Mth.isStringInvalid(wSeedStr)) {
                 try {
                     long parsedSeed = Long.parseLong(wSeedStr);
                     if (parsedSeed != 0L) {
@@ -137,13 +136,13 @@ public class GuiCreateNewMap extends Screen {
                 }
             }
 
-            this.client.interactionManager = new SingleplayerInteractionManager(this.client);
+            this.minecraft.gameMode = new SurvivalGameMode(this.minecraft);
             AC_DebugMode.levelEditing = true;
-            String wName = this.textboxMapName.getText().trim();
-            ((ExMinecraft) this.client).saveMapUsed(wName, wName);
-            World world = ((ExMinecraft) this.client).getWorld(wName, wSeed, wName);
+            String wName = this.textboxMapName.getValue().trim();
+            ((ExMinecraft) this.minecraft).saveMapUsed(wName, wName);
+            Level world = ((ExMinecraft) this.minecraft).getWorld(wName, wSeed, wName);
             WorldGenProperties wgpS = this.worldGenProps;
-            WorldGenProperties wgpD = ((ExWorldProperties) world.properties).getWorldGenProps();
+            WorldGenProperties wgpD = ((ExWorldProperties) world.levelData).getWorldGenProps();
             wgpD.useImages = wgpS.useImages;
             wgpD.mapSize = wgpS.mapSize;
             wgpD.waterLevel = wgpS.waterLevel;
@@ -156,40 +155,40 @@ public class GuiCreateNewMap extends Screen {
             wgpD.volatilityWeight1 = wgpS.volatilityWeight1;
             wgpD.volatilityWeight2 = wgpS.volatilityWeight2;
             ((ExWorld) world).updateChunkProvider();
-            this.client.notifyStatus(world, "Generating level");
-            this.client.openScreen(null);
+            this.minecraft.setLevel(world, "Generating level");
+            this.minecraft.setScreen(null);
         }
     }
 
     @Override
     protected void keyPressed(char var1, int var2) {
-        this.textboxMapName.keyPressed(var1, var2);
-        this.textboxSeed.keyPressed(var1, var2);
+        this.textboxMapName.charTyped(var1, var2);
+        this.textboxSeed.charTyped(var1, var2);
         if (var1 == 13) {
-            this.buttonClicked((ButtonWidget) this.buttons.get(0));
+            this.buttonClicked((Button) this.buttons.get(0));
         }
 
-        ((ButtonWidget) this.buttons.get(0)).active = this.textboxMapName.getText().length() > 0;
+        ((Button) this.buttons.get(0)).active = this.textboxMapName.getValue().length() > 0;
     }
 
     @Override
     protected void mouseClicked(int var1, int var2, int var3) {
         super.mouseClicked(var1, var2, var3);
-        this.textboxMapName.mouseClicked(var1, var2, var3);
-        this.textboxSeed.mouseClicked(var1, var2, var3);
+        this.textboxMapName.clicked(var1, var2, var3);
+        this.textboxSeed.clicked(var1, var2, var3);
     }
 
     @Override
     public void render(int mouseX, int mouseY, float deltaTime) {
-        TranslationStorage ts = TranslationStorage.getInstance();
+        I18n ts = I18n.getInstance();
         this.renderBackground();
-        this.drawTextWithShadowCentred(this.textRenderer, "Create Random Map", this.width / 2, 20, 16777215);
+        this.drawCenteredString(this.font, "Create Random Map", this.width / 2, 20, 16777215);
         String var5 = "Map Name:";
         String var6 = "Seed:";
-        this.drawTextWithShadow(this.textRenderer, var5, this.width / 2 - 110 - this.textRenderer.getTextWidth(var5), 44, 10526880);
-        this.drawTextWithShadow(this.textRenderer, var6, this.width / 2 - 110 - this.textRenderer.getTextWidth(var6), 68, 10526880);
-        this.textboxMapName.draw();
-        this.textboxSeed.draw();
+        this.drawString(this.font, var5, this.width / 2 - 110 - this.font.width(var5), 44, 10526880);
+        this.drawString(this.font, var6, this.width / 2 - 110 - this.font.width(var6), 68, 10526880);
+        this.textboxMapName.render();
+        this.textboxSeed.render();
         this.updateSliders();
         super.render(mouseX, mouseY, deltaTime);
     }

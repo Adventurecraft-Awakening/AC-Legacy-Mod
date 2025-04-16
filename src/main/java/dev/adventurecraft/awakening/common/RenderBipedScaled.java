@@ -1,21 +1,21 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.client.render.entity.BipedEntityRenderer;
-import net.minecraft.client.render.entity.model.BipedEntityModel;
-import net.minecraft.entity.LivingEntity;
+import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.renderer.entity.HumanoidMobRenderer;
+import net.minecraft.world.entity.LivingEntity;
 import org.lwjgl.opengl.GL11;
 
-public class RenderBipedScaled extends BipedEntityRenderer {
+public class RenderBipedScaled extends HumanoidMobRenderer {
     
     private float scaling;
 
-    public RenderBipedScaled(BipedEntityModel var1, float var2, float var3) {
+    public RenderBipedScaled(HumanoidModel var1, float var2, float var3) {
         super(var1, var2 * var3);
         this.scaling = var3;
     }
 
     @Override
-    protected void method_823(LivingEntity var1, float var2) {
+    protected void scale(LivingEntity var1, float var2) {
         GL11.glScalef(this.scaling, this.scaling, this.scaling);
     }
 }

@@ -1,10 +1,9 @@
 package dev.adventurecraft.awakening.extension.world;
 
 import dev.adventurecraft.awakening.common.WorldGenProperties;
-import net.minecraft.util.io.CompoundTag;
-import net.minecraft.world.World;
-
 import java.util.Map;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.Level;
 
 public interface ExWorldProperties {
 
@@ -42,7 +41,7 @@ public interface ExWorldProperties {
 
     CompoundTag getTextureReplacementTags();
 
-    void loadTextureReplacements(World world);
+    void loadTextureReplacements(Level world);
 
     float getSpawnYaw();
 
@@ -123,4 +122,8 @@ public interface ExWorldProperties {
     CompoundTag getMusicScope();
 
     void setMusicScope(CompoundTag value);
+
+    void setHudEnabled(boolean arg);
+
+    boolean getHudEnabled();
 }

@@ -1,14 +1,14 @@
 package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.extension.entity.animal.ExWolfEntity;
-import net.minecraft.entity.animal.WolfEntity;
+import net.minecraft.world.entity.animal.Wolf;
 
 @SuppressWarnings("unused")
 public class ScriptEntityWolf extends ScriptEntityCreature {
 
-    WolfEntity entityWolf;
+    Wolf entityWolf;
 
-    ScriptEntityWolf(WolfEntity var1) {
+    ScriptEntityWolf(Wolf var1) {
         super(var1);
         this.entityWolf = var1;
     }
@@ -22,23 +22,23 @@ public class ScriptEntityWolf extends ScriptEntityCreature {
     }
 
     public void setWolfSitting(boolean var1) {
-        this.entityWolf.setSitting(var1);
+        this.entityWolf.setInSittingPose(var1);
     }
 
     public boolean isWolfSitting() {
-        return this.entityWolf.isSitting();
+        return this.entityWolf.isInSittingPose();
     }
 
     public void setWolfAngry(boolean var1) {
-        this.entityWolf.setAngry(var1);
+        this.entityWolf.setAngery(var1);
     }
 
     public boolean isWolfAngry() {
-        return this.entityWolf.isAngry();
+        return this.entityWolf.isAngery();
     }
 
     public void setWolfTamed(boolean var1) {
-        this.entityWolf.setHasOwner(var1);
+        this.entityWolf.setTamed(var1);
     }
 
     public boolean isWolfTamed() {

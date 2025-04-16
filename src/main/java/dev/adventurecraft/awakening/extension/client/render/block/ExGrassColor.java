@@ -1,32 +1,35 @@
 package dev.adventurecraft.awakening.extension.client.render.block;
 
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.render.block.FoliageColor;
-import net.minecraft.client.render.block.GrassColor;
-import net.minecraft.world.World;
+import dev.adventurecraft.awakening.image.ImageFormat;
+import dev.adventurecraft.awakening.image.ImageLoadOptions;
+import dev.adventurecraft.awakening.image.ImageLoader;
+import net.minecraft.world.level.GrassColor;
+import net.minecraft.world.level.Level;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
+import java.nio.IntBuffer;
 
 public interface ExGrassColor {
 
     static int getBaseColor(int meta) {
-        return GrassColor.map[0];
+        return GrassColor.pixels[0];
     }
 
-    static void loadGrass(String fileName, World world) {
-        BufferedImage var1 = ((ExWorld) world).loadMapTexture(fileName);
-        if (var1 == null) {
+    static void loadGrass(String fileName, Level world) {
+        var image = ((ExWorld) world).loadMapTexture(fileName);
+        if (image == null) {
             try {
-                var1 = ImageIO.read(FoliageColor.class.getResource(fileName));
+                var url = GrassColor.class.getResource(fileName);
+                if (url != null) {
+                    image = ImageLoader.load(url, ImageLoadOptions.withFormat(ImageFormat.RGBA_U8));
+                }
             } catch (Exception var3) {
                 var3.printStackTrace();
             }
         }
 
-        if (var1 != null) {
-            var1.getRGB(0, 0, 256, 256, GrassColor.map, 0, 256);
+        if (image != null) {
+            image.copyTo(IntBuffer.wrap(GrassColor.pixels), ImageFormat.BGRA_U8);
         }
     }
 }

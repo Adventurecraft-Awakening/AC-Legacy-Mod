@@ -16,6 +16,7 @@ options.of.world.autosaveInterval=Autosave Interval
 options.of.world.time=Time
 options.of.world.weather=Weather
 options.of.world.farView=Far View
+options.ac.world.allowJavaInScript=Allow Java In Script
 
 ## Detail Settings names
 options.of.detail.clouds=Clouds
@@ -30,6 +31,8 @@ options.of.detail.clearWater=Clear Water
 options.of.detail.grass3d=3D Grass
 options.of.detail.grass=Grass
 options.of.detail.connectedGrass=Connected Grass
+options.ac.detail.particleLimit=Particle Limit
+
 options.ac.chatMessageBufferLimit=Chat Buffer Limit
 
 ## Texture Settings names
@@ -83,6 +86,8 @@ options.of.world.autosaveInterval.tooltip="Autosave interval", "Default autosave
 options.of.world.time.tooltip="Time", " Default - normal day/night cycles", " Day Only - day only", " Night Only - night only"
 options.of.world.weather.tooltip="Weather", "  ON - weather is active, slower", "  OFF  - weather is not active, faster", "The weather controls rain, snow and thunderstorms."
 options.of.world.farView.tooltip="Far View", " OFF - (default) standard view distance", " ON - 3x view distance", "Far View is very resource demanding!", "3x view distance => 9x chunks to be loaded => FPS / 9", "Standard view distances: 32, 64, 128, 256", "Far view distances: 96, 192, 384, 512"
+options.ac.world.allowJavaInScript.tooltip="Allow Java In Script", "  OFF - (default) Do not allow loading of Java classes.", "  ON - §4DANGER!§f Allow scripts to load any Java class.", "", "This allows scripts to §eexecute arbitrary code§f", "and makes your system vulnerable.", "", "(This cannot be changed at runtime.)"
+
 options.ac.chatMessageBufferLimit.tooltip="The maximum amount of messages to store in the", "chat history."
 
 ## Detail Settings tooltips
@@ -96,6 +101,7 @@ options.of.detail.water.tooltip="Water", "  Default - as set by setting Graphics
 options.of.detail.rainAndSnow.tooltip="Rain & Snow", "  Default - as set by setting Graphics", "  Fast  - light rain/snow, faster", "  Fancy - heavy rain/snow, slower", "  OFF - no rain/snow, fastest", "When rain is OFF the splashes and rain sounds", "are still active."
 options.of.detail.grass.tooltip="Grass", "  Default - as set by setting Graphics", "  Fast - lower quality, faster", "  Fancy - higher quality, slower", "Fast grass uses default side texture.", "Fancy grass uses biome side texture."
 options.of.detail.connectedGrass.tooltip="Connected Grass", "  OFF - default side grass texture, fastest", "  Fast - full side grass texture, slower", "  Fancy - dynamic side grass texture, slowest"
+options.ac.detail.particleLimit.tooltip="The maximum amount of particles to allow at once.", "Ranges from zero (no particles) to 32768."
 
 ## Texture Settings tooltips
 options.of.texture.mipLevel.tooltip="Visual effect which makes distant objects look better", "by smoothing the texture details", "  OFF - no smoothing", "  1 - minimum smoothing", "  4 - maximum smoothing", "This option usually does not affect the performance."

@@ -1,25 +1,25 @@
 package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
-import net.minecraft.inventory.PlayerInventory;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.player.Inventory;
 
 @SuppressWarnings("unused")
 public class ScriptInventoryPlayer extends ScriptInventory {
 
-    PlayerInventory invPlayer;
+    Inventory invPlayer;
 
-    ScriptInventoryPlayer(PlayerInventory var1) {
+    ScriptInventoryPlayer(Inventory var1) {
         super(var1);
         this.invPlayer = var1;
     }
 
     public int getSlotContainingItem(int var1) {
-        int var2 = this.invPlayer.getSlotWithItem(var1);
+        int var2 = this.invPlayer.getSlot(var1);
         if (var2 == -1) {
             for (int var3 = 36; var3 < 40; ++var3) {
-                ItemStack var4 = this.invPlayer.getInventoryItem(var3);
-                if (var4 != null && var4.itemId == var1) {
+                ItemInstance var4 = this.invPlayer.getItem(var3);
+                if (var4 != null && var4.id == var1) {
                     return var3;
                 }
             }
@@ -29,9 +29,9 @@ public class ScriptInventoryPlayer extends ScriptInventory {
     }
 
     public int getSlotContainingItemDamage(int var1, int var2) {
-        for (int var3 = 0; var3 < this.invPlayer.getInventorySize(); ++var3) {
-            ItemStack var4 = this.invPlayer.getInventoryItem(var3);
-            if (var4 != null && var4.itemId == var1 && var4.getMeta() == var2) {
+        for (int var3 = 0; var3 < this.invPlayer.getContainerSize(); ++var3) {
+            ItemInstance var4 = this.invPlayer.getItem(var3);
+            if (var4 != null && var4.id == var1 && var4.getAuxValue() == var2) {
                 return var3;
             }
         }
@@ -40,15 +40,15 @@ public class ScriptInventoryPlayer extends ScriptInventory {
     }
 
     public void setCurrentItem(int var1) {
-        this.invPlayer.setSelectedItemWithID(var1, false);
+        this.invPlayer.grabTexture(var1, false);
     }
 
     public void changeCurrentItem(int var1) {
-        this.invPlayer.scrollInHotBar(var1);
+        this.invPlayer.swapPaint(var1);
     }
 
     public boolean consumeItem(int var1) {
-        return this.invPlayer.removeItem(var1);
+        return this.invPlayer.removeResource(var1);
     }
 
     public boolean consumeItemAmount(int var1, int var2, int var3) {
@@ -60,17 +60,17 @@ public class ScriptInventoryPlayer extends ScriptInventory {
     }
 
     public void dropAllItems() {
-        this.invPlayer.dropInventory();
+        this.invPlayer.dropAll();
     }
 
     public ScriptItem getCurrentItem() {
-        ItemStack var1 = this.invPlayer.getHeldItem();
-        return var1 != null && var1.itemId != 0 ? new ScriptItem(var1) : null;
+        ItemInstance var1 = this.invPlayer.getSelected();
+        return var1 != null && var1.id != 0 ? new ScriptItem(var1) : null;
     }
 
     public ScriptItem getOffhandItem() {
-        ItemStack var1 = ((ExPlayerInventory) this.invPlayer).getOffhandItemStack();
-        return var1 != null && var1.itemId != 0 ? new ScriptItem(var1) : null;
+        ItemInstance var1 = ((ExPlayerInventory) this.invPlayer).getOffhandItemStack();
+        return var1 != null && var1.id != 0 ? new ScriptItem(var1) : null;
     }
 
     public void swapOffhandWithMain() {
@@ -78,19 +78,19 @@ public class ScriptInventoryPlayer extends ScriptInventory {
     }
 
     public boolean addItem(ScriptItem var1) {
-        return this.invPlayer.addStack(var1.item);
+        return this.invPlayer.add(var1.item);
     }
 
     public ScriptItem getCursorItem() {
-        ItemStack var1 = this.invPlayer.getCursorItem();
-        return var1 != null && var1.itemId != 0 ? new ScriptItem(var1) : null;
+        ItemInstance var1 = this.invPlayer.getCarried();
+        return var1 != null && var1.id != 0 ? new ScriptItem(var1) : null;
     }
 
     public void setCursorItem(ScriptItem var1) {
         if (var1 == null) {
-            this.invPlayer.setCursorItem(null);
+            this.invPlayer.setCarried(null);
         } else {
-            this.invPlayer.setCursorItem(var1.item);
+            this.invPlayer.setCarried(var1.item);
         }
     }
 }

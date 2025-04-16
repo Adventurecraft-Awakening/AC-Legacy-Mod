@@ -1,8 +1,8 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.entity.BlockEntity;
-import net.minecraft.util.io.CompoundTag;
-import net.minecraft.world.World;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.tile.entity.TileEntity;
 
 public final class AC_EditAction {
 
@@ -31,19 +31,19 @@ public final class AC_EditAction {
         this.newNBT = newNbt;
     }
 
-    public void undo(World world) {
-        world.placeBlockWithMetaData(this.x, this.y, this.z, this.prevBlockID, this.prevMetadata);
+    public void undo(Level world) {
+        world.setTileAndData(this.x, this.y, this.z, this.prevBlockID, this.prevMetadata);
         if (this.prevNBT != null) {
-            BlockEntity entity = BlockEntity.ofNBT(this.prevNBT);
-            world.setBlockEntity(entity.x, entity.y, entity.z, entity);
+            TileEntity entity = TileEntity.loadStatic(this.prevNBT);
+            world.setTileEntity(entity.x, entity.y, entity.z, entity);
         }
     }
 
-    public void redo(World world) {
-        world.placeBlockWithMetaData(this.x, this.y, this.z, this.newBlockID, this.newMetadata);
+    public void redo(Level world) {
+        world.setTileAndData(this.x, this.y, this.z, this.newBlockID, this.newMetadata);
         if (this.newNBT != null) {
-            BlockEntity entity = BlockEntity.ofNBT(this.newNBT);
-            world.setBlockEntity(entity.x, entity.y, entity.z, entity);
+            TileEntity entity = TileEntity.loadStatic(this.newNBT);
+            world.setTileEntity(entity.x, entity.y, entity.z, entity);
         }
     }
 }

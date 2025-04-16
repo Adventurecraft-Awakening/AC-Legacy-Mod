@@ -2,27 +2,27 @@ package dev.adventurecraft.awakening.mixin.entity.monster;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.entity.monster.ZombiePigmanEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.monster.PigZombie;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(ZombiePigmanEntity.class)
+@Mixin(PigZombie.class)
 public abstract class MixinZombiePigmanEntity extends MixinZombieEntity {
 
     @Inject(method = "<init>", at = @At("TAIL"))
-    private void init(World var1, CallbackInfo ci) {
-        this.setHeldItem(new ItemStack(Item.GOLD_SWORD, 1));
+    private void init(Level var1, CallbackInfo ci) {
+        this.setHeldItem(new ItemInstance(Item.GOLD_SWORD, 1));
     }
 
     @Environment(value = EnvType.CLIENT)
     @Overwrite
-    public ItemStack getMonsterHeldItem() {
-        return this.getHeldItem();
+    public ItemInstance getCarriedItem() {
+        return this.getSelectedItem();
     }
 }

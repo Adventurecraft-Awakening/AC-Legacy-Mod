@@ -1,11 +1,15 @@
 package dev.adventurecraft.awakening.extension.entity;
 
-import dev.adventurecraft.awakening.common.AC_IMultiAttackEntity;
-import net.minecraft.util.math.Vec3d;
+import dev.adventurecraft.awakening.entity.AC_IMultiAttackEntity;
+import net.minecraft.world.phys.Vec3;
 
 public interface ExEntity extends AC_IMultiAttackEntity {
 
-    Vec3d getRotation(float deltaTime);
+    void setCanGetFallDamage(boolean arg);
+
+    boolean getCanGetFallDamage();
+
+    Vec3 getRotation(float deltaTime);
 
     void setRotation(double x, double y, double z);
 
@@ -24,4 +28,18 @@ public interface ExEntity extends AC_IMultiAttackEntity {
     int getCollisionX();
 
     int getCollisionZ();
+
+    void setIgnoreCobwebCollision(boolean value);
+
+    boolean isIgnoreCobwebCollision();
+
+    void setCustomTagString(String key,String value);
+
+    boolean hasCustomTagString(String key);
+
+    String getOrCreateCustomTagString(String key,String defaultValue);
+
+    String getCustomTagString(String key);
+
+
 }

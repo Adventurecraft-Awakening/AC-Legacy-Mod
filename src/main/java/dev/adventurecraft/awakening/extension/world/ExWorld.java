@@ -2,27 +2,27 @@ package dev.adventurecraft.awakening.extension.world;
 
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.*;
+import dev.adventurecraft.awakening.image.ImageBuffer;
 import dev.adventurecraft.awakening.script.Script;
-import net.minecraft.entity.BlockEntity;
-import net.minecraft.entity.Entity;
 import net.minecraft.util.ProgressListener;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
-import net.minecraft.world.dimension.Dimension;
-import net.minecraft.world.dimension.DimensionData;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.dimension.Dimension;
+import net.minecraft.world.level.storage.LevelIO;
+import net.minecraft.world.level.tile.entity.TileEntity;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import org.mozilla.javascript.Scriptable;
 
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
 
 public interface ExWorld {
 
     void initWorld(
-        String mapName, DimensionData dimData, String saveName, long seed, Dimension dimension, ProgressListener progressListener);
+        String mapName, LevelIO dimData, String saveName, long seed, Dimension dimension, ProgressListener progressListener);
 
-    BufferedImage loadMapTexture(String name);
+    ImageBuffer loadMapTexture(String name);
 
     void updateChunkProvider();
 
@@ -35,11 +35,11 @@ public interface ExWorld {
     void ac$preTick();
 
     HitResult rayTraceBlocks2(
-        Vec3d pointA, Vec3d pointB,
+        Vec3 pointA, Vec3 pointB,
         boolean blockCollidableFlag, boolean useCollisionShapes, boolean collideWithClip);
 
     HitResult rayTraceBlocksCore(
-        Vec3d pointA, Vec3d pointB,
+        Vec3 pointA, Vec3 pointB,
         boolean blockCollidableFlag, boolean useCollisionShapes, boolean collideWithClip);
 
     void recordRayDebugList(
@@ -57,7 +57,7 @@ public interface ExWorld {
 
     float getFogEnd(float var1, float var2);
 
-    BlockEntity getBlockTileEntityDontCreate(int x, int y, int z);
+    TileEntity getBlockTileEntityDontCreate(int x, int y, int z);
 
     double getTemperatureValue(int x, int z);
 
@@ -97,10 +97,10 @@ public interface ExWorld {
 
     ArrayList<RayDebugList> getRayDebugLists();
 
-    static World createWorld(
-        String mapName, DimensionData dimData, String saveName, long seed, Dimension dimension, ProgressListener progressListener) {
+    static Level createWorld(
+        String mapName, LevelIO dimData, String saveName, long seed, Dimension dimension, ProgressListener progressListener) {
         try {
-            var world = (World) ACMod.UNSAFE.allocateInstance(World.class);
+            var world = (Level) ACMod.UNSAFE.allocateInstance(Level.class);
             ((ExWorld) world).initWorld(mapName, dimData, saveName, seed, dimension, progressListener);
             return world;
         } catch (InstantiationException e) {
@@ -108,11 +108,11 @@ public interface ExWorld {
         }
     }
 
-    static World createWorld(String mapName, DimensionData dimData, String saveName, long seed, ProgressListener progressListener) {
+    static Level createWorld(String mapName, LevelIO dimData, String saveName, long seed, ProgressListener progressListener) {
         return createWorld(mapName, dimData, saveName, seed, null, progressListener);
     }
 
-    static World createWorld(DimensionData dimData, String saveName, long seed, ProgressListener progressListener) {
+    static Level createWorld(LevelIO dimData, String saveName, long seed, ProgressListener progressListener) {
         return createWorld(null, dimData, saveName, seed, null, progressListener);
     }
 }

@@ -3,103 +3,107 @@ package dev.adventurecraft.awakening.mixin.entity;
 import dev.adventurecraft.awakening.common.IEntityPather;
 import dev.adventurecraft.awakening.extension.entity.ExMobEntity;
 import dev.adventurecraft.awakening.extension.entity.ai.pathing.ExEntityPath;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.ai.pathing.EntityPath;
-import net.minecraft.util.io.CompoundTag;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 
-@Mixin(MobEntity.class)
+import java.util.Collection;
+
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.phys.Vec3;
+
+@Mixin(Mob.class)
 public abstract class MixinMobEntity extends MixinLivingEntity implements ExMobEntity, IEntityPather {
 
     @Shadow
-    protected Entity entity;
+    protected Entity attackTarget;
     @Shadow
-    private EntityPath field_661;
+    private Path path;
     @Shadow
-    protected boolean field_663;
+    protected boolean holdGround;
 
     @Shadow
     protected abstract void method_632();
 
     @Shadow
-    protected abstract boolean method_640();
+    protected abstract boolean shouldHoldGround();
 
     @Shadow
-    protected abstract Entity getAttackTarget();
+    protected abstract Entity findAttackTarget();
 
     @Shadow
-    protected abstract void method_639(Entity arg, float f);
+    protected abstract void resetAttack(Entity arg, float f);
 
     @Shadow
-    protected abstract void tryAttack(Entity arg, float f);
+    protected abstract void checkHurtTarget(Entity arg, float f);
 
     @Shadow
-    public abstract boolean method_633();
+    public abstract boolean hasPath();
 
     public boolean canForgetTargetRandomly = true;
     public int timeBeforeForget = 0;
     public boolean canPathRandomly = true;
 
     @Overwrite
-    public void tickHandSwing() {
-        this.field_663 = this.method_640();
+    public void serverAiStep() {
+        this.holdGround = this.shouldHoldGround();
         float var1 = 16.0F;
-        if (this.entity == null) {
-            this.entity = this.getAttackTarget();
-            if (this.entity != null) {
-                this.field_661 = this.world.findPathTo((Entity) (Object) this, this.entity, var1);
+        if (this.attackTarget == null) {
+            this.attackTarget = this.findAttackTarget();
+            if (this.attackTarget != null) {
+                this.path = this.level.findPath((Entity) (Object) this, this.attackTarget, var1);
                 this.timeBeforeForget = 40;
             }
-        } else if (!this.entity.isAlive()) {
-            this.entity = null;
+        } else if (!this.attackTarget.isAlive()) {
+            this.attackTarget = null;
         } else {
-            float var2 = this.entity.distanceTo((Entity) (Object) this);
-            if (this.method_928(this.entity)) {
-                this.tryAttack(this.entity, var2);
+            float var2 = this.attackTarget.distanceTo((Entity) (Object) this);
+            if (this.canSee(this.attackTarget)) {
+                this.checkHurtTarget(this.attackTarget, var2);
             } else {
-                this.method_639(this.entity, var2);
+                this.resetAttack(this.attackTarget, var2);
             }
         }
 
         boolean var21 = false;
-        if (this.entity != null) {
-            var21 = this.method_928(this.entity);
+        if (this.attackTarget != null) {
+            var21 = this.canSee(this.attackTarget);
         }
 
-        if (!this.field_663 && this.entity != null && (this.field_661 == null || this.rand.nextInt(5) == 0 && ((ExEntityPath) this.field_661).needNewPath(this.entity)) && var21) {
-            this.field_661 = this.world.findPathTo((Entity) (Object) this, this.entity, var1);
-        } else if (this.canPathRandomly && !this.field_663 && (this.field_661 == null && this.rand.nextInt(80) == 0 || this.rand.nextInt(80) == 0)) {
+        if (!this.holdGround && this.attackTarget != null && (this.path == null || this.random.nextInt(5) == 0 && ((ExEntityPath) this.path).needNewPath(this.attackTarget)) && var21) {
+            this.path = this.level.findPath((Entity) (Object) this, this.attackTarget, var1);
+        } else if (this.canPathRandomly && !this.holdGround && (this.path == null && this.random.nextInt(80) == 0 || this.random.nextInt(80) == 0)) {
             this.method_632();
         }
 
-        if (this.entity != null && this.field_661 == null && !var21) {
+        if (this.attackTarget != null && this.path == null && !var21) {
             if (this.timeBeforeForget-- <= 0) {
-                this.entity = null;
+                this.attackTarget = null;
             }
         } else {
             this.timeBeforeForget = 40;
         }
 
-        int var3 = MathHelper.floor(this.boundingBox.minY + 0.5D);
-        boolean var4 = this.method_1334();
-        boolean var5 = this.method_1335();
-        this.pitch = 0.0F;
-        if (this.field_661 != null && (!this.canForgetTargetRandomly || this.rand.nextInt(300) != 0)) {
-            Vec3d var6 = this.field_661.method_2041((Entity) (Object) this);
-            double var7 = this.width * 2.0F;
+        int var3 = Mth.floor(this.bb.y0 + 0.5D);
+        boolean var4 = this.isInWater();
+        boolean var5 = this.isInLava();
+        this.xRot = 0.0F;
+        if (this.path != null && (!this.canForgetTargetRandomly || this.random.nextInt(300) != 0)) {
+            Vec3 var6 = this.path.current((Entity) (Object) this);
+            double var7 = this.bbWidth * 2.0F;
 
-            while (var6 != null && var6.squareDistanceTo(this.x, var6.y, this.z) < var7 * var7) {
-                this.field_661.method_2040();
-                if (this.field_661.method_2042()) {
+            while (var6 != null && var6.distanceToSqr(this.x, var6.y, this.z) < var7 * var7) {
+                this.path.next();
+                if (this.path.isDone()) {
                     var6 = null;
-                    this.field_661 = null;
+                    this.path = null;
                 } else {
-                    var6 = this.field_661.method_2041((Entity) (Object) this);
+                    var6 = this.path.current((Entity) (Object) this);
                 }
             }
 
@@ -109,9 +113,9 @@ public abstract class MixinMobEntity extends MixinLivingEntity implements ExMobE
                 double var9 = var6.z - this.z;
                 double var11 = var6.y - (double) var3;
                 float var13 = (float) (Math.atan2(var9, var7) * 180.0D / (double) ((float) Math.PI)) - 90.0F;
-                float var14 = var13 - this.yaw;
+                float var14 = var13 - this.yRot;
 
-                this.forwardVelocity = this.movementSpeed;
+                this.zza = this.runSpeed;
                 while (var14 < -180.0F) {
                     var14 += 360.0F;
                 }
@@ -128,62 +132,74 @@ public abstract class MixinMobEntity extends MixinLivingEntity implements ExMobE
                     var14 = -30.0F;
                 }
 
-                this.yaw += var14;
-                if (this.field_663 && this.entity != null) {
-                    double var15 = this.entity.x - this.x;
-                    double var17 = this.entity.z - this.z;
-                    float var19 = this.yaw;
-                    this.yaw = (float) (Math.atan2(var17, var15) * 180.0D / (double) ((float) Math.PI)) - 90.0F;
-                    float var20 = (var19 - this.yaw + 90.0F) * 3.141593F / 180.0F;
-                    this.horizontalVelocity = -MathHelper.sin(var20) * this.forwardVelocity * 1.0F;
-                    this.forwardVelocity = MathHelper.cos(var20) * this.forwardVelocity * 1.0F;
+                this.yRot += var14;
+                if (this.holdGround && this.attackTarget != null) {
+                    double var15 = this.attackTarget.x - this.x;
+                    double var17 = this.attackTarget.z - this.z;
+                    float var19 = this.yRot;
+                    this.yRot = (float) (Math.atan2(var17, var15) * 180.0D / (double) ((float) Math.PI)) - 90.0F;
+                    float var20 = (var19 - this.yRot + 90.0F) * 3.141593F / 180.0F;
+                    this.xxa = -Mth.sin(var20) * this.zza * 1.0F;
+                    this.zza = Mth.cos(var20) * this.zza * 1.0F;
                 }
 
                 if (var11 > 0.0D) {
                     this.jumping = true;
                 }
-            } else if (this.entity != null) {
-                this.lookAt(this.entity, 30.0F, 30.0F);
+            } else if (this.attackTarget != null) {
+                this.setLookAt(this.attackTarget, 30.0F, 30.0F);
             }
 
-            if (this.field_1624 && !this.method_633()) {
+            if (this.horizontalCollision && !this.hasPath()) {
                 this.jumping = true;
             }
 
-            if (this.rand.nextFloat() < 0.8F && (var4 || var5)) {
+            if (this.random.nextFloat() < 0.8F && (var4 || var5)) {
                 this.jumping = true;
             }
 
         } else {
-            super.tickHandSwing();
-            this.field_661 = null;
+            super.serverAiStep();
+            this.path = null;
         }
     }
 
     @Override
-    public EntityPath getCurrentPath() {
-        return this.field_661;
+    public Path getCurrentPath() {
+        return this.path;
     }
 
     @Override
-    public void writeAdditional(CompoundTag var1) {
-        super.writeAdditional(var1);
-        var1.put("canPathRandomly", this.canPathRandomly);
-        var1.put("canForgetTargetRandomly", this.canForgetTargetRandomly);
+    public void readAdditionalSaveData(CompoundTag compoundTag) {
+        super.readAdditionalSaveData(compoundTag);
+        compoundTag.putBoolean("canPathRandomly", this.canPathRandomly);
+        compoundTag.putBoolean("canForgetTargetRandomly", this.canForgetTargetRandomly);
+        if(!customData.isEmpty()) {
+            CompoundTag customCompoundTag = new CompoundTag();
+            for(String key : customData.keySet()){
+                customCompoundTag.putString(key,customData.get(key));
+            }
+            compoundTag.putCompoundTag("custom",customCompoundTag);
+        }
     }
 
     @Override
-    public void readAdditional(CompoundTag var1) {
-        super.readAdditional(var1);
-        if (var1.containsKey("canPathRandomly")) {
-            this.canPathRandomly = var1.getBoolean("canPathRandomly");
+    public void addAdditionalSaveData(CompoundTag compoundTag) {
+        super.addAdditionalSaveData(compoundTag);
+        if (compoundTag.hasKey("canPathRandomly")) {
+            this.canPathRandomly = compoundTag.getBoolean("canPathRandomly");
         }
 
-        if (var1.containsKey("canForgetTargetRandomly")) {
-            this.canPathRandomly = var1.getBoolean("canForgetTargetRandomly");
+        if (compoundTag.hasKey("canForgetTargetRandomly")) {
+            this.canPathRandomly = compoundTag.getBoolean("canForgetTargetRandomly");
+        }
+
+        if(compoundTag.hasKey("custom")){
+            for(Tag tags : (Collection<Tag>)compoundTag.getCompoundTag("custom").getTags()) {
+                customData.put(tags.getType(),tags.toString());
+            }
         }
     }
-
     @Override
     public boolean getCanForgetTargetRandomly() {
         return this.canForgetTargetRandomly;

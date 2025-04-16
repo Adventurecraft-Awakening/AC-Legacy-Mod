@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.mixin.client.gui.screen;
 
 import dev.adventurecraft.awakening.extension.client.gui.screen.ExScreen;
-import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screens.Screen;
 import org.spongepowered.asm.mixin.Mixin;
 
 @Mixin(Screen.class)

@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.util.io.CompoundTag;
+import net.minecraft.nbt.CompoundTag;
 
 public class AC_TriggerArea {
     public int minX;
@@ -31,12 +31,12 @@ public class AC_TriggerArea {
 
     public CompoundTag getTagCompound() {
         CompoundTag var1 = new CompoundTag();
-        var1.put("minX", this.minX);
-        var1.put("minY", this.minY);
-        var1.put("minZ", this.minZ);
-        var1.put("maxX", this.maxX);
-        var1.put("maxY", this.maxY);
-        var1.put("maxZ", this.maxZ);
+        var1.putInt("minX", this.minX);
+        var1.putInt("minY", this.minY);
+        var1.putInt("minZ", this.minZ);
+        var1.putInt("maxX", this.maxX);
+        var1.putInt("maxY", this.maxY);
+        var1.putInt("maxZ", this.maxZ);
         return var1;
     }
 

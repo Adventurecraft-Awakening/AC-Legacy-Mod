@@ -1,35 +1,44 @@
 package dev.adventurecraft.awakening.script;
 
-import net.minecraft.entity.projectile.ArrowEntity;
+import dev.adventurecraft.awakening.extension.entity.projectile.ExArrowEntity;
+import net.minecraft.world.entity.projectile.Arrow;
 
 @SuppressWarnings("unused")
 public class ScriptEntityArrow extends ScriptEntity {
 
-    ArrowEntity entityArrow;
+    Arrow entityArrow;
 
-    ScriptEntityArrow(ArrowEntity var1) {
+    ScriptEntityArrow(Arrow var1) {
         super(var1);
         this.entityArrow = var1;
     }
 
     public int getInBlockID() {
-        return this.entityArrow.inBlock;
+        return this.entityArrow.inTile;
     }
 
     public ScriptVec3 getInBlockCoords() {
-        if (this.entityArrow.inBlock == 0) return null;
-        return new ScriptVec3((float) this.entityArrow.blockX, (float) this.entityArrow.blockY, (float) this.entityArrow.blockZ);
+        if (this.entityArrow.inTile == 0) return null;
+        return new ScriptVec3((float) this.entityArrow.xTile, (float) this.entityArrow.yTile, (float) this.entityArrow.zTile);
     }
 
     public boolean getIsPlayersArrow() {
-        return this.entityArrow.spawnedByPlayer;
+        return this.entityArrow.player;
     }
 
     public void setIsPlayersArrow(boolean var1) {
-        this.entityArrow.spawnedByPlayer = var1;
+        this.entityArrow.player = var1;
     }
 
     public ScriptEntity getOwner() {
         return ScriptEntity.getEntityClass(this.entityArrow);
+    }
+
+    public void setAttackStrength(int value) {
+        ((ExArrowEntity)this.entityArrow).setAttackStrength(value);
+    }
+
+    public int getAttackStrength(){
+        return ((ExArrowEntity)this.entityArrow).getAttackStrength();
     }
 }

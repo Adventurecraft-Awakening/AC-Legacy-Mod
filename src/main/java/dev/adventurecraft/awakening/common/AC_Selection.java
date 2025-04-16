@@ -1,5 +1,7 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.item.AC_ItemCursor;
+
 public class AC_Selection {
     public int oneX;
     public int oneY;
@@ -24,6 +26,7 @@ public class AC_Selection {
         AC_ItemCursor.twoX = this.twoX;
         AC_ItemCursor.twoY = this.twoY;
         AC_ItemCursor.twoZ = this.twoZ;
+        
         AC_ItemCursor.minX = Math.min(this.oneX, this.twoX);
         AC_ItemCursor.minY = Math.min(this.oneY, this.twoY);
         AC_ItemCursor.minZ = Math.min(this.oneZ, this.twoZ);

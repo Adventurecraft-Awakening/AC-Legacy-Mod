@@ -1,22 +1,21 @@
 package dev.adventurecraft.awakening.mixin.client.render;
 
 import dev.adventurecraft.awakening.common.Vec2;
-import dev.adventurecraft.awakening.extension.world.ExWorld;
-import net.minecraft.client.render.FireTextureBinder;
-import net.minecraft.world.World;
+import dev.adventurecraft.awakening.image.Rgba;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-import java.awt.image.BufferedImage;
+import net.minecraft.client.renderer.ptexture.FireTexture;
+import net.minecraft.world.level.Level;
 
-@Mixin(FireTextureBinder.class)
+@Mixin(FireTexture.class)
 public class MixinFireTextureBinder extends MixinTextureBinder {
 
     @Shadow
-    protected float[] currentFireFrame;
+    protected float[] current;
 
     @Shadow
-    protected float[] lastFireFrame;
+    protected float[] next;
 
     @Override
     public void onTick(Vec2 size) {
@@ -34,66 +33,12 @@ public class MixinFireTextureBinder extends MixinTextureBinder {
         int var16;
         int var24;
         if (hasImages) {
-            this.imageData.clear();
-
-            int var18 = var2 / width;
-            var5 = curFrame * width * width;
-            var6 = 0;
-            boolean var20 = false;
-            if (var18 == 0) {
-                var20 = true;
-                var18 = width / var2;
-            }
-
-            if (!var20) {
-                for (var8 = 0; var8 < width; ++var8) {
-                    for (var9 = 0; var9 < width; ++var9) {
-                        var10 = this.imageData.get(var9 + var8 * width + var5);
-
-                        for (var24 = 0; var24 < var18; ++var24) {
-                            for (var12 = 0; var12 < var18; ++var12) {
-                                var6 = var9 * var18 + var24 + (var8 * var18 + var12) * var2;
-                                this.grid[var6 * 4 + 0] = (byte) (var10 >> 16 & 255);
-                                this.grid[var6 * 4 + 1] = (byte) (var10 >> 8 & 255);
-                                this.grid[var6 * 4 + 2] = (byte) (var10 & 255);
-                                this.grid[var6 * 4 + 3] = (byte) (var10 >> 24 & 255);
-                            }
-                        }
-                    }
-                }
-            } else {
-                for (var8 = 0; var8 < var2; ++var8) {
-                    for (var9 = 0; var9 < var2; ++var9) {
-                        var10 = 0;
-                        var24 = 0;
-                        var12 = 0;
-                        var13 = 0;
-
-                        for (var14 = 0; var14 < var18; ++var14) {
-                            for (var15 = 0; var15 < var18; ++var15) {
-                                var16 = this.imageData.get(var9 * var18 + var14 + (var8 * var18 + var15) * width + var5);
-                                var10 += var16 >> 16 & 255;
-                                var24 += var16 >> 8 & 255;
-                                var12 += var16 & 255;
-                                var13 += var16 >> 24 & 255;
-                            }
-                        }
-
-                        this.grid[var6 * 4 + 0] = (byte) (var10 / var18 / var18);
-                        this.grid[var6 * 4 + 1] = (byte) (var24 / var18 / var18);
-                        this.grid[var6 * 4 + 2] = (byte) (var12 / var18 / var18);
-                        this.grid[var6 * 4 + 3] = (byte) (var13 / var18 / var18);
-                        ++var6;
-                    }
-                }
-            }
-
-            curFrame = (curFrame + 1) % numFrames;
+            this.animate();
         } else {
             var3 = size.y / 16 * 20 / 16;
-            if (this.currentFireFrame.length != var2 * var3) {
-                this.currentFireFrame = new float[var2 * var3];
-                this.lastFireFrame = new float[var2 * var3];
+            if (this.current.length != var2 * var3) {
+                this.current = new float[var2 * var3];
+                this.next = new float[var2 * var3];
             }
 
             float var4 = 1.0F + 15.36F / (float) size.y;
@@ -111,7 +56,7 @@ public class MixinFireTextureBinder extends MixinTextureBinder {
                 for (var8 = 0; var8 < var3; ++var8) {
                     for (var9 = 0; var9 < var2; ++var9) {
                         var10 = var6;
-                        float var11 = this.currentFireFrame[var9 + (var8 + 1) % var3 * var2] * (float) var6;
+                        float var11 = this.current[var9 + (var8 + 1) % var3 * var2] * (float) var6;
 
                         for (var12 = var9 - 1; var12 <= var9 + 1; ++var12) {
                             for (var13 = var8; var13 <= var8 + 1; ++var13) {
@@ -121,30 +66,35 @@ public class MixinFireTextureBinder extends MixinTextureBinder {
                                 }
 
                                 if (var13 >= 0 && var13 < var3) {
-                                    var11 += this.currentFireFrame[var14 + var13 * var2];
+                                    var11 += this.current[var14 + var13 * var2];
                                 }
 
                                 ++var10;
                             }
                         }
 
-                        this.lastFireFrame[var9 + var8 * var2] = var11 / ((float) var10 * var4);
+                        this.next[var9 + var8 * var2] = var11 / ((float) var10 * var4);
                         if (var8 >= var3 - 1) {
-                            this.lastFireFrame[var9 + var8 * var2] = (float) (Math.random() * Math.random() * Math.random() * 4.0D + Math.random() * (double) 0.1F + (double) 0.2F);
+                            this.next[var9 + var8 * var2] = (float) (Math.random() * Math.random() * Math.random() * 4.0D + Math.random() * (double) 0.1F + (double) 0.2F);
                         }
                     }
                 }
 
-                float[] var21 = this.lastFireFrame;
-                this.lastFireFrame = this.currentFireFrame;
-                this.currentFireFrame = var21;
+                float[] var21 = this.next;
+                this.next = this.current;
+                this.current = var21;
             }
 
             var3 = size.y / 16;
             var7 = var2 * var3;
 
+            if (this.imageData.capacity() != var2 * var3) {
+                this.imageData = this.allocImageData(var2, var3);
+            }
+
+            var imageData = this.imageData;
             for (var8 = 0; var8 < var7; ++var8) {
-                float var22 = this.currentFireFrame[var8] * 1.8F;
+                float var22 = this.current[var8] * 1.8F;
                 if (var22 > 1.0F) {
                     var22 = 1.0F;
                 }
@@ -162,7 +112,7 @@ public class MixinFireTextureBinder extends MixinTextureBinder {
                 }
 
                 float var23 = (var22 - 0.5F) * 2.0F;
-                if (this.render3d) {
+                if (this.anaglyph3d) {
                     var15 = (var24 * 30 + var12 * 59 + var13 * 11) / 100;
                     var16 = (var24 * 30 + var12 * 70) / 100;
                     int var17 = (var24 * 30 + var13 * 70) / 100;
@@ -171,16 +121,14 @@ public class MixinFireTextureBinder extends MixinTextureBinder {
                     var13 = var17;
                 }
 
-                this.grid[var8 * 4 + 0] = (byte) var24;
-                this.grid[var8 * 4 + 1] = (byte) var12;
-                this.grid[var8 * 4 + 2] = (byte) var13;
-                this.grid[var8 * 4 + 3] = (byte) var25;
+                int color = Rgba.fromRgba8(var24, var12, var13, var25);
+                imageData.put(var8, color);
             }
         }
     }
 
     @Override
-    public void loadImage(String name, World world) {
+    public void loadImage(String name, Level world) {
         if (name == null) {
             name = "/custom_fire.png";
         }

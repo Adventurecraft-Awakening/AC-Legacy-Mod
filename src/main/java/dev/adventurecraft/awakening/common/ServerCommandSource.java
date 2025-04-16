@@ -1,16 +1,16 @@
 package dev.adventurecraft.awakening.common;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.Entity;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
 
 public class ServerCommandSource {
 
     private final Minecraft client;
-    private final World world;
+    private final Level world;
     private final Entity entity;
 
-    public ServerCommandSource(Minecraft client, World world, Entity entity) {
+    public ServerCommandSource(Minecraft client, Level world, Entity entity) {
         this.client = client;
         this.world = world;
         this.entity = entity;
@@ -20,7 +20,7 @@ public class ServerCommandSource {
         return this.client;
     }
 
-    public World getWorld() {
+    public Level getWorld() {
         return this.world;
     }
 

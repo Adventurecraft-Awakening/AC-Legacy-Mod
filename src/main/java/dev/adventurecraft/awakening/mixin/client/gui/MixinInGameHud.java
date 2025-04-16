@@ -10,20 +10,22 @@ import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
+import dev.adventurecraft.awakening.image.Rgba;
+import dev.adventurecraft.awakening.util.HexConvert;
 import dev.adventurecraft.awakening.script.ScriptUIContainer;
-import net.minecraft.block.Block;
-import net.minecraft.block.material.Material;
+import net.minecraft.client.Lighting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiElement;
-import net.minecraft.client.gui.InGameHud;
-import net.minecraft.client.gui.screen.ingame.ChatScreen;
-import net.minecraft.client.render.RenderHelper;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.TextRenderer;
-import net.minecraft.client.util.ScreenScaler;
-import net.minecraft.inventory.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.client.ScreenSizeCalculator;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.client.renderer.Tesselator;
+import net.minecraft.util.Mth;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.tile.Tile;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 import org.spongepowered.asm.mixin.Mixin;
@@ -37,8 +39,8 @@ import java.awt.*;
 import java.util.ArrayDeque;
 import java.util.Random;
 
-@Mixin(InGameHud.class)
-public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
+@Mixin(Gui.class)
+public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud {
 
     private static final String[] CODE_TO_ANSI_SEQUENCE = new String[]{
         // Regular
@@ -65,29 +67,29 @@ public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
     private static final int CHAT_WIDTH = 320;
 
     @Shadow
-    private Random rand;
+    private Random random;
     @Shadow
-    private Minecraft client;
+    private Minecraft minecraft;
     @Shadow
-    private int ticksRan;
+    private int tickCount;
     @Shadow
-    private String jukeboxMessage;
+    private String nowPlayingString;
     @Shadow
-    private int jukeboxMessageTime;
+    private int nowPlayingTime;
     @Shadow
-    private boolean isRecordPlaying;
+    private boolean animateOverlayMessageColor;
 
     @Shadow
-    protected abstract void renderPumpkinOverlay(int i, int j);
+    protected abstract void renderPumpkin(int i, int j);
 
     @Shadow
     protected abstract void renderPortalOverlay(float f, int i, int j);
 
     @Shadow
-    protected abstract void renderHotBarSlot(int i, int j, int k, float f);
+    protected abstract void renderSlot(int i, int j, int k, float f);
 
     @Shadow
-    protected abstract void renderVingette(float f, int i, int j);
+    protected abstract void renderVignette(float f, int i, int j);
 
     private ArrayDeque<AC_ChatMessage> chatMessages;
     public ScriptUIContainer scriptUI;
@@ -101,61 +103,66 @@ public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
 
     @Overwrite
     public void render(float var1, boolean var2, int var3, int var4) {
-        ScreenScaler scaler = new ScreenScaler(this.client.options, this.client.actualWidth, this.client.actualHeight);
-        int screenWidth = scaler.getScaledWidth();
-        int screenHeight = scaler.getScaledHeight();
-        TextRenderer textRenderer = this.client.textRenderer;
-        this.client.gameRenderer.method_1843();
+        ScreenSizeCalculator scaler = new ScreenSizeCalculator(this.minecraft.options, this.minecraft.width, this.minecraft.height);
+        int screenWidth = scaler.getWidth();
+        int screenHeight = scaler.getHeight();
+        Font textRenderer = this.minecraft.font;
+        this.minecraft.gameRenderer.setScreenProjectionMatrix();
         GL11.glEnable(GL11.GL_BLEND);
-        if (Minecraft.isFancyGraphicsEnabled()) {
-            this.renderVingette(this.client.player.getBrightnessAtEyes(var1), screenWidth, screenHeight);
+        if (Minecraft.useFancyGraphics()) {
+            this.renderVignette(this.minecraft.player.getBrightness(var1), screenWidth, screenHeight);
         }
 
-        if (!this.client.options.thirdPerson && !((ExMinecraft) this.client).isCameraActive()) {
-            ItemStack headItem = this.client.player.inventory.getArmorItem(3);
-            if (headItem != null && headItem.itemId == Block.PUMPKIN.id) {
-                this.renderPumpkinOverlay(screenWidth, screenHeight);
+        if (!this.minecraft.options.thirdPersonView && !((ExMinecraft) this.minecraft).isCameraActive()) {
+            ItemInstance headItem = this.minecraft.player.inventory.getArmor(3);
+            if (headItem != null && headItem.id == Tile.PUMPKIN.id) {
+                this.renderPumpkin(screenWidth, screenHeight);
             }
         }
 
-        if (this.client.world != null) {
-            String overlay = ((ExWorldProperties) this.client.world.properties).getOverlay();
+        if (this.minecraft.level != null) {
+            String overlay = ((ExWorldProperties) this.minecraft.level.levelData).getOverlay();
             if (!overlay.isEmpty()) {
                 this.renderOverlay(screenWidth, screenHeight, overlay);
             }
         }
 
-        float var10 = this.client.player.field_505 + (this.client.player.field_504 - this.client.player.field_505) * var1;
+        float var10 = this.minecraft.player.oPortalTime + (this.minecraft.player.portalTime - this.minecraft.player.oPortalTime) * var1;
         if (var10 > 0.0F) {
             this.renderPortalOverlay(var10, screenWidth, screenHeight);
         }
 
+        if (this.minecraft.level != null) {
+            // Refresh hudEnabled property (has to be here, because ui.hudEnabled can be set directly....)
+            ((ExWorldProperties) this.minecraft.level.levelData).setHudEnabled(this.hudEnabled);
+        }
+
         if (this.hudEnabled) {
-            int maxHealth = ((ExLivingEntity) this.client.player).getMaxHealth();
+            int maxHealth = ((ExLivingEntity) this.minecraft.player).getMaxHealth();
 
             GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.client.textureManager.getTextureId("/gui/gui.png"));
-            PlayerInventory var11 = this.client.player.inventory;
-            this.zOffset = -90.0F;
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.minecraft.textures.loadTexture("/gui/gui.png"));
+            Inventory var11 = this.minecraft.player.inventory;
+            this.blitOffset = -90.0F;
             this.blit(screenWidth / 2 - 91, screenHeight - 22, 0, 0, 182, 22);
             this.blit(screenWidth / 2 - 91 - 1 + ((ExPlayerInventory) var11).getOffhandItem() * 20, screenHeight - 22 - 1, 24, 22, 48, 22);
-            this.blit(screenWidth / 2 - 91 - 1 + var11.selectedHotBarSlot * 20, screenHeight - 22 - 1, 0, 22, 24, 22);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.client.textureManager.getTextureId("/gui/icons.png"));
+            this.blit(screenWidth / 2 - 91 - 1 + var11.selected * 20, screenHeight - 22 - 1, 0, 22, 24, 22);
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.minecraft.textures.loadTexture("/gui/icons.png"));
             GL11.glEnable(GL11.GL_BLEND);
             GL11.glBlendFunc(GL11.GL_ONE_MINUS_DST_COLOR, GL11.GL_ONE_MINUS_SRC_COLOR);
             this.blit(screenWidth / 2 - 7, screenHeight / 2 - 7, 0, 0, 16, 16);
             GL11.glDisable(GL11.GL_BLEND);
-            boolean isChatOpen = this.client.player.field_1613 / 3 % 2 == 1;
-            if (this.client.player.field_1613 < 10) {
+            boolean isChatOpen = this.minecraft.player.invulnerableTime / 3 % 2 == 1;
+            if (this.minecraft.player.invulnerableTime < 10) {
                 isChatOpen = false;
             }
 
-            int playerHealth = this.client.player.health;
-            int playerPrevHealth = this.client.player.prevHealth;
-            this.rand.setSeed(this.ticksRan * 312871);
+            int playerHealth = this.minecraft.player.health;
+            int playerPrevHealth = this.minecraft.player.lastHealth;
+            this.random.setSeed(this.tickCount * 312871);
 
-            if (this.client.interactionManager.method_1722()) {
-                int playerArmor = this.client.player.getArmorValue();
+            if (this.minecraft.gameMode.canHurtPlayer()) {
+                int playerArmor = this.minecraft.player.getArmor();
 
                 for (int armorIndex = 0; armorIndex < 10; ++armorIndex) {
                     int y = screenHeight - 32;
@@ -176,7 +183,7 @@ public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
 
                     int healthX = screenWidth / 2 - 91 + armorIndex * 8;
                     if (playerHealth <= 8) {
-                        y += this.rand.nextInt(2);
+                        y += this.random.nextInt(2);
                     }
 
                     for (int healthIndex = 0; healthIndex <= (maxHealth - 1) / 40; ++healthIndex) {
@@ -214,10 +221,10 @@ public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
                 }
             }
 
-            if (this.client.player.isInFluid(Material.WATER)) {
+            if (this.minecraft.player.isUnderLiquid(Material.WATER)) {
                 int healthYOffset = -9 * ((maxHealth - 1) / 40);
-                int alpha = (int) Math.ceil((double) (this.client.player.air - 2) * 10.0D / 300.0D);
-                int airUsed = (int) Math.ceil((double) this.client.player.air * 10.0D / 300.0D) - alpha;
+                int alpha = (int) Math.ceil((double) (this.minecraft.player.airSupply - 2) * 10.0D / 300.0D);
+                int airUsed = (int) Math.ceil((double) this.minecraft.player.airSupply * 10.0D / 300.0D) - alpha;
 
                 for (int bubbleIndex = 0; bubbleIndex < alpha + airUsed; ++bubbleIndex) {
                     if (bubbleIndex < alpha) {
@@ -234,23 +241,23 @@ public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
             GL11.glEnable(GL12.GL_RESCALE_NORMAL);
             GL11.glPushMatrix();
             GL11.glRotatef(120.0F, 1.0F, 0.0F, 0.0F);
-            RenderHelper.enableLighting();
+            Lighting.turnOn();
             GL11.glPopMatrix();
 
             for (int slot = 0; slot < 9; ++slot) {
                 int x = screenWidth / 2 - 90 + slot * 20 + 2;
                 int y = screenHeight - 16 - 3;
-                this.renderHotBarSlot(slot, x, y, var1);
+                this.renderSlot(slot, x, y, var1);
             }
 
-            RenderHelper.disableLighting();
+            Lighting.turnOff();
             GL11.glDisable(GL12.GL_RESCALE_NORMAL);
         }
 
-        if (this.client.player.getSleepTimer() > 0) {
+        if (this.minecraft.player.getSleepTimer() > 0) {
             GL11.glDisable(GL11.GL_DEPTH_TEST);
             GL11.glDisable(GL11.GL_ALPHA_TEST);
-            int sleepTimer = this.client.player.getSleepTimer();
+            int sleepTimer = this.minecraft.player.getSleepTimer();
             float sleepFactor = (float) sleepTimer / 100.0F;
             if (sleepFactor > 1.0F) {
                 sleepFactor = 1.0F - (float) (sleepTimer - 100) / 10.0F;
@@ -262,64 +269,64 @@ public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
             GL11.glEnable(GL11.GL_DEPTH_TEST);
         }
 
-        if (this.client.options.debugHud) {
+        if (this.minecraft.options.renderDebug) {
             GL11.glPushMatrix();
-            if (Minecraft.isPremiumCheckTime > 0L) {
+            if (Minecraft.sessionTime > 0L) {
                 GL11.glTranslatef(0.0F, 32.0F, 0.0F);
             }
 
-            textRenderer.drawTextWithShadow("Minecraft Beta 1.7.3 (" + this.client.fpsDebugString + ")", 2, 2, 16777215);
-            textRenderer.drawTextWithShadow(this.client.getDebugFirstLine(), 2, 12, 16777215);
-            textRenderer.drawTextWithShadow(this.client.getDebugSecondLine(), 2, 22, 16777215);
-            textRenderer.drawTextWithShadow(this.client.getDebugThirdLine(), 2, 32, 16777215);
-            textRenderer.drawTextWithShadow(this.client.getDebugFourthLine(), 2, 42, 16777215);
+            textRenderer.drawShadow("Minecraft Beta 1.7.3 (" + this.minecraft.fpsString + ")", 2, 2, 16777215);
+            textRenderer.drawShadow(this.minecraft.getChunkStatistics(), 2, 12, 16777215);
+            textRenderer.drawShadow(this.minecraft.getEntityStatistics(), 2, 22, 16777215);
+            textRenderer.drawShadow(this.minecraft.getParticleStatistics(), 2, 32, 16777215);
+            textRenderer.drawShadow(this.minecraft.getDebugInfo(), 2, 42, 16777215);
 
             long maxMem = Runtime.getRuntime().maxMemory();
             long totMem = Runtime.getRuntime().totalMemory();
             long freeMem = Runtime.getRuntime().freeMemory();
             long usedMem = totMem - freeMem;
             String var39 = "Used memory: " + usedMem * 100L / maxMem + "% (" + usedMem / 1024L / 1024L + "MB) of " + maxMem / 1024L / 1024L + "MB";
-            this.drawTextWithShadow(textRenderer, var39, screenWidth - textRenderer.getTextWidth(var39) - 2, 2, 14737632);
+            this.drawString(textRenderer, var39, screenWidth - textRenderer.width(var39) - 2, 2, 14737632);
             var39 = "Allocated memory: " + totMem * 100L / maxMem + "% (" + totMem / 1024L / 1024L + "MB)";
 
-            this.drawTextWithShadow(textRenderer, var39, screenWidth - textRenderer.getTextWidth(var39) - 2, 12, 14737632);
-            this.drawTextWithShadow(textRenderer, "x: " + this.client.player.x, 2, 64, 14737632);
-            this.drawTextWithShadow(textRenderer, "y: " + this.client.player.y, 2, 72, 14737632);
-            this.drawTextWithShadow(textRenderer, "z: " + this.client.player.z, 2, 80, 14737632);
-            this.drawTextWithShadow(textRenderer, "f: " + (MathHelper.floor((double) (this.client.player.yaw * 4.0F / 360.0F) + 0.5D) & 3), 2, 88, 14737632);
+            this.drawString(textRenderer, var39, screenWidth - textRenderer.width(var39) - 2, 12, 14737632);
+            this.drawString(textRenderer, "x: " + this.minecraft.player.x, 2, 64, 14737632);
+            this.drawString(textRenderer, "y: " + this.minecraft.player.y, 2, 72, 14737632);
+            this.drawString(textRenderer, "z: " + this.minecraft.player.z, 2, 80, 14737632);
+            this.drawString(textRenderer, "f: " + (Mth.floor((double) (this.minecraft.player.yRot * 4.0F / 360.0F) + 0.5D) & 3), 2, 88, 14737632);
 
-            boolean useWorldGenImages = ((ExWorldProperties) this.client.world.properties).getWorldGenProps().useImages;
-            this.drawTextWithShadow(textRenderer, String.format("Use Terrain Images: %b", useWorldGenImages), 2, 96, 14737632);
+            boolean useWorldGenImages = ((ExWorldProperties) this.minecraft.level.levelData).getWorldGenProps().useImages;
+            this.drawString(textRenderer, String.format("Use Terrain Images: %b", useWorldGenImages), 2, 96, 14737632);
 
-            var exPlayer = (ExEntity) this.client.player;
-            this.drawTextWithShadow(textRenderer, String.format("Collide X: %d Z: %d", exPlayer.getCollisionX(), exPlayer.getCollisionZ()), 2, 104, 14737632);
+            var exPlayer = (ExEntity) this.minecraft.player;
+            this.drawString(textRenderer, String.format("Collide X: %d Z: %d", exPlayer.getCollisionX(), exPlayer.getCollisionZ()), 2, 104, 14737632);
 
             if (useWorldGenImages) {
-                int var40 = (int) this.client.player.x;
-                int var21 = (int) this.client.player.z;
+                int var40 = (int) this.minecraft.player.x;
+                int var21 = (int) this.minecraft.player.z;
                 int var22 = AC_TerrainImage.getTerrainHeight(var40, var21);
                 int var23 = AC_TerrainImage.getWaterHeight(var40, var21);
                 double var24 = AC_TerrainImage.getTerrainTemperature(var40, var21);
                 double var26 = AC_TerrainImage.getTerrainHumidity(var40, var21);
-                this.drawTextWithShadow(textRenderer, String.format("T: %d W: %d Temp: %.2f Humid: %.2f", var22, var23, var24, var26), 2, 112, 14737632);
+                this.drawString(textRenderer, String.format("T: %d W: %d Temp: %.2f Humid: %.2f", var22, var23, var24, var26), 2, 112, 14737632);
             }
 
             GL11.glPopMatrix();
         } else {
-            textRenderer.drawTextWithShadow(AC_Version.shortVersion, 2, 2, 16777215);
-            int y = 12;
+            int y = 0; // 12 prev
             if (AC_DebugMode.active) {
-                textRenderer.drawTextWithShadow("Debug Active", 2, y, 16777215);
-                y += 10;
+                textRenderer.drawShadow(AC_Version.shortVersion, 2, 2, 16777215);
+                textRenderer.drawShadow("Debug Active", 2, 12, 16777215);
+                y += 22;
             }
 
             if (AC_DebugMode.levelEditing) {
-                textRenderer.drawTextWithShadow("Map Editing", 2, y, 16777215);
+                textRenderer.drawShadow("Map Editing", 2, y, 16777215);
             }
         }
 
-        if (this.jukeboxMessageTime > 0) {
-            float var32 = (float) this.jukeboxMessageTime - var1;
+        if (this.nowPlayingTime > 0) {
+            float var32 = (float) this.nowPlayingTime - var1;
             int alpha = (int) (var32 * 256.0F / 20.0F);
             if (alpha > 255) {
                 alpha = 255;
@@ -331,11 +338,11 @@ public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
                 GL11.glEnable(GL11.GL_BLEND);
                 GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
                 int color = 16777215;
-                if (this.isRecordPlaying) {
+                if (this.animateOverlayMessageColor) {
                     color = Color.HSBtoRGB(var32 / 50.0F, 0.7F, 0.6F) & 16777215;
                 }
 
-                textRenderer.drawText(this.jukeboxMessage, -textRenderer.getTextWidth(this.jukeboxMessage) / 2, -4, color + (alpha << 24));
+                textRenderer.draw(this.nowPlayingString, -textRenderer.width(this.nowPlayingString) / 2, -4, color + (alpha << 24));
                 GL11.glDisable(GL11.GL_BLEND);
                 GL11.glPopMatrix();
             }
@@ -345,7 +352,7 @@ public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GL11.glDisable(GL11.GL_ALPHA_TEST);
         GL11.glDisable(GL11.GL_DEPTH_TEST);
-        this.scriptUI.render(textRenderer, this.client.textureManager, var1);
+        this.scriptUI.render(textRenderer, this.minecraft.textures, var1);
         GL11.glEnable(GL11.GL_DEPTH_TEST);
 
         this.renderChat(screenHeight);
@@ -354,14 +361,17 @@ public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
     }
 
     private void renderChat(int screenHeight) {
-        var exTextRenderer = (ExTextRenderer) this.client.textRenderer;
+        var exTextRenderer = (ExTextRenderer) this.minecraft.font;
         ArrayDeque<AC_ChatMessage> messages = this.chatMessages;
 
+        final int marginLeft = 1;
+        final int marginRight = 1;
         final int messageSpacing = 2;
+        final int lineHeight = 9;
 
         final int maxChatHeight;
         final boolean isChatOpen;
-        if (this.client.currentScreen instanceof ChatScreen) {
+        if (this.minecraft.screen instanceof ChatScreen) {
             maxChatHeight = 200;
             isChatOpen = true;
         } else {
@@ -381,7 +391,7 @@ public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
             }
 
             for (int i = message.lines.size() - 1; i >= 0; i--) {
-                chatHeight += 9;
+                chatHeight += lineHeight;
                 if (chatHeight >= maxChatHeight) {
                     break;
                 }
@@ -400,7 +410,6 @@ public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
 
         TextRendererState textState = exTextRenderer.createState();
         textState.bindTexture();
-        textState.setShadow(true);
         textState.setShadowOffset(1, 1);
 
         for (AC_ChatMessage message : messages) {
@@ -413,26 +422,33 @@ public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
             }
 
             String text = message.text;
-            int color = 16777215 + (alpha << 24);
+            int color = Rgba.withAlpha(0xffffff, alpha);
             textState.setColor(color);
-            textState.setShadowColor(ExTextRenderer.getShadowColor(color));
+            textState.setShadow(ExTextRenderer.getShadowColor(color));
 
-            int yBase = (screenHeight - 48) - yOffset - (message.lines.size() - 1) * 9;
-            for (int i = 0; i < message.lines.size(); i++) {
-                AC_ChatMessage.Line line = message.lines.get(i);
-                int y = yBase + i * 9;
+            int xStart = x - marginLeft;
+            int xEnd = x + CHAT_WIDTH + marginRight;
 
-                this.fill(x, y - 1, x + CHAT_WIDTH, y + 8, alpha / 2 << 24);
-                GL11.glEnable(GL11.GL_BLEND);
-                textState.begin(Tessellator.INSTANCE);
-                textState.drawText(text, line.start(), line.end(), x, y);
-                textState.end();
+            int msgHeight = message.lines.size() * lineHeight;
+            int yBase = (screenHeight - 48) - msgHeight - yOffset;
+            int yEnd = yBase + msgHeight + 1;
+            int y = yBase + 1;
 
-                yOffset += 9;
+            this.fill(xStart, yBase, xEnd, yEnd, alpha / 2 << 24);
+            GL11.glEnable(GL11.GL_BLEND);
+
+            var ts = Tesselator.instance;
+            textState.begin(ts);
+            for (AC_ChatMessage.Line line : message.lines) {
+                textState.drawText(ts, text, line.start(), line.end(), x, y);
+
+                y += lineHeight;
+                yOffset += lineHeight;
                 if (yOffset >= maxChatHeight) {
                     break;
                 }
             }
+            textState.end(ts);
 
             if (yOffset >= maxChatHeight) {
                 break;
@@ -465,27 +481,27 @@ public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
         return alpha;
     }
 
-    @Inject(method = "runTick", at = @At("HEAD"))
+    @Inject(method = "tick", at = @At("HEAD"))
     private void runTick(CallbackInfo ci) {
         for (AC_ChatMessage message : this.chatMessages) {
             message.age += 1;
         }
     }
 
-    @Inject(method = "clearChat", at = @At("HEAD"))
+    @Inject(method = "clearMessages", at = @At("HEAD"))
     private void clearChat(CallbackInfo ci) {
         chatMessages.clear();
     }
 
     @Overwrite
-    public void addChatMessage(String message) {
+    public void addMessage(String message) {
         ACMod.CHAT_LOGGER.info(colorCodesToAnsi(message, 0, message.length()).toString());
 
         var entry = new AC_ChatMessage(message);
-        entry.rebuild((ExTextRenderer) this.client.textRenderer, CHAT_WIDTH);
+        entry.rebuild((ExTextRenderer) this.minecraft.font, CHAT_WIDTH);
         this.chatMessages.addFirst(entry);
 
-        int bufferLimit = ((ExGameOptions) client.options).getChatMessageBufferLimit();
+        int bufferLimit = ((ExGameOptions) minecraft.options).getChatMessageBufferLimit();
         while (this.chatMessages.size() > bufferLimit) {
             this.chatMessages.removeLast();
         }
@@ -497,7 +513,7 @@ public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
         for (int i = start; i < end; ++i) {
             char c = text.charAt(i);
             if (end > i + 1 && c == '§') {
-                int colorIndex = "0123456789abcdef".indexOf(Character.toLowerCase(text.charAt(i + 1)));
+                int colorIndex = HexConvert.fromHexDigit(text.charAt(i + 1));
                 if (colorIndex < 0 || colorIndex > 15) {
                     colorIndex = 15;
                 }
@@ -518,14 +534,14 @@ public abstract class MixinInGameHud extends GuiElement implements ExInGameHud {
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
         GL11.glDisable(GL11.GL_ALPHA_TEST);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.client.textureManager.getTextureId("/overlays/" + name));
-        Tessellator ts = Tessellator.INSTANCE;
-        ts.start();
-        ts.vertex(0.0D, y, -90.0D, 0.0D, 1.0D);
-        ts.vertex(x, y, -90.0D, 1.0D, 1.0D);
-        ts.vertex(x, 0.0D, -90.0D, 1.0D, 0.0D);
-        ts.vertex(0.0D, 0.0D, -90.0D, 0.0D, 0.0D);
-        ts.tessellate();
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.minecraft.textures.loadTexture("/overlays/" + name));
+        Tesselator ts = Tesselator.instance;
+        ts.begin();
+        ts.vertexUV(0.0D, y, -90.0D, 0.0D, 1.0D);
+        ts.vertexUV(x, y, -90.0D, 1.0D, 1.0D);
+        ts.vertexUV(x, 0.0D, -90.0D, 1.0D, 0.0D);
+        ts.vertexUV(0.0D, 0.0D, -90.0D, 0.0D, 0.0D);
+        ts.end();
         GL11.glDepthMask(true);
         GL11.glEnable(GL11.GL_DEPTH_TEST);
         GL11.glEnable(GL11.GL_ALPHA_TEST);

@@ -1,16 +1,15 @@
 package dev.adventurecraft.awakening.client.gui;
 
 import dev.adventurecraft.awakening.ACMod;
-import net.minecraft.client.gui.GuiElement;
-import net.minecraft.client.gui.widgets.OptionButtonWidget;
-import net.minecraft.client.gui.widgets.SliderWidget;
-import net.minecraft.client.options.Option;
-import net.minecraft.client.resource.language.TranslationStorage;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import net.minecraft.client.Option;
+import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.gui.components.OptionButton;
+import net.minecraft.client.gui.components.SliderButton;
+import net.minecraft.locale.I18n;
 
 public interface OptionTooltipProvider {
 
@@ -18,16 +17,16 @@ public interface OptionTooltipProvider {
 
     Option[] getOptions();
 
-    default List<String> getTooltipLines(GuiElement element) {
-        TranslationStorage ts = TranslationStorage.getInstance();
-        if (element instanceof OptionButtonWidget button) {
+    default List<String> getTooltipLines(GuiComponent element) {
+        I18n ts = I18n.getInstance();
+        if (element instanceof OptionButton button) {
             Option option = button.getOption();
-            String value = ts.translate(option.getTranslationKey() + ".tooltip");
+            String value = ts.get(option.getCaptionId() + ".tooltip");
             return parseOptionTooltip(value);
         }
-        if (element instanceof SliderWidget slider) {
+        if (element instanceof SliderButton slider) {
             Option option = slider.option;
-            String value = ts.translate(option.getTranslationKey() + ".tooltip");
+            String value = ts.get(option.getCaptionId() + ".tooltip");
             return parseOptionTooltip(value);
         }
         return null;

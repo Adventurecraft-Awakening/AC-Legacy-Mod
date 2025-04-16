@@ -4,7 +4,7 @@ import dev.adventurecraft.awakening.ACMainThread;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.options.GameOptions;
+import net.minecraft.client.Options;
 import org.lwjgl.Sys;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.MemoryUtil;
@@ -63,14 +63,7 @@ public class Config {
                 GL11.glEnable(33346 /* GL_DEBUG_OUTPUT_SYNCHRONOUS */);
             }
 
-            int severityControl = switch (ACMainThread.glDebugLogSeverity) {
-                case High -> ARBDebugOutput.GL_DEBUG_SEVERITY_HIGH_ARB;
-                case Medium -> ARBDebugOutput.GL_DEBUG_SEVERITY_MEDIUM_ARB;
-                case Low -> ARBDebugOutput.GL_DEBUG_SEVERITY_LOW_ARB;
-                case Info -> GL_DEBUG_SEVERITY_NOTIFICATION;
-                case All -> GL11.GL_DONT_CARE;
-                default -> throw new AssertionError();
-            };
+            int severityControl = getOpenGlSeverity(ACMainThread.glDebugLogSeverity);
 
             ARBDebugOutput.glDebugMessageCallbackARB(Config::debugMessageCallback, 0);
             ARBDebugOutput.nglDebugMessageControlARB(
@@ -80,6 +73,12 @@ public class Config {
 
     private static void debugMessageCallback(
         int source, int type, int id, int severity, int length, long message, long userParam) {
+
+        int logSeverity = getOpenGlSeverity(ACMainThread.glDebugLogSeverity);
+        if (logSeverity < severity) {
+           return;
+        }
+
         Logger glLog = ACMod.GL_LOGGER;
         String sSrc = getSourceName(source);
         String sType = getTypeName(type);
@@ -106,6 +105,17 @@ public class Config {
             }
             default -> glLog.warn(format, severity, sSrc, sType, id, sMsg, new Exception());
         }
+    }
+
+    private static int getOpenGlSeverity(ACMainThread.GlDebugSeverity severity) {
+        return switch (severity) {
+            case High -> ARBDebugOutput.GL_DEBUG_SEVERITY_HIGH_ARB;
+            case Medium -> ARBDebugOutput.GL_DEBUG_SEVERITY_MEDIUM_ARB;
+            case Low -> ARBDebugOutput.GL_DEBUG_SEVERITY_LOW_ARB;
+            case Info -> GL_DEBUG_SEVERITY_NOTIFICATION;
+            case All -> GL11.GL_DONT_CARE;
+            default -> throw new AssertionError();
+        };
     }
 
     private static String getSourceName(int value) {
@@ -180,7 +190,7 @@ public class Config {
             String.join(",", list));
     }
 
-    private static GameOptions getOptions() {
+    private static Options getOptions() {
         var instance = Minecraft.instance;
         if (instance == null) {
             return null;

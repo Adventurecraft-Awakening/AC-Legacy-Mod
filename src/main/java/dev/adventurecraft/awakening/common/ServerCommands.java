@@ -8,6 +8,9 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.tree.CommandNode;
+import dev.adventurecraft.awakening.common.gui.AC_GuiMapEditHUD;
+import dev.adventurecraft.awakening.common.gui.AC_GuiScriptStats;
+import dev.adventurecraft.awakening.common.gui.AC_GuiWorldConfig;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.render.ExWorldEventRenderer;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
@@ -15,13 +18,13 @@ import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 
 import static dev.adventurecraft.awakening.common.CommandUtils.*;
 
@@ -155,7 +158,7 @@ public class ServerCommands {
         var source = context.getSource();
         var world = source.getWorld();
         if (world != null) {
-            source.getClient().openScreen(new AC_GuiWorldConfig(world));
+            source.getClient().setScreen(new AC_GuiWorldConfig(world));
             return Command.SINGLE_SUCCESS;
         }
         return 0;
@@ -165,7 +168,7 @@ public class ServerCommands {
         var source = context.getSource();
         var world = source.getWorld();
         if (world != null) {
-            source.getClient().openScreen(new AC_GuiMapEditHUD(world));
+            source.getClient().setScreen(new AC_GuiMapEditHUD(world));
             return Command.SINGLE_SUCCESS;
         }
         return 0;
@@ -175,7 +178,7 @@ public class ServerCommands {
         var source = context.getSource();
         var world = source.getWorld();
         if (world != null) {
-            source.getClient().openScreen(new AC_GuiScriptStats(world));
+            source.getClient().setScreen(new AC_GuiScriptStats(world));
             return Command.SINGLE_SUCCESS;
         }
         return 0;
@@ -206,16 +209,16 @@ public class ServerCommands {
             int mobCount = 0;
             int count = 0;
             for (Entity entity : (List<Entity>) world.entities) {
-                if (entity instanceof LivingEntity && !(entity instanceof PlayerEntity)) {
+                if (entity instanceof LivingEntity && !(entity instanceof Player)) {
                     mobCount++;
                     if (!entity.removed) {
-                        entity.removed = true;
+                        entity.remove();
                         count++;
                     }
                 }
             }
 
-            source.getClient().overlay.addChatMessage(String.format("Removed %d out of %d mobs", count, mobCount));
+            source.getClient().gui.addMessage(String.format("Removed %d out of %d mobs", count, mobCount));
             return count;
         }
         return 0;
@@ -229,10 +232,10 @@ public class ServerCommands {
             activeCamera.clearPoints();
             activeCamera.loadCameraEntities();
 
-            client.overlay.addChatMessage(String.format("Cleared %d camera points", pointCount));
+            client.gui.addMessage(String.format("Cleared %d camera points", pointCount));
             return pointCount;
         }
-        client.overlay.addChatMessage("Need to be editing a camera block");
+        client.gui.addMessage("Need to be editing a camera block");
         return 0;
     }
 
@@ -241,9 +244,9 @@ public class ServerCommands {
         var world = source.getWorld();
         if (world != null) {
             for (int i = 0; i < 16; ++i) {
-                world.dimension.lightTable[i] = 1.0F;
+                world.dimension.brightnessRamp[i] = 1.0F;
             }
-            ((ExWorldEventRenderer) source.getClient().worldRenderer).updateAllTheRenderers();
+            ((ExWorldEventRenderer) source.getClient().levelRenderer).updateAllTheRenderers();
 
             return Command.SINGLE_SUCCESS;
         }
@@ -254,13 +257,13 @@ public class ServerCommands {
         var source = context.getSource();
         var world = source.getWorld();
         if (world instanceof ExWorld exWorld) {
-            var infos = exWorld.getScriptHandler().scripts.values();
+            var infos = exWorld.getScriptHandler().getScripts();
             int count = infos.size();
             for (AC_JScriptInfo info : infos) {
                 info.clear();
             }
 
-            source.getClient().overlay.addChatMessage(String.format("Reset %d script stats", count));
+            source.getClient().gui.addMessage(String.format("Reset %d script stats", count));
             return count;
         }
         return 0;
@@ -296,7 +299,7 @@ public class ServerCommands {
                 undoStack.undo(world);
             }
 
-            source.getClient().overlay.addChatMessage(String.format(
+            source.getClient().gui.addMessage(String.format(
                 "Undone %d actions (Undos left: %d, Redos left: %d)",
                 count,
                 undoStack.undoStack.size(),
@@ -320,7 +323,7 @@ public class ServerCommands {
                 undoStack.redo(world);
             }
 
-            source.getClient().overlay.addChatMessage(String.format(
+            source.getClient().gui.addMessage(String.format(
                 "Redone %d actions (Undos left: %d, Redos left: %d)",
                 count,
                 undoStack.undoStack.size(),
@@ -334,7 +337,7 @@ public class ServerCommands {
         var client = context.getSource().getClient();
         AC_DebugMode.levelEditing = value != null ? value : !AC_DebugMode.levelEditing;
 
-        client.overlay.addChatMessage(String.format("Level Editing: %b", AC_DebugMode.levelEditing));
+        client.gui.addMessage(String.format("Level Editing: %b", AC_DebugMode.levelEditing));
         return Command.SINGLE_SUCCESS;
     }
 
@@ -342,7 +345,7 @@ public class ServerCommands {
         var client = context.getSource().getClient();
         AC_DebugMode.renderPaths = value != null ? value : !AC_DebugMode.renderPaths;
 
-        client.overlay.addChatMessage(String.format("Render Paths: %b", AC_DebugMode.renderPaths));
+        client.gui.addMessage(String.format("Render Paths: %b", AC_DebugMode.renderPaths));
         return Command.SINGLE_SUCCESS;
     }
 
@@ -350,7 +353,7 @@ public class ServerCommands {
         var client = context.getSource().getClient();
         AC_DebugMode.renderFov = value != null ? value : !AC_DebugMode.renderFov;
 
-        client.overlay.addChatMessage(String.format("Render FOV: %b", AC_DebugMode.renderFov));
+        client.gui.addMessage(String.format("Render FOV: %b", AC_DebugMode.renderFov));
         return Command.SINGLE_SUCCESS;
     }
 
@@ -358,7 +361,7 @@ public class ServerCommands {
         var client = context.getSource().getClient();
         AC_DebugMode.renderCollisions = value != null ? value : !AC_DebugMode.renderCollisions;
 
-        client.overlay.addChatMessage(String.format("Render Collisions: %b", AC_DebugMode.renderCollisions));
+        client.gui.addMessage(String.format("Render Collisions: %b", AC_DebugMode.renderCollisions));
         return Command.SINGLE_SUCCESS;
     }
 
@@ -366,7 +369,7 @@ public class ServerCommands {
         var client = context.getSource().getClient();
         AC_DebugMode.renderRays = value != null ? value : !AC_DebugMode.renderRays;
 
-        client.overlay.addChatMessage(String.format("Render Rays: %b", AC_DebugMode.renderRays));
+        client.gui.addMessage(String.format("Render Rays: %b", AC_DebugMode.renderRays));
         return Command.SINGLE_SUCCESS;
     }
 
@@ -374,7 +377,7 @@ public class ServerCommands {
         var client = context.getSource().getClient();
         AC_DebugMode.isFluidHittable = value != null ? value : !AC_DebugMode.isFluidHittable;
 
-        client.overlay.addChatMessage(String.format("Fluid Collision: %b", AC_DebugMode.isFluidHittable));
+        client.gui.addMessage(String.format("Fluid Collision: %b", AC_DebugMode.isFluidHittable));
         return Command.SINGLE_SUCCESS;
     }
 
@@ -384,7 +387,7 @@ public class ServerCommands {
         if (entity instanceof ExEntity exEntity) {
             exEntity.setIsFlying(value != null ? value : !exEntity.handleFlying());
 
-            source.getClient().overlay.addChatMessage(String.format("Flying: %b", exEntity.handleFlying()));
+            source.getClient().gui.addMessage(String.format("Flying: %b", exEntity.handleFlying()));
             return Command.SINGLE_SUCCESS;
         }
         return 0;
@@ -394,12 +397,12 @@ public class ServerCommands {
         var source = context.getSource();
         var entity = source.getEntity();
         if (entity instanceof ExEntity exEntity) {
-            entity.field_1642 = value != null ? value : !entity.field_1642;
-            if (entity.field_1642) {
+            entity.noPhysics = value != null ? value : !entity.noPhysics;
+            if (entity.noPhysics) {
                 exEntity.setIsFlying(true);
             }
 
-            source.getClient().overlay.addChatMessage(String.format("NoClip: %b", entity.field_1642));
+            source.getClient().gui.addMessage(String.format("NoClip: %b", entity.noPhysics));
             return Command.SINGLE_SUCCESS;
         }
         return 0;
@@ -409,10 +412,10 @@ public class ServerCommands {
         var source = context.getSource();
         var world = source.getWorld();
         if (world != null) {
-            var props = (ExWorldProperties) world.properties;
+            var props = (ExWorldProperties) world.levelData;
             props.setIceMelts(value != null ? value : !props.getIceMelts());
 
-            source.getClient().overlay.addChatMessage(String.format("Ice Melts: %b", props.getIceMelts()));
+            source.getClient().gui.addMessage(String.format("Ice Melts: %b", props.getIceMelts()));
             return Command.SINGLE_SUCCESS;
         }
         return 0;
@@ -422,10 +425,10 @@ public class ServerCommands {
         var source = context.getSource();
         var world = source.getWorld();
         if (world != null) {
-            var props = (ExWorldProperties) world.properties;
+            var props = (ExWorldProperties) world.levelData;
             props.setLeavesDecay(value != null ? value : !props.getLeavesDecay());
 
-            source.getClient().overlay.addChatMessage(String.format("Leaves Decay: %b", props.getLeavesDecay()));
+            source.getClient().gui.addMessage(String.format("Leaves Decay: %b", props.getLeavesDecay()));
             return Command.SINGLE_SUCCESS;
         }
         return 0;
@@ -435,10 +438,10 @@ public class ServerCommands {
         var source = context.getSource();
         var world = source.getWorld();
         if (world != null) {
-            var props = (ExWorldProperties) world.properties;
+            var props = (ExWorldProperties) world.levelData;
             props.setMobsBurn(value != null ? value : !props.getMobsBurn());
 
-            source.getClient().overlay.addChatMessage(String.format("Mobs Burn in Daylight: %b", props.getMobsBurn()));
+            source.getClient().gui.addMessage(String.format("Mobs Burn in Daylight: %b", props.getMobsBurn()));
             return Command.SINGLE_SUCCESS;
         }
         return 0;
@@ -452,15 +455,15 @@ public class ServerCommands {
         AC_CutsceneCamera activeCamera = ((ExMinecraft) client).getActiveCutsceneCamera();
         if (activeCamera != null) {
             float x = (float) entity.x;
-            float y = (float) (entity.y - (double) entity.standingEyeHeight + 1.62D);
+            float y = (float) (entity.y - (double) entity.heightOffset + 1.62D);
             float z = (float) entity.z;
-            activeCamera.addCameraPoint(time, x, y, z, entity.yaw, entity.pitch, AC_CutsceneCameraBlendType.QUADRATIC);
+            activeCamera.addCameraPoint(time, x, y, z, entity.yRot, entity.xRot, AC_CutsceneCameraBlendType.QUADRATIC);
             activeCamera.loadCameraEntities();
 
-            client.overlay.addChatMessage("Camera point added");
+            client.gui.addMessage("Camera point added");
             return Command.SINGLE_SUCCESS;
         }
-        client.overlay.addChatMessage("Need to be editing a camera block");
+        client.gui.addMessage("Need to be editing a camera block");
         return 0;
     }
 
@@ -477,7 +480,7 @@ public class ServerCommands {
 
         var usageMap = dispatcher.getSmartUsage(dispatcher.getRoot(), source);
         int pageCount = (usageMap.size() + commandsPerPage - 1) / commandsPerPage;
-        client.overlay.addChatMessage(String.format("§2Help page %d out of %d:", currentPage + 1, pageCount));
+        client.gui.addMessage(String.format("§2Help page %d out of %d:", currentPage + 1, pageCount));
 
         int logCount = usageMap.keySet().stream()
             .skip((long) currentPage * commandsPerPage)
@@ -497,7 +500,7 @@ public class ServerCommands {
                     createCommandTree(child, descriptions, "  ", lines);
                 }
 
-                client.overlay.addChatMessage(String.join("\n", lines));
+                client.gui.addMessage(String.join("\n", lines));
                 return 1;
             }).reduce(0, Integer::sum);
         return logCount;
@@ -560,7 +563,7 @@ public class ServerCommands {
             lines.add(String.format("§cNo command node for \"§f%s§c\"", path));
             result = 0;
         }
-        client.overlay.addChatMessage(String.join("\n", lines));
+        client.gui.addMessage(String.join("\n", lines));
         return result;
     }
 
@@ -570,7 +573,7 @@ public class ServerCommands {
         if (world instanceof ExWorld exWorld) {
             var undoStack = exWorld.getUndoStack();
 
-            source.getClient().overlay.addChatMessage(String.format(
+            source.getClient().gui.addMessage(String.format(
                 "Undos left: %d, Redos left: %d",
                 undoStack.undoStack.size(),
                 undoStack.redoStack.size()));
@@ -588,7 +591,7 @@ public class ServerCommands {
             int redoCount = undoStack.redoStack.size();
             undoStack.clear();
 
-            source.getClient().overlay.addChatMessage(String.format(
+            source.getClient().gui.addMessage(String.format(
                 "Undos cleared: %d, Redos cleared: %d", undoCount, redoCount));
             return Command.SINGLE_SUCCESS;
         }

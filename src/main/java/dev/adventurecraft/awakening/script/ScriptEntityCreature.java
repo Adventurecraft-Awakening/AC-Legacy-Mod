@@ -1,36 +1,36 @@
 package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.extension.entity.ExMobEntity;
-import net.minecraft.entity.MobEntity;
+import net.minecraft.world.entity.Mob;
 
 @SuppressWarnings("unused")
 public class ScriptEntityCreature extends ScriptEntityLiving {
 
-    MobEntity mob;
+    Mob mob;
 
-    ScriptEntityCreature(MobEntity var1) {
+    ScriptEntityCreature(Mob var1) {
         super(var1);
         this.mob = var1;
     }
 
     public void setTarget(ScriptEntity var1) {
-        this.mob.method_636(var1.entity);
+        this.mob.setTarget(var1.entity);
     }
 
     public ScriptEntity getTarget() {
-        return ScriptEntity.getEntityClass(this.mob.method_634());
+        return ScriptEntity.getEntityClass(this.mob.getTarget());
     }
 
     public boolean hasPath() {
-        return this.mob.method_633();
+        return this.mob.hasPath();
     }
 
     public void pathToEntity(ScriptEntity var1) {
-        this.mob.setTarget(this.mob.world.findPathTo(this.mob, var1.entity, 1.0F));
+        this.mob.setPath(this.mob.level.findPath(this.mob, var1.entity, 1.0F));
     }
 
     public void pathToBlock(int var1, int var2, int var3) {
-        this.mob.setTarget(this.mob.world.method_189(this.mob, var1, var2, var3, 1.0F));
+        this.mob.setPath(this.mob.level.findPath(this.mob, var1, var2, var3, 1.0F));
     }
 
     public boolean getCanForgetTargetRandomly() {

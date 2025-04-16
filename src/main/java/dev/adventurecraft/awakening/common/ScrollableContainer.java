@@ -1,27 +1,26 @@
 package dev.adventurecraft.awakening.common;
 
-import net.minecraft.container.Container;
-import net.minecraft.container.slot.Slot;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
-
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.world.Container;
+import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
 
-public class ScrollableContainer extends Container {
+public class ScrollableContainer extends AbstractContainerMenu {
 
-    private final Inventory scrollableInventory;
+    private final Container scrollableInventory;
     private final int slotHeight;
     private final int rowCount;
 
     private final List<Slot> staticSlots;
     private final List<Slot> scrollableSlots;
 
-    public ScrollableContainer(Inventory staticInventory, Inventory scrollableInventory, int slotHeight) {
+    public ScrollableContainer(Container staticInventory, Container scrollableInventory, int slotHeight) {
         this.scrollableInventory = scrollableInventory;
         this.slotHeight = slotHeight;
-        this.rowCount = scrollableInventory.getInventorySize() / 9;
+        this.rowCount = scrollableInventory.getContainerSize() / 9;
 
         this.staticSlots = new ArrayList<>();
         this.scrollableSlots = new ArrayList<>();
@@ -65,26 +64,26 @@ public class ScrollableContainer extends Container {
     }
 
     @Override
-    public boolean canUse(PlayerEntity arg) {
-        return this.scrollableInventory.canPlayerUse(arg);
+    public boolean stillValid(Player arg) {
+        return this.scrollableInventory.stillValid(arg);
     }
 
     @Override
-    public ItemStack transferSlot(int i) {
-        ItemStack itemStack = null;
+    public ItemInstance quickMoveStack(int i) {
+        ItemInstance itemStack = null;
         Slot slot = (Slot) this.slots.get(i);
         if (slot != null && slot.hasItem()) {
-            ItemStack itemStack2 = slot.getItem();
+            ItemInstance itemStack2 = slot.getItem();
             itemStack = itemStack2.copy();
             if (i < this.rowCount * 9) {
-                this.insertItem(itemStack2, this.rowCount * 9, this.slots.size(), true);
+                this.moveItemStackTo(itemStack2, this.rowCount * 9, this.slots.size(), true);
             } else {
-                this.insertItem(itemStack2, 0, this.rowCount * 9, false);
+                this.moveItemStackTo(itemStack2, 0, this.rowCount * 9, false);
             }
             if (itemStack2.count == 0) {
-                slot.setStack(null);
+                slot.set(null);
             } else {
-                slot.markDirty();
+                slot.setChanged();
             }
         }
         return itemStack;

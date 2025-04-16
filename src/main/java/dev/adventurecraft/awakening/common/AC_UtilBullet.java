@@ -6,51 +6,49 @@ import java.util.Random;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.hit.HitType;
-import net.minecraft.util.math.AxixAlignedBoundingBox;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.HitType;
+import net.minecraft.world.phys.Vec3;
 
 public class AC_UtilBullet {
 
-    static Random rand = new Random();
-
-    public static void fireBullet(World world, LivingEntity caster, float spread, int damage) {
+    public static void fireBullet(Level world, LivingEntity caster, float spread, int damage) {
         HitResult hit = findHit(world, caster, spread);
         if (hit == null) {
             return;
         }
-        Vec3d pos = hit.field_1988;
-        Minecraft.instance.worldRenderer.addParticle("smoke", pos.x, pos.y, pos.z, 0.0D, 0.0D, 0.0D);
-        if (hit.type == HitType.field_790) {
-            Entity target = hit.field_1989;
+        Vec3 pos = hit.pos;
+        Minecraft.instance.levelRenderer.spawnParticle("smoke", pos.x, pos.y, pos.z, 0.0D, 0.0D, 0.0D);
+        if (hit.hitType == HitType.ENTITY) {
+            Entity target = hit.entity;
             ((ExEntity) target).attackEntityFromMulti(caster, damage);
         }
     }
 
-    public static HitResult rayTraceBlocks(World world, Vec3d pointA, Vec3d pointB) {
+    public static HitResult rayTraceBlocks(Level world, Vec3 pointA, Vec3 pointB) {
         return ((ExWorld) world).rayTraceBlocks2(pointA, pointB, false, false, false);
     }
 
-    static HitResult findHit(World world, LivingEntity caster, float spread) {
+    static HitResult findHit(Level world, LivingEntity caster, float spread) {
         double dist = 256.0D;
-        Vec3d pointA = caster.getPosition(1.0F);
-        Vec3d dir = caster.getRotation(1.0F);
-        dir.x += (double) spread * (2.0D * rand.nextDouble() - 1.0D);
-        dir.y += (double) spread * (2.0D * rand.nextDouble() - 1.0D);
-        dir.z += (double) spread * (2.0D * rand.nextDouble() - 1.0D);
-        Vec3d pointB = pointA.translate(dir.x * dist, dir.y * dist, dir.z * dist);
-        if (caster.standingEyeHeight == 0.0F) {
-            pointA.y += caster.height / 2.0F;
+        Vec3 pointA = caster.getPos(1.0F);
+        Vec3 dir = caster.getViewVector(1.0F);
+        dir.x += (double) spread * (2.0D * world.random.nextDouble() - 1.0D);
+        dir.y += (double) spread * (2.0D * world.random.nextDouble() - 1.0D);
+        dir.z += (double) spread * (2.0D * world.random.nextDouble() - 1.0D);
+        Vec3 pointB = pointA.add(dir.x * dist, dir.y * dist, dir.z * dist);
+        if (caster.heightOffset == 0.0F) {
+            pointA.y += caster.bbHeight / 2.0F;
         }
 
         return rayTrace(world, caster, pointA, pointB);
     }
 
-    public static HitResult rayTrace(World world, Entity ignore, Vec3d pointA, Vec3d pointB) {
+    public static HitResult rayTrace(Level world, Entity ignore, Vec3 pointA, Vec3 pointB) {
         if (Double.isNaN(pointA.x) || Double.isNaN(pointA.y) || Double.isNaN(pointA.z)) {
             return null;
         }
@@ -71,45 +69,45 @@ public class AC_UtilBullet {
         return hit;
     }
 
-    private static HitResult rayTraceCore(World world, Entity ignore, Vec3d pointA, Vec3d pointB) {
-        Vec3d end = pointB;
-        Vec3d pointACopy = Vec3d.from(pointA.x, pointA.y, pointA.z);
+    private static HitResult rayTraceCore(Level world, Entity ignore, Vec3 pointA, Vec3 pointB) {
+        Vec3 end = pointB;
+        Vec3 pointACopy = Vec3.newTemp(pointA.x, pointA.y, pointA.z);
         HitResult blockHit = rayTraceBlocks(world, pointACopy, pointB);
         if (blockHit != null) {
-            end = blockHit.field_1988;
+            end = blockHit.pos;
         }
 
         double distToEnd = end.distanceTo(pointA);
         Entity hitEntity = null;
 
         float extraSize = 1.0F;
-        var aabb = AxixAlignedBoundingBox.createAndAddToList(
+        var aabb = AABB.newTemp(
                 Math.min(pointA.x, end.x), Math.min(pointA.y, end.y), Math.min(pointA.z, end.z),
                 Math.max(pointA.x, end.x), Math.max(pointA.y, end.y), Math.max(pointA.z, end.z))
-            .expand(extraSize, extraSize, extraSize);
+            .inflate(extraSize, extraSize, extraSize);
 
         var entities = (List<Entity>) world.getEntities(ignore, aabb);
         double closestDist = distToEnd;
 
         for (Entity entity : entities) {
-            if (!entity.method_1356()) {
+            if (!entity.isPickable()) {
                 continue;
             }
 
-            double size = entity.method_1369();
-            AxixAlignedBoundingBox entityAabb = entity.boundingBox.expand(size, size, size);
-            HitResult hit = entityAabb.method_89(pointA, end);
-            if (entityAabb.contains(pointA)) {
+            double size = entity.getPickRadius();
+            AABB entityAabb = entity.bb.inflate(size, size, size);
+            HitResult hit = entityAabb.clip(pointA, end);
+            if (entityAabb.intersects(pointA)) {
                 if (0.0D < closestDist) {
                     hitEntity = entity;
                     end = pointA;
                     closestDist = 0.0D;
                 }
             } else if (hit != null) {
-                double dist = pointA.distanceTo(hit.field_1988);
+                double dist = pointA.distanceTo(hit.pos);
                 if (dist < closestDist) {
                     hitEntity = entity;
-                    end = hit.field_1988;
+                    end = hit.pos;
                     closestDist = dist;
                 }
             }
@@ -120,7 +118,7 @@ public class AC_UtilBullet {
         }
 
         var entityHit = new HitResult(hitEntity);
-        entityHit.field_1988 = end;
+        entityHit.pos = end;
         return entityHit;
     }
 }

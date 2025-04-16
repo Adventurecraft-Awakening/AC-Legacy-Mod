@@ -2,7 +2,7 @@ package dev.adventurecraft.awakening.extension.client.render;
 
 public interface ExHeldItemRenderer {
 
-    void renderItemInFirstPerson(float var1, float var2, float var3);
+    void renderItemInFirstPerson(float partialTick, float prog1, float prog2);
 
     boolean hasItem();
 }

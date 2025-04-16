@@ -4,15 +4,15 @@ import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.extension.entity.ai.pathing.ExEntityPath;
 import dev.adventurecraft.awakening.extension.entity.ai.pathing.ExPathNodeNavigator;
-import net.minecraft.block.Block;
-import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ai.pathing.EntityPath;
-import net.minecraft.entity.ai.pathing.PathNode;
-import net.minecraft.entity.ai.pathing.PathNodeNavigator;
-import net.minecraft.util.math.AxixAlignedBoundingBox;
-import net.minecraft.world.BlockView;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.LevelSource;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.pathfinder.Node;
+import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.level.pathfinder.PathFinder;
+import net.minecraft.world.level.tile.Tile;
+import net.minecraft.world.phys.AABB;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.*;
@@ -20,17 +20,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.ArrayList;
 
-@Mixin(PathNodeNavigator.class)
+@Mixin(PathFinder.class)
 public abstract class MixinPathNodeNavigator implements ExPathNodeNavigator {
 
     @Shadow
-    private BlockView block;
+    private LevelSource level;
 
     @Shadow
-    protected abstract int method_404(Entity arg, int i, int j, int k, PathNode arg2);
+    protected abstract int isFree(Entity arg, int i, int j, int k, Node arg2);
 
     @ModifyConstant(
-        method = "findPathTo(Lnet/minecraft/entity/Entity;DDDF)Lnet/minecraft/entity/ai/pathing/EntityPath;",
+        method = "findPath(Lnet/minecraft/world/entity/Entity;DDDF)Lnet/minecraft/world/level/pathfinder/Path;",
         constant = {
             @Constant(floatValue = 1.0F, ordinal = 0),
             @Constant(floatValue = 1.0F, ordinal = 2)})
@@ -39,62 +39,62 @@ public abstract class MixinPathNodeNavigator implements ExPathNodeNavigator {
     }
 
     @ModifyReturnValue(
-        method = "findPathTo(Lnet/minecraft/entity/Entity;DDDF)Lnet/minecraft/entity/ai/pathing/EntityPath;",
+        method = "findPath(Lnet/minecraft/world/entity/Entity;DDDF)Lnet/minecraft/world/level/pathfinder/Path;",
         at = @At("RETURN"))
-    private EntityPath simplifyOnFind(EntityPath path, @Local(ordinal = 2) PathNode node) {
+    private Path simplifyOnFind(Path path, @Local(ordinal = 2) Node node) {
         return this.simplifyPath(path, node);
     }
 
     @Inject(
-        method = "method_404",
+        method = "isFree",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/BlockView;getBlockId(III)I",
+            target = "Lnet/minecraft/world/level/LevelSource;getTile(III)I",
             shift = At.Shift.BEFORE),
         cancellable = true)
     private void returnOnFence(
-        Entity var1, int var2, int var3, int var4, PathNode var5, CallbackInfoReturnable<Integer> cir,
+        Entity var1, int var2, int var3, int var4, Node var5, CallbackInfoReturnable<Integer> cir,
         @Local(ordinal = 3) int x,
         @Local(ordinal = 4) int y,
         @Local(ordinal = 5) int z) {
         if (y > 1) {
-            int id = this.block.getBlockId(x, y - 1, z);
-            if (id == Block.FENCE.id) {
+            int id = this.level.getTile(x, y - 1, z);
+            if (id == Tile.OAK_FENCE.id) {
                 cir.setReturnValue(0);
             }
         }
     }
 
-    @Redirect(method = "method_404", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/material/Material;blocksMovement()Z"))
+    @Redirect(method = "isFree", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/material/Material;blocksMotion()Z"))
     private boolean refinedMoveBlockCheck(
         Material instance,
         @Local(ordinal = 3) int x,
         @Local(ordinal = 4) int y,
         @Local(ordinal = 5) int z,
         @Local(ordinal = 6) int id) {
-        if (Block.BY_ID[id].isCollidable()) {
-            AxixAlignedBoundingBox box = Block.BY_ID[id].getCollisionShape(Minecraft.instance.world, x, y, z);
+        if (Tile.tiles[id].mayPick()) {
+            AABB box = Tile.tiles[id].getAABB(Minecraft.instance.level, x, y, z);
             return box != null;
         }
         return false;
     }
 
     @Override
-    public EntityPath simplifyPath(EntityPath var1, PathNode var2) {
+    public Path simplifyPath(Path var1, Node var2) {
         if (var1 == null) {
             return null;
         }
 
-        ArrayList<PathNode> var3 = new ArrayList<>();
-        PathNode var4 = null;
-        PathNode var5 = null;
-        PathNode var6 = null;
+        ArrayList<Node> var3 = new ArrayList<>();
+        Node var4 = null;
+        Node var5 = null;
+        Node var6 = null;
         int var7 = 0;
         boolean var8 = false;
-        PathNode[] var9 = var1.field_2691;
+        Node[] var9 = var1.nodes;
 
-        for (PathNode pathNode : var9) {
-            if (var7++ >= var1.field_2692) {
+        for (Node pathNode : var9) {
+            if (var7++ >= var1.pos) {
                 if (var8) {
                     var3.add(pathNode);
                 } else if (var4 == null) {
@@ -132,12 +132,12 @@ public abstract class MixinPathNodeNavigator implements ExPathNodeNavigator {
                         }
 
                         for (var18 = 1; var18 < Math.abs(var14); ++var18) {
-                            if (this.method_404(null, var4.x + (int) var15, var4.y, var4.z + var18 * var17, var2) == 1 &&
-                                this.method_404(null, var4.x + (int) var15, var4.y - 1, var4.z + var18 * var17, var2) != 1 &&
-                                this.method_404(null, var4.x + (int) var15 + 1, var4.y, var4.z + var18 * var17, var2) == 1 &&
-                                this.method_404(null, var4.x + (int) var15 + 1, var4.y - 1, var4.z + var18 * var17, var2) != 1 &&
-                                this.method_404(null, var4.x + (int) var15 - 1, var4.y, var4.z + var18 * var17, var2) == 1 &&
-                                this.method_404(null, var4.x + (int) var15 - 1, var4.y - 1, var4.z + var18 * var17, var2) != 1) {
+                            if (this.isFree(null, var4.x + (int) var15, var4.y, var4.z + var18 * var17, var2) == 1 &&
+                                this.isFree(null, var4.x + (int) var15, var4.y - 1, var4.z + var18 * var17, var2) != 1 &&
+                                this.isFree(null, var4.x + (int) var15 + 1, var4.y, var4.z + var18 * var17, var2) == 1 &&
+                                this.isFree(null, var4.x + (int) var15 + 1, var4.y - 1, var4.z + var18 * var17, var2) != 1 &&
+                                this.isFree(null, var4.x + (int) var15 - 1, var4.y, var4.z + var18 * var17, var2) == 1 &&
+                                this.isFree(null, var4.x + (int) var15 - 1, var4.y - 1, var4.z + var18 * var17, var2) != 1) {
                                 var15 += var16;
                             } else {
                                 var3.add(var5);
@@ -154,12 +154,12 @@ public abstract class MixinPathNodeNavigator implements ExPathNodeNavigator {
                         }
 
                         for (var18 = 1; var18 < Math.abs(var13); ++var18) {
-                            if (this.method_404(null, var4.x + var18 * var17, var4.y, var4.z + (int) var15, var2) == 1 &&
-                                this.method_404(null, var4.x + var18 * var17, var4.y - 1, var4.z + (int) var15, var2) != 1 &&
-                                this.method_404(null, var4.x + var18 * var17, var4.y, var4.z + (int) var15 + 1, var2) == 1 &&
-                                this.method_404(null, var4.x + var18 * var17, var4.y - 1, var4.z + (int) var15 + 1, var2) != 1 &&
-                                this.method_404(null, var4.x + var18 * var17, var4.y, var4.z + (int) var15 - 1, var2) == 1 &&
-                                this.method_404(null, var4.x + var18 * var17, var4.y - 1, var4.z + (int) var15 - 1, var2) != 1) {
+                            if (this.isFree(null, var4.x + var18 * var17, var4.y, var4.z + (int) var15, var2) == 1 &&
+                                this.isFree(null, var4.x + var18 * var17, var4.y - 1, var4.z + (int) var15, var2) != 1 &&
+                                this.isFree(null, var4.x + var18 * var17, var4.y, var4.z + (int) var15 + 1, var2) == 1 &&
+                                this.isFree(null, var4.x + var18 * var17, var4.y - 1, var4.z + (int) var15 + 1, var2) != 1 &&
+                                this.isFree(null, var4.x + var18 * var17, var4.y, var4.z + (int) var15 - 1, var2) == 1 &&
+                                this.isFree(null, var4.x + var18 * var17, var4.y - 1, var4.z + (int) var15 - 1, var2) != 1) {
                                 var15 += var16;
                             } else {
                                 var4 = var5;
@@ -183,10 +183,10 @@ public abstract class MixinPathNodeNavigator implements ExPathNodeNavigator {
             }
         }
 
-        var1.field_2691 = var3.toArray(new PathNode[0]);
-        var1.field_2690 = var3.size();
-        var1.field_2692 = 0;
-        ((ExEntityPath) var1).setNavigator((PathNodeNavigator) (Object) this);
+        var1.nodes = var3.toArray(new Node[0]);
+        var1.length = var3.size();
+        var1.pos = 0;
+        ((ExEntityPath) var1).setNavigator((PathFinder) (Object) this);
         ((ExEntityPath) var1).setClearSize(var2);
         return var1;
     }

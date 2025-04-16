@@ -1,10 +1,9 @@
 package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import dev.adventurecraft.awakening.common.AC_UtilBullet;
-import net.minecraft.util.math.Vec3d;
 
 @SuppressWarnings("unused")
 public class ScriptEntityLiving extends ScriptEntity {
@@ -16,29 +15,33 @@ public class ScriptEntityLiving extends ScriptEntity {
         this.entityLiving = entity;
     }
 
+    public boolean isTouchingWater(){
+        return entityLiving.isInWaterOrRain();
+    }
+
     public void playLivingSound() {
-        this.entityLiving.method_918();
+        this.entityLiving.playAmbientSound();
     }
 
     public void spawnExplosionParticle() {
-        this.entityLiving.onSpawnedFromSpawner();
+        this.entityLiving.spawnAnim();
     }
 
     public void heal(int health) {
-        this.entityLiving.addHealth(health);
+        this.entityLiving.heal(health);
     }
 
     public boolean isOnLadder() {
-        return this.entityLiving.method_932();
+        return this.entityLiving.onLadder();
     }
 
     public ScriptEntity getLookTarget() {
-        Entity var1 = this.entityLiving.getTarget();
+        Entity var1 = this.entityLiving.getLookingAt();
         return ScriptEntity.getEntityClass(var1);
     }
 
     public void setLookTarget(ScriptEntity entity) {
-        this.entityLiving.target = entity.entity;
+        this.entityLiving.lookAt = entity.entity;
     }
 
     public int getHealth() {
@@ -58,7 +61,7 @@ public class ScriptEntityLiving extends ScriptEntity {
     }
 
     public String getTexture() {
-        return this.entityLiving.getTextured();
+        return this.entityLiving.getTexture();
     }
 
     public void setTexture(String name) {
@@ -70,7 +73,7 @@ public class ScriptEntityLiving extends ScriptEntity {
     }
 
     public int getHurtTimeResistance() {
-        return this.entityLiving.field_1058;
+        return this.entityLiving.lastHurt;
     }
 
     public void setHurtTime(int value) {
@@ -78,11 +81,11 @@ public class ScriptEntityLiving extends ScriptEntity {
     }
 
     public void setHurtTimeResistance(int value) {
-        this.entityLiving.field_1058 = value;
+        this.entityLiving.lastHurt = value;
     }
 
     public ScriptItem getHeldItem() {
-        return new ScriptItem(((ExLivingEntity) this.entityLiving).getHeldItem());
+        return new ScriptItem(((ExLivingEntity) this.entityLiving).getSelectedItem());
     }
 
     public void setHeldItem(ScriptItem item) {
@@ -170,7 +173,7 @@ public class ScriptEntityLiving extends ScriptEntity {
     }
 
     public void fireBullet(float spread, int damage) {
-        AC_UtilBullet.fireBullet(this.entityLiving.world, this.entityLiving, spread, damage);
+        AC_UtilBullet.fireBullet(this.entityLiving.level, this.entityLiving, spread, damage);
     }
 
     public float getFov() {

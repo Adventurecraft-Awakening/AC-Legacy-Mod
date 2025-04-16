@@ -1,13 +1,13 @@
 package dev.adventurecraft.awakening.client.gui;
 
 import dev.adventurecraft.awakening.client.options.OptionOF;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.options.GameOptions;
-import net.minecraft.client.options.Option;
+import net.minecraft.client.Option;
+import net.minecraft.client.Options;
+import net.minecraft.client.gui.screens.Screen;
 
 public class GuiWorldSettingsOF extends GuiBaseSettingsOF {
 
-    public GuiWorldSettingsOF(Screen prevScreen, GameOptions options) {
+    public GuiWorldSettingsOF(Screen prevScreen, Options options) {
         super(prevScreen, options, "options.of.worldTitle");
     }
 
@@ -18,6 +18,7 @@ public class GuiWorldSettingsOF extends GuiBaseSettingsOF {
             OptionOF.CHUNK_UPDATES, OptionOF.CHUNK_UPDATES_DYNAMIC,
             OptionOF.AUTOSAVE_TICKS, OptionOF.TIME,
             OptionOF.WEATHER, OptionOF.FAR_VIEW,
-            OptionOF.CHAT_MESSAGE_BUFFER_LIMIT};
+            OptionOF.CHAT_MESSAGE_BUFFER_LIMIT,
+            OptionOF.ALLOW_JAVA_IN_SCRIPT};
     }
 }

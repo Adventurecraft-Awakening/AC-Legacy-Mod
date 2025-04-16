@@ -2,8 +2,8 @@ package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import net.minecraft.client.options.GameOptions;
-import net.minecraft.world.World;
+import net.minecraft.client.Options;
+import net.minecraft.world.level.Level;
 import org.lwjgl.input.Keyboard;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
@@ -12,7 +12,7 @@ import org.mozilla.javascript.ScriptableObject;
 @SuppressWarnings("unused")
 public class ScriptKeyboard {
 
-    private GameOptions gameSettings;
+    private Options gameSettings;
     public String keyForwardScript = "";
     public String keyBackScript = "";
     public String keyLeftScript = "";
@@ -21,10 +21,10 @@ public class ScriptKeyboard {
     public String keySneakScript = "";
     String allKeys;
     Int2ObjectOpenHashMap<String> keyBinds;
-    World world;
+    Level world;
     Scriptable scope;
 
-    ScriptKeyboard(World var1, GameOptions var2, Scriptable var3) {
+    ScriptKeyboard(Level var1, Options var2, Scriptable var3) {
         this.world = var1;
         this.keyBinds = new Int2ObjectOpenHashMap<>();
         this.allKeys = null;
@@ -86,21 +86,21 @@ public class ScriptKeyboard {
     public boolean processPlayerKeyPress(int var1, boolean var2) {
         boolean var3 = true;
         String var4 = "";
-        if (var1 == this.gameSettings.forwardKey.key) {
+        if (var1 == this.gameSettings.keyUp.key) {
             var4 = this.keyForwardScript;
         }
 
-        if (var1 == this.gameSettings.backKey.key) {
+        if (var1 == this.gameSettings.keyDown.key) {
             var4 = this.keyBackScript;
         }
 
-        if (var1 == this.gameSettings.leftKey.key) {
+        if (var1 == this.gameSettings.keyLeft.key) {
             var4 = this.keyLeftScript;
-        } else if (var1 == this.gameSettings.rightKey.key) {
+        } else if (var1 == this.gameSettings.keyRight.key) {
             var4 = this.keyRightScript;
-        } else if (var1 == this.gameSettings.jumpKey.key) {
+        } else if (var1 == this.gameSettings.keyJump.key) {
             var4 = this.keyJumpScript;
-        } else if (var1 == this.gameSettings.sneakKey.key) {
+        } else if (var1 == this.gameSettings.keySneak.key) {
             var4 = this.keySneakScript;
         }
 
