@@ -49,8 +49,10 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
             }
 
             @Override
-            protected void entryClicked(int entryIndex, boolean doubleClick) {
-                self.method_1267(entryIndex, doubleClick);
+            protected void entryClicked(int entryIndex, int buttonIndex, boolean doubleClick) {
+                if (buttonIndex == 0) {
+                    self.method_1267(entryIndex, doubleClick);
+                }
             }
 
             @Override

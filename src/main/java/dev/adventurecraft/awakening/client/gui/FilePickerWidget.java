@@ -12,6 +12,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.text.DateFormat;
 import java.util.*;
+import java.util.List;
 
 public class FilePickerWidget extends ScrollableWidget {
 
@@ -37,8 +38,10 @@ public class FilePickerWidget extends ScrollableWidget {
     }
 
     @Override
-    protected void entryClicked(int entryIndex, boolean doubleClick) {
-        this.selectedIndex = entryIndex;
+    protected void entryClicked(int entryIndex, int buttonIndex, boolean doubleClick) {
+        if (buttonIndex == 0) {
+            this.selectedIndex = entryIndex;
+        }
     }
 
     @Override

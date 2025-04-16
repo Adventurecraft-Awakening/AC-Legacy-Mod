@@ -143,7 +143,10 @@ public class AC_GuiMapSelect extends Screen {
         }
 
         @Override
-        protected void entryClicked(int entryIndex, boolean doubleClick) {
+        protected void entryClicked(int entryIndex, int buttonIndex, boolean doubleClick) {
+            if (buttonIndex != 0)
+                return;
+
             this.selectedEntry = entryIndex;
             if (entryIndex != -1) {
                 this.selectedMap = maps.get(entryIndex);

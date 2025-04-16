@@ -318,10 +318,6 @@ public abstract class ScrollableContainerScreen extends Screen {
         }
 
         @Override
-        protected void entryClicked(int entryIndex, boolean doubleClick) {
-        }
-
-        @Override
         protected void beforeEntryRender(int mouseX, int mouseY, double entryX, double entryY, Tesselator tessellator) {
             super.beforeEntryRender(mouseX, mouseY, entryX, entryY, tessellator);
 
