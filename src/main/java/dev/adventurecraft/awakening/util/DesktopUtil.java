@@ -1,52 +1,56 @@
 package dev.adventurecraft.awakening.util;
 
-import java.awt.*;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 public final class DesktopUtil {
 
     public static void browseFileDirectory(Path path) throws IOException {
         String os = System.getProperty("os.name").toLowerCase(Locale.ROOT);
-        if (!openSystem(os, path.toAbsolutePath().toString()) && !openDesktopAwt(path.toFile())) {
+        if (!openSystem(os, path.toAbsolutePath().toString())) {
             throw new IOException("Unable to open file on OS " + os);
         }
     }
 
     private static boolean openSystem(String os, String path) {
-        String escapedPath = "\"" + path + "\"";
         if (os.contains("win")) {
-            return run("explorer /select," + escapedPath).equals(Optional.of(1));
+            // Windows command parsing is cursed.
+            return run(("explorer /select," + "\"" + path + "\"").split(" ")) == 1;
         }
-        if (os.contains("mac")) {
-            return run("open " + escapedPath).equals(Optional.of(0));
-        }
-        return run("kde-open " + escapedPath)
-            .or(() -> run("gnome-open " + escapedPath))
-            .or(() -> run("xdg-open " + escapedPath))
-            .equals(Optional.of(0));
-    }
 
-    private static boolean openDesktopAwt(File file) {
-        if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE_FILE_DIR)) {
-            Desktop.getDesktop().browseFileDirectory(file);
+        // TODO: this needs testing
+        if (os.contains("mac")) {
+            return run("open", "-R", path) == 0;
+        }
+
+        if (run(
+            "dbus-send",
+            "--session",
+            "--print-reply",
+            "--dest=org.freedesktop.FileManager1",
+            "--type=method_call",
+            "/org/freedesktop/FileManager1",
+            "org.freedesktop.FileManager1.ShowItems",
+            "array:string:file://" + path,
+            "string:java-launch"
+        ) == 0) {
             return true;
         }
-        return false;
+
+        return run("xdg-open", path) == 0;
     }
 
-    private static Optional<Integer> run(String command) {
+    private static int run(String... args) {
         try {
-            var p = new ProcessBuilder(command.split(" ")).start();
+            var p = new ProcessBuilder(args).start();
             if (p.waitFor(1, TimeUnit.SECONDS)) {
-                return Optional.of(p.exitValue());
+                return p.exitValue();
             }
+            return -1;
         } catch (IOException | InterruptedException ignored) {
+            return -2;
         }
-        return Optional.empty();
     }
 }
