@@ -1,8 +1,9 @@
 package dev.adventurecraft.awakening.client.gui;
 
-
+import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.ScrollableWidget;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
+import dev.adventurecraft.awakening.util.DesktopUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Tesselator;
 import org.lwjgl.input.Keyboard;
@@ -41,6 +42,13 @@ public class FilePickerWidget extends ScrollableWidget {
     protected void entryClicked(int entryIndex, int buttonIndex, boolean doubleClick) {
         if (buttonIndex == 0) {
             this.selectedIndex = entryIndex;
+        } else if (buttonIndex == 1) {
+            Path path = this.files.get(entryIndex);
+            try {
+                DesktopUtil.browseFileDirectory(path);
+            } catch (Exception ex) {
+                ACMod.LOGGER.warn("Failed to browse file dir: ", ex);
+            }
         }
     }
 
