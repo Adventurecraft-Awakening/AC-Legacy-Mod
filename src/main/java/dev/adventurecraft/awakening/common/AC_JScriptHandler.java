@@ -79,7 +79,7 @@ public class AC_JScriptHandler {
                 String fileName = path.getFileName().toString();
                 String name = fileName.toLowerCase(); // TODO: don't lower-case? (depends on FS)
                 if (!name.endsWith(".js")) {
-                    return;
+                    continue;
                 }
 
                 executor.execute(new ScriptLoadTask(path, cxFactory, queue));
