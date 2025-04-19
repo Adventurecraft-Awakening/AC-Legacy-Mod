@@ -93,6 +93,7 @@ dependencies {
 
     // Fabric-ASM allows us to extend enums.
     modImplementation "com.github.Chocohead:Fabric-ASM:v2.3"
+    include "com.github.Chocohead:Fabric-ASM:v2.3"
 
     // FastUtil provides specialized collection types.
     implementation "it.unimi.dsi:fastutil-core:8.5.15"
