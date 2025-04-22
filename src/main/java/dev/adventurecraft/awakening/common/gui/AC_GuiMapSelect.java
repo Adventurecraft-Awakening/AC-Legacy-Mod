@@ -5,6 +5,7 @@ import dev.adventurecraft.awakening.common.GuiCreateNewMap;
 import dev.adventurecraft.awakening.common.ScrollableWidget;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
+import dev.adventurecraft.awakening.util.IntRect;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -129,8 +130,9 @@ public class AC_GuiMapSelect extends Screen {
         public MapList() {
             super(
                 AC_GuiMapSelect.this.minecraft,
-                0, 0, AC_GuiMapSelect.this.width, AC_GuiMapSelect.this.height,
-                32, AC_GuiMapSelect.this.height - 58 + 4, 36);
+                new IntRect(0, 0, AC_GuiMapSelect.this.width, AC_GuiMapSelect.this.height),
+                new IntRect(0, 32, AC_GuiMapSelect.this.width, AC_GuiMapSelect.this.height - 58 + 4),
+                36);
 
             this.setContentTopPadding(4);
 

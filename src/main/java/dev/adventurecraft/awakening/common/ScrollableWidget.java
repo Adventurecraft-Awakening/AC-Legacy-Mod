@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.util.IntRect;
 import dev.adventurecraft.awakening.util.MathF;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import net.minecraft.client.Minecraft;
@@ -14,12 +15,9 @@ import java.util.List;
 public abstract class ScrollableWidget extends GuiComponent {
 
     public final Minecraft client;
-    public final int width;
-    public final int height;
-    public int widgetX;
-    public int widgetY;
-    public final int contentTop;
-    public final int contentBot;
+    private IntRect screenRect;
+    private IntRect contentRect;
+
     protected final int entryHeight;
     private final int scrollBackRight;
     private final int scrollBackLeft;
@@ -44,21 +42,19 @@ public abstract class ScrollableWidget extends GuiComponent {
 
     public ScrollableWidget(
         Minecraft minecraft,
-        int x, int y, int width, int height,
-        int contentTop, int contentBot, int entryHeight) {
+        IntRect screenRect,
+        IntRect contentRect,
+        int entryHeight) {
         this.client = minecraft;
-        this.width = width;
-        this.height = height;
-        this.widgetX = x;
-        this.widgetY = y;
-        this.contentTop = contentTop;
-        this.contentBot = contentBot;
+        this.screenRect = screenRect;
+        this.contentRect = contentRect;
+
         this.entryHeight = entryHeight;
         this.scrollBackLeft = 0;
-        this.scrollBackRight = width;
+        this.scrollBackRight = this.screenRect.w;
 
         this.scrollbarWidth = 6;
-        this.scrollbarX = width - this.scrollbarWidth;
+        this.scrollbarX = this.screenRect.w - this.scrollbarWidth;
         this.contentTopPadding = 0;
     }
 
@@ -102,7 +98,7 @@ public abstract class ScrollableWidget extends GuiComponent {
     }
 
     public int getEntryUnderPoint(int x, int y) {
-        int entryY = y - this.contentTop - this.contentTopPadding + (int) this.scrollY - this.widgetY;
+        int entryY = y - this.contentRect.top() - this.contentTopPadding + (int) this.scrollY - this.screenRect.top();
         if (entryY >= 0) {
             int entryIndex = entryY / this.entryHeight;
             if (entryIndex >= 0 && entryIndex < this.getEntryCount()) {
@@ -124,7 +120,7 @@ public abstract class ScrollableWidget extends GuiComponent {
 
         if (!this.isUsingScrollbar && this.isScrolling) {
             // Drag with more and more friction
-            double maxY = this.getTotalRenderHeight() - (this.contentBot - this.contentTop);
+            double maxY = this.getTotalRenderHeight() - this.contentRect.height();
             if (maxY < 0) {
                 maxY /= 2;
             }
@@ -143,7 +139,7 @@ public abstract class ScrollableWidget extends GuiComponent {
     }
 
     private double clampTargetScroll(double value, double totalHeight) {
-        double maxY = totalHeight - (this.contentBot - this.contentTop);
+        double maxY = totalHeight - this.contentRect.h;
         if (maxY < 0) {
             maxY /= 2;
         }
@@ -182,14 +178,14 @@ public abstract class ScrollableWidget extends GuiComponent {
 
     public void render(int mouseX, int mouseY, float tickTime) {
         int entryCount = this.getEntryCount();
-        int center = this.width / 2 + this.widgetX;
+        int center = this.screenRect.w / 2 + this.screenRect.x;
         int scrollBarLeft = this.scrollbarX;
         int scrollBarRight = scrollBarLeft + this.scrollbarWidth;
 
-        int scrollBackLeft = this.scrollBackLeft + this.widgetX;
-        int scrollBackRight = this.scrollBackRight + this.widgetX;
-        int contentTop = this.contentTop + this.widgetY;
-        int contentBot = this.contentBot + this.widgetY;
+        int scrollBackLeft = this.scrollBackLeft + this.screenRect.left();
+        int scrollBackRight = this.scrollBackRight + this.screenRect.left();
+        int contentTop = this.contentRect.top() + this.screenRect.top();
+        int contentBot = this.contentRect.bottom() + this.screenRect.top();
         int totalHeight = this.getTotalRenderHeight();
 
         if (this.firstFrame) {
@@ -297,8 +293,8 @@ public abstract class ScrollableWidget extends GuiComponent {
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.client.textures.loadTexture("/gui/background.png"));
         GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
         ts.begin();
-        this.renderBackground(this.widgetY, contentTop, 255, 255);
-        this.renderBackground(contentBot, this.widgetY + this.height, 255, 255);
+        this.renderBackground(this.screenRect.top(), contentTop, 255, 255);
+        this.renderBackground(contentBot, this.screenRect.bottom(), 255, 255);
         ts.end();
         GL11.glDisable(GL11.GL_ALPHA_TEST);
         GL11.glDisable(GL11.GL_TEXTURE_2D);
@@ -368,12 +364,13 @@ public abstract class ScrollableWidget extends GuiComponent {
     protected void renderBackground(int topY, int botY, int topAlpha, int botAlpha) {
         var ts = Tesselator.instance;
         float f = 32.0f;
+        int width = this.screenRect.width();
         ts.color(0x404040, topAlpha);
-        ts.vertexUV(this.widgetX + this.width, topY, 0.0, 0.0, (float) topY / f);
-        ts.vertexUV(this.widgetX, topY, 0.0, (float) this.width / f, (float) topY / f);
+        ts.vertexUV(this.screenRect.right(), topY, 0.0, 0.0, topY / f);
+        ts.vertexUV(this.screenRect.left(), topY, 0.0, width / f, topY / f);
         ts.color(0x404040, botAlpha);
-        ts.vertexUV(this.widgetX, botY, 0.0, (float) this.width / f, (float) botY / f);
-        ts.vertexUV(this.widgetX + this.width, botY, 0.0, 0.0, (float) botY / f);
+        ts.vertexUV(this.screenRect.left(), botY, 0.0, width / f, botY / f);
+        ts.vertexUV(this.screenRect.right(), botY, 0.0, 0.0, botY / f);
     }
 
     protected void renderContentBackground(
@@ -410,12 +407,20 @@ public abstract class ScrollableWidget extends GuiComponent {
         ts.vertexUV(left + borderSize, y + borderSize, 0.0, 0.0, 0.0);
     }
 
+    public IntRect getContentRect() {
+        return contentRect;
+    }
+
+    public IntRect getScreenRect() {
+        return screenRect;
+    }
+
     public int getContentTop() {
-        return this.contentTop;
+        return this.contentRect.top();
     }
 
     public int getContentBot() {
-        return this.contentBot;
+        return this.contentRect.bottom();
     }
 
     public int getContentTopPadding() {

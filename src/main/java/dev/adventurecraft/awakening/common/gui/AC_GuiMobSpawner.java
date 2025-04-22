@@ -8,6 +8,7 @@ import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.common.GuiSlider2;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.script.EntityDescriptions;
+import dev.adventurecraft.awakening.util.IntRect;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -148,8 +149,10 @@ public class AC_GuiMobSpawner extends Screen {
             int scriptY = 124;
             int scriptHeight = this.height - scriptY;
             this.scriptWidget = new FilePickerWidget(
-                this.minecraft, 0, scriptY, this.width, scriptHeight,
-                24, scriptHeight, 16);
+                this.minecraft,
+                new IntRect(this.width / 2, scriptY, this.width, scriptHeight),
+                new IntRect(0, 24, this.width, scriptHeight),
+                16);
             this.selectedScriptId = -1;
 
             this.reloadScriptList(((ExWorld) this.minecraft.level).getScriptHandler());

@@ -4,6 +4,7 @@ import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.ScrollableWidget;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import dev.adventurecraft.awakening.util.DesktopUtil;
+import dev.adventurecraft.awakening.util.IntRect;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Tesselator;
 import org.lwjgl.input.Keyboard;
@@ -27,9 +28,10 @@ public class FilePickerWidget extends ScrollableWidget {
 
     public FilePickerWidget(
         Minecraft minecraft,
-        int x, int y, int width, int height,
-        int contentStartY, int contentEndY, int entryHeight) {
-        super(minecraft, x, y, width, height, contentStartY, contentEndY, entryHeight);
+        IntRect screenRect,
+        IntRect contentRect,
+        int entryHeight) {
+        super(minecraft, screenRect, contentRect, entryHeight);
         this.setContentTopPadding(4);
     }
 
@@ -55,9 +57,10 @@ public class FilePickerWidget extends ScrollableWidget {
     @Override
     protected void renderContentBackground(
         double left, double right, double top, double bot, double scroll, Tesselator ts) {
+        IntRect rect = this.getScreenRect();
         this.fillGradient(
-            this.widgetX, this.widgetY,
-            this.widgetX + this.width, this.widgetY + this.height,
+            rect.left(), rect.top(),
+            rect.right(), rect.bottom(),
             0x0f101010, 0xd0101010);
     }
 
@@ -108,8 +111,11 @@ public class FilePickerWidget extends ScrollableWidget {
             return;
         }
 
-        int contentTop = this.contentTop + this.widgetY;
-        int contentBot = this.contentBot + this.widgetY;
+        IntRect screenRect = this.getScreenRect();
+        IntRect contentRect = this.getContentRect();
+
+        int contentTop = contentRect.top() + screenRect.top();
+        int contentBot = contentRect.bottom() + screenRect.top();
         if (mouseY > contentBot || mouseY + this.entryHeight < contentTop) {
             return;
         }
@@ -146,7 +152,8 @@ public class FilePickerWidget extends ScrollableWidget {
             return;
         }
 
-        int x = this.widgetX + this.width / 2 - maxWidth / 2;
+        IntRect screenRect = this.getScreenRect();
+        int x = screenRect.left() + screenRect.width() / 2 - maxWidth / 2;
         int y = mouseY + 4;
 
         int xEnd = x + maxWidth + 10;

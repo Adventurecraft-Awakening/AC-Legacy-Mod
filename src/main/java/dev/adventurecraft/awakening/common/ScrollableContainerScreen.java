@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.util.IntRect;
 import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -285,12 +286,8 @@ public abstract class ScrollableContainerScreen extends Screen {
         public ItemList(int contentTop, int contentBot, int width, int height, int entryHeight) {
             super(
                 ScrollableContainerScreen.this.minecraft,
-                0,
-                0,
-                width,
-                height,
-                contentTop,
-                contentBot,
+                new IntRect(0, 0, width, height),
+                IntRect.fromEdges(0, contentTop, width, contentBot),
                 entryHeight);
 
             this.registerSlots();
