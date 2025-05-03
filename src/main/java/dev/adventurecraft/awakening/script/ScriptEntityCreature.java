@@ -1,14 +1,14 @@
 package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.extension.entity.ExMobEntity;
-import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.PathfinderMob;
 
 @SuppressWarnings("unused")
 public class ScriptEntityCreature extends ScriptEntityLiving {
 
-    Mob mob;
+    PathfinderMob mob;
 
-    ScriptEntityCreature(Mob var1) {
+    ScriptEntityCreature(PathfinderMob var1) {
         super(var1);
         this.mob = var1;
     }

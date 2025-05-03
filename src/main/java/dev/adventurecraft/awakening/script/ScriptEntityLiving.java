@@ -2,15 +2,15 @@ package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import dev.adventurecraft.awakening.common.AC_UtilBullet;
 
 @SuppressWarnings("unused")
 public class ScriptEntityLiving extends ScriptEntity {
 
-    LivingEntity entityLiving;
+    Mob entityLiving;
 
-    ScriptEntityLiving(LivingEntity entity) {
+    ScriptEntityLiving(Mob entity) {
         super(entity);
         this.entityLiving = entity;
     }

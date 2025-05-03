@@ -43,8 +43,8 @@ import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.util.Mth;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
@@ -258,7 +258,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     }
 
     @Overwrite
-    public int render(LivingEntity entity, int renderPass, double deltaTime) {
+    public int render(Mob entity, int renderPass, double deltaTime) {
         if (this.dirtyChunks.size() < 10) {
             int vizEnd = 10;
             for (int vizStart = 0; vizStart < vizEnd; ++vizStart) {
@@ -505,7 +505,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         }
 
         this.renderListBuffer.flip();
-        LivingEntity entity = this.mc.cameraEntity;
+        Mob entity = this.mc.cameraEntity;
         double eprprX = entity.xOld + (entity.x - entity.xOld) * deltaTime;
         double eprprY = entity.yOld + (entity.y - entity.yOld) * deltaTime;
         double eprprZ = entity.zOld + (entity.z - entity.zOld) * deltaTime;
@@ -744,7 +744,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     }
 
     @Overwrite
-    public boolean updateDirtyChunks(LivingEntity var1, boolean var2) {
+    public boolean updateDirtyChunks(Mob var1, boolean var2) {
         List<Chunk> vizList = this.dirtyChunks;
         if (vizList.size() <= 0) {
             return false;
@@ -852,7 +852,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         return true;
     }
 
-    private boolean isMoving(LivingEntity entity) {
+    private boolean isMoving(Mob entity) {
         boolean moving = this.isMovingNow(entity);
         if (moving) {
             this.lastMovedTime = System.currentTimeMillis();
@@ -862,7 +862,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         }
     }
 
-    private boolean isMovingNow(LivingEntity entity) {
+    private boolean isMovingNow(Mob entity) {
         double threshold = 0.001D;
         if (entity.jumping) return true;
         if (entity.isSneaking()) return true;
@@ -970,7 +970,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
 
     @ModifyExpressionValue(method = "renderClouds", at = @At(
         value = "FIELD",
-        target = "Lnet/minecraft/world/entity/LivingEntity;yOld:D",
+        target = "Lnet/minecraft/world/entity/Mob;yOld:D",
         ordinal = 0))
     private double changeCameraY(double value, @Local(ordinal = 0, argsOnly = true) float var1) {
         var exClient = (ExMinecraft) this.mc;
@@ -983,7 +983,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
 
     @ModifyExpressionValue(method = "renderClouds", at = @At(
         value = "FIELD",
-        target = "Lnet/minecraft/world/entity/LivingEntity;xo:D",
+        target = "Lnet/minecraft/world/entity/Mob;xo:D",
         ordinal = 0))
     private double changeCameraX(double value, @Local(ordinal = 0, argsOnly = true) float var1) {
         var exClient = (ExMinecraft) this.mc;
@@ -996,7 +996,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
 
     @ModifyExpressionValue(method = "renderClouds", at = @At(
         value = "FIELD",
-        target = "Lnet/minecraft/world/entity/LivingEntity;xo:D",
+        target = "Lnet/minecraft/world/entity/Mob;xo:D",
         ordinal = 0))
     private double changeCameraZ(double value, @Local(ordinal = 0, argsOnly = true) float var1) {
         var exClient = (ExMinecraft) this.mc;
@@ -1008,7 +1008,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     }
 
     @Override
-    public void drawCursorSelection(LivingEntity entity, ItemInstance stack, float deltaTime) {
+    public void drawCursorSelection(Mob entity, ItemInstance stack, float deltaTime) {
         if (!AC_ItemCursor.bothSet || stack == null || stack.id < AC_Items.cursor.id || stack.id > AC_Items.cursor.id + 20) {
             return;
         }
@@ -1073,7 +1073,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     }
 
     @Override
-    public void drawEntityPath(Entity entity, LivingEntity viewEntity, float deltaTime) {
+    public void drawEntityPath(Entity entity, Mob viewEntity, float deltaTime) {
         if (!(entity instanceof IEntityPather pather)) {
             return;
         }
@@ -1090,7 +1090,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         ts.begin(GL11.GL_LINE_STRIP);
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        if (entity instanceof Mob mob && mob.getTarget() != null) {
+        if (entity instanceof PathfinderMob mob && mob.getTarget() != null) {
             GL11.glColor4f(1.0F, 0.0F, 0.0F, 0.4F);
         } else {
             GL11.glColor4f(1.0F, 1.0F, 0.0F, 0.4F);
@@ -1112,7 +1112,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     }
 
     @Override
-    public void drawEntityFOV(LivingEntity entity, LivingEntity viewEntity, float deltaTime) {
+    public void drawEntityFOV(Mob entity, Mob viewEntity, float deltaTime) {
         if (entity == viewEntity) {
             return;
         }

@@ -11,7 +11,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.LevelSource;
@@ -26,7 +26,7 @@ import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(LivingEntity.class)
+@Mixin(Mob.class)
 public abstract class MixinLivingEntity extends MixinEntity implements ExLivingEntity {
 
     @Shadow
@@ -208,7 +208,7 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         method = "baseTick",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/entity/LivingEntity;isInWall()Z"))
+            target = "Lnet/minecraft/world/entity/Mob;isInWall()Z"))
     private boolean damageIfNotCondition(boolean value) {
         return value && !this.noPhysics;
     }
@@ -232,7 +232,7 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         method = "hurt",
         at = @At(
             value = "FIELD",
-            target = "Lnet/minecraft/world/entity/LivingEntity;hurtTime:I",
+            target = "Lnet/minecraft/world/entity/Mob;hurtTime:I",
             shift = At.Shift.AFTER))
     private void setHurtTickOnDamage(Entity entity, int damage, CallbackInfoReturnable<Boolean> cir) {
         this.hurtTick = this.level.getTime();
@@ -607,7 +607,7 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         method = "aiStep",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/entity/LivingEntity;isInLava()Z",
+            target = "Lnet/minecraft/world/entity/Mob;isInLava()Z",
             shift = At.Shift.AFTER))
     private void fixupYaw(CallbackInfo ci) {
         if (this.onGround) {
@@ -633,7 +633,7 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         method = "aiStep",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/entity/LivingEntity;isInLava()Z",
+            target = "Lnet/minecraft/world/entity/Mob;isInLava()Z",
             shift = At.Shift.AFTER))
     private void doWallJump(CallbackInfo ci) {
         if (!this.jumping) {
@@ -729,10 +729,10 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         method = "die",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/entity/LivingEntity;dropDeathLoot()V",
+            target = "Lnet/minecraft/world/entity/Mob;dropDeathLoot()V",
             shift = At.Shift.AFTER))
     private void dropHeartsOnDeath(Entity killer, CallbackInfo ci) {
-        if (killer instanceof LivingEntity livingKiller) {
+        if (killer instanceof Mob livingKiller) {
             if (livingKiller.health < ((ExLivingEntity) livingKiller).getMaxHealth() && this.random.nextInt(3) != 0) {
                 var instance = new ItemInstance(AC_Items.heart.id, 1, 0);
                 var itemEntity = new ItemEntity(this.level, this.x, this.y, this.z, instance);

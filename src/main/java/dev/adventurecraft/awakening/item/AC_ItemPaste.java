@@ -3,7 +3,7 @@ package dev.adventurecraft.awakening.item;
 import dev.adventurecraft.awakening.common.AC_DebugMode;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.ItemInstance;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
@@ -27,7 +27,7 @@ public class AC_ItemPaste extends Item {
         int maxX = AC_ItemCursor.maxX;
         int maxY = AC_ItemCursor.maxY;
         int maxZ = AC_ItemCursor.maxZ;
-        LivingEntity entity = Minecraft.instance.cameraEntity;
+        Mob entity = Minecraft.instance.cameraEntity;
         Vec3 rot = entity.getLookAngle();
         int width = maxX - minX + 1;
         int height = maxY - minY + 1;

@@ -30,7 +30,7 @@ import net.minecraft.client.renderer.TileRenderer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -119,7 +119,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
 
     @Inject(method = "getFov", at = @At(
         value = "FIELD",
-        target = "Lnet/minecraft/world/entity/LivingEntity;health:I",
+        target = "Lnet/minecraft/world/entity/Mob;health:I",
         shift = At.Shift.BEFORE))
     private void handleZoom(float var1, CallbackInfoReturnable<Float> cir) {
         if (Keyboard.isKeyDown(((ExGameOptions) this.mc.options).ofKeyBindZoom().key) && this.mc.screen == null) {
@@ -135,7 +135,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
 
     @ModifyVariable(method = "getFov", index = 3, at = @At(
         value = "FIELD",
-        target = "Lnet/minecraft/world/entity/LivingEntity;health:I",
+        target = "Lnet/minecraft/world/entity/Mob;health:I",
         shift = At.Shift.BEFORE))
     private float modifyZoomFov(float value) {
         if (Keyboard.isKeyDown(((ExGameOptions) this.mc.options).ofKeyBindZoom().key)) {
@@ -288,9 +288,9 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
 
     @Redirect(method = "render(FJ)V", at = @At(
         value = "INVOKE",
-        target = "Lnet/minecraft/client/renderer/LevelRenderer;render(Lnet/minecraft/world/entity/LivingEntity;ID)I",
+        target = "Lnet/minecraft/client/renderer/LevelRenderer;render(Lnet/minecraft/world/entity/Mob;ID)I",
         ordinal = 1))
-    private int renderSortedRenderers1(LevelRenderer instance, LivingEntity var1, int var2, double var3) {
+    private int renderSortedRenderers1(LevelRenderer instance, Mob var1, int var2, double var3) {
         int result = ((ExWorldEventRenderer) instance).renderAllSortedRenderers(1, var3);
         return result;
     }
@@ -347,7 +347,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         target = "Lnet/minecraft/client/renderer/GameRenderer;setupFog(IF)V",
         shift = At.Shift.BEFORE,
         ordinal = 2))
-    private void updateCursor(float var1, long var2, CallbackInfo ci, @Local LivingEntity var22) {
+    private void updateCursor(float var1, long var2, CallbackInfo ci, @Local Mob var22) {
         GL11.glPushMatrix();
         if (AC_DebugMode.editMode && AC_DebugMode.mapEditing != null) {
             AC_DebugMode.mapEditing.updateCursor(var22, this.getFov(var1), var1);
@@ -378,7 +378,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
 
     @ModifyExpressionValue(method = "render(FJ)V", at = @At(
         value = "INVOKE",
-        target = "Lnet/minecraft/world/entity/LivingEntity;isUnderLiquid(Lnet/minecraft/world/level/material/Material;)Z",
+        target = "Lnet/minecraft/world/entity/Mob;isUnderLiquid(Lnet/minecraft/world/level/material/Material;)Z",
         ordinal = 0))
     private boolean noHeldItemInEditMode(boolean value) {
         return !AC_DebugMode.editMode && value;
@@ -392,7 +392,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         GameRenderer instance,
         float deltaTime,
         @Local LevelRenderer worldRenderer,
-        @Local LivingEntity viewEntity) {
+        @Local Mob viewEntity) {
 
         var wer = (ExWorldEventRenderer) worldRenderer;
 
@@ -413,8 +413,8 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
 
             if (AC_DebugMode.renderFov) {
                 for (Entity entity : (List<Entity>) this.mc.level.entities) {
-                    if (entity instanceof LivingEntity) {
-                        wer.drawEntityFOV((LivingEntity) entity, viewEntity, deltaTime);
+                    if (entity instanceof Mob) {
+                        wer.drawEntityFOV((Mob) entity, viewEntity, deltaTime);
                     }
                 }
             }
@@ -630,7 +630,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         }
 
         this.random.setSeed((long) this.tick * 312987231L);
-        LivingEntity viewEntity = this.mc.cameraEntity;
+        Mob viewEntity = this.mc.cameraEntity;
         Level world = this.mc.level;
         int viewX = Mth.floor(viewEntity.x);
         int viewY = Mth.floor(viewEntity.y);
@@ -698,7 +698,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
             return;
         }
 
-        LivingEntity viewEntity = this.mc.cameraEntity;
+        Mob viewEntity = this.mc.cameraEntity;
         Level world = this.mc.level;
         int viewX = Mth.floor(viewEntity.x);
         int viewY = Mth.floor(viewEntity.y);
@@ -832,7 +832,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
 
     @Overwrite
     private void setupFog(int var1, float var2) {
-        LivingEntity viewEntity = this.mc.cameraEntity;
+        Mob viewEntity = this.mc.cameraEntity;
         GL11.glFog(GL11.GL_FOG_COLOR, this.getBuffer(this.fogRed, this.fogGreen, this.fogBlue, 1.0F));
         GL11.glNormal3f(0.0F, -1.0F, 0.0F);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);

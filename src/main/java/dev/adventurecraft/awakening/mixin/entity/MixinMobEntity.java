@@ -13,11 +13,11 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
 
-@Mixin(Mob.class)
+@Mixin(PathfinderMob.class)
 public abstract class MixinMobEntity extends MixinLivingEntity implements ExMobEntity, IEntityPather {
 
     @Shadow
@@ -174,12 +174,12 @@ public abstract class MixinMobEntity extends MixinLivingEntity implements ExMobE
         super.readAdditionalSaveData(compoundTag);
         compoundTag.putBoolean("canPathRandomly", this.canPathRandomly);
         compoundTag.putBoolean("canForgetTargetRandomly", this.canForgetTargetRandomly);
-        if(!customData.isEmpty()) {
+        if (!customData.isEmpty()) {
             CompoundTag customCompoundTag = new CompoundTag();
-            for(String key : customData.keySet()){
-                customCompoundTag.putString(key,customData.get(key));
+            for (String key : customData.keySet()) {
+                customCompoundTag.putString(key, customData.get(key));
             }
-            compoundTag.putCompoundTag("custom",customCompoundTag);
+            compoundTag.putCompoundTag("custom", customCompoundTag);
         }
     }
 
@@ -194,12 +194,13 @@ public abstract class MixinMobEntity extends MixinLivingEntity implements ExMobE
             this.canPathRandomly = compoundTag.getBoolean("canForgetTargetRandomly");
         }
 
-        if(compoundTag.hasKey("custom")){
-            for(Tag tags : (Collection<Tag>)compoundTag.getCompoundTag("custom").getTags()) {
-                customData.put(tags.getType(),tags.toString());
+        if (compoundTag.hasKey("custom")) {
+            for (Tag tags : (Collection<Tag>) compoundTag.getCompoundTag("custom").getTags()) {
+                customData.put(tags.getType(), tags.toString());
             }
         }
     }
+
     @Override
     public boolean getCanForgetTargetRandomly() {
         return this.canForgetTargetRandomly;

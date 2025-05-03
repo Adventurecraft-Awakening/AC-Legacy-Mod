@@ -7,7 +7,7 @@ import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.client.renderer.TileRenderer;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.tile.Tile;
 import net.minecraft.world.phys.AABB;
@@ -39,7 +39,7 @@ public class AC_MapEditing {
         this.renderBlocks.level = world;
     }
 
-    public void updateCursor(LivingEntity entity, float var2, float deltaTime) {
+    public void updateCursor(Mob entity, float var2, float deltaTime) {
         if (this.mc.mouseGrabbed) {
             this.cursor = null;
             return;
@@ -93,7 +93,7 @@ public class AC_MapEditing {
     }
 
     public void render(float deltaTime) {
-        LivingEntity entity = Minecraft.instance.cameraEntity;
+        Mob entity = Minecraft.instance.cameraEntity;
         if (this.mc.mouseGrabbed) {
             return;
         }
@@ -121,7 +121,7 @@ public class AC_MapEditing {
         if (!AC_ItemCursor.bothSet) {
             return;
         }
-        LivingEntity entity = Minecraft.instance.cameraEntity;
+        Mob entity = Minecraft.instance.cameraEntity;
         float prX = (float) (entity.xOld + (entity.x - entity.xOld) * (double) deltaTime);
         float prY = (float) (entity.yOld + (entity.y - entity.yOld) * (double) deltaTime);
         float prZ = (float) (entity.zOld + (entity.z - entity.zOld) * (double) deltaTime);
@@ -204,7 +204,7 @@ public class AC_MapEditing {
         ts.end();
     }
 
-    private void drawCursor(LivingEntity entity, float deltaTime) {
+    private void drawCursor(Mob entity, float deltaTime) {
         if (this.cursor == null || this.cursor.hitType != HitType.TILE) {
             return;
         }

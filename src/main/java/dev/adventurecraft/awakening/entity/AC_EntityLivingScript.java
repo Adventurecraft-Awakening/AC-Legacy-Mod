@@ -14,7 +14,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.pathfinder.Path;
@@ -23,7 +23,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
-public class AC_EntityLivingScript extends LivingEntity implements IEntityPather {
+public class AC_EntityLivingScript extends Mob implements IEntityPather {
 
     String initDescTo;
     String descriptionName;
@@ -122,8 +122,8 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag tag) {
-        super.readAdditionalSaveData(tag);
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
         if (this.descriptionName != null && !this.descriptionName.equals("")) {
             tag.putString("descriptionName", this.descriptionName);
         }
@@ -158,8 +158,8 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag tag) {
-        super.addAdditionalSaveData(tag);
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
         this.initDescTo = tag.getString("descriptionName");
         this.onCreated = tag.getString("onCreated");
         this.onUpdate = tag.getString("onUpdate");

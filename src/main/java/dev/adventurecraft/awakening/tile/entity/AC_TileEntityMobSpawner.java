@@ -13,7 +13,7 @@ import net.minecraft.world.level.tile.Tile;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityIO;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.item.FallingTile;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.item.Minecart;
@@ -250,7 +250,7 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
                 }
 
                 if (showParticles) {
-                    if (entity instanceof LivingEntity livingEntity) {
+                    if (entity instanceof Mob livingEntity) {
                         livingEntity.spawnAnim();
                     }
                 }

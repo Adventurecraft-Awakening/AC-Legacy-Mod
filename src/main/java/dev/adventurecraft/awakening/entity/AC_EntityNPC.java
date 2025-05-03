@@ -107,8 +107,8 @@ public class AC_EntityNPC extends AC_EntityLivingScript {
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag tag) {
-        super.readAdditionalSaveData(tag);
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
         tag.putString("npcName", this.npcName);
         tag.putString("chatMsg", this.chatMsg);
         tag.putString("texture", this.textureName);
@@ -121,8 +121,8 @@ public class AC_EntityNPC extends AC_EntityLivingScript {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag tag) {
-        super.addAdditionalSaveData(tag);
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
         this.npcName = tag.getString("npcName");
         this.chatMsg = tag.getString("chatMsg");
         this.textureName = tag.getString("texture");

@@ -15,7 +15,7 @@ import net.minecraft.stats.Stat;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -61,7 +61,7 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
     public abstract void removeSelectedItem();
 
     @Shadow
-    protected abstract void method_510(LivingEntity arg, boolean bl);
+    protected abstract void method_510(Mob arg, boolean bl);
 
     @Shadow
     public abstract void awardStat(Stat arg, int i);
@@ -265,7 +265,7 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
             owner = arrow.owner;
         }
 
-        if (owner instanceof LivingEntity livingOwner) {
+        if (owner instanceof Mob livingOwner) {
             this.method_510(livingOwner, false);
         }
 
@@ -302,8 +302,8 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
         }
 
         ItemInstance heldItem = this.getSelectedItem();
-        if (heldItem != null && entity instanceof LivingEntity) {
-            heldItem.interactEnemy((LivingEntity) entity);
+        if (heldItem != null && entity instanceof Mob) {
+            heldItem.interactEnemy((Mob) entity);
 
             if (heldItem.count == 0) {
                 heldItem.snap((Player) (Object) this);
@@ -335,8 +335,8 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
 
         entity.hurt((Entity) (Object) this, attackDamage);
         ItemInstance heldItem = this.getSelectedItem();
-        if (heldItem != null && entity instanceof LivingEntity) {
-            heldItem.hurtEnemy((LivingEntity) entity, (Player) (Object) this);
+        if (heldItem != null && entity instanceof Mob) {
+            heldItem.hurtEnemy((Mob) entity, (Player) (Object) this);
 
             if (heldItem.count == 0) {
                 heldItem.snap((Player) (Object) this);
@@ -344,9 +344,9 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
             }
         }
 
-        if (entity instanceof LivingEntity) {
+        if (entity instanceof Mob) {
             if (entity.isAlive()) {
-                this.method_510((LivingEntity) entity, true);
+                this.method_510((Mob) entity, true);
             }
 
             this.awardStat(Stats.DAMAGE_DEALT, attackDamage);

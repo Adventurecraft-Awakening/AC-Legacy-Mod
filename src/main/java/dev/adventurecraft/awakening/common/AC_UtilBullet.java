@@ -1,13 +1,12 @@
 package dev.adventurecraft.awakening.common;
 
 import java.util.List;
-import java.util.Random;
 
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
@@ -16,7 +15,7 @@ import net.minecraft.world.phys.Vec3;
 
 public class AC_UtilBullet {
 
-    public static void fireBullet(Level world, LivingEntity caster, float spread, int damage) {
+    public static void fireBullet(Level world, Mob caster, float spread, int damage) {
         HitResult hit = findHit(world, caster, spread);
         if (hit == null) {
             return;
@@ -33,7 +32,7 @@ public class AC_UtilBullet {
         return ((ExWorld) world).rayTraceBlocks2(pointA, pointB, false, false, false);
     }
 
-    static HitResult findHit(Level world, LivingEntity caster, float spread) {
+    static HitResult findHit(Level world, Mob caster, float spread) {
         double dist = 256.0D;
         Vec3 pointA = caster.getPos(1.0F);
         Vec3 dir = caster.getViewVector(1.0F);
