@@ -549,7 +549,7 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         return false;
     }
 
-    @Inject(method = "readAdditionalSaveData", at = @At("TAIL"))
+    @Inject(method = "addAdditionalSaveData", at = @At("TAIL"))
     private void writeAdditionalAC(CompoundTag tag, CallbackInfo ci) {
         tag.putShort("MaxHealth", (short) this.maxHealth);
         tag.putInt("EntityID", this.id);
@@ -563,7 +563,7 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         tag.putBoolean("canGetFallDamage", this.canGetFallDamage);
     }
 
-    @Inject(method = "addAdditionalSaveData", at = @At("TAIL"))
+    @Inject(method = "readAdditionalSaveData", at = @At("TAIL"))
     private void readAdditionalAC(CompoundTag tag, CallbackInfo ci) {
         if (!tag.hasKey("MaxHealth")) {
             this.maxHealth = 10;
