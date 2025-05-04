@@ -16,6 +16,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(PathfinderMob.class)
 public abstract class MixinPathfinderMob extends MixinMob implements ExPathfinderMob, IEntityPather {
@@ -170,22 +171,25 @@ public abstract class MixinPathfinderMob extends MixinMob implements ExPathfinde
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag compoundTag) {
-        super.readAdditionalSaveData(compoundTag);
+    protected void ac$readAdditionalSaveData(CompoundTag compoundTag, CallbackInfo ci) {
+        super.ac$readAdditionalSaveData(compoundTag, ci);
+
         compoundTag.putBoolean("canPathRandomly", this.canPathRandomly);
         compoundTag.putBoolean("canForgetTargetRandomly", this.canForgetTargetRandomly);
-        if (!customData.isEmpty()) {
-            CompoundTag customCompoundTag = new CompoundTag();
-            for (String key : customData.keySet()) {
-                customCompoundTag.putString(key, customData.get(key));
+
+        if (!this.customData.isEmpty()) {
+            var customCompoundTag = new CompoundTag();
+            for (String key : this.customData.keySet()) {
+                customCompoundTag.putString(key, this.customData.get(key));
             }
             compoundTag.putCompoundTag("custom", customCompoundTag);
         }
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag compoundTag) {
-        super.addAdditionalSaveData(compoundTag);
+    protected void ac$addAdditionalSaveData(CompoundTag compoundTag, CallbackInfo ci) {
+        super.ac$addAdditionalSaveData(compoundTag, ci);
+
         if (compoundTag.hasKey("canPathRandomly")) {
             this.canPathRandomly = compoundTag.getBoolean("canPathRandomly");
         }
@@ -196,7 +200,7 @@ public abstract class MixinPathfinderMob extends MixinMob implements ExPathfinde
 
         if (compoundTag.hasKey("custom")) {
             for (Tag tags : (Collection<Tag>) compoundTag.getCompoundTag("custom").getTags()) {
-                customData.put(tags.getType(), tags.toString());
+                this.customData.put(tags.getType(), tags.toString());
             }
         }
     }

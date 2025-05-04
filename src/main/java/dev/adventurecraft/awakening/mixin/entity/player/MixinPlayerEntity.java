@@ -208,18 +208,18 @@ public abstract class MixinPlayerEntity extends MixinMob implements ExPlayerEnti
     private void keepInventoryOnDeath(Inventory instance) {
     }
 
-    @Inject(method = "readAdditionalSaveData", at = @At("TAIL"))
-    private void readAdditionalAC(CompoundTag var1, CallbackInfo ci) {
-        this.numHeartPieces = var1.getInt("NumHeartPieces");
+    @Override
+    protected void ac$readAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
+        this.numHeartPieces = tag.getInt("NumHeartPieces");
         if (this.maxHealth < 12) {
             this.health = this.health * 12 / this.maxHealth;
             this.maxHealth = 12;
         }
     }
 
-    @Inject(method = "addAdditionalSaveData", at = @At("TAIL"))
-    private void writeAdditionalAC(CompoundTag var1, CallbackInfo ci) {
-        var1.putInt("NumHeartPieces", this.numHeartPieces);
+    @Override
+    protected void ac$addAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
+        tag.putInt("NumHeartPieces", this.numHeartPieces);
     }
 
     @Redirect(

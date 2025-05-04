@@ -137,16 +137,6 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
     public abstract void setLookAt(Entity arg, float f, float g);
 
     @Shadow
-    public void readAdditionalSaveData(CompoundTag arg) {
-        throw new AssertionError();
-    }
-
-    @Shadow
-    public void addAdditionalSaveData(CompoundTag arg) {
-        throw new AssertionError();
-    }
-
-    @Shadow
     public abstract float getHeadHeight();
 
     @Shadow
@@ -560,7 +550,7 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
     }
 
     @Inject(method = "addAdditionalSaveData", at = @At("TAIL"))
-    private void writeAdditionalAC(CompoundTag tag, CallbackInfo ci) {
+    protected void ac$addAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
         tag.putShort("MaxHealth", (short) this.maxHealth);
         tag.putInt("EntityID", this.id);
         tag.putInt("timesCanJumpInAir", this.timesCanJumpInAir);
@@ -574,7 +564,7 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
     }
 
     @Inject(method = "readAdditionalSaveData", at = @At("TAIL"))
-    private void readAdditionalAC(CompoundTag tag, CallbackInfo ci) {
+    protected void ac$readAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
         if (!tag.hasKey("MaxHealth")) {
             this.maxHealth = 10;
         } else {
