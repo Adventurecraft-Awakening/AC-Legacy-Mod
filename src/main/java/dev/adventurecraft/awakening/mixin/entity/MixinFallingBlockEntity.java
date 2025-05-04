@@ -101,11 +101,19 @@ public abstract class MixinFallingBlockEntity extends MixinEntity implements ExF
     @Inject(method = "addAdditionalSaveData", at = @At("TAIL"))
     private void ac$addAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
         tag.putInt("EntityID", this.id);
+        tag.putInt("Metadata", this.metadata);
+        tag.putDouble("StartX", this.startX);
+        tag.putDouble("StartZ", this.startZ);
     }
 
     @Inject(method = "readAdditionalSaveData", at = @At("TAIL"))
     private void ac$readAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
-        ((ExCompoundTag) tag).findInt("EntityID").ifPresent(id -> this.id = id);
+        var exTag = (ExCompoundTag) tag;
+        exTag.findInt("EntityID").ifPresent(id -> this.id = id);
+        exTag.findInt("Metadata").ifPresent(meta -> this.metadata = meta);
+
+        this.startX = exTag.findDouble("StartX").orElse(this.x);
+        this.startZ = exTag.findDouble("StartZ").orElse(this.z);
     }
 
     @Override
