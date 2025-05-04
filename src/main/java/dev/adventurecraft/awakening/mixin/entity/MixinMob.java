@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.mixin.entity;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.extension.block.ExLadderBlock;
@@ -565,42 +566,23 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
 
     @Inject(method = "readAdditionalSaveData", at = @At("TAIL"))
     protected void ac$readAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
-        if (!tag.hasKey("MaxHealth")) {
-            this.maxHealth = 10;
-        } else {
-            this.maxHealth = tag.getShort("MaxHealth");
-        }
+        var exTag = (ExCompoundTag) tag;
+        this.maxHealth = exTag.findShort("MaxHealth").orElse((short) 10);
 
         //noinspection ConstantValue
-        if (tag.hasKey("EntityID") && !(((Object) this instanceof Player))) {
-            this.id = tag.getInt("EntityID");
-        }
+        exTag.findInt("EntityID")
+            .filter(id -> !((Object) this instanceof Player))
+            .ifPresent(id -> this.id = id);
 
         this.timesCanJumpInAir = tag.getInt("timesCanJumpInAir");
         this.canWallJump = tag.getBoolean("canWallJump");
-        if (tag.hasKey("fov")) {
-            this.fov = tag.getFloat("fov");
-        }
+        exTag.findFloat("fov").ifPresent(this::setFov);
 
-        if (tag.hasKey("canLookRandomly")) {
-            this.canLookRandomly = tag.getBoolean("canLookRandomly");
-        }
-
-        if (tag.hasKey("randomLookVelocity")) {
-            this.randomLookVelocity = tag.getFloat("randomLookVelocity");
-        }
-
-        if (tag.hasKey("randomLookRate")) {
-            this.randomLookRate = tag.getInt("randomLookRate");
-        }
-
-        if (tag.hasKey("randomLookRateVariation")) {
-            this.randomLookRateVariation = tag.getInt("randomLookRateVariation");
-        }
-
-        if (tag.hasKey("canGetFallDamage")) {
-            this.canGetFallDamage = tag.getBoolean("canGetFallDamage");
-        }
+        exTag.findBool("canLookRandomly").ifPresent(this::setCanLookRandomly);
+        exTag.findFloat("randomLookVelocity").ifPresent(this::setRandomLookVelocity);
+        exTag.findInt("randomLookRate").ifPresent(this::setRandomLookRate);
+        exTag.findInt("randomLookRateVariation").ifPresent(this::setRandomLookRateVariation);
+        exTag.findBool("canGetFallDamage").ifPresent(this::setCanGetFallDamage);
     }
 
     @Inject(

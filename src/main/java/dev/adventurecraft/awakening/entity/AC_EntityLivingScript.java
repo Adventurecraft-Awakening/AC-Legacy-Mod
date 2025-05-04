@@ -4,6 +4,7 @@ import dev.adventurecraft.awakening.common.AC_CoordBlock;
 import dev.adventurecraft.awakening.common.IEntityPather;
 import dev.adventurecraft.awakening.extension.entity.ExMob;
 import dev.adventurecraft.awakening.extension.entity.ai.pathing.ExEntityPath;
+import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.script.EntityDescriptions;
 import dev.adventurecraft.awakening.script.ScopeTag;
@@ -11,7 +12,6 @@ import dev.adventurecraft.awakening.script.ScriptEntity;
 import dev.adventurecraft.awakening.script.ScriptEntityDescription;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityNpcPath;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
@@ -124,6 +124,7 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
+
         if (this.descriptionName != null && !this.descriptionName.equals("")) {
             tag.putString("descriptionName", this.descriptionName);
         }
@@ -152,9 +153,8 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
             tag.putString("onInteraction", this.onInteraction);
         }
 
-        if (tag.hasKey("scope")) {
-            ScopeTag.loadScopeFromTag(this.scope, tag.getCompoundTag("scope"));
-        }
+        ((ExCompoundTag) tag).findCompound("scope")
+            .ifPresent(c -> ScopeTag.loadScopeFromTag(this.scope, c));
     }
 
     @Override
@@ -167,7 +167,7 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
         this.onAttacked = tag.getString("onAttacked");
         this.onDeath = tag.getString("onDeath");
         this.onInteraction = tag.getString("onInteraction");
-        tag.putTag("scope", (Tag) ScopeTag.getTagFromScope(this.scope));
+        tag.putTag("scope", ScopeTag.getTagFromScope(this.scope));
     }
 
     public void runCreatedScript() {

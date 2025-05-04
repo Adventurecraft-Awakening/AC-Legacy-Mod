@@ -6,6 +6,7 @@ import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.entity.AC_EntityLivingScript;
 import dev.adventurecraft.awakening.entity.AC_EntitySkeletonSword;
 import dev.adventurecraft.awakening.extension.entity.ExFallingBlockEntity;
+import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.util.Xoshiro128PP;
@@ -410,6 +411,8 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        var exTag = (ExCompoundTag) tag;
+
         this.entityID = tag.getString("EntityId");
         this.delay = tag.getShort("Delay");
         this.respawnDelay = tag.getInt("RespawnDelay");
@@ -420,12 +423,9 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
         this.hasDroppedItem = tag.getBoolean("HasDroppedItem");
         this.spawnID = tag.getInt("SpawnID");
         this.spawnMeta = tag.getInt("SpawnMeta");
-        if (tag.hasKey("ShowDebugInfo")) {
-            this.showDebugInfo = tag.getBoolean("ShowDebugInfo");
-        }
-        if (tag.hasKey("ShowParticles")) {
-            this.showParticles = tag.getBoolean("ShowParticles");
-        }
+        exTag.findBool("ShowDebugInfo").ifPresent(b -> this.showDebugInfo = b);
+        exTag.findBool("ShowParticles").ifPresent(b -> this.showParticles = b);
+
         for (int id = 0; id < 8; ++id) {
             this.minVec[id].x = tag.getInt("minX".concat(Integer.toString(id)));
             this.minVec[id].y = tag.getInt("minY".concat(Integer.toString(id)));
@@ -440,14 +440,14 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
         this.maxSpawnVec.x = tag.getInt("maxSpawnX");
         this.maxSpawnVec.y = tag.getInt("maxSpawnY");
         this.maxSpawnVec.z = tag.getInt("maxSpawnZ");
-        if (tag.hasKey("numEntities") && tag.getShort("numEntities") > 0) {
+
+        if (exTag.findShort("numEntities").filter(n -> n > 0).isPresent()) {
             this.ticksBeforeLoad = 20;
             this.delayLoadData = tag;
         }
 
-        if (tag.hasKey("scope")) {
-            ScopeTag.loadScopeFromTag(this.scope, tag.getCompoundTag("scope"));
-        }
+        exTag.findCompound("scope")
+            .ifPresent(c -> ScopeTag.loadScopeFromTag(this.scope, c));
     }
 
     @Override
@@ -489,7 +489,7 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
             ++id;
         }
 
-        tag.putTag("scope", (Tag) ScopeTag.getTagFromScope(this.scope));
+        tag.putTag("scope", ScopeTag.getTagFromScope(this.scope));
     }
 
     private void executeScript(String name) {

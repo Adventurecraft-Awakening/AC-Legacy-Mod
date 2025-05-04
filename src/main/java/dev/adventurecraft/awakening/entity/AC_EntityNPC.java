@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.entity;
 
+import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
@@ -123,26 +124,21 @@ public class AC_EntityNPC extends AC_EntityLivingScript {
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+        var exTag = (ExCompoundTag) tag;
+
         this.npcName = tag.getString("npcName");
         this.chatMsg = tag.getString("chatMsg");
         this.textureName = tag.getString("texture");
+
         if (tag.hasKey("spawnX")) {
             this.spawnX = tag.getDouble("spawnX");
             this.spawnY = tag.getDouble("spawnY");
             this.spawnZ = tag.getDouble("spawnZ");
         }
 
-        if (tag.hasKey("pathToHome")) {
-            this.pathToHome = tag.getBoolean("pathToHome");
-        }
-
-        if (tag.hasKey("trackPlayer")) {
-            this.trackPlayer = tag.getBoolean("trackPlayer");
-        }
-
-        if (tag.hasKey("isAttackable")) {
-            this.isAttackable = tag.getBoolean("isAttackable");
-        }
+        exTag.findBool("pathToHome").ifPresent(b -> this.pathToHome = b);
+        exTag.findBool("trackPlayer").ifPresent(b -> this.trackPlayer = b);
+        exTag.findBool("isAttackable").ifPresent(b -> this.isAttackable = b);
     }
 
     @Override

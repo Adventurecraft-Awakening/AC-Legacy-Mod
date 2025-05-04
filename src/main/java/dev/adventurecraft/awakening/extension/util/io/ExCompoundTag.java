@@ -31,6 +31,10 @@ public interface ExCompoundTag {
         return this.findTag(key).map(tag -> tag instanceof StringTag sTag ? sTag.contents : null);
     }
 
+    default Optional<byte[]> findByteArray(String key) {
+        return this.findTag(key).map(tag -> tag instanceof ByteArrayTag aTag ? aTag.data : null);
+    }
+
     default Optional<CompoundTag> findCompound(String key) {
         return this.findTag(key).map(tag -> tag instanceof CompoundTag cTag ? cTag : null);
     }

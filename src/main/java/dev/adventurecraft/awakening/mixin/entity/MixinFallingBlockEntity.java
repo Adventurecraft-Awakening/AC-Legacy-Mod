@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.mixin.entity;
 
 import dev.adventurecraft.awakening.extension.entity.ExFallingBlockEntity;
+import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.item.FallingTile;
@@ -8,6 +9,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.tile.SandTile;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -21,8 +23,11 @@ public abstract class MixinFallingBlockEntity extends MixinEntity implements ExF
     @Shadow
     public int time;
 
+    @Unique
     public int metadata;
+    @Unique
     public double startX;
+    @Unique
     public double startZ;
 
     @Inject(method = "<init>(Lnet/minecraft/world/level/Level;)V", at = @At("TAIL"))
@@ -100,9 +105,7 @@ public abstract class MixinFallingBlockEntity extends MixinEntity implements ExF
 
     @Inject(method = "readAdditionalSaveData", at = @At("TAIL"))
     private void ac$readAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
-        if (tag.hasKey("EntityID")) {
-            this.id = tag.getInt("EntityID");
-        }
+        ((ExCompoundTag) tag).findInt("EntityID").ifPresent(id -> this.id = id);
     }
 
     @Override
