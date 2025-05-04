@@ -210,6 +210,8 @@ public abstract class MixinPlayerEntity extends MixinMob implements ExPlayerEnti
 
     @Override
     protected void ac$readAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
+        super.ac$readAdditionalSaveData(tag, ci);
+
         this.numHeartPieces = tag.getInt("NumHeartPieces");
         if (this.maxHealth < 12) {
             this.health = this.health * 12 / this.maxHealth;
@@ -219,6 +221,8 @@ public abstract class MixinPlayerEntity extends MixinMob implements ExPlayerEnti
 
     @Override
     protected void ac$addAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
+        super.ac$addAdditionalSaveData(tag, ci);
+
         tag.putInt("NumHeartPieces", this.numHeartPieces);
     }
 
