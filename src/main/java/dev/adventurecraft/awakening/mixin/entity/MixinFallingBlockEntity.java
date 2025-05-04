@@ -8,6 +8,7 @@ import net.minecraft.world.entity.item.FallingTile;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.tile.SandTile;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -44,57 +45,60 @@ public abstract class MixinFallingBlockEntity extends MixinEntity implements ExF
         this.startZ = z;
     }
 
+    @Overwrite
     public void tick() {
         if (this.tileId == 0) {
             this.remove();
-        } else {
-            this.xo = this.x;
-            this.yo = this.y;
-            this.zo = this.z;
-            ++this.time;
-            this.yd -= 0.04F;
-            this.move(this.xd, this.yd, this.zd);
-            this.xd *= 0.98F;
-            this.yd *= 0.98F;
-            this.zd *= 0.98F;
-            int var1 = Mth.floor(this.x);
-            int var2 = Mth.floor(this.y);
-            int var3 = Mth.floor(this.z);
-            if (this.level.getTile(var1, var2, var3) == this.tileId) {
-                this.level.setTile(var1, var2, var3, 0);
-            }
+            return;
+        }
 
-            if (this.onGround && Math.abs(this.xd) < 0.01D && Math.abs(this.zd) < 0.01D) {
-                this.xd *= 0.7F;
-                this.zd *= 0.7F;
-                this.yd *= -0.5D;
-                if (!SandTile.isFree(this.level, var1, var2 - 1, var3)) {
-                    this.remove();
-                    if (!this.level.isClientSide) {
-                        if (!this.level.mayPlace(this.tileId, var1, var2, var3, true, 1) ||
-                            !this.level.setTileAndData(var1, var2, var3, this.tileId, this.metadata)) {
-                            this.spawnAtLocation(this.tileId, 1);
-                        }
-                    }
-                } else {
-                    this.setPos((double) var1 + 0.5D, this.y, (double) var3 + 0.5D);
-                    this.xd = 0.0D;
-                    this.zd = 0.0D;
-                }
-            } else if (this.time > 100 && !this.level.isClientSide) {
-                this.spawnAtLocation(this.tileId, 1);
+        this.xo = this.x;
+        this.yo = this.y;
+        this.zo = this.z;
+        ++this.time;
+        this.yd -= 0.04F;
+        this.move(this.xd, this.yd, this.zd);
+        this.xd *= 0.98F;
+        this.yd *= 0.98F;
+        this.zd *= 0.98F;
+
+        int ix = Mth.floor(this.x);
+        int iy = Mth.floor(this.y);
+        int iz = Mth.floor(this.z);
+        if (this.level.getTile(ix, iy, iz) == this.tileId) {
+            this.level.setTile(ix, iy, iz, 0);
+        }
+
+        if (this.onGround && Math.abs(this.xd) < 0.01D && Math.abs(this.zd) < 0.01D) {
+            this.xd *= 0.7F;
+            this.zd *= 0.7F;
+            this.yd *= -0.5D;
+            if (!SandTile.isFree(this.level, ix, iy - 1, iz)) {
                 this.remove();
-            }
-
-            if (Math.abs(this.x - this.startX) >= 1.0D) {
+                if (!this.level.isClientSide) {
+                    if (!this.level.mayPlace(this.tileId, ix, iy, iz, true, 1) ||
+                        !this.level.setTileAndData(ix, iy, iz, this.tileId, this.metadata)) {
+                        this.spawnAtLocation(this.tileId, 1);
+                    }
+                }
+            } else {
+                this.setPos((double) ix + 0.5D, this.y, (double) iz + 0.5D);
                 this.xd = 0.0D;
-                this.setPos((double) var1 + 0.5D, this.y, this.z);
-            }
-
-            if (Math.abs(this.z - this.startZ) >= 1.0D) {
                 this.zd = 0.0D;
-                this.setPos(this.x, this.y, (double) var3 + 0.5D);
             }
+        } else if (this.time > 100 && !this.level.isClientSide) {
+            this.spawnAtLocation(this.tileId, 1);
+            this.remove();
+        }
+
+        if (Math.abs(this.x - this.startX) >= 1.0D) {
+            this.xd = 0.0D;
+            this.setPos((double) ix + 0.5D, this.y, this.z);
+        }
+
+        if (Math.abs(this.z - this.startZ) >= 1.0D) {
+            this.zd = 0.0D;
+            this.setPos(this.x, this.y, (double) iz + 0.5D);
         }
     }
 
