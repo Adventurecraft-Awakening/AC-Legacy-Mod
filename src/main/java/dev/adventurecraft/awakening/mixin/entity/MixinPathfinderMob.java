@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.mixin.entity;
 
 import dev.adventurecraft.awakening.common.IEntityPather;
-import dev.adventurecraft.awakening.extension.entity.ExMobEntity;
+import dev.adventurecraft.awakening.extension.entity.ExPathfinderMob;
 import dev.adventurecraft.awakening.extension.entity.ai.pathing.ExEntityPath;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -18,7 +18,7 @@ import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
 
 @Mixin(PathfinderMob.class)
-public abstract class MixinMobEntity extends MixinLivingEntity implements ExMobEntity, IEntityPather {
+public abstract class MixinPathfinderMob extends MixinMob implements ExPathfinderMob, IEntityPather {
 
     @Shadow
     protected Entity attackTarget;

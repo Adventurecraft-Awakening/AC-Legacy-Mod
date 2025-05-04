@@ -7,7 +7,7 @@ import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.item.AC_IItemLight;
 import dev.adventurecraft.awakening.item.AC_Items;
-import dev.adventurecraft.awakening.mixin.entity.MixinLivingEntity;
+import dev.adventurecraft.awakening.mixin.entity.MixinMob;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
@@ -31,7 +31,7 @@ import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Player.class)
-public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExPlayerEntity {
+public abstract class MixinPlayerEntity extends MixinMob implements ExPlayerEntity {
 
     @Shadow
     public Inventory inventory;

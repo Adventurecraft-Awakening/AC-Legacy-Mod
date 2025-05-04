@@ -7,7 +7,7 @@ import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
-import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
+import dev.adventurecraft.awakening.extension.entity.ExMob;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.image.Rgba;
@@ -138,7 +138,7 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
         }
 
         if (this.hudEnabled) {
-            int maxHealth = ((ExLivingEntity) this.minecraft.player).getMaxHealth();
+            int maxHealth = ((ExMob) this.minecraft.player).getMaxHealth();
 
             GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.minecraft.textures.loadTexture("/gui/gui.png"));

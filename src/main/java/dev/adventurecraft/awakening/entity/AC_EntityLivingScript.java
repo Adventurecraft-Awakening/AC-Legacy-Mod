@@ -2,7 +2,7 @@ package dev.adventurecraft.awakening.entity;
 
 import dev.adventurecraft.awakening.common.AC_CoordBlock;
 import dev.adventurecraft.awakening.common.IEntityPather;
-import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
+import dev.adventurecraft.awakening.extension.entity.ExMob;
 import dev.adventurecraft.awakening.extension.entity.ai.pathing.ExEntityPath;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.script.EntityDescriptions;
@@ -64,7 +64,7 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
 
         if (reset) {
             this.health = desc.health;
-            ((ExLivingEntity) this).setMaxHealth(desc.health);
+            ((ExMob) this).setMaxHealth(desc.health);
             this.onCreated = desc.onCreated;
             this.onUpdate = desc.onUpdate;
             this.onPathReached = desc.onPathReached;

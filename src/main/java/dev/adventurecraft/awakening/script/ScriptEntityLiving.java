@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.script;
 
-import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
+import dev.adventurecraft.awakening.extension.entity.ExMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import dev.adventurecraft.awakening.common.AC_UtilBullet;
@@ -53,11 +53,11 @@ public class ScriptEntityLiving extends ScriptEntity {
     }
 
     public int getMaxHealth() {
-        return ((ExLivingEntity) this.entityLiving).getMaxHealth();
+        return ((ExMob) this.entityLiving).getMaxHealth();
     }
 
     public void setMaxHealth(int value) {
-        ((ExLivingEntity) this.entityLiving).setMaxHealth(value);
+        ((ExMob) this.entityLiving).setMaxHealth(value);
     }
 
     public String getTexture() {
@@ -65,7 +65,7 @@ public class ScriptEntityLiving extends ScriptEntity {
     }
 
     public void setTexture(String name) {
-        ((ExLivingEntity) this.entityLiving).setTexture(name);
+        ((ExMob) this.entityLiving).setTexture(name);
     }
 
     public int getHurtTime() {
@@ -85,75 +85,75 @@ public class ScriptEntityLiving extends ScriptEntity {
     }
 
     public ScriptItem getHeldItem() {
-        return new ScriptItem(((ExLivingEntity) this.entityLiving).getSelectedItem());
+        return new ScriptItem(((ExMob) this.entityLiving).getSelectedItem());
     }
 
     public void setHeldItem(ScriptItem item) {
-        ((ExLivingEntity) this.entityLiving).setHeldItem(item.item);
+        ((ExMob) this.entityLiving).setHeldItem(item.item);
     }
 
     public float getMoveSpeed() {
-        return ((ExLivingEntity) this.entityLiving).getMovementSpeed();
+        return ((ExMob) this.entityLiving).getMovementSpeed();
     }
 
     public void setMoveSpeed(float value) {
-        ((ExLivingEntity) this.entityLiving).setMovementSpeed(value);
+        ((ExMob) this.entityLiving).setMovementSpeed(value);
     }
 
     public int getTimesCanJumpInAir() {
-        return ((ExLivingEntity) this.entityLiving).getTimesCanJumpInAir();
+        return ((ExMob) this.entityLiving).getTimesCanJumpInAir();
     }
 
     public void setTimesCanJumpInAir(int value) {
-        ((ExLivingEntity) this.entityLiving).setTimesCanJumpInAir(value);
+        ((ExMob) this.entityLiving).setTimesCanJumpInAir(value);
     }
 
     public boolean getCanWallJump() {
-        return ((ExLivingEntity) this.entityLiving).getCanWallJump();
+        return ((ExMob) this.entityLiving).getCanWallJump();
     }
 
     public void setCanWallJump(boolean value) {
-        ((ExLivingEntity) this.entityLiving).setCanWallJump(value);
+        ((ExMob) this.entityLiving).setCanWallJump(value);
     }
 
     public int getJumpsInAirLeft() {
-        return ((ExLivingEntity) this.entityLiving).getJumpsLeft();
+        return ((ExMob) this.entityLiving).getJumpsLeft();
     }
 
     public void setJumpsInAirLeft(int value) {
-        ((ExLivingEntity) this.entityLiving).setJumpsLeft(value);
+        ((ExMob) this.entityLiving).setJumpsLeft(value);
     }
 
     public double getGravity() {
-        return ((ExLivingEntity) this.entityLiving).getGravity();
+        return ((ExMob) this.entityLiving).getGravity();
     }
 
     public void setGravity(double value) {
-        ((ExLivingEntity) this.entityLiving).setGravity(value);
+        ((ExMob) this.entityLiving).setGravity(value);
     }
 
     public double getJumpVelocity() {
-        return ((ExLivingEntity) this.entityLiving).getJumpVelocity();
+        return ((ExMob) this.entityLiving).getJumpVelocity();
     }
 
     public void setJumpVelocity(double value) {
-        ((ExLivingEntity) this.entityLiving).setJumpVelocity(value);
+        ((ExMob) this.entityLiving).setJumpVelocity(value);
     }
 
     public double getJumpWallMultiplier() {
-        return ((ExLivingEntity) this.entityLiving).getJumpWallMultiplier();
+        return ((ExMob) this.entityLiving).getJumpWallMultiplier();
     }
 
     public void setJumpWallMultiplier(double value) {
-        ((ExLivingEntity) this.entityLiving).setJumpWallMultiplier(value);
+        ((ExMob) this.entityLiving).setJumpWallMultiplier(value);
     }
 
     public double getJumpInAirMultiplier() {
-        return ((ExLivingEntity) this.entityLiving).getJumpInAirMultiplier();
+        return ((ExMob) this.entityLiving).getJumpInAirMultiplier();
     }
 
     public void setJumpInAirMultiplier(double value) {
-        ((ExLivingEntity) this.entityLiving).setJumpInAirMultiplier(value);
+        ((ExMob) this.entityLiving).setJumpInAirMultiplier(value);
     }
 
     public boolean getShouldJump() {
@@ -165,11 +165,11 @@ public class ScriptEntityLiving extends ScriptEntity {
     }
 
     public float getAirControl() {
-        return ((ExLivingEntity) this.entityLiving).getAirControl();
+        return ((ExMob) this.entityLiving).getAirControl();
     }
 
     public void setAirControl(float value) {
-        ((ExLivingEntity) this.entityLiving).setAirControl(value);
+        ((ExMob) this.entityLiving).setAirControl(value);
     }
 
     public void fireBullet(float spread, int damage) {
@@ -177,50 +177,50 @@ public class ScriptEntityLiving extends ScriptEntity {
     }
 
     public float getFov() {
-        return ((ExLivingEntity) this.entityLiving).getFov();
+        return ((ExMob) this.entityLiving).getFov();
     }
 
     public void setFov(float value) {
-        ((ExLivingEntity) this.entityLiving).setFov(value);
+        ((ExMob) this.entityLiving).setFov(value);
     }
 
     public boolean getCanLookRandomly() {
-        return ((ExLivingEntity) this.entityLiving).getCanLookRandomly();
+        return ((ExMob) this.entityLiving).getCanLookRandomly();
     }
 
     public void setCanLookRandomly(boolean value) {
-        ((ExLivingEntity) this.entityLiving).setCanLookRandomly(value);
+        ((ExMob) this.entityLiving).setCanLookRandomly(value);
     }
 
     public float getRandomLookVelocity() {
-        return ((ExLivingEntity) this.entityLiving).getRandomLookVelocity();
+        return ((ExMob) this.entityLiving).getRandomLookVelocity();
     }
 
     public void setRandomLookVelocity(float var1) {
-        ((ExLivingEntity) this.entityLiving).setRandomLookVelocity(var1);
+        ((ExMob) this.entityLiving).setRandomLookVelocity(var1);
     }
 
     public int getRandomLookNext() {
-        return ((ExLivingEntity) this.entityLiving).getRandomLookNext();
+        return ((ExMob) this.entityLiving).getRandomLookNext();
     }
 
     public void setRandomLookNext(int value) {
-        ((ExLivingEntity) this.entityLiving).setRandomLookNext(value);
+        ((ExMob) this.entityLiving).setRandomLookNext(value);
     }
 
     public int getRandomLookRate() {
-        return ((ExLivingEntity) this.entityLiving).getRandomLookRate();
+        return ((ExMob) this.entityLiving).getRandomLookRate();
     }
 
     public void setRandomLookRate(int value) {
-        ((ExLivingEntity) this.entityLiving).setRandomLookRate(value);
+        ((ExMob) this.entityLiving).setRandomLookRate(value);
     }
 
     public int getRandomLookRateVariation() {
-        return ((ExLivingEntity) this.entityLiving).getRandomLookRateVariation();
+        return ((ExMob) this.entityLiving).getRandomLookRateVariation();
     }
 
     public void setRandomLookRateVariation(int value) {
-        ((ExLivingEntity) this.entityLiving).setRandomLookRateVariation(value);
+        ((ExMob) this.entityLiving).setRandomLookRateVariation(value);
     }
 }

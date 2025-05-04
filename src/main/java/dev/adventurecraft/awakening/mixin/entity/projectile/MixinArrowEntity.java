@@ -2,7 +2,7 @@ package dev.adventurecraft.awakening.mixin.entity.projectile;
 
 import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.extension.block.ExLadderBlock;
-import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
+import dev.adventurecraft.awakening.extension.entity.ExMob;
 import dev.adventurecraft.awakening.extension.entity.projectile.ExArrowEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.mixin.entity.MixinEntity;
@@ -196,7 +196,7 @@ public abstract class MixinArrowEntity extends MixinEntity implements ExArrowEnt
     }
 
     public void handleHitEntity(HitResult var1) {
-        if (var1.entity instanceof Mob && ((ExLivingEntity) var1.entity).protectedByShield(this.xo, this.yo, this.zo)) {
+        if (var1.entity instanceof Mob && ((ExMob) var1.entity).protectedByShield(this.xo, this.yo, this.zo)) {
             this.level.playSound((Entity) (Object) this, "random.drr", 1.0F, 1.2F / (this.random.nextFloat() * 0.2F + 0.9F));
             this.remove();
         } else if (var1.entity.hurt(this.owner, this.attackStrength)) {

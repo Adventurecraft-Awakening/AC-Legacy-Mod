@@ -10,7 +10,7 @@ import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.render.ExWorldEventRenderer;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
-import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
+import dev.adventurecraft.awakening.extension.entity.ExMob;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunkCache;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.item.AC_Items;
@@ -1124,7 +1124,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         ts.begin(GL11.GL_LINE_STRIP);
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        if (((ExLivingEntity) entity).getExtraFov() > 0.0F) {
+        if (((ExMob) entity).getExtraFov() > 0.0F) {
             GL11.glColor4f(1.0F, 0.5F, 0.0F, 0.4F);
         } else {
             GL11.glColor4f(0.0F, 1.0F, 0.0F, 0.4F);
@@ -1132,7 +1132,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
 
         GL11.glLineWidth(5.0F);
         GL11.glDisable(GL11.GL_TEXTURE_2D);
-        float fov = Math.min(((ExLivingEntity) entity).getFov() / 2.0F + ((ExLivingEntity) entity).getExtraFov(), 180.0F);
+        float fov = Math.min(((ExMob) entity).getFov() / 2.0F + ((ExMob) entity).getExtraFov(), 180.0F);
         double rX = 5.0D * Math.sin(-Math.PI * (double) (entity.yRot - fov) / 180.0D) + entity.x;
         double rZ = 5.0D * Math.cos(-Math.PI * (double) (entity.yRot - fov) / 180.0D) + entity.z;
         double rdY = entity.y - dY + (double) entity.getHeadHeight();

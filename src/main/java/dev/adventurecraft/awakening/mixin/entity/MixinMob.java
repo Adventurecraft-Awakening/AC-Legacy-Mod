@@ -4,7 +4,7 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.extension.block.ExLadderBlock;
-import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
+import dev.adventurecraft.awakening.extension.entity.ExMob;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.nbt.CompoundTag;
@@ -27,7 +27,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Mob.class)
-public abstract class MixinLivingEntity extends MixinEntity implements ExLivingEntity {
+public abstract class MixinMob extends MixinEntity implements ExMob {
 
     @Shadow
     public int invulnerableDuration;
@@ -733,7 +733,7 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
             shift = At.Shift.AFTER))
     private void dropHeartsOnDeath(Entity killer, CallbackInfo ci) {
         if (killer instanceof Mob livingKiller) {
-            if (livingKiller.health < ((ExLivingEntity) livingKiller).getMaxHealth() && this.random.nextInt(3) != 0) {
+            if (livingKiller.health < ((ExMob) livingKiller).getMaxHealth() && this.random.nextInt(3) != 0) {
                 var instance = new ItemInstance(AC_Items.heart.id, 1, 0);
                 var itemEntity = new ItemEntity(this.level, this.x, this.y, this.z, instance);
                 this.level.addEntity(itemEntity);

@@ -14,7 +14,7 @@ import dev.adventurecraft.awakening.common.gui.AC_GuiWorldConfig;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.render.ExWorldEventRenderer;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
-import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
+import dev.adventurecraft.awakening.extension.entity.ExMob;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
@@ -275,7 +275,7 @@ public class ServerCommands {
         if (entity instanceof Mob livingEntity) {
             int health = amount != null ? amount : 12;
             livingEntity.health = health;
-            ((ExLivingEntity) livingEntity).setMaxHealth(health);
+            ((ExMob) livingEntity).setMaxHealth(health);
             if (livingEntity instanceof ExPlayerEntity exPlayer) {
                 exPlayer.setHeartPiecesCount(0);
             }

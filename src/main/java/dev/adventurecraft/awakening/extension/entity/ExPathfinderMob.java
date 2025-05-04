@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.extension.entity;
 
-public interface ExMobEntity {
+public interface ExPathfinderMob {
 
     boolean getCanForgetTargetRandomly();
 
