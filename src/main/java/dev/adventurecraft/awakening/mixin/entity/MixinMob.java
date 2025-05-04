@@ -92,36 +92,46 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
     @Shadow
     protected int lookTime;
 
-    public boolean canGetFallDamage = true;
-
-    public void setCanGetFallDamage(boolean arg) {
-        this.canGetFallDamage = arg;
-    }
-
-    public boolean getCanGetFallDamage() {
-        return this.canGetFallDamage;
-    }
-
+    @Unique
     protected int maxHealth = 10;
     @Unique
     private ItemInstance ac$heldItem;
+    @Unique
     private long hurtTick;
+    @Unique
     public int timesCanJumpInAir = 0;
+    @Unique
     public int jumpsLeft = 0;
+    @Unique
     public boolean canWallJump = false;
+    @Unique
     private long tickBeforeNextJump;
+    @Unique
     public double jumpVelocity = 0.42D;
+    @Unique
     public double jumpWallMultiplier = 1.0D;
+    @Unique
     public double jumpInAirMultiplier = 1.0D;
+    @Unique
     public float airControl = 0.9259F;
+    @Unique
     public double gravity = 0.08D;
+    @Unique
     public float fov = 140.0F;
+    @Unique
     public float extraFov = 0.0F;
+    @Unique
     public boolean canLookRandomly = true;
+    @Unique
     public float randomLookVelocity = 20.0F;
+    @Unique
     public int randomLookNext = 0;
+    @Unique
     public int randomLookRate = 100;
+    @Unique
     public int randomLookRateVariation = 40;
+    @Unique
+    public boolean canGetFallDamage = true;
 
     @Shadow
     public abstract void setLookAt(Entity arg, float f, float g);
@@ -962,5 +972,15 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
     public void setRandomLookRateVariation(int value) {
         // TODO: throw on "value <= 0"
         this.randomLookRateVariation = value;
+    }
+
+    @Override
+    public void setCanGetFallDamage(boolean arg) {
+        this.canGetFallDamage = arg;
+    }
+
+    @Override
+    public boolean getCanGetFallDamage() {
+        return this.canGetFallDamage;
     }
 }
