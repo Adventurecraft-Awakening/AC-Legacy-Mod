@@ -22,6 +22,7 @@ public class AC_EntityBoomerang extends Entity {
     private static final float STANDING_EYE_HEIGHT = 0.03125F;
     private static final double DISTANCE_MAX = 35.0D;
     private static final double DISTANCE_MIN = 1.5D;
+
     private final ArrayList<ItemEntity> itemsPickedUp = new ArrayList<>();
     private boolean turningAround = true;
     private Entity returnsTo = null;
@@ -37,8 +38,8 @@ public class AC_EntityBoomerang extends Entity {
         this.setSize(0.5F, 1.0F / 16.0F);
         this.heightOffset = STANDING_EYE_HEIGHT;
 
-        ExEntity entity = (ExEntity)this;
-        entity.setCollidesWithClipBlocks(true);
+        var entity = (ExEntity)this;
+        entity.setCollidesWithClipBlocks(false);
         entity.setIgnoreCobwebCollision(true);
     }
 

@@ -82,7 +82,7 @@ public class AC_JScriptHandler {
                     continue;
                 }
 
-                executor.execute(new ScriptLoadTask(path, cxFactory, queue));
+                executor.execute(new ScriptLoadTask(path, fileName, cxFactory, queue));
                 taskCounter.incrementAndGet();
             }
 
@@ -163,14 +163,17 @@ public class AC_JScriptHandler {
 
     private static class ScriptLoadTask extends ForkJoinTask<Void> {
         public final Path path;
+        public final String scriptName;
         public final ContextFactory cxFactory;
         public final BlockingQueue<ScriptLoadTask> queue;
 
         public Script result;
         public Exception ex;
 
-        private ScriptLoadTask(Path path, ContextFactory cxFactory, BlockingQueue<ScriptLoadTask> queue) {
+        private ScriptLoadTask(
+            Path path, String scriptName, ContextFactory cxFactory, BlockingQueue<ScriptLoadTask> queue) {
             this.path = path;
+            this.scriptName = scriptName;
             this.cxFactory = cxFactory;
             this.queue = queue;
         }
@@ -193,8 +196,8 @@ public class AC_JScriptHandler {
             }
 
             // TODO: update charset to UTF-8 in new maps?
-            try (var reader = new FileReader(path.toFile(), StandardCharsets.ISO_8859_1)) {
-                this.result = cx.compileReader(reader, path.toString(), 1, null);
+            try (var reader = new FileReader(this.path.toFile(), StandardCharsets.ISO_8859_1)) {
+                this.result = cx.compileReader(reader, this.scriptName, 1, null);
             } catch (Exception ex) {
                 this.ex = ex;
             }
