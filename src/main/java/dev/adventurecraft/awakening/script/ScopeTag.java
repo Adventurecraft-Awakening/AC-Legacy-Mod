@@ -64,7 +64,7 @@ public class ScopeTag {
         for (String key : ((ExCompoundTag) tag).getKeys()) {
             String[] elements = key.split("_", 2);
             if (elements.length != 2) {
-                logUnsupportedProp("decode", key, ((ExCompoundTag) tag).getValue(key));
+                logUnsupportedProp("decode", key, ((ExCompoundTag) tag).getTag(key));
                 continue;
             }
 
@@ -100,7 +100,7 @@ public class ScopeTag {
                     scriptable.put(name, scriptable, value);
                 }
                 default -> {
-                    logUnsupportedProp("read", key, ((ExCompoundTag) tag).getValue(key));
+                    logUnsupportedProp("read", key, ((ExCompoundTag) tag).getTag(key));
                 }
             }
         }

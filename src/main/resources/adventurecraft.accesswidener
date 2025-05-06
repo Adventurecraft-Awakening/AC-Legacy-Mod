@@ -47,9 +47,9 @@ accessible field net/minecraft/world/level/pathfinder/Path nodes [Lnet/minecraft
 mutable field net/minecraft/world/level/pathfinder/Path nodes [Lnet/minecraft/world/level/pathfinder/Node; # field_2691
 accessible field net/minecraft/world/level/pathfinder/Path pos I # field_2692
 
-accessible field net/minecraft/world/entity/LivingEntity jumping Z
-accessible field net/minecraft/world/entity/LivingEntity lastHurt I # field_1058
-accessible field net/minecraft/world/entity/LivingEntity lookAt Lnet/minecraft/world/entity/Entity;
+accessible field net/minecraft/world/entity/Mob jumping Z
+accessible field net/minecraft/world/entity/Mob lastHurt I # field_1058
+accessible field net/minecraft/world/entity/Mob lookAt Lnet/minecraft/world/entity/Entity;
 
 accessible method net/minecraft/world/entity/player/Player actuallyHurt (I)V
 

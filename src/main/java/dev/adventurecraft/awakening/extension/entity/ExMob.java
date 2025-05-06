@@ -2,7 +2,7 @@ package dev.adventurecraft.awakening.extension.entity;
 
 import net.minecraft.world.ItemInstance;
 
-public interface ExLivingEntity extends ExEntity {
+public interface ExMob extends ExEntity {
 
     boolean protectedByShield();
 

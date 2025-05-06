@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.common.mixin;
 
 import dev.adventurecraft.awakening.entity.AC_EntityLivingScript;
-import dev.adventurecraft.awakening.mixin.entity.MixinLivingEntity;
+import dev.adventurecraft.awakening.mixin.entity.MixinMob;
 import dev.adventurecraft.awakening.script.ScriptEntity;
 import net.minecraft.world.entity.Entity;
 import org.mozilla.javascript.Context;
@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 @Mixin(AC_EntityLivingScript.class)
-public abstract class MixinAC_EntityLivingScript extends MixinLivingEntity {
+public abstract class MixinAC_EntityLivingScript extends MixinMob {
 
     @Shadow(remap = false)
     protected Scriptable scope;

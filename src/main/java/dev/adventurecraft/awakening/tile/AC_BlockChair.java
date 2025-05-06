@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.tile;
 
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.Level;
 
 public class AC_BlockChair extends AC_BlockSolid {
@@ -28,7 +28,7 @@ public class AC_BlockChair extends AC_BlockSolid {
     }
 
     @Override
-    public void setPlacedBy(Level var1, int var2, int var3, int var4, LivingEntity var5) {
+    public void setPlacedBy(Level var1, int var2, int var3, int var4, Mob var5) {
         int var6 = var1.getData(var2, var3, var4);
         int var7 = Mth.floor((double) (var5.yRot * 4.0F / 360.0F) + 0.5D) & 3;
         var1.setData(var2, var3, var4, var6 + (var7 + 1) % 4);

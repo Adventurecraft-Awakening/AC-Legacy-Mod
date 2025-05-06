@@ -19,6 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Mixin(LevelData.class)
 public abstract class MixinWorldProperties implements ExWorldProperties {
@@ -63,10 +64,10 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
 
     @Inject(method = "<init>(Lnet/minecraft/nbt/CompoundTag;)V", at = @At("TAIL"))
     private void init(CompoundTag tag, CallbackInfo ci) {
-        this.tempOffset = tag.getDouble("TemperatureOffset");
-        if (tag.hasKey("IsPrecipitating")) {
-            this.raining = tag.getBoolean("IsPrecipitating");
-        }
+        var exTag = (ExCompoundTag) tag;
+
+        this.tempOffset = exTag.findDouble("TemperatureOffset").orElse(0.0);
+        exTag.findBool("IsPrecipitating").ifPresent(b -> this.raining = b);
 
         Entity.ENTITY_COUNTER = tag.getInt("nextEntityID");
         if (tag.hasKey("useImages")) {
@@ -84,85 +85,43 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
             wgp.volatilityWeight2 = tag.getDouble("volatilityWeight2");
         }
 
-        if (tag.hasKey("iceMelts")) {
-            this.iceMelts = tag.getBoolean("iceMelts");
-        }
+        exTag.findBool("iceMelts").ifPresent(this::setIceMelts);
+        exTag.findBool("leavesDecay").ifPresent(this::setLeavesDecay);
+        exTag.findBool("mobsBurn").ifPresent(this::setMobsBurn);
 
-        if (tag.hasKey("leavesDecay")) {
-            this.leavesDecay = tag.getBoolean("leavesDecay");
-        }
+        exTag.findCompound("triggerAreas").ifPresent(c -> this.triggerData = c);
 
-        if (tag.hasKey("triggerAreas")) {
-            this.triggerData = tag.getCompoundTag("triggerAreas");
-        }
-
-        if (tag.hasKey("timeRate")) {
-            this.timeRate = tag.getFloat("timeRate");
-        } else {
-            this.timeRate = 1.0F;
-        }
-
-        if (tag.hasKey("timeOfDay")) {
-            this.timeOfDay = tag.getFloat("timeOfDay");
-        } else {
-            this.timeOfDay = (float) this.time;
-        }
-
+        this.timeRate = exTag.findFloat("timeRate").orElse(1.0F);
+        this.timeOfDay = exTag.findFloat("timeOfDay").orElse((float) this.time);
         this.playingMusic = tag.getString("playingMusic");
-        if (tag.hasKey("mobsBurn")) {
-            this.mobsBurn = tag.getBoolean("mobsBurn");
-        }
 
         this.overlay = tag.getString("overlay");
-        if (tag.hasKey("textureReplacements")) {
-            this.replacementTag = tag.getCompoundTag("textureReplacements");
-        }
+        exTag.findCompound("textureReplacements").ifPresent(c -> this.replacementTag = c);
 
         this.onNewSaveScript = tag.getString("onNewSaveScript");
         this.onLoadScript = tag.getString("onLoadScript");
         this.onUpdateScript = tag.getString("onUpdateScript");
-        if (tag.hasKey("playerName")) {
-            this.playerName = tag.getString("playerName");
-        }
+
+        exTag.findString("playerName").ifPresent(this::setPlayerName);
 
         for (int i = 0; i < 16; ++i) {
-            String id = "brightness" + i;
-            if (tag.hasKey(id)) {
-                this.brightness[i] = tag.getFloat(id);
+            Optional<Float> value = exTag.findFloat("brightness" + i);
+            if (value.isPresent()) {
+                this.brightness[i] = value.get();
             } else {
                 this.brightness[i] = LightHelper.getDefaultLightAtIndex(i);
             }
         }
 
-        if (tag.hasKey("globalScope")) {
-            this.globalScope = tag.getCompoundTag("globalScope");
-        }
+        exTag.findCompound("globalScope").ifPresent(this::setGlobalScope);
+        exTag.findCompound("worldScope").ifPresent(this::setWorldScope);
+        exTag.findCompound("musicScope").ifPresent(this::setMusicScope);
 
-        if (tag.hasKey("worldScope")) {
-            this.worldScope = tag.getCompoundTag("worldScope");
-        }
+        this.originallyFromAC = exTag.findBool("originallyFromAC")
+            .orElseGet(() -> tag.hasKey("TemperatureOffset"));
 
-        if (tag.hasKey("musicScope")) {
-            this.musicScope = tag.getCompoundTag("musicScope");
-        }
-
-        if (tag.hasKey("originallyFromAC")) {
-            this.originallyFromAC = tag.getBoolean("originallyFromAC");
-        } else {
-            this.originallyFromAC = tag.hasKey("TemperatureOffset");
-        }
-
-        if (tag.hasKey("allowsInventoryCrafting")) {
-            this.allowsInventoryCrafting = tag.getBoolean("allowsInventoryCrafting");
-        } else {
-            this.allowsInventoryCrafting = true;
-        }
-
-        if (tag.hasKey("hudEnabled")) {
-            this.hudEnabled = tag.getBoolean("hudEnabled");
-        } else {
-            this.hudEnabled = true;
-        }
+        this.allowsInventoryCrafting = exTag.findBool("allowsInventoryCrafting").orElse(true);
+        this.hudEnabled = exTag.findBool("hudEnabled").orElse(true);
     }
 
     @Inject(method = "<init>(JLjava/lang/String;)V", at = @At("TAIL"))
@@ -176,7 +135,8 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
 
     @Inject(method = "<init>(Lnet/minecraft/world/level/storage/LevelData;)V", at = @At("TAIL"))
     private void init(LevelData var1, CallbackInfo ci) {
-        System.arraycopy(((MixinWorldProperties) (Object) var1).brightness, 0, this.brightness, 0, 16);
+        System.arraycopy(
+            ((MixinWorldProperties) (Object) var1).brightness, 0, this.brightness, 0, 16);
     }
 
     @Inject(method = "save(Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/nbt/CompoundTag;)V", at = @At("TAIL"))
@@ -232,8 +192,8 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
             tag.putString("playerName", this.playerName);
         }
 
-        for (int var3 = 0; var3 < 16; ++var3) {
-            tag.putFloat("brightness" + var3, this.brightness[var3]);
+        for (int i = 0; i < 16; ++i) {
+            tag.putFloat("brightness" + i, this.brightness[i]);
         }
 
         if (this.globalScope != null) {
@@ -575,11 +535,13 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         this.musicScope = value;
     }
 
-    public void setHudEnabled(boolean arg){
+    @Override
+    public void setHudEnabled(boolean arg) {
         this.hudEnabled = arg;
     }
 
-    public boolean getHudEnabled(){
+    @Override
+    public boolean getHudEnabled() {
         return this.hudEnabled;
     }
 }

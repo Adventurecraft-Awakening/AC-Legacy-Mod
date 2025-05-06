@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.tile.entity;
 
+import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
@@ -44,15 +45,15 @@ public class AC_TileEntityScript extends TileEntity {
     }
 
     @Override
-    public void load(CompoundTag var1) {
-        super.load(var1);
-        this.onTriggerScriptFile = var1.getString("onTriggerScriptFile");
-        this.onDetriggerScriptFile = var1.getString("onDetriggerScriptFile");
-        this.onUpdateScriptFile = var1.getString("onUpdateScriptFile");
-        this.isActivated = var1.getBoolean("isActivated");
-        if (var1.hasKey("scope")) {
-            ScopeTag.loadScopeFromTag(this.scope, var1.getCompoundTag("scope"));
-        }
+    public void load(CompoundTag tag) {
+        super.load(tag);
+        this.onTriggerScriptFile = tag.getString("onTriggerScriptFile");
+        this.onDetriggerScriptFile = tag.getString("onDetriggerScriptFile");
+        this.onUpdateScriptFile = tag.getString("onUpdateScriptFile");
+        this.isActivated = tag.getBoolean("isActivated");
+
+        ((ExCompoundTag) tag).findCompound("scope")
+            .ifPresent(c -> ScopeTag.loadScopeFromTag(this.scope, c));
     }
 
     @Override

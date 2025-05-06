@@ -7,7 +7,7 @@ import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.item.AC_IItemLight;
 import dev.adventurecraft.awakening.item.AC_Items;
-import dev.adventurecraft.awakening.mixin.entity.MixinLivingEntity;
+import dev.adventurecraft.awakening.mixin.entity.MixinMob;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
@@ -15,7 +15,7 @@ import net.minecraft.stats.Stat;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -31,7 +31,7 @@ import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Player.class)
-public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExPlayerEntity {
+public abstract class MixinPlayerEntity extends MixinMob implements ExPlayerEntity {
 
     @Shadow
     public Inventory inventory;
@@ -61,7 +61,7 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
     public abstract void removeSelectedItem();
 
     @Shadow
-    protected abstract void method_510(LivingEntity arg, boolean bl);
+    protected abstract void method_510(Mob arg, boolean bl);
 
     @Shadow
     public abstract void awardStat(Stat arg, int i);
@@ -208,18 +208,22 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
     private void keepInventoryOnDeath(Inventory instance) {
     }
 
-    @Inject(method = "readAdditionalSaveData", at = @At("TAIL"))
-    private void readAdditionalAC(CompoundTag var1, CallbackInfo ci) {
-        this.numHeartPieces = var1.getInt("NumHeartPieces");
+    @Override
+    protected void ac$readAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
+        super.ac$readAdditionalSaveData(tag, ci);
+
+        this.numHeartPieces = tag.getInt("NumHeartPieces");
         if (this.maxHealth < 12) {
             this.health = this.health * 12 / this.maxHealth;
             this.maxHealth = 12;
         }
     }
 
-    @Inject(method = "addAdditionalSaveData", at = @At("TAIL"))
-    private void writeAdditionalAC(CompoundTag var1, CallbackInfo ci) {
-        var1.putInt("NumHeartPieces", this.numHeartPieces);
+    @Override
+    protected void ac$addAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
+        super.ac$addAdditionalSaveData(tag, ci);
+
+        tag.putInt("NumHeartPieces", this.numHeartPieces);
     }
 
     @Redirect(
@@ -265,7 +269,7 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
             owner = arrow.owner;
         }
 
-        if (owner instanceof LivingEntity livingOwner) {
+        if (owner instanceof Mob livingOwner) {
             this.method_510(livingOwner, false);
         }
 
@@ -302,8 +306,8 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
         }
 
         ItemInstance heldItem = this.getSelectedItem();
-        if (heldItem != null && entity instanceof LivingEntity) {
-            heldItem.interactEnemy((LivingEntity) entity);
+        if (heldItem != null && entity instanceof Mob) {
+            heldItem.interactEnemy((Mob) entity);
 
             if (heldItem.count == 0) {
                 heldItem.snap((Player) (Object) this);
@@ -335,8 +339,8 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
 
         entity.hurt((Entity) (Object) this, attackDamage);
         ItemInstance heldItem = this.getSelectedItem();
-        if (heldItem != null && entity instanceof LivingEntity) {
-            heldItem.hurtEnemy((LivingEntity) entity, (Player) (Object) this);
+        if (heldItem != null && entity instanceof Mob) {
+            heldItem.hurtEnemy((Mob) entity, (Player) (Object) this);
 
             if (heldItem.count == 0) {
                 heldItem.snap((Player) (Object) this);
@@ -344,9 +348,9 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
             }
         }
 
-        if (entity instanceof LivingEntity) {
+        if (entity instanceof Mob) {
             if (entity.isAlive()) {
-                this.method_510((LivingEntity) entity, true);
+                this.method_510((Mob) entity, true);
             }
 
             this.awardStat(Stats.DAMAGE_DEALT, attackDamage);
