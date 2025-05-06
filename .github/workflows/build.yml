@@ -10,13 +10,9 @@ jobs:
   build:
     strategy:
       matrix:
-        # Use these Java versions
-        java: [23]
+        java: [24] # Use these Java versions
         os: [ubuntu-latest]
-        include:
-          - java: 23
-            os: ubuntu-latest
-            artifacts: true
+        artifacts: [true]
         
     runs-on: ${{ matrix.os }}
     
