@@ -5,7 +5,7 @@ import dev.adventurecraft.awakening.common.GuiCreateNewMap;
 import dev.adventurecraft.awakening.common.ScrollableWidget;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
-import dev.adventurecraft.awakening.util.IntRect;
+import dev.adventurecraft.awakening.layout.*;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;

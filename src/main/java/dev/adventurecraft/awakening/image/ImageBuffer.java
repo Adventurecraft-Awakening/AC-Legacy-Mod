@@ -1,5 +1,7 @@
 package dev.adventurecraft.awakening.image;
 
+import dev.adventurecraft.awakening.layout.IntPoint;
+import dev.adventurecraft.awakening.layout.IntRect;
 import org.apache.commons.lang3.NotImplementedException;
 import org.lwjgl.BufferUtils;
 
@@ -27,8 +29,8 @@ public final class ImageBuffer {
         this.format = format;
     }
 
-    public Rect getBounds() {
-        return new Rect(0, 0, this.width, this.height);
+    public IntRect getBounds() {
+        return new IntRect(0, 0, this.width, this.height);
     }
 
     public Size getSize() {
@@ -59,7 +61,7 @@ public final class ImageBuffer {
         return this.buffer.slice(y * this.stride, this.stride).order(ByteOrder.nativeOrder());
     }
 
-    public void copyTo(ImageBuffer dst, Point dstPoint, Point srcPoint, Size size) {
+    public void copyTo(ImageBuffer dst, IntPoint dstPoint, IntPoint srcPoint, Size size) {
         var src = this;
 
         int srcStart = src.format.getByteStride(srcPoint.x);
@@ -81,10 +83,10 @@ public final class ImageBuffer {
     }
 
     public void copyTo(ImageBuffer dst) {
-        copyTo(dst, Point.zero, Point.zero, this.getSize());
+        copyTo(dst, IntPoint.zero, IntPoint.zero, this.getSize());
     }
 
-    public void copyTo(IntBuffer dst, Point dstPoint, Point srcPoint, Size size, ImageFormat dstFormat) {
+    public void copyTo(IntBuffer dst, IntPoint dstPoint, IntPoint srcPoint, Size size, ImageFormat dstFormat) {
         var src = this;
         if (src.format == dstFormat) {
             blitTo(dst, dstPoint, srcPoint, size);
@@ -100,7 +102,7 @@ public final class ImageBuffer {
         throw new NotImplementedException();
     }
 
-    private void blitTo(IntBuffer dst, Point dstPoint, Point srcPoint, Size size) {
+    private void blitTo(IntBuffer dst, IntPoint dstPoint, IntPoint srcPoint, Size size) {
         var src = this;
         int dstOffset = dstPoint.y * size.w + dstPoint.x;
         for (int i = 0; i < size.h; i++) {
@@ -112,7 +114,7 @@ public final class ImageBuffer {
         }
     }
 
-    private void rgba8ToBgra8(IntBuffer dst, Point dstPoint, Point srcPoint, Size size) {
+    private void rgba8ToBgra8(IntBuffer dst, IntPoint dstPoint, IntPoint srcPoint, Size size) {
         var src = this;
         int dstOffset = dstPoint.y * size.w + dstPoint.x;
         for (int i = 0; i < size.h; i++) {
@@ -127,7 +129,7 @@ public final class ImageBuffer {
     }
 
     public void copyTo(IntBuffer dst, ImageFormat format) {
-        this.copyTo(dst, Point.zero, Point.zero, this.getSize(), format);
+        this.copyTo(dst, IntPoint.zero, IntPoint.zero, this.getSize(), format);
     }
 
     public static ImageBuffer create(int width, int height, int stride, ImageFormat format) {

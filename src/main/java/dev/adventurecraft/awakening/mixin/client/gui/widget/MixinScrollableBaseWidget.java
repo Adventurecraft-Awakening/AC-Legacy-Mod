@@ -2,7 +2,7 @@ package dev.adventurecraft.awakening.mixin.client.gui.widget;
 
 import dev.adventurecraft.awakening.common.ScrollableWidget;
 import dev.adventurecraft.awakening.extension.client.gui.widget.ExScrollableBaseWidget;
-import dev.adventurecraft.awakening.util.IntRect;
+import dev.adventurecraft.awakening.layout.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractSelectionList;
 import net.minecraft.client.gui.components.Button;

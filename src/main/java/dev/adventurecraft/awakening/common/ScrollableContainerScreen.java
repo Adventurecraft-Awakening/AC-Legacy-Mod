@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
-import dev.adventurecraft.awakening.util.IntRect;
+import dev.adventurecraft.awakening.layout.*;
 import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;

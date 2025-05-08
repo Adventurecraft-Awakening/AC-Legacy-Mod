@@ -1,6 +1,5 @@
 package dev.adventurecraft.awakening.common;
 
-import dev.adventurecraft.awakening.util.IntRect;
 import dev.adventurecraft.awakening.util.MathF;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import net.minecraft.client.Minecraft;
