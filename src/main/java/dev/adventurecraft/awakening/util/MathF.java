@@ -25,6 +25,15 @@ public final class MathF {
         return Math.round(value * decimals) / (double) decimals;
     }
 
+    public static double roundToZero(double value) {
+        if (value < 0) {
+            return Math.ceil(value);
+        }
+        else {
+            return Math.floor(value);
+        }
+    }
+
     public static float sin(float a) {
         return (float) Math.sin(a);
     }

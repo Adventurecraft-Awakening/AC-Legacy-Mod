@@ -83,10 +83,11 @@ public abstract class ScrollableWidget extends GuiComponent {
 
     public int getEntryUnderPoint(Point location) {
         Point contentLocation = this.getLocationRelativeToContent(location);
-        // TODO: also check contentLocation.x
-        double entryIndex = contentLocation.y / this.entryHeight;
-        if (entryIndex >= 0 && entryIndex < this.getEntryCount()) {
-            return (int) entryIndex;
+        if (contentLocation.x >= 0 && contentLocation.x < this.getContentRect().width()) {
+            double entryIndex = contentLocation.y / this.entryHeight;
+            if (entryIndex >= 0 && entryIndex < this.getEntryCount()) {
+                return (int) entryIndex;
+            }
         }
         return -1;
     }

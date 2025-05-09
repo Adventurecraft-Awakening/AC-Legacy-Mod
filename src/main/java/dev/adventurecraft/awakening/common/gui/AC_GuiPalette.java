@@ -5,6 +5,7 @@ import dev.adventurecraft.awakening.common.InventoryDebug;
 import dev.adventurecraft.awakening.common.ScrollableContainer;
 import dev.adventurecraft.awakening.common.ScrollableContainerScreen;
 import dev.adventurecraft.awakening.extension.client.ExInteractionManager;
+import dev.adventurecraft.awakening.util.MathF;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 
@@ -90,12 +91,7 @@ public class AC_GuiPalette extends ScrollableContainerScreen {
     }
 
     private void goToPageRelative(int count) {
-        double row = this.itemList.getScrollRow() / this.rowsPerPage;
-        if (count < 0)
-            row = Math.ceil(row);
-        else
-            row = Math.floor(row);
-
+        double row = MathF.roundToZero(this.itemList.getScrollRow() / this.rowsPerPage);
         double newRow = (row + count) * this.rowsPerPage;
         this.itemList.setScrollRow(newRow, false);
     }
