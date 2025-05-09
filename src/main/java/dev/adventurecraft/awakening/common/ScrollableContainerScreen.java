@@ -50,6 +50,7 @@ public abstract class ScrollableContainerScreen extends Screen {
 
         itemList = new ItemList(new IntRect(0, entryHeight, this.containerWidth, listHeight), entryHeight);
         itemList.setEdgeShadowHeight(0);
+        itemList.setLayoutPadding(IntBorder.zero);
     }
 
     @Override

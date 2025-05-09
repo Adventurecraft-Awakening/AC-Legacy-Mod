@@ -46,6 +46,7 @@ public abstract class ScrollableWidget extends GuiComponent {
         this.client = minecraft;
         this.layoutRect = layoutRect;
 
+        this.layoutPadding = new IntBorder(0, this.edgeShadowHeight);
         this.entryHeight = entryHeight;
         this.scrollbarWidth = 6;
     }
