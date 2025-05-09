@@ -22,17 +22,11 @@ public class FilePickerWidget extends ScrollableWidget {
     private int selectedIndex = -1;
     private int hoveredIndex = -1;
 
-    private int lastMouseX = 0;
-    private int lastMouseY = 0;
+    private IntPoint lastMousePoint = IntPoint.zero;
     private long mouseStillTime = 0L;
 
-    public FilePickerWidget(
-        Minecraft minecraft,
-        IntRect screenRect,
-        IntRect contentRect,
-        int entryHeight) {
-        super(minecraft, screenRect, contentRect, entryHeight);
-        this.setContentTopPadding(4);
+    public FilePickerWidget(Minecraft minecraft, IntRect layoutRect, int entryHeight) {
+        super(minecraft, layoutRect, entryHeight);
     }
 
     @Override
@@ -44,79 +38,70 @@ public class FilePickerWidget extends ScrollableWidget {
     protected void entryClicked(int entryIndex, int buttonIndex, boolean doubleClick) {
         if (buttonIndex == 0) {
             this.selectedIndex = entryIndex;
-        } else if (buttonIndex == 1) {
+        }
+        else if (buttonIndex == 1) {
             Path path = this.files.get(entryIndex);
             try {
                 DesktopUtil.browseFileDirectory(path);
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 ACMod.LOGGER.warn("Failed to browse file dir: ", ex);
             }
         }
     }
 
     @Override
-    protected void renderContentBackground(
-        double left, double right, double top, double bot, double scroll, Tesselator ts) {
-        IntRect rect = this.getScreenRect();
-        this.fillGradient(
-            rect.left(), rect.top(),
-            rect.right(), rect.bottom(),
-            0x0f101010, 0xd0101010);
+    protected void renderContentBackground(Tesselator ts, Rect rect, Point scroll) {
+        DrawUtil.fillRect(ts, rect, IntCorner.vertical(0x0f101010, 0xd0101010), null);
     }
 
     @Override
-    protected void beforeEntryRender(int mouseX, int mouseY, double entryX, double entryY, Tesselator ts) {
-        super.beforeEntryRender(mouseX, mouseY, entryX, entryY, ts);
+    protected void beforeEntryRender(Tesselator ts, IntPoint mouseLocation, Point entryLocation) {
+        super.beforeEntryRender(ts, mouseLocation, entryLocation);
 
-        this.hoveredIndex = this.getEntryUnderPoint(mouseX, mouseY);
+        this.hoveredIndex = this.getEntryUnderPoint(mouseLocation.asFloat());
     }
 
     @Override
-    protected void renderEntry(int entryIndex, double entryX, double entryY, int entryHeight, Tesselator ts) {
+    protected void renderEntry(Tesselator ts, int entryIndex, Point entryLocation, int entryHeight) {
         var exText = (ExTextRenderer) this.client.font;
         String file = this.files.get(entryIndex).getFileName().toString();
 
-        entryX -= 110;
-
         if (this.selectedIndex == entryIndex || this.hoveredIndex == entryIndex) {
             int width = exText.getTextWidth(file, 0).width() + 6;
+            var selectRect = new Rect(entryLocation.x, entryLocation.y, width, entryHeight);
+
             boolean isHover = this.selectedIndex != entryIndex && this.hoveredIndex == entryIndex;
-            int borderColor = isHover ? 0x80808080 : 0xff808080;
-            int backColor = isHover ? 0x80000000 : 0xff000000;
+            var borderColor = new IntCorner(isHover ? 0x80808080 : 0xff808080);
+            var backColor = new IntCorner(isHover ? 0x80000000 : 0xff000000);
 
             GL11.glDisable(GL11.GL_TEXTURE_2D);
             GL11.glEnable(GL11.GL_BLEND);
             ts.begin();
-            this.renderContentSelection(
-                entryX - 2, entryY - 2, width, entryHeight, 1, borderColor, backColor, ts);
+            this.renderContentSelection(ts, selectRect, new Border(1), borderColor, backColor, null, null);
             ts.end();
             GL11.glEnable(GL11.GL_TEXTURE_2D);
             GL11.glDisable(GL11.GL_BLEND);
         }
 
-        float x = (float) entryX + 2;
-        float y = (float) entryY + 2;
+        float x = (float) entryLocation.x + 3;
+        float y = (float) entryLocation.y + 3;
         exText.drawString(file, x, y, 0xffffff, true);
     }
 
     @Override
-    public void render(int mouseX, int mouseY, float tickTime) {
-        super.render(mouseX, mouseY, tickTime);
+    public void render(IntPoint mousePoint, float tickTime) {
+        super.render(mousePoint, tickTime);
 
-        if (Math.abs(mouseX - this.lastMouseX) > 5 ||
-            Math.abs(mouseY - this.lastMouseY) > 5) {
-            this.lastMouseX = mouseX;
-            this.lastMouseY = mouseY;
+        IntPoint mouseDelta = mousePoint.sub(lastMousePoint).abs();
+        if (mouseDelta.x > 5 || mouseDelta.y > 5) {
+            this.lastMousePoint = mousePoint;
             this.mouseStillTime = System.currentTimeMillis();
             return;
         }
 
-        IntRect screenRect = this.getScreenRect();
-        IntRect contentRect = this.getContentRect();
-
-        int contentTop = contentRect.top() + screenRect.top();
-        int contentBot = contentRect.bottom() + screenRect.top();
-        if (mouseY > contentBot || mouseY + this.entryHeight < contentTop) {
+        IntRect contentRect = this.getBorderRect();
+        if (mousePoint.y > contentRect.bot() || mousePoint.y + this.entryHeight < contentRect.top()) {
             return;
         }
 
@@ -124,14 +109,13 @@ public class FilePickerWidget extends ScrollableWidget {
         if (System.currentTimeMillis() >= this.mouseStillTime + hoverDelay) {
             int hoverIndex = getHoveredIndex();
             if (hoverIndex != -1) {
-                this.lastMouseX = mouseX;
-                this.lastMouseY = mouseY;
-                renderHoverTooltip(hoverIndex, mouseX, mouseY);
+                this.lastMousePoint = mousePoint;
+                renderHoverTooltip(hoverIndex, mousePoint);
             }
         }
     }
 
-    public void renderHoverTooltip(int entryIndex, int mouseX, int mouseY) {
+    public void renderHoverTooltip(int entryIndex, IntPoint mousePoint) {
         Path path = this.files.get(entryIndex);
         File file = path.toFile();
 
@@ -144,17 +128,14 @@ public class FilePickerWidget extends ScrollableWidget {
             lines.add("§7Dir: " + path.getParent().normalize());
         }
 
-        int maxWidth = lines.stream()
-            .mapToInt(line -> this.client.font.width(line))
-            .max()
-            .orElse(0);
+        int maxWidth = lines.stream().mapToInt(line -> this.client.font.width(line)).max().orElse(0);
         if (maxWidth == 0) {
             return;
         }
 
-        IntRect screenRect = this.getScreenRect();
-        int x = screenRect.left() + screenRect.width() / 2 - maxWidth / 2;
-        int y = mouseY + 4;
+        IntRect layoutRect = this.getLayoutRect();
+        int x = layoutRect.left() + layoutRect.width() / 2 - maxWidth / 2;
+        int y = mousePoint.y + 4;
 
         int xEnd = x + maxWidth + 10;
         int yEnd = y + 11 * lines.size() + 6;

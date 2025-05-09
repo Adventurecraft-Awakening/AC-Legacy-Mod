@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.mixin.client.gui.widget;
 
+import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.ScrollableWidget;
 import dev.adventurecraft.awakening.extension.client.gui.widget.ExScrollableBaseWidget;
 import dev.adventurecraft.awakening.layout.*;
@@ -23,30 +24,31 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
 
     @Unique
     private ScrollableWidget rootWidget;
-
-    @Unique
-    private boolean doRenderStatItemSlot;
-
-    @Unique
-    private boolean renderSelections = true;
-
     @Unique
     private int hoveredEntry = -1;
+
+    @Shadow
+    private boolean renderSelection;
+    @Shadow
+    private boolean renderHeader;
+    @Shadow
+    private int headerHeight;
 
     @Shadow
     protected abstract void renderDecorations(int i, int j);
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(
-        Minecraft instance, int width, int height,
-        int contentTop, int contentBot, int entryHeight, CallbackInfo ci) {
-
+        Minecraft instance,
+        int width,
+        int height,
+        int contentTop,
+        int contentBot,
+        int entryHeight,
+        CallbackInfo ci
+    ) {
         MixinScrollableBaseWidget self = this;
-        this.rootWidget = new ScrollableWidget(
-            instance,
-            new IntRect(0, 0, width, height),
-            IntRect.fromEdges(0, contentTop, width, contentBot),
-            entryHeight) {
+        this.rootWidget = new ScrollableWidget(instance, new IntRect(0, 0, width, height), entryHeight) {
             @Override
             protected int getEntryCount() {
                 return self.getItemCount();
@@ -60,91 +62,83 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
             }
 
             @Override
-            public int getEntryUnderPoint(int x, int y) {
-                IntRect screenRect = this.getScreenRect();
-                int center = screenRect.width() / 2 + screenRect.left();
-                int left = center - 110;
-                int right = center + 110;
-                if (x >= left && x <= right) {
-                    int entryY = y - this.getContentRect().top() - this.getContentTopPadding() + (int) this.getScrollY() - 4 - screenRect.top();
-                    if (entryY >= 0) {
-                        int entryIndex = entryY / this.entryHeight;
-                        if (entryIndex >= 0 && entryIndex < this.getEntryCount()) {
-                            return entryIndex;
-                        }
-                    }
-                }
-                return -1;
-            }
-
-            @Override
-            protected boolean mouseClicked(int mouseX, int mouseY) {
-                IntRect screenRect = this.getScreenRect();
-                int contentTop = this.getContentRect().top() + screenRect.top();
-                int scrollY = (int) this.getScrollY();
-                int entryLeft = mouseX - (screenRect.width() / 2 + screenRect.left() - 110);
-                int entryTop = mouseY - contentTop + scrollY - 4;
-                int hoverY = mouseY - contentTop - this.getContentTopPadding() + scrollY - 4;
-                if (hoverY <= 0) {
-                    self.method_1254(entryLeft, entryTop);
+            protected boolean mouseClicked(IntPoint mouseLocation) {
+                Point contentLocation = this.getLocationRelativeToContent(mouseLocation.asFloat());
+                if (contentLocation.y <= 0) {
+                    self.method_1254((int) contentLocation.x, (int) contentLocation.y);
                 }
                 return false;
             }
 
             @Override
-            protected int getTotalRenderHeight() {
-                return self.getMaxPosition() + 4;
+            protected int getTotalContentHeight() {
+                return self.getMaxPosition() + 8;
             }
 
             @Override
-            protected void renderContentBackground(
-                double left, double right, double top, double bot, double scroll, Tesselator ts) {
+            protected void renderContentBackground(Tesselator ts, Rect rect, Point scroll) {
                 self.renderBackground();
-                super.renderContentBackground(left, right, top, bot, scroll, ts);
+                super.renderContentBackground(ts, rect, scroll);
             }
 
             @Override
-            protected void renderEntry(int entryIndex, double entryX, double entryY, int entryHeight, Tesselator ts) {
-                int x = (int) Math.floor(entryX) - 92 - 16;
-                int y = (int) Math.floor(entryY) + 4;
-
-                if (self.renderSelections) {
-                    boolean selected = self.isSelectedItem(entryIndex);
-                    if (selected || hoveredEntry == entryIndex) {
-                        boolean isHover = !selected && self.hoveredEntry == entryIndex;
-                        int borderColor = isHover ? 0x80808080 : 0xff808080;
-                        int backColor = isHover ? 0x80000000 : 0xff000000;
-
-                        GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-                        GL11.glDisable(GL11.GL_TEXTURE_2D);
-                        GL11.glEnable(GL11.GL_BLEND);
-                        ts.begin();
-                        self.rootWidget.renderContentSelection(
-                            x - 2, y - 2, 220, entryHeight, 1, borderColor, backColor, ts);
-                        ts.end();
-                        GL11.glEnable(GL11.GL_TEXTURE_2D);
-                        GL11.glDisable(GL11.GL_BLEND);
-                    }
+            protected void renderEntry(Tesselator ts, int entryIndex, Point entryLocation, int entryHeight) {
+                Point location = entryLocation.floor();
+                if (self.renderSelection) {
+                    this.renderSelection(ts, entryIndex, entryLocation);
                 }
-                self.renderEntry(entryIndex, x, y, entryHeight - 4, ts);
+                self.renderEntry(entryIndex, (int) location.x, (int) location.y, entryHeight - 4, ts);
+            }
+
+            private void renderSelection(Tesselator ts, int entryIndex, Point point) {
+                boolean selected = self.isSelectedItem(entryIndex);
+                if (!selected && hoveredEntry != entryIndex) {
+                    return;
+                }
+                var rect = new Rect(point.x - 2, point.y - 2, 220, this.entryHeight);
+                var border = new Border(1);
+
+                boolean isHover = !selected && self.hoveredEntry == entryIndex;
+                var borderColor = new IntCorner(isHover ? 0x80808080 : 0xff808080);
+                var backColor = new IntCorner(isHover ? 0x80000000 : 0xff000000);
+
+                GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+                GL11.glDisable(GL11.GL_TEXTURE_2D);
+                GL11.glEnable(GL11.GL_BLEND);
+                GL11.glDisable(GL11.GL_CULL_FACE);
+                ts.begin();
+                self.rootWidget.renderContentSelection(ts, rect, border, borderColor, backColor, null, null);
+                ts.end();
+                GL11.glEnable(GL11.GL_TEXTURE_2D);
+                GL11.glDisable(GL11.GL_BLEND);
             }
 
             @Override
-            protected void beforeEntryRender(int mouseX, int mouseY, double entryX, double entryY, Tesselator ts) {
-                if (self.doRenderStatItemSlot) {
-                    int sX = (int) Math.floor(entryX) - 92 - 16;
-                    int sY = (int) Math.floor(entryY) + 4;
+            protected void beforeEntryRender(Tesselator ts, IntPoint mouseLocation, Point entryLocation) {
+                if (self.renderHeader) {
+                    Point headerLocation = entryLocation.floor();
+                    int sX = (int) headerLocation.x;
+                    int sY = (int) headerLocation.y - this.entryHeight;
                     self.renderHeader(sX, sY, ts);
                 }
 
-                self.hoveredEntry = this.getEntryUnderPoint(mouseX, mouseY);
+                self.hoveredEntry = this.getEntryUnderPoint(mouseLocation.asFloat());
             }
 
             @Override
-            protected void afterRender(int mouseX, int mouseY, float tickTime, Tesselator ts) {
-                self.renderDecorations(mouseX, mouseY);
+            protected void afterRender(Tesselator ts, IntPoint mouseLocation, float tickTime) {
+                self.renderDecorations(mouseLocation.x, mouseLocation.y);
             }
         };
+        this.rootWidget.setLayoutBorder(new IntBorder(0, 0, contentTop, height - contentBot));
+        this.updateLayoutPadding();
+    }
+
+    @Unique
+    private void updateLayoutPadding() {
+        IntRect layoutRect = this.rootWidget.getLayoutRect();
+        int size = layoutRect.width() / 2 - 110;
+        this.rootWidget.setLayoutPadding(new IntBorder(size, size, this.headerHeight + 4, 4));
     }
 
     @Shadow
@@ -171,26 +165,19 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
     @Shadow
     protected abstract void renderHeader(int x, int y, Tesselator ts);
 
-    @Overwrite
-    public void setRenderSelection(boolean bl) {
-        this.renderSelections = bl;
-    }
-
-    @Inject(method = "setRenderHeader", at = @At("HEAD"))
-    public void capture_method_1261(boolean bl, int i, CallbackInfo ci) {
-        this.doRenderStatItemSlot = bl;
-        int contentYOffset = bl ? i : 0;
-        this.rootWidget.setContentTopPadding(contentYOffset);
+    @Inject(method = "setRenderHeader", at = @At("TAIL"))
+    public void setPaddingForRenderHeader(boolean renderHeader, int headerHeight, CallbackInfo ci) {
+        this.updateLayoutPadding();
     }
 
     @Overwrite
     public int getEntryAtPosition(int x, int y) {
-        return this.rootWidget.getEntryUnderPoint(x, y);
+        return this.rootWidget.getEntryUnderPoint(new Point(x, y));
     }
 
     @Overwrite
-    public void updateSize(List list, int i, int j) {
-        this.rootWidget.registerButtons(list, i, j);
+    public void updateSize(List buttons, int upId, int downId) {
+        this.rootWidget.registerButtons(buttons, upId, downId);
     }
 
     @Overwrite
@@ -200,7 +187,7 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
 
     @Overwrite
     public void render(int i, int j, float f) {
-        this.rootWidget.render(i, j, f);
+        this.rootWidget.render(new IntPoint(i, j), f);
     }
 
     @Override
