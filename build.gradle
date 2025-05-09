@@ -55,9 +55,8 @@ switch (OperatingSystem.current()) {
         break
     case OperatingSystem.WINDOWS:
         def osArch = System.getProperty("os.arch")
-        project.ext.lwjglNatives = osArch.contains("64")
-            ? "natives-windows${osArch.startsWith("aarch64") ? "-arm64" : ""}"
-            : "natives-windows-x86"
+        def winArm64 = "natives-windows${osArch.startsWith("aarch64") ? "-arm64" : ""}"
+        project.ext.lwjglNatives = osArch.contains("64") ? winArm64 : "natives-windows-x86"
         break
 }
 
