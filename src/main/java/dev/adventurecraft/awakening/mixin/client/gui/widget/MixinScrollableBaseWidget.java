@@ -65,7 +65,7 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
             protected boolean mouseClicked(IntPoint mouseLocation) {
                 Point contentLocation = this.getLocationRelativeToContent(mouseLocation.asFloat());
                 if (contentLocation.y <= 0) {
-                    self.method_1254((int) contentLocation.x, (int) contentLocation.y);
+                    self.method_1254((int) contentLocation.x - 1, (int) contentLocation.y);
                 }
                 return false;
             }
@@ -122,12 +122,12 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
                     self.renderHeader(sX, sY, ts);
                 }
 
-                self.hoveredEntry = this.getEntryUnderPoint(mouseLocation.asFloat());
+                self.hoveredEntry = self.getEntryAtPosition(mouseLocation.x, mouseLocation.y);
             }
 
             @Override
             protected void afterRender(Tesselator ts, IntPoint mouseLocation, float tickTime) {
-                self.renderDecorations(mouseLocation.x, mouseLocation.y);
+                self.renderDecorations(mouseLocation.x + 2, mouseLocation.y - 2);
             }
         };
         this.rootWidget.setLayoutBorder(new IntBorder(0, 0, contentTop, height - contentBot));
@@ -172,7 +172,7 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
 
     @Overwrite
     public int getEntryAtPosition(int x, int y) {
-        return this.rootWidget.getEntryUnderPoint(new Point(x, y));
+        return this.rootWidget.getEntryUnderPoint(new Point(x + 2, y + 2));
     }
 
     @Overwrite
