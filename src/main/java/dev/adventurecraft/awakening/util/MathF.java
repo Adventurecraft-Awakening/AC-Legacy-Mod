@@ -1,5 +1,8 @@
 package dev.adventurecraft.awakening.util;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
 public final class MathF {
 
     private static final double DEGREES_TO_RADIANS = Math.PI / 180.0;
@@ -36,6 +39,16 @@ public final class MathF {
 
     public static double log(double a, double base) {
         return Math.log(a) / Math.log(base);
+    }
+
+    public static double log(Number a, double base) {
+        if (a instanceof BigDecimal bigDec) {
+            return BigMath.log(bigDec, base);
+        }
+        else if (a instanceof BigInteger bigInt) {
+            return BigMath.log(bigInt, base);
+        }
+        return log(a.doubleValue(), base);
     }
 
     public static float sin(float a) {

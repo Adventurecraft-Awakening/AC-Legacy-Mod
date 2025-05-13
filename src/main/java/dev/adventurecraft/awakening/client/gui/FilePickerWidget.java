@@ -2,8 +2,10 @@ package dev.adventurecraft.awakening.client.gui;
 
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.ScrollableWidget;
+import dev.adventurecraft.awakening.extension.client.ExTextureManager;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import dev.adventurecraft.awakening.layout.*;
+import dev.adventurecraft.awakening.layout.Border;
 import dev.adventurecraft.awakening.util.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Tesselator;
@@ -65,7 +67,7 @@ public class FilePickerWidget extends ScrollableWidget {
     @Override
     protected void renderEntry(Tesselator ts, int entryIndex, Point entryLocation, int entryHeight) {
         var exText = (ExTextRenderer) this.client.font;
-        String file = this.files.get(entryIndex).getFileName().toString();
+        String file = FileDisplayUtil.colorizePath(this.files.get(entryIndex).getFileName());
 
         if (this.selectedIndex == entryIndex || this.hoveredIndex == entryIndex) {
             int width = exText.getTextWidth(file, 0).width() + 6;
@@ -110,7 +112,7 @@ public class FilePickerWidget extends ScrollableWidget {
             int hoverIndex = getHoveredIndex();
             if (hoverIndex != -1) {
                 this.lastMousePoint = mousePoint;
-                renderHoverTooltip(hoverIndex, mousePoint);
+                this.renderHoverTooltip(hoverIndex, mousePoint);
             }
         }
     }
@@ -120,12 +122,12 @@ public class FilePickerWidget extends ScrollableWidget {
         File file = path.toFile();
 
         List<String> lines = new ArrayList<>();
-        lines.add(file.getName());
-        lines.add("§7Size: " + file.length() + " bytes");
-        lines.add("§7Last modified: " + DateFormat.getInstance().format(new Date(file.lastModified())));
+        lines.add(FileDisplayUtil.colorizePath(path.getFileName()));
+        lines.add("§7Size: §r" + FileDisplayUtil.readableLength(file.length()));
+        lines.add("§7Last modified: §r" + DateFormat.getInstance().format(new Date(file.lastModified())));
 
         if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
-            lines.add("§7Dir: " + path.getParent().normalize());
+            lines.add("§7Dir: §r" + FileDisplayUtil.colorizePath(path.getParent().normalize()));
         }
 
         int maxWidth = lines.stream().mapToInt(line -> this.client.font.width(line)).max().orElse(0);
