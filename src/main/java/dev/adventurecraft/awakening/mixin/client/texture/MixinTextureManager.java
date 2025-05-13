@@ -97,6 +97,9 @@ public abstract class MixinTextureManager implements ExTextureManager {
     @Shadow
     protected abstract int smoothBlend(int var1, int var2);
 
+    @Shadow
+    public abstract void releaseTexture(int id);
+
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(TexturePackRepository var1, Options var2, CallbackInfo ci) {
         this.allocateImageData(256, 256);
@@ -213,7 +216,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
     }
 
     @Override
-    public int getTexture(ImageBuffer buffer) {
+    public int loadTexture(ImageBuffer buffer) {
         this.ib.clear();
         MemoryTracker.genTextures(this.ib);
         int id = this.ib.get(0);

@@ -19,7 +19,9 @@ public interface ExTextureManager {
 
     void loadTexture(int id, String name);
 
-    int getTexture(ImageBuffer image);
+    int loadTexture(ImageBuffer image);
+
+    void releaseTexture(int id);
 
     Vec2 getTextureResolution(String name);
 

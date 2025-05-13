@@ -34,6 +34,10 @@ public final class MathF {
         }
     }
 
+    public static double log(double a, double base) {
+        return Math.log(a) / Math.log(base);
+    }
+
     public static float sin(float a) {
         return (float) Math.sin(a);
     }

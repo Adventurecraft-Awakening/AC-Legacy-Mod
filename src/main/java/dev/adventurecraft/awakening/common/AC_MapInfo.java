@@ -52,7 +52,7 @@ public class AC_MapInfo {
 
             ImageBuffer image = FutureUtil.getOrElse(this.imageFuture, null);
             if (image != null) {
-                this.textureID = ((ExTextureManager) textureManager).getTexture(image);
+                this.textureID = ((ExTextureManager) textureManager).loadTexture(image);
             } else {
                 this.textureID = -2;
             }

@@ -4,7 +4,6 @@ import dev.adventurecraft.awakening.extension.client.render.ExTesselator;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import dev.adventurecraft.awakening.image.Rgba;
 import dev.adventurecraft.awakening.util.HexConvert;
-import net.minecraft.SharedConstants;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.Tesselator;
 import org.lwjgl.opengl.GL11;
@@ -14,7 +13,10 @@ public class TextRendererState {
     private final Font font;
 
     private int color;
+    private int activeColor;
     private int shadow;
+    private int activeShadow;
+
     private float shadowOffsetX, shadowOffsetY;
 
     public TextRendererState(Font font) {
@@ -27,6 +29,8 @@ public class TextRendererState {
 
     public void begin(Tesselator tessallator) {
         tessallator.begin();
+
+        this.resetFormat();
     }
 
     public void end(Tesselator tessallator) {
@@ -42,52 +46,54 @@ public class TextRendererState {
         }
         validateCharSequence(text, start, end);
 
-        if (Rgba.getAlpha(this.color) == 0) {
+        if (Rgba.getAlpha(this.activeColor) == 0) {
             return;
         }
         var exTs = (ExTesselator) ts;
-        exTs.ac$color(this.color);
+        exTs.ac$color(this.activeColor);
 
-        var colorPalette = ((ExTextRenderer) this.font).getColorPalette();
-        var widthLookup = ((ExTextRenderer) this.font).getCharWidths();
+        var font = (ExTextRenderer) this.font;
+        int[] colorPalette = font.getColorPalette();
+        int[] widthLookup = font.getCharWidths();
 
         float xOff = 0;
 
         for (int i = start; i < end; ++i) {
             char c = text.charAt(i);
             if (end > i + 1 && c == '§') {
-                int colorIndex = HexConvert.fromHexDigit(text.charAt(i + 1));
-                if (colorIndex < 0 || colorIndex > 15) {
-                    colorIndex = 15;
+                int formatCode = text.charAt(i + 1);
+                if (formatCode == 'r') {
+                    this.resetFormat();
                 }
+                else {
+                    int colorIndex = HexConvert.fromHexDigit(formatCode);
+                    if (colorIndex < 0 || colorIndex > 15) {
+                        colorIndex = 15;
+                    }
 
-                this.color = Rgba.withRgb(this.color, colorPalette[colorIndex]);
-                if (this.hasShadow()) {
-                    this.shadow = Rgba.withRgb(this.shadow, colorPalette[colorIndex + 16]);
-                } else {
-                    exTs.ac$color(this.color);
+                    this.activeColor = Rgba.withRgb(this.activeColor, colorPalette[colorIndex]);
+                    if (this.hasShadow()) {
+                        this.activeShadow = Rgba.withRgb(this.activeShadow, colorPalette[colorIndex + 16]);
+                    }
+                    else {
+                        exTs.ac$color(this.activeColor);
+                    }
                 }
-
-                i++; // skip the digit
+                i++; // skip the format code digit
                 continue;
             }
 
-            int charIndex = SharedConstants.acceptableLetters.indexOf(c);
-            int ch;
-            if (charIndex >= 0 && c < 176) {
-                ch = charIndex + 32;
-            } else if (c < 256) {
-                ch = c;
-            } else {
+            int ch = font.getCharIndex(c);
+            if (ch == -1) {
                 continue;
             }
 
             int column = ch % 16 * 8;
             int row = ch / 16 * 8;
             if (this.hasShadow()) {
-                exTs.ac$color(this.shadow);
+                exTs.ac$color(this.activeShadow);
                 drawChar(ts, column, row, xOff + x + this.shadowOffsetX, y + this.shadowOffsetY);
-                exTs.ac$color(this.color);
+                exTs.ac$color(this.activeColor);
             }
             drawChar(ts, column, row, xOff + x, y);
             xOff += widthLookup[ch];
@@ -102,8 +108,13 @@ public class TextRendererState {
         this.shadow = color;
     }
 
+    public void resetFormat() {
+        this.activeColor = this.color;
+        this.activeShadow = this.shadow;
+    }
+
     public boolean hasShadow() {
-        return Rgba.getAlpha(this.shadow) != 0;
+        return Rgba.getAlpha(this.activeShadow) != 0;
     }
 
     public void setShadowOffsetX(float offsetX) {
@@ -132,16 +143,22 @@ public class TextRendererState {
 
     public static void validateCharSequence(CharSequence text, int start, int end) {
         if (start > text.length()) {
-            throw new IllegalArgumentException(
-                String.format("start (%d) exceeds text length (%d).", start, text.length()));
+            throw new IllegalArgumentException(String.format(
+                "start (%d) exceeds text length (%d).",
+                start,
+                text.length()
+            ));
         }
         if (end > text.length()) {
-            throw new IllegalArgumentException(
-                String.format("end (%d) exceeds text length (%d).", end, text.length()));
+            throw new IllegalArgumentException(String.format("end (%d) exceeds text length (%d).", end, text.length()));
         }
         if ((end - start) > text.length()) {
-            throw new IllegalArgumentException(
-                String.format("(end (%d) - start (%d)) exceeds text length (%d).", end, start, text.length()));
+            throw new IllegalArgumentException(String.format(
+                "(end (%d) - start (%d)) exceeds text length (%d).",
+                end,
+                start,
+                text.length()
+            ));
         }
     }
 }
