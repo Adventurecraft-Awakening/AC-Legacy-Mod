@@ -1,9 +1,16 @@
 package dev.adventurecraft.awakening.client.gui;
 
+import ch.bailu.gtk.gdk.Display;
+import ch.bailu.gtk.gtk.*;
+import ch.bailu.gtk.type.exception.AllocationError;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.ScrollableWidget;
 import dev.adventurecraft.awakening.extension.client.ExTextureManager;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
+import dev.adventurecraft.awakening.filesystem.FileIconOptions;
+import dev.adventurecraft.awakening.filesystem.FileIconRenderer;
+import dev.adventurecraft.awakening.filesystem.GtkFileIconRenderer;
+import dev.adventurecraft.awakening.image.ImageFormat;
 import dev.adventurecraft.awakening.layout.*;
 import dev.adventurecraft.awakening.layout.Border;
 import dev.adventurecraft.awakening.util.*;
@@ -144,10 +151,42 @@ public class FilePickerWidget extends ScrollableWidget {
 
         fillGradient(x, y, xEnd, yEnd, 0xe0000000, 0xe0000000);
 
+        try (var renderer = FileIconRenderer.create()) {
+            if (renderer != null) {
+                double size = (Math.sin(System.currentTimeMillis() / 4000.0) + 1.0) * 31 + 1;
+                this.renderFileIcon(renderer, path, new Rect(x - 32, y, size, size));
+            }
+        }
+
         int lineIndex = 0;
         for (String line : lines) {
             this.client.font.drawShadow(line, x + 5, y + 5 + lineIndex++ * 11, 14540253);
         }
+    }
+
+    private void renderFileIcon(FileIconRenderer renderer, Path path, Rect rect) {
+        Rect realRect = GLUtil.projectModelViewProj(rect);
+        double fRealSize = Math.max(realRect.width(), realRect.height());
+        int realSize = (int) Math.round(fRealSize);
+
+        var image = renderer.getIcon(path, new FileIconOptions(ImageFormat.RGBA_U8, realSize, 1, false));
+
+        var ts = Tesselator.instance;
+        GL11.glEnable(GL11.GL_TEXTURE_2D);
+        GL11.glEnable(GL11.GL_BLEND);
+
+        var texMan = (ExTextureManager) this.client.textures;
+        int id = texMan.loadTexture(image);
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, id);
+
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
+
+        ts.begin();
+        DrawUtil.fillRect(ts, rect, new IntCorner(0xffffffff), new Rect(0, 0, 1, 1));
+        ts.end();
+
+        texMan.releaseTexture(id);
     }
 
     public Path getSelectedItem() {

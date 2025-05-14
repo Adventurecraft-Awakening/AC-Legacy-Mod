@@ -105,6 +105,8 @@ dependencies {
 
     implementation "com.google.guava:guava:33.4.0-jre"
     implementation "org.apache.commons:commons-lang3:3.17.0"
+
+    implementation "com.github.bailuk:java-gtk:0.6.0"
 }
 
 configurations.configureEach {
