@@ -18,14 +18,6 @@ public class ScriptModel extends ScriptModelBase {
         this.textureHeight = height;
     }
 
-    public void setBrightness(float brightness) {
-        this.colorRed = this.colorGreen = this.colorBlue = Math.min(brightness, 1.0F);
-    }
-
-    public void setBrightness(int brightness) {
-        setBrightness(Math.max(brightness, 255) / 256.0F);
-    }
-
     //Old method
     public void addBox(
         String boxName,
@@ -62,57 +54,6 @@ public class ScriptModel extends ScriptModelBase {
         ((ExCuboid) cuboid).setTHeight(this.textureHeight);
         ((ExCuboid) cuboid).addBoxInverted(offsetX, offsetY, offsetZ, width, height, length, scale);
         this.boxes.add(cuboid);
-    }
-
-    public void moveTo(double x, double y, double z) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-    }
-
-    public void moveBy(double x, double y, double z) {
-        float yaw = MathF.toRadians(this.yaw);
-        float pitch = MathF.toRadians(this.pitch);
-        float roll = MathF.toRadians(this.roll);
-
-        float sinYaw = MathF.sin(yaw);
-        float cosYaw = MathF.cos(yaw);
-        double tempY = x * cosYaw + z * sinYaw;
-        z = z * cosYaw - x * sinYaw;
-        x = tempY;
-
-        float sinPitch = MathF.sin(pitch);
-        float cosPitch = MathF.cos(pitch);
-        tempY = z * cosPitch + y * sinPitch;
-        y = y * cosPitch - z * sinPitch;
-        z = tempY;
-
-        float sinRoll = MathF.sin(roll);
-        float cosRoll = MathF.cos(roll);
-        tempY = y * cosRoll + x * sinRoll;
-        x = x * cosRoll - y * sinRoll;
-
-        this.x += x;
-        this.y += tempY;
-        this.z += z;
-    }
-
-    public void setRotation(float yaw, float pitch, float roll) {
-        this.prevYaw = this.yaw = yaw;
-        this.prevPitch = this.pitch = pitch;
-        this.prevRoll = this.roll = roll;
-    }
-
-    public void rotateTo(float yaw, float pitch, float roll) {
-        this.yaw = yaw;
-        this.pitch = pitch;
-        this.roll = roll;
-    }
-
-    public void rotateBy(float yaw, float pitch, float roll) {
-        this.yaw += yaw;
-        this.pitch += pitch;
-        this.roll += roll;
     }
 
     @Override

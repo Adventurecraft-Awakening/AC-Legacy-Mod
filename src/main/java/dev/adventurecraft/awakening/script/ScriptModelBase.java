@@ -149,20 +149,85 @@ public abstract class ScriptModelBase {
         this.colorRed = this.colorGreen = this.colorBlue = brightness;
     }
 
+    public void setBrightness(int brightness) {
+        this.setBrightness(Math.max(brightness, 255) / 256.0F);
+    }
+
     public void setPosition(double x, double y, double z) {
-        this.prevX = this.x = x;
-        this.prevY = this.y = y;
-        this.prevZ = this.z = z;
+        this.moveTo(x, y, z);
+        this.prevX = this.x;
+        this.prevY = this.y;
+        this.prevZ = this.z;
     }
 
     public void setPosition(ScriptVec3 vec) {
-        this.prevX = this.x = vec.x;
-        this.prevY = this.y = vec.y;
-        this.prevZ = this.z = vec.z;
+        this.setPosition(vec.x, vec.y, vec.z);
     }
 
     public ScriptVec3 getPosition() {
         return new ScriptVec3(x, y, z);
+    }
+
+    public void moveTo(double x, double y, double z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+
+    public void moveBy(double x, double y, double z) {
+        float yaw = MathF.toRadians(this.yaw);
+        float pitch = MathF.toRadians(this.pitch);
+        float roll = MathF.toRadians(this.roll);
+
+        float sinYaw = MathF.sin(yaw);
+        float cosYaw = MathF.cos(yaw);
+        double tempY = x * cosYaw + z * sinYaw;
+        z = z * cosYaw - x * sinYaw;
+        x = tempY;
+
+        float sinPitch = MathF.sin(pitch);
+        float cosPitch = MathF.cos(pitch);
+        tempY = z * cosPitch + y * sinPitch;
+        y = y * cosPitch - z * sinPitch;
+        z = tempY;
+
+        float sinRoll = MathF.sin(roll);
+        float cosRoll = MathF.cos(roll);
+        tempY = y * cosRoll + x * sinRoll;
+        x = x * cosRoll - y * sinRoll;
+
+        x += this.x;
+        tempY += this.y;
+        z += this.z;
+        this.moveTo(x, tempY, z);
+    }
+
+    public void rotateTo(float yaw, float pitch, float roll) {
+        this.yaw = yaw;
+        this.pitch = pitch;
+        this.roll = roll;
+    }
+
+    public void rotateBy(float yaw, float pitch, float roll) {
+        yaw += this.yaw;
+        pitch += this.pitch;
+        roll += this.roll;
+        this.rotateTo(yaw, pitch, roll);
+    }
+
+    public void setRotation(float yaw, float pitch, float roll) {
+        this.rotateTo(yaw, pitch, roll);
+        this.prevYaw = this.yaw;
+        this.prevPitch = this.pitch;
+        this.prevRoll = this.roll;
+    }
+
+    public void setRotation(ScriptVec3 vec) {
+        this.setRotation((float) vec.x, (float) vec.y, (float) vec.z);
+    }
+
+    public ScriptVec3 getRotation() {
+        return new ScriptVec3(this.yaw, this.pitch, this.roll);
     }
 
     public void setAlpha(float alpha) {
