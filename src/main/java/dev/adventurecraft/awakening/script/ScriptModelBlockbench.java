@@ -87,6 +87,18 @@ public class ScriptModelBlockbench extends ScriptModelBase {
         this.boxes.add(cuboid);
     }
 
+    public void addBoxExpanded(
+        int width, int height, int length,
+        int textureOffsetX, int textureOffsetY, float inflate) {
+        this.setSize(width, height, length);
+
+        var cuboid = new ModelPart(textureOffsetX, textureOffsetY);
+        ((ExCuboid) cuboid).setTWidth(this.textureWidth);
+        ((ExCuboid) cuboid).setTHeight(this.textureHeight);
+        ((ExCuboid) cuboid).addBoxInverted(0, 0, 0, width, height, length, inflate);
+        this.boxes.add(cuboid);
+    }
+
     public void setRotation(float yaw, float pitch, float roll) {
         this.prevRoll = this.roll = roll;
         this.prevPitch = this.pitch = -pitch;
@@ -144,6 +156,67 @@ public class ScriptModelBlockbench extends ScriptModelBase {
     public ScriptVec3 getPivot() {
         return new ScriptVec3(this.pivotX, this.pivotY, this.pivotZ);
     }
+
+    public void setBrightness(float brightness) {
+        this.colorRed = this.colorGreen = this.colorBlue = Math.min(brightness, 1.0F);
+    }
+
+    public void setBrightness(int brightness) {
+        setBrightness(Math.max(brightness, 255) / 256.0F);
+    }
+
+    public void moveTo(double x, double y, double z) {
+        this.prevX = this.x = x;
+        this.prevY = this.y = y;
+        this.prevZ = this.z = z;
+    }
+
+    public void moveBy(double x, double y, double z) {
+        float yaw = MathF.toRadians(this.yaw);
+        float pitch = MathF.toRadians(this.pitch);
+        float roll = MathF.toRadians(this.roll);
+
+        float sinYaw = MathF.sin(yaw);
+        float cosYaw = MathF.cos(yaw);
+        double tempY = x * cosYaw + z * sinYaw;
+        z = z * cosYaw - x * sinYaw;
+        x = tempY;
+
+        float sinPitch = MathF.sin(pitch);
+        float cosPitch = MathF.cos(pitch);
+        tempY = z * cosPitch + y * sinPitch;
+        y = y * cosPitch - z * sinPitch;
+        z = tempY;
+
+        float sinRoll = MathF.sin(roll);
+        float cosRoll = MathF.cos(roll);
+        tempY = y * cosRoll + x * sinRoll;
+        x = x * cosRoll - y * sinRoll;
+
+        this.prevX = this.x += x;
+        this.prevY = this.y += tempY;
+        this.prevZ = this.z += z;
+    }
+
+
+    public void rotateTo(float yaw, float pitch, float roll) {
+        this.prevYaw = this.yaw = -yaw;
+        this.prevPitch = this.pitch = -pitch;
+        this.prevRoll = this.roll = roll;
+    }
+
+
+    public void rotateBy(float yaw, float pitch, float roll) {
+        this.yaw -= yaw;
+        this.pitch -= pitch;
+        this.roll += roll;
+
+        this.prevYaw = this.yaw;
+        this.prevPitch = this.pitch;
+        this.prevRoll = this.roll;
+    }
+
+
 }
 
 
