@@ -64,9 +64,9 @@ public abstract class ScriptModelBase {
             return;
         }
         Level world = Minecraft.instance.level;
-        Textures var3 = Minecraft.instance.textures;
+        Textures texMan = Minecraft.instance.textures;
         if (this.texture != null && !this.texture.isEmpty()) {
-            var3.bind(var3.loadTexture(this.texture));
+            texMan.bind(texMan.loadTexture(this.texture));
         }
 
         var localMat = new Matrix4f();
@@ -79,9 +79,11 @@ public abstract class ScriptModelBase {
                     this.setBrightness(this.attachedTo.entity.getBrightness(partialTick));
                 }
                 break;
+
             case 2:
                 // usage for custom RGB Values
                 break;
+
             case 3:
                 // use the lightning value of the attached model
                 if (this.modelAttachment != null) {
@@ -90,6 +92,7 @@ public abstract class ScriptModelBase {
                     this.colorBlue = this.modelAttachment.colorBlue;
                 }
                 break;
+
             default:
                 // Default lightning values
                 var vr = Matrix4f.transform(localMat, new Vector3f(), new Vector3f());
@@ -108,17 +111,23 @@ public abstract class ScriptModelBase {
             GL11.glColor3f(r, g, b);
         }
 
-        var cuboidMat = Matrix4f.mul(transform, localMat, localMat);
+        Matrix4f.mul(transform, localMat, localMat);
         try (var stack = MemoryStack.stackPush()) {
             var matBuf = stack.mallocFloat(16);
 
+            var mat = new Matrix4f();
             for (ModelPart cuboid : this.boxes) {
-                var mat = new Matrix4f(cuboidMat);
-                ((ExCuboid) cuboid).translateTo(mat);
+                var exCuboid = (ExCuboid) cuboid;
+                if (!exCuboid.canRender()) {
+                    continue;
+                }
+
+                mat.load(localMat);
+                exCuboid.translateTo(mat);
 
                 mat.store(matBuf);
                 GL11.glLoadMatrixf(matBuf.flip());
-                ((ExCuboid) cuboid).render();
+                exCuboid.render();
             }
         }
 
