@@ -127,6 +127,7 @@
     "item.MixinBlockItem",
     "item.MixinBowItem",
     "item.MixinItem",
+    "item.MixinTileItemWithoutTranslation",
     "item.MixinItemStack",
     "item.MixinRedstoneItem",
     "item.MixinSwordItem",
