@@ -126,4 +126,8 @@ public interface ExWorldProperties {
     void setHudEnabled(boolean arg);
 
     boolean getHudEnabled();
+
+    void setCanSleep(boolean arg);
+
+    boolean getCanSleep();
 }

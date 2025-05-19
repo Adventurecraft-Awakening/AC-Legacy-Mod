@@ -124,6 +124,10 @@ public class ServerCommands {
             "value", BoolArgumentType.bool(),
             descs.attach(ServerCommands::cmdMobsBurn, "Toggles mobs burning in daylight")));
 
+        dispatcher.register(optionalArg(literal("togglesleep"),
+            "value", BoolArgumentType.bool(),
+            descs.attach(ServerCommands::cmdToggleSleep, "Toggles if player can sleep in beds")));
+
         dispatcher.register(requiredArg(literal("cameraadd"),
             "time", FloatArgumentType.floatArg(),
             ServerCommands::cmdCameraAdd));
@@ -442,6 +446,19 @@ public class ServerCommands {
             props.setMobsBurn(value != null ? value : !props.getMobsBurn());
 
             source.getClient().gui.addMessage(String.format("Mobs Burn in Daylight: %b", props.getMobsBurn()));
+            return Command.SINGLE_SUCCESS;
+        }
+        return 0;
+    }
+
+    public static int cmdToggleSleep(CommandContext<ServerCommandSource> context, Boolean value) {
+        var source = context.getSource();
+        var world = source.getWorld();
+        if (world != null) {
+            var props = (ExWorldProperties) world.levelData;
+            props.setCanSleep(value != null ? value : !props.getCanSleep());
+
+            source.getClient().gui.addMessage(String.format("Player can sleep in beds: %b", props.getCanSleep()));
             return Command.SINGLE_SUCCESS;
         }
         return 0;
