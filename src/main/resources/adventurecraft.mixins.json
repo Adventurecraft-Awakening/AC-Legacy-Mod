@@ -126,6 +126,7 @@
     "item.MixinArmorItem",
     "item.MixinBlockItem",
     "item.MixinBowItem",
+    "item.MixinHoeItem",
     "item.MixinItem",
     "item.MixinItemStack",
     "item.MixinRedstoneItem",

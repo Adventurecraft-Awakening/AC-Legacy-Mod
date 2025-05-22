@@ -30,6 +30,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     private long time;
 
     private boolean hudEnabled = true;
+    private boolean canUseHoe = true;
     public double tempOffset;
     private WorldGenProperties worldGenProps = new WorldGenProperties();
     public boolean iceMelts = true;
@@ -160,8 +161,10 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
 
         if (tag.hasKey("hudEnabled")) {
             this.hudEnabled = tag.getBoolean("hudEnabled");
-        } else {
-            this.hudEnabled = true;
+        }
+
+        if (tag.hasKey("canUseHoe")) {
+            this.canUseHoe = tag.getBoolean("canUseHoe");
         }
     }
 
@@ -251,6 +254,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         tag.putBoolean("originallyFromAC", this.originallyFromAC);
         tag.putBoolean("allowsInventoryCrafting", this.allowsInventoryCrafting);
         tag.putBoolean("hudEnabled", this.hudEnabled);
+        tag.putBoolean("canUseHoe", this.canUseHoe);
     }
 
     @Override
@@ -581,5 +585,13 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
 
     public boolean getHudEnabled(){
         return this.hudEnabled;
+    }
+
+    public void setCanUseHoe(boolean arg){
+        this.canUseHoe = arg;
+    }
+
+    public boolean getCanUseHoe(){
+        return this.canUseHoe;
     }
 }

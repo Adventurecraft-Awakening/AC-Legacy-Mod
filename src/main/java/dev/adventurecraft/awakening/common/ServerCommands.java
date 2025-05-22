@@ -120,6 +120,10 @@ public class ServerCommands {
             "value", BoolArgumentType.bool(),
             descs.attach(ServerCommands::cmdToggleDecay, "Toggles leaf decay")));
 
+        dispatcher.register(optionalArg(literal("toggleHoe"),
+            "value", BoolArgumentType.bool(),
+            descs.attach(ServerCommands::cmdToggleHoe, "Toggles hoe usage outside of Debug Mode")));
+
         dispatcher.register(optionalArg(literal("mobsburn"),
             "value", BoolArgumentType.bool(),
             descs.attach(ServerCommands::cmdMobsBurn, "Toggles mobs burning in daylight")));
@@ -429,6 +433,19 @@ public class ServerCommands {
             props.setLeavesDecay(value != null ? value : !props.getLeavesDecay());
 
             source.getClient().gui.addMessage(String.format("Leaves Decay: %b", props.getLeavesDecay()));
+            return Command.SINGLE_SUCCESS;
+        }
+        return 0;
+    }
+
+    public static int cmdToggleHoe(CommandContext<ServerCommandSource> context, Boolean value) {
+        var source = context.getSource();
+        var world = source.getWorld();
+        if (world != null) {
+            var props = (ExWorldProperties) world.levelData;
+            props.setCanUseHoe(value != null ? value : !props.getCanUseHoe());
+
+            source.getClient().gui.addMessage(String.format("Hoe usable without Debug Mode: %b", props.getCanUseHoe()));
             return Command.SINGLE_SUCCESS;
         }
         return 0;
