@@ -120,7 +120,7 @@ public class ServerCommands {
             "value", BoolArgumentType.bool(),
             descs.attach(ServerCommands::cmdToggleDecay, "Toggles leaf decay")));
 
-        dispatcher.register(optionalArg(literal("toggleHoe"),
+        dispatcher.register(optionalArg(literal("togglehoe"),
             "value", BoolArgumentType.bool(),
             descs.attach(ServerCommands::cmdToggleHoe, "Toggles hoe usage outside of Debug Mode")));
 
