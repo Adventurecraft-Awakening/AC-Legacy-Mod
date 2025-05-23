@@ -430,4 +430,10 @@ public abstract class MixinPlayerEntity extends MixinLivingEntity implements ExP
     public void setCloakTexture(String value) {
         this.cloakTexture = value;
     }
+
+    @Overwrite
+    public float getDestroySpeed(Tile tile) {
+        float destroySpeed = this.inventory.getDestroySpeed(tile);
+        return destroySpeed;
+    }
 }
