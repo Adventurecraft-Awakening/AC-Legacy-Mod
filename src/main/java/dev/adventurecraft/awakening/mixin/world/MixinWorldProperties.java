@@ -30,6 +30,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     private long time;
 
     private boolean hudEnabled = true;
+    private boolean canUseBonemeal = false;
     public double tempOffset;
     private WorldGenProperties worldGenProps = new WorldGenProperties();
     public boolean iceMelts = true;
@@ -163,6 +164,10 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         } else {
             this.hudEnabled = true;
         }
+
+        if (tag.hasKey("canUseBonemeal")) {
+            this.canUseBonemeal = tag.getBoolean("canUseBonemeal");
+        }
     }
 
     @Inject(method = "<init>(JLjava/lang/String;)V", at = @At("TAIL"))
@@ -251,6 +256,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         tag.putBoolean("originallyFromAC", this.originallyFromAC);
         tag.putBoolean("allowsInventoryCrafting", this.allowsInventoryCrafting);
         tag.putBoolean("hudEnabled", this.hudEnabled);
+        tag.putBoolean("canUseBonemeal", this.canUseBonemeal);
     }
 
     @Override
@@ -581,5 +587,13 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
 
     public boolean getHudEnabled(){
         return this.hudEnabled;
+    }
+
+    public void setCanUseBonemeal(boolean arg){
+        this.canUseBonemeal = arg;
+    }
+
+    public boolean getCanUseBonemeal(){
+        return this.canUseBonemeal;
     }
 }
