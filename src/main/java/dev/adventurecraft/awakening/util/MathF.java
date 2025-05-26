@@ -8,6 +8,10 @@ public final class MathF {
     private static final double DEGREES_TO_RADIANS = Math.PI / 180.0;
     private static final double RADIANS_TO_DEGREES = 180.0 / Math.PI;
 
+    public static int clamp(long value, int min, int max) {
+        return (int) Math.min(max, Math.max(value, min));
+    }
+
     public static float cubicInterpolation(float mu, float y0, float y1, float y2, float y3) {
         float mu2 = mu * mu;
         float a0 = -0.5F * y0 + 1.5F * y1 - 1.5F * y2 + 0.5F * y3;

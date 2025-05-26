@@ -43,8 +43,8 @@ public abstract class SizeFormat extends Format {
 
     public String getSuffix(double log) {
         String[] suffixes = this.getNumberBase() == 1024 ? this.getBinarySuffixes() : this.getMetricSuffixes();
-        int index = (int) Math.floor(log);
-        return index > suffixes.length ? suffixes[suffixes.length - 1] : suffixes[index];
+        int index = MathF.clamp((int) Math.floor(log), 0, suffixes.length - 1);
+        return suffixes[index];
     }
 
     protected abstract String[] getBinarySuffixes();
