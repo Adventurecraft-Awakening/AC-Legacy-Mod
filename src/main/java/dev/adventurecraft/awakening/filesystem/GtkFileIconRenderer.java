@@ -27,6 +27,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 public class GtkFileIconRenderer extends FileIconRenderer {
+
     private static final String ATTR_ICON = GioConstants.FILE_ATTRIBUTE_STANDARD_ICON;
     private static final String ATTR_SYM_ICON = GioConstants.FILE_ATTRIBUTE_STANDARD_SYMBOLIC_ICON;
 
@@ -53,7 +54,7 @@ public class GtkFileIconRenderer extends FileIconRenderer {
     public ImageBuffer getIcon(Path path, FileIconOptions options) {
         var file = newFile(path);
         try {
-            var icon = queryIcon(file, options.symbolic(), null);
+            var icon = queryIcon(file, options, null);
             return renderIcon(icon, options);
         }
         catch (AllocationError e) {
@@ -68,7 +69,7 @@ public class GtkFileIconRenderer extends FileIconRenderer {
 
         return new ProxyFuture<>(executor.submit(() -> {
             try {
-                var icon = queryIcon(file, options.symbolic(), cancellable);
+                var icon = queryIcon(file, options, cancellable);
                 return renderIcon(icon, options);
             }
             catch (AllocationError e) {
@@ -89,7 +90,7 @@ public class GtkFileIconRenderer extends FileIconRenderer {
         throws AllocationError {
         var theme = this.getIconTheme();
 
-        int size = options.size();
+        int size = Math.max(options.width(), options.height());
         var themeIcon = theme.lookupByGicon(icon, size, options.scale(), TextDirection.LTR, IconLookupFlags.NONE);
 
         var renderer = new ch.bailu.gtk.gsk.CairoRenderer();
@@ -104,25 +105,26 @@ public class GtkFileIconRenderer extends FileIconRenderer {
         var downloader = new TextureDownloader(texture);
         downloader.setFormat(MemoryFormat.R8G8B8A8);
 
-        var image = createImageBufferFromTexture(downloader, texture, options.format());
-
-        return image;
+        return createImageBufferFromTexture(downloader, texture, options.format());
     }
 
     @Nullable
-    public static Icon queryIcon(ch.bailu.gtk.gio.File file, boolean symbolic, @Nullable Cancellable cancellable)
+    public static Icon queryIcon(ch.bailu.gtk.gio.File file, FileIconOptions options, @Nullable Cancellable cancellable)
         throws AllocationError {
         String attributes = String.join(",", ATTR_ICON, ATTR_SYM_ICON);
         FileInfo info = file.queryInfo(attributes, FileQueryInfoFlags.NONE, cancellable);
 
-        if (symbolic) {
-            Icon icon = getSymIcon(info);
-            return icon != null ? icon : getIcon(info);
+        for (FileIconFlags flag : options.flags()) {
+            Icon icon = switch (flag) {
+                case Icon -> getIcon(info);
+                case Symbolic -> getSymIcon(info);
+                case Thumbnail -> null; // TODO
+            };
+            if (icon != null) {
+                return icon;
+            }
         }
-        else {
-            Icon icon = getIcon(info);
-            return icon != null ? icon : getSymIcon(info);
-        }
+        return null;
     }
 
     private static Icon getIcon(FileInfo info) {

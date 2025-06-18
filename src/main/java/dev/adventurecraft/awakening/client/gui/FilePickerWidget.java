@@ -153,7 +153,7 @@ public class FilePickerWidget extends ScrollableWidget {
 
         try (var renderer = FileIconRenderer.create()) {
             if (renderer != null) {
-                double size = (Math.sin(System.currentTimeMillis() / 4000.0) + 1.0) * 31 + 1;
+                double size = 32; // scaling test: (Math.sin(System.currentTimeMillis() / 4000.0) + 1.0) * 31 + 1;
                 this.renderFileIcon(renderer, path, new Rect(x - 32, y, size, size));
             }
         }
@@ -166,18 +166,23 @@ public class FilePickerWidget extends ScrollableWidget {
 
     private void renderFileIcon(FileIconRenderer renderer, Path path, Rect rect) {
         Rect realRect = GLUtil.projectModelViewProj(rect);
-        double fRealSize = Math.max(realRect.width(), realRect.height());
-        int realSize = (int) Math.round(fRealSize);
+        int realWidth = (int) Math.round(realRect.width());
+        int realHeight = (int) Math.round(realRect.height());
 
-        var image = renderer.getIcon(path, new FileIconOptions(ImageFormat.RGBA_U8, realSize, 1, false));
+        var flags = List.of(FileIconFlags.Icon, FileIconFlags.Symbolic);
+        var options = new FileIconOptions(ImageFormat.RGBA_U8, realWidth, realHeight, 1, flags);
+        var iconImage = renderer.getIcon(path, options);
+        if (iconImage == null) {
+            return;
+        }
 
         var ts = Tesselator.instance;
         GL11.glEnable(GL11.GL_TEXTURE_2D);
         GL11.glEnable(GL11.GL_BLEND);
 
         var texMan = (ExTextureManager) this.client.textures;
-        int id = texMan.loadTexture(image);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, id);
+        int texId = texMan.loadTexture(iconImage);
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, texId);
 
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
@@ -186,7 +191,7 @@ public class FilePickerWidget extends ScrollableWidget {
         DrawUtil.fillRect(ts, rect, new IntCorner(0xffffffff), new Rect(0, 0, 1, 1));
         ts.end();
 
-        texMan.releaseTexture(id);
+        texMan.releaseTexture(texId);
     }
 
     public Path getSelectedItem() {
