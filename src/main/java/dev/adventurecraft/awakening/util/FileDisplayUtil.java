@@ -7,27 +7,27 @@ import java.nio.file.Path;
 public final class FileDisplayUtil {
 
     public static StringBuilder colorizePath(StringBuilder path, String separator) {
-        String separatorCode = "§7";
-        String resetCode = "§r";
-
+        final String separatorStyle = "§7";
+        final String extensionStyle = "§e";
+        final String resetStyle = "§r";
+        
         int offset = 0;
         while ((offset = path.indexOf(separator, offset)) != -1) {
-            path.insert(offset, separatorCode);
-            offset += separatorCode.length() + separator.length();
+            path.insert(offset, separatorStyle);
+            offset += separatorStyle.length() + separator.length();
 
-            path.insert(offset, resetCode);
-            offset += resetCode.length();
+            path.insert(offset, resetStyle);
+            offset += resetStyle.length();
         }
 
         int extensionIndex = path.lastIndexOf(".");
         if (extensionIndex != -1) {
-            String extensionColor = "§e";
-            path.insert(extensionIndex, extensionColor);
+            path.insert(extensionIndex, extensionStyle);
         }
         return path;
     }
 
-    public static String colorizePath(String path, String separator) {
+    public static String colorizePath(CharSequence path, String separator) {
         return colorizePath(new StringBuilder(path), separator).toString();
     }
 
