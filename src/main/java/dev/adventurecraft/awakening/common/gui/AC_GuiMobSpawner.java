@@ -16,8 +16,9 @@ import net.minecraft.world.item.Item;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class AC_GuiMobSpawner extends Screen {
 
@@ -36,10 +37,9 @@ public class AC_GuiMobSpawner extends Screen {
 
     public AC_GuiMobSpawner(AC_TileEntityMobSpawner entity) {
         this.mobSpawner = entity;
-    }
 
-    @Override
-    public void tick() {
+        // create dummy picker to avoid null-checks
+        this.scriptWidget = new FilePickerWidget(this, IntRect.zero, 0);
     }
 
     @Override
@@ -193,7 +193,7 @@ public class AC_GuiMobSpawner extends Screen {
             int scriptY = 124;
             int scriptHeight = this.height - scriptY;
             this.scriptWidget = new FilePickerWidget(
-                this.minecraft,
+                this,
                 new IntRect(this.width / 2, scriptY, this.width / 2, scriptHeight),
                 16
             );
@@ -206,6 +206,10 @@ public class AC_GuiMobSpawner extends Screen {
 
     @Override
     protected void buttonClicked(Button button) {
+        if (this.scriptWidget.buttonClicked(button)) {
+            return;
+        }
+
         if (button.id == 52) {
             if (this.mobSpawner.dropItem == AC_Items.doorKey.id) {
                 button.message = "Drop heart container";
@@ -313,6 +317,22 @@ public class AC_GuiMobSpawner extends Screen {
         }
     }
 
+    protected @Override void keyPressed(char codepoint, int key) {
+        super.keyPressed(codepoint, key);
+
+        this.scriptWidget.charTyped(codepoint, key);
+    }
+
+    protected @Override void mouseClicked(int mouseX, int mouseY, int button) {
+        super.mouseClicked(mouseX, mouseY, button);
+
+        this.scriptWidget.clicked(new IntPoint(mouseX, mouseY), button);
+    }
+
+    public @Override void tick() {
+        this.scriptWidget.tick();
+    }
+
     @Override
     public void render(int mouseX, int mouseY, float tickTime) {
         this.fill(0, 0, this.width, this.height, Integer.MIN_VALUE);
@@ -348,8 +368,8 @@ public class AC_GuiMobSpawner extends Screen {
             if (this.selectedScriptId != currentScriptId) {
                 this.selectedScriptId = currentScriptId;
 
-                Path file = this.scriptWidget.getSelectedItem();
-                this.updateScriptFile(file == null ? "" : file.getFileName().toString());
+                var entry = this.scriptWidget.getSelectedEntry();
+                this.updateScriptFile(entry == null ? "" : entry.value().getFileName().toString());
                 this.resetNames();
             }
         }
@@ -374,9 +394,13 @@ public class AC_GuiMobSpawner extends Screen {
     }
 
     private void reloadScriptList(AC_JScriptHandler scriptHandler) {
-        this.scriptWidget.files.clear();
+        List<FilePickerWidget.Entry> list = this.scriptWidget.getStorageList();
+        list.clear();
+
         Path[] files = scriptHandler.getFiles();
-        Collections.addAll(this.scriptWidget.files, files);
+        Arrays.stream(files).map(FilePickerWidget.Entry::new).collect(Collectors.toCollection(() -> list));
+
+        this.scriptWidget.refresh();
     }
 
     private void resetNames() {

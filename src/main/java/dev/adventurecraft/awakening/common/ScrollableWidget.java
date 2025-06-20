@@ -136,18 +136,22 @@ public abstract class ScrollableWidget extends GuiComponent {
         this.targetScroll = this.clampTargetScroll(this.targetScroll, totalHeight);
     }
 
-    public void buttonClicked(Button button) {
+    public boolean buttonClicked(Button button) {
         if (!button.active) {
-            return;
+            return false;
         }
+
         if (button.id == this.scrollUpButtonId) {
             this.moveContent(-(this.entryHeight * 2.0 / 3));
             this.dragDistance = -2.0;
+            return true;
         }
         else if (button.id == this.scrollDownButtonId) {
             this.moveContent(this.entryHeight * 2.0 / 3);
             this.dragDistance = -2.0;
+            return true;
         }
+        return false;
     }
 
     public void onMouseEvent() {

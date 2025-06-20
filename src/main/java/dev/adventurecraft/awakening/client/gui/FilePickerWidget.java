@@ -1,21 +1,20 @@
 package dev.adventurecraft.awakening.client.gui;
 
-import ch.bailu.gtk.gdk.Display;
-import ch.bailu.gtk.gtk.*;
-import ch.bailu.gtk.type.exception.AllocationError;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.ScrollableWidget;
 import dev.adventurecraft.awakening.extension.client.ExTextureManager;
+import dev.adventurecraft.awakening.extension.client.gui.screen.ExScreen;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import dev.adventurecraft.awakening.filesystem.FileIconFlags;
 import dev.adventurecraft.awakening.filesystem.FileIconOptions;
 import dev.adventurecraft.awakening.filesystem.FileIconRenderer;
-import dev.adventurecraft.awakening.filesystem.GtkFileIconRenderer;
 import dev.adventurecraft.awakening.image.ImageFormat;
 import dev.adventurecraft.awakening.layout.*;
 import dev.adventurecraft.awakening.layout.Border;
+import dev.adventurecraft.awakening.layout.Point;
 import dev.adventurecraft.awakening.util.*;
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.Tesselator;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
@@ -25,23 +24,40 @@ import java.nio.file.Path;
 import java.text.DateFormat;
 import java.util.*;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class FilePickerWidget extends ScrollableWidget {
 
-    public final List<Path> files = new ArrayList<>();
+    private final List<Entry> storageList = new ArrayList<>();
+    private final List<Entry> displayList = new ArrayList<>();
+
+    private final SearchPatternBox searchPatternBox;
+    private Pattern searchPattern;
+
     private int selectedIndex = -1;
     private int hoveredIndex = -1;
 
     private IntPoint lastMousePoint = IntPoint.zero;
     private long mouseStillTime = 0L;
 
-    public FilePickerWidget(Minecraft minecraft, IntRect layoutRect, int entryHeight) {
-        super(minecraft, layoutRect, entryHeight);
+    public FilePickerWidget(Screen parent, IntRect layoutRect, int entryHeight) {
+        super(((ExScreen) parent).getMinecraft(), layoutRect, entryHeight);
+
+        this.searchPatternBox = makePatternBox(parent, layoutRect);
+    }
+
+    private static SearchPatternBox makePatternBox(Screen parent, IntRect layoutRect) {
+        var offset = new IntPoint(2, 0);
+        int width = Math.min(layoutRect.width() / 2 - offset.x, 120);
+        int x = layoutRect.right() - width - offset.x;
+        return new SearchPatternBox(parent, new IntRect(x, layoutRect.y + 2, width, 16));
     }
 
     @Override
     protected int getEntryCount() {
-        return this.files.size();
+        return this.getActiveList().size();
     }
 
     @Override
@@ -50,7 +66,7 @@ public class FilePickerWidget extends ScrollableWidget {
             this.selectedIndex = entryIndex;
         }
         else if (buttonIndex == 1) {
-            Path path = this.files.get(entryIndex);
+            Path path = this.getActiveList().get(entryIndex).value();
             try {
                 DesktopUtil.browseFileDirectory(path);
             }
@@ -73,12 +89,41 @@ public class FilePickerWidget extends ScrollableWidget {
     }
 
     @Override
+    protected void afterRender(Tesselator ts, IntPoint mouseLocation, float tickTime) {
+        super.afterRender(ts, mouseLocation, tickTime);
+
+        this.renderMatchCount();
+    }
+
+    private void renderMatchCount() {
+        int activeSize = this.getActiveList().size();
+        String sizeText;
+        if (this.searchPattern == null) {
+            sizeText = activeSize + " files";
+        }
+        else {
+            int storageSize = this.getStorageList().size();
+            sizeText = "%d of %d match".formatted(activeSize, storageSize);
+        }
+        var boxRect = this.searchPatternBox.getBoxRect();
+        var boxPos = boxRect.botLeft();
+
+        var exText = (ExTextRenderer) this.client.font;
+        int width = exText.getTextWidth(sizeText, 0).width();
+        int x = boxRect.right() - 6 - width;
+
+        GL11.glEnable(GL11.GL_TEXTURE_2D);
+        exText.drawString(sizeText, x, boxPos.y + 6, 0xffffff, true);
+    }
+
+    @Override
     protected void renderEntry(Tesselator ts, int entryIndex, Point entryLocation, int entryHeight) {
         var exText = (ExTextRenderer) this.client.font;
-        String file = FileDisplayUtil.colorizePath(this.files.get(entryIndex).getFileName());
+        Entry entry = this.getActiveList().get(entryIndex);
+        String displayName = entry.getDisplayName();
 
         if (this.selectedIndex == entryIndex || this.hoveredIndex == entryIndex) {
-            int width = exText.getTextWidth(file, 0).width() + 6;
+            int width = exText.getTextWidth(displayName, 0).width() + 6;
             var selectRect = new Rect(entryLocation.x, entryLocation.y, width, entryHeight);
 
             boolean isHover = this.selectedIndex != entryIndex && this.hoveredIndex == entryIndex;
@@ -96,14 +141,96 @@ public class FilePickerWidget extends ScrollableWidget {
 
         float x = (float) entryLocation.x + 3;
         float y = (float) entryLocation.y + 3;
-        exText.drawString(file, x, y, 0xffffff, true);
+        exText.drawString(displayName, x, y, 0xffffff, true);
     }
 
-    @Override
-    public void render(IntPoint mousePoint, float tickTime) {
-        super.render(mousePoint, tickTime);
+    public void charTyped(char codepoint, int key) {
+        this.searchPatternBox.charTyped(codepoint, key);
+    }
 
-        IntPoint mouseDelta = mousePoint.sub(lastMousePoint).abs();
+    public void clicked(IntPoint mouseLocation, int buttonIndex) {
+        this.searchPatternBox.clicked(mouseLocation, buttonIndex);
+    }
+
+    public @Override boolean buttonClicked(Button button) {
+        if (this.searchPatternBox.buttonClicked(button)) {
+            return true;
+        }
+        return super.buttonClicked(button);
+    }
+
+    public void refresh() {
+        for (Entry entry : this.displayList) {
+            entry.setDisplayName(null);
+        }
+        this.displayList.clear();
+
+        if (this.searchPattern != null) {
+            this.applySearchPattern(this.searchPattern);
+        }
+    }
+
+    private void applySearchPattern(Pattern pattern) {
+        final var matcher = pattern.matcher("");
+        final var builder = new StringBuilder();
+
+        this.storageList.stream().filter(entry -> {
+            builder.setLength(0);
+            return matchEntry(entry, matcher, builder);
+        }).collect(Collectors.toCollection(() -> this.displayList));
+    }
+
+    private static boolean matchEntry(Entry entry, Matcher matcher, StringBuilder builder) {
+        final String matchStyle = "§3";
+        final String resetStyle = "§r";
+
+        // TODO: colorize path before match styling?
+
+        final String fileName = entry.value().getFileName().toString();
+        matcher.reset(fileName);
+
+        int last = 0;
+        while (matcher.find()) {
+            int start = matcher.start();
+            int end = matcher.end();
+            builder.append(fileName, last, start); // append unmatched text ahead of match
+
+            builder.append(matchStyle); // push style
+            builder.append(fileName, start, end); // append matched text
+            builder.append(resetStyle); // pop style
+            last = end;
+        }
+
+        if (last == 0) {
+            return false;
+        }
+        builder.append(fileName, last, fileName.length()); // append remaining unmatched text
+
+        entry.setDisplayName(builder.toString());
+        return true;
+    }
+
+    public void tick() {
+        this.searchPatternBox.tick();
+
+        Pattern nextPattern = this.searchPatternBox.getPattern();
+        if (this.searchPattern != nextPattern) {
+            this.searchPattern = nextPattern;
+
+            this.refresh();
+        }
+    }
+
+    public @Override void render(IntPoint mouseLocation, float tickTime) {
+        super.render(mouseLocation, tickTime);
+
+        this.searchPatternBox.render();
+
+        this.renderHoverTooltipUnderMouse(mouseLocation);
+    }
+
+    private void renderHoverTooltipUnderMouse(IntPoint mousePoint) {
+        IntPoint mouseDelta = mousePoint.sub(this.lastMousePoint).abs();
         if (mouseDelta.x > 5 || mouseDelta.y > 5) {
             this.lastMousePoint = mousePoint;
             this.mouseStillTime = System.currentTimeMillis();
@@ -126,7 +253,7 @@ public class FilePickerWidget extends ScrollableWidget {
     }
 
     public void renderHoverTooltip(int entryIndex, IntPoint mousePoint) {
-        Path path = this.files.get(entryIndex);
+        Path path = this.getActiveList().get(entryIndex).value();
         File file = path.toFile();
 
         List<String> lines = new ArrayList<>();
@@ -195,10 +322,10 @@ public class FilePickerWidget extends ScrollableWidget {
         texMan.releaseTexture(texId);
     }
 
-    public Path getSelectedItem() {
-        int index = getSelectedIndex();
+    public Entry getSelectedEntry() {
+        int index = this.getSelectedIndex();
         if (index != -1) {
-            return this.files.get(index);
+            return this.getActiveList().get(index);
         }
         return null;
     }
@@ -209,5 +336,48 @@ public class FilePickerWidget extends ScrollableWidget {
 
     public int getHoveredIndex() {
         return this.hoveredIndex;
+    }
+
+    private boolean canUseStorageList() {
+        return this.displayList.isEmpty() && this.searchPattern == null;
+    }
+
+    public List<Entry> getActiveList() {
+        if (this.canUseStorageList()) {
+            return this.storageList;
+        }
+        return this.displayList;
+    }
+
+    public List<Entry> getStorageList() {
+        return this.storageList;
+    }
+
+    public List<Entry> getDisplayList() {
+        return this.displayList;
+    }
+
+    public static class Entry {
+        private final Path value;
+        private String displayName;
+
+        public Entry(Path value) {
+            this.value = value;
+        }
+
+        public Path value() {
+            return value;
+        }
+
+        public String getDisplayName() {
+            if (this.displayName == null) {
+                this.displayName = FileDisplayUtil.colorizePath(this.value.getFileName());
+            }
+            return this.displayName;
+        }
+
+        public void setDisplayName(String value) {
+            this.displayName = value;
+        }
     }
 }
