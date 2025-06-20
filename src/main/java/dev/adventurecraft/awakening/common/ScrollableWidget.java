@@ -13,15 +13,14 @@ import org.lwjgl.opengl.GL11;
 import javax.annotation.Nullable;
 import java.util.List;
 
-import static dev.adventurecraft.awakening.util.DrawUtil.drawRect;
 import static dev.adventurecraft.awakening.util.DrawUtil.fillRect;
 
 public abstract class ScrollableWidget extends GuiComponent {
 
     public final Minecraft client;
     private IntRect layoutRect;
-    private IntBorder layoutBorder = IntBorder.zero;
-    private IntBorder layoutPadding = IntBorder.zero;
+    private IntBorder layoutBorder;
+    private IntBorder layoutPadding;
 
     protected final int entryHeight;
 
@@ -46,7 +45,9 @@ public abstract class ScrollableWidget extends GuiComponent {
         this.client = minecraft;
         this.layoutRect = layoutRect;
 
+        this.layoutBorder = IntBorder.zero;
         this.layoutPadding = new IntBorder(0, this.edgeShadowHeight);
+
         this.entryHeight = entryHeight;
         this.scrollbarWidth = 6;
     }
@@ -62,7 +63,7 @@ public abstract class ScrollableWidget extends GuiComponent {
 
     protected abstract void renderEntry(Tesselator ts, int entryIndex, Point entryLocation, int entryHeight);
 
-    protected boolean mouseClicked(IntPoint mouseLocation) {
+    protected boolean mouseClicked(IntPoint mouseLocation, int buttonIndex, boolean doubleClick) {
         return false;
     }
 
@@ -195,19 +196,20 @@ public abstract class ScrollableWidget extends GuiComponent {
             if (this.dragDistance == -1.0) {
                 if (mousePoint.y >= contentTop && mousePoint.y <= contentBot) {
                     boolean doDragging = buttonIndex == 0;
+                    boolean isDoubleClick = System.currentTimeMillis() - this.prevClickTime < 250L;
 
                     int entryIndex = this.getEntryUnderPoint(mousePoint.asFloat());
                     if (entryIndex != -1) {
-                        boolean doubleClick = entryIndex == this.prevEntryIndex && System.currentTimeMillis() - this.prevClickTime < 250L;
-
-                        this.entryClicked(entryIndex, buttonIndex, doubleClick);
+                        boolean isEntryDoubleClick = entryIndex == this.prevEntryIndex && isDoubleClick;
+                        this.entryClicked(entryIndex, buttonIndex, isEntryDoubleClick);
                         this.prevEntryIndex = entryIndex;
-                        this.prevClickTime = System.currentTimeMillis();
                     }
-                    else {
-                        if (this.mouseClicked(mousePoint)) {
-                            doDragging = false;
-                        }
+                    else if (this.mouseClicked(mousePoint, buttonIndex, isDoubleClick)) {
+                        doDragging = false;
+                    }
+
+                    if (isDoubleClick) {
+                        this.prevClickTime = System.currentTimeMillis();
                     }
 
                     if (this.scrollbarWidth > 0 && mousePoint.x >= scrollBarLeft && mousePoint.x <= scrollBarRight) {

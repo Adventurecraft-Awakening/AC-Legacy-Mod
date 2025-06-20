@@ -1,6 +1,5 @@
 package dev.adventurecraft.awakening.mixin.client.gui.widget;
 
-import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.ScrollableWidget;
 import dev.adventurecraft.awakening.extension.client.gui.widget.ExScrollableBaseWidget;
 import dev.adventurecraft.awakening.layout.*;
@@ -22,17 +21,12 @@ import java.util.List;
 @Mixin(AbstractSelectionList.class)
 public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidget {
 
-    @Unique
-    private ScrollableWidget rootWidget;
-    @Unique
-    private int hoveredEntry = -1;
+    @Unique private ScrollableWidget rootWidget;
+    @Unique private int hoveredEntry = -1;
 
-    @Shadow
-    private boolean renderSelection;
-    @Shadow
-    private boolean renderHeader;
-    @Shadow
-    private int headerHeight;
+    @Shadow private boolean renderSelection;
+    @Shadow private boolean renderHeader;
+    @Shadow private int headerHeight;
 
     @Shadow
     protected abstract void renderDecorations(int i, int j);
@@ -61,8 +55,7 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
                 }
             }
 
-            @Override
-            protected boolean mouseClicked(IntPoint mouseLocation) {
+            protected @Override boolean mouseClicked(IntPoint mouseLocation, int buttonIndex, boolean doubleClick) {
                 Point contentLocation = this.getLocationRelativeToContent(mouseLocation.asFloat());
                 if (contentLocation.y <= 0) {
                     self.method_1254((int) contentLocation.x - 1, (int) contentLocation.y);
