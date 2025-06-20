@@ -7,6 +7,7 @@ import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.ScrollableWidget;
 import dev.adventurecraft.awakening.extension.client.ExTextureManager;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
+import dev.adventurecraft.awakening.filesystem.FileIconFlags;
 import dev.adventurecraft.awakening.filesystem.FileIconOptions;
 import dev.adventurecraft.awakening.filesystem.FileIconRenderer;
 import dev.adventurecraft.awakening.filesystem.GtkFileIconRenderer;
