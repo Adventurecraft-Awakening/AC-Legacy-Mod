@@ -31,8 +31,7 @@ public final class IntPoint implements PointType {
         return new IntPoint(Math.abs(this.x), Math.abs(this.y));
     }
 
-    @Override
-    public Point asFloat() {
+    public @Override Point asFloat() {
         return new Point(this.x, this.y);
     }
 

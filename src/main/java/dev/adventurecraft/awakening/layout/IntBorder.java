@@ -47,6 +47,18 @@ public final class IntBorder implements BorderType {
         );
     }
 
+    public boolean contains(IntPoint point) {
+        return this.containsX(point.x) && this.containsY(point.y);
+    }
+
+    public boolean containsX(int x) {
+        return x >= this.left && x <= this.right;
+    }
+
+    public boolean containsY(int y) {
+        return y >= this.top && y <= this.bot;
+    }
+
     @Override
     public Border asFloat() {
         return new Border(this.left, this.right, this.top, this.bot);
@@ -55,7 +67,8 @@ public final class IntBorder implements BorderType {
     @Override
     public boolean equals(Object other) {
         if (other instanceof IntBorder border) {
-            return this.left == border.left && this.right == border.right && this.top == border.top && this.bot == border.bot;
+            return this.left == border.left && this.right == border.right && this.top == border.top &&
+                this.bot == border.bot;
         }
         return false;
     }

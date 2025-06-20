@@ -58,6 +58,22 @@ public final class IntRect implements RectType {
         return new IntPoint(this.x, this.y);
     }
 
+    public IntPoint topLeft() {
+        return new IntPoint(this.x, this.y);
+    }
+
+    public IntPoint topRight() {
+        return new IntPoint(this.x + this.w, this.y);
+    }
+
+    public IntPoint botLeft() {
+        return new IntPoint(this.x, this.y + this.h);
+    }
+
+    public IntPoint botRight() {
+        return new IntPoint(this.x + this.w, this.y + this.h);
+    }
+
     public IntRect alongLeft(int width) {
         return fromEdges(this.left() + width, this.top(), this.left(), this.bot());
     }
@@ -90,6 +106,18 @@ public final class IntRect implements RectType {
             this.w + border.right + border.left,
             this.h + border.bot + border.top
         );
+    }
+
+    public boolean contains(IntPoint point) {
+        return this.containsX(point.x) && this.containsY(point.y);
+    }
+
+    public boolean containsX(int x) {
+        return x >= this.left() && x <= this.right();
+    }
+
+    public boolean containsY(int y) {
+        return y >= this.top() && y <= this.bot();
     }
 
     @Override

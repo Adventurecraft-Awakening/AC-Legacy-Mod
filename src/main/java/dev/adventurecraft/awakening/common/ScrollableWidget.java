@@ -165,11 +165,13 @@ public abstract class ScrollableWidget extends GuiComponent {
 
     public void render(IntPoint mousePoint, float tickTime) {
         IntRect borderRect = this.getBorderRect();
-        IntRect contentRect = this.getContentRect();
 
-        int entryCount = this.getEntryCount();
-        int scrollBarLeft = this.layoutRect.right() - this.scrollbarWidth;
-        int scrollBarRight = this.layoutRect.right();
+        var scrollBarBorder = new IntBorder(
+            this.layoutRect.right() - this.scrollbarWidth,
+            this.layoutRect.right(),
+            0,
+            0
+        );
 
         int contentTop = borderRect.top();
         int contentBot = borderRect.bot();
@@ -194,7 +196,7 @@ public abstract class ScrollableWidget extends GuiComponent {
 
         if (buttonIndex != -1) {
             if (this.dragDistance == -1.0) {
-                if (mousePoint.y >= contentTop && mousePoint.y <= contentBot) {
+                if (borderRect.containsY(mousePoint.y)) {
                     boolean doDragging = buttonIndex == 0;
                     boolean isDoubleClick = System.currentTimeMillis() - this.prevClickTime < 250L;
 
@@ -212,13 +214,14 @@ public abstract class ScrollableWidget extends GuiComponent {
                         this.prevClickTime = System.currentTimeMillis();
                     }
 
-                    if (this.scrollbarWidth > 0 && mousePoint.x >= scrollBarLeft && mousePoint.x <= scrollBarRight) {
+                    if (scrollBarBorder.width() > 0 && scrollBarBorder.containsX(mousePoint.x)) {
                         this.scrollAmount = -1.0;
                         int n3 = totalHeight - (contentBot - contentTop);
                         if (n3 < 1) {
                             n3 = 1;
                         }
-                        int n2 = (int) Math.ceil((double) ((contentBot - contentTop) * (contentBot - contentTop)) / (double) totalHeight);
+                        int n2 = (int) Math.ceil(
+                            (double) ((contentBot - contentTop) * (contentBot - contentTop)) / (double) totalHeight);
                         if (n2 < 32) {
                             n2 = 32;
                         }
@@ -260,6 +263,22 @@ public abstract class ScrollableWidget extends GuiComponent {
         if (!this.isScrolling) {
             this.clampTargetScroll(totalHeight);
         }
+
+        this.doRender(mousePoint, tickTime, borderRect, totalHeight, scrollBarBorder);
+    }
+
+    private void doRender(
+        IntPoint mousePoint,
+        float tickTime,
+        IntRect borderRect,
+        int totalHeight,
+        IntBorder scrollBarBorder
+    ) {
+        int contentTop = borderRect.top();
+        int contentBot = borderRect.bot();
+
+        IntRect contentRect = this.getContentRect();
+        int entryCount = this.getEntryCount();
 
         GL11.glDisable(GL11.GL_LIGHTING);
         GL11.glDisable(GL11.GL_FOG);
@@ -318,8 +337,11 @@ public abstract class ScrollableWidget extends GuiComponent {
                 n = contentTop;
             }
 
+            int scrollBarLeft = scrollBarBorder.left;
+            int scrollBarRight = scrollBarBorder.right;
             Rect scrollBarBackRect = Rect.fromEdges(scrollBarLeft, contentTop, scrollBarRight, contentBot);
             Rect scrollHandleRect = Rect.fromEdges(scrollBarLeft, n, scrollBarRight, n + n2);
+
             ts.begin();
             fillRect(ts, scrollBarBackRect, new IntCorner(0x7f000000), null);
             DrawUtil.shadowRect(
