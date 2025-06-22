@@ -7,6 +7,7 @@ import dev.adventurecraft.awakening.common.gui.AC_GuiTriggerInverter;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTriggerInverter;
+import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelSource;
@@ -92,13 +93,15 @@ public class AC_BlockTriggerInverter extends TileEntityTile implements AC_ITrigg
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active && (player.getSelectedItem() == null || player.getSelectedItem().id == AC_Items.cursor.id)) {
-            var entity = (AC_TileEntityTriggerInverter) world.getTileEntity(x, y, z);
-            AC_GuiTriggerInverter.showUI(entity);
-            return true;
-        } else {
-            return false;
+        if (AC_DebugMode.active) {
+            ItemInstance item = player.getSelectedItem();
+            if (item == null || item.id == AC_Items.cursor.id) {
+                var entity = (AC_TileEntityTriggerInverter) world.getTileEntity(x, y, z);
+                AC_GuiTriggerInverter.showUI(entity);
+                return true;
+            }
         }
+        return false;
     }
 
     @Override

@@ -7,6 +7,7 @@ import dev.adventurecraft.awakening.common.gui.AC_GuiTriggerMemory;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTriggerMemory;
+import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelSource;
@@ -96,7 +97,8 @@ public class AC_BlockTriggerMemory extends TileEntityTile implements AC_ITrigger
         if (entity.isSet()) {
             if (world.getData(x, y, z) > 0) {
                 this.onTriggerDeactivated(world, x, y, z);
-            } else {
+            }
+            else {
                 this.onTriggerActivated(world, x, y, z);
             }
         }
@@ -120,13 +122,15 @@ public class AC_BlockTriggerMemory extends TileEntityTile implements AC_ITrigger
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active && (player.getSelectedItem() == null || player.getSelectedItem().id == AC_Items.cursor.id)) {
-            var entity = (AC_TileEntityTriggerMemory) world.getTileEntity(x, y, z);
-            AC_GuiTriggerMemory.showUI(entity);
-            return true;
-        } else {
-            return false;
+        if (AC_DebugMode.active) {
+            ItemInstance item = player.getSelectedItem();
+            if (item == null || item.id == AC_Items.cursor.id) {
+                var entity = (AC_TileEntityTriggerMemory) world.getTileEntity(x, y, z);
+                AC_GuiTriggerMemory.showUI(entity);
+                return true;
+            }
         }
+        return false;
     }
 
     @Override

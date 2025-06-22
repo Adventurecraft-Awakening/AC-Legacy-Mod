@@ -258,8 +258,9 @@ public class AC_GuiMobSpawner extends Screen {
             }
 
             String txt = "Spawn Item/Block: None";
-            if (Item.items[this.mobSpawner.spawnID] != null) {
-                txt = String.format("Spawn Item/Block: %s", Item.items[this.mobSpawner.spawnID].getDescriptionId());
+            var item = Item.items[this.mobSpawner.spawnID];
+            if (item != null) {
+                txt = "Spawn Item/Block: " + item.getDescriptionId();
             }
             button.message = txt;
         }

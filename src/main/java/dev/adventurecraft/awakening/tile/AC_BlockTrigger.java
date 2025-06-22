@@ -8,6 +8,7 @@ import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityMinMax;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTrigger;
+import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -228,13 +229,15 @@ public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerBlock 
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active && (player.getSelectedItem() == null || player.getSelectedItem().id == AC_Items.cursor.id)) {
-            var entity = (AC_TileEntityTrigger) world.getTileEntity(x, y, z);
-            AC_GuiTrigger.showUI(entity);
-        } else {
-            return false;
+        if (AC_DebugMode.active) {
+            ItemInstance item = player.getSelectedItem();
+            if (item == null || item.id == AC_Items.cursor.id) {
+                var entity = (AC_TileEntityTrigger) world.getTileEntity(x, y, z);
+                AC_GuiTrigger.showUI(entity);
+                return true;
+            }
         }
-        return true;
+        return false;
     }
 
     @Override
