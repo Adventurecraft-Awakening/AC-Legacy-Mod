@@ -220,13 +220,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     ) {
         this.blen = true;
         float aoLevel = ((ExGameOptions) Minecraft.instance.options).ofAoLevel();
-        boolean var10 = false;
-        boolean useBottomColor = true;
-        boolean useTopColor = true;
-        boolean useEastColor = true;
-        boolean useWestColor = true;
-        boolean useNorthColor = true;
-        boolean useSouthColor = true;
+        boolean renderAny = false;
 
         boolean renderBottom = this.noCulling || block.shouldRenderFace(this.level, x, y - 1, z, 0);
         boolean renderTop = this.noCulling || block.shouldRenderFace(this.level, x, y + 1, z, 1);
@@ -236,88 +230,121 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         boolean renderSouth = this.noCulling || block.shouldRenderFace(this.level, x + 1, y, z, 5);
 
         if (renderTop || renderSouth) {
-            this.field_70 = isTranslucent(x + 1, y + 1, z);
+            this.field_70 = this.isTranslucent(x + 1, y + 1, z);
         }
 
         if (renderBottom || renderSouth) {
-            this.field_78 = isTranslucent(x + 1, y - 1, z);
+            this.field_78 = this.isTranslucent(x + 1, y - 1, z);
         }
 
         if (renderWest || renderSouth) {
-            this.field_74 = isTranslucent(x + 1, y, z + 1);
+            this.field_74 = this.isTranslucent(x + 1, y, z + 1);
         }
 
         if (renderEast || renderSouth) {
-            this.field_76 = isTranslucent(x + 1, y, z - 1);
+            this.field_76 = this.isTranslucent(x + 1, y, z - 1);
         }
 
         if (renderTop || renderNorth) {
-            this.field_71 = isTranslucent(x - 1, y + 1, z);
+            this.field_71 = this.isTranslucent(x - 1, y + 1, z);
         }
 
         if (renderBottom || renderNorth) {
-            this.field_79 = isTranslucent(x - 1, y - 1, z);
+            this.field_79 = this.isTranslucent(x - 1, y - 1, z);
         }
 
         if (renderEast || renderNorth) {
-            this.field_73 = isTranslucent(x - 1, y, z - 1);
+            this.field_73 = this.isTranslucent(x - 1, y, z - 1);
         }
 
         if (renderWest || renderNorth) {
-            this.field_75 = isTranslucent(x - 1, y, z + 1);
+            this.field_75 = this.isTranslucent(x - 1, y, z + 1);
         }
 
         if (renderTop || renderWest) {
-            this.field_72 = isTranslucent(x, y + 1, z + 1);
+            this.field_72 = this.isTranslucent(x, y + 1, z + 1);
         }
 
         if (renderTop || renderEast) {
-            this.field_69 = isTranslucent(x, y + 1, z - 1);
+            this.field_69 = this.isTranslucent(x, y + 1, z - 1);
         }
 
         if (renderBottom || renderWest) {
-            this.field_80 = isTranslucent(x, y - 1, z + 1);
+            this.field_80 = this.isTranslucent(x, y - 1, z + 1);
         }
 
         if (renderBottom || renderEast) {
-            this.field_77 = isTranslucent(x, y - 1, z - 1);
+            this.field_77 = this.isTranslucent(x, y - 1, z - 1);
         }
 
         boolean doGrassEdges = fancy && block.id == Tile.GRASS.id;
-        if (block.id == Tile.GRASS.id || this.fixedTexture >= 0) {
-            useSouthColor = false;
-            useNorthColor = false;
-            useWestColor = false;
-            useEastColor = false;
-            useBottomColor = false;
-        }
+        boolean useColor = block.id != Tile.GRASS.id && this.fixedTexture < 0;
 
         if (renderBottom) {
-            var10 |= this.renderBottomSide(block, x, y, z, r, g, b, aoLevel, useBottomColor);
+            renderAny |= this.renderBottomSide(block, x, y, z, r, g, b, aoLevel, useColor);
         }
-
         if (renderTop) {
-            var10 |= this.renderTopSide(block, x, y, z, r, g, b, aoLevel, useTopColor);
+            renderAny |= this.renderTopSide(block, x, y, z, r, g, b, aoLevel);
         }
-
         if (renderEast) {
-            var10 |= this.renderEastSide(block, x, y, z, r, g, b, aoLevel, useEastColor, doGrassEdges);
+            renderAny |= this.renderEastSide(block, x, y, z, r, g, b, aoLevel, useColor, doGrassEdges);
         }
-
         if (renderWest) {
-            var10 |= this.renderWestSide(block, x, y, z, r, g, b, aoLevel, useWestColor, doGrassEdges);
+            renderAny |= this.renderWestSide(block, x, y, z, r, g, b, aoLevel, useColor, doGrassEdges);
         }
-
         if (renderNorth) {
-            var10 |= this.renderNorthSide(block, x, y, z, r, g, b, aoLevel, useNorthColor, doGrassEdges);
+            renderAny |= this.renderNorthSide(block, x, y, z, r, g, b, aoLevel, useColor, doGrassEdges);
         }
-
         if (renderSouth) {
-            var10 |= this.renderSouthSide(block, x, y, z, r, g, b, aoLevel, useSouthColor, doGrassEdges);
+            renderAny |= this.renderSouthSide(block, x, y, z, r, g, b, aoLevel, useColor, doGrassEdges);
         }
 
         this.blen = false;
-        return var10;
+        return renderAny;
+    }
+
+    private @Unique void resetColor(boolean useColor, float r, float g, float b, float factor) {
+        float cR = factor;
+        float cG = factor;
+        float cB = factor;
+        if (useColor) {
+            cR *= r;
+            cG *= g;
+            cB *= b;
+        }
+        this.c1r = this.c2r = this.c3r = this.c4r = cR;
+        this.c1g = this.c2g = this.c3g = this.c4g = cG;
+        this.c1b = this.c2b = this.c3b = this.c4b = cB;
+    }
+
+    private @Unique void applyColorBrightness(float l1, float l2, float l3, float l4) {
+        this.c1r *= l1;
+        this.c1g *= l1;
+        this.c1b *= l1;
+        this.c2r *= l2;
+        this.c2g *= l2;
+        this.c2b *= l2;
+        this.c3r *= l3;
+        this.c3g *= l3;
+        this.c3b *= l3;
+        this.c4r *= l4;
+        this.c4g *= l4;
+        this.c4b *= l4;
+    }
+
+    private @Unique void multiplyColor(float r, float g, float b) {
+        this.c1r *= r;
+        this.c2r *= r;
+        this.c3r *= r;
+        this.c4r *= r;
+        this.c1g *= g;
+        this.c2g *= g;
+        this.c3g *= g;
+        this.c4g *= g;
+        this.c1b *= b;
+        this.c2b *= b;
+        this.c3b *= b;
+        this.c4b *= b;
     }
 
     private boolean renderBottomSide(
@@ -333,15 +360,15 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     ) {
         this.ll0y0 = block.getBrightness(this.level, x, y - 1, z);
 
-        float var21;
-        float var22;
-        float var23;
-        float var24;
+        float l1;
+        float l2;
+        float l3;
+        float l4;
         if (this.blsmooth <= 0) {
-            var24 = this.ll0y0;
-            var23 = var24;
-            var22 = var24;
-            var21 = var24;
+            l4 = this.ll0y0;
+            l3 = l4;
+            l2 = l4;
+            l1 = l4;
         }
         else {
             --y;
@@ -382,27 +409,15 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                 this.fixBottomAo(aoLevel);
             }
 
-            var21 = (this.llXyz + this.llxyz + this.llxyZ + this.ll0y0) * (1 / 4F);
-            var24 = (this.llxyZ + this.ll0y0 + this.llXyZ + this.ll0yz) * (1 / 4F);
-            var23 = (this.ll0y0 + this.llxy0 + this.ll0yz + this.llXy0) * (1 / 4F);
-            var22 = (this.llxyz + this.ll0yZ + this.ll0y0 + this.llxy0) * (1 / 4F);
+            l1 = (this.llXyz + this.llxyz + this.llxyZ + this.ll0y0) * (1 / 4F);
+            l4 = (this.llxyZ + this.ll0y0 + this.llXyZ + this.ll0yz) * (1 / 4F);
+            l3 = (this.ll0y0 + this.llxy0 + this.ll0yz + this.llXy0) * (1 / 4F);
+            l2 = (this.llxyz + this.ll0yZ + this.ll0y0 + this.llxy0) * (1 / 4F);
         }
 
-        this.c1r = this.c2r = this.c3r = this.c4r = (useColor ? r : 1.0F) * 0.5F;
-        this.c1g = this.c2g = this.c3g = this.c4g = (useColor ? g : 1.0F) * 0.5F;
-        this.c1b = this.c2b = this.c3b = this.c4b = (useColor ? b : 1.0F) * 0.5F;
-        this.c1r *= var21;
-        this.c1g *= var21;
-        this.c1b *= var21;
-        this.c2r *= var22;
-        this.c2g *= var22;
-        this.c2b *= var22;
-        this.c3r *= var23;
-        this.c3g *= var23;
-        this.c3b *= var23;
-        this.c4r *= var24;
-        this.c4g *= var24;
-        this.c4b *= var24;
+        this.resetColor(useColor, r, g, b, 0.5F);
+        this.applyColorBrightness(l1, l2, l3, l4);
+
         this.renderFaceDown(block, x, y, z, block.getTexture(this.level, x, y, z, 0));
         return true;
     }
@@ -422,28 +437,18 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         this.ll0yZ = AoHelper.fixAoLight(min, max, this.ll0yZ, aoB, aoF);
     }
 
-    private boolean renderTopSide(
-        Tile block,
-        int x,
-        int y,
-        int z,
-        float r,
-        float g,
-        float b,
-        float aoLevel,
-        boolean useColor
-    ) {
+    private boolean renderTopSide(Tile block, int x, int y, int z, float r, float g, float b, float aoLevel) {
         this.ll0Y0 = block.getBrightness(this.level, x, y + 1, z);
 
-        float var21;
-        float var22;
-        float var23;
-        float var24;
+        float l1;
+        float l2;
+        float l3;
+        float l4;
         if (this.blsmooth <= 0) {
-            var24 = this.ll0Y0;
-            var23 = var24;
-            var22 = var24;
-            var21 = var24;
+            l4 = this.ll0Y0;
+            l3 = l4;
+            l2 = l4;
+            l1 = l4;
         }
         else {
             ++y;
@@ -484,27 +489,15 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                 this.fixTopAo(aoLevel);
             }
 
-            var24 = (this.llxYZ + this.llxY0 + this.ll0YZ + this.ll0Y0) * (1 / 4F);
-            var21 = (this.ll0YZ + this.ll0Y0 + this.llXYZ + this.llXY0) * (1 / 4F);
-            var22 = (this.ll0Y0 + this.ll0Yz + this.llXY0 + this.llXYz) * (1 / 4F);
-            var23 = (this.llxY0 + this.llxYz + this.ll0Y0 + this.ll0Yz) * (1 / 4F);
+            l4 = (this.llxYZ + this.llxY0 + this.ll0YZ + this.ll0Y0) * (1 / 4F);
+            l1 = (this.ll0YZ + this.ll0Y0 + this.llXYZ + this.llXY0) * (1 / 4F);
+            l2 = (this.ll0Y0 + this.ll0Yz + this.llXY0 + this.llXYz) * (1 / 4F);
+            l3 = (this.llxY0 + this.llxYz + this.ll0Y0 + this.ll0Yz) * (1 / 4F);
         }
 
-        this.c1r = this.c2r = this.c3r = this.c4r = useColor ? r : 1.0F;
-        this.c1g = this.c2g = this.c3g = this.c4g = useColor ? g : 1.0F;
-        this.c1b = this.c2b = this.c3b = this.c4b = useColor ? b : 1.0F;
-        this.c1r *= var21;
-        this.c1g *= var21;
-        this.c1b *= var21;
-        this.c2r *= var22;
-        this.c2g *= var22;
-        this.c2b *= var22;
-        this.c3r *= var23;
-        this.c3g *= var23;
-        this.c3b *= var23;
-        this.c4r *= var24;
-        this.c4g *= var24;
-        this.c4b *= var24;
+        this.resetColor(true, r, g, b, 1.0F);
+        this.applyColorBrightness(l1, l2, l3, l4);
+
         this.renderFaceUp(block, x, y, z, block.getTexture(this.level, x, y, z, 1));
         return true;
     }
@@ -538,15 +531,15 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     ) {
         this.ll00z = block.getBrightness(this.level, x, y, z - 1);
 
-        float var21;
-        float var22;
-        float var23;
-        float var24;
+        float l1;
+        float l2;
+        float l3;
+        float l4;
         if (this.blsmooth <= 0) {
-            var24 = this.ll00z;
-            var23 = var24;
-            var22 = var24;
-            var21 = var24;
+            l4 = this.ll00z;
+            l3 = l4;
+            l2 = l4;
+            l1 = l4;
         }
         else {
             --z;
@@ -587,57 +580,23 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                 this.fixEastAo(aoLevel);
             }
 
-            var21 = (this.llx0z + this.llxYz + this.ll00z + this.ll0Yz) * (1 / 4F);
-            var22 = (this.ll00z + this.ll0Yz + this.llX0z + this.llXYz) * (1 / 4F);
-            var23 = (this.llxy0 + this.ll00z + this.llXy0 + this.llX0z) * (1 / 4F);
-            var24 = (this.ll0yZ + this.llx0z + this.llxy0 + this.ll00z) * (1 / 4F);
+            l1 = (this.llx0z + this.llxYz + this.ll00z + this.ll0Yz) * (1 / 4F);
+            l2 = (this.ll00z + this.ll0Yz + this.llX0z + this.llXYz) * (1 / 4F);
+            l3 = (this.llxy0 + this.ll00z + this.llXy0 + this.llX0z) * (1 / 4F);
+            l4 = (this.ll0yZ + this.llx0z + this.llxy0 + this.ll00z) * (1 / 4F);
         }
 
-        this.c1r = this.c2r = this.c3r = this.c4r = (useColor ? r : 1.0F) * 0.8F;
-        this.c1g = this.c2g = this.c3g = this.c4g = (useColor ? g : 1.0F) * 0.8F;
-        this.c1b = this.c2b = this.c3b = this.c4b = (useColor ? b : 1.0F) * 0.8F;
-        this.c1r *= var21;
-        this.c1g *= var21;
-        this.c1b *= var21;
-        this.c2r *= var22;
-        this.c2g *= var22;
-        this.c2b *= var22;
-        this.c3r *= var23;
-        this.c3g *= var23;
-        this.c3b *= var23;
-        this.c4r *= var24;
-        this.c4g *= var24;
-        this.c4b *= var24;
+        this.resetColor(useColor, r, g, b, 0.8F);
+        this.applyColorBrightness(l1, l2, l3, l4);
+
         long bTexture = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, 2);
         if (hasColorBit(bTexture)) {
-            this.c1r *= r;
-            this.c2r *= r;
-            this.c3r *= r;
-            this.c4r *= r;
-            this.c1g *= g;
-            this.c2g *= g;
-            this.c3g *= g;
-            this.c4g *= g;
-            this.c1b *= b;
-            this.c2b *= b;
-            this.c3b *= b;
-            this.c4b *= b;
+            this.multiplyColor(r, g, b);
         }
 
         this.renderNorth(block, x, y, z, (int) bTexture);
         if (doGrassEdges && bTexture == 3 && this.fixedTexture < 0) {
-            this.c1r *= r;
-            this.c2r *= r;
-            this.c3r *= r;
-            this.c4r *= r;
-            this.c1g *= g;
-            this.c2g *= g;
-            this.c3g *= g;
-            this.c4g *= g;
-            this.c1b *= b;
-            this.c2b *= b;
-            this.c3b *= b;
-            this.c4b *= b;
+            this.multiplyColor(r, g, b);
             this.renderNorth(block, x, y, z, 38);
         }
 
@@ -728,9 +687,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             var22 = (this.llXyz + this.llx0Z + this.llxyZ + this.ll00Z) * (1 / 4F);
         }
 
-        this.c1r = this.c2r = this.c3r = this.c4r = (useColor ? r : 1.0F) * 0.8F;
-        this.c1g = this.c2g = this.c3g = this.c4g = (useColor ? g : 1.0F) * 0.8F;
-        this.c1b = this.c2b = this.c3b = this.c4b = (useColor ? b : 1.0F) * 0.8F;
+        this.resetColor(useColor, r, g, b, 0.8F);
         this.c1r *= var21;
         this.c1g *= var21;
         this.c1b *= var21;
@@ -745,34 +702,12 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         this.c4b *= var24;
         long bTexture = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, 3);
         if (hasColorBit(bTexture)) {
-            this.c1r *= r;
-            this.c2r *= r;
-            this.c3r *= r;
-            this.c4r *= r;
-            this.c1g *= g;
-            this.c2g *= g;
-            this.c3g *= g;
-            this.c4g *= g;
-            this.c1b *= b;
-            this.c2b *= b;
-            this.c3b *= b;
-            this.c4b *= b;
+            this.multiplyColor(r, g, b);
         }
 
         this.renderSouth(block, x, y, z, (int) bTexture);
         if (doGrassEdges && bTexture == 3 && this.fixedTexture < 0) {
-            this.c1r *= r;
-            this.c2r *= r;
-            this.c3r *= r;
-            this.c4r *= r;
-            this.c1g *= g;
-            this.c2g *= g;
-            this.c3g *= g;
-            this.c4g *= g;
-            this.c1b *= b;
-            this.c2b *= b;
-            this.c3b *= b;
-            this.c4b *= b;
+            this.multiplyColor(r, g, b);
             this.renderSouth(block, x, y, z, 38);
         }
 
@@ -808,15 +743,15 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     ) {
         this.llx00 = block.getBrightness(this.level, x - 1, y, z);
 
-        float var21;
-        float var22;
-        float var23;
-        float var24;
+        float l1;
+        float l2;
+        float l3;
+        float l4;
         if (this.blsmooth <= 0) {
-            var24 = this.llx00;
-            var23 = var24;
-            var22 = var24;
-            var21 = var24;
+            l4 = this.llx00;
+            l3 = l4;
+            l2 = l4;
+            l1 = l4;
         }
         else {
             --x;
@@ -857,57 +792,23 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                 this.fixNorthAo(aoLevel);
             }
 
-            var24 = (this.llxyz + this.llXyz + this.llx00 + this.llx0Z) * (1 / 4F);
-            var21 = (this.llx00 + this.llx0Z + this.llxY0 + this.llxYZ) * (1 / 4F);
-            var22 = (this.llx0z + this.llx00 + this.llxYz + this.llxY0) * (1 / 4F);
-            var23 = (this.ll0yZ + this.llxyz + this.llx0z + this.llx00) * (1 / 4F);
+            l4 = (this.llxyz + this.llXyz + this.llx00 + this.llx0Z) * (1 / 4F);
+            l1 = (this.llx00 + this.llx0Z + this.llxY0 + this.llxYZ) * (1 / 4F);
+            l2 = (this.llx0z + this.llx00 + this.llxYz + this.llxY0) * (1 / 4F);
+            l3 = (this.ll0yZ + this.llxyz + this.llx0z + this.llx00) * (1 / 4F);
         }
 
-        this.c1r = this.c2r = this.c3r = this.c4r = (useColor ? r : 1.0F) * 0.6F;
-        this.c1g = this.c2g = this.c3g = this.c4g = (useColor ? g : 1.0F) * 0.6F;
-        this.c1b = this.c2b = this.c3b = this.c4b = (useColor ? b : 1.0F) * 0.6F;
-        this.c1r *= var21;
-        this.c1g *= var21;
-        this.c1b *= var21;
-        this.c2r *= var22;
-        this.c2g *= var22;
-        this.c2b *= var22;
-        this.c3r *= var23;
-        this.c3g *= var23;
-        this.c3b *= var23;
-        this.c4r *= var24;
-        this.c4g *= var24;
-        this.c4b *= var24;
+        this.resetColor(useColor, r, g, b, 0.6F);
+        this.applyColorBrightness(l1, l2, l3, l4);
+
         long bTexture = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, 4);
         if (hasColorBit(bTexture)) {
-            this.c1r *= r;
-            this.c2r *= r;
-            this.c3r *= r;
-            this.c4r *= r;
-            this.c1g *= g;
-            this.c2g *= g;
-            this.c3g *= g;
-            this.c4g *= g;
-            this.c1b *= b;
-            this.c2b *= b;
-            this.c3b *= b;
-            this.c4b *= b;
+            this.multiplyColor(r, g, b);
         }
 
         this.renderWest(block, x, y, z, (int) bTexture);
         if (doGrassEdges && bTexture == 3 && this.fixedTexture < 0) {
-            this.c1r *= r;
-            this.c2r *= r;
-            this.c3r *= r;
-            this.c4r *= r;
-            this.c1g *= g;
-            this.c2g *= g;
-            this.c3g *= g;
-            this.c4g *= g;
-            this.c1b *= b;
-            this.c2b *= b;
-            this.c3b *= b;
-            this.c4b *= b;
+            this.multiplyColor(r, g, b);
             this.renderWest(block, x, y, z, 38);
         }
 
@@ -943,15 +844,15 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     ) {
         this.llX00 = block.getBrightness(this.level, x + 1, y, z);
 
-        float var21;
-        float var22;
-        float var23;
-        float var24;
+        float l1;
+        float l2;
+        float l3;
+        float l4;
         if (this.blsmooth <= 0) {
-            var24 = this.llX00;
-            var23 = var24;
-            var22 = var24;
-            var21 = var24;
+            l4 = this.llX00;
+            l3 = l4;
+            l2 = l4;
+            l1 = l4;
         }
         else {
             ++x;
@@ -992,57 +893,23 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                 this.fixSouthAo(aoLevel);
             }
 
-            var21 = (this.ll0yz + this.llXyZ + this.llX00 + this.llX0Z) * (1 / 4F);
-            var24 = (this.llX00 + this.llX0Z + this.llXY0 + this.llXYZ) * (1 / 4F);
-            var23 = (this.llX0z + this.llX00 + this.llXYz + this.llXY0) * (1 / 4F);
-            var22 = (this.llXy0 + this.ll0yz + this.llX0z + this.llX00) * (1 / 4F);
+            l1 = (this.ll0yz + this.llXyZ + this.llX00 + this.llX0Z) * (1 / 4F);
+            l4 = (this.llX00 + this.llX0Z + this.llXY0 + this.llXYZ) * (1 / 4F);
+            l3 = (this.llX0z + this.llX00 + this.llXYz + this.llXY0) * (1 / 4F);
+            l2 = (this.llXy0 + this.ll0yz + this.llX0z + this.llX00) * (1 / 4F);
         }
 
-        this.c1r = this.c2r = this.c3r = this.c4r = (useColor ? r : 1.0F) * 0.6F;
-        this.c1g = this.c2g = this.c3g = this.c4g = (useColor ? g : 1.0F) * 0.6F;
-        this.c1b = this.c2b = this.c3b = this.c4b = (useColor ? b : 1.0F) * 0.6F;
-        this.c1r *= var21;
-        this.c1g *= var21;
-        this.c1b *= var21;
-        this.c2r *= var22;
-        this.c2g *= var22;
-        this.c2b *= var22;
-        this.c3r *= var23;
-        this.c3g *= var23;
-        this.c3b *= var23;
-        this.c4r *= var24;
-        this.c4g *= var24;
-        this.c4b *= var24;
+        this.resetColor(useColor, r, g, b, 0.6F);
+        this.applyColorBrightness(l1, l2, l3, l4);
+
         long bTexture = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, 5);
         if (hasColorBit(bTexture)) {
-            this.c1r *= r;
-            this.c2r *= r;
-            this.c3r *= r;
-            this.c4r *= r;
-            this.c1g *= g;
-            this.c2g *= g;
-            this.c3g *= g;
-            this.c4g *= g;
-            this.c1b *= b;
-            this.c2b *= b;
-            this.c3b *= b;
-            this.c4b *= b;
+            this.multiplyColor(r, g, b);
         }
 
         this.renderEast(block, x, y, z, (int) bTexture);
         if (doGrassEdges && bTexture == 3 && this.fixedTexture < 0) {
-            this.c1r *= r;
-            this.c2r *= r;
-            this.c3r *= r;
-            this.c4r *= r;
-            this.c1g *= g;
-            this.c2g *= g;
-            this.c3g *= g;
-            this.c4g *= g;
-            this.c1b *= b;
-            this.c2b *= b;
-            this.c3b *= b;
-            this.c4b *= b;
+            this.multiplyColor(r, g, b);
             this.renderEast(block, x, y, z, 38);
         }
 
@@ -1396,8 +1263,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             ts.vertexUV((float) x + var21, (float) (y + 1) + var20, (float) (z + 0) - var20, var13, var15);
             ts.vertexUV((float) x + var21, (float) (y + 0) - var20, (float) (z + 0) - var20, var13, var17);
         }
-
-        if (var19 == 4) {
+        else if (var19 == 4) {
             ts.vertexUV((float) (x + 1) - var21, (float) (y + 0) - var20, (float) (z + 1) + var20, var13, var17);
             ts.vertexUV((float) (x + 1) - var21, (float) (y + 1) + var20, (float) (z + 1) + var20, var13, var15);
             ts.vertexUV((float) (x + 1) - var21, (float) (y + 1) + var20, (float) (z + 0) - var20, var11, var15);
@@ -1407,8 +1273,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             ts.vertexUV((float) (x + 1) - var21, (float) (y + 1) + var20, (float) (z + 1) + var20, var13, var15);
             ts.vertexUV((float) (x + 1) - var21, (float) (y + 0) - var20, (float) (z + 1) + var20, var13, var17);
         }
-
-        if (var19 == 3) {
+        else if (var19 == 3) {
             ts.vertexUV((float) (x + 1) + var20, (float) (y + 0) - var20, (float) z + var21, var13, var17);
             ts.vertexUV((float) (x + 1) + var20, (float) (y + 1) + var20, (float) z + var21, var13, var15);
             ts.vertexUV((float) (x + 0) - var20, (float) (y + 1) + var20, (float) z + var21, var11, var15);
@@ -1418,8 +1283,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             ts.vertexUV((float) (x + 1) + var20, (float) (y + 1) + var20, (float) z + var21, var13, var15);
             ts.vertexUV((float) (x + 1) + var20, (float) (y + 0) - var20, (float) z + var21, var13, var17);
         }
-
-        if (var19 == 2) {
+        else if (var19 == 2) {
             ts.vertexUV((float) (x + 1) + var20, (float) (y + 1) + var20, (float) (z + 1) - var21, var11, var15);
             ts.vertexUV((float) (x + 1) + var20, (float) (y + 0) - var20, (float) (z + 1) - var21, var11, var17);
             ts.vertexUV((float) (x + 0) - var20, (float) (y + 0) - var20, (float) (z + 1) - var21, var13, var17);
