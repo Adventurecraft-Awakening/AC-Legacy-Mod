@@ -33,124 +33,70 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.Slice;
 
-@Mixin(value = TileRenderer.class, priority = 999)
+@Mixin(
+    value = TileRenderer.class,
+    priority = 999
+)
 public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
-    @Unique
-    private final Xoshiro128PP rand = new Xoshiro128PP();
+    @Unique private final Xoshiro128PP rand = new Xoshiro128PP();
 
-    @Shadow
-    public static boolean fancy;
-    @Shadow
-    public LevelSource level;
-    @Shadow
-    private int fixedTexture;
-    @Shadow
-    private boolean noCulling;
-    @Shadow
-    private boolean blen;
-    @Shadow
-    private float llx00;
-    @Shadow
-    private float ll0y0;
-    @Shadow
-    private float ll00z;
-    @Shadow
-    private float llX00;
-    @Shadow
-    private float ll0Y0;
-    @Shadow
-    private float ll00Z;
-    @Shadow
-    private float ll0yZ;
-    @Shadow
-    private float llxyz;
-    @Shadow
-    private float llXyz;
-    @Shadow
-    private float llxy0;
-    @Shadow
-    private float llxyZ;
-    @Shadow
-    private float llXy0;
-    @Shadow
-    private float ll0yz;
-    @Shadow
-    private float llXyZ;
-    @Shadow
-    private float llxYz;
-    @Shadow
-    private float llxY0;
-    @Shadow
-    private float llxYZ;
-    @Shadow
-    private float ll0Yz;
-    @Shadow
-    private float llXYz;
-    @Shadow
-    private float llXY0;
-    @Shadow
-    private float ll0YZ;
-    @Shadow
-    private float llXYZ;
-    @Shadow
-    private float llx0z;
-    @Shadow
-    private float llX0z;
-    @Shadow
-    private float llx0Z;
-    @Shadow
-    private float llX0Z;
-    @Shadow
-    private int blsmooth;
-    @Shadow
-    private float c1r;
-    @Shadow
-    private float c2r;
-    @Shadow
-    private float c3r;
-    @Shadow
-    private float c4r;
-    @Shadow
-    private float c1g;
-    @Shadow
-    private float c2g;
-    @Shadow
-    private float c3g;
-    @Shadow
-    private float c4g;
-    @Shadow
-    private float c1b;
-    @Shadow
-    private float c2b;
-    @Shadow
-    private float c3b;
-    @Shadow
-    private float c4b;
-    @Shadow
-    private boolean field_69;
-    @Shadow
-    private boolean field_70;
-    @Shadow
-    private boolean field_71;
-    @Shadow
-    private boolean field_72;
-    @Shadow
-    private boolean field_73;
-    @Shadow
-    private boolean field_74;
-    @Shadow
-    private boolean field_75;
-    @Shadow
-    private boolean field_76;
-    @Shadow
-    private boolean field_77;
-    @Shadow
-    private boolean field_78;
-    @Shadow
-    private boolean field_79;
-    @Shadow
-    private boolean field_80;
+    @Shadow public static boolean fancy;
+    @Shadow public LevelSource level;
+    @Shadow private int fixedTexture;
+    @Shadow private boolean noCulling;
+    @Shadow private boolean blen;
+    @Shadow private float llx00;
+    @Shadow private float ll0y0;
+    @Shadow private float ll00z;
+    @Shadow private float llX00;
+    @Shadow private float ll0Y0;
+    @Shadow private float ll00Z;
+    @Shadow private float ll0yZ;
+    @Shadow private float llxyz;
+    @Shadow private float llXyz;
+    @Shadow private float llxy0;
+    @Shadow private float llxyZ;
+    @Shadow private float llXy0;
+    @Shadow private float ll0yz;
+    @Shadow private float llXyZ;
+    @Shadow private float llxYz;
+    @Shadow private float llxY0;
+    @Shadow private float llxYZ;
+    @Shadow private float ll0Yz;
+    @Shadow private float llXYz;
+    @Shadow private float llXY0;
+    @Shadow private float ll0YZ;
+    @Shadow private float llXYZ;
+    @Shadow private float llx0z;
+    @Shadow private float llX0z;
+    @Shadow private float llx0Z;
+    @Shadow private float llX0Z;
+    @Shadow private int blsmooth;
+    @Shadow private float c1r;
+    @Shadow private float c2r;
+    @Shadow private float c3r;
+    @Shadow private float c4r;
+    @Shadow private float c1g;
+    @Shadow private float c2g;
+    @Shadow private float c3g;
+    @Shadow private float c4g;
+    @Shadow private float c1b;
+    @Shadow private float c2b;
+    @Shadow private float c3b;
+    @Shadow private float c4b;
+    @Shadow private boolean field_69;
+    @Shadow private boolean field_70;
+    @Shadow private boolean field_71;
+    @Shadow private boolean field_72;
+    @Shadow private boolean field_73;
+    @Shadow private boolean field_74;
+    @Shadow private boolean field_75;
+    @Shadow private boolean field_76;
+    @Shadow private boolean field_77;
+    @Shadow private boolean field_78;
+    @Shadow private boolean field_79;
+    @Shadow private boolean field_80;
 
     @Shadow
     public abstract void renderWest(Tile block, double x, double y, double z, int texture);
@@ -254,12 +200,24 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         this.level = null;
     }
 
-    private static boolean hasColorBit(long textureId) {
+    private static @Unique boolean hasColorBit(long textureId) {
         return ((textureId >> 32) & 1) == 1;
     }
 
+    private @Unique boolean isTranslucent(int x, int y, int z) {
+        return Tile.translucent[this.level.getTile(x, y, z)];
+    }
+
     @Overwrite
-    public boolean tesselateBlockInWorldWithAmbienceOcclusion(Tile block, int x, int y, int z, float r, float g, float b) {
+    public boolean tesselateBlockInWorldWithAmbienceOcclusion(
+        Tile block,
+        int x,
+        int y,
+        int z,
+        float r,
+        float g,
+        float b
+    ) {
         this.blen = true;
         float aoLevel = ((ExGameOptions) Minecraft.instance.options).ofAoLevel();
         boolean var10 = false;
@@ -277,41 +235,53 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         boolean renderNorth = this.noCulling || block.shouldRenderFace(this.level, x - 1, y, z, 4);
         boolean renderSouth = this.noCulling || block.shouldRenderFace(this.level, x + 1, y, z, 5);
 
-        if (renderTop || renderSouth)
-            this.field_70 = Tile.translucent[this.level.getTile(x + 1, y + 1, z)];
+        if (renderTop || renderSouth) {
+            this.field_70 = isTranslucent(x + 1, y + 1, z);
+        }
 
-        if (renderBottom || renderSouth)
-            this.field_78 = Tile.translucent[this.level.getTile(x + 1, y - 1, z)];
+        if (renderBottom || renderSouth) {
+            this.field_78 = isTranslucent(x + 1, y - 1, z);
+        }
 
-        if (renderWest || renderSouth)
-            this.field_74 = Tile.translucent[this.level.getTile(x + 1, y, z + 1)];
+        if (renderWest || renderSouth) {
+            this.field_74 = isTranslucent(x + 1, y, z + 1);
+        }
 
-        if (renderEast || renderSouth)
-            this.field_76 = Tile.translucent[this.level.getTile(x + 1, y, z - 1)];
+        if (renderEast || renderSouth) {
+            this.field_76 = isTranslucent(x + 1, y, z - 1);
+        }
 
-        if (renderTop || renderNorth)
-            this.field_71 = Tile.translucent[this.level.getTile(x - 1, y + 1, z)];
+        if (renderTop || renderNorth) {
+            this.field_71 = isTranslucent(x - 1, y + 1, z);
+        }
 
-        if (renderBottom || renderNorth)
-            this.field_79 = Tile.translucent[this.level.getTile(x - 1, y - 1, z)];
+        if (renderBottom || renderNorth) {
+            this.field_79 = isTranslucent(x - 1, y - 1, z);
+        }
 
-        if (renderEast || renderNorth)
-            this.field_73 = Tile.translucent[this.level.getTile(x - 1, y, z - 1)];
+        if (renderEast || renderNorth) {
+            this.field_73 = isTranslucent(x - 1, y, z - 1);
+        }
 
-        if (renderWest || renderNorth)
-            this.field_75 = Tile.translucent[this.level.getTile(x - 1, y, z + 1)];
+        if (renderWest || renderNorth) {
+            this.field_75 = isTranslucent(x - 1, y, z + 1);
+        }
 
-        if (renderTop || renderWest)
-            this.field_72 = Tile.translucent[this.level.getTile(x, y + 1, z + 1)];
+        if (renderTop || renderWest) {
+            this.field_72 = isTranslucent(x, y + 1, z + 1);
+        }
 
-        if (renderTop || renderEast)
-            this.field_69 = Tile.translucent[this.level.getTile(x, y + 1, z - 1)];
+        if (renderTop || renderEast) {
+            this.field_69 = isTranslucent(x, y + 1, z - 1);
+        }
 
-        if (renderBottom || renderWest)
-            this.field_80 = Tile.translucent[this.level.getTile(x, y - 1, z + 1)];
+        if (renderBottom || renderWest) {
+            this.field_80 = isTranslucent(x, y - 1, z + 1);
+        }
 
-        if (renderBottom || renderEast)
-            this.field_77 = Tile.translucent[this.level.getTile(x, y - 1, z - 1)];
+        if (renderBottom || renderEast) {
+            this.field_77 = isTranslucent(x, y - 1, z - 1);
+        }
 
         boolean doGrassEdges = fancy && block.id == Tile.GRASS.id;
         if (block.id == Tile.GRASS.id || this.fixedTexture >= 0) {
@@ -351,7 +321,16 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     private boolean renderBottomSide(
-        Tile block, int x, int y, int z, float r, float g, float b, float aoLevel, boolean useColor) {
+        Tile block,
+        int x,
+        int y,
+        int z,
+        float r,
+        float g,
+        float b,
+        float aoLevel,
+        boolean useColor
+    ) {
         this.ll0y0 = block.getBrightness(this.level, x, y - 1, z);
 
         float var21;
@@ -363,7 +342,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             var23 = var24;
             var22 = var24;
             var21 = var24;
-        } else {
+        }
+        else {
             --y;
             this.llxyz = block.getBrightness(this.level, x - 1, y, z);
             this.llxy0 = block.getBrightness(this.level, x, y, z - 1);
@@ -371,42 +351,35 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             this.ll0yz = block.getBrightness(this.level, x + 1, y, z);
             if (!this.field_77 && !this.field_79) {
                 this.ll0yZ = this.llxyz;
-            } else {
+            }
+            else {
                 this.ll0yZ = block.getBrightness(this.level, x - 1, y, z - 1);
             }
 
             if (!this.field_80 && !this.field_79) {
                 this.llXyz = this.llxyz;
-            } else {
+            }
+            else {
                 this.llXyz = block.getBrightness(this.level, x - 1, y, z + 1);
             }
 
             if (!this.field_77 && !this.field_78) {
                 this.llXy0 = this.ll0yz;
-            } else {
+            }
+            else {
                 this.llXy0 = block.getBrightness(this.level, x + 1, y, z - 1);
             }
 
             if (!this.field_80 && !this.field_78) {
                 this.llXyZ = this.ll0yz;
-            } else {
+            }
+            else {
                 this.llXyZ = block.getBrightness(this.level, x + 1, y, z + 1);
             }
 
             ++y;
             if (aoLevel > 0.0f) {
-                float min = AoHelper.lightLevel0;
-                float max = AoHelper.lightLevel1;
-                float aoB = this.ll0y0;
-                float aoF = 1.0F - aoLevel;
-                this.llXyz = AoHelper.fixAoLight(min, max, this.llXyz, aoB, aoF);
-                this.llxyz = AoHelper.fixAoLight(min, max, this.llxyz, aoB, aoF);
-                this.llxyZ = AoHelper.fixAoLight(min, max, this.llxyZ, aoB, aoF);
-                this.llXyZ = AoHelper.fixAoLight(min, max, this.llXyZ, aoB, aoF);
-                this.ll0yz = AoHelper.fixAoLight(min, max, this.ll0yz, aoB, aoF);
-                this.llxy0 = AoHelper.fixAoLight(min, max, this.llxy0, aoB, aoF);
-                this.llXy0 = AoHelper.fixAoLight(min, max, this.llXy0, aoB, aoF);
-                this.ll0yZ = AoHelper.fixAoLight(min, max, this.ll0yZ, aoB, aoF);
+                this.fixBottomAo(aoLevel);
             }
 
             var21 = (this.llXyz + this.llxyz + this.llxyZ + this.ll0y0) * (1 / 4F);
@@ -434,8 +407,32 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         return true;
     }
 
+    private @Unique void fixBottomAo(float aoLevel) {
+        float min = AoHelper.lightLevel0;
+        float max = AoHelper.lightLevel1;
+        float aoB = this.ll0y0;
+        float aoF = 1.0F - aoLevel;
+        this.llXyz = AoHelper.fixAoLight(min, max, this.llXyz, aoB, aoF);
+        this.llxyz = AoHelper.fixAoLight(min, max, this.llxyz, aoB, aoF);
+        this.llxyZ = AoHelper.fixAoLight(min, max, this.llxyZ, aoB, aoF);
+        this.llXyZ = AoHelper.fixAoLight(min, max, this.llXyZ, aoB, aoF);
+        this.ll0yz = AoHelper.fixAoLight(min, max, this.ll0yz, aoB, aoF);
+        this.llxy0 = AoHelper.fixAoLight(min, max, this.llxy0, aoB, aoF);
+        this.llXy0 = AoHelper.fixAoLight(min, max, this.llXy0, aoB, aoF);
+        this.ll0yZ = AoHelper.fixAoLight(min, max, this.ll0yZ, aoB, aoF);
+    }
+
     private boolean renderTopSide(
-        Tile block, int x, int y, int z, float r, float g, float b, float aoLevel, boolean useColor) {
+        Tile block,
+        int x,
+        int y,
+        int z,
+        float r,
+        float g,
+        float b,
+        float aoLevel,
+        boolean useColor
+    ) {
         this.ll0Y0 = block.getBrightness(this.level, x, y + 1, z);
 
         float var21;
@@ -447,7 +444,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             var23 = var24;
             var22 = var24;
             var21 = var24;
-        } else {
+        }
+        else {
             ++y;
             this.llxY0 = block.getBrightness(this.level, x - 1, y, z);
             this.llXY0 = block.getBrightness(this.level, x + 1, y, z);
@@ -455,42 +453,35 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             this.ll0YZ = block.getBrightness(this.level, x, y, z + 1);
             if (!this.field_69 && !this.field_71) {
                 this.llxYz = this.llxY0;
-            } else {
+            }
+            else {
                 this.llxYz = block.getBrightness(this.level, x - 1, y, z - 1);
             }
 
             if (!this.field_69 && !this.field_70) {
                 this.llXYz = this.llXY0;
-            } else {
+            }
+            else {
                 this.llXYz = block.getBrightness(this.level, x + 1, y, z - 1);
             }
 
             if (!this.field_72 && !this.field_71) {
                 this.llxYZ = this.llxY0;
-            } else {
+            }
+            else {
                 this.llxYZ = block.getBrightness(this.level, x - 1, y, z + 1);
             }
 
             if (!this.field_72 && !this.field_70) {
                 this.llXYZ = this.llXY0;
-            } else {
+            }
+            else {
                 this.llXYZ = block.getBrightness(this.level, x + 1, y, z + 1);
             }
 
             --y;
             if (aoLevel > 0.0f) {
-                float min = AoHelper.lightLevel0;
-                float max = AoHelper.lightLevel1;
-                float aoB = this.ll0Y0;
-                float aoF = 1.0F - aoLevel;
-                this.llxYZ = AoHelper.fixAoLight(min, max, this.llxYZ, aoB, aoF);
-                this.llxY0 = AoHelper.fixAoLight(min, max, this.llxY0, aoB, aoF);
-                this.ll0YZ = AoHelper.fixAoLight(min, max, this.ll0YZ, aoB, aoF);
-                this.llXYZ = AoHelper.fixAoLight(min, max, this.llXYZ, aoB, aoF);
-                this.llXY0 = AoHelper.fixAoLight(min, max, this.llXY0, aoB, aoF);
-                this.ll0Yz = AoHelper.fixAoLight(min, max, this.ll0Yz, aoB, aoF);
-                this.llXYz = AoHelper.fixAoLight(min, max, this.llXYz, aoB, aoF);
-                this.llxYz = AoHelper.fixAoLight(min, max, this.llxYz, aoB, aoF);
+                this.fixTopAo(aoLevel);
             }
 
             var24 = (this.llxYZ + this.llxY0 + this.ll0YZ + this.ll0Y0) * (1 / 4F);
@@ -518,9 +509,33 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         return true;
     }
 
+    private @Unique void fixTopAo(float aoLevel) {
+        float min = AoHelper.lightLevel0;
+        float max = AoHelper.lightLevel1;
+        float aoB = this.ll0Y0;
+        float aoF = 1.0F - aoLevel;
+        this.llxYZ = AoHelper.fixAoLight(min, max, this.llxYZ, aoB, aoF);
+        this.llxY0 = AoHelper.fixAoLight(min, max, this.llxY0, aoB, aoF);
+        this.ll0YZ = AoHelper.fixAoLight(min, max, this.ll0YZ, aoB, aoF);
+        this.llXYZ = AoHelper.fixAoLight(min, max, this.llXYZ, aoB, aoF);
+        this.llXY0 = AoHelper.fixAoLight(min, max, this.llXY0, aoB, aoF);
+        this.ll0Yz = AoHelper.fixAoLight(min, max, this.ll0Yz, aoB, aoF);
+        this.llXYz = AoHelper.fixAoLight(min, max, this.llXYz, aoB, aoF);
+        this.llxYz = AoHelper.fixAoLight(min, max, this.llxYz, aoB, aoF);
+    }
+
     private boolean renderEastSide(
-        Tile block, int x, int y, int z, float r, float g, float b,
-        float aoLevel, boolean useColor, boolean doGrassEdges) {
+        Tile block,
+        int x,
+        int y,
+        int z,
+        float r,
+        float g,
+        float b,
+        float aoLevel,
+        boolean useColor,
+        boolean doGrassEdges
+    ) {
         this.ll00z = block.getBrightness(this.level, x, y, z - 1);
 
         float var21;
@@ -532,7 +547,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             var23 = var24;
             var22 = var24;
             var21 = var24;
-        } else {
+        }
+        else {
             --z;
             this.llx0z = block.getBrightness(this.level, x - 1, y, z);
             this.llxy0 = block.getBrightness(this.level, x, y - 1, z);
@@ -540,42 +556,35 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             this.llX0z = block.getBrightness(this.level, x + 1, y, z);
             if (!this.field_73 && !this.field_77) {
                 this.ll0yZ = this.llx0z;
-            } else {
+            }
+            else {
                 this.ll0yZ = block.getBrightness(this.level, x - 1, y - 1, z);
             }
 
             if (!this.field_73 && !this.field_69) {
                 this.llxYz = this.llx0z;
-            } else {
+            }
+            else {
                 this.llxYz = block.getBrightness(this.level, x - 1, y + 1, z);
             }
 
             if (!this.field_76 && !this.field_77) {
                 this.llXy0 = this.llX0z;
-            } else {
+            }
+            else {
                 this.llXy0 = block.getBrightness(this.level, x + 1, y - 1, z);
             }
 
             if (!this.field_76 && !this.field_69) {
                 this.llXYz = this.llX0z;
-            } else {
+            }
+            else {
                 this.llXYz = block.getBrightness(this.level, x + 1, y + 1, z);
             }
 
             ++z;
             if (aoLevel > 0.0f) {
-                float min = AoHelper.lightLevel0;
-                float max = AoHelper.lightLevel1;
-                float aoB = this.ll00z;
-                float aoF = 1.0F - aoLevel;
-                this.llx0z = AoHelper.fixAoLight(min, max, this.llx0z, aoB, aoF);
-                this.llxYz = AoHelper.fixAoLight(min, max, this.llxYz, aoB, aoF);
-                this.ll0Yz = AoHelper.fixAoLight(min, max, this.ll0Yz, aoB, aoF);
-                this.llX0z = AoHelper.fixAoLight(min, max, this.llX0z, aoB, aoF);
-                this.llXYz = AoHelper.fixAoLight(min, max, this.llXYz, aoB, aoF);
-                this.llxy0 = AoHelper.fixAoLight(min, max, this.llxy0, aoB, aoF);
-                this.llXy0 = AoHelper.fixAoLight(min, max, this.llXy0, aoB, aoF);
-                this.ll0yZ = AoHelper.fixAoLight(min, max, this.ll0yZ, aoB, aoF);
+                this.fixEastAo(aoLevel);
             }
 
             var21 = (this.llx0z + this.llxYz + this.ll00z + this.ll0Yz) * (1 / 4F);
@@ -635,9 +644,33 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         return true;
     }
 
+    private @Unique void fixEastAo(float aoLevel) {
+        float min = AoHelper.lightLevel0;
+        float max = AoHelper.lightLevel1;
+        float aoB = this.ll00z;
+        float aoF = 1.0F - aoLevel;
+        this.llx0z = AoHelper.fixAoLight(min, max, this.llx0z, aoB, aoF);
+        this.llxYz = AoHelper.fixAoLight(min, max, this.llxYz, aoB, aoF);
+        this.ll0Yz = AoHelper.fixAoLight(min, max, this.ll0Yz, aoB, aoF);
+        this.llX0z = AoHelper.fixAoLight(min, max, this.llX0z, aoB, aoF);
+        this.llXYz = AoHelper.fixAoLight(min, max, this.llXYz, aoB, aoF);
+        this.llxy0 = AoHelper.fixAoLight(min, max, this.llxy0, aoB, aoF);
+        this.llXy0 = AoHelper.fixAoLight(min, max, this.llXy0, aoB, aoF);
+        this.ll0yZ = AoHelper.fixAoLight(min, max, this.ll0yZ, aoB, aoF);
+    }
+
     private boolean renderWestSide(
-        Tile block, int x, int y, int z, float r, float g, float b,
-        float aoLevel, boolean useColor, boolean doGrassEdges) {
+        Tile block,
+        int x,
+        int y,
+        int z,
+        float r,
+        float g,
+        float b,
+        float aoLevel,
+        boolean useColor,
+        boolean doGrassEdges
+    ) {
         this.ll00Z = block.getBrightness(this.level, x, y, z + 1);
 
         float var21;
@@ -649,7 +682,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             var23 = var24;
             var22 = var24;
             var21 = var24;
-        } else {
+        }
+        else {
             ++z;
             this.llx0Z = block.getBrightness(this.level, x - 1, y, z);
             this.llX0Z = block.getBrightness(this.level, x + 1, y, z);
@@ -657,42 +691,35 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             this.ll0YZ = block.getBrightness(this.level, x, y + 1, z);
             if (!this.field_75 && !this.field_80) {
                 this.llXyz = this.llx0Z;
-            } else {
+            }
+            else {
                 this.llXyz = block.getBrightness(this.level, x - 1, y - 1, z);
             }
 
             if (!this.field_75 && !this.field_72) {
                 this.llxYZ = this.llx0Z;
-            } else {
+            }
+            else {
                 this.llxYZ = block.getBrightness(this.level, x - 1, y + 1, z);
             }
 
             if (!this.field_74 && !this.field_80) {
                 this.llXyZ = this.llX0Z;
-            } else {
+            }
+            else {
                 this.llXyZ = block.getBrightness(this.level, x + 1, y - 1, z);
             }
 
             if (!this.field_74 && !this.field_72) {
                 this.llXYZ = this.llX0Z;
-            } else {
+            }
+            else {
                 this.llXYZ = block.getBrightness(this.level, x + 1, y + 1, z);
             }
 
             --z;
             if (aoLevel > 0.0f) {
-                float min = AoHelper.lightLevel0;
-                float max = AoHelper.lightLevel1;
-                float aoB = this.ll00Z;
-                float aoF = 1.0F - aoLevel;
-                this.llx0Z = AoHelper.fixAoLight(min, max, this.llx0Z, aoB, aoF);
-                this.llxYZ = AoHelper.fixAoLight(min, max, this.llxYZ, aoB, aoF);
-                this.ll0YZ = AoHelper.fixAoLight(min, max, this.ll0YZ, aoB, aoF);
-                this.llX0Z = AoHelper.fixAoLight(min, max, this.llX0Z, aoB, aoF);
-                this.llXYZ = AoHelper.fixAoLight(min, max, this.llXYZ, aoB, aoF);
-                this.llxyZ = AoHelper.fixAoLight(min, max, this.llxyZ, aoB, aoF);
-                this.llXyZ = AoHelper.fixAoLight(min, max, this.llXyZ, aoB, aoF);
-                this.llXyz = AoHelper.fixAoLight(min, max, this.llXyz, aoB, aoF);
+                this.fixWestAo(aoLevel);
             }
 
             var21 = (this.llx0Z + this.llxYZ + this.ll00Z + this.ll0YZ) * (1 / 4F);
@@ -752,9 +779,33 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         return true;
     }
 
+    private @Unique void fixWestAo(float aoLevel) {
+        float min = AoHelper.lightLevel0;
+        float max = AoHelper.lightLevel1;
+        float aoB = this.ll00Z;
+        float aoF = 1.0F - aoLevel;
+        this.llx0Z = AoHelper.fixAoLight(min, max, this.llx0Z, aoB, aoF);
+        this.llxYZ = AoHelper.fixAoLight(min, max, this.llxYZ, aoB, aoF);
+        this.ll0YZ = AoHelper.fixAoLight(min, max, this.ll0YZ, aoB, aoF);
+        this.llX0Z = AoHelper.fixAoLight(min, max, this.llX0Z, aoB, aoF);
+        this.llXYZ = AoHelper.fixAoLight(min, max, this.llXYZ, aoB, aoF);
+        this.llxyZ = AoHelper.fixAoLight(min, max, this.llxyZ, aoB, aoF);
+        this.llXyZ = AoHelper.fixAoLight(min, max, this.llXyZ, aoB, aoF);
+        this.llXyz = AoHelper.fixAoLight(min, max, this.llXyz, aoB, aoF);
+    }
+
     private boolean renderNorthSide(
-        Tile block, int x, int y, int z, float r, float g, float b,
-        float aoLevel, boolean useColor, boolean doGrassEdges) {
+        Tile block,
+        int x,
+        int y,
+        int z,
+        float r,
+        float g,
+        float b,
+        float aoLevel,
+        boolean useColor,
+        boolean doGrassEdges
+    ) {
         this.llx00 = block.getBrightness(this.level, x - 1, y, z);
 
         float var21;
@@ -766,7 +817,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             var23 = var24;
             var22 = var24;
             var21 = var24;
-        } else {
+        }
+        else {
             --x;
             this.llxyz = block.getBrightness(this.level, x, y - 1, z);
             this.llx0z = block.getBrightness(this.level, x, y, z - 1);
@@ -774,42 +826,35 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             this.llxY0 = block.getBrightness(this.level, x, y + 1, z);
             if (!this.field_73 && !this.field_79) {
                 this.ll0yZ = this.llx0z;
-            } else {
+            }
+            else {
                 this.ll0yZ = block.getBrightness(this.level, x, y - 1, z - 1);
             }
 
             if (!this.field_75 && !this.field_79) {
                 this.llXyz = this.llx0Z;
-            } else {
+            }
+            else {
                 this.llXyz = block.getBrightness(this.level, x, y - 1, z + 1);
             }
 
             if (!this.field_73 && !this.field_71) {
                 this.llxYz = this.llx0z;
-            } else {
+            }
+            else {
                 this.llxYz = block.getBrightness(this.level, x, y + 1, z - 1);
             }
 
             if (!this.field_75 && !this.field_71) {
                 this.llxYZ = this.llx0Z;
-            } else {
+            }
+            else {
                 this.llxYZ = block.getBrightness(this.level, x, y + 1, z + 1);
             }
 
             ++x;
             if (aoLevel > 0.0f) {
-                float min = AoHelper.lightLevel0;
-                float max = AoHelper.lightLevel1;
-                float aoB = this.llx00;
-                float aoF = 1.0F - aoLevel;
-                this.llxyz = AoHelper.fixAoLight(min, max, this.llxyz, aoB, aoF);
-                this.llXyz = AoHelper.fixAoLight(min, max, this.llXyz, aoB, aoF);
-                this.llx0Z = AoHelper.fixAoLight(min, max, this.llx0Z, aoB, aoF);
-                this.llxY0 = AoHelper.fixAoLight(min, max, this.llxY0, aoB, aoF);
-                this.llxYZ = AoHelper.fixAoLight(min, max, this.llxYZ, aoB, aoF);
-                this.llx0z = AoHelper.fixAoLight(min, max, this.llx0z, aoB, aoF);
-                this.llxYz = AoHelper.fixAoLight(min, max, this.llxYz, aoB, aoF);
-                this.ll0yZ = AoHelper.fixAoLight(min, max, this.ll0yZ, aoB, aoF);
+                this.fixNorthAo(aoLevel);
             }
 
             var24 = (this.llxyz + this.llXyz + this.llx00 + this.llx0Z) * (1 / 4F);
@@ -869,9 +914,33 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         return true;
     }
 
+    private @Unique void fixNorthAo(float aoLevel) {
+        float min = AoHelper.lightLevel0;
+        float max = AoHelper.lightLevel1;
+        float aoB = this.llx00;
+        float aoF = 1.0F - aoLevel;
+        this.llxyz = AoHelper.fixAoLight(min, max, this.llxyz, aoB, aoF);
+        this.llXyz = AoHelper.fixAoLight(min, max, this.llXyz, aoB, aoF);
+        this.llx0Z = AoHelper.fixAoLight(min, max, this.llx0Z, aoB, aoF);
+        this.llxY0 = AoHelper.fixAoLight(min, max, this.llxY0, aoB, aoF);
+        this.llxYZ = AoHelper.fixAoLight(min, max, this.llxYZ, aoB, aoF);
+        this.llx0z = AoHelper.fixAoLight(min, max, this.llx0z, aoB, aoF);
+        this.llxYz = AoHelper.fixAoLight(min, max, this.llxYz, aoB, aoF);
+        this.ll0yZ = AoHelper.fixAoLight(min, max, this.ll0yZ, aoB, aoF);
+    }
+
     private boolean renderSouthSide(
-        Tile block, int x, int y, int z, float r, float g, float b,
-        float aoLevel, boolean useColor, boolean doGrassEdges) {
+        Tile block,
+        int x,
+        int y,
+        int z,
+        float r,
+        float g,
+        float b,
+        float aoLevel,
+        boolean useColor,
+        boolean doGrassEdges
+    ) {
         this.llX00 = block.getBrightness(this.level, x + 1, y, z);
 
         float var21;
@@ -883,7 +952,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             var23 = var24;
             var22 = var24;
             var21 = var24;
-        } else {
+        }
+        else {
             ++x;
             this.ll0yz = block.getBrightness(this.level, x, y - 1, z);
             this.llX0z = block.getBrightness(this.level, x, y, z - 1);
@@ -891,42 +961,35 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             this.llXY0 = block.getBrightness(this.level, x, y + 1, z);
             if (!this.field_78 && !this.field_76) {
                 this.llXy0 = this.llX0z;
-            } else {
+            }
+            else {
                 this.llXy0 = block.getBrightness(this.level, x, y - 1, z - 1);
             }
 
             if (!this.field_78 && !this.field_74) {
                 this.llXyZ = this.llX0Z;
-            } else {
+            }
+            else {
                 this.llXyZ = block.getBrightness(this.level, x, y - 1, z + 1);
             }
 
             if (!this.field_70 && !this.field_76) {
                 this.llXYz = this.llX0z;
-            } else {
+            }
+            else {
                 this.llXYz = block.getBrightness(this.level, x, y + 1, z - 1);
             }
 
             if (!this.field_70 && !this.field_74) {
                 this.llXYZ = this.llX0Z;
-            } else {
+            }
+            else {
                 this.llXYZ = block.getBrightness(this.level, x, y + 1, z + 1);
             }
 
             --x;
             if (aoLevel > 0.0f) {
-                float min = AoHelper.lightLevel0;
-                float max = AoHelper.lightLevel1;
-                float aoB = this.llX00;
-                float aoF = 1.0F - aoLevel;
-                this.ll0yz = AoHelper.fixAoLight(min, max, this.ll0yz, aoB, aoF);
-                this.llXyZ = AoHelper.fixAoLight(min, max, this.llXyZ, aoB, aoF);
-                this.llX0Z = AoHelper.fixAoLight(min, max, this.llX0Z, aoB, aoF);
-                this.llXY0 = AoHelper.fixAoLight(min, max, this.llXY0, aoB, aoF);
-                this.llXYZ = AoHelper.fixAoLight(min, max, this.llXYZ, aoB, aoF);
-                this.llX0z = AoHelper.fixAoLight(min, max, this.llX0z, aoB, aoF);
-                this.llXYz = AoHelper.fixAoLight(min, max, this.llXYz, aoB, aoF);
-                this.llXy0 = AoHelper.fixAoLight(min, max, this.llXy0, aoB, aoF);
+                this.fixSouthAo(aoLevel);
             }
 
             var21 = (this.ll0yz + this.llXyZ + this.llX00 + this.llX0Z) * (1 / 4F);
@@ -986,6 +1049,21 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         return true;
     }
 
+    private void fixSouthAo(float aoLevel) {
+        float min = AoHelper.lightLevel0;
+        float max = AoHelper.lightLevel1;
+        float aoB = this.llX00;
+        float aoF = 1.0F - aoLevel;
+        this.ll0yz = AoHelper.fixAoLight(min, max, this.ll0yz, aoB, aoF);
+        this.llXyZ = AoHelper.fixAoLight(min, max, this.llXyZ, aoB, aoF);
+        this.llX0Z = AoHelper.fixAoLight(min, max, this.llX0Z, aoB, aoF);
+        this.llXY0 = AoHelper.fixAoLight(min, max, this.llXY0, aoB, aoF);
+        this.llXYZ = AoHelper.fixAoLight(min, max, this.llXYZ, aoB, aoF);
+        this.llX0z = AoHelper.fixAoLight(min, max, this.llX0z, aoB, aoF);
+        this.llXYz = AoHelper.fixAoLight(min, max, this.llXYz, aoB, aoF);
+        this.llXy0 = AoHelper.fixAoLight(min, max, this.llXy0, aoB, aoF);
+    }
+
     @Overwrite
     public boolean tesselateBlockInWorld(Tile block, int x, int y, int z, float r, float g, float b) {
         this.blen = false;
@@ -1034,7 +1112,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             float brightness;
             if (block.yy1 != 1.0D && !block.material.isLiquid()) {
                 brightness = coreBrightness;
-            } else {
+            }
+            else {
                 brightness = block.getBrightness(this.level, x, y + 1, z);
             }
 
@@ -1047,14 +1126,16 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             float brightness;
             if (block.zz0 > 0.0D) {
                 brightness = coreBrightness;
-            } else {
+            }
+            else {
                 brightness = block.getBrightness(this.level, x, y, z - 1);
             }
 
             long bTexture = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, 2);
             if (hasColorBit(bTexture)) {
                 ts.color(var19 * brightness * r, var22 * brightness * g, var25 * brightness * b);
-            } else {
+            }
+            else {
                 ts.color(var19 * brightness, var22 * brightness, var25 * brightness);
             }
             this.renderNorth(block, x, y, z, (int) bTexture);
@@ -1071,14 +1152,16 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             float brightness;
             if (block.zz1 < 1.0D) {
                 brightness = coreBrightness;
-            } else {
+            }
+            else {
                 brightness = block.getBrightness(this.level, x, y, z + 1);
             }
 
             long bTexture = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, 3);
             if (hasColorBit(bTexture)) {
                 ts.color(var19 * brightness * r, var22 * brightness * g, var25 * brightness * b);
-            } else {
+            }
+            else {
                 ts.color(var19 * brightness, var22 * brightness, var25 * brightness);
             }
             this.renderSouth(block, x, y, z, (int) bTexture);
@@ -1095,14 +1178,16 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             float brightness;
             if (block.xx0 > 0.0D) {
                 brightness = coreBrightness;
-            } else {
+            }
+            else {
                 brightness = block.getBrightness(this.level, x - 1, y, z);
             }
 
             long bTexture = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, 4);
             if (hasColorBit(bTexture)) {
                 ts.color(var20 * brightness * r, var23 * brightness * g, var26 * brightness * b);
-            } else {
+            }
+            else {
                 ts.color(var20 * brightness, var23 * brightness, var26 * brightness);
             }
             this.renderWest(block, x, y, z, (int) bTexture);
@@ -1119,14 +1204,16 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             float brightness;
             if (block.xx1 < 1.0D) {
                 brightness = coreBrightness;
-            } else {
+            }
+            else {
                 brightness = block.getBrightness(this.level, x + 1, y, z);
             }
 
             long bTexture = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, 5);
             if (hasColorBit(bTexture)) {
                 ts.color(var20 * brightness * r, var23 * brightness * g, var26 * brightness * b);
-            } else {
+            }
+            else {
                 ts.color(var20 * brightness, var23 * brightness, var26 * brightness);
             }
             this.renderEast(block, x, y, z, (int) bTexture);
@@ -1152,41 +1239,59 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         block.updateShape(this.level, x, y, z);
         if (renderType == 0) {
             return this.tesselateBlockInWorld(block, x, y, z);
-        } else if (renderType == 4) {
+        }
+        else if (renderType == 4) {
             return this.tesselateWaterInWorld(block, x, y, z);
-        } else if (renderType == 13) {
+        }
+        else if (renderType == 13) {
             return this.tesselateCactusInWorld(block, x, y, z);
-        } else if (renderType == 1) {
+        }
+        else if (renderType == 1) {
             return this.tesselateCrossInWorld(block, x, y, z);
-        } else if (renderType == 6) {
+        }
+        else if (renderType == 6) {
             return this.tesselateRowInWorld(block, x, y, z);
-        } else if (renderType == 2) {
+        }
+        else if (renderType == 2) {
             return this.tesselateTorchInWorld(block, x, y, z);
-        } else if (renderType == 3) {
+        }
+        else if (renderType == 3) {
             return this.tesselateFireInWorld(block, x, y, z);
-        } else if (renderType == 5) {
+        }
+        else if (renderType == 5) {
             return this.tesselateDustInWorld(block, x, y, z);
-        } else if (renderType == 8) {
+        }
+        else if (renderType == 8) {
             return this.tesselateLadderInWorld(block, x, y, z);
-        } else if (renderType == 7) {
+        }
+        else if (renderType == 7) {
             return this.tesselateDoorInWorld(block, x, y, z);
-        } else if (renderType == 9) {
+        }
+        else if (renderType == 9) {
             return this.tesselateRailInWorld((RailTile) block, x, y, z);
-        } else if (renderType == 10) {
+        }
+        else if (renderType == 10) {
             return this.tesselateStairsInWorld(block, x, y, z);
-        } else if (renderType == 11) {
+        }
+        else if (renderType == 11) {
             return this.tesselateFenceInWorld(block, x, y, z);
-        } else if (renderType == 12) {
+        }
+        else if (renderType == 12) {
             return this.tesselateLeverInWorld(block, x, y, z);
-        } else if (renderType == 14) {
+        }
+        else if (renderType == 14) {
             return this.tesselateBedInWorld(block, x, y, z);
-        } else if (renderType == 15) {
+        }
+        else if (renderType == 15) {
             return this.tesselateRepeaterInWorld(block, x, y, z);
-        } else if (renderType == 16) {
+        }
+        else if (renderType == 16) {
             return this.tesselatePistonInWorld(block, x, y, z, false);
-        } else if (renderType == 17) {
+        }
+        else if (renderType == 17) {
             return this.tesselateHeadPistonInWorld(block, x, y, z, true);
-        } else if (renderType == 30) {
+        }
+        else if (renderType == 30) {
             if (this.level != null && this.fixedTexture == -1) {
                 int topId = this.level.getTile(x, y + 1, z);
                 if (topId == 0 || !((ExBlock) Tile.tiles[topId]).shouldRender(this.level, x, y + 1, z)) {
@@ -1194,41 +1299,70 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                 }
             }
             return this.tesselateBlockInWorld(block, x, y, z);
-        } else if (renderType == 31) {
+        }
+        else if (renderType == 31) {
             boolean var7 = this.tesselateBlockInWorld(block, x, y, z);
             if (((ExWorld) Minecraft.instance.level).getTriggerManager().isActivated(x, y, z)) {
                 Tesselator.instance.color(1.0F, 1.0F, 1.0F);
                 this.fixedTexture = 99;
-            } else {
+            }
+            else {
                 this.fixedTexture = 115;
             }
             this.tesselateTorch(block, x, (double) y + 0.25D, z, 0.0D, 0.0D);
             this.fixedTexture = -1;
             return var7;
-        } else {
-            if (renderType == 32) return this.renderSpikes(block, x, y, z);
-            if (renderType == 33) return this.renderTable(block, x, y, z);
-            if (renderType == 34) return this.renderChair(block, x, y, z);
-            if (renderType == 35) return this.renderRope(block, x, y, z);
-            if (renderType == 36) return this.renderBlockTree(block, x, y, z);
-            if (renderType == 37) return this.renderBlockOverlay((AC_BlockOverlay) block, x, y, z);
-            if (renderType == 38) return this.renderBlockSlope(block, x, y, z);
+        }
+        else {
+            if (renderType == 32) {
+                return this.renderSpikes(block, x, y, z);
+            }
+            if (renderType == 33) {
+                return this.renderTable(block, x, y, z);
+            }
+            if (renderType == 34) {
+                return this.renderChair(block, x, y, z);
+            }
+            if (renderType == 35) {
+                return this.renderRope(block, x, y, z);
+            }
+            if (renderType == 36) {
+                return this.renderBlockTree(block, x, y, z);
+            }
+            if (renderType == 37) {
+                return this.renderBlockOverlay((AC_BlockOverlay) block, x, y, z);
+            }
+            if (renderType == 38) {
+                return this.renderBlockSlope(block, x, y, z);
+            }
             return false;
         }
     }
 
-    @Redirect(method = {"tesselateTorchInWorld", "tesselateRepeaterInWorld", "tesselateLeverInWorld", "tesselateDoorInWorld"}, at = @At(
-        value = "FIELD",
-        target = "Lnet/minecraft/world/level/tile/Tile;lightEmission:[I",
-        opcode = Opcodes.GETSTATIC,
-        args = "array=get"))
+    @Redirect(
+        method = {"tesselateTorchInWorld", "tesselateRepeaterInWorld", "tesselateLeverInWorld", "tesselateDoorInWorld"},
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/world/level/tile/Tile;lightEmission:[I",
+            opcode = Opcodes.GETSTATIC,
+            args = "array=get"
+        )
+    )
     private int redirectToBlockLight(
-        int[] array,
-        int index,
-        @Local(index = 1, argsOnly = true) Tile block,
-        @Local(index = 2, argsOnly = true) int x,
-        @Local(index = 3, argsOnly = true) int y,
-        @Local(index = 4, argsOnly = true) int z) {
+        int[] array, int index, @Local(
+            index = 1,
+            argsOnly = true
+        ) Tile block, @Local(
+            index = 2,
+            argsOnly = true
+        ) int x, @Local(
+            index = 3,
+            argsOnly = true
+        ) int y, @Local(
+            index = 4,
+            argsOnly = true
+        ) int z
+    ) {
         return ((ExBlock) block).getBlockLightValue(this.level, x, y, z);
     }
 
@@ -1350,11 +1484,10 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         Tesselator ts = Tesselator.instance;
         boolean var6 = block.shouldRenderFace(this.level, x, y + 1, z, 1);
         boolean var7 = block.shouldRenderFace(this.level, x, y - 1, z, 0);
-        boolean[] var8 = new boolean[]{
-            block.shouldRenderFace(this.level, x, y, z - 1, 2),
-            block.shouldRenderFace(this.level, x, y, z + 1, 3),
-            block.shouldRenderFace(this.level, x - 1, y, z, 4),
-            block.shouldRenderFace(this.level, x + 1, y, z, 5)};
+        boolean[] var8 = new boolean[] {
+            block.shouldRenderFace(this.level, x, y, z - 1, 2), block.shouldRenderFace(this.level, x, y, z + 1, 3),
+            block.shouldRenderFace(this.level, x - 1, y, z, 4), block.shouldRenderFace(this.level, x + 1, y, z, 5)
+        };
         if (!var6 && !var7 && !var8[0] && !var8[1] && !var8[2] && !var8[3]) {
             return false;
         }
@@ -1394,7 +1527,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             double var34 = ((double) var31 + 8.0D) / 256.0D;
             if (var29 < -999.0F) {
                 var29 = 0.0F;
-            } else {
+            }
+            else {
                 var32 = (float) (var30 + 16) / 256.0F;
                 var34 = (float) (var31 + 16) / 256.0F;
             }
@@ -1403,10 +1537,34 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             var37 = Mth.cos(var29) * 8.0F / 256.0F;
             var38 = block.getBrightness(this.level, x, y, z);
             ts.color(var15 * var38 * red, var15 * var38 * green, var15 * var38 * blue);
-            ts.vertexUV(x + 0, (float) y + var24, z + 0, var32 - (double) var37 - (double) var36, var34 - (double) var37 + (double) var36);
-            ts.vertexUV(x + 0, (float) y + var25, z + 1, var32 - (double) var37 + (double) var36, var34 + (double) var37 + (double) var36);
-            ts.vertexUV(x + 1, (float) y + var26, z + 1, var32 + (double) var37 + (double) var36, var34 + (double) var37 - (double) var36);
-            ts.vertexUV(x + 1, (float) y + var27, z + 0, var32 + (double) var37 - (double) var36, var34 - (double) var37 - (double) var36);
+            ts.vertexUV(
+                x + 0,
+                (float) y + var24,
+                z + 0,
+                var32 - (double) var37 - (double) var36,
+                var34 - (double) var37 + (double) var36
+            );
+            ts.vertexUV(
+                x + 0,
+                (float) y + var25,
+                z + 1,
+                var32 - (double) var37 + (double) var36,
+                var34 + (double) var37 + (double) var36
+            );
+            ts.vertexUV(
+                x + 1,
+                (float) y + var26,
+                z + 1,
+                var32 + (double) var37 + (double) var36,
+                var34 + (double) var37 - (double) var36
+            );
+            ts.vertexUV(
+                x + 1,
+                (float) y + var27,
+                z + 0,
+                var32 + (double) var37 - (double) var36,
+                var34 - (double) var37 - (double) var36
+            );
         }
 
         if (this.noCulling || var7) {
@@ -1449,21 +1607,24 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                     var39 = (float) (x + 1);
                     var38 = (float) z;
                     var40 = (float) z;
-                } else if (side == 1) {
+                }
+                else if (side == 1) {
                     var35 = var26;
                     var36 = var25;
                     var37 = (float) (x + 1);
                     var39 = (float) x;
                     var38 = (float) (z + 1);
                     var40 = (float) (z + 1);
-                } else if (side == 2) {
+                }
+                else if (side == 2) {
                     var35 = var25;
                     var36 = var24;
                     var37 = (float) x;
                     var39 = (float) x;
                     var38 = (float) (z + 1);
                     var40 = (float) z;
-                } else {
+                }
+                else {
                     var35 = var27;
                     var36 = var26;
                     var37 = (float) (x + 1);
@@ -1481,7 +1642,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                 float var51 = block.getBrightness(this.level, var53, y, var31);
                 if (side < 2) {
                     var51 *= var16;
-                } else {
+                }
+                else {
                     var51 *= var17;
                 }
 
@@ -1516,13 +1678,11 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         boolean var5 = true;
         boolean var8 = false;
         boolean var9 = false;
-        if (this.level.getTile(x - 1, y, z) == block.id ||
-            this.level.getTile(x + 1, y, z) == block.id) {
+        if (this.level.getTile(x - 1, y, z) == block.id || this.level.getTile(x + 1, y, z) == block.id) {
             var8 = true;
         }
 
-        if (this.level.getTile(x, y, z - 1) == block.id ||
-            this.level.getTile(x, y, z + 1) == block.id) {
+        if (this.level.getTile(x, y, z - 1) == block.id || this.level.getTile(x, y, z + 1) == block.id) {
             var9 = true;
         }
 
@@ -1728,7 +1888,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                 if (leftMeta == 2) {
                     block.setShape(0.0F, 0.5F, 0.5F, 0.5F, 1.0F, 1.0F);
                     this.tesselateBlockInWorld(block, x, y, z);
-                } else if (leftMeta == 3) {
+                }
+                else if (leftMeta == 3) {
                     block.setShape(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 0.5F);
                     this.tesselateBlockInWorld(block, x, y, z);
                 }
@@ -1740,17 +1901,20 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                 if (rightMeta == 2) {
                     block.setShape(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
                     this.tesselateBlockInWorld(block, x, y, z);
-                } else if (rightMeta == 3) {
+                }
+                else if (rightMeta == 3) {
                     block.setShape(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
                     this.tesselateBlockInWorld(block, x, y, z);
                 }
-            } else {
+            }
+            else {
                 block.setShape(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 1.0F);
                 this.tesselateBlockInWorld(block, x, y, z);
             }
 
             var5 = true;
-        } else {
+        }
+        else {
             if (coreMeta == 1) {
                 int leftMeta = this.level.getData(x - 1, y, z) & 3;
                 Tile leftBlock = Tile.tiles[this.level.getTile(x - 1, y, z)];
@@ -1758,11 +1922,13 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                     if (leftMeta == 3) {
                         block.setShape(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 0.5F);
                         this.tesselateBlockInWorld(block, x, y, z);
-                    } else {
+                    }
+                    else {
                         block.setShape(0.0F, 0.5F, 0.5F, 0.5F, 1.0F, 1.0F);
                         this.tesselateBlockInWorld(block, x, y, z);
                     }
-                } else {
+                }
+                else {
                     block.setShape(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 1.0F);
                     this.tesselateBlockInWorld(block, x, y, z);
                 }
@@ -1773,21 +1939,24 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                     if (rightMeta == 2) {
                         block.setShape(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
                         this.tesselateBlockInWorld(block, x, y, z);
-                    } else if (rightMeta == 3) {
+                    }
+                    else if (rightMeta == 3) {
                         block.setShape(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
                         this.tesselateBlockInWorld(block, x, y, z);
                     }
                 }
 
                 var5 = true;
-            } else if (coreMeta == 2) {
+            }
+            else if (coreMeta == 2) {
                 Tile frontBlock = Tile.tiles[this.level.getTile(x, y, z - 1)];
                 if (frontBlock != null && frontBlock.getRenderShape() == 10) {
                     int frontMeta = this.level.getData(x, y, z - 1) & 3;
                     if (frontMeta == 1) {
                         block.setShape(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 0.5F);
                         this.tesselateBlockInWorld(block, x, y, z);
-                    } else if (frontMeta == 0) {
+                    }
+                    else if (frontMeta == 0) {
                         block.setShape(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
                         this.tesselateBlockInWorld(block, x, y, z);
                     }
@@ -1799,24 +1968,28 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                     if (backMeta == 0) {
                         block.setShape(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
                         this.tesselateBlockInWorld(block, x, y, z);
-                    } else {
+                    }
+                    else {
                         block.setShape(0.0F, 0.5F, 0.5F, 0.5F, 1.0F, 1.0F);
                         this.tesselateBlockInWorld(block, x, y, z);
                     }
-                } else {
+                }
+                else {
                     block.setShape(0.0F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
                     this.tesselateBlockInWorld(block, x, y, z);
                 }
 
                 var5 = true;
-            } else if (coreMeta == 3) {
+            }
+            else if (coreMeta == 3) {
                 Tile backBlock = Tile.tiles[this.level.getTile(x, y, z + 1)];
                 if (backBlock != null && backBlock.getRenderShape() == 10) {
                     int backMeta = this.level.getData(x, y, z + 1) & 3;
                     if (backMeta == 1) {
                         block.setShape(0.0F, 0.5F, 0.5F, 0.5F, 1.0F, 1.0F);
                         this.tesselateBlockInWorld(block, x, y, z);
-                    } else if (backMeta == 0) {
+                    }
+                    else if (backMeta == 0) {
                         block.setShape(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
                         this.tesselateBlockInWorld(block, x, y, z);
                     }
@@ -1828,11 +2001,13 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                     if (frontMeta == 0) {
                         block.setShape(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
                         this.tesselateBlockInWorld(block, x, y, z);
-                    } else {
+                    }
+                    else {
                         block.setShape(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 0.5F);
                         this.tesselateBlockInWorld(block, x, y, z);
                     }
-                } else {
+                }
+                else {
                     block.setShape(0.0F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
                     this.tesselateBlockInWorld(block, x, y, z);
                 }
@@ -1849,13 +2024,22 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         method = "renderTile",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/level/tile/Tile;getTexture(I)I"),
+            target = "Lnet/minecraft/world/level/tile/Tile;getTexture(I)I"
+        ),
         slice = @Slice(
             to = @At(
                 value = "INVOKE",
                 target = "Lnet/minecraft/world/level/tile/Tile;getTexture(I)I",
-                ordinal = 11)))
-    public int useTextureForSide(Tile instance, int i, @Local(index = 2, argsOnly = true) int meta) {
+                ordinal = 11
+            )
+        )
+    )
+    public int useTextureForSide(
+        Tile instance, int i, @Local(
+            index = 2,
+            argsOnly = true
+        ) int meta
+    ) {
         return instance.getTexture(i, meta);
     }
 
@@ -2121,7 +2305,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                     ts.vertexUV(x + 1, y, z, var10, var16);
                     ts.vertexUV(x, y, z, var12, var16);
                     ts.vertexUV(x, y, z, var12, var16);
-                } else if (leftMeta == 3) {
+                }
+                else if (leftMeta == 3) {
                     ts.color(0.9F * brightness, 0.9F * brightness, 0.9F * brightness);
                     ts.vertexUV(x, y, z + 1, var10, var16);
                     ts.vertexUV(x + 1, y, z + 1, var12, var16);
@@ -2147,7 +2332,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                 ts.vertexUV(x + 1, y + 1, z, var10, var14);
                 ts.vertexUV(x + 1, y + 1, z + 1, var12, var14);
                 ts.vertexUV(x + 1, y, z + 1, var12, var16);
-            } else {
+            }
+            else {
                 int rightMeta = this.level.getData(x + 1, y, z) & 3;
                 Tile rightBlock = Tile.tiles[this.level.getTile(x + 1, y, z)];
                 if (rightBlock != null && rightBlock.getRenderShape() == 38 && (rightMeta == 2 || rightMeta == 3)) {
@@ -2166,7 +2352,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                         ts.vertexUV(x, y, z + 1, var10, var16);
                         ts.vertexUV(x + 1, y, z + 1, var12, var16);
                         ts.vertexUV(x + 1, y, z + 1, var12, var16);
-                    } else if (rightMeta == 3) {
+                    }
+                    else if (rightMeta == 3) {
                         ts.color(0.9F * brightness, 0.9F * brightness, 0.9F * brightness);
                         ts.vertexUV(x, y, z + 1, var10, var16);
                         ts.vertexUV(x + 1, y, z + 1, var12, var16);
@@ -2183,7 +2370,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                         ts.vertexUV(x, y, z, var12, var16);
                         ts.vertexUV(x, y, z, var12, var16);
                     }
-                } else {
+                }
+                else {
                     ts.color(0.6F * brightness, 0.6F * brightness, 0.6F * brightness);
                     ts.vertexUV(x + 1, y, z, var10, var16);
                     ts.vertexUV(x + 1, y + 1, z, var10, var14);
@@ -2204,7 +2392,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                     ts.vertexUV(x + 1, y, z + 1, var12, var16);
                 }
             }
-        } else if (coreMeta == 1) {
+        }
+        else if (coreMeta == 1) {
             Tile rightBlock = Tile.tiles[this.level.getTile(x + 1, y, z)];
             int rightMeta = this.level.getData(x + 1, y, z) & 3;
             if (rightBlock != null && rightBlock.getRenderShape() == 38 && (rightMeta == 2 || rightMeta == 3)) {
@@ -2224,7 +2413,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                     ts.vertexUV(x + 1, y, z, var10, var16);
                     ts.vertexUV(x, y, z, var12, var16);
                     ts.vertexUV(x, y, z, var12, var16);
-                } else {
+                }
+                else {
                     ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
                     ts.vertexUV(x, y + 1, z, var10, var14);
                     ts.vertexUV(x + 1, y + 1, z, var12, var14);
@@ -2251,7 +2441,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                 ts.vertexUV(x, y, z + 1, var12, var16);
                 ts.vertexUV(x, y + 1, z + 1, var12, var14);
                 ts.vertexUV(x, y + 1, z, var10, var14);
-            } else {
+            }
+            else {
                 int leftMeta = this.level.getData(x - 1, y, z) & 3;
                 Tile leftBlock = Tile.tiles[this.level.getTile(x - 1, y, z)];
                 if (leftBlock != null && leftBlock.getRenderShape() == 38 && (leftMeta == 2 || leftMeta == 3)) {
@@ -2270,7 +2461,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                         ts.vertexUV(x + 1, y, z, var10, var16);
                         ts.vertexUV(x, y, z, var12, var16);
                         ts.vertexUV(x, y, z, var12, var16);
-                    } else {
+                    }
+                    else {
                         ts.color(0.9F * brightness, 0.9F * brightness, 0.9F * brightness);
                         ts.vertexUV(x, y + 1, z + 1, var12, var14);
                         ts.vertexUV(x, y + 1, z + 1, var12, var14);
@@ -2286,7 +2478,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                         ts.vertexUV(x + 1, y, z + 1, var12, var16);
                         ts.vertexUV(x + 1, y, z + 1, var12, var16);
                     }
-                } else {
+                }
+                else {
                     ts.color(0.6F * brightness, 0.6F * brightness, 0.6F * brightness);
                     ts.vertexUV(x, y, z, var10, var16);
                     ts.vertexUV(x, y, z + 1, var12, var16);
@@ -2307,7 +2500,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                     ts.vertexUV(x, y, z, var12, var16);
                 }
             }
-        } else {
+        }
+        else {
             if (coreMeta == 2) {
                 int frontMeta = this.level.getData(x, y, z - 1) & 3;
                 Tile frontBlock = Tile.tiles[this.level.getTile(x, y, z - 1)];
@@ -2328,7 +2522,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                         ts.vertexUV(x + 1, y + 1, z + 1, var10, var14);
                         ts.vertexUV(x + 1, y, z + 1, var10, var16);
                         ts.vertexUV(x + 1, y, z + 1, var10, var16);
-                    } else if (frontMeta == 0) {
+                    }
+                    else if (frontMeta == 0) {
                         ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
                         ts.vertexUV(x, y, z, var10, var16);
                         ts.vertexUV(x, y, z + 1, var12, var16);
@@ -2356,7 +2551,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                     ts.vertexUV(x + 1, y + 1, z + 1, var10, var14);
                     ts.vertexUV(x + 1, y, z, var10, var16);
                     ts.vertexUV(x, y, z, var12, var16);
-                } else {
+                }
+                else {
                     int backMeta = this.level.getData(x, y, z + 1) & 3;
                     Tile backBlock = Tile.tiles[this.level.getTile(x, y, z + 1)];
                     if (backBlock != null && backBlock.getRenderShape() == 38 && (backMeta == 0 || backMeta == 1)) {
@@ -2376,7 +2572,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                             ts.vertexUV(x + 1, y + 1, z + 1, var10, var14);
                             ts.vertexUV(x + 1, y, z + 1, var10, var16);
                             ts.vertexUV(x + 1, y, z + 1, var10, var16);
-                        } else {
+                        }
+                        else {
                             ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
                             ts.vertexUV(x, y + 1, z + 1, var10, var14);
                             ts.vertexUV(x, y + 1, z + 1, var10, var14);
@@ -2393,7 +2590,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                             ts.vertexUV(x, y, z, var10, var16);
                             ts.vertexUV(x, y, z, var10, var16);
                         }
-                    } else {
+                    }
+                    else {
                         ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
                         ts.vertexUV(x + 1, y, z + 1, var12, var16);
                         ts.vertexUV(x + 1, y + 1, z + 1, var12, var14);
@@ -2415,7 +2613,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                         ts.vertexUV(x + 1, y, z + 1, var10, var16);
                     }
                 }
-            } else if (coreMeta == 3) {
+            }
+            else if (coreMeta == 3) {
                 int backMeta = this.level.getData(x, y, z + 1) & 3;
                 Tile backBlock = Tile.tiles[this.level.getTile(x, y, z + 1)];
                 if (backBlock != null && backBlock.getRenderShape() == 38 && (backMeta == 0 || backMeta == 1)) {
@@ -2435,7 +2634,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                         ts.vertexUV(x + 1, y + 1, z, var12, var14);
                         ts.vertexUV(x + 1, y, z + 1, var10, var16);
                         ts.vertexUV(x + 1, y, z + 1, var10, var16);
-                    } else if (backMeta == 0) {
+                    }
+                    else if (backMeta == 0) {
                         ts.color(0.6F * brightness, 0.6F * brightness, 0.6F * brightness);
                         ts.vertexUV(x + 1, y, z, var10, var16);
                         ts.vertexUV(x + 1, y + 1, z, var10, var14);
@@ -2463,7 +2663,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                     ts.vertexUV(x + 1, y, z + 1, var12, var16);
                     ts.vertexUV(x + 1, y + 1, z, var12, var14);
                     ts.vertexUV(x, y + 1, z, var10, var14);
-                } else {
+                }
+                else {
                     int frontMeta = this.level.getData(x, y, z - 1) & 3;
                     Tile frontBlock = Tile.tiles[this.level.getTile(x, y, z - 1)];
                     if (frontBlock != null && frontBlock.getRenderShape() == 38 && (frontMeta == 0 || frontMeta == 1)) {
@@ -2483,7 +2684,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                             ts.vertexUV(x + 1, y + 1, z, var12, var14);
                             ts.vertexUV(x + 1, y, z + 1, var10, var16);
                             ts.vertexUV(x + 1, y, z + 1, var10, var16);
-                        } else {
+                        }
+                        else {
                             ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
                             ts.vertexUV(x, y + 1, z, var12, var14);
                             ts.vertexUV(x, y + 1, z, var12, var14);
@@ -2500,7 +2702,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                             ts.vertexUV(x, y, z, var10, var16);
                             ts.vertexUV(x, y, z, var10, var16);
                         }
-                    } else {
+                    }
+                    else {
                         ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
                         ts.vertexUV(x, y + 1, z, var10, var14);
                         ts.vertexUV(x + 1, y + 1, z, var12, var14);
@@ -2591,17 +2794,23 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         int meta = this.level.getData(x, y, z);
         if (this.level.isSolidTile(x, y - 1, z)) {
             this.tesselateCrossTexture(block, meta, x, y, z);
-        } else if (this.level.isSolidTile(x, y + 1, z)) {
+        }
+        else if (this.level.isSolidTile(x, y + 1, z)) {
             this.renderCrossedSquaresUpsideDown(block, meta, x, y, z);
-        } else if (this.level.isSolidTile(x - 1, y, z)) {
+        }
+        else if (this.level.isSolidTile(x - 1, y, z)) {
             this.renderCrossedSquaresEast(block, meta, x, y, z);
-        } else if (this.level.isSolidTile(x + 1, y, z)) {
+        }
+        else if (this.level.isSolidTile(x + 1, y, z)) {
             this.renderCrossedSquaresWest(block, meta, x, y, z);
-        } else if (this.level.isSolidTile(x, y, z - 1)) {
+        }
+        else if (this.level.isSolidTile(x, y, z - 1)) {
             this.renderCrossedSquaresNorth(block, meta, x, y, z);
-        } else if (this.level.isSolidTile(x, y, z + 1)) {
+        }
+        else if (this.level.isSolidTile(x, y, z + 1)) {
             this.renderCrossedSquaresSouth(block, meta, x, y, z);
-        } else {
+        }
+        else {
             this.tesselateCrossTexture(block, meta, x, y, z);
         }
         return true;
@@ -2678,9 +2887,11 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         int ropeMeta = meta % 3;
         if (ropeMeta == 0) {
             this.tesselateCrossTexture(block, meta, x, y, z);
-        } else if (ropeMeta == 1) {
+        }
+        else if (ropeMeta == 1) {
             this.renderCrossedSquaresEast(block, meta, x, y, z);
-        } else {
+        }
+        else {
             this.renderCrossedSquaresNorth(block, meta, x, y, z);
         }
 
@@ -2757,17 +2968,23 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         block.updateBounds(this.level, x, y, z);
         if (this.level.isSolidTile(x, y - 1, z)) {
             this.renderFaceUp(block, x, y, z, texture);
-        } else if (this.level.isSolidTile(x, y + 1, z)) {
+        }
+        else if (this.level.isSolidTile(x, y + 1, z)) {
             this.renderFaceDown(block, x, y, z, texture);
-        } else if (this.level.isSolidTile(x - 1, y, z)) {
+        }
+        else if (this.level.isSolidTile(x - 1, y, z)) {
             this.renderEast(block, x, y, z, texture);
-        } else if (this.level.isSolidTile(x + 1, y, z)) {
+        }
+        else if (this.level.isSolidTile(x + 1, y, z)) {
             this.renderWest(block, x, y, z, texture);
-        } else if (this.level.isSolidTile(x, y, z - 1)) {
+        }
+        else if (this.level.isSolidTile(x, y, z - 1)) {
             this.renderSouth(block, x, y, z, texture);
-        } else if (this.level.isSolidTile(x, y, z + 1)) {
+        }
+        else if (this.level.isSolidTile(x, y, z + 1)) {
             this.renderNorth(block, x, y, z, texture);
-        } else {
+        }
+        else {
             this.renderFaceUp(block, x, y, z, texture);
         }
         return true;
