@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.mixin.client.render.block;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.tile.AC_BlockOverlay;
+import dev.adventurecraft.awakening.tile.AC_BlockShapes;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTree;
 import dev.adventurecraft.awakening.common.AoHelper;
@@ -13,6 +14,7 @@ import dev.adventurecraft.awakening.extension.client.render.block.ExBlockRendere
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.util.Xoshiro128PP;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.BlockShapes;
 import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.client.renderer.TileRenderer;
 import net.minecraft.util.Mth;
@@ -133,6 +135,10 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
     @Shadow
     public abstract boolean tesselateRailInWorld(RailTile block, int x, int y, int z);
+
+    private @Unique boolean tesselateRailInWorld(Tile block, int x, int y, int z) {
+        return tesselateRailInWorld((RailTile) block, x, y, z);
+    }
 
     @Shadow
     protected abstract boolean tesselateRepeaterInWorld(Tile block, int x, int y, int z);
@@ -1098,112 +1104,67 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
     @Overwrite
     public boolean tesselateInWorld(Tile block, int x, int y, int z) {
-        if (!((ExBlock) block).shouldRender(this.level, x, y, z)) {
+        int renderShape = ((ExBlock) block).getRenderShape(this.level, x, y, z);
+        if (renderShape == BlockShapes.NONE) {
             return false;
         }
 
-        int renderType = block.getRenderShape();
         block.updateShape(this.level, x, y, z);
-        if (renderType == 0) {
-            return this.tesselateBlockInWorld(block, x, y, z);
-        }
-        else if (renderType == 4) {
-            return this.tesselateWaterInWorld(block, x, y, z);
-        }
-        else if (renderType == 13) {
-            return this.tesselateCactusInWorld(block, x, y, z);
-        }
-        else if (renderType == 1) {
-            return this.tesselateCrossInWorld(block, x, y, z);
-        }
-        else if (renderType == 6) {
-            return this.tesselateRowInWorld(block, x, y, z);
-        }
-        else if (renderType == 2) {
-            return this.tesselateTorchInWorld(block, x, y, z);
-        }
-        else if (renderType == 3) {
-            return this.tesselateFireInWorld(block, x, y, z);
-        }
-        else if (renderType == 5) {
-            return this.tesselateDustInWorld(block, x, y, z);
-        }
-        else if (renderType == 8) {
-            return this.tesselateLadderInWorld(block, x, y, z);
-        }
-        else if (renderType == 7) {
-            return this.tesselateDoorInWorld(block, x, y, z);
-        }
-        else if (renderType == 9) {
-            return this.tesselateRailInWorld((RailTile) block, x, y, z);
-        }
-        else if (renderType == 10) {
-            return this.tesselateStairsInWorld(block, x, y, z);
-        }
-        else if (renderType == 11) {
-            return this.tesselateFenceInWorld(block, x, y, z);
-        }
-        else if (renderType == 12) {
-            return this.tesselateLeverInWorld(block, x, y, z);
-        }
-        else if (renderType == 14) {
-            return this.tesselateBedInWorld(block, x, y, z);
-        }
-        else if (renderType == 15) {
-            return this.tesselateRepeaterInWorld(block, x, y, z);
-        }
-        else if (renderType == 16) {
-            return this.tesselatePistonInWorld(block, x, y, z, false);
-        }
-        else if (renderType == 17) {
-            return this.tesselateHeadPistonInWorld(block, x, y, z, true);
-        }
-        else if (renderType == 30) {
-            if (this.level != null && this.fixedTexture == -1) {
-                int topId = this.level.getTile(x, y + 1, z);
-                if (topId == 0 || !((ExBlock) Tile.tiles[topId]).shouldRender(this.level, x, y + 1, z)) {
-                    this.renderGrass(block, x, y, z);
-                }
+
+        return switch (renderShape) {
+            case 0 -> this.tesselateBlockInWorld(block, x, y, z);
+            case BlockShapes.LIQUID -> this.tesselateWaterInWorld(block, x, y, z);
+            case BlockShapes.CACTUS -> this.tesselateCactusInWorld(block, x, y, z);
+            case BlockShapes.REEDS -> this.tesselateCrossInWorld(block, x, y, z);
+            case BlockShapes.CROP -> this.tesselateRowInWorld(block, x, y, z);
+            case BlockShapes.TORCH -> this.tesselateTorchInWorld(block, x, y, z);
+            case BlockShapes.FIRE -> this.tesselateFireInWorld(block, x, y, z);
+            case BlockShapes.REDSTONE -> this.tesselateDustInWorld(block, x, y, z);
+            case BlockShapes.LADDER -> this.tesselateLadderInWorld(block, x, y, z);
+            case BlockShapes.DOOR -> this.tesselateDoorInWorld(block, x, y, z);
+            case BlockShapes.RAILS -> this.tesselateRailInWorld(block, x, y, z);
+            case BlockShapes.STAIRS -> this.tesselateStairsInWorld(block, x, y, z);
+            case BlockShapes.FENCE -> this.tesselateFenceInWorld(block, x, y, z);
+            case BlockShapes.LEVER -> this.tesselateLeverInWorld(block, x, y, z);
+            case BlockShapes.BED -> this.tesselateBedInWorld(block, x, y, z);
+            case BlockShapes.REPEATER -> this.tesselateRepeaterInWorld(block, x, y, z);
+            case BlockShapes.PISTON -> this.tesselatePistonInWorld(block, x, y, z, false);
+            case BlockShapes.PISTON_HEAD -> this.tesselateHeadPistonInWorld(block, x, y, z, true);
+            case AC_BlockShapes.GRASS_3D -> this.tesselateGrassOnBlock(block, x, y, z);
+            case AC_BlockShapes.REDSTONE_POWER -> this.tesselateRedstonePower(block, x, y, z);
+            case AC_BlockShapes.SPIKES -> this.renderSpikes(block, x, y, z);
+            case AC_BlockShapes.TABLE -> this.renderTable(block, x, y, z);
+            case AC_BlockShapes.CHAIR -> this.renderChair(block, x, y, z);
+            case AC_BlockShapes.ROPE -> this.renderRope(block, x, y, z);
+            case AC_BlockShapes.BLOCK_TREE -> this.renderBlockTree(block, x, y, z);
+            case AC_BlockShapes.BLOCK_OVERLAY -> this.renderBlockOverlay(block, x, y, z);
+            case AC_BlockShapes.BLOCK_SLOPE -> this.renderBlockSlope(block, x, y, z);
+            default -> false;
+        };
+    }
+
+    private @Unique boolean tesselateGrassOnBlock(Tile block, int x, int y, int z) {
+        if (this.level != null && this.fixedTexture == -1) {
+            int topId = this.level.getTile(x, y + 1, z);
+            if (topId == 0 || ((ExBlock) Tile.tiles[topId]).getRenderShape(this.level, x, y + 1, z) == BlockShapes.NONE) {
+                this.renderGrass(block, x, y, z);
             }
-            return this.tesselateBlockInWorld(block, x, y, z);
         }
-        else if (renderType == 31) {
-            boolean var7 = this.tesselateBlockInWorld(block, x, y, z);
-            if (((ExWorld) Minecraft.instance.level).getTriggerManager().isActivated(x, y, z)) {
-                Tesselator.instance.color(1.0F, 1.0F, 1.0F);
-                this.fixedTexture = 99;
-            }
-            else {
-                this.fixedTexture = 115;
-            }
-            this.tesselateTorch(block, x, (double) y + 0.25D, z, 0.0D, 0.0D);
-            this.fixedTexture = -1;
-            return var7;
+        return this.tesselateBlockInWorld(block, x, y, z);
+    }
+
+    private @Unique boolean tesselateRedstonePower(Tile block, int x, int y, int z) {
+        boolean hasFaces = this.tesselateBlockInWorld(block, x, y, z);
+        if (((ExWorld) Minecraft.instance.level).getTriggerManager().isActivated(x, y, z)) {
+            Tesselator.instance.color(1.0F, 1.0F, 1.0F);
+            this.fixedTexture = 99;
         }
         else {
-            if (renderType == 32) {
-                return this.renderSpikes(block, x, y, z);
-            }
-            if (renderType == 33) {
-                return this.renderTable(block, x, y, z);
-            }
-            if (renderType == 34) {
-                return this.renderChair(block, x, y, z);
-            }
-            if (renderType == 35) {
-                return this.renderRope(block, x, y, z);
-            }
-            if (renderType == 36) {
-                return this.renderBlockTree(block, x, y, z);
-            }
-            if (renderType == 37) {
-                return this.renderBlockOverlay((AC_BlockOverlay) block, x, y, z);
-            }
-            if (renderType == 38) {
-                return this.renderBlockSlope(block, x, y, z);
-            }
-            return false;
+            this.fixedTexture = 115;
         }
+        this.tesselateTorch(block, x, (double) y + 0.25D, z, 0.0D, 0.0D);
+        this.fixedTexture = -1;
+        return hasFaces;
     }
 
     @Redirect(
@@ -1747,7 +1708,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         this.tesselateBlockInWorld(block, x, y, z);
         if (coreMeta == 0) {
             Tile leftBlock = Tile.tiles[this.level.getTile(x - 1, y, z)];
-            if (leftBlock != null && leftBlock.getRenderShape() == 10) {
+            if (leftBlock != null && leftBlock.getRenderShape() == BlockShapes.STAIRS) {
                 int leftMeta = this.level.getData(x - 1, y, z) & 3;
                 if (leftMeta == 2) {
                     block.setShape(0.0F, 0.5F, 0.5F, 0.5F, 1.0F, 1.0F);
@@ -1761,7 +1722,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
             int rightMeta = this.level.getData(x + 1, y, z) & 3;
             Tile rightBlock = Tile.tiles[this.level.getTile(x + 1, y, z)];
-            if (rightBlock != null && rightBlock.getRenderShape() == 10 && (rightMeta == 2 || rightMeta == 3)) {
+            if (rightBlock != null && rightBlock.getRenderShape() == BlockShapes.STAIRS &&
+                (rightMeta == 2 || rightMeta == 3)) {
                 if (rightMeta == 2) {
                     block.setShape(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
                     this.tesselateBlockInWorld(block, x, y, z);
@@ -1782,7 +1744,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             if (coreMeta == 1) {
                 int leftMeta = this.level.getData(x - 1, y, z) & 3;
                 Tile leftBlock = Tile.tiles[this.level.getTile(x - 1, y, z)];
-                if (leftBlock != null && leftBlock.getRenderShape() == 10 && (leftMeta == 2 || leftMeta == 3)) {
+                if (leftBlock != null && leftBlock.getRenderShape() == BlockShapes.STAIRS &&
+                    (leftMeta == 2 || leftMeta == 3)) {
                     if (leftMeta == 3) {
                         block.setShape(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 0.5F);
                         this.tesselateBlockInWorld(block, x, y, z);
@@ -1798,7 +1761,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                 }
 
                 Tile rightBlock = Tile.tiles[this.level.getTile(x + 1, y, z)];
-                if (rightBlock != null && rightBlock.getRenderShape() == 10) {
+                if (rightBlock != null && rightBlock.getRenderShape() == BlockShapes.STAIRS) {
                     int rightMeta = this.level.getData(x + 1, y, z) & 3;
                     if (rightMeta == 2) {
                         block.setShape(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
@@ -1814,7 +1777,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             }
             else if (coreMeta == 2) {
                 Tile frontBlock = Tile.tiles[this.level.getTile(x, y, z - 1)];
-                if (frontBlock != null && frontBlock.getRenderShape() == 10) {
+                if (frontBlock != null && frontBlock.getRenderShape() == BlockShapes.STAIRS) {
                     int frontMeta = this.level.getData(x, y, z - 1) & 3;
                     if (frontMeta == 1) {
                         block.setShape(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 0.5F);
@@ -1828,7 +1791,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
                 int backMeta = this.level.getData(x, y, z + 1) & 3;
                 Tile backBlock = Tile.tiles[this.level.getTile(x, y, z + 1)];
-                if (backBlock != null && backBlock.getRenderShape() == 10 && (backMeta == 0 || backMeta == 1)) {
+                if (backBlock != null && backBlock.getRenderShape() == BlockShapes.STAIRS &&
+                    (backMeta == 0 || backMeta == 1)) {
                     if (backMeta == 0) {
                         block.setShape(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
                         this.tesselateBlockInWorld(block, x, y, z);
@@ -1847,7 +1811,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             }
             else if (coreMeta == 3) {
                 Tile backBlock = Tile.tiles[this.level.getTile(x, y, z + 1)];
-                if (backBlock != null && backBlock.getRenderShape() == 10) {
+                if (backBlock != null && backBlock.getRenderShape() == BlockShapes.STAIRS) {
                     int backMeta = this.level.getData(x, y, z + 1) & 3;
                     if (backMeta == 1) {
                         block.setShape(0.0F, 0.5F, 0.5F, 0.5F, 1.0F, 1.0F);
@@ -1861,7 +1825,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
                 int frontMeta = this.level.getData(x, y, z - 1) & 3;
                 Tile frontBlock = Tile.tiles[this.level.getTile(x, y, z - 1)];
-                if (frontBlock != null && frontBlock.getRenderShape() == 10 && (frontMeta == 0 || frontMeta == 1)) {
+                if (frontBlock != null && frontBlock.getRenderShape() == BlockShapes.STAIRS &&
+                    (frontMeta == 0 || frontMeta == 1)) {
                     if (frontMeta == 0) {
                         block.setShape(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
                         this.tesselateBlockInWorld(block, x, y, z);
@@ -2153,7 +2118,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         if (coreMeta == 0) {
             Tile leftBlock = Tile.tiles[this.level.getTile(x - 1, y, z)];
             int leftMeta = this.level.getData(x - 1, y, z) & 3;
-            if (leftBlock != null && leftBlock.getRenderShape() == 38 && (leftMeta == 2 || leftMeta == 3)) {
+            if (leftBlock != null && leftBlock.getRenderShape() == AC_BlockShapes.BLOCK_SLOPE && (leftMeta == 2 || leftMeta == 3)) {
                 if (leftMeta == 2) {
                     ts.color(0.9F * brightness, 0.9F * brightness, 0.9F * brightness);
                     ts.vertexUV(x, y + 1, z + 1, var12, var14);
@@ -2200,7 +2165,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             else {
                 int rightMeta = this.level.getData(x + 1, y, z) & 3;
                 Tile rightBlock = Tile.tiles[this.level.getTile(x + 1, y, z)];
-                if (rightBlock != null && rightBlock.getRenderShape() == 38 && (rightMeta == 2 || rightMeta == 3)) {
+                if (rightBlock != null && rightBlock.getRenderShape() == AC_BlockShapes.BLOCK_SLOPE && (rightMeta == 2 || rightMeta == 3)) {
                     if (rightMeta == 2) {
                         ts.color(0.9F * brightness, 0.9F * brightness, 0.9F * brightness);
                         ts.vertexUV(x + 1, y, z, var10, var16);
@@ -2260,7 +2225,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         else if (coreMeta == 1) {
             Tile rightBlock = Tile.tiles[this.level.getTile(x + 1, y, z)];
             int rightMeta = this.level.getData(x + 1, y, z) & 3;
-            if (rightBlock != null && rightBlock.getRenderShape() == 38 && (rightMeta == 2 || rightMeta == 3)) {
+            if (rightBlock != null && rightBlock.getRenderShape() == AC_BlockShapes.BLOCK_SLOPE && (rightMeta == 2 || rightMeta == 3)) {
                 if (rightMeta == 2) {
                     ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
                     ts.vertexUV(x + 1, y, z + 1, var12, var16);
@@ -2309,7 +2274,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             else {
                 int leftMeta = this.level.getData(x - 1, y, z) & 3;
                 Tile leftBlock = Tile.tiles[this.level.getTile(x - 1, y, z)];
-                if (leftBlock != null && leftBlock.getRenderShape() == 38 && (leftMeta == 2 || leftMeta == 3)) {
+                if (leftBlock != null && leftBlock.getRenderShape() == AC_BlockShapes.BLOCK_SLOPE && (leftMeta == 2 || leftMeta == 3)) {
                     if (leftMeta == 3) {
                         ts.color(0.9F * brightness, 0.9F * brightness, 0.9F * brightness);
                         ts.vertexUV(x, y, z + 1, var10, var16);
@@ -2369,7 +2334,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             if (coreMeta == 2) {
                 int frontMeta = this.level.getData(x, y, z - 1) & 3;
                 Tile frontBlock = Tile.tiles[this.level.getTile(x, y, z - 1)];
-                if (frontBlock != null && frontBlock.getRenderShape() == 38 && (frontMeta == 0 || frontMeta == 1)) {
+                if (frontBlock != null && frontBlock.getRenderShape() == AC_BlockShapes.BLOCK_SLOPE && (frontMeta == 0 || frontMeta == 1)) {
                     if (frontMeta == 1) {
                         ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
                         ts.vertexUV(x, y + 1, z, var12, var14);
@@ -2419,7 +2384,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                 else {
                     int backMeta = this.level.getData(x, y, z + 1) & 3;
                     Tile backBlock = Tile.tiles[this.level.getTile(x, y, z + 1)];
-                    if (backBlock != null && backBlock.getRenderShape() == 38 && (backMeta == 0 || backMeta == 1)) {
+                    if (backBlock != null && backBlock.getRenderShape() == AC_BlockShapes.BLOCK_SLOPE && (backMeta == 0 || backMeta == 1)) {
                         if (backMeta == 0) {
                             ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
                             ts.vertexUV(x, y, z, var10, var16);
@@ -2481,7 +2446,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             else if (coreMeta == 3) {
                 int backMeta = this.level.getData(x, y, z + 1) & 3;
                 Tile backBlock = Tile.tiles[this.level.getTile(x, y, z + 1)];
-                if (backBlock != null && backBlock.getRenderShape() == 38 && (backMeta == 0 || backMeta == 1)) {
+                if (backBlock != null && backBlock.getRenderShape() == AC_BlockShapes.BLOCK_SLOPE && (backMeta == 0 || backMeta == 1)) {
                     if (backMeta == 1) {
                         ts.color(0.6F * brightness, 0.6F * brightness, 0.6F * brightness);
                         ts.vertexUV(x, y, z, var10, var16);
@@ -2531,7 +2496,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                 else {
                     int frontMeta = this.level.getData(x, y, z - 1) & 3;
                     Tile frontBlock = Tile.tiles[this.level.getTile(x, y, z - 1)];
-                    if (frontBlock != null && frontBlock.getRenderShape() == 38 && (frontMeta == 0 || frontMeta == 1)) {
+                    if (frontBlock != null && frontBlock.getRenderShape() == AC_BlockShapes.BLOCK_SLOPE && (frontMeta == 0 || frontMeta == 1)) {
                         if (frontMeta == 0) {
                             ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
                             ts.vertexUV(x, y, z, var10, var16);
@@ -2822,14 +2787,14 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         return true;
     }
 
-    public boolean renderBlockOverlay(AC_BlockOverlay block, int x, int y, int z) {
+    public boolean renderBlockOverlay(Tile block, int x, int y, int z) {
         Tesselator ts = Tesselator.instance;
         float brightness = block.getBrightness(this.level, x, y, z);
         ts.color(brightness, brightness, brightness);
 
         int meta = this.level.getData(x, y, z);
         int texture = block.getTexture(0, meta);
-        block.updateBounds(this.level, x, y, z);
+        ((AC_BlockOverlay) block).updateBounds(this.level, x, y, z);
         if (this.level.isSolidTile(x, y - 1, z)) {
             this.renderFaceUp(block, x, y, z, texture);
         }

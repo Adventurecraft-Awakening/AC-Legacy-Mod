@@ -20,7 +20,7 @@ import net.minecraft.world.phys.AABB;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 
-public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerBlock {
+public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerDebugBlock {
 
     protected AC_BlockTrigger(int var1, int var2) {
         super(var1, var2, Material.AIR);
@@ -52,11 +52,6 @@ public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerBlock 
     }
 
     @Override
-    public boolean shouldRender(LevelSource view, int x, int y, int z) {
-        return AC_DebugMode.active;
-    }
-
-    @Override
     public int getTexture(LevelSource view, int x, int y, int z, int side) {
         return super.getTexture(view, x, y, z, side);
     }
@@ -64,6 +59,10 @@ public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerBlock 
     @Override
     public boolean mayPick() {
         return AC_DebugMode.active;
+    }
+
+    public @Override boolean canBeTriggered() {
+        return false;
     }
 
     private void setNotVisited(Level world, int x, int y, int z) {

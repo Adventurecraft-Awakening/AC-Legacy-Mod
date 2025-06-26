@@ -10,14 +10,13 @@ import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTriggerMemory;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelSource;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.tile.TileEntityTile;
 import net.minecraft.world.level.tile.entity.TileEntity;
 import net.minecraft.world.phys.AABB;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 
-public class AC_BlockTriggerMemory extends TileEntityTile implements AC_ITriggerBlock {
+public class AC_BlockTriggerMemory extends TileEntityTile implements AC_ITriggerDebugBlock {
 
     protected AC_BlockTriggerMemory(int id, int texture) {
         super(id, texture, Material.AIR);
@@ -49,18 +48,8 @@ public class AC_BlockTriggerMemory extends TileEntityTile implements AC_ITrigger
     }
 
     @Override
-    public boolean shouldRender(LevelSource view, int x, int y, int z) {
-        return AC_DebugMode.active;
-    }
-
-    @Override
     public boolean mayPick() {
         return AC_DebugMode.active;
-    }
-
-    @Override
-    public boolean canBeTriggered() {
-        return true;
     }
 
     @Override

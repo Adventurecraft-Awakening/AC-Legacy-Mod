@@ -24,13 +24,13 @@ public class AC_BlockChair extends AC_BlockSolid {
 
     @Override
     public int getRenderShape() {
-        return 34;
+        return AC_BlockShapes.CHAIR;
     }
 
     @Override
-    public void setPlacedBy(Level var1, int var2, int var3, int var4, Mob var5) {
-        int var6 = var1.getData(var2, var3, var4);
-        int var7 = Mth.floor((double) (var5.yRot * 4.0F / 360.0F) + 0.5D) & 3;
-        var1.setData(var2, var3, var4, var6 + (var7 + 1) % 4);
+    public void setPlacedBy(Level level, int x, int y, int z, Mob entity) {
+        int meta = level.getData(x, y, z);
+        int direction = Mth.floor((double) (entity.yRot * 4.0F / 360.0F) + 0.5D) & 3;
+        level.setData(x, y, z, meta + (direction + 1) % 4);
     }
 }

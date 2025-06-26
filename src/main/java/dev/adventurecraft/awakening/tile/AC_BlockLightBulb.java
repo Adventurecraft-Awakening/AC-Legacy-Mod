@@ -11,7 +11,7 @@ import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.tile.Tile;
 import net.minecraft.world.phys.AABB;
 
-public class AC_BlockLightBulb extends Tile implements AC_ITriggerBlock {
+public class AC_BlockLightBulb extends Tile implements AC_ITriggerDebugBlock {
 
     protected AC_BlockLightBulb(int var1, int var2) {
         super(var1, var2, Material.AIR);
@@ -25,16 +25,6 @@ public class AC_BlockLightBulb extends Tile implements AC_ITriggerBlock {
     @Override
     public AABB getAABB(Level var1, int var2, int var3, int var4) {
         return null;
-    }
-
-    @Override
-    public boolean shouldRender(LevelSource view, int x, int y, int z) {
-        return AC_DebugMode.active;
-    }
-
-    @Override
-    public boolean canBeTriggered() {
-        return true;
     }
 
     @Override

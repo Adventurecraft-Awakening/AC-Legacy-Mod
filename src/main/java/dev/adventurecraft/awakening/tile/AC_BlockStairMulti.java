@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.tile;
 
+import net.minecraft.client.renderer.BlockShapes;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.Level;
@@ -16,7 +17,7 @@ public class AC_BlockStairMulti extends StairsTile implements AC_IBlockColor {
 
     @Override
     public int getRenderShape() {
-        return 10;
+        return BlockShapes.STAIRS;
     }
 
     @Override
@@ -43,21 +44,13 @@ public class AC_BlockStairMulti extends StairsTile implements AC_IBlockColor {
     public void setPlacedBy(Level world, int x, int y, int z, Mob placer) {
         int meta = world.getData(x, y, z);
         int direction = Mth.floor((double) (placer.yRot * 4.0F / 360.0F) + 0.5D) & 3;
-        if (direction == 0) {
-            world.setData(x, y, z, 2 + meta);
-        }
-
-        if (direction == 1) {
-            world.setData(x, y, z, 1 + meta);
-        }
-
-        if (direction == 2) {
-            world.setData(x, y, z, 3 + meta);
-        }
-
-        if (direction == 3) {
-            world.setData(x, y, z, 0 + meta);
-        }
+        int offset = switch (direction) {
+            case 0 -> 2;
+            case 1 -> 1;
+            case 2 -> 3;
+            default -> 0;
+        };
+        world.setData(x, y, z, meta + offset);
     }
 
     @Override
