@@ -86,3 +86,5 @@ accessible class net/minecraft/client/gui/screens/SelectWorldScreen$WorldSelecti
 accessible method net/minecraft/client/gui/GuiComponent fillGradient (IIIIII)V
 
 accessible field net/minecraft/client/gui/components/SliderButton option Lnet/minecraft/client/Option;
+
+accessible class net/minecraft/world/level/chunk/storage/RegionFile$ChunkBuffer
