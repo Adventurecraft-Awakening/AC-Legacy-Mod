@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.tile;
 
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelSource;
 import net.minecraft.world.level.tile.StairsTile;
@@ -40,7 +40,7 @@ public class AC_BlockStairMulti extends StairsTile implements AC_IBlockColor {
     }
 
     @Override
-    public void setPlacedBy(Level world, int x, int y, int z, LivingEntity placer) {
+    public void setPlacedBy(Level world, int x, int y, int z, Mob placer) {
         int meta = world.getData(x, y, z);
         int direction = Mth.floor((double) (placer.yRot * 4.0F / 360.0F) + 0.5D) & 3;
         if (direction == 0) {

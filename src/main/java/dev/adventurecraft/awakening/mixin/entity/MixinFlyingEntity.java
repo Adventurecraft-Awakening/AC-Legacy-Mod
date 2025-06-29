@@ -5,7 +5,7 @@ import net.minecraft.world.entity.FlyingMob;
 import org.spongepowered.asm.mixin.Mixin;
 
 @Mixin(FlyingMob.class)
-public abstract class MixinFlyingEntity extends MixinLivingEntity implements ExFlyingEntity {
+public abstract class MixinFlyingEntity extends MixinMob implements ExFlyingEntity {
 
     private int attackStrength = 1;
 

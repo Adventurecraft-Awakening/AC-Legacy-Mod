@@ -1,17 +1,18 @@
 package dev.adventurecraft.awakening.mixin.entity;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.extension.block.ExLadderBlock;
-import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
+import dev.adventurecraft.awakening.extension.entity.ExMob;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.LevelSource;
@@ -26,8 +27,8 @@ import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(LivingEntity.class)
-public abstract class MixinLivingEntity extends MixinEntity implements ExLivingEntity {
+@Mixin(Mob.class)
+public abstract class MixinMob extends MixinEntity implements ExMob {
 
     @Shadow
     public int invulnerableDuration;
@@ -92,49 +93,49 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
     @Shadow
     protected int lookTime;
 
-    public boolean canGetFallDamage = true;
-
-    public void setCanGetFallDamage(boolean arg) {
-        this.canGetFallDamage = arg;
-    }
-
-    public boolean getCanGetFallDamage() {
-        return this.canGetFallDamage;
-    }
-
+    @Unique
     protected int maxHealth = 10;
     @Unique
     private ItemInstance ac$heldItem;
+    @Unique
     private long hurtTick;
+    @Unique
     public int timesCanJumpInAir = 0;
+    @Unique
     public int jumpsLeft = 0;
+    @Unique
     public boolean canWallJump = false;
+    @Unique
     private long tickBeforeNextJump;
+    @Unique
     public double jumpVelocity = 0.42D;
+    @Unique
     public double jumpWallMultiplier = 1.0D;
+    @Unique
     public double jumpInAirMultiplier = 1.0D;
+    @Unique
     public float airControl = 0.9259F;
+    @Unique
     public double gravity = 0.08D;
+    @Unique
     public float fov = 140.0F;
+    @Unique
     public float extraFov = 0.0F;
+    @Unique
     public boolean canLookRandomly = true;
+    @Unique
     public float randomLookVelocity = 20.0F;
+    @Unique
     public int randomLookNext = 0;
+    @Unique
     public int randomLookRate = 100;
+    @Unique
     public int randomLookRateVariation = 40;
+    @Unique
+    public boolean canGetFallDamage = true;
 
     @Shadow
     public abstract void setLookAt(Entity arg, float f, float g);
-
-    @Shadow
-    public void readAdditionalSaveData(CompoundTag arg) {
-        throw new AssertionError();
-    }
-
-    @Shadow
-    public void addAdditionalSaveData(CompoundTag arg) {
-        throw new AssertionError();
-    }
 
     @Shadow
     public abstract float getHeadHeight();
@@ -208,7 +209,7 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         method = "baseTick",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/entity/LivingEntity;isInWall()Z"))
+            target = "Lnet/minecraft/world/entity/Mob;isInWall()Z"))
     private boolean damageIfNotCondition(boolean value) {
         return value && !this.noPhysics;
     }
@@ -232,7 +233,7 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         method = "hurt",
         at = @At(
             value = "FIELD",
-            target = "Lnet/minecraft/world/entity/LivingEntity;hurtTime:I",
+            target = "Lnet/minecraft/world/entity/Mob;hurtTime:I",
             shift = At.Shift.AFTER))
     private void setHurtTickOnDamage(Entity entity, int damage, CallbackInfoReturnable<Boolean> cir) {
         this.hurtTick = this.level.getTime();
@@ -549,8 +550,8 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         return false;
     }
 
-    @Inject(method = "readAdditionalSaveData", at = @At("TAIL"))
-    private void writeAdditionalAC(CompoundTag tag, CallbackInfo ci) {
+    @Inject(method = "addAdditionalSaveData", at = @At("TAIL"))
+    protected void ac$addAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
         tag.putShort("MaxHealth", (short) this.maxHealth);
         tag.putInt("EntityID", this.id);
         tag.putInt("timesCanJumpInAir", this.timesCanJumpInAir);
@@ -563,51 +564,32 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         tag.putBoolean("canGetFallDamage", this.canGetFallDamage);
     }
 
-    @Inject(method = "addAdditionalSaveData", at = @At("TAIL"))
-    private void readAdditionalAC(CompoundTag tag, CallbackInfo ci) {
-        if (!tag.hasKey("MaxHealth")) {
-            this.maxHealth = 10;
-        } else {
-            this.maxHealth = tag.getShort("MaxHealth");
-        }
+    @Inject(method = "readAdditionalSaveData", at = @At("TAIL"))
+    protected void ac$readAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
+        var exTag = (ExCompoundTag) tag;
+        this.maxHealth = exTag.findShort("MaxHealth").orElse((short) 10);
 
         //noinspection ConstantValue
-        if (tag.hasKey("EntityID") && !(((Object) this instanceof Player))) {
-            this.id = tag.getInt("EntityID");
-        }
+        exTag.findInt("EntityID")
+            .filter(id -> !((Object) this instanceof Player))
+            .ifPresent(id -> this.id = id);
 
         this.timesCanJumpInAir = tag.getInt("timesCanJumpInAir");
         this.canWallJump = tag.getBoolean("canWallJump");
-        if (tag.hasKey("fov")) {
-            this.fov = tag.getFloat("fov");
-        }
+        exTag.findFloat("fov").ifPresent(this::setFov);
 
-        if (tag.hasKey("canLookRandomly")) {
-            this.canLookRandomly = tag.getBoolean("canLookRandomly");
-        }
-
-        if (tag.hasKey("randomLookVelocity")) {
-            this.randomLookVelocity = tag.getFloat("randomLookVelocity");
-        }
-
-        if (tag.hasKey("randomLookRate")) {
-            this.randomLookRate = tag.getInt("randomLookRate");
-        }
-
-        if (tag.hasKey("randomLookRateVariation")) {
-            this.randomLookRateVariation = tag.getInt("randomLookRateVariation");
-        }
-
-        if (tag.hasKey("canGetFallDamage")) {
-            this.canGetFallDamage = tag.getBoolean("canGetFallDamage");
-        }
+        exTag.findBool("canLookRandomly").ifPresent(this::setCanLookRandomly);
+        exTag.findFloat("randomLookVelocity").ifPresent(this::setRandomLookVelocity);
+        exTag.findInt("randomLookRate").ifPresent(this::setRandomLookRate);
+        exTag.findInt("randomLookRateVariation").ifPresent(this::setRandomLookRateVariation);
+        exTag.findBool("canGetFallDamage").ifPresent(this::setCanGetFallDamage);
     }
 
     @Inject(
         method = "aiStep",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/entity/LivingEntity;isInLava()Z",
+            target = "Lnet/minecraft/world/entity/Mob;isInLava()Z",
             shift = At.Shift.AFTER))
     private void fixupYaw(CallbackInfo ci) {
         if (this.onGround) {
@@ -633,7 +615,7 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         method = "aiStep",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/entity/LivingEntity;isInLava()Z",
+            target = "Lnet/minecraft/world/entity/Mob;isInLava()Z",
             shift = At.Shift.AFTER))
     private void doWallJump(CallbackInfo ci) {
         if (!this.jumping) {
@@ -729,11 +711,11 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
         method = "die",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/entity/LivingEntity;dropDeathLoot()V",
+            target = "Lnet/minecraft/world/entity/Mob;dropDeathLoot()V",
             shift = At.Shift.AFTER))
     private void dropHeartsOnDeath(Entity killer, CallbackInfo ci) {
-        if (killer instanceof LivingEntity livingKiller) {
-            if (livingKiller.health < ((ExLivingEntity) livingKiller).getMaxHealth() && this.random.nextInt(3) != 0) {
+        if (killer instanceof Mob livingKiller) {
+            if (livingKiller.health < ((ExMob) livingKiller).getMaxHealth() && this.random.nextInt(3) != 0) {
                 var instance = new ItemInstance(AC_Items.heart.id, 1, 0);
                 var itemEntity = new ItemEntity(this.level, this.x, this.y, this.z, instance);
                 this.level.addEntity(itemEntity);
@@ -962,5 +944,15 @@ public abstract class MixinLivingEntity extends MixinEntity implements ExLivingE
     public void setRandomLookRateVariation(int value) {
         // TODO: throw on "value <= 0"
         this.randomLookRateVariation = value;
+    }
+
+    @Override
+    public void setCanGetFallDamage(boolean arg) {
+        this.canGetFallDamage = arg;
+    }
+
+    @Override
+    public boolean getCanGetFallDamage() {
+        return this.canGetFallDamage;
     }
 }

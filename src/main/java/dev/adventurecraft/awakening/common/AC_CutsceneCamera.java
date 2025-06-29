@@ -9,7 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.Vec3;
 import org.lwjgl.opengl.GL11;
 
@@ -79,7 +79,7 @@ public class AC_CutsceneCamera {
         }
     }
 
-    public void drawLines(LivingEntity entity, float time) {
+    public void drawLines(Mob entity, float time) {
         double prX = entity.xOld + (entity.x - entity.xOld) * (double) time;
         double prY = entity.yOld + (entity.y - entity.yOld) * (double) time;
         double prZ = entity.zOld + (entity.z - entity.zOld) * (double) time;

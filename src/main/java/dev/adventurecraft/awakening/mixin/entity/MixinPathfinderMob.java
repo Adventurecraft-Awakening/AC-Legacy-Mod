@@ -1,24 +1,27 @@
 package dev.adventurecraft.awakening.mixin.entity;
 
 import dev.adventurecraft.awakening.common.IEntityPather;
-import dev.adventurecraft.awakening.extension.entity.ExMobEntity;
+import dev.adventurecraft.awakening.extension.entity.ExPathfinderMob;
 import dev.adventurecraft.awakening.extension.entity.ai.pathing.ExEntityPath;
+import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 
 import java.util.Collection;
+import java.util.Optional;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(Mob.class)
-public abstract class MixinMobEntity extends MixinLivingEntity implements ExMobEntity, IEntityPather {
+@Mixin(PathfinderMob.class)
+public abstract class MixinPathfinderMob extends MixinMob implements ExPathfinderMob, IEntityPather {
 
     @Shadow
     protected Entity attackTarget;
@@ -170,36 +173,37 @@ public abstract class MixinMobEntity extends MixinLivingEntity implements ExMobE
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag compoundTag) {
-        super.readAdditionalSaveData(compoundTag);
-        compoundTag.putBoolean("canPathRandomly", this.canPathRandomly);
-        compoundTag.putBoolean("canForgetTargetRandomly", this.canForgetTargetRandomly);
-        if(!customData.isEmpty()) {
-            CompoundTag customCompoundTag = new CompoundTag();
-            for(String key : customData.keySet()){
-                customCompoundTag.putString(key,customData.get(key));
+    protected void ac$readAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
+        super.ac$readAdditionalSaveData(tag, ci);
+
+        tag.putBoolean("canPathRandomly", this.canPathRandomly);
+        tag.putBoolean("canForgetTargetRandomly", this.canForgetTargetRandomly);
+
+        if (!this.customData.isEmpty()) {
+            var customCompoundTag = new CompoundTag();
+            for (String key : this.customData.keySet()) {
+                customCompoundTag.putString(key, this.customData.get(key));
             }
-            compoundTag.putCompoundTag("custom",customCompoundTag);
+            tag.putCompoundTag("custom", customCompoundTag);
         }
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag compoundTag) {
-        super.addAdditionalSaveData(compoundTag);
-        if (compoundTag.hasKey("canPathRandomly")) {
-            this.canPathRandomly = compoundTag.getBoolean("canPathRandomly");
-        }
+    protected void ac$addAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
+        super.ac$addAdditionalSaveData(tag, ci);
+        var exTag = (ExCompoundTag) tag;
 
-        if (compoundTag.hasKey("canForgetTargetRandomly")) {
-            this.canPathRandomly = compoundTag.getBoolean("canForgetTargetRandomly");
-        }
+        exTag.findBool("canPathRandomly").ifPresent(this::setCanPathRandomly);
+        exTag.findBool("canForgetTargetRandomly").ifPresent(this::setCanForgetTargetRandomly);
 
-        if(compoundTag.hasKey("custom")){
-            for(Tag tags : (Collection<Tag>)compoundTag.getCompoundTag("custom").getTags()) {
-                customData.put(tags.getType(),tags.toString());
+        var customTag = exTag.findCompound("custom");
+        if (customTag.isPresent()) {
+            for (Tag tags : (Collection<Tag>) customTag.get().getTags()) {
+                this.customData.put(tags.getType(), tags.toString());
             }
         }
     }
+
     @Override
     public boolean getCanForgetTargetRandomly() {
         return this.canForgetTargetRandomly;

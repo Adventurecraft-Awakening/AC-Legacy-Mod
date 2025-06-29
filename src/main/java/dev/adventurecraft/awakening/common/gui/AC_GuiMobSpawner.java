@@ -1,17 +1,22 @@
 package dev.adventurecraft.awakening.common.gui;
 
+import dev.adventurecraft.awakening.client.gui.FilePickerWidget;
+import dev.adventurecraft.awakening.common.AC_JScriptHandler;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityMobSpawner;
 import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.common.GuiSlider2;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.script.EntityDescriptions;
+import dev.adventurecraft.awakening.util.IntRect;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.item.Item;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class AC_GuiMobSpawner extends Screen {
@@ -25,6 +30,9 @@ public class AC_GuiMobSpawner extends Screen {
     Button setOnDetrigger;
     Button setOnUpdate;
     int selectedID;
+
+    FilePickerWidget scriptWidget;
+    int selectedScriptId;
 
     public AC_GuiMobSpawner(AC_TileEntityMobSpawner entity) {
         this.mobSpawner = entity;
@@ -138,18 +146,16 @@ public class AC_GuiMobSpawner extends Screen {
             buttons.add(new Button(64, this.width / 2 - 1, 104, subWidth, 20, "Reload Scripts"));
             buttons.add(new Button(65, 4, 124, (this.width - 12) / 3, 18, "None"));
 
-            String[] scriptFiles = ((ExWorld) this.minecraft.level).getScriptFiles();
-            int id = 1;
-            for (String scriptFile : scriptFiles) {
-                var button = new Button(
-                    id + scriptIdOffset - 1,
-                    4 + id % 3 * (this.width - 8) / 3,
-                    124 + id / 3 * 20,
-                    (this.width - 12) / 3, 18,
-                    scriptFile);
-                buttons.add(button);
-                ++id;
-            }
+            int scriptY = 124;
+            int scriptHeight = this.height - scriptY;
+            this.scriptWidget = new FilePickerWidget(
+                this.minecraft,
+                new IntRect(this.width / 2, scriptY, this.width, scriptHeight),
+                new IntRect(0, 24, this.width, scriptHeight),
+                16);
+            this.selectedScriptId = -1;
+
+            this.reloadScriptList(((ExWorld) this.minecraft.level).getScriptHandler());
         }
     }
 
@@ -208,7 +214,9 @@ public class AC_GuiMobSpawner extends Screen {
             }
         } else if (button.id == 64) {
             if (this.displayScreen == 3) {
-                ((ExWorld) this.mobSpawner.level).getScriptHandler().loadScripts();
+                var scriptHandler = ((ExWorld) this.mobSpawner.level).getScriptHandler();
+                scriptHandler.loadScripts();
+                this.reloadScriptList(scriptHandler);
                 this.resetNames();
             }
         } else if (button.id == 65) {
@@ -219,9 +227,6 @@ public class AC_GuiMobSpawner extends Screen {
         } else if (button.id >= 120) {
             if (this.displayScreen == 0) {
                 this.mobSpawner.entityID = button.message;
-            } else if (this.displayScreen == 3) {
-                this.updateScriptFile(button.message);
-                this.resetNames();
             }
         } else if (button.id >= 70 && button.id < 120) {
             if (this.displayScreen == 2) {
@@ -235,6 +240,15 @@ public class AC_GuiMobSpawner extends Screen {
                     button.message = "Trigger ".concat(Integer.toString(triggerId)).concat(": Set");
                 }
             }
+        }
+    }
+
+    @Override
+    public void mouseEvent() {
+        super.mouseEvent();
+
+        if (this.displayScreen == 3) {
+            this.scriptWidget.onMouseEvent();
         }
     }
 
@@ -256,6 +270,19 @@ public class AC_GuiMobSpawner extends Screen {
         this.mobSpawner.respawnDelay = (int) (this.respawnSlider.sliderValue * 12000.0F + 0.5F);
         this.respawnSlider.message = String.format("Respawn Delay: %.1fs", (float) this.mobSpawner.respawnDelay / 20.0F);
 
+        if (this.displayScreen == 3) {
+            this.scriptWidget.render(mouseX, mouseY, tickTime);
+
+            int currentScriptId = this.scriptWidget.getSelectedIndex();
+            if (this.selectedScriptId != currentScriptId) {
+                this.selectedScriptId = currentScriptId;
+
+                Path file = this.scriptWidget.getSelectedItem();
+                this.updateScriptFile(file == null ? "" : file.getFileName().toString());
+                this.resetNames();
+            }
+        }
+
         super.render(mouseX, mouseY, tickTime);
     }
 
@@ -273,6 +300,12 @@ public class AC_GuiMobSpawner extends Screen {
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    private void reloadScriptList(AC_JScriptHandler scriptHandler) {
+        this.scriptWidget.files.clear();
+        Path[] files = scriptHandler.getFiles();
+        Collections.addAll(this.scriptWidget.files, files);
     }
 
     private void resetNames() {

@@ -4,6 +4,7 @@ import dev.adventurecraft.awakening.common.AC_CutsceneCamera;
 import dev.adventurecraft.awakening.common.AC_CutsceneCameraBlendType;
 import dev.adventurecraft.awakening.common.AC_CutsceneCameraPoint;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
+import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.tile.entity.TileEntity;
@@ -25,30 +26,27 @@ public class AC_TileEntityCamera extends TileEntity {
         this.copyCamera(((ExMinecraft) Minecraft.instance).getCutsceneCamera(), this.camera);
     }
 
-    private void copyCamera(AC_CutsceneCamera var1, AC_CutsceneCamera var2) {
-        var2.clearPoints();
+    private void copyCamera(AC_CutsceneCamera src, AC_CutsceneCamera dst) {
+        dst.clearPoints();
 
-        for (AC_CutsceneCameraPoint var4 : var1.cameraPoints) {
-            var2.addCameraPoint(var4.time, var4.posX, var4.posY, var4.posZ, var4.rotYaw, var4.rotPitch, var4.blendType);
+        for (AC_CutsceneCameraPoint p : src.cameraPoints) {
+            dst.addCameraPoint(p.time, p.posX, p.posY, p.posZ, p.rotYaw, p.rotPitch, p.blendType);
         }
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        var exTag = (ExCompoundTag) tag;
+
         int pointCount = tag.getInt("numPoints");
 
         for (int i = 0; i < pointCount; ++i) {
             this.readPointTag(tag.getCompoundTag(String.format("point%d", i)));
         }
 
-        if (tag.hasKey("type")) {
-            this.setBlendType(AC_CutsceneCameraBlendType.get(tag.getByte("type")));
-        }
-
-        if (tag.hasKey("pauseGame")) {
-            this.pauseGame = tag.getBoolean("pauseGame");
-        }
+        exTag.findByte("type").map(AC_CutsceneCameraBlendType::get).ifPresent(this::setBlendType);
+        exTag.findBool("pauseGame").ifPresent(b -> this.pauseGame = b);
     }
 
     @Override
@@ -86,10 +84,9 @@ public class AC_TileEntityCamera extends TileEntity {
         float yaw = tag.getFloat("yaw");
         float pitch = tag.getFloat("pitch");
 
-        var type = AC_CutsceneCameraBlendType.QUADRATIC;
-        if (tag.hasKey("type")) {
-            type = AC_CutsceneCameraBlendType.get(tag.getByte("type"));
-        }
+        var type = ((ExCompoundTag) tag).findByte("type")
+            .map(AC_CutsceneCameraBlendType::get)
+            .orElse(AC_CutsceneCameraBlendType.QUADRATIC);
 
         this.camera.addCameraPoint(time, x, y, z, yaw, pitch, type);
     }

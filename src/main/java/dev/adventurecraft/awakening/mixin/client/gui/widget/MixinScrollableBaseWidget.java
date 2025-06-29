@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.mixin.client.gui.widget;
 
 import dev.adventurecraft.awakening.common.ScrollableWidget;
 import dev.adventurecraft.awakening.extension.client.gui.widget.ExScrollableBaseWidget;
+import dev.adventurecraft.awakening.util.IntRect;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractSelectionList;
 import net.minecraft.client.gui.components.Button;
@@ -42,24 +43,30 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
 
         MixinScrollableBaseWidget self = this;
         this.rootWidget = new ScrollableWidget(
-            instance, 0, 0, width, height, contentTop, contentBot, entryHeight) {
+            instance,
+            new IntRect(0, 0, width, height),
+            IntRect.fromEdges(0, contentTop, width, contentBot),
+            entryHeight) {
             @Override
             protected int getEntryCount() {
                 return self.getItemCount();
             }
 
             @Override
-            protected void entryClicked(int entryIndex, boolean doubleClick) {
-                self.method_1267(entryIndex, doubleClick);
+            protected void entryClicked(int entryIndex, int buttonIndex, boolean doubleClick) {
+                if (buttonIndex == 0) {
+                    self.method_1267(entryIndex, doubleClick);
+                }
             }
 
             @Override
             public int getEntryUnderPoint(int x, int y) {
-                int center = this.width / 2 + this.widgetX;
+                IntRect screenRect = this.getScreenRect();
+                int center = screenRect.width() / 2 + screenRect.left();
                 int left = center - 110;
                 int right = center + 110;
                 if (x >= left && x <= right) {
-                    int entryY = y - this.contentTop - this.getContentTopPadding() + (int) this.getScrollY() - 4 - this.widgetY;
+                    int entryY = y - this.getContentRect().top() - this.getContentTopPadding() + (int) this.getScrollY() - 4 - screenRect.top();
                     if (entryY >= 0) {
                         int entryIndex = entryY / this.entryHeight;
                         if (entryIndex >= 0 && entryIndex < this.getEntryCount()) {
@@ -72,9 +79,10 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
 
             @Override
             protected boolean mouseClicked(int mouseX, int mouseY) {
-                int contentTop = this.contentTop + this.widgetY;
+                IntRect screenRect = this.getScreenRect();
+                int contentTop = this.getContentRect().top() + screenRect.top();
                 int scrollY = (int) this.getScrollY();
-                int entryLeft = mouseX - (this.width / 2 + this.widgetX - 110);
+                int entryLeft = mouseX - (screenRect.width() / 2 + screenRect.left() - 110);
                 int entryTop = mouseY - contentTop + scrollY - 4;
                 int hoverY = mouseY - contentTop - this.getContentTopPadding() + scrollY - 4;
                 if (hoverY <= 0) {

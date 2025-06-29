@@ -4,7 +4,7 @@ import java.io.File;
 
 import dev.adventurecraft.awakening.entity.AC_EntityNPC;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityNpcPath;
-import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
+import dev.adventurecraft.awakening.extension.entity.ExMob;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
@@ -167,13 +167,13 @@ public class AC_GuiNPC extends Screen {
                     btn.message = "Can't be attacked";
                 }
             } else if (btn.id == 0) {
-                ((ExLivingEntity) this.npc).setTexture("/mob/char.png");
+                ((ExMob) this.npc).setTexture("/mob/char.png");
             } else if (btn.id > 0) {
                 File npcDir = new File(((ExWorld) Minecraft.instance.level).getLevelDir(), "npc");
                 File[] files = npcDir.listFiles();
                 if (files != null) {
                     if (btn.id - 1 < files.length) {
-                        ((ExLivingEntity) this.npc).setTexture("/npc/" + files[btn.id - 1].getName());
+                        ((ExMob) this.npc).setTexture("/npc/" + files[btn.id - 1].getName());
                     }
                 }
             }

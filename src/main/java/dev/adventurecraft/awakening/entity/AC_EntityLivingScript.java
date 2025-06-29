@@ -2,8 +2,9 @@ package dev.adventurecraft.awakening.entity;
 
 import dev.adventurecraft.awakening.common.AC_CoordBlock;
 import dev.adventurecraft.awakening.common.IEntityPather;
-import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
+import dev.adventurecraft.awakening.extension.entity.ExMob;
 import dev.adventurecraft.awakening.extension.entity.ai.pathing.ExEntityPath;
+import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.script.EntityDescriptions;
 import dev.adventurecraft.awakening.script.ScopeTag;
@@ -11,10 +12,9 @@ import dev.adventurecraft.awakening.script.ScriptEntity;
 import dev.adventurecraft.awakening.script.ScriptEntityDescription;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityNpcPath;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.pathfinder.Path;
@@ -23,7 +23,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
-public class AC_EntityLivingScript extends LivingEntity implements IEntityPather {
+public class AC_EntityLivingScript extends Mob implements IEntityPather {
 
     String initDescTo;
     String descriptionName;
@@ -64,7 +64,7 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
 
         if (reset) {
             this.health = desc.health;
-            ((ExLivingEntity) this).setMaxHealth(desc.health);
+            ((ExMob) this).setMaxHealth(desc.health);
             this.onCreated = desc.onCreated;
             this.onUpdate = desc.onUpdate;
             this.onPathReached = desc.onPathReached;
@@ -122,8 +122,9 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag tag) {
-        super.readAdditionalSaveData(tag);
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+
         if (this.descriptionName != null && !this.descriptionName.equals("")) {
             tag.putString("descriptionName", this.descriptionName);
         }
@@ -152,14 +153,13 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
             tag.putString("onInteraction", this.onInteraction);
         }
 
-        if (tag.hasKey("scope")) {
-            ScopeTag.loadScopeFromTag(this.scope, tag.getCompoundTag("scope"));
-        }
+        ((ExCompoundTag) tag).findCompound("scope")
+            .ifPresent(c -> ScopeTag.loadScopeFromTag(this.scope, c));
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag tag) {
-        super.addAdditionalSaveData(tag);
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
         this.initDescTo = tag.getString("descriptionName");
         this.onCreated = tag.getString("onCreated");
         this.onUpdate = tag.getString("onUpdate");
@@ -167,7 +167,7 @@ public class AC_EntityLivingScript extends LivingEntity implements IEntityPather
         this.onAttacked = tag.getString("onAttacked");
         this.onDeath = tag.getString("onDeath");
         this.onInteraction = tag.getString("onInteraction");
-        tag.putTag("scope", (Tag) ScopeTag.getTagFromScope(this.scope));
+        tag.putTag("scope", ScopeTag.getTagFromScope(this.scope));
     }
 
     public void runCreatedScript() {

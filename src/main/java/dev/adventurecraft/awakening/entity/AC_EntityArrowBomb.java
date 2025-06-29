@@ -2,7 +2,7 @@ package dev.adventurecraft.awakening.entity;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Arrow;
 import net.minecraft.world.level.Level;
@@ -19,7 +19,7 @@ public class AC_EntityArrowBomb extends Arrow {
         super(var1, var2, var4, var6);
     }
 
-    public AC_EntityArrowBomb(Level var1, LivingEntity var2) {
+    public AC_EntityArrowBomb(Level var1, Mob var2) {
         super(var1, var2);
     }
 
@@ -44,14 +44,14 @@ public class AC_EntityArrowBomb extends Arrow {
         this.flightTime = 0;
     }
 
-    public void readAdditionalSaveData(CompoundTag var1) {
-        super.readAdditionalSaveData(var1);
-        var1.putByte("fuse", (byte) this.fuse);
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putByte("fuse", (byte) this.fuse);
     }
 
-    public void addAdditionalSaveData(CompoundTag var1) {
-        super.addAdditionalSaveData(var1);
-        this.fuse = var1.getByte("fuse") & 255;
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        this.fuse = tag.getByte("fuse") & 255;
     }
 
     public void playerTouch(Player var1) {

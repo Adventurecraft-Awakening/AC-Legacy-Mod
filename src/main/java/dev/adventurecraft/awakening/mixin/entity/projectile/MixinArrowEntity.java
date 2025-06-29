@@ -2,7 +2,7 @@ package dev.adventurecraft.awakening.mixin.entity.projectile;
 
 import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.extension.block.ExLadderBlock;
-import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
+import dev.adventurecraft.awakening.extension.entity.ExMob;
 import dev.adventurecraft.awakening.extension.entity.projectile.ExArrowEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.mixin.entity.MixinEntity;
@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.List;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.projectile.Arrow;
 import net.minecraft.world.level.tile.Tile;
 import net.minecraft.world.phys.AABB;
@@ -45,7 +45,7 @@ public abstract class MixinArrowEntity extends MixinEntity implements ExArrowEnt
     @Shadow
     public int flightTime;
     @Shadow
-    public LivingEntity owner;
+    public Mob owner;
 
     private int attackStrength = 2;
 
@@ -196,7 +196,7 @@ public abstract class MixinArrowEntity extends MixinEntity implements ExArrowEnt
     }
 
     public void handleHitEntity(HitResult var1) {
-        if (var1.entity instanceof LivingEntity && ((ExLivingEntity) var1.entity).protectedByShield(this.xo, this.yo, this.zo)) {
+        if (var1.entity instanceof Mob && ((ExMob) var1.entity).protectedByShield(this.xo, this.yo, this.zo)) {
             this.level.playSound((Entity) (Object) this, "random.drr", 1.0F, 1.2F / (this.random.nextFloat() * 0.2F + 0.9F));
             this.remove();
         } else if (var1.entity.hurt(this.owner, this.attackStrength)) {
