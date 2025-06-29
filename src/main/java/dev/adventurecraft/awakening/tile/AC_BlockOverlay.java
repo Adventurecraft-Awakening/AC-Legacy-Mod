@@ -75,7 +75,7 @@ public class AC_BlockOverlay extends Tile implements AC_IBlockColor, AC_ITrigger
 
     @Override
     public int getRenderShape() {
-        return 37;
+        return AC_BlockShapes.BLOCK_OVERLAY;
     }
 
     @Override

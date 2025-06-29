@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.tile;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
+import net.minecraft.client.renderer.BlockShapes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelSource;
@@ -10,7 +11,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
-public class AC_BlockLockedDoor extends Tile implements AC_ITriggerBlock {
+public class AC_BlockLockedDoor extends Tile implements AC_ITriggerDebugBlock {
 
     int doorKeyToUse;
 
@@ -38,132 +39,144 @@ public class AC_BlockLockedDoor extends Tile implements AC_ITriggerBlock {
     }
 
     @Override
-    public boolean shouldRender(LevelSource view, int x, int y, int z) {
-        int var5 = view.getData(x, y, z);
-        return AC_DebugMode.active || var5 == 0;
+    public int getRenderShape(LevelSource view, int x, int y, int z) {
+        if (AC_DebugMode.active || view.getData(x, y, z) == 0) {
+            return this.getRenderShape();
+        }
+        return BlockShapes.NONE;
+    }
+
+    public @Override boolean canBeTriggered() {
+        return false;
     }
 
     @Override
-    public int getTexture(LevelSource var1, int var2, int var3, int var4, int var5) {
-        if (var5 != 0 && var5 != 1) {
-            int var6 = 1;
-            while (var1.getTile(var2, var3 + var6, var4) == this.id) {
-                ++var6;
-            }
-
-            int var7;
-            for (var7 = 1; var1.getTile(var2, var3 - var7, var4) == this.id; ++var7) {
-                ++var6;
-            }
-
-            int var8 = this.tex;
-            if (var6 > 2) {
-                if (var6 / 2 == var7 - 1) {
-                    int var9 = 1;
-
-                    var7 = 1;
-                    while (var1.getTile(var2 + var9, var3, var4) == this.id) {
-                        ++var9;
-                    }
-
-                    while (var1.getTile(var2 - var7, var3, var4) == this.id) {
-                        ++var9;
-                        ++var7;
-                    }
-
-                    if (var9 == 1) {
-                        while (var1.getTile(var2, var3, var4 + var9) == this.id) {
-                            ++var9;
-                        }
-
-                        while (var1.getTile(var2, var3, var4 - var7) == this.id) {
-                            ++var9;
-                            ++var7;
-                        }
-                    }
-
-                    if (var9 / 2 == var7 - 1) {
-                        ++var8;
-                    }
-                }
-            } else {
-                var8 += 16;
-                if (var1.getTile(var2, var3 - 1, var4) != this.id) {
-                    var8 += 16;
-                }
-
-                if (var5 == 2) {
-                    if (var1.getTile(var2 + 1, var3, var4) == this.id) {
-                        ++var8;
-                    }
-                } else if (var5 == 3) {
-                    if (var1.getTile(var2 - 1, var3, var4) == this.id) {
-                        ++var8;
-                    }
-                } else if (var5 == 4) {
-                    if (var1.getTile(var2, var3, var4 - 1) == this.id) {
-                        ++var8;
-                    }
-                } else if (var5 == 5 && var1.getTile(var2, var3, var4 + 1) == this.id) {
-                    ++var8;
-                }
-            }
-
-            return var8;
-        } else {
+    public int getTexture(LevelSource level, int x, int y, int z, int side) {
+        if (side == 0 || side == 1) {
             return this.tex;
         }
+
+        int c = 1;
+        while (level.getTile(x, y + c, z) == this.id) {
+            ++c;
+        }
+
+        int b;
+        for (b = 1; level.getTile(x, y - b, z) == this.id; ++b) {
+            ++c;
+        }
+
+        int id = this.tex;
+        if (c > 2) {
+            if (c / 2 == b - 1) {
+                int a = 1;
+
+                b = 1;
+                while (level.getTile(x + a, y, z) == this.id) {
+                    ++a;
+                }
+
+                while (level.getTile(x - b, y, z) == this.id) {
+                    ++a;
+                    ++b;
+                }
+
+                if (a == 1) {
+                    while (level.getTile(x, y, z + a) == this.id) {
+                        ++a;
+                    }
+
+                    while (level.getTile(x, y, z - b) == this.id) {
+                        ++a;
+                        ++b;
+                    }
+                }
+
+                if (a / 2 == b - 1) {
+                    ++id;
+                }
+            }
+            return id;
+        }
+
+        id += 16;
+        if (level.getTile(x, y - 1, z) != this.id) {
+            id += 16;
+        }
+
+        if (side == 2) {
+            if (level.getTile(x + 1, y, z) == this.id) {
+                ++id;
+            }
+        }
+        else if (side == 3) {
+            if (level.getTile(x - 1, y, z) == this.id) {
+                ++id;
+            }
+        }
+        else if (side == 4) {
+            if (level.getTile(x, y, z - 1) == this.id) {
+                ++id;
+            }
+        }
+        else if (side == 5 && level.getTile(x, y, z + 1) == this.id) {
+            ++id;
+        }
+        return id;
     }
 
     @Override
-    public void attack(Level var1, int var2, int var3, int var4, Player var5) {
-        if (var5.inventory.removeResource(this.doorKeyToUse)) {
-            var1.playSound((double) var2 + 0.5D, (double) var3 + 0.5D, (double) var4 + 0.5D, "random.door_open", 1.0F, var1.random.nextFloat() * 0.1F + 0.9F);
+    public void attack(Level level, int x, int y, int z, Player player) {
+        if (!player.inventory.removeResource(this.doorKeyToUse)) {
+            return;
+        }
 
-            int var6;
-            int var7;
-            for (var6 = 0; var1.getTile(var2, var3 + var6, var4) == this.id; ++var6) {
-                for (var7 = 0; var1.getTile(var2 + var7, var3 + var6, var4) == this.id; ++var7) {
-                    var1.setData(var2 + var7, var3 + var6, var4, 1);
-                    var1.sendTileUpdated(var2 + var7, var3 + var6, var4);
-                }
+        float pitch = level.random.nextFloat() * 0.1F + 0.9F;
+        level.playSound(x + 0.5D, y + 0.5D, z + 0.5D, "random.door_open", 1.0F, pitch);
 
-                for (var7 = 1; var1.getTile(var2 - var7, var3 + var6, var4) == this.id; ++var7) {
-                    var1.setData(var2 - var7, var3 + var6, var4, 1);
-                    var1.sendTileUpdated(var2 - var7, var3 + var6, var4);
-                }
-
-                for (var7 = 1; var1.getTile(var2, var3 + var6, var4 + var7) == this.id; ++var7) {
-                    var1.setData(var2, var3 + var6, var4 + var7, 1);
-                    var1.sendTileUpdated(var2, var3 + var6, var4 + var7);
-                }
-
-                for (var7 = 1; var1.getTile(var2, var3 + var6, var4 - var7) == this.id; ++var7) {
-                    var1.setData(var2, var3 + var6, var4 - var7, 1);
-                    var1.sendTileUpdated(var2, var3 + var6, var4 - var7);
-                }
+        int a;
+        int b;
+        for (a = 0; level.getTile(x, y + a, z) == this.id; ++a) {
+            for (b = 0; level.getTile(x + b, y + a, z) == this.id; ++b) {
+                level.setData(x + b, y + a, z, 1);
+                level.sendTileUpdated(x + b, y + a, z);
             }
 
-            for (var6 = -1; var1.getTile(var2, var3 + var6, var4) == this.id; --var6) {
-                for (var7 = 0; var1.getTile(var2 + var7, var3 + var6, var4) == this.id; ++var7) {
-                    var1.setData(var2 + var7, var3 + var6, var4, 1);
-                    var1.sendTileUpdated(var2 + var7, var3 + var6, var4);
-                }
+            for (b = 1; level.getTile(x - b, y + a, z) == this.id; ++b) {
+                level.setData(x - b, y + a, z, 1);
+                level.sendTileUpdated(x - b, y + a, z);
+            }
 
-                for (var7 = 1; var1.getTile(var2 - var7, var3 + var6, var4) == this.id; ++var7) {
-                    var1.setData(var2 - var7, var3 + var6, var4, 1);
-                    var1.sendTileUpdated(var2 - var7, var3 + var6, var4);
-                }
+            for (b = 1; level.getTile(x, y + a, z + b) == this.id; ++b) {
+                level.setData(x, y + a, z + b, 1);
+                level.sendTileUpdated(x, y + a, z + b);
+            }
 
-                for (var7 = 1; var1.getTile(var2, var3 + var6, var4 + var7) == this.id; ++var7) {
-                    var1.setData(var2, var3 + var6, var4 + var7, 1);
-                    var1.sendTileUpdated(var2, var3 + var6, var4 + var7);
-                }
+            for (b = 1; level.getTile(x, y + a, z - b) == this.id; ++b) {
+                level.setData(x, y + a, z - b, 1);
+                level.sendTileUpdated(x, y + a, z - b);
+            }
+        }
 
-                for (var7 = 1; var1.getTile(var2, var3 + var6, var4 - var7) == this.id; ++var7) {
-                    var1.setData(var2, var3 + var6, var4 - var7, 1);
-                    var1.sendTileUpdated(var2, var3 + var6, var4 - var7);
-                }
+        for (a = -1; level.getTile(x, y + a, z) == this.id; --a) {
+            for (b = 0; level.getTile(x + b, y + a, z) == this.id; ++b) {
+                level.setData(x + b, y + a, z, 1);
+                level.sendTileUpdated(x + b, y + a, z);
+            }
+
+            for (b = 1; level.getTile(x - b, y + a, z) == this.id; ++b) {
+                level.setData(x - b, y + a, z, 1);
+                level.sendTileUpdated(x - b, y + a, z);
+            }
+
+            for (b = 1; level.getTile(x, y + a, z + b) == this.id; ++b) {
+                level.setData(x, y + a, z + b, 1);
+                level.sendTileUpdated(x, y + a, z + b);
+            }
+
+            for (b = 1; level.getTile(x, y + a, z - b) == this.id; ++b) {
+                level.setData(x, y + a, z - b, 1);
+                level.sendTileUpdated(x, y + a, z - b);
             }
         }
     }

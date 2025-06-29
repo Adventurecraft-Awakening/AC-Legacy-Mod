@@ -10,6 +10,7 @@
     "client.MixinSingleplayerInteractionManager",
     "client.gui.MixinAchievementWidget",
     "client.gui.MixinInGameHud",
+    "client.gui.components.MixinEditBox",
     "client.gui.screen.MixinScreen",
     "client.gui.screen.MixinSelectWorldScreen",
     "client.gui.screen.container.MixinContainerScreen",

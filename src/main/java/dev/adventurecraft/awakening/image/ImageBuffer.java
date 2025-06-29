@@ -1,5 +1,7 @@
 package dev.adventurecraft.awakening.image;
 
+import dev.adventurecraft.awakening.layout.IntPoint;
+import dev.adventurecraft.awakening.layout.IntRect;
 import org.apache.commons.lang3.NotImplementedException;
 import org.lwjgl.BufferUtils;
 
@@ -17,8 +19,29 @@ public final class ImageBuffer {
     private final ImageFormat format;
 
     ImageBuffer(ByteBuffer buffer, int width, int height, int stride, ImageFormat format) {
-        if (format == null)
-            throw new IllegalArgumentException();
+        if (format == null) {
+            throw new IllegalArgumentException("'format' is null.");
+        }
+
+        int minStride = format.getByteStride(width);
+        if (stride < minStride) {
+            throw new IllegalArgumentException(String.format("'stride' (%d) is less than minimum stride (%d) for width (%d).",
+                stride,
+                minStride,
+                width
+            ));
+        }
+
+        final int size = stride * height;
+        if (buffer.remaining() < size) {
+            throw new IllegalArgumentException(String.format(
+                "'buffer' size (%d) is less than bounds (%d * %d = %d).",
+                buffer.remaining(),
+                stride,
+                height,
+                size
+            ));
+        }
 
         this.buffer = buffer;
         this.width = width;
@@ -27,8 +50,8 @@ public final class ImageBuffer {
         this.format = format;
     }
 
-    public Rect getBounds() {
-        return new Rect(0, 0, this.width, this.height);
+    public IntRect getBounds() {
+        return new IntRect(0, 0, this.width, this.height);
     }
 
     public Size getSize() {
@@ -59,7 +82,7 @@ public final class ImageBuffer {
         return this.buffer.slice(y * this.stride, this.stride).order(ByteOrder.nativeOrder());
     }
 
-    public void copyTo(ImageBuffer dst, Point dstPoint, Point srcPoint, Size size) {
+    public void copyTo(ImageBuffer dst, IntPoint dstPoint, IntPoint srcPoint, Size size) {
         var src = this;
 
         int srcStart = src.format.getByteStride(srcPoint.x);
@@ -73,7 +96,8 @@ public final class ImageBuffer {
                 var dstSpan = dst.getRowSlice(y + dstPoint.y).slice(dstStart, dstSize);
                 dstSpan.put(srcSpan);
             }
-        } else {
+        }
+        else {
             var srcBuffer = BufferUtils.createByteBuffer(src.format.getByteStride(size.w));
             var dstBuffer = BufferUtils.createByteBuffer(dst.format.getByteStride(size.w));
             throw new NotImplementedException();
@@ -81,10 +105,10 @@ public final class ImageBuffer {
     }
 
     public void copyTo(ImageBuffer dst) {
-        copyTo(dst, Point.zero, Point.zero, this.getSize());
+        copyTo(dst, IntPoint.zero, IntPoint.zero, this.getSize());
     }
 
-    public void copyTo(IntBuffer dst, Point dstPoint, Point srcPoint, Size size, ImageFormat dstFormat) {
+    public void copyTo(IntBuffer dst, IntPoint dstPoint, IntPoint srcPoint, Size size, ImageFormat dstFormat) {
         var src = this;
         if (src.format == dstFormat) {
             blitTo(dst, dstPoint, srcPoint, size);
@@ -93,14 +117,26 @@ public final class ImageBuffer {
 
         if (src.format == ImageFormat.RGBA_U8) {
             if (dstFormat == ImageFormat.BGRA_U8) {
-                rgba8ToBgra8(dst, dstPoint, srcPoint, size);
+                swapRedAndBlue(dst, dstPoint, srcPoint, size);
                 return;
             }
         }
-        throw new NotImplementedException();
+
+        if (src.format == ImageFormat.BGRA_U8) {
+            if (dstFormat == ImageFormat.RGBA_U8) {
+                swapRedAndBlue(dst, dstPoint, srcPoint, size);
+                return;
+            }
+        }
+
+        throw new NotImplementedException(String.format(
+            "Cannot convert source (%s) to destination (%s).",
+            src.format.toShortString(),
+            dstFormat.toShortString()
+        ));
     }
 
-    private void blitTo(IntBuffer dst, Point dstPoint, Point srcPoint, Size size) {
+    private void blitTo(IntBuffer dst, IntPoint dstPoint, IntPoint srcPoint, Size size) {
         var src = this;
         int dstOffset = dstPoint.y * size.w + dstPoint.x;
         for (int i = 0; i < size.h; i++) {
@@ -112,7 +148,7 @@ public final class ImageBuffer {
         }
     }
 
-    private void rgba8ToBgra8(IntBuffer dst, Point dstPoint, Point srcPoint, Size size) {
+    private void swapRedAndBlue(IntBuffer dst, IntPoint dstPoint, IntPoint srcPoint, Size size) {
         var src = this;
         int dstOffset = dstPoint.y * size.w + dstPoint.x;
         for (int i = 0; i < size.h; i++) {
@@ -127,7 +163,7 @@ public final class ImageBuffer {
     }
 
     public void copyTo(IntBuffer dst, ImageFormat format) {
-        this.copyTo(dst, Point.zero, Point.zero, this.getSize(), format);
+        this.copyTo(dst, IntPoint.zero, IntPoint.zero, this.getSize(), format);
     }
 
     public static ImageBuffer create(int width, int height, int stride, ImageFormat format) {

@@ -49,7 +49,7 @@ public class AC_BlockTree extends TileEntityTile implements AC_IBlockColor {
 
     @Override
     public int getRenderShape() {
-        return 36;
+        return AC_BlockShapes.BLOCK_TREE;
     }
 
     @Override

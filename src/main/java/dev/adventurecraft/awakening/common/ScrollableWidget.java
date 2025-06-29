@@ -1,8 +1,8 @@
 package dev.adventurecraft.awakening.common;
 
-import dev.adventurecraft.awakening.util.IntRect;
-import dev.adventurecraft.awakening.util.MathF;
+import dev.adventurecraft.awakening.layout.*;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
+import dev.adventurecraft.awakening.util.DrawUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.components.Button;
@@ -10,52 +10,46 @@ import net.minecraft.client.renderer.Tesselator;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
+import javax.annotation.Nullable;
 import java.util.List;
+
+import static dev.adventurecraft.awakening.util.DrawUtil.fillRect;
 
 public abstract class ScrollableWidget extends GuiComponent {
 
     public final Minecraft client;
-    private IntRect screenRect;
-    private IntRect contentRect;
+    private IntRect layoutRect;
+    private IntBorder layoutBorder;
+    private IntBorder layoutPadding;
 
     protected final int entryHeight;
-    private final int scrollBackRight;
-    private final int scrollBackLeft;
 
-    private int scrollbarX;
     private int scrollbarWidth;
-    private int field_1533;
-    private int field_1534;
+    private int scrollUpButtonId;
+    private int scrollDownButtonId;
+
     private double dragDistance = -2.0;
     private double scrollAmount;
-    private double lerpScrollY;
-    private double targetScrollY;
-    private double scrollY;
+    private Point lerpScroll = Point.zero;
+    private Point targetScroll = Point.zero;
+    private Point scroll = Point.zero;
+
     private int prevEntryIndex = -1;
     private long prevClickTime = 0L;
-    private int contentTopPadding;
-    private int contentBotPadding;
-    private boolean renderEdgeShadows = true;
+    private int edgeShadowHeight = 4;
     private boolean isUsingScrollbar;
     private boolean isScrolling;
     private boolean firstFrame = true;
 
-    public ScrollableWidget(
-        Minecraft minecraft,
-        IntRect screenRect,
-        IntRect contentRect,
-        int entryHeight) {
+    public ScrollableWidget(Minecraft minecraft, IntRect layoutRect, int entryHeight) {
         this.client = minecraft;
-        this.screenRect = screenRect;
-        this.contentRect = contentRect;
+        this.layoutRect = layoutRect;
+
+        this.layoutBorder = IntBorder.zero;
+        this.layoutPadding = new IntBorder(0, this.edgeShadowHeight);
 
         this.entryHeight = entryHeight;
-        this.scrollBackLeft = 0;
-        this.scrollBackRight = this.screenRect.w;
-
         this.scrollbarWidth = 6;
-        this.scrollbarX = this.screenRect.w - this.scrollbarWidth;
-        this.contentTopPadding = 0;
     }
 
     protected abstract int getEntryCount();
@@ -63,54 +57,45 @@ public abstract class ScrollableWidget extends GuiComponent {
     protected void entryClicked(int entryIndex, int buttonIndex, boolean doubleClick) {
     }
 
-    protected int getTotalRenderHeight() {
-        return this.getEntryCount() * this.entryHeight + this.contentTopPadding + this.contentBotPadding;
+    protected int getTotalContentHeight() {
+        return this.getEntryCount() * this.entryHeight + this.layoutPadding.height();
     }
 
-    protected abstract void renderEntry(
-        int entryIndex, double entryX, double entryY, int entryHeight, Tesselator tessellator);
+    protected abstract void renderEntry(Tesselator ts, int entryIndex, Point entryLocation, int entryHeight);
 
-    protected boolean mouseClicked(int mouseX, int mouseY) {
+    protected boolean mouseClicked(IntPoint mouseLocation, int buttonIndex, boolean doubleClick) {
         return false;
     }
 
-    protected void beforeEntryRender(int mouseX, int mouseY, double entryX, double entryY, Tesselator tessellator) {
+    protected void beforeEntryRender(Tesselator ts, IntPoint mouseLocation, Point entryLocation) {
     }
 
-    protected void afterRender(int mouseX, int mouseY, float tickTime, Tesselator tessellator) {
+    protected void afterRender(Tesselator ts, IntPoint mouseLocation, float tickTime) {
     }
 
-    public void setContentTopPadding(int value) {
-        this.contentTopPadding = value;
+    public void setEdgeShadowHeight(int value) {
+        this.edgeShadowHeight = value;
     }
 
-    public void setContentBotPadding(int value) {
-        this.contentBotPadding = value;
+    public Point getLocationRelativeToContent(Point layoutLocation) {
+        Point contentOrigin = this.getContentRect().location().asFloat();
+        return layoutLocation.sub(contentOrigin).add(this.getScroll());
     }
 
-    public void setRenderEdgeShadows(boolean value) {
-        this.renderEdgeShadows = value;
-    }
-
-    public void setScrollbarSize(int x, int width) {
-        this.scrollbarX = x;
-        this.scrollbarWidth = width;
-    }
-
-    public int getEntryUnderPoint(int x, int y) {
-        int entryY = y - this.contentRect.top() - this.contentTopPadding + (int) this.scrollY - this.screenRect.top();
-        if (entryY >= 0) {
-            int entryIndex = entryY / this.entryHeight;
+    public int getEntryUnderPoint(Point location) {
+        Point contentLocation = this.getLocationRelativeToContent(location);
+        if (contentLocation.x >= 0 && contentLocation.x < this.getContentRect().width()) {
+            double entryIndex = contentLocation.y / this.entryHeight;
             if (entryIndex >= 0 && entryIndex < this.getEntryCount()) {
-                return entryIndex;
+                return (int) entryIndex;
             }
         }
         return -1;
     }
 
-    public void registerButtons(List list, int i, int j) {
-        this.field_1533 = i;
-        this.field_1534 = j;
+    public void registerButtons(List buttons, int upId, int downId) {
+        this.scrollUpButtonId = upId;
+        this.scrollDownButtonId = downId;
     }
 
     public void moveContent(double amount) {
@@ -120,55 +105,53 @@ public abstract class ScrollableWidget extends GuiComponent {
 
         if (!this.isUsingScrollbar && this.isScrolling) {
             // Drag with more and more friction
-            double maxY = this.getTotalRenderHeight() - this.contentRect.height();
+            double maxY = this.getTotalContentHeight() - this.layoutPadding.height();
             if (maxY < 0) {
                 maxY /= 2;
             }
-            if (this.targetScrollY >= maxY) {
-                double delta = this.targetScrollY - maxY + amount;
+            if (this.targetScroll.y >= maxY) {
+                double delta = this.targetScroll.y - maxY + amount;
                 amount = amount / (1.0 + (delta * delta) / this.entryHeight);
-            } else {
+            }
+            else {
                 double minY = Math.min(maxY, 0.0f);
-                if (this.targetScrollY < minY) {
-                    double delta = minY - this.targetScrollY - amount;
+                if (this.targetScroll.y < minY) {
+                    double delta = minY - this.targetScroll.y - amount;
                     amount = amount / (1.0 + (delta * delta) / this.entryHeight);
                 }
             }
         }
-        this.targetScrollY += amount;
+        this.targetScroll = this.targetScroll.add(0, amount);
     }
 
-    private double clampTargetScroll(double value, double totalHeight) {
-        double maxY = totalHeight - this.contentRect.h;
+    private Point clampTargetScroll(Point scroll, double totalHeight) {
+        double maxY = totalHeight - this.getBorderRect().height();
         if (maxY < 0) {
             maxY /= 2;
         }
-        if (value >= maxY) {
-            value = maxY;
-        } else {
-            double minY = Math.min(maxY, 0.0f);
-            if (value < minY) {
-                value = minY;
-            }
-        }
-        return value;
+        return scroll.clamp(Point.zero, new Point(0, maxY));
     }
 
     private void clampTargetScroll(double totalHeight) {
-        this.targetScrollY = this.clampTargetScroll(this.targetScrollY, totalHeight);
+        this.targetScroll = this.clampTargetScroll(this.targetScroll, totalHeight);
     }
 
-    public void buttonClicked(Button button) {
+    public boolean buttonClicked(Button button) {
         if (!button.active) {
-            return;
+            return false;
         }
-        if (button.id == this.field_1533) {
+
+        if (button.id == this.scrollUpButtonId) {
             this.moveContent(-(this.entryHeight * 2.0 / 3));
             this.dragDistance = -2.0;
-        } else if (button.id == this.field_1534) {
+            return true;
+        }
+        else if (button.id == this.scrollDownButtonId) {
             this.moveContent(this.entryHeight * 2.0 / 3);
             this.dragDistance = -2.0;
+            return true;
         }
+        return false;
     }
 
     public void onMouseEvent() {
@@ -176,24 +159,34 @@ public abstract class ScrollableWidget extends GuiComponent {
         this.moveContent(-(double) mouseScrollYDelta * this.entryHeight);
     }
 
-    public void render(int mouseX, int mouseY, float tickTime) {
-        int entryCount = this.getEntryCount();
-        int center = this.screenRect.w / 2 + this.screenRect.x;
-        int scrollBarLeft = this.scrollbarX;
-        int scrollBarRight = scrollBarLeft + this.scrollbarWidth;
+    public IntRect getBorderRect() {
+        return this.layoutRect.shrink(this.layoutBorder);
+    }
 
-        int scrollBackLeft = this.scrollBackLeft + this.screenRect.left();
-        int scrollBackRight = this.scrollBackRight + this.screenRect.left();
-        int contentTop = this.contentRect.top() + this.screenRect.top();
-        int contentBot = this.contentRect.bottom() + this.screenRect.top();
-        int totalHeight = this.getTotalRenderHeight();
+    public IntRect getContentRect() {
+        return this.getBorderRect().shrink(this.layoutPadding);
+    }
+
+    public void render(IntPoint mousePoint, float tickTime) {
+        IntRect borderRect = this.getBorderRect();
+
+        var scrollBarBorder = new IntBorder(
+            this.layoutRect.right() - this.scrollbarWidth,
+            this.layoutRect.right(),
+            0,
+            0
+        );
+
+        int contentTop = borderRect.top();
+        int contentBot = borderRect.bot();
+        int totalHeight = this.getTotalContentHeight();
 
         if (this.firstFrame) {
             // Derived classes handle element count,
             // so we can only do initial layout before rendering.
             this.clampTargetScroll(totalHeight);
-            this.lerpScrollY = this.targetScrollY;
-            this.scrollY = this.targetScrollY;
+            this.lerpScroll = this.targetScroll;
+            this.scroll = this.targetScroll;
             this.firstFrame = false;
         }
 
@@ -207,24 +200,25 @@ public abstract class ScrollableWidget extends GuiComponent {
 
         if (buttonIndex != -1) {
             if (this.dragDistance == -1.0) {
-                if (mouseY >= contentTop && mouseY <= contentBot) {
+                if (borderRect.containsY(mousePoint.y)) {
                     boolean doDragging = buttonIndex == 0;
+                    boolean isDoubleClick = System.currentTimeMillis() - this.prevClickTime < 250L;
 
-                    int entryIndex = this.getEntryUnderPoint(mouseX, mouseY);
+                    int entryIndex = this.getEntryUnderPoint(mousePoint.asFloat());
                     if (entryIndex != -1) {
-                        boolean doubleClick = entryIndex == this.prevEntryIndex &&
-                            System.currentTimeMillis() - this.prevClickTime < 250L;
-
-                        this.entryClicked(entryIndex, buttonIndex, doubleClick);
+                        boolean isEntryDoubleClick = entryIndex == this.prevEntryIndex && isDoubleClick;
+                        this.entryClicked(entryIndex, buttonIndex, isEntryDoubleClick);
                         this.prevEntryIndex = entryIndex;
-                        this.prevClickTime = System.currentTimeMillis();
-                    } else {
-                        if (this.mouseClicked(mouseX, mouseY)) {
-                            doDragging = false;
-                        }
+                    }
+                    else if (this.mouseClicked(mousePoint, buttonIndex, isDoubleClick)) {
+                        doDragging = false;
                     }
 
-                    if (this.scrollbarWidth > 0 && mouseX >= scrollBarLeft && mouseX <= scrollBarRight) {
+                    if (isDoubleClick) {
+                        this.prevClickTime = System.currentTimeMillis();
+                    }
+
+                    if (scrollBarBorder.width() > 0 && scrollBarBorder.containsX(mousePoint.x)) {
                         this.scrollAmount = -1.0;
                         int n3 = totalHeight - (contentBot - contentTop);
                         if (n3 < 1) {
@@ -240,19 +234,23 @@ public abstract class ScrollableWidget extends GuiComponent {
                         }
                         this.scrollAmount /= (double) (contentBot - contentTop - n2) / (double) n3;
                         this.isUsingScrollbar = true;
-                    } else {
+                    }
+                    else {
                         this.scrollAmount = 1.0;
                     }
-                    this.dragDistance = doDragging ? (double) mouseY : -2.0;
-                } else {
+                    this.dragDistance = doDragging ? (double) mousePoint.y : -2.0;
+                }
+                else {
                     this.dragDistance = -2.0;
                 }
-            } else if (buttonIndex == 0 && this.dragDistance >= 0.0) {
-                this.moveContent(-((double) mouseY - this.dragDistance) * this.scrollAmount);
-                this.dragDistance = mouseY;
+            }
+            else if (buttonIndex == 0 && this.dragDistance >= 0.0) {
+                this.moveContent(-((double) mousePoint.y - this.dragDistance) * this.scrollAmount);
+                this.dragDistance = mousePoint.y;
                 this.isScrolling = true;
             }
-        } else {
+        }
+        else {
             this.dragDistance = -1.0;
             this.isUsingScrollbar = false;
             this.isScrolling = false;
@@ -264,28 +262,45 @@ public abstract class ScrollableWidget extends GuiComponent {
         }
         double lerpFactor = this.isUsingScrollbar ? 45 : 25;
         double deltaTime = ((ExMinecraft) this.client).getFrameTime();
-        this.lerpScrollY = MathF.lerp(lerpFactor * deltaTime, this.lerpScrollY, this.targetScrollY);
-        this.scrollY = Math.round(this.lerpScrollY);
+        this.lerpScroll = this.lerpScroll.lerp(this.targetScroll, lerpFactor * deltaTime);
+        this.scroll = this.lerpScroll.round();
         if (!this.isScrolling) {
             this.clampTargetScroll(totalHeight);
         }
 
+        this.doRender(mousePoint, tickTime, borderRect, totalHeight, scrollBarBorder);
+    }
+
+    private void doRender(
+        IntPoint mousePoint,
+        float tickTime,
+        IntRect borderRect,
+        int totalHeight,
+        IntBorder scrollBarBorder
+    ) {
+        int contentTop = borderRect.top();
+        int contentBot = borderRect.bot();
+
+        IntRect contentRect = this.getContentRect();
+        int entryCount = this.getEntryCount();
+
         GL11.glDisable(GL11.GL_LIGHTING);
         GL11.glDisable(GL11.GL_FOG);
         var ts = Tesselator.instance;
-        this.renderContentBackground(scrollBackLeft, scrollBackRight, contentTop, contentBot, this.scrollY, ts);
+        Rect contentBackRect = IntRect.fromEdges(this.layoutRect, borderRect).asFloat();
+        this.renderContentBackground(ts, contentBackRect, this.scroll);
 
-        double entryBaseX = center;
-        double entryBaseY = contentTop - this.scrollY;
-        this.beforeEntryRender(mouseX, mouseY, entryBaseX, entryBaseY, ts);
+        Point entryLocation = contentRect.location().asFloat().sub(this.scroll);
+        this.beforeEntryRender(ts, mousePoint, entryLocation);
 
         for (int entryIndex = 0; entryIndex < entryCount; ++entryIndex) {
-            double entryY = entryBaseY + entryIndex * this.entryHeight + this.contentTopPadding;
+            double entryY = entryLocation.y + entryIndex * this.entryHeight;
             if (entryY > contentBot || entryY + this.entryHeight < contentTop) {
                 continue;
             }
-            this.renderEntry(entryIndex, entryBaseX, entryY, this.entryHeight, ts);
+            this.renderEntry(ts, entryIndex, new Point(entryLocation.x, entryY), this.entryHeight);
         }
+
         GL11.glDisable(GL11.GL_DEPTH_TEST);
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
@@ -293,162 +308,133 @@ public abstract class ScrollableWidget extends GuiComponent {
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.client.textures.loadTexture("/gui/background.png"));
         GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
         ts.begin();
-        this.renderBackground(this.screenRect.top(), contentTop, 255, 255);
-        this.renderBackground(contentBot, this.screenRect.bottom(), 255, 255);
+        var bgColor = new IntCorner(0xff404040);
+        this.renderBackground(ts, this.layoutRect.alongTop(this.layoutBorder.top).asFloat(), bgColor);
+        this.renderBackground(ts, this.layoutRect.alongBot(this.layoutBorder.bot).asFloat(), bgColor);
         ts.end();
         GL11.glDisable(GL11.GL_ALPHA_TEST);
         GL11.glDisable(GL11.GL_TEXTURE_2D);
 
-        if (renderEdgeShadows) {
-            int n4 = 4;
-            ts.begin();
-            ts.color(0, 0);
-            ts.vertexUV(scrollBackLeft, contentTop + n4, 0.0, 0.0, 1.0);
-            ts.vertexUV(scrollBackRight, contentTop + n4, 0.0, 1.0, 1.0);
-            ts.color(0, 255);
-            ts.vertexUV(scrollBackRight, contentTop, 0.0, 1.0, 0.0);
-            ts.vertexUV(scrollBackLeft, contentTop, 0.0, 0.0, 0.0);
+        if (this.edgeShadowHeight > 0) {
+            Rect topRect = contentBackRect.alongTop(this.edgeShadowHeight);
+            Rect botRect = contentBackRect.alongBot(this.edgeShadowHeight);
 
-            ts.color(0, 255);
-            ts.vertexUV(scrollBackLeft, contentBot, 0.0, 0.0, 1.0);
-            ts.vertexUV(scrollBackRight, contentBot, 0.0, 1.0, 1.0);
-            ts.color(0, 0);
-            ts.vertexUV(scrollBackRight, contentBot - n4, 0.0, 1.0, 0.0);
-            ts.vertexUV(scrollBackLeft, contentBot - n4, 0.0, 0.0, 0.0);
+            ts.begin();
+            DrawUtil.fillRect(ts, topRect, IntCorner.vertical(0xff000000, 0), null);
+            DrawUtil.fillRect(ts, botRect, IntCorner.vertical(0, 0xff000000), null);
             ts.end();
         }
 
         int n3 = totalHeight - (contentBot - contentTop);
         if (this.scrollbarWidth > 0 && n3 > 0) {
             // Scrollbar rendering
-            int n2 = (contentBot - contentTop) * (contentBot - contentTop) / totalHeight;
+            double n2 = (contentBot - contentTop) * (contentBot - contentTop) / (double) totalHeight;
             if (n2 < 32) {
                 n2 = 32;
             }
             if (n2 > contentBot - contentTop) {
                 n2 = contentBot - contentTop;
             }
-            int n = (int) this.clampTargetScroll(
-                this.targetScrollY, totalHeight) * (contentBot - contentTop - n2) / n3 + contentTop;
+            Point scroll = this.clampTargetScroll(this.targetScroll, totalHeight);
+            double n = scroll.y * (contentBot - contentTop - n2) / n3 + contentTop;
             if (n < contentTop) {
                 n = contentTop;
             }
 
+            int scrollBarLeft = scrollBarBorder.left;
+            int scrollBarRight = scrollBarBorder.right;
+            Rect scrollBarBackRect = Rect.fromEdges(scrollBarLeft, contentTop, scrollBarRight, contentBot);
+            Rect scrollHandleRect = Rect.fromEdges(scrollBarLeft, n, scrollBarRight, n + n2);
+
             ts.begin();
-            ts.color(0, 127);
-            ts.vertexUV(scrollBarLeft, contentBot, 0.0, 0.0, 1.0);
-            ts.vertexUV(scrollBarRight, contentBot, 0.0, 1.0, 1.0);
-            ts.vertexUV(scrollBarRight, contentTop, 0.0, 1.0, 0.0);
-            ts.vertexUV(scrollBarLeft, contentTop, 0.0, 0.0, 0.0);
-
-            ts.color(0x808080, 127);
-            ts.vertexUV(scrollBarLeft, n + n2, 0.0, 0.0, 1.0);
-            ts.vertexUV(scrollBarRight, n + n2, 0.0, 1.0, 1.0);
-            ts.vertexUV(scrollBarRight, n, 0.0, 1.0, 0.0);
-            ts.vertexUV(scrollBarLeft, n, 0.0, 0.0, 0.0);
-
-            ts.color(0xC0C0C0, 127);
-            ts.vertexUV(scrollBarLeft, n + n2 - 1, 0.0, 0.0, 1.0);
-            ts.vertexUV(scrollBarRight - 1, n + n2 - 1, 0.0, 1.0, 1.0);
-            ts.vertexUV(scrollBarRight - 1, n, 0.0, 1.0, 0.0);
-            ts.vertexUV(scrollBarLeft, n, 0.0, 0.0, 0.0);
+            fillRect(ts, scrollBarBackRect, new IntCorner(0x7f000000), null);
+            DrawUtil.shadowRect(
+                ts,
+                scrollHandleRect,
+                new Border(0, 1, 0, 1),
+                new IntCorner(0x7f808080),
+                new IntCorner(0x7fC0C0C0),
+                null,
+                null
+            );
             ts.end();
         }
-        this.afterRender(mouseX, mouseY, tickTime, ts);
+
+        this.afterRender(ts, mousePoint, tickTime);
+
         GL11.glEnable(GL11.GL_TEXTURE_2D);
         GL11.glShadeModel(GL11.GL_FLAT);
         GL11.glEnable(GL11.GL_ALPHA_TEST);
         GL11.glDisable(GL11.GL_BLEND);
     }
 
-    protected void renderBackground(int topY, int botY, int topAlpha, int botAlpha) {
-        var ts = Tesselator.instance;
-        float f = 32.0f;
-        int width = this.screenRect.width();
-        ts.color(0x404040, topAlpha);
-        ts.vertexUV(this.screenRect.right(), topY, 0.0, 0.0, topY / f);
-        ts.vertexUV(this.screenRect.left(), topY, 0.0, width / f, topY / f);
-        ts.color(0x404040, botAlpha);
-        ts.vertexUV(this.screenRect.left(), botY, 0.0, width / f, botY / f);
-        ts.vertexUV(this.screenRect.right(), botY, 0.0, 0.0, botY / f);
+    protected void renderBackground(Tesselator ts, Rect rect, IntCorner color) {
+        double uvSize = 32.0;
+        Rect uv = rect.divide(new Rect(uvSize));
+        fillRect(ts, rect, color, uv);
     }
 
-    protected void renderContentBackground(
-        double left, double right, double top, double bot, double scroll, Tesselator ts) {
+    protected void renderContentBackground(Tesselator ts, Rect rect, Point scroll) {
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.client.textures.loadTexture("/gui/background.png"));
         GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-        double f2 = 32.0;
+
+        double uvSize = 32.0;
+        Rect uv = rect.offset(scroll).divide(uvSize);
         ts.begin();
-        ts.color(0x202020);
-        ts.vertexUV(left, bot, 0.0, left / f2, (bot + scroll) / f2);
-        ts.vertexUV(right, bot, 0.0, right / f2, (bot + scroll) / f2);
-        ts.vertexUV(right, top, 0.0, right / f2, (top + scroll) / f2);
-        ts.vertexUV(left, top, 0.0, left / f2, (top + scroll) / f2);
+        fillRect(ts, rect, new IntCorner(0xff202020), uv);
         ts.end();
     }
 
     public void renderContentSelection(
-        double x, double y, double width, double height,
-        double borderSize, int borderColor, int backColor, Tesselator ts) {
-
-        double left = x;
-        double right = x + width;
-
-        ts.color(borderColor, (int) ((Integer.toUnsignedLong(borderColor) & 0xff000000L) >> 24));
-        ts.vertexUV(left, y + height, 0.0, 0.0, 1.0);
-        ts.vertexUV(right, y + height, 0.0, 1.0, 1.0);
-        ts.vertexUV(right, y, 0.0, 1.0, 0.0);
-        ts.vertexUV(left, y, 0.0, 0.0, 0.0);
-
-        ts.color(backColor, (int) ((Integer.toUnsignedLong(backColor) & 0xff000000L) >> 24));
-        ts.vertexUV(left + borderSize, y + height - borderSize, 0.0, 0.0, 1.0);
-        ts.vertexUV(right - borderSize, y + height - borderSize, 0.0, 1.0, 1.0);
-        ts.vertexUV(right - borderSize, y + borderSize, 0.0, 1.0, 0.0);
-        ts.vertexUV(left + borderSize, y + borderSize, 0.0, 0.0, 0.0);
+        Tesselator ts,
+        Rect rect,
+        Border padding,
+        IntCorner frontColor,
+        IntCorner backColor,
+        @Nullable Rect frontUv,
+        @Nullable Rect backUv
+    ) {
+        DrawUtil.shadowRect(ts, rect, padding, frontColor, backColor, frontUv, backUv);
     }
 
-    public IntRect getContentRect() {
-        return contentRect;
+    public IntRect getLayoutRect() {
+        return this.layoutRect;
     }
 
-    public IntRect getScreenRect() {
-        return screenRect;
+    public IntBorder getLayoutPadding() {
+        return this.layoutPadding;
     }
 
-    public int getContentTop() {
-        return this.contentRect.top();
+    public void setLayoutPadding(IntBorder value) {
+        this.layoutPadding = value;
     }
 
-    public int getContentBot() {
-        return this.contentRect.bottom();
+    public IntBorder getLayoutBorder() {
+        return this.layoutBorder;
     }
 
-    public int getContentTopPadding() {
-        return this.contentTopPadding;
+    public void setLayoutBorder(IntBorder value) {
+        this.layoutBorder = value;
     }
 
-    public int getContentBotPadding() {
-        return this.contentBotPadding;
+    public Point getScroll() {
+        return this.scroll;
     }
 
-    public double getScrollY() {
-        return this.scrollY;
-    }
-
-    public void setScrollY(double value, boolean lerp) {
-        value = clampTargetScroll(value, getTotalRenderHeight());
-        this.targetScrollY = value;
+    public void setScroll(Point value, boolean lerp) {
+        Point scroll = clampTargetScroll(value, getTotalContentHeight());
+        this.targetScroll = scroll;
         if (!lerp) {
-            this.scrollY = value;
-            this.lerpScrollY = value;
+            this.scroll = scroll;
+            this.lerpScroll = scroll;
         }
     }
 
     public double getScrollRow() {
-        return this.targetScrollY / this.entryHeight;
+        return this.targetScroll.y / this.entryHeight;
     }
 
     public void setScrollRow(double row, boolean lerp) {
-        setScrollY(row * this.entryHeight, lerp);
+        setScroll(new Point(this.scroll.x, row * this.entryHeight), lerp);
     }
 }
