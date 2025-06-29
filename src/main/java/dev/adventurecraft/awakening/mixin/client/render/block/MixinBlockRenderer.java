@@ -17,6 +17,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockShapes;
 import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.client.renderer.TileRenderer;
+import net.minecraft.util.Facing;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelSource;
@@ -1708,151 +1709,160 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
     @Overwrite
     public boolean tesselateStairsInWorld(Tile block, int x, int y, int z) {
-        boolean var5 = false;
-        int coreMeta = this.level.getData(x, y, z) & 3;
+        boolean renderAny = false;
         block.setShape(0.0F, 0.0F, 0.0F, 1.0F, 0.5F, 1.0F);
         this.tesselateBlockInWorld(block, x, y, z);
+
+        int coreMeta = this.level.getData(x, y, z) & 3;
         if (coreMeta == 0) {
-            Tile leftBlock = Tile.tiles[this.level.getTile(x - 1, y, z)];
-            if (leftBlock != null && leftBlock.getRenderShape() == BlockShapes.STAIRS) {
-                int leftMeta = this.level.getData(x - 1, y, z) & 3;
-                if (leftMeta == 2) {
-                    block.setShape(0.0F, 0.5F, 0.5F, 0.5F, 1.0F, 1.0F);
-                    this.tesselateBlockInWorld(block, x, y, z);
-                }
-                else if (leftMeta == 3) {
-                    block.setShape(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 0.5F);
-                    this.tesselateBlockInWorld(block, x, y, z);
-                }
-            }
-
-            int rightMeta = this.level.getData(x + 1, y, z) & 3;
-            Tile rightBlock = Tile.tiles[this.level.getTile(x + 1, y, z)];
-            if (rightBlock != null && rightBlock.getRenderShape() == BlockShapes.STAIRS &&
-                (rightMeta == 2 || rightMeta == 3)) {
-                if (rightMeta == 2) {
-                    block.setShape(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
-                    this.tesselateBlockInWorld(block, x, y, z);
-                }
-                else if (rightMeta == 3) {
-                    block.setShape(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
-                    this.tesselateBlockInWorld(block, x, y, z);
-                }
-            }
-            else {
-                block.setShape(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 1.0F);
-                this.tesselateBlockInWorld(block, x, y, z);
-            }
-
-            var5 = true;
+            tesselateStairs0(block, x, y, z);
+            renderAny = true;
         }
-        else {
-            if (coreMeta == 1) {
-                int leftMeta = this.level.getData(x - 1, y, z) & 3;
-                Tile leftBlock = Tile.tiles[this.level.getTile(x - 1, y, z)];
-                if (leftBlock != null && leftBlock.getRenderShape() == BlockShapes.STAIRS &&
-                    (leftMeta == 2 || leftMeta == 3)) {
-                    if (leftMeta == 3) {
-                        block.setShape(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 0.5F);
-                        this.tesselateBlockInWorld(block, x, y, z);
-                    }
-                    else {
-                        block.setShape(0.0F, 0.5F, 0.5F, 0.5F, 1.0F, 1.0F);
-                        this.tesselateBlockInWorld(block, x, y, z);
-                    }
-                }
-                else {
-                    block.setShape(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 1.0F);
-                    this.tesselateBlockInWorld(block, x, y, z);
-                }
-
-                Tile rightBlock = Tile.tiles[this.level.getTile(x + 1, y, z)];
-                if (rightBlock != null && rightBlock.getRenderShape() == BlockShapes.STAIRS) {
-                    int rightMeta = this.level.getData(x + 1, y, z) & 3;
-                    if (rightMeta == 2) {
-                        block.setShape(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
-                        this.tesselateBlockInWorld(block, x, y, z);
-                    }
-                    else if (rightMeta == 3) {
-                        block.setShape(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
-                        this.tesselateBlockInWorld(block, x, y, z);
-                    }
-                }
-
-                var5 = true;
-            }
-            else if (coreMeta == 2) {
-                Tile frontBlock = Tile.tiles[this.level.getTile(x, y, z - 1)];
-                if (frontBlock != null && frontBlock.getRenderShape() == BlockShapes.STAIRS) {
-                    int frontMeta = this.level.getData(x, y, z - 1) & 3;
-                    if (frontMeta == 1) {
-                        block.setShape(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 0.5F);
-                        this.tesselateBlockInWorld(block, x, y, z);
-                    }
-                    else if (frontMeta == 0) {
-                        block.setShape(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
-                        this.tesselateBlockInWorld(block, x, y, z);
-                    }
-                }
-
-                int backMeta = this.level.getData(x, y, z + 1) & 3;
-                Tile backBlock = Tile.tiles[this.level.getTile(x, y, z + 1)];
-                if (backBlock != null && backBlock.getRenderShape() == BlockShapes.STAIRS &&
-                    (backMeta == 0 || backMeta == 1)) {
-                    if (backMeta == 0) {
-                        block.setShape(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
-                        this.tesselateBlockInWorld(block, x, y, z);
-                    }
-                    else {
-                        block.setShape(0.0F, 0.5F, 0.5F, 0.5F, 1.0F, 1.0F);
-                        this.tesselateBlockInWorld(block, x, y, z);
-                    }
-                }
-                else {
-                    block.setShape(0.0F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
-                    this.tesselateBlockInWorld(block, x, y, z);
-                }
-
-                var5 = true;
-            }
-            else if (coreMeta == 3) {
-                Tile backBlock = Tile.tiles[this.level.getTile(x, y, z + 1)];
-                if (backBlock != null && backBlock.getRenderShape() == BlockShapes.STAIRS) {
-                    int backMeta = this.level.getData(x, y, z + 1) & 3;
-                    if (backMeta == 1) {
-                        block.setShape(0.0F, 0.5F, 0.5F, 0.5F, 1.0F, 1.0F);
-                        this.tesselateBlockInWorld(block, x, y, z);
-                    }
-                    else if (backMeta == 0) {
-                        block.setShape(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
-                        this.tesselateBlockInWorld(block, x, y, z);
-                    }
-                }
-
-                int frontMeta = this.level.getData(x, y, z - 1) & 3;
-                Tile frontBlock = Tile.tiles[this.level.getTile(x, y, z - 1)];
-                if (frontBlock != null && frontBlock.getRenderShape() == BlockShapes.STAIRS &&
-                    (frontMeta == 0 || frontMeta == 1)) {
-                    if (frontMeta == 0) {
-                        block.setShape(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
-                        this.tesselateBlockInWorld(block, x, y, z);
-                    }
-                    else {
-                        block.setShape(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 0.5F);
-                        this.tesselateBlockInWorld(block, x, y, z);
-                    }
-                }
-                else {
-                    block.setShape(0.0F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
-                    this.tesselateBlockInWorld(block, x, y, z);
-                }
-
-                var5 = true;
-            }
+        else if (coreMeta == 1) {
+            tesselateStairs1(block, x, y, z);
+            renderAny = true;
+        }
+        else if (coreMeta == 2) {
+            tesselateStairs2(block, x, y, z);
+            renderAny = true;
+        }
+        else if (coreMeta == 3) {
+            tesselateStairs3(block, x, y, z);
+            renderAny = true;
         }
 
         block.setShape(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
-        return var5;
+        return renderAny;
+    }
+
+    private @Unique void tesselateStairs0(Tile block, int x, int y, int z) {
+        Tile leftBlock = Tile.tiles[this.level.getTile(x - 1, y, z)];
+        if (leftBlock != null && leftBlock.getRenderShape() == BlockShapes.STAIRS) {
+            int leftMeta = this.level.getData(x - 1, y, z) & 3;
+            if (leftMeta == 2) {
+                block.setShape(0.0F, 0.5F, 0.5F, 0.5F, 1.0F, 1.0F);
+                this.tesselateBlockInWorld(block, x, y, z);
+            }
+            else if (leftMeta == 3) {
+                block.setShape(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 0.5F);
+                this.tesselateBlockInWorld(block, x, y, z);
+            }
+        }
+
+        int rightMeta = this.level.getData(x + 1, y, z) & 3;
+        Tile rightBlock = Tile.tiles[this.level.getTile(x + 1, y, z)];
+        if (rightBlock != null && rightBlock.getRenderShape() == BlockShapes.STAIRS &&
+            (rightMeta == 2 || rightMeta == 3)) {
+            if (rightMeta == 2) {
+                block.setShape(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
+                this.tesselateBlockInWorld(block, x, y, z);
+            }
+            else if (rightMeta == 3) {
+                block.setShape(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
+                this.tesselateBlockInWorld(block, x, y, z);
+            }
+        }
+        else {
+            block.setShape(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 1.0F);
+            this.tesselateBlockInWorld(block, x, y, z);
+        }
+    }
+
+    private @Unique void tesselateStairs1(Tile block, int x, int y, int z) {
+        int leftMeta = this.level.getData(x - 1, y, z) & 3;
+        Tile leftBlock = Tile.tiles[this.level.getTile(x - 1, y, z)];
+        if (leftBlock != null && leftBlock.getRenderShape() == BlockShapes.STAIRS && (leftMeta == 2 || leftMeta == 3)) {
+            if (leftMeta == 3) {
+                block.setShape(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 0.5F);
+                this.tesselateBlockInWorld(block, x, y, z);
+            }
+            else {
+                block.setShape(0.0F, 0.5F, 0.5F, 0.5F, 1.0F, 1.0F);
+                this.tesselateBlockInWorld(block, x, y, z);
+            }
+        }
+        else {
+            block.setShape(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 1.0F);
+            this.tesselateBlockInWorld(block, x, y, z);
+        }
+
+        Tile rightBlock = Tile.tiles[this.level.getTile(x + 1, y, z)];
+        if (rightBlock != null && rightBlock.getRenderShape() == BlockShapes.STAIRS) {
+            int rightMeta = this.level.getData(x + 1, y, z) & 3;
+            if (rightMeta == 2) {
+                block.setShape(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
+                this.tesselateBlockInWorld(block, x, y, z);
+            }
+            else if (rightMeta == 3) {
+                block.setShape(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
+                this.tesselateBlockInWorld(block, x, y, z);
+            }
+        }
+    }
+
+    private @Unique void tesselateStairs2(Tile block, int x, int y, int z) {
+        Tile backBlock = Tile.tiles[this.level.getTile(x, y, z - 1)];
+        if (backBlock != null && backBlock.getRenderShape() == BlockShapes.STAIRS) {
+            int backMeta = this.level.getData(x, y, z - 1) & 3;
+            if (backMeta == 1) {
+                block.setShape(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 0.5F);
+                this.tesselateBlockInWorld(block, x, y, z);
+            }
+            else if (backMeta == 0) {
+                block.setShape(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
+                this.tesselateBlockInWorld(block, x, y, z);
+            }
+        }
+
+        int frontMeta = this.level.getData(x, y, z + 1) & 3;
+        Tile frontBlock = Tile.tiles[this.level.getTile(x, y, z + 1)];
+        if (frontBlock != null && frontBlock.getRenderShape() == BlockShapes.STAIRS &&
+            (frontMeta == 0 || frontMeta == 1)) {
+            if (frontMeta == 0) {
+                block.setShape(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
+                this.tesselateBlockInWorld(block, x, y, z);
+            }
+            else {
+                block.setShape(0.0F, 0.5F, 0.5F, 0.5F, 1.0F, 1.0F);
+                this.tesselateBlockInWorld(block, x, y, z);
+            }
+        }
+        else {
+            block.setShape(0.0F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
+            this.tesselateBlockInWorld(block, x, y, z);
+        }
+    }
+
+    private @Unique void tesselateStairs3(Tile block, int x, int y, int z) {
+        Tile frontBlock = Tile.tiles[this.level.getTile(x, y, z + 1)];
+        if (frontBlock != null && frontBlock.getRenderShape() == BlockShapes.STAIRS) {
+            int frontMeta = this.level.getData(x, y, z + 1) & 3;
+            if (frontMeta == 1) {
+                block.setShape(0.0F, 0.5F, 0.5F, 0.5F, 1.0F, 1.0F);
+                this.tesselateBlockInWorld(block, x, y, z);
+            }
+            else if (frontMeta == 0) {
+                block.setShape(0.5F, 0.5F, 0.5F, 1.0F, 1.0F, 1.0F);
+                this.tesselateBlockInWorld(block, x, y, z);
+            }
+        }
+
+        int backMeta = this.level.getData(x, y, z - 1) & 3;
+        Tile backBlock = Tile.tiles[this.level.getTile(x, y, z - 1)];
+        if (backBlock != null && backBlock.getRenderShape() == BlockShapes.STAIRS && (backMeta == 0 || backMeta == 1)) {
+            if (backMeta == 0) {
+                block.setShape(0.5F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
+                this.tesselateBlockInWorld(block, x, y, z);
+            }
+            else {
+                block.setShape(0.0F, 0.5F, 0.0F, 0.5F, 1.0F, 0.5F);
+                this.tesselateBlockInWorld(block, x, y, z);
+            }
+        }
+        else {
+            block.setShape(0.0F, 0.5F, 0.0F, 1.0F, 1.0F, 0.5F);
+            this.tesselateBlockInWorld(block, x, y, z);
+        }
     }
 
     @Redirect(
@@ -2106,7 +2116,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     public boolean renderBlockSlope(Tile block, int x, int y, int z) {
         Tesselator ts = Tesselator.instance;
         int coreMeta = this.level.getData(x, y, z) & 3;
-        int coreTexture = block.getTexture(this.level, x, y, z, 0);
+        int coreTexture = block.getTexture(this.level, x, y, z, Facing.DOWN);
         int var8 = (coreTexture & 15) << 4;
         int var9 = coreTexture & 240;
         double var10 = (double) var8 / 256.0D;
@@ -2124,7 +2134,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         if (coreMeta == 0) {
             Tile leftBlock = Tile.tiles[this.level.getTile(x - 1, y, z)];
             int leftMeta = this.level.getData(x - 1, y, z) & 3;
-            if (leftBlock != null && leftBlock.getRenderShape() == AC_BlockShapes.BLOCK_SLOPE && (leftMeta == 2 || leftMeta == 3)) {
+            if (leftBlock != null && leftBlock.getRenderShape() == AC_BlockShapes.BLOCK_SLOPE &&
+                (leftMeta == 2 || leftMeta == 3)) {
                 if (leftMeta == 2) {
                     ts.color(0.9F * brightness, 0.9F * brightness, 0.9F * brightness);
                     ts.vertexUV(x, y + 1, z + 1, var12, var14);
@@ -2171,7 +2182,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             else {
                 int rightMeta = this.level.getData(x + 1, y, z) & 3;
                 Tile rightBlock = Tile.tiles[this.level.getTile(x + 1, y, z)];
-                if (rightBlock != null && rightBlock.getRenderShape() == AC_BlockShapes.BLOCK_SLOPE && (rightMeta == 2 || rightMeta == 3)) {
+                if (rightBlock != null && rightBlock.getRenderShape() == AC_BlockShapes.BLOCK_SLOPE &&
+                    (rightMeta == 2 || rightMeta == 3)) {
                     if (rightMeta == 2) {
                         ts.color(0.9F * brightness, 0.9F * brightness, 0.9F * brightness);
                         ts.vertexUV(x + 1, y, z, var10, var16);
@@ -2231,7 +2243,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         else if (coreMeta == 1) {
             Tile rightBlock = Tile.tiles[this.level.getTile(x + 1, y, z)];
             int rightMeta = this.level.getData(x + 1, y, z) & 3;
-            if (rightBlock != null && rightBlock.getRenderShape() == AC_BlockShapes.BLOCK_SLOPE && (rightMeta == 2 || rightMeta == 3)) {
+            if (rightBlock != null && rightBlock.getRenderShape() == AC_BlockShapes.BLOCK_SLOPE &&
+                (rightMeta == 2 || rightMeta == 3)) {
                 if (rightMeta == 2) {
                     ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
                     ts.vertexUV(x + 1, y, z + 1, var12, var16);
@@ -2280,7 +2293,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             else {
                 int leftMeta = this.level.getData(x - 1, y, z) & 3;
                 Tile leftBlock = Tile.tiles[this.level.getTile(x - 1, y, z)];
-                if (leftBlock != null && leftBlock.getRenderShape() == AC_BlockShapes.BLOCK_SLOPE && (leftMeta == 2 || leftMeta == 3)) {
+                if (leftBlock != null && leftBlock.getRenderShape() == AC_BlockShapes.BLOCK_SLOPE &&
+                    (leftMeta == 2 || leftMeta == 3)) {
                     if (leftMeta == 3) {
                         ts.color(0.9F * brightness, 0.9F * brightness, 0.9F * brightness);
                         ts.vertexUV(x, y, z + 1, var10, var16);
@@ -2338,10 +2352,11 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         }
         else {
             if (coreMeta == 2) {
-                int frontMeta = this.level.getData(x, y, z - 1) & 3;
-                Tile frontBlock = Tile.tiles[this.level.getTile(x, y, z - 1)];
-                if (frontBlock != null && frontBlock.getRenderShape() == AC_BlockShapes.BLOCK_SLOPE && (frontMeta == 0 || frontMeta == 1)) {
-                    if (frontMeta == 1) {
+                int backMeta = this.level.getData(x, y, z - 1) & 3;
+                Tile backBlock = Tile.tiles[this.level.getTile(x, y, z - 1)];
+                if (backBlock != null && backBlock.getRenderShape() == AC_BlockShapes.BLOCK_SLOPE &&
+                    (backMeta == 0 || backMeta == 1)) {
+                    if (backMeta == 1) {
                         ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
                         ts.vertexUV(x, y + 1, z, var12, var14);
                         ts.vertexUV(x, y + 1, z + 1, var10, var14);
@@ -2358,7 +2373,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                         ts.vertexUV(x + 1, y, z + 1, var10, var16);
                         ts.vertexUV(x + 1, y, z + 1, var10, var16);
                     }
-                    else if (frontMeta == 0) {
+                    else if (backMeta == 0) {
                         ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
                         ts.vertexUV(x, y, z, var10, var16);
                         ts.vertexUV(x, y, z + 1, var12, var16);
@@ -2388,10 +2403,11 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                     ts.vertexUV(x, y, z, var12, var16);
                 }
                 else {
-                    int backMeta = this.level.getData(x, y, z + 1) & 3;
-                    Tile backBlock = Tile.tiles[this.level.getTile(x, y, z + 1)];
-                    if (backBlock != null && backBlock.getRenderShape() == AC_BlockShapes.BLOCK_SLOPE && (backMeta == 0 || backMeta == 1)) {
-                        if (backMeta == 0) {
+                    int frontMeta = this.level.getData(x, y, z + 1) & 3;
+                    Tile frontBlock = Tile.tiles[this.level.getTile(x, y, z + 1)];
+                    if (frontBlock != null && frontBlock.getRenderShape() == AC_BlockShapes.BLOCK_SLOPE &&
+                        (frontMeta == 0 || frontMeta == 1)) {
+                        if (frontMeta == 0) {
                             ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
                             ts.vertexUV(x, y, z, var10, var16);
                             ts.vertexUV(x, y, z + 1, var12, var16);
@@ -2450,10 +2466,11 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                 }
             }
             else if (coreMeta == 3) {
-                int backMeta = this.level.getData(x, y, z + 1) & 3;
-                Tile backBlock = Tile.tiles[this.level.getTile(x, y, z + 1)];
-                if (backBlock != null && backBlock.getRenderShape() == AC_BlockShapes.BLOCK_SLOPE && (backMeta == 0 || backMeta == 1)) {
-                    if (backMeta == 1) {
+                int frontMeta = this.level.getData(x, y, z + 1) & 3;
+                Tile frontBlock = Tile.tiles[this.level.getTile(x, y, z + 1)];
+                if (frontBlock != null && frontBlock.getRenderShape() == AC_BlockShapes.BLOCK_SLOPE &&
+                    (frontMeta == 0 || frontMeta == 1)) {
+                    if (frontMeta == 1) {
                         ts.color(0.6F * brightness, 0.6F * brightness, 0.6F * brightness);
                         ts.vertexUV(x, y, z, var10, var16);
                         ts.vertexUV(x, y, z + 1, var12, var16);
@@ -2470,7 +2487,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                         ts.vertexUV(x + 1, y, z + 1, var10, var16);
                         ts.vertexUV(x + 1, y, z + 1, var10, var16);
                     }
-                    else if (backMeta == 0) {
+                    else if (frontMeta == 0) {
                         ts.color(0.6F * brightness, 0.6F * brightness, 0.6F * brightness);
                         ts.vertexUV(x + 1, y, z, var10, var16);
                         ts.vertexUV(x + 1, y + 1, z, var10, var14);
@@ -2500,10 +2517,11 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
                     ts.vertexUV(x, y + 1, z, var10, var14);
                 }
                 else {
-                    int frontMeta = this.level.getData(x, y, z - 1) & 3;
-                    Tile frontBlock = Tile.tiles[this.level.getTile(x, y, z - 1)];
-                    if (frontBlock != null && frontBlock.getRenderShape() == AC_BlockShapes.BLOCK_SLOPE && (frontMeta == 0 || frontMeta == 1)) {
-                        if (frontMeta == 0) {
+                    int backMeta = this.level.getData(x, y, z - 1) & 3;
+                    Tile backBlock = Tile.tiles[this.level.getTile(x, y, z - 1)];
+                    if (backBlock != null && backBlock.getRenderShape() == AC_BlockShapes.BLOCK_SLOPE &&
+                        (backMeta == 0 || backMeta == 1)) {
+                        if (backMeta == 0) {
                             ts.color(0.8F * brightness, 0.8F * brightness, 0.8F * brightness);
                             ts.vertexUV(x, y, z, var10, var16);
                             ts.vertexUV(x, y, z + 1, var12, var16);
