@@ -31,7 +31,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.HashSet;
 import java.util.List;
 
-@Mixin(value = Chunk.class, priority = 999)
+@Mixin(
+    value = Chunk.class,
+    priority = 999
+)
 public abstract class MixinClass_66 implements ExClass_66 {
 
     @Shadow
@@ -92,10 +95,12 @@ public abstract class MixinClass_66 implements ExClass_66 {
         at = @At(
             value = "INVOKE_ASSIGN",
             target = "Lnet/minecraft/world/phys/AABB;create(DDDDDD)Lnet/minecraft/world/phys/AABB;",
-            shift = At.Shift.BEFORE),
-            cancellable = true)
-    public void setNeedsBoxUpdate(int i, int j, int k, CallbackInfo ci) {
-        this.bb = AABB.create((float) i, (float) j, (float) k, (float) (i + this.xs), (float) (j + this.ys), (float) (k + this.zs));
+            shift = At.Shift.BEFORE
+        ),
+        cancellable = true
+    )
+    public void setNeedsBoxUpdate(int x, int y, int z, CallbackInfo ci) {
+        this.bb = AABB.create(x, y, z, x + this.xs, y + this.ys, z + this.zs);
         this.needsBoxUpdate = true;
         this.setDirty();
         this.isVisibleFromPosition = false;
@@ -108,9 +113,16 @@ public abstract class MixinClass_66 implements ExClass_66 {
             return;
         }
         ++Chunk.updates;
-        if (this.needsBoxUpdate) {
+        if (this.needsBoxUpdate && Minecraft.instance.options.advancedOpengl) {
             GL11.glNewList(this.lists + 2, GL11.GL_COMPILE);
-            ItemRenderer.renderFlat(AABB.newTemp((float) this.xRenderOffs, (float) this.yRenderOffs, (float) this.zRenderOffs, (float) (this.xRenderOffs + this.xs), (float) (this.yRenderOffs + this.ys), (float) (this.zRenderOffs + this.zs)));
+            ItemRenderer.renderFlat(AABB.newTemp(
+                this.xRenderOffs,
+                this.yRenderOffs,
+                this.zRenderOffs,
+                this.xRenderOffs + this.xs,
+                this.yRenderOffs + this.ys,
+                this.zRenderOffs + this.zs
+            ));
             GL11.glEndList();
             this.needsBoxUpdate = false;
         }
@@ -124,16 +136,24 @@ public abstract class MixinClass_66 implements ExClass_66 {
         int height = this.y + this.ys;
         int depth = this.z + this.zs;
 
-        for (int var7 = 0; var7 < 2; ++var7) {
-            this.empty[var7] = true;
+        for (int i = 0; i < 2; ++i) {
+            this.empty[i] = true;
         }
 
         LevelChunk.touchedSky = false;
         HashSet<TileEntity> var23 = new HashSet<>();
         var23.addAll(this.renderableTileEntities);
         this.renderableTileEntities.clear();
-        byte var8 = 1;
-        Region region = new Region(this.level, startX - var8, startY - var8, startZ - var8, width + var8, height + var8, depth + var8);
+        int regionPadding = 1;
+        Region region = new Region(
+            this.level,
+            startX - regionPadding,
+            startY - regionPadding,
+            startZ - regionPadding,
+            width + regionPadding,
+            height + regionPadding,
+            depth + regionPadding
+        );
         TileRenderer blockRenderer = new TileRenderer(region);
         Textures texMan = Minecraft.instance.textures;
 
@@ -158,7 +178,12 @@ public abstract class MixinClass_66 implements ExClass_66 {
                     for (int z = startZ; z < depth; ++z) {
                         for (int y = startY; y < height; ++y) {
                             int blockId = region.getTile(x, y, z);
-                            if (blockId > 0 && texId == ((ExBlock) Tile.tiles[blockId]).getTextureNum()) {
+                            if (blockId <= 0) {
+                                continue;
+                            }
+
+                            Tile block = Tile.tiles[blockId];
+                            if (texId == ((ExBlock) block).getTextureNum()) {
                                 if (!var14) {
                                     var14 = true;
                                     GL11.glNewList(this.lists + renderPass, GL11.GL_COMPILE);
@@ -187,11 +212,11 @@ public abstract class MixinClass_66 implements ExClass_66 {
                                     }
                                 }
 
-                                Tile block = Tile.tiles[blockId];
                                 int blockRenderPass = block.getRenderLayer();
                                 if (blockRenderPass != renderPass) {
                                     var12 = true;
-                                } else {
+                                }
+                                else {
                                     var13 |= blockRenderer.tesselateInWorld(block, x, y, z);
                                 }
                             }
@@ -210,7 +235,8 @@ public abstract class MixinClass_66 implements ExClass_66 {
                 GL11.glEndList();
                 //tesselator.setOffset(0.0D, 0.0D, 0.0D);
                 //((ExTessellator) tesselator).setRenderingChunk(false);
-            } else {
+            }
+            else {
                 var13 = false;
             }
 
@@ -237,11 +263,15 @@ public abstract class MixinClass_66 implements ExClass_66 {
         AC_CoordBlock.resetPool();
     }
 
-    @Inject(method = "cull", at = @At("TAIL"))
+    @Inject(
+        method = "cull",
+        at = @At("TAIL")
+    )
     private void fancyOcclusionCulling(Culler var1, CallbackInfo ci) {
         if (this.visible && ((ExGameOptions) Minecraft.instance.options).isOcclusionFancy()) {
             this.isInFrustrumFully = ((ExCameraView) var1).isBoundingBoxInFrustumFully(this.bb);
-        } else {
+        }
+        else {
             this.isInFrustrumFully = false;
         }
     }
