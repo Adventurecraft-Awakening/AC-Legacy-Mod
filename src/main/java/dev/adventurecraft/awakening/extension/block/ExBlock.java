@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.extension.block;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
+import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.tile.AC_ITriggerBlock;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.tile.Tile;
@@ -8,6 +9,8 @@ import net.minecraft.world.level.tile.Tile;
 public interface ExBlock extends AC_TexturedBlock, AC_ITriggerBlock {
 
     int[] subTypes = new int[256];
+
+    boolean[] neighborLit = new boolean[256];
 
     void setBoundingBox(double minX, double minY, double minZ, double maxX, double maxY, double maxZ);
 

@@ -35,7 +35,8 @@ public class AC_PlayerTorch {
         int updateRate = 1;
         if (avgFrameTime > 1 / 30.0) {
             updateRate = 3;
-        } else if (avgFrameTime > 1 / 60.0) {
+        }
+        else if (avgFrameTime > 1 / 60.0) {
             updateRate = 2;
         }
 
@@ -54,16 +55,20 @@ public class AC_PlayerTorch {
         }
     }
 
+    private static float getCachedTorchLight(Level world, int x, int y, int z) {
+        int bX = x - iX + torchBrightness;
+        int bY = y - iY + torchBrightness;
+        int bZ = z - iZ + torchBrightness;
+        if (bX >= 0 && bX < range && bY >= 0 && bY < range && bZ >= 0 && bZ < range) {
+            return cache[bX * range * range + bY * range + bZ];
+        }
+        return 0.0F;
+    }
+
     public static float getTorchLight(Level world, int x, int y, int z) {
         if (torchActive) {
-            int bX = x - iX + torchBrightness;
-            int bY = y - iY + torchBrightness;
-            int bZ = z - iZ + torchBrightness;
-            if (bX >= 0 && bX < range && bY >= 0 && bY < range && bZ >= 0 && bZ < range) {
-                return cache[bX * range * range + bY * range + bZ];
-            }
+            return getCachedTorchLight(world, x, y, z);
         }
-
         return 0.0F;
     }
 
@@ -84,14 +89,18 @@ public class AC_PlayerTorch {
 
                     int id = world.getTile(x, y, z);
                     float result = 0.0F;
+                    // TODO: use ExBlock.neighborLit?
                     if (id == 0 || !Tile.tiles[id].isSolidRender() || id == Tile.SLAB.id || id == Tile.FARMLAND.id) {
-                        float brightness = (float) (Math.abs((double) rX + 0.5D - (double) baseX) + Math.abs((double) rY + 0.5D - (double) baseY) + Math.abs((double) rZ + 0.5D - (double) baseZ));
-                        if (brightness <= (float) torchBrightness) {
-                            if ((float) torchBrightness - brightness > (float) world.getLightLevel(x, y, z)) {
+                        double xLight = Math.abs(rX + 0.5D - baseX);
+                        double yLight = Math.abs(rY + 0.5D - baseY);
+                        double zLight = Math.abs(rZ + 0.5D - baseZ);
+                        float light = (float) (xLight + yLight + zLight);
+
+                        if (light <= torchBrightness) {
+                            if (torchBrightness - light > world.getLightLevel(x, y, z)) {
                                 world.sendTileUpdated(x, y, z);
                             }
-
-                            result = (float) torchBrightness - brightness;
+                            result = torchBrightness - light;
                         }
                     }
                     cache[index++] = result;

@@ -31,9 +31,9 @@ import dev.adventurecraft.awakening.script.EntityDescriptions;
 import dev.adventurecraft.awakening.script.ScopeTag;
 import dev.adventurecraft.awakening.script.Script;
 import dev.adventurecraft.awakening.script.ScriptModel;
-import dev.adventurecraft.awakening.tile.AC_BlockStairMulti;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityNpcPath;
+import dev.adventurecraft.awakening.util.MathF;
 import dev.adventurecraft.awakening.util.RandomUtil;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -574,62 +574,62 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         }
     }
 
+    private static @Unique boolean outOfBounds(int x, int z) {
+        return Math.max(Math.abs(x), Math.abs(z)) > 32000000;
+    }
+
     @Override
     public boolean setBlockAndMetadataTemp(int x, int y, int z, int id, int meta) {
-        if (x < -32000000 || z < -32000000 || x >= 32000000 || z > 32000000) {
+        if (outOfBounds(x, z)) {
             return false;
         }
-        if (y < 0) {
+
+        if (y < 0 || y >= 128) {
             return false;
-        } else if (y >= 128) {
-            return false;
-        } else {
-            LevelChunk chunk = this.getChunk(x >> 4, z >> 4);
-            return ((ExChunk) chunk).setBlockIDWithMetadataTemp(x & 15, y, z & 15, id, meta);
         }
+        LevelChunk chunk = this.getChunk(x >> 4, z >> 4);
+        return ((ExChunk) chunk).setBlockIDWithMetadataTemp(x & 15, y, z & 15, id, meta);
+    }
+
+    private @Unique int getNeighborBrightness(int x, int y, int z) {
+        int id = this.getTile(x, y, z);
+        if (!ExBlock.neighborLit[id]) {
+            return -1;
+        }
+
+        int topId = this.getRawBrightness(x, y + 1, z, false);
+        int rightId = this.getRawBrightness(x + 1, y, z, false);
+        int leftId = this.getRawBrightness(x - 1, y, z, false);
+        int frontId = this.getRawBrightness(x, y, z + 1, false);
+        int backId = this.getRawBrightness(x, y, z - 1, false);
+        topId = Math.max(rightId, topId);
+        topId = Math.max(leftId, topId);
+        topId = Math.max(frontId, topId);
+        topId = Math.max(backId, topId);
+        return topId;
     }
 
     @Overwrite
-    public int getRawBrightness(int x, int y, int z, boolean var4) {
-        if (x < -32000000 || z < -32000000 || x >= 32000000 || z > 32000000) {
+    public int getRawBrightness(int x, int y, int z, boolean checkNeighbors) {
+        if (outOfBounds(x, z)) {
             return 15;
         }
 
-        if (var4) {
-            int id = this.getTile(x, y, z);
-            if (id != 0 && (id == Tile.SLAB.id || id == Tile.FARMLAND.id || id == Tile.COBBLESTONE_STAIRS.id || id == Tile.WOOD_STAIRS.id || Tile.tiles[id] instanceof AC_BlockStairMulti)) {
-                int topId = this.getRawBrightness(x, y + 1, z, false);
-                int rightId = this.getRawBrightness(x + 1, y, z, false);
-                int leftId = this.getRawBrightness(x - 1, y, z, false);
-                int frontId = this.getRawBrightness(x, y, z + 1, false);
-                int backId = this.getRawBrightness(x, y, z - 1, false);
-                if (rightId > topId) {
-                    topId = rightId;
-                }
-
-                if (leftId > topId) {
-                    topId = leftId;
-                }
-
-                if (frontId > topId) {
-                    topId = frontId;
-                }
-
-                if (backId > topId) {
-                    topId = backId;
-                }
-
-                return topId;
+        if (checkNeighbors) {
+            int n = this.getNeighborBrightness(x, y, z);
+            if (n != -1) {
+                return n;
             }
         }
 
         if (y < 0) {
             return 0;
         }
+        return getChunkBrightness(x, y, z);
+    }
 
-        if (y >= 128) {
-            y = 127;
-        }
+    private @Unique int getChunkBrightness(int x, int y, int z) {
+        y = Math.min(y, 127);
 
         LevelChunk chunk = this.getChunk(x >> 4, z >> 4);
         x &= 15;
@@ -651,10 +651,12 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             if (this.isSkyLit(x, y, z)) {
                 value = 15;
             }
-        } else if (lightType == LightLayer.BLOCK) {
+        }
+        else if (lightType == LightLayer.BLOCK) {
             int id = this.getTile(x, y, z);
-            if (Tile.tiles[id] != null && ((ExBlock) Tile.tiles[id]).getBlockLightValue(this, x, y, z) < value) {
-                value = ((ExBlock) Tile.tiles[id]).getBlockLightValue(this, x, y, z);
+            var tile = (ExBlock) Tile.tiles[id];
+            if (tile != null && tile.getBlockLightValue(this, x, y, z) < value) {
+                value = tile.getBlockLightValue(this, x, y, z);
             }
         }
 
@@ -665,30 +667,26 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
 
     @Override
     public float getLightValue(int x, int y, int z) {
-        int var4 = this.getLightLevel(x, y, z);
-        float var5 = AC_PlayerTorch.getTorchLight((Level) (Object) this, x, y, z);
-        return (float) var4 < var5 ? Math.min(var5, 15.0F) : (float) var4;
+        float level = this.getLightLevel(x, y, z);
+        float torch = AC_PlayerTorch.getTorchLight((Level) (Object) this, x, y, z);
+        return Math.max(level, Math.min(torch, 15.0F));
     }
 
     private float getBrightnessLevel(float value) {
-        int var2 = (int) Math.floor(value);
-        if ((float) var2 != value) {
-            int var3 = (int) Math.ceil(value);
-            float var4 = value - (float) var2;
-            return (1.0F - var4) * this.dimension.brightnessRamp[var2] + var4 * this.dimension.brightnessRamp[var3];
-        } else {
-            return this.dimension.brightnessRamp[var2];
+        float[] ramp = this.dimension.brightnessRamp;
+        int low = (int) Math.floor(value);
+        if (low == value) {
+            return ramp[low];
         }
+        int high = (int) Math.ceil(value);
+        float delta = value - low;
+        return MathF.lerp(delta, ramp[low], ramp[high]);
     }
 
     @Environment(EnvType.CLIENT)
     @Overwrite
     public float getBrightness(int x, int y, int z, int max) {
-        float value = this.getLightValue(x, y, z);
-        if (value < (float) max) {
-            value = (float) max;
-        }
-
+        float value = Math.max(this.getLightValue(x, y, z), max);
         return this.getBrightnessLevel(value);
     }
 

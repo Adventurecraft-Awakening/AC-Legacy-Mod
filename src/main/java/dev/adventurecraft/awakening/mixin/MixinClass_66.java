@@ -258,7 +258,6 @@ public abstract class MixinClass_66 implements ExClass_66 {
         this.skyLit = LevelChunk.touchedSky;
         this.compiled = true;
 
-        AC_LightCache.cache.clear();
         AC_CoordBlock.resetPool();
     }
 
