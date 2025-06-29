@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.mixin;
 
 import dev.adventurecraft.awakening.common.AC_CoordBlock;
-import dev.adventurecraft.awakening.common.AC_LightCache;
+import dev.adventurecraft.awakening.collections.IdentityHashSet;
 import dev.adventurecraft.awakening.extension.ExClass_66;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
@@ -28,7 +28,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.HashSet;
 import java.util.List;
 
 @Mixin(
@@ -141,7 +140,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
         }
 
         LevelChunk.touchedSky = false;
-        HashSet<TileEntity> var23 = new HashSet<>();
+        var var23 = new IdentityHashSet<TileEntity>();
         var23.addAll(this.renderableTileEntities);
         this.renderableTileEntities.clear();
         int regionPadding = 1;
@@ -249,7 +248,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
             }
         }
 
-        HashSet<TileEntity> var24 = new HashSet<>();
+        var var24 = new IdentityHashSet<TileEntity>();
         var24.addAll(this.renderableTileEntities);
         var24.removeAll(var23);
         this.globalRenderableTileEntities.addAll(var24);
