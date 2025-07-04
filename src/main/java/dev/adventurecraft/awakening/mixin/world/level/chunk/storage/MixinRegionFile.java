@@ -21,7 +21,7 @@ public abstract class MixinRegionFile {
             return null;
         }
         var out = ((RegionFile) (Object) this).new ChunkBuffer(x, z);
-        var deflater = new Deflater(); // TODO: use faster compression level based saves vs. mapedit?
+        var deflater = new Deflater(); // TODO: use faster compression level based on saves vs. mapedit?
         var deflaterOut = new DeflaterOutputStream(out, deflater, 512);
         return new DataOutputStream(new BufferOutputStream(deflaterOut, 1024));
     }

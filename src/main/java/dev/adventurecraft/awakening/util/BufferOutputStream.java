@@ -6,9 +6,13 @@ import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
+/**
+ * Buffered output stream with a fixed-size buffer. Writes are tightly packed
+ * (performed as multiples of buffer size) when not explicitly flushing.
+ */
 public final class BufferOutputStream extends FilterOutputStream {
 
-    private byte[] buffer;
+    private final byte[] buffer;
     private int pos;
 
     public BufferOutputStream(OutputStream out, int size) {
@@ -16,60 +20,76 @@ public final class BufferOutputStream extends FilterOutputStream {
         this.buffer = new byte[size];
     }
 
-    private int avail() {
+    private int available() {
         return this.buffer.length - this.pos;
     }
 
-    private void dumpBuffer(boolean ifFull)
+    private void flushBuffer()
         throws IOException {
-        if (pos == 0) {
+        if (this.pos == 0) {
             return;
         }
-        if (!ifFull || this.avail() == 0) {
-            out.write(buffer, 0, pos);
-            pos = 0;
-        }
+        this.out.write(this.buffer, 0, this.pos);
+        this.pos = 0;
     }
 
-    public @Override void write(final int b)
-        throws IOException {
-        buffer[pos++] = (byte) b;
-        dumpBuffer(true);
+    private void writeToBuffer(byte[] data, int offset, int length) {
+        System.arraycopy(data, offset, this.buffer, this.pos, length);
+        this.pos += length;
     }
 
-    public @Override void write(byte @NotNull [] b, int offset, int length)
+    public @Override void write(int b)
         throws IOException {
-        if (length >= buffer.length) {
-            dumpBuffer(false);
-            out.write(b, offset, length);
-            return;
+        if (this.available() <= 0) {
+            this.flushBuffer();
+        }
+        this.buffer[this.pos] = (byte) (b & 255);
+        this.pos += 1;
+    }
+
+    public @Override void write(byte @NotNull [] data, int offset, int length)
+        throws IOException {
+        // Fill buffer as much as possible.
+        int copyLen = Math.min(length, this.available());
+        if (copyLen > 0) {
+            this.writeToBuffer(data, offset, length);
+            offset += copyLen;
+            length -= copyLen;
         }
 
-        if (length <= this.avail()) {
-            System.arraycopy(b, offset, buffer, pos, length);
-            pos += length;
-            dumpBuffer(true);
+        if (length <= 0) {
             return;
         }
+        // There is more data; buffer needs to be flushed.
+        this.flushBuffer();
 
-        dumpBuffer(false);
-        System.arraycopy(b, offset, buffer, 0, length);
-        pos = length;
+        // Write a large aligned slice, possibly leaving a remainder.
+        int blocks = length / this.buffer.length;
+        if (blocks > 0) {
+            int blockLen = blocks * this.buffer.length;
+            this.out.write(data, offset, blockLen);
+            offset += blockLen;
+            length -= blockLen;
+        }
+
+        // Store the remainder for later.
+        if (length > 0) {
+            this.writeToBuffer(data, offset, length);
+        }
     }
 
     public @Override void flush()
         throws IOException {
-        dumpBuffer(false);
-        out.flush();
+        this.flushBuffer();
+        this.out.flush();
     }
 
     public @Override void close()
         throws IOException {
-        if (out == null) {
+        if (this.out == null) {
             return;
         }
-        flush();
-        out = null;
-        buffer = null;
+        this.flush();
+        this.out = null;
     }
 }
