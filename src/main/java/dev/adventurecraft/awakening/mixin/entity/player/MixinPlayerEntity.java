@@ -29,6 +29,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Player.class)
 public abstract class MixinPlayerEntity extends MixinMob implements ExPlayerEntity {
@@ -172,6 +173,14 @@ public abstract class MixinPlayerEntity extends MixinMob implements ExPlayerEnti
             if (offhandItem != null && offhandItem.id == AC_Items.umbrella.id) {
                 offhandItem.setDamage(1);
             }
+        }
+    }
+
+    @Inject(method = "startSleepInBed", at = @At(value = "HEAD"), cancellable = true)
+    private void onlySleepWhenAllowed(CallbackInfoReturnable ci) {
+        boolean canSleepBool = ((ExWorldProperties) Minecraft.instance.level.levelData).getCanSleep();
+        if (!canSleepBool) {
+            ci.cancel();
         }
     }
 

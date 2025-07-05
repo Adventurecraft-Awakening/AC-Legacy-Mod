@@ -31,6 +31,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     private long time;
 
     private boolean hudEnabled = true;
+    private boolean canSleep = true;
     public double tempOffset;
     private WorldGenProperties worldGenProps = new WorldGenProperties();
     public boolean iceMelts = true;
@@ -122,6 +123,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
 
         this.allowsInventoryCrafting = exTag.findBool("allowsInventoryCrafting").orElse(true);
         this.hudEnabled = exTag.findBool("hudEnabled").orElse(true);
+        this.canSleep = tag.findBool("canSleep").orElse(true);
     }
 
     @Inject(method = "<init>(JLjava/lang/String;)V", at = @At("TAIL"))
@@ -211,6 +213,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         tag.putBoolean("originallyFromAC", this.originallyFromAC);
         tag.putBoolean("allowsInventoryCrafting", this.allowsInventoryCrafting);
         tag.putBoolean("hudEnabled", this.hudEnabled);
+        tag.putBoolean("canSleep", this.canSleep);
     }
 
     @Override
@@ -543,5 +546,13 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     @Override
     public boolean getHudEnabled() {
         return this.hudEnabled;
+    }
+
+    public void setCanSleep(boolean arg){
+        this.canSleep = arg;
+    }
+
+    public boolean getCanSleep(){
+        return this.canSleep;
     }
 }
