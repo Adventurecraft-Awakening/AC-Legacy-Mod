@@ -443,4 +443,10 @@ public abstract class MixinPlayerEntity extends MixinMob implements ExPlayerEnti
     public void setCloakTexture(String value) {
         this.cloakTexture = value;
     }
+
+    @Overwrite
+    public float getDestroySpeed(Tile tile) {
+        float destroySpeed = this.inventory.getDestroySpeed(tile);
+        return destroySpeed;
+    }
 }
