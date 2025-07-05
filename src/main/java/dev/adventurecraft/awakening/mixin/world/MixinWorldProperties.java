@@ -32,6 +32,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
 
     private boolean hudEnabled = true;
     private boolean canSleep = true;
+    private boolean canUseHoe = true;
     public double tempOffset;
     private WorldGenProperties worldGenProps = new WorldGenProperties();
     public boolean iceMelts = true;
@@ -124,6 +125,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         this.allowsInventoryCrafting = exTag.findBool("allowsInventoryCrafting").orElse(true);
         this.hudEnabled = exTag.findBool("hudEnabled").orElse(true);
         this.canSleep = tag.findBool("canSleep").orElse(true);
+        this.canUseHoe = tag.findBool("canUseHoe").orElse(true);
     }
 
     @Inject(method = "<init>(JLjava/lang/String;)V", at = @At("TAIL"))
@@ -214,6 +216,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         tag.putBoolean("allowsInventoryCrafting", this.allowsInventoryCrafting);
         tag.putBoolean("hudEnabled", this.hudEnabled);
         tag.putBoolean("canSleep", this.canSleep);
+        tag.putBoolean("canUseHoe", this.canUseHoe);
     }
 
     @Override
@@ -554,5 +557,13 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
 
     public boolean getCanSleep(){
         return this.canSleep;
+    }
+  
+    public void setCanUseHoe(boolean arg){
+        this.canUseHoe = arg;
+    }
+
+    public boolean getCanUseHoe(){
+        return this.canUseHoe;
     }
 }
