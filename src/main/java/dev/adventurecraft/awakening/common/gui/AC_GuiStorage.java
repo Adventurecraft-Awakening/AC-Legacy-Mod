@@ -29,9 +29,11 @@ public class AC_GuiStorage extends Screen {
     protected void buttonClicked(Button button) {
         if (button.id == 0) {
             this.storage.setArea();
-        } else if (button.id == 1) {
+        }
+        else if (button.id == 1) {
             this.storage.saveCurrentArea();
-        } else if (button.id == 2) {
+        }
+        else if (button.id == 2) {
             this.storage.loadCurrentArea();
         }
     }
@@ -39,8 +41,7 @@ public class AC_GuiStorage extends Screen {
     @Override
     public void render(int mouseX, int mouseY, float deltaTime) {
         this.fill(0, 0, this.width, this.height, Integer.MIN_VALUE);
-        this.drawString(this.font, String.format("Min: (%d, %d, %d)", this.storage.minX, this.storage.minY, this.storage.minZ), 4, 4, 14737632);
-        this.drawString(this.font, String.format("Max: (%d, %d, %d)", this.storage.maxX, this.storage.maxY, this.storage.maxZ), 4, 24, 14737632);
+        AC_GuiStrings.drawMinMax(this, this.storage, 4, 4, 0xe0e0e0);
         super.render(mouseX, mouseY, deltaTime);
     }
 

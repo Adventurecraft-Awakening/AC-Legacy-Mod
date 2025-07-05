@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.item;
 
+import dev.adventurecraft.awakening.common.Coord;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;
@@ -22,16 +23,13 @@ public class AC_ItemHammer extends Item {
         int id = world.getTile(bX, bY, bZ);
         int meta = world.getData(bX, bY, bZ);
         Minecraft.instance.gui.addMessage(String.format("Swapping Area With BlockID %d", id));
-        int minX = Math.min(AC_ItemCursor.oneX, AC_ItemCursor.twoX);
-        int maxX = Math.max(AC_ItemCursor.oneX, AC_ItemCursor.twoX);
-        int minY = Math.min(AC_ItemCursor.oneY, AC_ItemCursor.twoY);
-        int maxY = Math.max(AC_ItemCursor.oneY, AC_ItemCursor.twoY);
-        int minZ = Math.min(AC_ItemCursor.oneZ, AC_ItemCursor.twoZ);
-        int maxZ = Math.max(AC_ItemCursor.oneZ, AC_ItemCursor.twoZ);
 
-        for (int x = minX; x <= maxX; ++x) {
-            for (int y = minY; y <= maxY; ++y) {
-                for (int z = minZ; z <= maxZ; ++z) {
+        Coord min = AC_ItemCursor.one().min(AC_ItemCursor.two());
+        Coord max = AC_ItemCursor.one().max(AC_ItemCursor.two());
+
+        for (int x = min.x; x <= max.x; x++) {
+            for (int y = min.y; y <= max.y; y++) {
+                for (int z = min.z; z <= max.z; z++) {
                     world.setTileAndData(x, y, z, id, meta);
                 }
             }

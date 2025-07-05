@@ -1,6 +1,5 @@
 package dev.adventurecraft.awakening.mixin;
 
-import dev.adventurecraft.awakening.common.AC_CoordBlock;
 import dev.adventurecraft.awakening.collections.IdentityHashSet;
 import dev.adventurecraft.awakening.extension.ExClass_66;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
@@ -24,6 +23,7 @@ import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -79,12 +79,12 @@ public abstract class MixinClass_66 implements ExClass_66 {
     @Shadow
     private List<TileEntity> globalRenderableTileEntities;
 
-    public boolean isVisibleFromPosition = false;
-    public double visibleFromX;
-    public double visibleFromY;
-    public double visibleFromZ;
-    private boolean needsBoxUpdate = false;
-    public boolean isInFrustrumFully = false;
+    @Unique public boolean isVisibleFromPosition = false;
+    @Unique public double visibleFromX;
+    @Unique public double visibleFromY;
+    @Unique public double visibleFromZ;
+    @Unique private boolean needsBoxUpdate = false;
+    @Unique public boolean isInFrustrumFully = false;
 
     @Shadow
     public abstract void setDirty();
@@ -257,8 +257,6 @@ public abstract class MixinClass_66 implements ExClass_66 {
         this.globalRenderableTileEntities.removeAll(var23);
         this.skyLit = LevelChunk.touchedSky;
         this.compiled = true;
-
-        AC_CoordBlock.resetPool();
     }
 
     @Inject(

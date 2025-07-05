@@ -30,9 +30,11 @@ public class AC_TileEntityTimer extends AC_TileEntityMinMax {
             }
 
             if (!this.resetOnTrigger) {
-                ((ExWorld) this.level).getTriggerManager().addArea(this.x, this.y, this.z, new AC_TriggerArea(this.minX, this.minY, this.minZ, this.maxX, this.maxY, this.maxZ));
-            } else {
-                ExBlock.resetArea(this.level, this.minX, this.minY, this.minZ, this.maxX, this.maxY, this.maxZ);
+                var area = new AC_TriggerArea(this.min(), this.max());
+                ((ExWorld) this.level).getTriggerManager().addArea(this.x, this.y, this.z, area);
+            }
+            else {
+                ExBlock.resetArea(this.level, this.min(), this.max());
             }
         }
 
@@ -44,10 +46,12 @@ public class AC_TileEntityTimer extends AC_TileEntityMinMax {
                 if (!this.resetOnTrigger) {
                     ((ExWorld) this.level).getTriggerManager().removeArea(this.x, this.y, this.z);
                 }
-            } else {
+            }
+            else {
                 this.canActivate = true;
             }
-        } else {
+        }
+        else {
             --this.ticks;
         }
     }

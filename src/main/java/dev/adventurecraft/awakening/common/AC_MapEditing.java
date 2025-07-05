@@ -144,9 +144,11 @@ public class AC_MapEditing {
 
             ((ExBlockRenderer) this.renderBlocks).startRenderingBlocks(this.world);
 
-            for (int x = AC_ItemCursor.minX; x <= AC_ItemCursor.maxX; ++x) {
-                for (int y = AC_ItemCursor.minY; y <= AC_ItemCursor.maxY; ++y) {
-                    for (int z = AC_ItemCursor.minZ; z <= AC_ItemCursor.maxZ; ++z) {
+            Coord min = AC_ItemCursor.min();
+            Coord max = AC_ItemCursor.max();
+            for (int x = min.x; x <= max.x; x++) {
+                for (int y = min.y; y <= max.y; y++) {
+                    for (int z = min.z; z <= max.z; z++) {
                         int id = this.mc.level.getTile(x, y, z);
                         Tile block = Tile.tiles[id];
                         if (block != null && ((ExBlock) block).getTextureNum() == texIndex) {

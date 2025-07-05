@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.entity;
 
-import dev.adventurecraft.awakening.common.AC_CoordBlock;
+import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.common.IEntityPather;
 import dev.adventurecraft.awakening.extension.entity.ExMob;
 import dev.adventurecraft.awakening.extension.entity.ai.pathing.ExEntityPath;
@@ -11,6 +11,7 @@ import dev.adventurecraft.awakening.script.ScopeTag;
 import dev.adventurecraft.awakening.script.ScriptEntity;
 import dev.adventurecraft.awakening.script.ScriptEntityDescription;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityNpcPath;
+import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -19,6 +20,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -38,7 +40,7 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
     public String onInteraction = "";
     private Path path;
     private Entity pathToEntity;
-    private AC_CoordBlock pathToVec;
+    private @Nullable Coord pathToVec;
     public float maxPathDistance = 64.0F;
     private int nextPathIn;
     private double prevDistToPoint = 999999.0D;
@@ -153,8 +155,7 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
             tag.putString("onInteraction", this.onInteraction);
         }
 
-        ((ExCompoundTag) tag).findCompound("scope")
-            .ifPresent(c -> ScopeTag.loadScopeFromTag(this.scope, c));
+        ((ExCompoundTag) tag).findCompound("scope").ifPresent(c -> ScopeTag.loadScopeFromTag(this.scope, c));
     }
 
     @Override
@@ -197,9 +198,8 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
             // Reset curScope afterwards! IMPORTANT for normal damage scripts
             ((ExWorld) this.level).getScript().setNewCurScope(tempScope);
             return result instanceof Boolean b ? b : true;
-        } else {
-            return true;
         }
+        return true;
     }
 
     private void runDeathScript() {
@@ -212,9 +212,8 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
         if (!this.onInteraction.equals("")) {
             Object result = ((ExWorld) this.level).getScriptHandler().runScript(this.onInteraction, this.scope);
             return result instanceof Boolean b ? b : true;
-        } else {
-            return true;
         }
+        return true;
     }
 
     public boolean isPathing() {
@@ -232,7 +231,7 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
 
     public void pathToPosition(int x, int y, int z) {
         this.pathToEntity = null;
-        this.pathToVec = new AC_CoordBlock(x, y, z);
+        this.pathToVec = new Coord(x, y, z);
         this.path = this.level.findPath(this, x, y, z, this.maxPathDistance);
         this.nextPathIn = this.level.random.nextInt(40) + 60;
         this.prevDistToPoint = 999999.0D;
@@ -252,11 +251,16 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
             return;
         }
 
-        if (this.path == null || --this.nextPathIn <= 0 && this.pathToEntity != null && ((ExEntityPath) this.path).needNewPath(this.pathToEntity)) {
+        if (this.path == null || --this.nextPathIn <= 0 && this.pathToEntity != null &&
+            ((ExEntityPath) this.path).needNewPath(this.pathToEntity)) {
             if (this.pathToEntity != null) {
                 this.path = this.level.findPath(this, this.pathToEntity, this.maxPathDistance);
-            } else if (this.pathToVec != null) {
-                this.path = this.level.findPath(this, this.pathToVec.x, this.pathToVec.y, this.pathToVec.z, this.maxPathDistance);
+            }
+            else {
+                Coord p = this.pathToVec;
+                if (p != null) {
+                    this.path = this.level.findPath(this, p.x, p.y, p.z, this.maxPathDistance);
+                }
             }
 
             this.nextPathIn = this.level.random.nextInt(40) + 10;
@@ -299,7 +303,7 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
             double dX = point.x - this.x;
             double dZ = point.z - this.z;
             double dY = point.y - (double) Mth.floor(this.bb.y0 + 0.5D);
-            float newYaw = (float) (Math.atan2(dZ, dX) * 180.0D / (double) (float) Math.PI) - 90.0F;
+            float newYaw = (float) (Math.atan2(dZ, dX) * 180.0D / Math.PI) - 90.0F;
             float extraYaw = newYaw - this.yRot;
 
             this.zza = this.runSpeed;
@@ -311,13 +315,7 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
                 extraYaw -= 360.0F;
             }
 
-            if (extraYaw > 30.0F) {
-                extraYaw = 30.0F;
-            }
-
-            if (extraYaw < -30.0F) {
-                extraYaw = -30.0F;
-            }
+            extraYaw = MathF.clamp(extraYaw, -30.0F, 30.0F);
 
             this.yRot += extraYaw;
             if (dY > 0.0D) {

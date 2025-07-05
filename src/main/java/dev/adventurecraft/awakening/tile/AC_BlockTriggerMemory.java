@@ -72,8 +72,8 @@ public class AC_BlockTriggerMemory extends TileEntityTile implements AC_ITrigger
 
     public void triggerActivate(Level world, int x, int y, int z) {
         var e = (AC_TileEntityTriggerMemory) world.getTileEntity(x, y, z);
-        ((ExWorld) world).getTriggerManager().addArea(
-            x, y, z, new AC_TriggerArea(e.minX, e.minY, e.minZ, e.maxX, e.maxY, e.maxZ));
+        var area = new AC_TriggerArea(e.min(), e.max());
+        ((ExWorld) world).getTriggerManager().addArea(x, y, z, area);
     }
 
     public void triggerDeactivate(Level world, int x, int y, int z) {
@@ -97,15 +97,10 @@ public class AC_BlockTriggerMemory extends TileEntityTile implements AC_ITrigger
 
     public void setTriggerToSelection(Level world, int x, int y, int z) {
         var e = (AC_TileEntityTriggerMemory) world.getTileEntity(x, y, z);
-        if (e.minX != AC_ItemCursor.minX ||
-            e.minY != AC_ItemCursor.minY ||
-            e.minZ != AC_ItemCursor.minZ ||
-            e.maxX != AC_ItemCursor.maxX ||
-            e.maxY != AC_ItemCursor.maxY ||
-            e.maxZ != AC_ItemCursor.maxZ) {
-            e.set(
-                AC_ItemCursor.minX, AC_ItemCursor.minY, AC_ItemCursor.minZ,
-                AC_ItemCursor.maxX, AC_ItemCursor.maxY, AC_ItemCursor.maxZ);
+        Coord min = AC_ItemCursor.min();
+        Coord max = AC_ItemCursor.max();
+        if (!e.min().equals(min) || !e.max().equals(max)) {
+            e.set(min, max);
         }
     }
 

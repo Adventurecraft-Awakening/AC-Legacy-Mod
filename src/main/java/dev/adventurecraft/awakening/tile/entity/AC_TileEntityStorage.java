@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.tile.entity;
 
 import java.util.ArrayList;
 
+import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
@@ -19,15 +20,12 @@ public class AC_TileEntityStorage extends AC_TileEntityMinMax {
     ArrayList<CompoundTag> tileEntities = new ArrayList<>();
 
     public void setArea() {
-        this.minX = AC_ItemCursor.minX;
-        this.minY = AC_ItemCursor.minY;
-        this.minZ = AC_ItemCursor.minZ;
-        this.maxX = AC_ItemCursor.maxX;
-        this.maxY = AC_ItemCursor.maxY;
-        this.maxZ = AC_ItemCursor.maxZ;
-        int width = this.maxX - this.minX + 1;
-        int height = this.maxY - this.minY + 1;
-        int depth = this.maxZ - this.minZ + 1;
+        this.setMin(AC_ItemCursor.min());
+        this.setMax(AC_ItemCursor.max());
+        Coord delta = this.max().sub(this.min());
+        int width = delta.x + 1;
+        int height = delta.y + 1;
+        int depth = delta.z + 1;
         int volume = width * height * depth;
         this.blockIDs = new byte[volume];
         this.metadatas = new byte[volume];
@@ -42,9 +40,11 @@ public class AC_TileEntityStorage extends AC_TileEntityMinMax {
         int blockIndex = 0;
         this.tileEntities.clear();
 
-        for (int x = this.minX; x <= this.maxX; ++x) {
-            for (int z = this.minZ; z <= this.maxZ; ++z) {
-                for (int y = this.minY; y <= this.maxY; ++y) {
+        Coord min = this.min();
+        Coord max = this.max();
+        for (int x = min.x; x <= max.x; ++x) {
+            for (int z = min.z; z <= max.z; ++z) {
+                for (int y = min.y; y <= max.y; ++y) {
                     int id = this.level.getTile(x, y, z);
                     int meta = this.level.getData(x, y, z);
                     this.blockIDs[blockIndex] = (byte) ExChunk.translate128(id);
@@ -55,7 +55,6 @@ public class AC_TileEntityStorage extends AC_TileEntityMinMax {
                         tileEntity.save(tag);
                         this.tileEntities.add(tag);
                     }
-
                     ++blockIndex;
                 }
             }
@@ -71,9 +70,11 @@ public class AC_TileEntityStorage extends AC_TileEntityMinMax {
 
         int blockIndex = 0;
 
-        for (int x = this.minX; x <= this.maxX; ++x) {
-            for (int z = this.minZ; z <= this.maxZ; ++z) {
-                for (int y = this.minY; y <= this.maxY; ++y) {
+        Coord min = this.min();
+        Coord max = this.max();
+        for (int x = min.x; x <= max.x; ++x) {
+            for (int z = min.z; z <= max.z; ++z) {
+                for (int y = min.y; y <= max.y; ++y) {
                     int id = this.level.getTile(x, y, z);
                     ((ExWorld) this.level).cancelBlockUpdate(x, y, z, id);
                     int id256 = ExChunk.translate256(this.blockIDs[blockIndex]);

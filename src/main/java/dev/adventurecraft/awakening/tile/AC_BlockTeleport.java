@@ -53,10 +53,6 @@ public class AC_BlockTeleport extends TileEntityTile implements AC_ITriggerDebug
     }
 
     @Override
-    public void onTriggerDeactivated(Level world, int x, int y, int z) {
-    }
-
-    @Override
     public boolean mayPick() {
         return AC_DebugMode.active;
     }
@@ -67,9 +63,10 @@ public class AC_BlockTeleport extends TileEntityTile implements AC_ITriggerDebug
             ItemInstance heldItem = player.getSelectedItem();
             if (heldItem != null && heldItem.id == AC_Items.cursor.id) {
                 var entity = (AC_TileEntityTeleport) world.getTileEntity(x, y, z);
-                entity.x = AC_ItemCursor.minX;
-                entity.y = AC_ItemCursor.minY;
-                entity.z = AC_ItemCursor.minZ;
+                Coord pos = AC_ItemCursor.min();
+                entity.x = pos.x;
+                entity.y = pos.y;
+                entity.z = pos.z;
                 entity.hasPosition = true;
                 Minecraft.instance.gui.addMessage(String.format("Setting Teleport (%d, %d, %d)", entity.x, entity.y, entity.z));
                 return true;

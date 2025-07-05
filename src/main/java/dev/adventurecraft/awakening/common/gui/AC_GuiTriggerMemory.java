@@ -8,6 +8,7 @@ import net.minecraft.client.gui.components.OptionButton;
 import net.minecraft.client.gui.screens.Screen;
 
 public class AC_GuiTriggerMemory extends Screen {
+
     private AC_TileEntityTriggerMemory trigger;
 
     public AC_GuiTriggerMemory(AC_TileEntityTriggerMemory entity) {
@@ -28,7 +29,7 @@ public class AC_GuiTriggerMemory extends Screen {
 
         var1 = new OptionButton(2, 4, 80, "Reset on Death");
         if (!this.trigger.resetOnDeath) {
-            var1.message = "Don\'t Reset on Death";
+            var1.message = "Don't Reset on Death";
         }
         this.buttons.add(var1);
     }
@@ -40,18 +41,22 @@ public class AC_GuiTriggerMemory extends Screen {
             if (var2 == AC_Blocks.triggerMemory.id) {
                 AC_Blocks.triggerMemory.setTriggerToSelection(t.level, t.x, t.y, t.z);
             }
-        } else if (btn.id == 1) {
+        }
+        else if (btn.id == 1) {
             t.activateOnDetrigger = !t.activateOnDetrigger;
             if (t.activateOnDetrigger) {
                 btn.message = "Activate on Detrigger";
-            } else {
+            }
+            else {
                 btn.message = "Activate on Trigger";
             }
-        } else if (btn.id == 2) {
+        }
+        else if (btn.id == 2) {
             t.resetOnDeath = !t.resetOnDeath;
             if (t.resetOnDeath) {
                 btn.message = "Reset on Death";
-            } else {
+            }
+            else {
                 btn.message = "Don't Reset on Death";
             }
         }
@@ -63,15 +68,10 @@ public class AC_GuiTriggerMemory extends Screen {
         this.fill(0, 0, this.width, this.height, Integer.MIN_VALUE);
 
         AC_TileEntityTriggerMemory t = this.trigger;
-        int color = 14737632;
-
-        this.drawString(this.font, String.format("Min: (%d, %d, %d)", t.minX, t.minY, t.minZ), 4, 4, color);
-        this.drawString(this.font, String.format("Max: (%d, %d, %d)", t.maxX, t.maxY, t.maxZ), 4, 24, color);
-        if (t.isActivated) {
-            this.drawString(this.font, "Memory Set", 4, 104, color);
-        } else {
-            this.drawString(this.font, "Memory Unset", 4, 104, color);
-        }
+        int color = 0xe0e0e0;
+        AC_GuiStrings.drawMinMax(this, t, 4, 4, color);
+        String msg = t.isActivated ? "Memory Set" : "Memory Unset";
+        this.drawString(this.font, msg, 4, 104, color);
 
         super.render(mouseX, mouseY, tick);
     }

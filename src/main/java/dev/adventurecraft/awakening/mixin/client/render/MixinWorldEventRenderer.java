@@ -1009,7 +1009,10 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
 
     @Override
     public void drawCursorSelection(Mob entity, ItemInstance stack, float deltaTime) {
-        if (!AC_ItemCursor.bothSet || stack == null || stack.id < AC_Items.cursor.id || stack.id > AC_Items.cursor.id + 20) {
+        if (!AC_ItemCursor.bothSet) {
+            return;
+        }
+        if (stack == null || stack.id < AC_Items.cursor.id || stack.id > AC_Items.cursor.id + 20) {
             return;
         }
 
@@ -1018,12 +1021,14 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         GL11.glColor4f(1.0F, 0.6F, 0.0F, 0.4F);
         GL11.glLineWidth(3.0F);
         GL11.glDisable(GL11.GL_TEXTURE_2D);
-        int x1 = Math.min(AC_ItemCursor.oneX, AC_ItemCursor.twoX);
-        int x2 = Math.max(AC_ItemCursor.oneX, AC_ItemCursor.twoX) + 1;
-        int y1 = Math.min(AC_ItemCursor.oneY, AC_ItemCursor.twoY);
-        int y2 = Math.max(AC_ItemCursor.oneY, AC_ItemCursor.twoY) + 1;
-        int z1 = Math.min(AC_ItemCursor.oneZ, AC_ItemCursor.twoZ);
-        int z2 = Math.max(AC_ItemCursor.oneZ, AC_ItemCursor.twoZ) + 1;
+        Coord c0 = AC_ItemCursor.one().min(AC_ItemCursor.two());
+        Coord c1 = AC_ItemCursor.one().max(AC_ItemCursor.two());
+        int x1 = c0.x;
+        int y1 = c0.y;
+        int z1 = c0.z;
+        int x2 = c1.x + 1;
+        int y2 = c1.y + 1;
+        int z2 = c1.z + 1;
         double dX = entity.xOld + (entity.x - entity.xOld) * (double) deltaTime;
         double dY = entity.yOld + (entity.y - entity.yOld) * (double) deltaTime;
         double dZ = entity.zOld + (entity.z - entity.zOld) * (double) deltaTime;
