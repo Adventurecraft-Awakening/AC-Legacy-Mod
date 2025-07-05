@@ -133,6 +133,7 @@
     "item.MixinSwordItem",
     "util.MixinMth",
     "util.io.MixinCompoundTag",
+    "world.MixinCakeTile",
     "world.MixinWorld",
     "world.MixinWorldManager",
     "world.MixinWorldPopulationRegion",
