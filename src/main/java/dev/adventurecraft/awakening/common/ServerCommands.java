@@ -124,6 +124,10 @@ public class ServerCommands {
             "value", BoolArgumentType.bool(),
             descs.attach(ServerCommands::cmdToggleHoe, "Toggles hoe usage outside of Debug Mode")));
 
+        dispatcher.register(optionalArg(literal("togglebonemeal"),
+            "value", BoolArgumentType.bool(),
+            descs.attach(ServerCommands::cmdToggleBonemeal, "Toggles bonemeal usage outside of Debug Mode")));
+
         dispatcher.register(optionalArg(literal("mobsburn"),
             "value", BoolArgumentType.bool(),
             descs.attach(ServerCommands::cmdMobsBurn, "Toggles mobs burning in daylight")));
@@ -450,6 +454,20 @@ public class ServerCommands {
             props.setCanUseHoe(value != null ? value : !props.getCanUseHoe());
 
             source.getClient().gui.addMessage(String.format("Hoe usable without Debug Mode: %b", props.getCanUseHoe()));
+            return Command.SINGLE_SUCCESS;
+        }
+        return 0;
+    }
+  
+ 
+    public static int cmdToggleBonemeal(CommandContext<ServerCommandSource> context, Boolean value) {
+        var source = context.getSource();
+        var world = source.getWorld();
+        if (world != null) {
+            var props = (ExWorldProperties) world.levelData;
+            props.setCanUseBonemeal(value != null ? value : !props.getCanUseBonemeal());
+
+            source.getClient().gui.addMessage(String.format("Bonemeal usable without Debug Mode: %b", props.getCanUseBonemeal()));
             return Command.SINGLE_SUCCESS;
         }
         return 0;

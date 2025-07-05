@@ -134,4 +134,8 @@ public interface ExWorldProperties {
     void setCanUseHoe(boolean arg);
 
     boolean getCanUseHoe();
+  
+    void setCanUseBonemeal(boolean arg);
+
+    boolean getCanUseBonemeal();
 }
