@@ -36,48 +36,27 @@ import java.util.List;
 )
 public abstract class MixinClass_66 implements ExClass_66 {
 
-    @Shadow
-    public Level level;
-    @Shadow
-    private int lists;
-    @Shadow
-    private static Tesselator tesselator;
-    @Shadow
-    public int x;
-    @Shadow
-    public int y;
-    @Shadow
-    public int z;
-    @Shadow
-    public int xs;
-    @Shadow
-    public int ys;
-    @Shadow
-    public int zs;
-    @Shadow
-    public int xRenderOffs;
-    @Shadow
-    public int yRenderOffs;
-    @Shadow
-    public int zRenderOffs;
-    @Shadow
-    public boolean visible;
-    @Shadow
-    public boolean[] empty;
-    @Shadow
-    public boolean dirty;
-    @Shadow
-    public AABB bb;
-    @Shadow
-    public boolean occlusion_visible;
-    @Shadow
-    public boolean skyLit;
-    @Shadow
-    private boolean compiled;
-    @Shadow
-    public List<TileEntity> renderableTileEntities;
-    @Shadow
-    private List<TileEntity> globalRenderableTileEntities;
+    @Shadow public Level level;
+    @Shadow private int lists;
+    @Shadow private static Tesselator tesselator;
+    @Shadow public int x;
+    @Shadow public int y;
+    @Shadow public int z;
+    @Shadow public int xs;
+    @Shadow public int ys;
+    @Shadow public int zs;
+    @Shadow public int xRenderOffs;
+    @Shadow public int yRenderOffs;
+    @Shadow public int zRenderOffs;
+    @Shadow public boolean visible;
+    @Shadow public boolean[] empty;
+    @Shadow public boolean dirty;
+    @Shadow public AABB bb;
+    @Shadow public boolean occlusion_visible;
+    @Shadow public boolean skyLit;
+    @Shadow private boolean compiled;
+    @Shadow public List<TileEntity> renderableTileEntities;
+    @Shadow private List<TileEntity> globalRenderableTileEntities;
 
     @Unique public boolean isVisibleFromPosition = false;
     @Unique public double visibleFromX;

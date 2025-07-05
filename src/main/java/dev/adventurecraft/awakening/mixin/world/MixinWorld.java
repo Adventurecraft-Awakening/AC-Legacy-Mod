@@ -82,119 +82,42 @@ import java.util.*;
 @Mixin(Level.class)
 public abstract class MixinWorld implements ExWorld, LevelSource {
 
-    @Shadow
-    static int maxLoop;
-
-    @Shadow
-    public LevelData levelData;
-
-    @Shadow
-    public DimensionDataStorage dataStorage;
-
-    @Shadow
-    public boolean isFindingSpawn;
-
-    @Shadow
-    @Final
-    @Mutable
-    public Dimension dimension;
-
-    @Shadow
-    public Random random;
-
-    @Shadow
-    public ChunkSource chunkSource;
-
-    @Shadow
-    @Final
-    @Mutable
-    protected LevelIO levelIo;
-
-    @Shadow
-    public int skyDarken;
-
-    @Shadow
-    private ArrayList<AABB> boxes;
-
-    @Shadow
-    private Set<TickNextTickData> tickNextTickSet;
-
-    @Shadow
-    protected List<LevelListener> listeners;
-
-    @Shadow
-    public int saveInterval;
-
-    @Shadow
-    protected float oRainLevel;
-
-    @Shadow
-    protected float rainLevel;
-
-    @Shadow
-    protected float oThunderLevel;
-
-    @Shadow
-    protected float thunderLevel;
-
-    @Shadow
-    public List<Player> players;
-
-    @Shadow
-    public boolean isClientSide;
-
-    @Shadow
-    private int delayUntilNextMoodSound;
-
-    @Shadow
-    protected int randValue;
-
-    @Shadow
-    protected int lightingCooldown;
-
-    @Shadow
-    public boolean isNew;
-
-    @Shadow
-    private TreeSet<TickNextTickData> tickNextTickList;
-
-    @Shadow
-    public List<Entity> entities;
-
-    @Shadow
-    private List<LightUpdate> lightUpdates;
-
-    @Shadow
-    @Final
-    @Mutable
-    protected int addend;
-
-    @Shadow
-    private List<Entity> entitiesToRemove;
-
-    @Shadow
-    public List<TileEntity> tileEntityList;
-
-    @Shadow
-    private List<TileEntity> pendingTileEntities;
-
-    @Shadow
-    public List<Entity> globalEntities;
-
-    @Shadow
-    private long cloudColor;
-
-    @Shadow
-    private List<Entity> es;
-
-    @Shadow
-    private boolean spawnFriendlies;
-
-    @Shadow
-    private boolean spawnEnemies;
-
-    @Shadow
-    private long sessionId;
+    @Shadow static int maxLoop;
+    @Shadow public LevelData levelData;
+    @Shadow public DimensionDataStorage dataStorage;
+    @Shadow public boolean isFindingSpawn;
+    @Shadow @Final @Mutable public Dimension dimension;
+    @Shadow public Random random;
+    @Shadow public ChunkSource chunkSource;
+    @Shadow @Final @Mutable protected LevelIO levelIo;
+    @Shadow public int skyDarken;
+    @Shadow private ArrayList<AABB> boxes;
+    @Shadow private Set<TickNextTickData> tickNextTickSet;
+    @Shadow protected List<LevelListener> listeners;
+    @Shadow public int saveInterval;
+    @Shadow protected float oRainLevel;
+    @Shadow protected float rainLevel;
+    @Shadow protected float oThunderLevel;
+    @Shadow protected float thunderLevel;
+    @Shadow public List<Player> players;
+    @Shadow public boolean isClientSide;
+    @Shadow private int delayUntilNextMoodSound;
+    @Shadow protected int randValue;
+    @Shadow protected int lightingCooldown;
+    @Shadow public boolean isNew;
+    @Shadow private TreeSet<TickNextTickData> tickNextTickList;
+    @Shadow public List<Entity> entities;
+    @Shadow private List<LightUpdate> lightUpdates;
+    @Shadow @Final @Mutable protected int addend;
+    @Shadow private List<Entity> entitiesToRemove;
+    @Shadow public List<TileEntity> tileEntityList;
+    @Shadow private List<TileEntity> pendingTileEntities;
+    @Shadow public List<Entity> globalEntities;
+    @Shadow private long cloudColor;
+    @Shadow private List<Entity> es;
+    @Shadow private boolean spawnFriendlies;
+    @Shadow private boolean spawnEnemies;
+    @Shadow private long sessionId;
 
     public File levelDir;
     private int[] coordOrder;
@@ -286,7 +209,13 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
 
     @Override
     public void initWorld(
-        String mapName, LevelIO dimData, String saveName, long seed, Dimension dimension, ProgressListener progressListener) {
+        String mapName,
+        LevelIO dimData,
+        String saveName,
+        long seed,
+        Dimension dimension,
+        ProgressListener progressListener
+    ) {
         this.addend = 1013904223;
         this.fogColorOverridden = false;
         this.fogDensityOverridden = false;
@@ -329,7 +258,8 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         if (dimData != null) {
             this.dataStorage = new DimensionDataStorage(dimData);
             this.levelData = dimData.getLevelData();
-        } else {
+        }
+        else {
             this.dataStorage = new DimensionDataStorage(this.mapHandler);
         }
 
@@ -345,9 +275,11 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         this.isNew = this.levelData == null;
         if (dimension != null) {
             this.dimension = dimension;
-        } else if (this.levelData != null && this.levelData.getDimension() == -1) {
+        }
+        else if (this.levelData != null && this.levelData.getDimension() == -1) {
             this.dimension = Dimension.getNew(-1);
-        } else {
+        }
+        else {
             this.dimension = Dimension.getNew(0);
         }
 
@@ -355,7 +287,8 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         if (this.levelData == null) {
             this.levelData = new LevelData(seed, saveName);
             newProps = true;
-        } else {
+        }
+        else {
             this.levelData.setLevelName(saveName);
         }
 
@@ -427,7 +360,8 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             int id = entry.getValue();
             try {
                 texManager.loadTexture(id, name);
-            } catch (IllegalArgumentException ex) {
+            }
+            catch (IllegalArgumentException ex) {
                 ACMod.LOGGER.error("Failed to load texture \"{}\".", name, ex);
             }
         }
@@ -474,15 +408,18 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
                             //noinspection DataFlowIssue
                             ((AC_TextureBinder) instance).loadImage(imageName, (Level) (Object) this);
                             texManager.registerTextureAnimation(animName, instance);
-                        } catch (Exception var12) {
+                        }
+                        catch (Exception var12) {
                             var12.printStackTrace();
                         }
                     }
                 }
-            } catch (IOException var13) {
+            }
+            catch (IOException var13) {
                 var13.printStackTrace();
             }
-        } catch (FileNotFoundException var14) {
+        }
+        catch (FileNotFoundException var14) {
             var14.printStackTrace();
         }
     }
@@ -493,7 +430,8 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         if (file.exists()) {
             try {
                 return ImageLoader.load(file, ImageLoadOptions.withFormat(ImageFormat.RGBA_U8));
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 ACMod.LOGGER.error("Failed to load map texture \"{}\":", file.getPath(), ex);
             }
         }
@@ -510,7 +448,8 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         ChunkStorage io;
         if (this.levelIo == null) {
             io = this.mapHandler.readDimension(this.dimension);
-        } else {
+        }
+        else {
             io = this.levelIo.readDimension(this.dimension);
             if (this.mapHandler != null) {
                 io = new MapChunkLoader(this.mapHandler.readDimension(this.dimension), io);
@@ -521,22 +460,30 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             var cache = (ChunkCache) ACMod.UNSAFE.allocateInstance(ChunkCache.class);
             ((ExChunkCache) cache).init((Level) (Object) this, io, this.dimension.createRandomLevelSource());
             return cache;
-        } catch (InstantiationException e) {
+        }
+        catch (InstantiationException e) {
             throw new RuntimeException(e);
         }
     }
 
-    @Redirect(method = "setInitialSpawn", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/world/level/storage/LevelData;setSpawnXYZ(III)V"))
+    @Redirect(
+        method = "setInitialSpawn",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/level/storage/LevelData;setSpawnXYZ(III)V"
+        )
+    )
     private void spawnAtUncoveredBlock(LevelData instance, int x, int y, int z) {
         this.levelData.setSpawnXYZ(x, this.getFirstUncoveredBlockY(x, z), z);
     }
 
-    @Inject(method = "validateSpawn", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/world/level/storage/LevelData;setSpawnZ(I)V",
-        shift = At.Shift.AFTER)
+    @Inject(
+        method = "validateSpawn",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/level/storage/LevelData;setSpawnZ(I)V",
+            shift = At.Shift.AFTER
+        )
     )
     private void spawnAtUncoveredBlock(CallbackInfo ci, @Local(ordinal = 0) int x, @Local(ordinal = 1) int z) {
         this.levelData.setSpawnY(this.getFirstUncoveredBlockY(x, z));
@@ -556,9 +503,13 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         return this.getTile(x, y, z);
     }
 
-    @Redirect(method = "saveLevel", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/world/level/storage/LevelIO;saveWithPlayers(Lnet/minecraft/world/level/storage/LevelData;Ljava/util/List;)V"))
+    @Redirect(
+        method = "saveLevel",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/level/storage/LevelIO;saveWithPlayers(Lnet/minecraft/world/level/storage/LevelData;Ljava/util/List;)V"
+        )
+    )
     private void modifySave(LevelIO instance, LevelData worldProperties, List<Player> list) {
         var exProps = (ExWorldProperties) worldProperties;
         exProps.setGlobalScope(ScopeTag.getTagFromScope(this.script.globalScope));
@@ -708,7 +659,12 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
 
     @Override
     public HitResult rayTraceBlocks2(
-        Vec3 pointA, Vec3 pointB, boolean blockCollidableFlag, boolean useCollisionShapes, boolean collideWithClip) {
+        Vec3 pointA,
+        Vec3 pointB,
+        boolean blockCollidableFlag,
+        boolean useCollisionShapes,
+        boolean collideWithClip
+    ) {
         if (Double.isNaN(pointA.x) || Double.isNaN(pointA.y) || Double.isNaN(pointA.z)) {
             return null;
         }
@@ -722,7 +678,12 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         double paZ = pointA.z;
 
         HitResult hit = this.rayTraceBlocksCore(
-            pointA, pointB, blockCollidableFlag, useCollisionShapes, collideWithClip);
+            pointA,
+            pointB,
+            blockCollidableFlag,
+            useCollisionShapes,
+            collideWithClip
+        );
 
         if (AC_DebugMode.renderRays) {
             this.recordRayDebugList(paX, paY, paZ, pointB.x, pointB.y, pointB.z, hit);
@@ -731,8 +692,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     }
 
     @Override
-    public void recordRayDebugList(
-        double aX, double aY, double aZ, double bX, double bY, double bZ, HitResult hit) {
+    public void recordRayDebugList(double aX, double aY, double aZ, double bX, double bY, double bZ, HitResult hit) {
 
         var blocksCollisionsArray = saveAsFloatArray(this.rayCheckedBlocks);
         this.rayCheckedBlocks.clear();
@@ -748,7 +708,12 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
 
     @Override
     public HitResult rayTraceBlocksCore(
-        Vec3 pointA, Vec3 pointB, boolean blockCollidableFlag, boolean useCollisionShapes, boolean collideWithClip) {
+        Vec3 pointA,
+        Vec3 pointB,
+        boolean blockCollidableFlag,
+        boolean useCollisionShapes,
+        boolean collideWithClip
+    ) {
         int bX = Mth.floor(pointB.x);
         int bY = Mth.floor(pointB.y);
         int bZ = Mth.floor(pointB.z);
@@ -760,7 +725,9 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         AABB aAabb = null;
         if (aBlock != null &&
             (!useCollisionShapes || (aAabb = aBlock.getAABB((Level) (Object) this, aX, aY, aZ)) != null) &&
-            (aId > 0 && (collideWithClip || !this.isClippingBlock(aId)) && aBlock.mayPick(this.getData(aX, aY, aZ), blockCollidableFlag))) {
+            (aId > 0 && (collideWithClip || !this.isClippingBlock(aId)) &&
+                aBlock.mayPick(this.getData(aX, aY, aZ), blockCollidableFlag)
+            )) {
 
             if (aAabb != null && AC_DebugMode.renderRays) {
                 this.rayCheckedBlocks.add(aAabb);
@@ -790,25 +757,31 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             double startZ = 999.0D;
             if (bX > aX) {
                 startX = (double) aX + 1.0D;
-            } else if (bX < aX) {
+            }
+            else if (bX < aX) {
                 startX = (double) aX + 0.0D;
-            } else {
+            }
+            else {
                 moveX = false;
             }
 
             if (bY > aY) {
                 startY = (double) aY + 1.0D;
-            } else if (bY < aY) {
+            }
+            else if (bY < aY) {
                 startY = (double) aY + 0.0D;
-            } else {
+            }
+            else {
                 moveY = false;
             }
 
             if (bZ > aZ) {
                 startZ = (double) aZ + 1.0D;
-            } else if (bZ < aZ) {
+            }
+            else if (bZ < aZ) {
                 startZ = (double) aZ + 0.0D;
-            } else {
+            }
+            else {
                 moveZ = false;
             }
 
@@ -834,27 +807,32 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             if (distX < distY && distX < distZ) {
                 if (bX > aX) {
                     side = 4;
-                } else {
+                }
+                else {
                     side = 5;
                 }
 
                 pointA.x = startX;
                 pointA.y += deltaY * distX;
                 pointA.z += deltaZ * distX;
-            } else if (distY < distZ) {
+            }
+            else if (distY < distZ) {
                 if (bY > aY) {
                     side = 0;
-                } else {
+                }
+                else {
                     side = 1;
                 }
 
                 pointA.x += deltaX * distY;
                 pointA.y = startY;
                 pointA.z += deltaZ * distY;
-            } else {
+            }
+            else {
                 if (bZ > aZ) {
                     side = 2;
-                } else {
+                }
+                else {
                     side = 3;
                 }
 
@@ -905,7 +883,9 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         at = @At(
             value = "INVOKE",
             target = "Ljava/util/List;add(Ljava/lang/Object;)Z",
-            ordinal = 1))
+            ordinal = 1
+        )
+    )
     private <E> boolean spawnIfNotExisting(List<E> instance, E entity) {
         if (!instance.contains(entity)) {
             return instance.add(entity);
@@ -917,17 +897,29 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         method = "getCubes",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/level/tile/Tile;addAABBs(Lnet/minecraft/world/level/Level;IIILnet/minecraft/world/phys/AABB;Ljava/util/ArrayList;)V"))
+            target = "Lnet/minecraft/world/level/tile/Tile;addAABBs(Lnet/minecraft/world/level/Level;IIILnet/minecraft/world/phys/AABB;Ljava/util/ArrayList;)V"
+        )
+    )
     private void guardBoxCollide(
-        Tile block, Level world, int x, int y, int z, AABB aabb, ArrayList<AABB> output,
-        @Local(argsOnly = true) Entity entity) {
+        Tile block,
+        Level world,
+        int x,
+        int y,
+        int z,
+        AABB aabb,
+        ArrayList<AABB> output,
+        @Local(argsOnly = true) Entity entity
+    ) {
 
         if (((ExEntity) entity).getCollidesWithClipBlocks() || !this.isClippingBlock(block.id)) {
             block.addAABBs(world, x, y, z, aabb, output);
         }
     }
 
-    @Inject(method = "getCubes", at = @At("RETURN"))
+    @Inject(
+        method = "getCubes",
+        at = @At("RETURN")
+    )
     private void recordCollision(Entity entity, AABB aabb, CallbackInfoReturnable<List<AABB>> cir) {
         if (!AC_DebugMode.renderCollisions) {
             return;
@@ -963,7 +955,10 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         return this.dimension.getTimeOfDay(props.getTimeOfDay(), var1 * props.getTimeRate());
     }
 
-    @Inject(method = "getFogColor", at = @At("RETURN"))
+    @Inject(
+        method = "getFogColor",
+        at = @At("RETURN")
+    )
     private void changeFogColor(float dt, CallbackInfoReturnable<Vec3> cir) {
         Vec3 rgb = cir.getReturnValue();
         var props = (ExWorldProperties) this.levelData;
@@ -972,7 +967,8 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
                 rgb.x = props.getFogR();
                 rgb.y = props.getFogG();
                 rgb.z = props.getFogB();
-            } else {
+            }
+            else {
                 rgb.x = (double) (1.0F - dt) * rgb.x + (double) (dt * props.getFogR());
                 rgb.y = (double) (1.0F - dt) * rgb.y + (double) (dt * props.getFogG());
                 rgb.z = (double) (1.0F - dt) * rgb.z + (double) (dt * props.getFogB());
@@ -1006,7 +1002,8 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
 
     @Inject(
         method = "tickEntities",
-        at = @At("HEAD"))
+        at = @At("HEAD")
+    )
     private void clearCollisionList(CallbackInfo ci) {
         this.collisionDebugLists.clear();
     }
@@ -1017,10 +1014,14 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         at = @At(
             value = "FIELD",
             target = "Lnet/minecraft/world/entity/Entity;removed:Z",
-            ordinal = 2))
+            ordinal = 2
+        )
+    )
     private boolean fixupRemoveCondition(boolean value, @Local Entity entity) {
         ExMinecraft mc = (ExMinecraft) Minecraft.instance;
-        return !(!entity.removed && (!mc.isCameraActive() || !mc.isCameraPause()) && (!AC_DebugMode.active || entity instanceof Player));
+        return !(!entity.removed && (!mc.isCameraActive() || !mc.isCameraPause()) &&
+            (!AC_DebugMode.active || entity instanceof Player)
+        );
     }
 
     @Inject(
@@ -1028,7 +1029,9 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/level/Level;tick(Lnet/minecraft/world/entity/Entity;)V",
-            shift = At.Shift.AFTER))
+            shift = At.Shift.AFTER
+        )
+    )
     private void fixupBoundingBox(CallbackInfo ci) {
         AABB.resetPool();
     }
@@ -1038,11 +1041,14 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         slice = @Slice(
             from = @At(
                 value = "FIELD",
-                target = "Lnet/minecraft/world/level/Level;tileEntityList:Ljava/util/List;")
+                target = "Lnet/minecraft/world/level/Level;tileEntityList:Ljava/util/List;"
+            )
         ),
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/level/Level;getChunk(II)Lnet/minecraft/world/level/chunk/LevelChunk;"))
+            target = "Lnet/minecraft/world/level/Level;getChunk(II)Lnet/minecraft/world/level/chunk/LevelChunk;"
+        )
+    )
     private LevelChunk ignoreIfKilledOnSave(Level instance, int j, int i, @Local TileEntity var5) {
         if (((ExBlockEntity) var5).isKilledFromSaving()) {
             return null;
@@ -1069,9 +1075,11 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             int stunned = ((ExEntity) entity).getStunned();
             if (stunned > 0) {
                 ((ExEntity) entity).setStunned(stunned - 1);
-            } else if (entity.riding != null) {
+            }
+            else if (entity.riding != null) {
                 entity.rideTick();
-            } else {
+            }
+            else {
                 entity.tick();
             }
         }
@@ -1107,7 +1115,8 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             if (this.hasChunk(ecX, ecZ)) {
                 entity.inChunk = true;
                 this.getChunk(ecX, ecZ).addEntity(entity);
-            } else {
+            }
+            else {
                 entity.inChunk = false;
             }
         }
@@ -1115,7 +1124,8 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         if (tick && entity.inChunk && entity.rider != null) {
             if (!entity.rider.removed && entity.rider.riding == entity) {
                 this.tick(entity.rider);
-            } else {
+            }
+            else {
                 entity.rider.riding = null;
                 entity.rider = null;
             }
@@ -1127,7 +1137,9 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         at = @At(
             value = "FIELD",
             target = "Lnet/minecraft/world/level/Level;updatingTileEntities:Z",
-            shift = At.Shift.BEFORE))
+            shift = At.Shift.BEFORE
+        )
+    )
     private void removeBlockEntityOnSet(int x, int y, int z, TileEntity var4, CallbackInfo ci) {
         this.removeTileEntity(x, y, z);
     }
@@ -1136,7 +1148,9 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         method = "removeTileEntity",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/level/Level;getTileEntity(III)Lnet/minecraft/world/level/tile/entity/TileEntity;"))
+            target = "Lnet/minecraft/world/level/Level;getTileEntity(III)Lnet/minecraft/world/level/tile/entity/TileEntity;"
+        )
+    )
     private TileEntity removeBlockEntityDontCreate(Level instance, int x, int y, int z) {
         return this.getBlockTileEntityDontCreate(x, y, z);
     }
@@ -1180,7 +1194,8 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
                 System.out.println("More than " + maxUpdates + " updates, aborting lighting updates");
                 this.lightUpdates.clear();
             }
-        } finally {
+        }
+        finally {
             --maxLoop;
         }
     }
@@ -1264,7 +1279,8 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         this.oRainLevel = this.rainLevel;
         if (this.levelData.isRaining()) {
             this.rainLevel = (float) ((double) this.rainLevel + 0.01D);
-        } else {
+        }
+        else {
             this.rainLevel = (float) ((double) this.rainLevel - 0.01D);
         }
 
@@ -1279,7 +1295,8 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         this.oThunderLevel = this.thunderLevel;
         if (this.levelData.isThundering()) {
             this.thunderLevel = (float) ((double) this.thunderLevel + 0.01D);
-        } else {
+        }
+        else {
             this.thunderLevel = (float) ((double) this.thunderLevel - 0.01D);
         }
 
@@ -1368,9 +1385,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             int eY = entry.y;
             int eZ = entry.z;
             int eD = 8;
-            if (this.hasChunksAt(
-                eX - eD, eY - eD, eZ - eD,
-                eX + eD, eY + eD, eZ + eD)) {
+            if (this.hasChunksAt(eX - eD, eY - eD, eZ - eD, eX + eD, eY + eD, eZ + eD)) {
                 int id = this.getTile(entry.x, entry.y, entry.z);
                 if (id == entry.priority && id > 0) {
                     Tile.tiles[id].tick((Level) (Object) this, eX, eY, eZ, this.random);
@@ -1386,7 +1401,8 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     public void checkSession() {
         if (this.levelIo != null) {
             this.levelIo.checkSession();
-        } else {
+        }
+        else {
             this.mapHandler.checkSession();
         }
     }
@@ -1444,7 +1460,8 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
                     return false;
                 }
                 this.setTile(x, y, z, Tile.SNOW_LAYER.id);
-            } else if (idDown == Tile.FLOWING_WATER.id && this.getData(x, y - 1, z) == 0) {
+            }
+            else if (idDown == Tile.FLOWING_WATER.id && this.getData(x, y - 1, z) == 0) {
                 if (this.getBrightness(LightLayer.BLOCK, x, y, z) > 11) {
                     return false;
                 }
@@ -1457,10 +1474,12 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         if (id == Tile.SNOW_LAYER.id) {
             this.setTile(x, y, z, 0);
             return true;
-        } else if (idDown == Tile.SNOW.id) {
+        }
+        else if (idDown == Tile.SNOW.id) {
             this.setTile(x, y - 1, z, Tile.SNOW_LAYER.id);
             return true;
-        } else if (idDown == Tile.ICE.id) {
+        }
+        else if (idDown == Tile.ICE.id) {
             this.setTile(x, y - 1, z, Tile.FLOWING_WATER.id);
             return true;
         }
