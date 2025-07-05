@@ -1,14 +1,14 @@
 package dev.adventurecraft.awakening.script;
 
-import dev.adventurecraft.awakening.extension.entity.ExMobEntity;
-import net.minecraft.world.entity.Mob;
+import dev.adventurecraft.awakening.extension.entity.ExPathfinderMob;
+import net.minecraft.world.entity.PathfinderMob;
 
 @SuppressWarnings("unused")
 public class ScriptEntityCreature extends ScriptEntityLiving {
 
-    Mob mob;
+    PathfinderMob mob;
 
-    ScriptEntityCreature(Mob var1) {
+    ScriptEntityCreature(PathfinderMob var1) {
         super(var1);
         this.mob = var1;
     }
@@ -34,18 +34,18 @@ public class ScriptEntityCreature extends ScriptEntityLiving {
     }
 
     public boolean getCanForgetTargetRandomly() {
-        return ((ExMobEntity) this.mob).getCanForgetTargetRandomly();
+        return ((ExPathfinderMob) this.mob).getCanForgetTargetRandomly();
     }
 
     public void setCanForgetTargetRandomly(boolean var1) {
-        ((ExMobEntity) this.mob).setCanForgetTargetRandomly(var1);
+        ((ExPathfinderMob) this.mob).setCanForgetTargetRandomly(var1);
     }
 
     public boolean getCanPathRandomly() {
-        return ((ExMobEntity) this.mob).getCanPathRandomly();
+        return ((ExPathfinderMob) this.mob).getCanPathRandomly();
     }
 
     public void setCanPathRandomly(boolean var1) {
-        ((ExMobEntity) this.mob).setCanPathRandomly(var1);
+        ((ExPathfinderMob) this.mob).setCanPathRandomly(var1);
     }
 }

@@ -6,13 +6,12 @@ import dev.adventurecraft.awakening.common.AC_DebugMode;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelSource;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.tile.Tile;
 import net.minecraft.world.phys.AABB;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 
-public class AC_BlockSpawn extends Tile implements AC_ITriggerBlock {
+public class AC_BlockSpawn extends Tile implements AC_ITriggerDebugBlock {
 
     protected AC_BlockSpawn(int var1, int var2) {
         super(var1, var2, Material.AIR);
@@ -39,11 +38,6 @@ public class AC_BlockSpawn extends Tile implements AC_ITriggerBlock {
     }
 
     @Override
-    public boolean shouldRender(LevelSource view, int x, int y, int z) {
-        return AC_DebugMode.active;
-    }
-
-    @Override
     public boolean mayPick() {
         return AC_DebugMode.active;
     }
@@ -54,11 +48,6 @@ public class AC_BlockSpawn extends Tile implements AC_ITriggerBlock {
             world.levelData.setSpawnXYZ(x, y, z);
             ((ExWorld) world).setSpawnYaw(entity.yRot);
         }
-    }
-
-    @Override
-    public boolean canBeTriggered() {
-        return true;
     }
 
     @Override

@@ -14,7 +14,7 @@ import dev.adventurecraft.awakening.common.gui.AC_GuiWorldConfig;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.render.ExWorldEventRenderer;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
-import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
+import dev.adventurecraft.awakening.extension.entity.ExMob;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 
 import static dev.adventurecraft.awakening.common.CommandUtils.*;
@@ -128,6 +128,10 @@ public class ServerCommands {
             "value", BoolArgumentType.bool(),
             descs.attach(ServerCommands::cmdMobsBurn, "Toggles mobs burning in daylight")));
 
+        dispatcher.register(optionalArg(literal("togglesleep"),
+            "value", BoolArgumentType.bool(),
+            descs.attach(ServerCommands::cmdToggleSleep, "Toggles if player can sleep in beds")));
+
         dispatcher.register(requiredArg(literal("cameraadd"),
             "time", FloatArgumentType.floatArg(),
             ServerCommands::cmdCameraAdd));
@@ -213,7 +217,7 @@ public class ServerCommands {
             int mobCount = 0;
             int count = 0;
             for (Entity entity : (List<Entity>) world.entities) {
-                if (entity instanceof LivingEntity && !(entity instanceof Player)) {
+                if (entity instanceof Mob && !(entity instanceof Player)) {
                     mobCount++;
                     if (!entity.removed) {
                         entity.remove();
@@ -276,10 +280,10 @@ public class ServerCommands {
     public static int cmdHealth(CommandContext<ServerCommandSource> context, Integer amount) {
         var source = context.getSource();
         var entity = source.getEntity();
-        if (entity instanceof LivingEntity livingEntity) {
+        if (entity instanceof Mob livingEntity) {
             int health = amount != null ? amount : 12;
             livingEntity.health = health;
-            ((ExLivingEntity) livingEntity).setMaxHealth(health);
+            ((ExMob) livingEntity).setMaxHealth(health);
             if (livingEntity instanceof ExPlayerEntity exPlayer) {
                 exPlayer.setHeartPiecesCount(0);
             }
@@ -459,6 +463,19 @@ public class ServerCommands {
             props.setMobsBurn(value != null ? value : !props.getMobsBurn());
 
             source.getClient().gui.addMessage(String.format("Mobs Burn in Daylight: %b", props.getMobsBurn()));
+            return Command.SINGLE_SUCCESS;
+        }
+        return 0;
+    }
+
+    public static int cmdToggleSleep(CommandContext<ServerCommandSource> context, Boolean value) {
+        var source = context.getSource();
+        var world = source.getWorld();
+        if (world != null) {
+            var props = (ExWorldProperties) world.levelData;
+            props.setCanSleep(value != null ? value : !props.getCanSleep());
+
+            source.getClient().gui.addMessage(String.format("Player can sleep in beds: %b", props.getCanSleep()));
             return Command.SINGLE_SUCCESS;
         }
         return 0;

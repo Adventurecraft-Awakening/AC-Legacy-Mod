@@ -127,6 +127,10 @@ public interface ExWorldProperties {
 
     boolean getHudEnabled();
 
+    void setCanSleep(boolean arg);
+
+    boolean getCanSleep();
+  
     void setCanUseHoe(boolean arg);
 
     boolean getCanUseHoe();

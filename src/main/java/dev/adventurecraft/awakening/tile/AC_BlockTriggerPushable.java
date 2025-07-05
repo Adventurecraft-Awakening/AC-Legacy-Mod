@@ -8,6 +8,7 @@ import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityMinMax;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTriggerPushable;
+import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Material;
@@ -65,13 +66,15 @@ public class AC_BlockTriggerPushable extends AC_BlockColorWithEntity {
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active && (player.getSelectedItem() == null || player.getSelectedItem().id == AC_Items.cursor.id)) {
-            var entity = (AC_TileEntityTriggerPushable) world.getTileEntity(x, y, z);
-            AC_GuiTriggerPushable.showUI(entity);
-            return true;
-        } else {
-            return false;
+        if (AC_DebugMode.active) {
+            ItemInstance item = player.getSelectedItem();
+            if (item == null || item.id == AC_Items.cursor.id) {
+                var entity = (AC_TileEntityTriggerPushable) world.getTileEntity(x, y, z);
+                AC_GuiTriggerPushable.showUI(entity);
+                return true;
+            }
         }
+        return false;
     }
 
     @Override

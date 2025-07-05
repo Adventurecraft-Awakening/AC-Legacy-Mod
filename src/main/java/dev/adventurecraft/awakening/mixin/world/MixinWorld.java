@@ -38,6 +38,7 @@ import dev.adventurecraft.awakening.util.RandomUtil;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.BlockShapes;
 import net.minecraft.client.renderer.ptexture.*;
 import net.minecraft.locale.I18n;
 import net.minecraft.util.Mth;
@@ -883,8 +884,10 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             Tile block = Tile.tiles[id];
             AABB aabb = null;
             if (block != null &&
-                (!useCollisionShapes || (aabb = block.getAABB((Level) (Object) this, aX, aY, aZ)) != null) &&
-                id != 0 && block.mayPick(this.getData(aX, aY, aZ), blockCollidableFlag) && ((ExBlock) block).shouldRender(this, aX, aY, aZ)) {
+                (!useCollisionShapes || (aabb = block.getAABB((Level) (Object) this, aX, aY, aZ)) != null) && id != 0 &&
+                block.mayPick(this.getData(aX, aY, aZ), blockCollidableFlag) &&
+                // TODO: is getRenderShape check needed after mayPick?
+                ((ExBlock) block).getRenderShape(this, aX, aY, aZ) != BlockShapes.NONE) {
 
                 if (aabb != null && AC_DebugMode.renderRays) {
                     this.rayCheckedBlocks.add(aabb);
