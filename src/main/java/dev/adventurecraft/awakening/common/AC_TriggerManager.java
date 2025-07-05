@@ -2,22 +2,23 @@ package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.tile.Tile;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Map;
 
-public class AC_TriggerManager {
+public final class AC_TriggerManager {
 
-    public Level world;
-    public HashMap<Coord, Int2ObjectOpenHashMap<AC_TriggerArea>> triggerAreas;
+    public final Level world;
+    public final Map<Coord, Int2ObjectOpenHashMap<AC_TriggerArea>> triggerAreas;
 
     public AC_TriggerManager(Level world) {
         this.world = world;
-        this.triggerAreas = new HashMap<>();
+        this.triggerAreas = new Object2ObjectOpenHashMap<>();
     }
 
     public void addArea(int x, int y, int z, AC_TriggerArea area) {
