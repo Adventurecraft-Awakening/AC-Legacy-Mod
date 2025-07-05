@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.mixin.block;
 
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.client.options.ConnectedGrassOption;
+import dev.adventurecraft.awakening.tile.AC_BlockShapes;
 import dev.adventurecraft.awakening.tile.AC_IBlockColor;
 import dev.adventurecraft.awakening.extension.block.AC_TexturedBlock;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
@@ -30,9 +31,11 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
     public long getTextureForSideEx(LevelSource view, int x, int y, int z, int side) {
         if (side == 1) {
             return getTopTexture(view, x, y, z);
-        } else if (side == 0) {
+        }
+        else if (side == 0) {
             return 2;
-        } else {
+        }
+        else {
             return getSideTexture(view, x, y, z, side);
         }
     }
@@ -95,9 +98,13 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
         return (long) getTopTexture(view, x, y, z) | (1L << 32);
     }
 
-    @Redirect(method = "tick", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/world/level/Level;setTile(IIII)Z"))
+    @Redirect(
+        method = "tick",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/level/Level;setTile(IIII)Z"
+        )
+    )
     private boolean setChunkPopulatingOnSetBlock(Level instance, int j, int k, int l, int i) {
         ACMod.chunkIsNotPopulating = false;
         boolean result = instance.setTile(j, k, l, i);
@@ -112,7 +119,9 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
 
     @Override
     public int getRenderShape() {
-        return ((ExGameOptions) Minecraft.instance.options).isGrass3d() ? 30 : super.getRenderShape();
+        return ((ExGameOptions) Minecraft.instance.options).isGrass3d()
+            ? AC_BlockShapes.GRASS_3D
+            : super.getRenderShape();
     }
 
     @Override

@@ -9,8 +9,7 @@ import org.spongepowered.asm.mixin.Shadow;
 @Mixin(FrustumData.class)
 public abstract class MixinFrustum implements ExFrustum {
 
-    @Shadow
-    public float[][] m_Frustum;
+    @Shadow public float[][] m_Frustum;
 
     @Overwrite
     public boolean cubeInFrustum(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
@@ -21,8 +20,9 @@ public abstract class MixinFrustum implements ExFrustum {
         float bY = (float) maxY;
         float bZ = (float) maxZ;
 
+        float[][] frustum = this.m_Frustum;
         for (int i = 0; i < 6; ++i) {
-            float[] mat = this.m_Frustum[i];
+            float[] mat = frustum[i];
             float m0 = mat[0];
             float m1 = mat[1];
             float m2 = mat[2];
@@ -32,8 +32,8 @@ public abstract class MixinFrustum implements ExFrustum {
             float m0bX = m0 * bX;
             float m1aY = m1 * aY;
             float m1bY = m1 * bY;
-            float m2aZm3 = Math.fma(m2, aZ, m3);
-            float m2bZm3 = Math.fma(m2, bZ, m3);
+            float m2aZm3 = (m2 * aZ) + m3;
+            float m2bZm3 = (m2 * bZ) + m3;
 
             boolean b0 = m0aX + m1aY + m2aZm3 < 0.0F;
             boolean b1 = m0bX + m1aY + m2aZm3 < 0.0F;
@@ -60,8 +60,9 @@ public abstract class MixinFrustum implements ExFrustum {
         float bY = (float) maxY;
         float bZ = (float) maxZ;
 
+        float[][] frustum = this.m_Frustum;
         for (int i = 0; i < 6; ++i) {
-            float[] mat = this.m_Frustum[i];
+            float[] mat = frustum[i];
             float m0 = mat[0];
             float m1 = mat[1];
             float m2 = mat[2];
@@ -71,8 +72,8 @@ public abstract class MixinFrustum implements ExFrustum {
             float m0bX = m0 * bX;
             float m1aY = m1 * aY;
             float m1bY = m1 * bY;
-            float m2aZm3 = Math.fma(m2, aZ, m3);
-            float m2bZm3 = Math.fma(m2, bZ, m3);
+            float m2aZm3 = (m2 * aZ) + m3;
+            float m2bZm3 = (m2 * bZ) + m3;
 
             boolean b0 = m0aX + m1aY + m2aZm3 <= 0.0F;
             boolean b1 = m0bX + m1aY + m2aZm3 <= 0.0F;
@@ -87,7 +88,8 @@ public abstract class MixinFrustum implements ExFrustum {
                 if (b0 || b1 || b2 || b3 || b4 || b5 || b6 || b7) {
                     return false;
                 }
-            } else if (b0 && b1 && b2 && b3 && b4 && b5 && b6 && b7) {
+            }
+            else if (b0 && b1 && b2 && b3 && b4 && b5 && b6 && b7) {
                 return false;
             }
         }

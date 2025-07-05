@@ -9,7 +9,7 @@ import dev.adventurecraft.awakening.tile.AC_Blocks;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -24,7 +24,7 @@ public class AC_EntityHookshot extends Entity {
     private boolean turningAround;
     public boolean attachedToSurface;
     public boolean mainHand;
-    private LivingEntity returnsTo;
+    private Mob returnsTo;
     private Entity entityGrabbed;
     ItemInstance itemStack;
 
@@ -36,7 +36,7 @@ public class AC_EntityHookshot extends Entity {
         ((ExEntity) this).setCollidesWithClipBlocks(false);
     }
 
-    public AC_EntityHookshot(Level world, LivingEntity entity, boolean mainHand, ItemInstance stack) {
+    public AC_EntityHookshot(Level world, Mob entity, boolean mainHand, ItemInstance stack) {
         this(world);
         this.mainHand = mainHand;
         this.setRot(entity.yRot, entity.xRot);
@@ -119,7 +119,7 @@ public class AC_EntityHookshot extends Entity {
                 this.setTurningAround(true);
             }
         } else if (this.getReturnEntity() != null) {
-            LivingEntity returnsTo = this.getReturnEntity();
+            Mob returnsTo = this.getReturnEntity();
             if (returnsTo.removed) {
                 this.remove();
                 return;
@@ -155,7 +155,7 @@ public class AC_EntityHookshot extends Entity {
             var entities = (List<Entity>) this.level.getEntities(this, this.bb.inflate(0.5D, 0.5D, 0.5D));
             for (Entity entity : entities) {
                 boolean isItem = entity instanceof ItemEntity;
-                if (isItem || entity instanceof LivingEntity && entity != this.getReturnEntity()) {
+                if (isItem || entity instanceof Mob && entity != this.getReturnEntity()) {
                     if (isItem) {
                         this.level.playSound(this, "damage.fallsmall", 1.0F, 1.2F / (this.random.nextFloat() * 0.2F + 0.9F));
                     } else {
@@ -177,11 +177,11 @@ public class AC_EntityHookshot extends Entity {
     }
 
     @Override
-    protected void readAdditionalSaveData(CompoundTag tag) {
+    protected void addAdditionalSaveData(CompoundTag tag) {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag tag) {
+    public void readAdditionalSaveData(CompoundTag tag) {
         this.remove();
     }
 
@@ -215,11 +215,11 @@ public class AC_EntityHookshot extends Entity {
         this.turningAround = turningAround;
     }
 
-    public LivingEntity getReturnEntity() {
+    public Mob getReturnEntity() {
         return this.returnsTo;
     }
 
-    public void setReturnEntity(LivingEntity returnsTo) {
+    public void setReturnEntity(Mob returnsTo) {
         this.returnsTo = returnsTo;
     }
 

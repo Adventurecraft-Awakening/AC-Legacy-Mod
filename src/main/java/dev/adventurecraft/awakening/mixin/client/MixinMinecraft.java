@@ -54,7 +54,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.Vec3i;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
@@ -187,7 +187,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
     public abstract void toggleDimension();
 
     @Shadow
-    public LivingEntity cameraEntity;
+    public Mob cameraEntity;
 
     @Shadow
     protected abstract void prepareLevel(String string);
@@ -232,7 +232,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
     public AC_CutsceneCamera activeCutsceneCamera;
     public boolean cameraActive;
     public boolean cameraPause = true;
-    public LivingEntity cutsceneCameraEntity;
+    public Mob cutsceneCameraEntity;
     public AC_GuiStore storeGUI = new AC_GuiStore();
     ItemInstance lastItemUsed;
     Entity lastEntityHit;
@@ -425,8 +425,8 @@ public abstract class MixinMinecraft implements ExMinecraft {
         method = "run",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/sounds/SoundEngine;update(Lnet/minecraft/world/entity/LivingEntity;F)V"))
-    private void run_setSoundListenerPos(SoundEngine instance, LivingEntity f, float v) {
+            target = "Lnet/minecraft/client/sounds/SoundEngine;update(Lnet/minecraft/world/entity/Mob;F)V"))
+    private void run_setSoundListenerPos(SoundEngine instance, Mob f, float v) {
         if (this.cameraActive) {
             instance.update(this.cutsceneCameraEntity, v);
         } else {
@@ -1344,7 +1344,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
     }
 
     @Override
-    public LivingEntity getCutsceneCameraEntity() {
+    public Mob getCutsceneCameraEntity() {
         return this.cutsceneCameraEntity;
     }
 

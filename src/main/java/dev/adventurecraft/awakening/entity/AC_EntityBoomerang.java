@@ -8,7 +8,7 @@ import java.util.List;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -141,7 +141,7 @@ public class AC_EntityBoomerang extends Entity {
                 }
                 continue;
             }
-            if (entity instanceof LivingEntity && entity != this.returnsTo) {
+            if (entity instanceof Mob && entity != this.returnsTo) {
                 ((ExEntity) entity).setStunned(20);
                 entity.xo = entity.x;
                 entity.yo = entity.y;
@@ -231,11 +231,11 @@ public class AC_EntityBoomerang extends Entity {
         this.xRot = (float) (-57.29578D * Math.atan2(this.yd, speed));
     }
 
-    protected void readAdditionalSaveData(CompoundTag tag) {
+    protected void addAdditionalSaveData(CompoundTag tag) {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag tag) {
+    public void readAdditionalSaveData(CompoundTag tag) {
         this.remove();
     }
 

@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.tile.entity;
 
 import java.util.ArrayList;
 
+import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
@@ -92,18 +93,16 @@ public class AC_TileEntityStorage extends AC_TileEntityMinMax {
 
     public void load(CompoundTag tag) {
         super.load(tag);
-        if (tag.hasKey("blockIDs")) {
-            this.blockIDs = tag.getByteArray("blockIDs");
-        }
+        var exTag = (ExCompoundTag) tag;
 
-        if (tag.hasKey("metadatas")) {
-            this.metadatas = tag.getByteArray("metadatas");
-        }
+        exTag.findByteArray("blockIDs").ifPresent(a -> this.blockIDs = a);
+        exTag.findByteArray("metadatas").ifPresent(a -> this.metadatas = a);
 
-        if (tag.hasKey("numTiles")) {
+        var numTiles = exTag.findInt("numTiles");
+        if (numTiles.isPresent()) {
             this.tileEntities.clear();
-            int tileCount = tag.getInt("numTiles");
 
+            int tileCount = numTiles.get();
             for (int i = 0; i < tileCount; ++i) {
                 this.tileEntities.add(tag.getCompoundTag(String.format("tile%d", i)));
             }
@@ -116,6 +115,7 @@ public class AC_TileEntityStorage extends AC_TileEntityMinMax {
 
     public void save(CompoundTag tag) {
         super.save(tag);
+
         if (this.blockIDs != null) {
             tag.putByteArray("blockIDs", this.blockIDs);
         }

@@ -2,7 +2,7 @@ package dev.adventurecraft.awakening.item;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.ItemInstance;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
@@ -20,7 +20,7 @@ public class AC_ItemNudge extends Item implements AC_ILeftClickItem {
             return stack;
         }
 
-        LivingEntity viewEntity = Minecraft.instance.cameraEntity;
+        Mob viewEntity = Minecraft.instance.cameraEntity;
         Vec3 viewRot = viewEntity.getLookAngle();
         int width = AC_ItemCursor.maxX - AC_ItemCursor.minX + 1;
         int height = AC_ItemCursor.maxY - AC_ItemCursor.minY + 1;
@@ -129,7 +129,7 @@ public class AC_ItemNudge extends Item implements AC_ILeftClickItem {
             return;
         }
 
-        LivingEntity viewEntity = Minecraft.instance.cameraEntity;
+        Mob viewEntity = Minecraft.instance.cameraEntity;
         Vec3 viewRot = viewEntity.getLookAngle();
         int width = AC_ItemCursor.maxX - AC_ItemCursor.minX + 1;
         int height = AC_ItemCursor.maxY - AC_ItemCursor.minY + 1;

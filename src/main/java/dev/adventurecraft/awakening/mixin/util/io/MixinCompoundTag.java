@@ -16,6 +16,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 @Mixin(CompoundTag.class)
@@ -57,46 +58,67 @@ public abstract class MixinCompoundTag implements ExCompoundTag {
         }
     }
 
-    @Overwrite
-    public short getShort(String var1) {
-        Tag tag = this.entries.get(var1);
-        if (tag == null) {
-            return 0;
-        } else if (tag instanceof ShortTag sTag) {
-            return sTag.data;
-        } else {
-            return ((ByteTag) tag).data;
+    @Override
+    public Optional<Byte> findByte(String key) {
+        Tag tag = this.getTag(key);
+        if (tag instanceof ByteTag bTag) {
+            return Optional.of(bTag.data);
         }
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<Short> findShort(String key) {
+        Tag tag = this.getTag(key);
+        if (tag instanceof ShortTag sTag) {
+            return Optional.of(sTag.data);
+        } else if (tag instanceof ByteTag bTag) {
+            return Optional.of((short) bTag.data);
+        }
+        return Optional.empty();
     }
 
     @Overwrite
-    public int getInt(String var1) {
-        Tag tag = this.entries.get(var1);
-        if (tag == null) {
-            return 0;
-        } else if (tag instanceof IntTag iTag) {
-            return iTag.data;
+    public short getShort(String key) {
+        return this.findShort(key).orElse((short) 0);
+    }
+
+    @Override
+    public Optional<Integer> findInt(String key) {
+        Tag tag = this.getTag(key);
+        if (tag instanceof IntTag iTag) {
+            return Optional.of(iTag.data);
         } else if (tag instanceof ShortTag sTag) {
-            return sTag.data;
-        } else {
-            return ((ByteTag) tag).data;
+            return Optional.of((int) sTag.data);
+        } else if (tag instanceof ByteTag bTag) {
+            return Optional.of((int) bTag.data);
         }
+        return Optional.empty();
     }
 
     @Overwrite
-    public long getLong(String var1) {
-        Tag tag = this.entries.get(var1);
-        if (tag == null) {
-            return 0;
-        } else if (tag instanceof LongTag lTag) {
-            return lTag.data;
+    public int getInt(String key) {
+        return this.findInt(key).orElse(0);
+    }
+
+    @Override
+    public Optional<Long> findLong(String key) {
+        Tag tag = this.getTag(key);
+        if (tag instanceof LongTag lTag) {
+            return Optional.of(lTag.data);
         } else if (tag instanceof IntTag iTag) {
-            return iTag.data;
+            return Optional.of((long) iTag.data);
         } else if (tag instanceof ShortTag sTag) {
-            return sTag.data;
-        } else {
-            return ((ByteTag) tag).data;
+            return Optional.of((long) sTag.data);
+        } else if (tag instanceof ByteTag bTag) {
+            return Optional.of((long) bTag.data);
         }
+        return Optional.empty();
+    }
+
+    @Overwrite
+    public long getLong(String key) {
+        return this.findLong(key).orElse(0L);
     }
 
     @Override
@@ -105,7 +127,12 @@ public abstract class MixinCompoundTag implements ExCompoundTag {
     }
 
     @Override
-    public Object getValue(String key) {
+    public Tag getTag(String key) {
         return this.entries.get(key);
+    }
+
+    @Override
+    public Optional<Tag> findTag(String key) {
+        return Optional.ofNullable(this.getTag(key));
     }
 }

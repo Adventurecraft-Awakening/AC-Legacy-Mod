@@ -9,7 +9,7 @@ import net.minecraft.client.Options;
 import net.minecraft.client.sounds.Sound;
 import net.minecraft.client.sounds.SoundEngine;
 import net.minecraft.client.sounds.SoundRepository;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -54,7 +54,7 @@ public abstract class MixinSoundHelper implements ExSoundHelper {
             shift = At.Shift.AFTER,
             remap = false))
     private void setBgMusicPosition(
-        LivingEntity var1,
+        Mob var1,
         float var2,
         CallbackInfo ci,
         @Local(ordinal = 0) double var4,

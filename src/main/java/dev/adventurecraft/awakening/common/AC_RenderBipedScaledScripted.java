@@ -3,7 +3,7 @@ package dev.adventurecraft.awakening.common;
 import dev.adventurecraft.awakening.entity.AC_EntityLivingScript;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.renderer.entity.HumanoidMobRenderer;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import org.lwjgl.opengl.GL11;
 
 public class AC_RenderBipedScaledScripted extends HumanoidMobRenderer {
@@ -12,7 +12,7 @@ public class AC_RenderBipedScaledScripted extends HumanoidMobRenderer {
         super(var1, 0.5F);
     }
 
-    protected void scale(LivingEntity entity, float tick) {
+    protected void scale(Mob entity, float tick) {
         var script = (AC_EntityLivingScript) entity;
         float x = (1.0F - tick) * script.getPrevWidth() + tick * script.bbWidth;
         float y = (1.0F - tick) * script.getPrevHeight() + tick * script.bbHeight;
