@@ -1,5 +1,8 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.layout.*;
+import dev.adventurecraft.awakening.util.DrawUtil;
+import dev.adventurecraft.awakening.util.GLUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -13,8 +16,6 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.util.glu.GLU;
 
 import java.util.ArrayList;
 
@@ -44,20 +45,15 @@ public abstract class ScrollableContainerScreen extends Screen {
         super.init();
         this.minecraft.player.containerMenu = this.container;
 
-        int remRows = container.getRowCount() % rowsPerPage;
+        int entryHeight = this.container.getSlotHeight();
+        int listHeight = entryHeight * this.rowsPerPage;
 
-        int topPadding = 0;
-        int entryHeight = container.getSlotHeight();
-        int botPadding = (rowsPerPage - remRows - 1) * entryHeight;
-        int contentTop = entryHeight - topPadding;
-        int contentBot = contentTop + rowsPerPage * entryHeight + topPadding;
-
-        itemList = new ItemList(contentTop, contentBot, containerWidth, contentBot - contentTop, entryHeight);
-        itemList.setContentTopPadding(topPadding);
-        itemList.setContentBotPadding(botPadding);
-        itemList.setRenderEdgeShadows(false);
+        itemList = new ItemList(new IntRect(0, entryHeight, this.containerWidth, listHeight), entryHeight);
+        itemList.setEdgeShadowHeight(0);
+        itemList.setLayoutPadding(IntBorder.zero);
     }
 
+    @Override
     public void render(int mouseX, int mouseY, float deltaTime) {
         this.renderBackground();
 
@@ -74,77 +70,69 @@ public abstract class ScrollableContainerScreen extends Screen {
         GL11.glPushMatrix();
         GL11.glTranslatef(screenX, screenY, 0.0f);
         GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-        GL11.glEnable(0x803a);
-
-        int inputX = mouseX - screenX;
-        int inputY = mouseY - screenY;
+        GL11.glEnable(0x803a); // GL_RESCALE_NORMAL
 
         for (Slot slot : this.container.getStaticSlots()) {
-            renderSlot(slot, 0, 0);
+            renderSlot(slot, IntPoint.zero);
         }
+
+        IntRect contentRect = this.itemList.getBorderRect();
+        IntRect realContentRect = GLUtil.projectModelViewProj(contentRect.asFloat()).round().asInt();
 
         GL11.glEnable(GL11.GL_SCISSOR_TEST);
+        GL11.glScissor(realContentRect.x, realContentRect.y, realContentRect.width(), realContentRect.height());
 
-        float sx;
-        float sy;
-        float sx2;
-        float sy2;
-        try (var stack = MemoryStack.stackPush()) {
-            var viewport = stack.mallocInt(16);
-            var modelViewMatrix = stack.mallocFloat(16);
-            var projMatrix = stack.mallocFloat(16);
-            var objPos = stack.mallocFloat(3);
+        var mousePoint = new IntPoint(mouseX - screenX, mouseY - screenY);
+        this.itemList.render(mousePoint, deltaTime);
 
-            GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, modelViewMatrix);
-            GL11.glGetFloat(GL11.GL_PROJECTION_MATRIX, projMatrix);
-            GL11.glGetInteger(GL11.GL_VIEWPORT, viewport);
-
-            GLU.gluProject(0, 0, 1.0F, modelViewMatrix, projMatrix, viewport, objPos);
-            sx = objPos.get(0);
-            sy = objPos.get(1);
-
-            GLU.gluProject(1, 1, 1.0F, modelViewMatrix, projMatrix, viewport, objPos);
-            sx2 = objPos.get(0);
-            sy2 = objPos.get(1);
-        }
-
-        double sxf = Math.abs(sx2 - sx);
-        double syf = Math.abs(sy2 - sy);
-        double sw = Math.round(containerWidth * sxf);
-        double sh = Math.round((this.itemList.getContentBot() - this.itemList.getContentTop() - 1) * syf);
-        GL11.glScissor(
-            Math.round(sx),
-            (int) Math.round((sy - sh - this.itemList.getContentTop() * syf)),
-            (int) sw,
-            (int) sh);
-        this.itemList.render(inputX, inputY, deltaTime);
-
-        FoundSlot hoveredSlot = getSlot(mouseX, mouseY);
+        var ts = Tesselator.instance;
+        FoundSlot hoveredSlot = getSlot(new Point(mouseX, mouseY));
         if (hoveredSlot != null) {
             if (hoveredSlot.isStatic) {
                 GL11.glDisable(GL11.GL_SCISSOR_TEST);
             }
+
             Slot slot = hoveredSlot.slot;
+            var slotLocation = new IntPoint(slot.x, slot.z);
             GL11.glDisable(GL11.GL_LIGHTING);
             GL11.glDisable(GL11.GL_DEPTH_TEST);
-            int slotY = hoveredSlot.isStatic ? slot.z : (int) Math.round(getScrollableSlotY(slot.z));
-            this.fillGradient(slot.x, slotY, slot.x + 16, slotY + 16, 0x80ffffff, 0x80ffffff);
+
+            Point renderPoint = hoveredSlot.isStatic
+                ? slotLocation.asFloat()
+                : getScrollableSlotPoint(slotLocation.asFloat());
+            Rect renderRect = new Rect(renderPoint.x, renderPoint.y, 16, 16);
+
+            DrawUtil.beginFill(ts);
+            DrawUtil.fillRect(ts, renderRect, new IntCorner(0x80ffffff), null);
+            DrawUtil.endFill(ts);
+
             GL11.glEnable(GL11.GL_LIGHTING);
             GL11.glEnable(GL11.GL_DEPTH_TEST);
         }
-
         GL11.glDisable(GL11.GL_SCISSOR_TEST);
+
+        //var ts = Tesselator.instance;
+        //ts.begin();
+        //ScrollableWidget.drawRect(ts, this.itemList.getScreenRect().asFloat(), new Border(-2), new IntBorder(0x7f_00ff00));
+        //ScrollableWidget.drawRect(ts, contentRect.asFloat(), new Border(-1), new IntBorder(0x7f_ff00ff));
+        //ts.end();
 
         Inventory playerInventory = this.minecraft.player.inventory;
         if (playerInventory.getCarried() != null) {
+            // Render in front of everything.
             GL11.glTranslatef(0.0f, 0.0f, 32.0f);
-            itemRenderer.renderAndDecorateItem(this.font, this.minecraft.textures, playerInventory.getCarried(), inputX - 8, inputY - 8);
-            itemRenderer.renderGuiItemDecorations(this.font, this.minecraft.textures, playerInventory.getCarried(), inputX - 8, inputY - 8);
+
+            int iX = mousePoint.x - 16 / 2;
+            int iY = mousePoint.y - 16 / 2;
+
+            var item = playerInventory.getCarried();
+            itemRenderer.renderAndDecorateItem(this.font, this.minecraft.textures, item, iX, iY);
+            itemRenderer.renderGuiItemDecorations(this.font, this.minecraft.textures, item, iX, iY);
         }
-        GL11.glDisable(0x803a);
+        GL11.glDisable(0x803a); // GL_RESCALE_NORMAL
         Lighting.turnOff();
-        GL11.glDisable(2896);
-        GL11.glDisable(2929);
+        GL11.glDisable(GL11.GL_LIGHTING);
+        GL11.glDisable(GL11.GL_DEPTH_TEST);
 
         this.renderForeground();
 
@@ -153,10 +141,14 @@ public abstract class ScrollableContainerScreen extends Screen {
             if (item != null && hoveredSlot.slot.hasItem()) {
                 String name = (I18n.getInstance().getDescriptionString(item.getTranslationKey())).trim();
                 if (name.length() > 0) {
-                    int textX = inputX + 12;
-                    int textY = inputY - 12;
+                    int textX = mousePoint.x + 12;
+                    int textY = mousePoint.y - 12;
                     int textWidth = this.font.width(name);
-                    this.fillGradient(textX - 3, textY - 3, textX + textWidth + 3, textY + 8 + 3, -1073741824, -1073741824);
+                    var textRect = new Rect(textX, textY, textWidth, 8).expand(new Border(3));
+
+                    DrawUtil.beginFill(ts);
+                    DrawUtil.fillRect(ts, textRect, new IntCorner(0xc0000000), null);
+                    DrawUtil.endFill(ts);
                     this.font.drawShadow(name, textX, textY, -1);
                 }
             }
@@ -164,12 +156,12 @@ public abstract class ScrollableContainerScreen extends Screen {
         GL11.glPopMatrix();
 
         super.render(mouseX, mouseY, deltaTime);
-        GL11.glEnable(2896);
-        GL11.glEnable(2929);
+        GL11.glEnable(GL11.GL_LIGHTING);
+        GL11.glEnable(GL11.GL_DEPTH_TEST);
     }
 
-    public double getScrollableSlotY(double slotY) {
-        return slotY - itemList.getScrollY();
+    public Point getScrollableSlotPoint(Point slotPoint) {
+        return slotPoint.sub(this.itemList.getScroll());
     }
 
     protected void renderForeground() {
@@ -177,9 +169,9 @@ public abstract class ScrollableContainerScreen extends Screen {
 
     protected abstract void renderContainerBackground(float var1);
 
-    private void renderSlot(Slot slot, int xOffset, int yOffset) {
-        int x = slot.x + xOffset;
-        int y = slot.z + yOffset;
+    private void renderSlot(Slot slot, IntPoint offset) {
+        int x = slot.x + offset.x;
+        int y = slot.z + offset.y;
         ItemInstance itemStack = slot.getItem();
         if (itemStack == null) {
             int n = slot.getNoItemIcon();
@@ -198,26 +190,32 @@ public abstract class ScrollableContainerScreen extends Screen {
     record FoundSlot(Slot slot, boolean isStatic) {
     }
 
-    private FoundSlot getSlot(int x, int y) {
+    private FoundSlot getSlot(Point point) {
         for (Slot slot : this.container.getStaticSlots()) {
-            if (this.isOverSlot(slot.x, slot.z, x, y)) {
+            Point slotLocation = new Point(slot.x, slot.z);
+            if (this.isOverSlot(slotLocation, point)) {
                 return new FoundSlot(slot, true);
             }
         }
+
+        IntRect contentRect = this.itemList.getBorderRect();
         for (Slot slot : this.container.getScrollableSlots()) {
-            int slotY = (int) Math.round(getScrollableSlotY(slot.z));
-            if (slotY + 18 < this.itemList.getContentTop() || slotY > this.itemList.getContentBot()) {
+            Point slotLocation = getScrollableSlotPoint(new Point(slot.x, slot.z));
+            if (slotLocation.y + 18 < contentRect.top() || slotLocation.y > contentRect.bot()) {
                 continue;
             }
-
-            if (this.isOverSlot(slot.x, slotY, x, y)) {
+            if (this.isOverSlot(slotLocation, point)) {
                 return new FoundSlot(slot, false);
             }
         }
         return null;
     }
 
-    private boolean isOverSlot(int slotX, int slotY, int x, int y) {
+    private boolean isOverSlot(Point slotLocation, Point point) {
+        double slotX = slotLocation.x;
+        double slotY = slotLocation.y;
+        double x = point.x;
+        double y = point.y;
         int cx = (this.width - this.containerWidth) / 2;
         int cy = (this.height - this.containerHeight) / 2;
         return (x -= cx) >= slotX - 1 && x < slotX + 16 + 1 && (y -= cy) >= slotY - 1 && y < slotY + 16 + 1;
@@ -225,22 +223,31 @@ public abstract class ScrollableContainerScreen extends Screen {
 
     protected void mouseClicked(int mouseX, int mouseY, int button) {
         super.mouseClicked(mouseX, mouseY, button);
-        if (button == 0 || button == 1) {
-            FoundSlot slot = this.getSlot(mouseX, mouseY);
-            int x = (this.width - this.containerWidth) / 2;
-            int y = (this.height - this.containerHeight) / 2;
-            boolean bl = mouseX < x || mouseY < y || mouseX >= x + this.containerWidth || mouseY >= y + this.containerHeight;
-            int slotId = -1;
-            if (slot != null) {
-                slotId = slot.slot.index;
-            }
-            if (bl) {
-                slotId = -999;
-            }
-            if (slotId != -1) {
-                boolean bl2 = slotId != -999 && (Keyboard.isKeyDown(42) || Keyboard.isKeyDown(54));
-                this.minecraft.gameMode.handleInventoryMouseClick(this.container.containerId, slotId, button, bl2, this.minecraft.player);
-            }
+        if (button != 0 && button != 1) {
+            return;
+        }
+
+        FoundSlot slot = this.getSlot(new Point(mouseX, mouseY));
+        int x = (this.width - this.containerWidth) / 2;
+        int y = (this.height - this.containerHeight) / 2;
+        boolean bl = mouseX < x || mouseY < y || mouseX >= x + this.containerWidth || mouseY >= y + this.containerHeight;
+
+        int slotId = -1;
+        if (slot != null) {
+            slotId = slot.slot.index;
+        }
+        if (bl) {
+            slotId = -999;
+        }
+        if (slotId != -1) {
+            boolean bl2 = slotId != -999 && (Keyboard.isKeyDown(42) || Keyboard.isKeyDown(54));
+            this.minecraft.gameMode.handleInventoryMouseClick(
+                this.container.containerId,
+                slotId,
+                button,
+                bl2,
+                this.minecraft.player
+            );
         }
     }
 
@@ -282,16 +289,8 @@ public abstract class ScrollableContainerScreen extends Screen {
 
         private final ArrayList<Row> rows = new ArrayList<>();
 
-        public ItemList(int contentTop, int contentBot, int width, int height, int entryHeight) {
-            super(
-                ScrollableContainerScreen.this.minecraft,
-                0,
-                0,
-                width,
-                height,
-                contentTop,
-                contentBot,
-                entryHeight);
+        public ItemList(IntRect layoutRect, int entryHeight) {
+            super(ScrollableContainerScreen.this.minecraft, layoutRect, entryHeight);
 
             this.registerSlots();
         }
@@ -318,32 +317,28 @@ public abstract class ScrollableContainerScreen extends Screen {
         }
 
         @Override
-        protected void entryClicked(int entryIndex, boolean doubleClick) {
-        }
-
-        @Override
-        protected void beforeEntryRender(int mouseX, int mouseY, double entryX, double entryY, Tesselator tessellator) {
-            super.beforeEntryRender(mouseX, mouseY, entryX, entryY, tessellator);
+        protected void beforeEntryRender(Tesselator ts, IntPoint mouseLocation, Point entryLocation) {
+            super.beforeEntryRender(ts, mouseLocation, entryLocation);
 
             GL11.glEnable(GL11.GL_LIGHTING);
             GL11.glEnable(GL11.GL_DEPTH_TEST);
         }
 
         @Override
-        protected void renderEntry(int entryIndex, double entryX, double entryY, int entryHeight, Tesselator tessellator) {
+        protected void renderEntry(Tesselator ts, int entryIndex, Point entryLocation, int entryHeight) {
             Row row = rows.get(entryIndex);
-            int yOffset = (int) (-row.rowY + entryY);
+            int yOffset = (int) (-row.rowY + entryLocation.y);
             for (Slot slot : row.slots) {
-                renderSlot(slot, 0, yOffset);
+                renderSlot(slot, new IntPoint(0, yOffset));
             }
         }
 
         @Override
-        protected void renderBackground(int topY, int botY, int topAlpha, int botAlpha) {
+        protected void renderBackground(Tesselator ts, Rect rect, IntCorner color) {
         }
 
         @Override
-        protected void renderContentBackground(double left, double right, double top, double bot, double scroll, Tesselator ts) {
+        protected void renderContentBackground(Tesselator ts, Rect rect, Point scroll) {
         }
     }
 }

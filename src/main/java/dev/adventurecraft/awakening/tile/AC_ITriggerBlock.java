@@ -9,8 +9,10 @@ public interface AC_ITriggerBlock {
         return 0;
     }
 
-    default boolean shouldRender(LevelSource view, int x, int y, int z) {
-        return true;
+    int getRenderShape();
+
+    default int getRenderShape(LevelSource view, int x, int y, int z) {
+        return this.getRenderShape();
     }
 
     default boolean canBeTriggered() {

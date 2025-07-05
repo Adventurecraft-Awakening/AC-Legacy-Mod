@@ -8,6 +8,7 @@ import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityMinMax;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTrigger;
+import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -19,7 +20,7 @@ import net.minecraft.world.phys.AABB;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 
-public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerBlock {
+public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerDebugBlock {
 
     protected AC_BlockTrigger(int var1, int var2) {
         super(var1, var2, Material.AIR);
@@ -51,11 +52,6 @@ public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerBlock 
     }
 
     @Override
-    public boolean shouldRender(LevelSource view, int x, int y, int z) {
-        return AC_DebugMode.active;
-    }
-
-    @Override
     public int getTexture(LevelSource view, int x, int y, int z, int side) {
         return super.getTexture(view, x, y, z, side);
     }
@@ -63,6 +59,10 @@ public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerBlock 
     @Override
     public boolean mayPick() {
         return AC_DebugMode.active;
+    }
+
+    public @Override boolean canBeTriggered() {
+        return false;
     }
 
     private void setNotVisited(Level world, int x, int y, int z) {
@@ -228,13 +228,15 @@ public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerBlock 
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active && (player.getSelectedItem() == null || player.getSelectedItem().id == AC_Items.cursor.id)) {
-            var entity = (AC_TileEntityTrigger) world.getTileEntity(x, y, z);
-            AC_GuiTrigger.showUI(entity);
-        } else {
-            return false;
+        if (AC_DebugMode.active) {
+            ItemInstance item = player.getSelectedItem();
+            if (item == null || item.id == AC_Items.cursor.id) {
+                var entity = (AC_TileEntityTrigger) world.getTileEntity(x, y, z);
+                AC_GuiTrigger.showUI(entity);
+                return true;
+            }
         }
-        return true;
+        return false;
     }
 
     @Override

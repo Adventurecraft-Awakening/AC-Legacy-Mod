@@ -7,13 +7,12 @@ import dev.adventurecraft.awakening.tile.entity.AC_TileEntityMobSpawner;
 import dev.adventurecraft.awakening.common.gui.AC_GuiMobSpawner;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelSource;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.tile.TileEntityTile;
 import net.minecraft.world.level.tile.entity.TileEntity;
 import net.minecraft.world.phys.AABB;
 
-public class AC_BlockMobSpawner extends TileEntityTile implements AC_ITriggerBlock {
+public class AC_BlockMobSpawner extends TileEntityTile implements AC_ITriggerDebugBlock {
 
     protected AC_BlockMobSpawner(int var1, int var2) {
         super(var1, var2, Material.AIR);
@@ -53,16 +52,6 @@ public class AC_BlockMobSpawner extends TileEntityTile implements AC_ITriggerBlo
         } else {
             return false;
         }
-    }
-
-    @Override
-    public boolean shouldRender(LevelSource view, int x, int y, int z) {
-        return AC_DebugMode.active;
-    }
-
-    @Override
-    public boolean canBeTriggered() {
-        return true;
     }
 
     @Override

@@ -20,7 +20,7 @@ import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.PlayerRenderer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.ItemInstance;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.saveddata.MapItemSavedData;
@@ -74,7 +74,7 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
     }
 
     @Overwrite
-    public void renderItem(LivingEntity var1, ItemInstance var2) {
+    public void renderItem(Mob var1, ItemInstance var2) {
         GL11.glPushMatrix();
         if (var2.id < 256 && TileRenderer.canRender(Tile.tiles[var2.id].getRenderShape())) {
             int var24 = ((ExBlock) Tile.tiles[var2.id]).getTextureNum();

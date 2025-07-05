@@ -7,6 +7,7 @@ import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityRedstoneTrigger;
+import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelSource;
@@ -57,13 +58,15 @@ public class AC_BlockRedstoneTrigger extends TileEntityTile implements AC_ITrigg
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active && (player.getSelectedItem() == null || player.getSelectedItem().id == AC_Items.cursor.id)) {
-            var entity = (AC_TileEntityRedstoneTrigger) world.getTileEntity(x, y, z);
-            AC_GuiRedstoneTrigger.showUI(entity);
-            return true;
-        } else {
-            return false;
+        if (AC_DebugMode.active) {
+            ItemInstance item = player.getSelectedItem();
+            if (item == null || item.id == AC_Items.cursor.id) {
+                var entity = (AC_TileEntityRedstoneTrigger) world.getTileEntity(x, y, z);
+                AC_GuiRedstoneTrigger.showUI(entity);
+                return true;
+            }
         }
+        return false;
     }
 
     public void setTriggerToSelection(Level world, int x, int y, int z) {

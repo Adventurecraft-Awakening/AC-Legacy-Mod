@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.client.render.AC_TextureBinder;
+import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.AC_TextureAnimated;
 import dev.adventurecraft.awakening.common.LightHelper;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
@@ -131,4 +132,6 @@ public class ScriptEffect {
     public boolean getIsCameraActive(){
         return ((ExMinecraft) Minecraft.instance).isCameraActive();
     }
+
+    public boolean getIsDebugModeActive(){return AC_DebugMode.active;}
 }

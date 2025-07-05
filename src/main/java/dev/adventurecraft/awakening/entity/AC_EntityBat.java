@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.entity;
 
 import dev.adventurecraft.awakening.extension.entity.ExFlyingEntity;
-import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
+import dev.adventurecraft.awakening.extension.entity.ExMob;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.FlyingMob;
@@ -26,7 +26,7 @@ public class AC_EntityBat extends FlyingMob implements Enemy {
         this.movingToTarget = false;
         this.setSize(0.5F, 0.5F);
         this.health = 5;
-        ((ExLivingEntity) this).setMaxHealth(5);
+        ((ExMob) this).setMaxHealth(5);
     }
 
     @Override

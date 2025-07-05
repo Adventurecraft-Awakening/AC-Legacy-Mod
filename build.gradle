@@ -55,9 +55,8 @@ switch (OperatingSystem.current()) {
         break
     case OperatingSystem.WINDOWS:
         def osArch = System.getProperty("os.arch")
-        project.ext.lwjglNatives = osArch.contains("64")
-            ? "natives-windows${osArch.startsWith("aarch64") ? "-arm64" : ""}"
-            : "natives-windows-x86"
+        def winArm64 = "natives-windows${osArch.startsWith("aarch64") ? "-arm64" : ""}"
+        project.ext.lwjglNatives = osArch.contains("64") ? winArm64 : "natives-windows-x86"
         break
 }
 
@@ -106,6 +105,12 @@ dependencies {
 
     implementation "com.google.guava:guava:33.4.0-jre"
     implementation "org.apache.commons:commons-lang3:3.17.0"
+
+    // Optional dependencies for filesystem icon rendering.
+    implementation "net.java.dev.jna:jna:5.17.0"
+    implementation "net.java.dev.jna:jna-platform:5.17.0"
+
+    implementation "com.github.bailuk:java-gtk:0.6.0"
 }
 
 configurations.configureEach {
