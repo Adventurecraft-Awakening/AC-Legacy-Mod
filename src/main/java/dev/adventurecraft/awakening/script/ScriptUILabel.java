@@ -62,7 +62,6 @@ public class ScriptUILabel extends UIElement {
         state.setShadowOffset(1, 1);
 
         var ts = Tesselator.instance;
-        state.bindTexture();
         state.setColor(color);
         state.setShadow(shadowColor);
 

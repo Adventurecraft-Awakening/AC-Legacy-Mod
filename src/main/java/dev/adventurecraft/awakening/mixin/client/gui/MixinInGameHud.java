@@ -428,7 +428,6 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
         int stateHeight = 0;
 
         TextRendererState textState = exFont.createState();
-        textState.bindTexture();
         textState.setShadowOffset(1, 1);
 
         textState.begin(ts);

@@ -28,6 +28,8 @@ public class TextRendererState {
     }
 
     public void begin(Tesselator tessallator) {
+        this.bindTexture();
+
         tessallator.begin();
 
         this.resetFormat();
