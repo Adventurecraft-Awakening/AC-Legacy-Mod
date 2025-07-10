@@ -2,10 +2,13 @@ plugins {
     id "maven-publish"
     id "fabric-loom" version "1.10.1"
     id "babric-loom-extension" version "1.10.1"
+    id 'com.palantir.git-version' version "4.0.0"
 }
 
 version = project.mod_version
 group = project.maven_group
+
+project.ext.gitDetails = versionDetails()
 
 base {
     archivesName = project.archives_base_name
@@ -130,7 +133,7 @@ java {
     // If you remove this line, sources will not be generated.
     withSourcesJar()
 
-    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_21
 }
 
 jar {
