@@ -1,5 +1,7 @@
 package dev.adventurecraft.awakening.util;
 
+import com.google.common.primitives.UnsignedLong;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
@@ -7,6 +9,8 @@ public final class MathF {
 
     private static final double DEGREES_TO_RADIANS = Math.PI / 180.0;
     private static final double RADIANS_TO_DEGREES = 180.0 / Math.PI;
+
+    private static final double LOG2_INVERSE = 1.44269504088896340735992468100189213743;
 
     public static int clamp(long value, int min, int max) {
         return (int) Math.min(max, Math.max(value, min));
@@ -49,10 +53,30 @@ public final class MathF {
         }
     }
 
+    /**
+     * Returns the logarithm of a number using a specified base.
+     *
+     * @param a The number.
+     * @param base The base.
+     * @return The logarithm.
+     */
     public static double log(double a, double base) {
         return Math.log(a) / Math.log(base);
     }
 
+    public static double log2(double a) {
+        return Math.log(a) * LOG2_INVERSE;
+    }
+
+    /**
+     * Returns the logarithm of a number using a specified base.
+     *
+     * @param a The number.
+     * @param base The base.
+     * @return The logarithm.
+     * @implNote Uses {@link Number#doubleValue()}
+     * when number is not {@link BigDecimal} or {@link BigInteger}.
+     */
     public static double log(Number a, double base) {
         if (a instanceof BigDecimal bigDec) {
             return BigMath.log(bigDec, base);
@@ -77,5 +101,14 @@ public final class MathF {
 
     public static float toRadians(double degrees) {
         return (float) (degrees * DEGREES_TO_RADIANS);
+    }
+
+    /// @see UnsignedLong#doubleValue()
+    /// @see <a href="https://github.com/WebAssembly/spec/blob/1041527d508218acc40f0278d4abc3be9ba5e3bd/interpreter/exec/f64_convert.ml#L27-L37">f64_convert.ml</a>
+    public static double unsignedLongToDouble(long value) {
+        if (value >= 0) {
+            return (double) value;
+        }
+        return ((value >>> 1) | (value & 1)) * 2.0;
     }
 }
