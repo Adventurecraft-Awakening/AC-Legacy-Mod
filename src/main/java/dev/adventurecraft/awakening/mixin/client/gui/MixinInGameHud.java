@@ -25,8 +25,8 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.Tesselator;
-import net.minecraft.util.Mth;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.level.material.Material;
@@ -48,7 +48,7 @@ import java.util.Random;
 @Mixin(Gui.class)
 public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud {
 
-    private static final String[] CODE_TO_ANSI_SEQUENCE = new String[]{
+    private static final String[] CODE_TO_ANSI_SEQUENCE = new String[] {
         // Regular
         "\033[0;30m", // BLACK
         "\033[0;34m", // BLUE
@@ -73,18 +73,12 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
     private static final int CHAT_WIDTH = 320;
     private static final long MAX_MESSAGE_AGE = 200 * 50;
 
-    @Shadow
-    private Random random;
-    @Shadow
-    private Minecraft minecraft;
-    @Shadow
-    private int tickCount;
-    @Shadow
-    private String nowPlayingString;
-    @Shadow
-    private int nowPlayingTime;
-    @Shadow
-    private boolean animateOverlayMessageColor;
+    @Shadow private Random random;
+    @Shadow private Minecraft minecraft;
+    @Shadow private int tickCount;
+    @Shadow private String nowPlayingString;
+    @Shadow private int nowPlayingTime;
+    @Shadow private boolean animateOverlayMessageColor;
 
     @Shadow
     protected abstract void renderPumpkin(int i, int j);
@@ -112,118 +106,141 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
     }
 
     @Overwrite
-    public void render(float var1, boolean var2, int var3, int var4) {
-        ScreenSizeCalculator scaler = new ScreenSizeCalculator(this.minecraft.options, this.minecraft.width, this.minecraft.height);
-        int screenWidth = scaler.getWidth();
-        int screenHeight = scaler.getHeight();
-        Font textRenderer = this.minecraft.font;
-        this.minecraft.gameRenderer.setScreenProjectionMatrix();
+    public void render(float partialTick, boolean hasScreen, int mouseX, int mouseY) {
+        final Minecraft mc = this.minecraft;
+        final LocalPlayer player = mc.player;
+        final Font textRenderer = mc.font;
+
+        var scaler = new ScreenSizeCalculator(mc.options, mc.width, mc.height);
+        final int screenWidth = scaler.getWidth();
+        final int screenHeight = scaler.getHeight();
+
+        var barRect = new IntRect(screenWidth / 2 - 91, screenHeight - 22, 182, 22);
+
+        mc.gameRenderer.setScreenProjectionMatrix();
         GL11.glEnable(GL11.GL_BLEND);
         if (Minecraft.useFancyGraphics()) {
-            this.renderVignette(this.minecraft.player.getBrightness(var1), screenWidth, screenHeight);
+            this.renderVignette(player.getBrightness(partialTick), screenWidth, screenHeight);
         }
 
-        if (!this.minecraft.options.thirdPersonView && !((ExMinecraft) this.minecraft).isCameraActive()) {
-            ItemInstance headItem = this.minecraft.player.inventory.getArmor(3);
+        if (!mc.options.thirdPersonView && !((ExMinecraft) mc).isCameraActive()) {
+            ItemInstance headItem = player.inventory.getArmor(3);
             if (headItem != null && headItem.id == Tile.PUMPKIN.id) {
                 this.renderPumpkin(screenWidth, screenHeight);
             }
         }
 
-        if (this.minecraft.level != null) {
-            String overlay = ((ExWorldProperties) this.minecraft.level.levelData).getOverlay();
+        if (mc.level != null) {
+            String overlay = ((ExWorldProperties) mc.level.levelData).getOverlay();
             if (!overlay.isEmpty()) {
                 this.renderOverlay(screenWidth, screenHeight, overlay);
             }
         }
 
-        float var10 = this.minecraft.player.oPortalTime + (this.minecraft.player.portalTime - this.minecraft.player.oPortalTime) * var1;
-        if (var10 > 0.0F) {
-            this.renderPortalOverlay(var10, screenWidth, screenHeight);
+        float portalTime = MathF.fastLerp(partialTick, player.oPortalTime, player.portalTime);
+        if (portalTime > 0.0F) {
+            this.renderPortalOverlay(portalTime, screenWidth, screenHeight);
         }
 
-        if (this.minecraft.level != null) {
+        if (mc.level != null) {
             // Refresh hudEnabled property (has to be here, because ui.hudEnabled can be set directly....)
-            ((ExWorldProperties) this.minecraft.level.levelData).setHudEnabled(this.hudEnabled);
+            ((ExWorldProperties) mc.level.levelData).setHudEnabled(this.hudEnabled);
         }
+
+        final int slotWidth = 20;
 
         if (this.hudEnabled) {
-            int maxHealth = ((ExMob) this.minecraft.player).getMaxHealth();
+            final int maxHealth = ((ExMob) player).getMaxHealth();
+            final int heartRows = (maxHealth - 1) / 40;
 
             GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.minecraft.textures.loadTexture("/gui/gui.png"));
-            Inventory var11 = this.minecraft.player.inventory;
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, mc.textures.loadTexture("/gui/gui.png"));
+            Inventory inv = player.inventory;
             this.blitOffset = -90.0F;
-            this.blit(screenWidth / 2 - 91, screenHeight - 22, 0, 0, 182, 22);
-            this.blit(screenWidth / 2 - 91 - 1 + ((ExPlayerInventory) var11).getOffhandItem() * 20, screenHeight - 22 - 1, 24, 22, 48, 22);
-            this.blit(screenWidth / 2 - 91 - 1 + var11.selected * 20, screenHeight - 22 - 1, 0, 22, 24, 22);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.minecraft.textures.loadTexture("/gui/icons.png"));
+            // Render bar
+            this.blit(barRect.left(), barRect.top(), 0, 0, barRect.width(), barRect.height());
+
+            // Render off-hand slot outline.
+            int offhandLeft = barRect.left() - 1 + ((ExPlayerInventory) inv).getOffhandItem() * slotWidth;
+            this.blit(offhandLeft, barRect.top() - 1, 24, 22, 48, barRect.height());
+
+            // Render main-hand slot outline.
+            int mainhandLeft = barRect.left() - 1 + inv.selected * slotWidth;
+            this.blit(mainhandLeft, barRect.top() - 1, 0, 22, 24, barRect.height());
+
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, mc.textures.loadTexture("/gui/icons.png"));
+
+            // Render cross-hair
             GL11.glEnable(GL11.GL_BLEND);
             GL11.glBlendFunc(GL11.GL_ONE_MINUS_DST_COLOR, GL11.GL_ONE_MINUS_SRC_COLOR);
             this.blit(screenWidth / 2 - 7, screenHeight / 2 - 7, 0, 0, 16, 16);
             GL11.glDisable(GL11.GL_BLEND);
-            boolean isChatOpen = this.minecraft.player.invulnerableTime / 3 % 2 == 1;
-            if (this.minecraft.player.invulnerableTime < 10) {
-                isChatOpen = false;
-            }
 
-            int playerHealth = this.minecraft.player.health;
-            int playerPrevHealth = this.minecraft.player.lastHealth;
-            this.random.setSeed(this.tickCount * 312871);
+            final int lowHealthThreshold = 8;
+            final int playerHealth = player.health;
+            final int playerPrevHealth = player.lastHealth;
+            this.random.setSeed(this.tickCount * 312871L);
 
-            if (this.minecraft.gameMode.canHurtPlayer()) {
-                int playerArmor = this.minecraft.player.getArmor();
+            final int heartBot = barRect.top() - 10;
+            final int heartTop = heartBot - 9 * heartRows;
+
+            if (mc.gameMode.canHurtPlayer()) {
+                int playerArmor = player.getArmor();
+                boolean isInvulnerable = player.invulnerableTime >= 10 && player.invulnerableTime / 3 % 2 == 1;
 
                 for (int armorIndex = 0; armorIndex < 10; ++armorIndex) {
-                    int y = screenHeight - 32;
+                    int y = heartBot;
                     if (playerArmor > 0) {
-                        int armorX = screenWidth / 2 + 91 - armorIndex * 8 - 9;
-                        if (armorIndex * 2 + 1 < playerArmor) {
-                            this.blit(armorX, y, 34, 9, 9, 9);
-                        }
-
-                        if (armorIndex * 2 + 1 == playerArmor) {
-                            this.blit(armorX, y, 25, 9, 9, 9);
-                        }
-
-                        if (armorIndex * 2 + 1 > playerArmor) {
-                            this.blit(armorX, y, 16, 9, 9, 9);
-                        }
+                        int armorLeft = barRect.right() - armorIndex * 8 - 9;
+                        int u = 25 - Integer.compare((armorIndex * 2 + 1), playerArmor) * 9;
+                        this.blit(armorLeft, y, u, 9, 9, 9);
                     }
 
-                    int healthX = screenWidth / 2 - 91 + armorIndex * 8;
-                    if (playerHealth <= 8) {
+                    int heartLeft = barRect.left() + armorIndex * 8;
+                    if (playerHealth <= lowHealthThreshold) {
                         y += this.random.nextInt(2);
                     }
 
-                    for (int healthIndex = 0; healthIndex <= (maxHealth - 1) / 40; ++healthIndex) {
+                    for (int healthIndex = 0; healthIndex <= heartRows; ++healthIndex) {
                         if ((armorIndex + 1 + healthIndex * 10) * 4 <= maxHealth) {
-                            int chatYOffset = 0;
-                            if (isChatOpen) {
-                                chatYOffset = 1;
-                            }
+                            int u0 = isInvulnerable ? 9 : 0;
 
-                            this.blit(healthX, y, 16 + chatYOffset * 9, 0, 9, 9);
-                            if (isChatOpen) {
+                            this.blit(heartLeft, y, 16 + u0, 0, 9, 9);
+
+                            if (isInvulnerable) {
+                                int u1 = -1;
                                 if (armorIndex * 4 + 3 + healthIndex * 40 < playerPrevHealth) {
-                                    this.blit(healthX, y, 70, 0, 9, 9);
-                                } else if (armorIndex * 4 + 3 + healthIndex * 40 == playerPrevHealth) {
-                                    this.blit(healthX, y, 105, 0, 9, 9);
-                                } else if (armorIndex * 4 + 2 + healthIndex * 40 == playerPrevHealth) {
-                                    this.blit(healthX, y, 79, 0, 9, 9);
-                                } else if (armorIndex * 4 + 1 + healthIndex * 40 == playerPrevHealth) {
-                                    this.blit(healthX, y, 114, 0, 9, 9);
+                                    u1 = 70;
+                                }
+                                else if (armorIndex * 4 + 3 + healthIndex * 40 == playerPrevHealth) {
+                                    u1 = 105;
+                                }
+                                else if (armorIndex * 4 + 2 + healthIndex * 40 == playerPrevHealth) {
+                                    u1 = 79;
+                                }
+                                else if (armorIndex * 4 + 1 + healthIndex * 40 == playerPrevHealth) {
+                                    u1 = 114;
+                                }
+                                if (u1 != -1) {
+                                    this.blit(heartLeft, y, u1, 0, 9, 9);
                                 }
                             }
 
+                            int u2 = -1;
                             if (armorIndex * 4 + 3 + healthIndex * 40 < playerHealth) {
-                                this.blit(healthX, y, 52, 0, 9, 9);
-                            } else if (armorIndex * 4 + 3 + healthIndex * 40 == playerHealth) {
-                                this.blit(healthX, y, 87, 0, 9, 9);
-                            } else if (armorIndex * 4 + 2 + healthIndex * 40 == playerHealth) {
-                                this.blit(healthX, y, 61, 0, 9, 9);
-                            } else if (armorIndex * 4 + 1 + healthIndex * 40 == playerHealth) {
-                                this.blit(healthX, y, 96, 0, 9, 9);
+                                u2 = 52;
+                            }
+                            else if (armorIndex * 4 + 3 + healthIndex * 40 == playerHealth) {
+                                u2 = 87;
+                            }
+                            else if (armorIndex * 4 + 2 + healthIndex * 40 == playerHealth) {
+                                u2 = 61;
+                            }
+                            else if (armorIndex * 4 + 1 + healthIndex * 40 == playerHealth) {
+                                u2 = 96;
+                            }
+                            if (u2 != -1) {
+                                this.blit(heartLeft, y, u2, 0, 9, 9);
                             }
                         }
                         y -= 9;
@@ -231,22 +248,22 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
                 }
             }
 
-            if (this.minecraft.player.isUnderLiquid(Material.WATER)) {
-                int healthYOffset = -9 * ((maxHealth - 1) / 40);
-                int alpha = (int) Math.ceil((double) (this.minecraft.player.airSupply - 2) * 10.0D / 300.0D);
-                int airUsed = (int) Math.ceil((double) this.minecraft.player.airSupply * 10.0D / 300.0D) - alpha;
+            if (player.isUnderLiquid(Material.WATER)) {
+                int airAlpha = (int) Math.ceil((player.airSupply - 2) * 10.0D / 300.0D);
+                int airUsed = (int) Math.ceil(player.airSupply * 10.0D / 300.0D) - airAlpha;
 
-                for (int bubbleIndex = 0; bubbleIndex < alpha + airUsed; ++bubbleIndex) {
-                    if (bubbleIndex < alpha) {
-                        this.blit(screenWidth / 2 - 91 + bubbleIndex * 8, screenHeight - 32 - 9 + healthYOffset, 16, 18, 9, 9);
-                    } else {
-                        this.blit(screenWidth / 2 - 91 + bubbleIndex * 8, screenHeight - 32 - 9 + healthYOffset, 25, 18, 9, 9);
-                    }
+                for (int bubbleIndex = 0; bubbleIndex < airAlpha + airUsed; ++bubbleIndex) {
+                    int u = bubbleIndex < airAlpha ? 16 : 25;
+                    int x = barRect.left() + bubbleIndex * 8;
+                    int y = heartTop - 9;
+                    this.blit(x, y, u, 18, 9, 9);
                 }
             }
         }
+        else {
+            GL11.glDisable(GL11.GL_BLEND);
+        }
 
-        GL11.glDisable(GL11.GL_BLEND);
         if (this.hudEnabled) {
             GL11.glEnable(GL12.GL_RESCALE_NORMAL);
             GL11.glPushMatrix();
@@ -255,118 +272,132 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
             GL11.glPopMatrix();
 
             for (int slot = 0; slot < 9; ++slot) {
-                int x = screenWidth / 2 - 90 + slot * 20 + 2;
-                int y = screenHeight - 16 - 3;
-                this.renderSlot(slot, x, y, var1);
+                int x = barRect.left() + slot * slotWidth + 3;
+                int y = barRect.top() + 3;
+                this.renderSlot(slot, x, y, partialTick);
             }
 
             Lighting.turnOff();
             GL11.glDisable(GL12.GL_RESCALE_NORMAL);
         }
 
-        if (this.minecraft.player.getSleepTimer() > 0) {
+        int sleepTimer = player.getSleepTimer();
+        if (sleepTimer > 0) {
             GL11.glDisable(GL11.GL_DEPTH_TEST);
             GL11.glDisable(GL11.GL_ALPHA_TEST);
-            int sleepTimer = this.minecraft.player.getSleepTimer();
             float sleepFactor = (float) sleepTimer / 100.0F;
             if (sleepFactor > 1.0F) {
                 sleepFactor = 1.0F - (float) (sleepTimer - 100) / 10.0F;
             }
 
-            int color = (int) (220.0F * sleepFactor) << 24 | 1052704;
+            int color = Rgba.withAlpha(0x101020, (int) (220.0F * sleepFactor));
             this.fill(0, 0, screenWidth, screenHeight, color);
             GL11.glEnable(GL11.GL_ALPHA_TEST);
             GL11.glEnable(GL11.GL_DEPTH_TEST);
         }
 
-        if (this.minecraft.options.renderDebug) {
-            GL11.glPushMatrix();
+        int x = 2;
+        final int color0 = 0xffffff;
+        final int color1 = 0xe0e0e0;
+
+        if (mc.options.renderDebug) {
+            int y = 2;
             if (Minecraft.sessionTime > 0L) {
-                GL11.glTranslatef(0.0F, 32.0F, 0.0F);
+                y += 32;
             }
 
-            textRenderer.drawShadow("Minecraft Beta 1.7.3 (" + this.minecraft.fpsString + ")", 2, 2, 16777215);
-            textRenderer.drawShadow(this.minecraft.getChunkStatistics(), 2, 12, 16777215);
-            textRenderer.drawShadow(this.minecraft.getEntityStatistics(), 2, 22, 16777215);
-            textRenderer.drawShadow(this.minecraft.getParticleStatistics(), 2, 32, 16777215);
-            textRenderer.drawShadow(this.minecraft.getDebugInfo(), 2, 42, 16777215);
+            textRenderer.drawShadow(AC_Version.shortVersion, x, y, color0);
+            textRenderer.drawShadow(mc.fpsString, x, y += 10, color0);
+            textRenderer.drawShadow(mc.getChunkStatistics(), x, y += 10, color0);
+            textRenderer.drawShadow(mc.getEntityStatistics(), x, y += 10, color0);
+            textRenderer.drawShadow(mc.getParticleStatistics(), x, y += 10, color0);
+            textRenderer.drawShadow(mc.getDebugInfo(), x, y += 10, color0);
+            y += 10;
 
             long maxMem = Runtime.getRuntime().maxMemory();
             long totMem = Runtime.getRuntime().totalMemory();
             long freeMem = Runtime.getRuntime().freeMemory();
             long usedMem = totMem - freeMem;
-            String var39 = "Used memory: " + usedMem * 100L / maxMem + "% (" + usedMem / 1024L / 1024L + "MB) of " + maxMem / 1024L / 1024L + "MB";
-            this.drawString(textRenderer, var39, screenWidth - textRenderer.width(var39) - 2, 2, 14737632);
-            var39 = "Allocated memory: " + totMem * 100L / maxMem + "% (" + totMem / 1024L / 1024L + "MB)";
 
-            this.drawString(textRenderer, var39, screenWidth - textRenderer.width(var39) - 2, 12, 14737632);
-            this.drawString(textRenderer, "x: " + this.minecraft.player.x, 2, 64, 14737632);
-            this.drawString(textRenderer, "y: " + this.minecraft.player.y, 2, 72, 14737632);
-            this.drawString(textRenderer, "z: " + this.minecraft.player.z, 2, 80, 14737632);
-            this.drawString(textRenderer, "f: " + (Mth.floor((double) (this.minecraft.player.yRot * 4.0F / 360.0F) + 0.5D) & 3), 2, 88, 14737632);
+            String usedMsg = "Used: %d%% (%dMB) of %dMB".formatted(
+                usedMem * 100L / maxMem,
+                usedMem / 1024L / 1024L,
+                maxMem / 1024L / 1024L
+            );
+            this.drawString(textRenderer, usedMsg, screenWidth - textRenderer.width(usedMsg) - 2, 2, color1);
 
-            boolean useWorldGenImages = ((ExWorldProperties) this.minecraft.level.levelData).getWorldGenProps().useImages;
-            this.drawString(textRenderer, String.format("Use Terrain Images: %b", useWorldGenImages), 2, 96, 14737632);
+            String allocMsg = "Allocated: %d%% (%dMB)".formatted(totMem * 100L / maxMem, totMem / 1024L / 1024L);
+            this.drawString(textRenderer, allocMsg, screenWidth - textRenderer.width(allocMsg) - 2, 12, color1);
 
-            var exPlayer = (ExEntity) this.minecraft.player;
-            this.drawString(textRenderer, String.format("Collide X: %d Z: %d", exPlayer.getCollisionX(), exPlayer.getCollisionZ()), 2, 104, 14737632);
+            this.drawString(textRenderer, "x: " + player.x, x, y += 8, color1);
+            this.drawString(textRenderer, "y: " + player.y, x, y += 8, color1);
+            this.drawString(textRenderer, "z: " + player.z, x, y += 8, color1);
+            int facing = ((int) Math.floor((player.yRot * 4.0F / 360.0F) + 0.5D) & 3);
+            this.drawString(textRenderer, "f: " + facing, x, y += 8, color1);
+            y += 10;
 
+            boolean useWorldGenImages = ((ExWorldProperties) mc.level.levelData).getWorldGenProps().useImages;
             if (useWorldGenImages) {
-                int var40 = (int) this.minecraft.player.x;
-                int var21 = (int) this.minecraft.player.z;
-                int var22 = AC_TerrainImage.getTerrainHeight(var40, var21);
-                int var23 = AC_TerrainImage.getWaterHeight(var40, var21);
-                double var24 = AC_TerrainImage.getTerrainTemperature(var40, var21);
-                double var26 = AC_TerrainImage.getTerrainHumidity(var40, var21);
-                this.drawString(textRenderer, String.format("T: %d W: %d Temp: %.2f Humid: %.2f", var22, var23, var24, var26), 2, 112, 14737632);
+                int pX = (int) player.x;
+                int pY = (int) player.z;
+                int tH = AC_TerrainImage.getTerrainHeight(pX, pY);
+                int wH = AC_TerrainImage.getWaterHeight(pX, pY);
+                double tTemp = AC_TerrainImage.getTerrainTemperature(pX, pY);
+                double tHumid = AC_TerrainImage.getTerrainHumidity(pX, pY);
+                String msg = String.format("T: %d W: %d Temp: %.2f Humid: %.2f", tH, wH, tTemp, tHumid);
+                this.drawString(textRenderer, msg, x, y += 10, color1);
             }
 
-            GL11.glPopMatrix();
-        } else {
-            int y = 0; // 12 prev
+            var exPlayer = (ExEntity) player;
+            var collideMsg = String.format("Collide X: %d Z: %d", exPlayer.getCollisionX(), exPlayer.getCollisionZ());
+            this.drawString(textRenderer, collideMsg, x, y += 10, color1);
+        }
+        else {
+            int y = 2; // 12 prev
             if (AC_DebugMode.active) {
-                textRenderer.drawShadow(AC_Version.shortVersion, 2, 2, 16777215);
-                textRenderer.drawShadow("Debug Active", 2, 12, 16777215);
-                y += 22;
+                this.drawString(textRenderer, AC_Version.shortVersion, x, y, color0);
+                y += 10;
+
+                var gitMeta = ACMod.GIT_META;
+                if (gitMeta != null && !Boolean.parseBoolean(gitMeta.isCleanTag)) {
+                    String branchHash = "Branch \"" + gitMeta.branch + "\" - " + gitMeta.hash;
+                    textRenderer.drawShadow(branchHash, x, y, color0);
+                    y += 10;
+                }
+
+                textRenderer.drawShadow("Debug Active", x, y, color0);
+                y += 10;
             }
 
             if (AC_DebugMode.levelEditing) {
-                textRenderer.drawShadow("Map Editing", 2, y, 16777215);
-            }
-        }
-
-        if (this.nowPlayingTime > 0) {
-            float var32 = (float) this.nowPlayingTime - var1;
-            int alpha = (int) (var32 * 256.0F / 20.0F);
-            if (alpha > 255) {
-                alpha = 255;
-            }
-
-            if (alpha > 0) {
-                GL11.glPushMatrix();
-                GL11.glTranslatef((float) (screenWidth / 2), (float) (screenHeight - 48), 0.0F);
-                GL11.glEnable(GL11.GL_BLEND);
-                GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-                int color = 16777215;
-                if (this.animateOverlayMessageColor) {
-                    color = Color.HSBtoRGB(var32 / 50.0F, 0.7F, 0.6F) & 16777215;
-                }
-
-                textRenderer.draw(this.nowPlayingString, -textRenderer.width(this.nowPlayingString) / 2, -4, color + (alpha << 24));
-                GL11.glDisable(GL11.GL_BLEND);
-                GL11.glPopMatrix();
+                textRenderer.drawShadow("Map Editing", x, y, color0);
             }
         }
 
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+
+        if (this.nowPlayingTime > 0) {
+            float partialTime = (float) this.nowPlayingTime - partialTick;
+            int alpha = Math.min((int) (partialTime * 256.0F / 20.0F), 255);
+            if (alpha > 0) {
+                int color = color0;
+                if (this.animateOverlayMessageColor) {
+                    color = Color.HSBtoRGB(partialTime / 50.0F, 0.7F, 0.6F) & color0;
+                }
+
+                int pX = screenWidth / 2 - textRenderer.width(this.nowPlayingString) / 2;
+                textRenderer.draw(this.nowPlayingString, pX, screenHeight - 48 - 4, Rgba.withAlpha(color, alpha));
+            }
+        }
+
         GL11.glDisable(GL11.GL_ALPHA_TEST);
         GL11.glDisable(GL11.GL_DEPTH_TEST);
-        this.scriptUI.render(textRenderer, this.minecraft.textures, var1);
+
+        this.scriptUI.render(textRenderer, mc.textures, partialTick);
         GL11.glEnable(GL11.GL_DEPTH_TEST);
 
         this.renderChat(screenHeight);
-
         GL11.glEnable(GL11.GL_ALPHA_TEST);
     }
 
@@ -384,7 +415,8 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
         if (this.minecraft.screen instanceof ChatScreen) {
             maxChatHeight = 200; // TODO: use screen height?
             isChatOpen = true;
-        } else {
+        }
+        else {
             maxChatHeight = 100;
             isChatOpen = false;
         }
