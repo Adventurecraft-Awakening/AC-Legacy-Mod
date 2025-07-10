@@ -127,6 +127,16 @@ processResources {
     }
 }
 
+tasks.register("fixRunResources") {
+    dependsOn("processResources")
+    doLast {
+        copy {
+            from("build/resources/main")
+            into("out/production/resources")
+        }
+    }
+}
+
 java {
     // Loom will automatically attach sourcesJar to a RemapSourcesJar task and
     // to the "build" task if it is present.
