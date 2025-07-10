@@ -12,6 +12,12 @@ public final class MathF {
 
     private static final double LOG2_INVERSE = 1.44269504088896340735992468100189213743;
 
+    // The `Math.clamp` built-ins perform expensive checks, we skip them here.
+
+    public static int clamp(int value, int min, int max) {
+        return Math.min(max, Math.max(value, min));
+    }
+
     public static int clamp(long value, int min, int max) {
         return (int) Math.min(max, Math.max(value, min));
     }
@@ -20,12 +26,16 @@ public final class MathF {
         return Math.min(max, Math.max(value, min));
     }
 
+    public static double clamp(double value, double min, double max) {
+        return Math.min(max, Math.max(value, min));
+    }
+
     public static float cubicInterpolation(float mu, float y0, float y1, float y2, float y3) {
-        float mu2 = mu * mu;
         float a0 = -0.5F * y0 + 1.5F * y1 - 1.5F * y2 + 0.5F * y3;
         float a1 = y0 - 2.5F * y1 + 2.0F * y2 - 0.5F * y3;
         float a2 = -0.5F * y0 + 0.5F * y2;
-        return a0 * mu * mu2 + a1 * mu2 + a2 * mu + y1;
+        float mu2 = mu * mu;
+        return (a0 * mu) * mu2 + a1 * mu2 + a2 * mu + y1;
     }
 
     public static float fastLerp(float amount, float start, float end) {
@@ -45,12 +55,7 @@ public final class MathF {
     }
 
     public static double roundToZero(double value) {
-        if (value < 0) {
-            return Math.ceil(value);
-        }
-        else {
-            return Math.floor(value);
-        }
+        return value < 0 ? Math.ceil(value) : Math.floor(value);
     }
 
     /**

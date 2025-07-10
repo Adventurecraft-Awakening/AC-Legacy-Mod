@@ -11,8 +11,13 @@ import dev.adventurecraft.awakening.extension.entity.ExMob;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.image.Rgba;
+import dev.adventurecraft.awakening.layout.Border;
+import dev.adventurecraft.awakening.layout.IntRect;
+import dev.adventurecraft.awakening.layout.Rect;
+import dev.adventurecraft.awakening.util.DrawUtil;
 import dev.adventurecraft.awakening.util.HexConvert;
 import dev.adventurecraft.awakening.script.ScriptUIContainer;
+import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.client.Lighting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.ScreenSizeCalculator;
@@ -31,6 +36,7 @@ import org.lwjgl.opengl.GL12;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -65,6 +71,7 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
     };
 
     private static final int CHAT_WIDTH = 320;
+    private static final long MAX_MESSAGE_AGE = 200 * 50;
 
     @Shadow
     private Random random;
@@ -91,11 +98,14 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
     @Shadow
     protected abstract void renderVignette(float f, int i, int j);
 
-    private ArrayDeque<AC_ChatMessage> chatMessages;
-    public ScriptUIContainer scriptUI;
-    public boolean hudEnabled = true;
+    @Unique private ArrayDeque<AC_ChatMessage> chatMessages;
+    @Unique public ScriptUIContainer scriptUI;
+    @Unique public boolean hudEnabled = true;
 
-    @Inject(method = "<init>", at = @At("TAIL"))
+    @Inject(
+        method = "<init>",
+        at = @At("TAIL")
+    )
     private void init(Minecraft var1, CallbackInfo ci) {
         this.chatMessages = new ArrayDeque<>();
         this.scriptUI = new ScriptUIContainer(0.0F, 0.0F, null);
@@ -361,18 +371,18 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
     }
 
     private void renderChat(int screenHeight) {
-        var exTextRenderer = (ExTextRenderer) this.minecraft.font;
-        ArrayDeque<AC_ChatMessage> messages = this.chatMessages;
+        final var ts = Tesselator.instance;
+        final var exFont = (ExTextRenderer) this.minecraft.font;
+        final ArrayDeque<AC_ChatMessage> messages = this.chatMessages;
 
-        final int marginLeft = 1;
-        final int marginRight = 1;
+        var shadowBorder = new Border(1, 1, 1, 0);
         final int messageSpacing = 2;
         final int lineHeight = 9;
 
         final int maxChatHeight;
         final boolean isChatOpen;
         if (this.minecraft.screen instanceof ChatScreen) {
-            maxChatHeight = 200;
+            maxChatHeight = 200; // TODO: use screen height?
             isChatOpen = true;
         } else {
             maxChatHeight = 100;
@@ -380,124 +390,116 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
         }
 
         int chatHeight = 0;
-
-        for (AC_ChatMessage message : messages) {
-            if (message.age >= 200 && !isChatOpen) {
-                continue;
-            }
-            int alpha = this.getMessageAlpha(message, isChatOpen);
-            if (alpha <= 0) {
-                continue;
-            }
-
-            for (int i = message.lines.size() - 1; i >= 0; i--) {
-                chatHeight += lineHeight;
-                if (chatHeight >= maxChatHeight) {
-                    break;
-                }
-            }
-
-            if (chatHeight >= maxChatHeight) {
-                break;
-            }
-            chatHeight += messageSpacing;
-        }
+        int chatY = screenHeight - 48;
+        int x = 2;
 
         GL11.glEnable(GL11.GL_BLEND);
 
-        int x = 2;
-        int yOffset = 0;
-
-        TextRendererState textState = exTextRenderer.createState();
-        textState.bindTexture();
-        textState.setShadowOffset(1, 1);
-
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        ts.begin();
         for (AC_ChatMessage message : messages) {
-            if (message.age >= 200 && !isChatOpen) {
+            long age = message.getAgeInMillis();
+            if (age >= MAX_MESSAGE_AGE && !isChatOpen) {
                 continue;
             }
-            int alpha = this.getMessageAlpha(message, isChatOpen);
+            int alpha = this.getMessageAlpha(age, isChatOpen);
             if (alpha <= 0) {
                 continue;
             }
+
+            int freeHeight = maxChatHeight - chatHeight;
+            int freeLines = freeHeight / lineHeight;
+            if (freeLines == 0) {
+                break;
+            }
+
+            int usedLines = Math.min(freeLines, message.lines.size());
+            int msgHeight = usedLines * lineHeight;
+            int y = chatY - chatHeight - msgHeight;
+
+            var rect = new Rect(x, y, CHAT_WIDTH, msgHeight).expand(shadowBorder);
+            DrawUtil.fillRect(ts, rect, Rgba.withAlpha(0, alpha / 2));
+
+            chatHeight += msgHeight + messageSpacing;
+        }
+        ts.end();
+        GL11.glEnable(GL11.GL_TEXTURE_2D);
+
+        int stateHeight = 0;
+
+        TextRendererState textState = exFont.createState();
+        textState.bindTexture();
+        textState.setShadowOffset(1, 1);
+
+        textState.begin(ts);
+        for (AC_ChatMessage message : messages) {
+            long age = message.getAgeInMillis();
+            if (age >= MAX_MESSAGE_AGE && !isChatOpen) {
+                continue;
+            }
+            int alpha = this.getMessageAlpha(age, isChatOpen);
+            if (alpha <= 0) {
+                continue;
+            }
+
+            int freeHeight = maxChatHeight - stateHeight;
+            int freeLines = freeHeight / lineHeight;
+            if (freeLines == 0) {
+                break;
+            }
+
+            int usedLines = Math.min(freeLines, message.lines.size());
+            int msgHeight = usedLines * lineHeight;
+            int y = chatY - stateHeight - msgHeight;
 
             String text = message.text;
             int color = Rgba.withAlpha(0xffffff, alpha);
             textState.setColor(color);
             textState.setShadow(ExTextRenderer.getShadowColor(color));
+            textState.resetFormat();
 
-            int xStart = x - marginLeft;
-            int xEnd = x + CHAT_WIDTH + marginRight;
-
-            int msgHeight = message.lines.size() * lineHeight;
-            int yBase = (screenHeight - 48) - msgHeight - yOffset;
-            int yEnd = yBase + msgHeight + 1;
-            int y = yBase + 1;
-
-            this.fill(xStart, yBase, xEnd, yEnd, alpha / 2 << 24);
-            GL11.glEnable(GL11.GL_BLEND);
-
-            var ts = Tesselator.instance;
-            textState.begin(ts);
-            for (AC_ChatMessage.Line line : message.lines) {
+            int totalLines = message.lines.size();
+            for (int i = totalLines - usedLines; i < totalLines; i++) {
+                var line = message.lines.get(i);
                 textState.drawText(ts, text, line.start(), line.end(), x, y);
-
                 y += lineHeight;
-                yOffset += lineHeight;
-                if (yOffset >= maxChatHeight) {
-                    break;
-                }
             }
-            textState.end(ts);
 
-            if (yOffset >= maxChatHeight) {
-                break;
-            }
-            yOffset += messageSpacing;
+            stateHeight += msgHeight + messageSpacing;
         }
+        textState.end(ts);
 
         GL11.glDisable(GL11.GL_BLEND);
     }
 
-    private int getMessageAlpha(AC_ChatMessage message, boolean isChatOpen) {
+    private int getMessageAlpha(long ageMillis, boolean isChatOpen) {
         if (isChatOpen) {
             return 255;
         }
 
-        double age = (double) message.age / 200.0D;
+        double age = (double) ageMillis / MAX_MESSAGE_AGE;
         age = 1.0D - age;
         age *= 10.0D;
-        if (age < 0.0D) {
-            age = 0.0D;
-        }
-
-        if (age > 1.0D) {
-            age = 1.0D;
-        }
-
+        age = MathF.clamp(age, 0.0, 1.0);
         age *= age;
 
         int alpha = (int) (255.0D * age);
         return alpha;
     }
 
-    @Inject(method = "tick", at = @At("HEAD"))
-    private void runTick(CallbackInfo ci) {
-        for (AC_ChatMessage message : this.chatMessages) {
-            message.age += 1;
-        }
-    }
-
-    @Inject(method = "clearMessages", at = @At("HEAD"))
+    @Inject(
+        method = "clearMessages",
+        at = @At("HEAD")
+    )
     private void clearChat(CallbackInfo ci) {
-        chatMessages.clear();
+        this.chatMessages.clear();
     }
 
     @Overwrite
     public void addMessage(String message) {
         ACMod.CHAT_LOGGER.info(colorCodesToAnsi(message, 0, message.length()).toString());
 
-        var entry = new AC_ChatMessage(message);
+        var entry = new AC_ChatMessage(message, System.currentTimeMillis());
         entry.rebuild((ExTextRenderer) this.minecraft.font, CHAT_WIDTH);
         this.chatMessages.addFirst(entry);
 
