@@ -102,12 +102,20 @@ public class TextRendererState {
         }
     }
 
+    public void drawText(Tesselator ts, CharSequence text, float x, float y) {
+        this.drawText(ts, text, 0, text.length(), x, y);
+    }
+
     public void setColor(int color) {
         this.color = color;
     }
 
     public void setShadow(int color) {
         this.shadow = color;
+    }
+
+    public void setShadowToColor() {
+        this.shadow = ExTextRenderer.getShadowColor(this.color);
     }
 
     public void resetFormat() {

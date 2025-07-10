@@ -72,7 +72,7 @@ public class ScriptUILabel extends UIElement {
                 lineX = x - (float) (textRenderer.width(line) / 2);
             }
 
-            state.drawText(ts, line, 0, line.length(), lineX, y);
+            state.drawText(ts, line, lineX, y);
             state.resetFormat();
 
             y += 9.0F;
