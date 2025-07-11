@@ -52,7 +52,7 @@ public final class BufferOutputStream extends FilterOutputStream {
         // Fill buffer as much as possible.
         int copyLen = Math.min(length, this.available());
         if (copyLen > 0) {
-            this.writeToBuffer(data, offset, length);
+            this.writeToBuffer(data, offset, copyLen);
             offset += copyLen;
             length -= copyLen;
         }
