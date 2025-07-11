@@ -1,23 +1,9 @@
 package dev.adventurecraft.awakening.util;
 
-import com.google.common.primitives.UnsignedLong;
-
-import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
 public final class BigMath {
-
-    private static final Field magField;
-
-    static {
-        try {
-            magField = BigInteger.class.getDeclaredField("mag");
-        }
-        catch (java.lang.NoSuchFieldException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     public static double log(BigInteger value, double base) {
         if (value.signum() < 0 || base == 1.0D) {
@@ -29,6 +15,10 @@ public final class BigMath {
         if (base == 0.0D && !value.equals(BigInteger.ONE)) {
             return Double.NaN;
         }
+        if (value.bitLength() <= 64) {
+            long bits = value.longValue();
+            return MathF.log(MathF.unsignedLongToDouble(bits), base);
+        }
         return getTopBits(value).log(base);
     }
 
@@ -37,24 +27,11 @@ public final class BigMath {
     }
 
     private static TopBitMeta getTopBits(BigInteger value) {
-        try {
-            int[] bits = (int[]) magField.get(value);
-            int h = bits[0];
-            int m = bits.length > 1 ? bits[1] : 0;
-            int l = bits.length > 2 ? bits[2] : 0;
-            return new TopBitMeta((long) bits.length * 32, h, m, l);
-        }
-        catch (IllegalAccessException e) {
-            return getTopBitsFallback(value);
-        }
-    }
-
-    private static TopBitMeta getTopBitsFallback(BigInteger value) {
         byte[] bytes = value.toByteArray();
         int h = getInt(bytes, 0);
         int m = getInt(bytes, 4);
         int l = getInt(bytes, 8);
-        return new TopBitMeta((long) bytes.length * 8, h, m, l);
+        return new TopBitMeta(bytes.length, h, m, l);
     }
 
     private static int getInt(byte[] bytes, int off) {
@@ -69,7 +46,7 @@ public final class BigMath {
         return (i < bytes.length ? bytes[i] : 0) & 0xFF;
     }
 
-    private record TopBitMeta(long bitCount, int high, int mid, int low) {
+    private record TopBitMeta(int byteCount, int high, int mid, int low) {
 
         /**
          * @see <a href="https://github.com/dotnet/runtime/blob/1d1bf92fcf43aa6981804dc53c5174445069c9e4/src/libraries/System.Runtime.Numerics/src/System/Numerics/BigInteger.cs#L832-L857">BigInteger.cs</a>
@@ -84,15 +61,15 @@ public final class BigMath {
 
             // Measure the exact bit count
             int c = Integer.numberOfLeadingZeros((int) h);
-            long b = this.bitCount - c;
+            long b = this.byteCount * 8L - c;
 
             // Extract most significant bits
             long sx = (h << 32 + c) | (m << c) | (l >>> 32 - c);
-            double x = UnsignedLong.fromLongBits(sx).doubleValue();
+            double x = MathF.unsignedLongToDouble(sx);
 
             // Let v = value, b = bit count, x = v/2^b-64
             // log ( v/2^b-64 * 2^b-64 ) = log ( x ) + log ( 2^b-64 )
-            return MathF.log(x, base) + (b - 64) / MathF.log(base, 2);
+            return MathF.log(x, base) + (b - 64) / MathF.log2(base);
         }
     }
 }

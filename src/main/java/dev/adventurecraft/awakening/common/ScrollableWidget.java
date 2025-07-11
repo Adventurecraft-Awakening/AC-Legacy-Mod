@@ -17,6 +17,8 @@ import static dev.adventurecraft.awakening.util.DrawUtil.fillRect;
 
 public abstract class ScrollableWidget extends GuiComponent {
 
+    public static final long DOUBLE_CLICK_TIME = 250L;
+
     public final Minecraft client;
     private IntRect layoutRect;
     private IntBorder layoutBorder;
@@ -202,7 +204,10 @@ public abstract class ScrollableWidget extends GuiComponent {
             if (this.dragDistance == -1.0) {
                 if (borderRect.containsY(mousePoint.y)) {
                     boolean doDragging = buttonIndex == 0;
-                    boolean isDoubleClick = System.currentTimeMillis() - this.prevClickTime < 250L;
+
+                    long currentMillis = System.currentTimeMillis();
+                    boolean isDoubleClick = currentMillis - this.prevClickTime < DOUBLE_CLICK_TIME;
+                    this.prevClickTime = currentMillis;
 
                     int entryIndex = this.getEntryUnderPoint(mousePoint.asFloat());
                     if (entryIndex != -1) {
@@ -212,10 +217,6 @@ public abstract class ScrollableWidget extends GuiComponent {
                     }
                     else if (this.mouseClicked(mousePoint, buttonIndex, isDoubleClick)) {
                         doDragging = false;
-                    }
-
-                    if (isDoubleClick) {
-                        this.prevClickTime = System.currentTimeMillis();
                     }
 
                     if (scrollBarBorder.width() > 0 && scrollBarBorder.containsX(mousePoint.x)) {
@@ -347,7 +348,7 @@ public abstract class ScrollableWidget extends GuiComponent {
             Rect scrollHandleRect = Rect.fromEdges(scrollBarLeft, n, scrollBarRight, n + n2);
 
             ts.begin();
-            fillRect(ts, scrollBarBackRect, new IntCorner(0x7f000000), null);
+            fillRect(ts, scrollBarBackRect, 0x7f000000);
             DrawUtil.shadowRect(
                 ts,
                 scrollHandleRect,

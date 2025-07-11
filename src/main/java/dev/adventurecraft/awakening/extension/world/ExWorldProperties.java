@@ -126,4 +126,16 @@ public interface ExWorldProperties {
     void setHudEnabled(boolean arg);
 
     boolean getHudEnabled();
+
+    void setCanSleep(boolean arg);
+
+    boolean getCanSleep();
+  
+    void setCanUseHoe(boolean arg);
+
+    boolean getCanUseHoe();
+  
+    void setCanUseBonemeal(boolean arg);
+
+    boolean getCanUseBonemeal();
 }

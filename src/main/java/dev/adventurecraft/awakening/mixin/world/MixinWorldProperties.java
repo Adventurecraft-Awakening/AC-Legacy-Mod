@@ -24,13 +24,13 @@ import java.util.Optional;
 @Mixin(LevelData.class)
 public abstract class MixinWorldProperties implements ExWorldProperties {
 
-    @Shadow
-    private boolean raining;
-
-    @Shadow
-    private long time;
+    @Shadow private boolean raining;
+    @Shadow private long time;
 
     private boolean hudEnabled = true;
+    private boolean canSleep = true;
+    private boolean canUseHoe = true;
+    private boolean canUseBonemeal = true;
     public double tempOffset;
     private WorldGenProperties worldGenProps = new WorldGenProperties();
     public boolean iceMelts = true;
@@ -62,7 +62,10 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     public boolean originallyFromAC = false;
     public boolean allowsInventoryCrafting = false;
 
-    @Inject(method = "<init>(Lnet/minecraft/nbt/CompoundTag;)V", at = @At("TAIL"))
+    @Inject(
+        method = "<init>(Lnet/minecraft/nbt/CompoundTag;)V",
+        at = @At("TAIL")
+    )
     private void init(CompoundTag tag, CallbackInfo ci) {
         var exTag = (ExCompoundTag) tag;
 
@@ -108,7 +111,8 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
             Optional<Float> value = exTag.findFloat("brightness" + i);
             if (value.isPresent()) {
                 this.brightness[i] = value.get();
-            } else {
+            }
+            else {
                 this.brightness[i] = LightHelper.getDefaultLightAtIndex(i);
             }
         }
@@ -117,14 +121,20 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         exTag.findCompound("worldScope").ifPresent(this::setWorldScope);
         exTag.findCompound("musicScope").ifPresent(this::setMusicScope);
 
-        this.originallyFromAC = exTag.findBool("originallyFromAC")
-            .orElseGet(() -> tag.hasKey("TemperatureOffset"));
+        this.originallyFromAC = exTag.findBool("originallyFromAC").orElseGet(() -> tag.hasKey("TemperatureOffset"));
 
         this.allowsInventoryCrafting = exTag.findBool("allowsInventoryCrafting").orElse(true);
         this.hudEnabled = exTag.findBool("hudEnabled").orElse(true);
+
+        this.canSleep = exTag.findBool("canSleep").orElse(true);
+        this.canUseHoe = exTag.findBool("canUseHoe").orElse(true);
+        this.canUseBonemeal = exTag.findBool("canUseBonemeal").orElse(true);
     }
 
-    @Inject(method = "<init>(JLjava/lang/String;)V", at = @At("TAIL"))
+    @Inject(
+        method = "<init>(JLjava/lang/String;)V",
+        at = @At("TAIL")
+    )
     private void init(long var1, String var2, CallbackInfo ci) {
         this.timeRate = 1.0F;
 
@@ -133,13 +143,18 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         }
     }
 
-    @Inject(method = "<init>(Lnet/minecraft/world/level/storage/LevelData;)V", at = @At("TAIL"))
+    @Inject(
+        method = "<init>(Lnet/minecraft/world/level/storage/LevelData;)V",
+        at = @At("TAIL")
+    )
     private void init(LevelData var1, CallbackInfo ci) {
-        System.arraycopy(
-            ((MixinWorldProperties) (Object) var1).brightness, 0, this.brightness, 0, 16);
+        System.arraycopy(((MixinWorldProperties) (Object) var1).brightness, 0, this.brightness, 0, 16);
     }
 
-    @Inject(method = "save(Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/nbt/CompoundTag;)V", at = @At("TAIL"))
+    @Inject(
+        method = "save(Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/nbt/CompoundTag;)V",
+        at = @At("TAIL")
+    )
     private void insertWorldPropsForAC(CompoundTag tag, CompoundTag playerTag, CallbackInfo ci) {
         WorldGenProperties wgp = this.worldGenProps;
         tag.putDouble("TemperatureOffset", this.tempOffset);
@@ -211,6 +226,9 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         tag.putBoolean("originallyFromAC", this.originallyFromAC);
         tag.putBoolean("allowsInventoryCrafting", this.allowsInventoryCrafting);
         tag.putBoolean("hudEnabled", this.hudEnabled);
+        tag.putBoolean("canSleep", this.canSleep);
+        tag.putBoolean("canUseHoe", this.canUseHoe);
+        tag.putBoolean("canUseBonemeal", this.canUseBonemeal);
     }
 
     @Override
@@ -302,7 +320,8 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         String found = this.replacementTextures.get(key);
         if (found != null && found.equals(value)) {
             return false;
-        } else {
+        }
+        else {
             this.replacementTextures.put(key, value);
             return true;
         }
@@ -543,5 +562,29 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     @Override
     public boolean getHudEnabled() {
         return this.hudEnabled;
+    }
+
+    public @Override void setCanSleep(boolean arg) {
+        this.canSleep = arg;
+    }
+
+    public @Override boolean getCanSleep() {
+        return this.canSleep;
+    }
+
+    public @Override void setCanUseHoe(boolean arg) {
+        this.canUseHoe = arg;
+    }
+
+    public @Override boolean getCanUseHoe() {
+        return this.canUseHoe;
+    }
+
+    public @Override void setCanUseBonemeal(boolean arg) {
+        this.canUseBonemeal = arg;
+    }
+
+    public @Override boolean getCanUseBonemeal() {
+        return this.canUseBonemeal;
     }
 }

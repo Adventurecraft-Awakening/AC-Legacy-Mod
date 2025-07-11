@@ -2,10 +2,13 @@ plugins {
     id "maven-publish"
     id "fabric-loom" version "1.10.1"
     id "babric-loom-extension" version "1.10.1"
+    id 'com.palantir.git-version' version "4.0.0"
 }
 
 version = project.mod_version
 group = project.maven_group
+
+project.ext.gitDetails = versionDetails()
 
 base {
     archivesName = project.archives_base_name
@@ -124,13 +127,23 @@ processResources {
     }
 }
 
+tasks.register("fixRunResources") {
+    dependsOn("processResources")
+    doLast {
+        copy {
+            from("build/resources/main")
+            into("out/production/resources")
+        }
+    }
+}
+
 java {
     // Loom will automatically attach sourcesJar to a RemapSourcesJar task and
     // to the "build" task if it is present.
     // If you remove this line, sources will not be generated.
     withSourcesJar()
 
-    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_21
 }
 
 jar {
