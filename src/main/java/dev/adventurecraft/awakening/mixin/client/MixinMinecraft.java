@@ -224,19 +224,20 @@ public abstract class MixinMinecraft implements ExMinecraft {
     @Shadow
     protected abstract void renderLoadingScreen();
 
-    private long previousNanoTime;
-    private double deltaTime;
-    private int rightMouseTicksRan;
-    public AC_MapList mapList;
-    public AC_CutsceneCamera cutsceneCamera = new AC_CutsceneCamera();
-    public AC_CutsceneCamera activeCutsceneCamera;
-    public boolean cameraActive;
-    public boolean cameraPause = true;
-    public Mob cutsceneCameraEntity;
-    public AC_GuiStore storeGUI = new AC_GuiStore();
-    ItemInstance lastItemUsed;
-    Entity lastEntityHit;
-    ScriptVec3 lastBlockHit;
+    @Unique private long previousNanoTime;
+    @Unique private double deltaTime;
+    @Unique private int rightMouseTicksRan;
+    @Unique private int middleMouseTicksRan;
+    @Unique public AC_MapList mapList;
+    @Unique public AC_CutsceneCamera cutsceneCamera = new AC_CutsceneCamera();
+    @Unique public AC_CutsceneCamera activeCutsceneCamera;
+    @Unique public boolean cameraActive;
+    @Unique public boolean cameraPause = true;
+    @Unique public Mob cutsceneCameraEntity;
+    @Unique public AC_GuiStore storeGUI = new AC_GuiStore();
+    @Unique ItemInstance lastItemUsed;
+    @Unique Entity lastEntityHit;
+    @Unique ScriptVec3 lastBlockHit;
 
     @Overwrite(remap = false)
     public static void main(String[] args) {
@@ -916,8 +917,10 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
             if (mouseButton == 0) {
                 this.lastClickTick = this.ticks + useDelay;
-            } else {
+            } else if (mouseButton == 1) {
                 this.rightMouseTicksRan = this.ticks + useDelay;
+            } else if (mouseButton == 2) {
+                this.middleMouseTicksRan = this.ticks + useDelay;
             }
 
             if (stack != null &&
@@ -930,6 +933,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         } else {
             this.lastClickTick = this.ticks + 5;
             this.rightMouseTicksRan = this.ticks + 5;
+            this.middleMouseTicksRan = this.ticks + 5;
         }
 
         if (mouseButton == 0) {
@@ -972,7 +976,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
                     if (stack != null && Item.items[stack.id] instanceof AC_ILeftClickItem leftClickItem) {
                         leftClickItem.onItemUseLeftClick(stack, this.player, this.level, bX, bY, bZ, bSide);
                     }
-                } else {
+                } else if (mouseButton == 1) {
                     int count = stack == null ? 0 : stack.count;
                     if (this.gameMode.useItemOn(this.player, this.level, stack, bX, bY, bZ, bSide)) {
                         useOnBlock = false;
