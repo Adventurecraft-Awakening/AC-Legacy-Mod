@@ -22,10 +22,6 @@ public final class MathF {
         return (int) Math.min(max, Math.max(value, min));
     }
 
-    public static int clamp(int value, int min, int max) {
-        return Math.min(max, Math.max(value, min));
-    }
-
     public static float clamp(float value, float min, float max) {
         return Math.min(max, Math.max(value, min));
     }
