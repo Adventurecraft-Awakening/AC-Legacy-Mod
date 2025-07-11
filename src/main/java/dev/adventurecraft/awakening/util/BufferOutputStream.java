@@ -83,13 +83,4 @@ public final class BufferOutputStream extends FilterOutputStream {
         this.flushBuffer();
         this.out.flush();
     }
-
-    public @Override void close()
-        throws IOException {
-        if (this.out == null) {
-            return;
-        }
-        this.flush();
-        this.out = null;
-    }
 }
