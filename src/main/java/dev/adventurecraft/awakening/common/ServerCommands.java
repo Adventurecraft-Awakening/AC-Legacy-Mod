@@ -159,11 +159,41 @@ public class ServerCommands {
             descs.attach(node.getChild("path").getCommand(), "Gets the description of a command node");
         }
 
+        {
+            var node = dispatcher.register(requiredArg(literal("toggle"),
+                "case", StringArgumentType.greedyString(),
+                    (ctx, name) -> ServerCommands.cmdToggle(ctx,name)));
+            descs.attach(node.getChild("case").getCommand(), "Toggle: leaves, mobsburn, melting, bonemeal, bed, hoe");
+        }
         // TODO: save/restore for undostacks
         dispatcher.register(literal("undostack")
             .executes(descs.attach(ServerCommands::cmdUndoStack, "Gets info about the undo stack"))
             .then(literal("clear")
                 .executes(descs.attach(ServerCommands::cmdUndoStackClear, "Clears the undo stack"))));
+    }
+
+    public static int cmdToggle(CommandContext<ServerCommandSource> context,String pCase) {
+        // toggle commands
+        switch(pCase.toLowerCase()) {
+            case "leaves":
+                ServerCommands.cmdToggleDecay(context,null);
+                break;
+            case "mobsburn":
+                ServerCommands.cmdMobsBurn(context, null);
+                break;
+            case "melting":
+                ServerCommands.cmdToggleMelting(context, null);
+                break;
+            case "bonemeal":
+                ServerCommands.cmdToggleBonemeal(context, null);
+                break;
+            case "bed":
+                ServerCommands.cmdToggleSleep(context, null);
+                break;
+            case "hoe":
+                ServerCommands.cmdToggleHoe(context, null);
+        }
+        return 0;
     }
 
     public static int cmdConfig(CommandContext<ServerCommandSource> context) {
