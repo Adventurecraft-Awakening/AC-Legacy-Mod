@@ -4,7 +4,11 @@ import net.minecraft.world.ItemInstance;
 
 public interface ExPlayerInventory {
 
-    boolean consumeItemAmount(int var1, int var2, int var3);
+    boolean consumeItemAmount(int id, int meta, int count);
+
+    int getSlot(int id, int meta);
+
+    void selectSlot(int index);
 
     int getOffhandItem();
 

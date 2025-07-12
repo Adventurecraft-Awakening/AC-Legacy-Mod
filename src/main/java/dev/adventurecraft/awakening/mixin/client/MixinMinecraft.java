@@ -55,6 +55,7 @@ import net.minecraft.util.Vec3i;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
@@ -170,9 +171,6 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
     @Shadow
     public abstract void grabMouse();
-
-    @Shadow
-    protected abstract void pickBlock();
 
     @Shadow
     private int recheckPlayerIn;
@@ -878,6 +876,48 @@ public abstract class MixinMinecraft implements ExMinecraft {
         }
 
         this.lastTickTime = System.currentTimeMillis();
+    }
+
+    @Overwrite
+    private void pickBlock() {
+        if (!AC_DebugMode.active) {
+            return;
+        }
+
+        var hit = this.hitResult;
+        if (hit == null) {
+            return;
+        }
+
+        int id = this.level.getTile(hit.x, hit.y, hit.z);
+        int meta = this.level.getData(hit.x, hit.y, hit.z);
+
+        Inventory inv = this.player.inventory;
+        int slotId = ((ExPlayerInventory) inv).getSlot(id, meta);
+        if (slotId >= 0 && slotId < 9) {
+            ((ExPlayerInventory) inv).selectSlot(slotId);
+            return;
+        }
+
+        ItemInstance handItem = inv.getItem(inv.selected);
+
+        ItemInstance pickItem;
+        if (slotId == -1) {
+            pickItem = new ItemInstance(id, -64, meta);
+        }
+        else {
+            pickItem = inv.getItem(slotId);
+            // Swap hand item into found slot.
+            inv.setItem(slotId, handItem);
+            handItem = null;
+        }
+
+        inv.setItem(inv.selected, pickItem);
+        if (handItem != null) {
+            if (!inv.add(handItem)) {
+                this.player.drop(handItem);
+            }
+        }
     }
 
     @Redirect(
