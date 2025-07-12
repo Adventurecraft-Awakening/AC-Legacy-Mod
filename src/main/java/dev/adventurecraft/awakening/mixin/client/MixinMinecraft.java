@@ -880,10 +880,6 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
     @Overwrite
     private void pickBlock() {
-        if (!AC_DebugMode.active) {
-            return;
-        }
-
         var hit = this.hitResult;
         if (hit == null) {
             return;
@@ -903,6 +899,10 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
         ItemInstance pickItem;
         if (slotId == -1) {
+            // Only grant items in debug mode.
+            if (!AC_DebugMode.active) {
+                return;
+            }
             pickItem = new ItemInstance(id, -64, meta);
         }
         else {
