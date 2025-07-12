@@ -172,7 +172,13 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
 
     public void runCreatedScript() {
         if (!this.onCreated.equals("")) {
+            // Save curscope temporary
+            Scriptable tempScope = ((ExWorld) this.level).getScript().getCurScope();
+            ((ExWorld) this.level).getScript().setNewCurScope(this.scope);
+            // Run OnCreated Script
             ((ExWorld) this.level).getScriptHandler().runScript(this.onCreated, this.scope);
+            // Reset curScope afterwards! IMPORTANT for normal damage scripts
+            ((ExWorld) this.level).getScript().setNewCurScope(tempScope);
         }
     }
 
