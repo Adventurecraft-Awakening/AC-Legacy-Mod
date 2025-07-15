@@ -59,6 +59,7 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
     @Override
     public void setOffhandSlot(int value) {
         this.offhandItem = value;
+        ((ExWorldProperties)this.player.level.levelData).setOffhandSlot(this.offhandItem);
     }
 
     @Override
@@ -69,6 +70,7 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
     @Override
     public void setMainhandSlot(int value) {
         this.selected = value;
+        ((ExWorldProperties)this.player.level.levelData).setMainhandSlot(this.selected);
     }
 
     public ItemInstance getOffhandItemStack() {
@@ -79,6 +81,16 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
         int slot = this.selected;
         this.selected = this.offhandItem;
         this.offhandItem = slot;
+    }
+
+    // Method specifically not for the stuff that abuses swappOffhandWithMain method
+    public void swapOffhandWithMainSlot() {
+        int slot = this.selected;
+        this.selected = this.offhandItem;
+        this.offhandItem = slot;
+        // Update properties
+        ((ExWorldProperties)this.player.level.levelData).setMainhandSlot(this.selected);
+        ((ExWorldProperties)this.player.level.levelData).setOffhandSlot(this.offhandItem);
     }
 
     @Environment(EnvType.CLIENT)

@@ -784,16 +784,12 @@ public abstract class MixinMinecraft implements ExMinecraft {
                             this.gui.addMessage(String.format("Reach Changed to %d", AC_DebugMode.reachDistance));
                         } else {
                             if (ctrlDown) {
-                                int selectedSlot = this.player.inventory.selected;
-                                this.player.inventory.selected = ((ExPlayerInventory) this.player.inventory).getOffhandSlot();
-                                ((ExPlayerInventory) this.player.inventory).setOffhandSlot(selectedSlot);
+                                ((ExPlayerInventory)this.player.inventory).swapOffhandWithMainSlot();
                             }
 
                             this.player.inventory.swapPaint(wheelDelta);
                             if (ctrlDown) {
-                                int selectedSlot = this.player.inventory.selected;
-                                this.player.inventory.selected = ((ExPlayerInventory) this.player.inventory).getOffhandSlot();
-                                ((ExPlayerInventory) this.player.inventory).setOffhandSlot(selectedSlot);
+                                ((ExPlayerInventory)this.player.inventory).swapOffhandWithMainSlot();
                             }
 
                             if (this.options.discreteMouseScroll) {
