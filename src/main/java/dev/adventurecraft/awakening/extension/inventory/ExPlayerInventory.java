@@ -6,9 +6,13 @@ public interface ExPlayerInventory {
 
     boolean consumeItemAmount(int var1, int var2, int var3);
 
-    int getOffhandItem();
+    int getOffhandSlot();
 
-    void setOffhandItem(int value);
+    void setOffhandSlot(int value);
+
+    int getMainhandSlot();
+
+    void setMainhandSlot(int value);
 
     ItemInstance getOffhandItemStack();
 

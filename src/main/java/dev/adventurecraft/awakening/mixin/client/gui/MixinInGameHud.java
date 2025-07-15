@@ -145,7 +145,7 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
             Inventory var11 = this.minecraft.player.inventory;
             this.blitOffset = -90.0F;
             this.blit(screenWidth / 2 - 91, screenHeight - 22, 0, 0, 182, 22);
-            this.blit(screenWidth / 2 - 91 - 1 + ((ExPlayerInventory) var11).getOffhandItem() * 20, screenHeight - 22 - 1, 24, 22, 48, 22);
+            this.blit(screenWidth / 2 - 91 - 1 + ((ExPlayerInventory) var11).getOffhandSlot() * 20, screenHeight - 22 - 1, 24, 22, 48, 22);
             this.blit(screenWidth / 2 - 91 - 1 + var11.selected * 20, screenHeight - 22 - 1, 0, 22, 24, 22);
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.minecraft.textures.loadTexture("/gui/icons.png"));
             GL11.glEnable(GL11.GL_BLEND);

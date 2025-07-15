@@ -18,6 +18,7 @@ import dev.adventurecraft.awakening.extension.client.resource.language.ExTransla
 import dev.adventurecraft.awakening.extension.client.sound.ExSoundHelper;
 import dev.adventurecraft.awakening.extension.entity.ExBlockEntity;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
+import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
@@ -1201,6 +1202,11 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             }
 
             this.firstTick = false;
+
+            for (Player player : this.players) {
+                ((ExPlayerInventory)player.inventory).setMainhandSlot(props.getMainhandSlot());
+                ((ExPlayerInventory)player.inventory).setOffhandSlot(props.getOffhandSlot());
+            }
         }
     }
 

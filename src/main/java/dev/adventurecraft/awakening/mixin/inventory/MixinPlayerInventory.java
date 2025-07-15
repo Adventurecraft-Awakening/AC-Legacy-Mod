@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.mixin.inventory;
 
 import com.llamalad7.mixinextras.sugar.Local;
+import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.item.AC_IItemReload;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.item.AC_ISlotCallbackItem;
@@ -51,13 +52,23 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
     //public int[] consumeInventory = new int[36];
 
     @Override
-    public int getOffhandItem() {
+    public int getOffhandSlot() {
         return this.offhandItem;
     }
 
     @Override
-    public void setOffhandItem(int value) {
+    public void setOffhandSlot(int value) {
         this.offhandItem = value;
+    }
+
+    @Override
+    public int getMainhandSlot() {
+        return this.selected;
+    }
+
+    @Override
+    public void setMainhandSlot(int value) {
+        this.selected = value;
     }
 
     public ItemInstance getOffhandItemStack() {
@@ -95,6 +106,9 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
         if (this.selected == this.offhandItem) {
             this.offhandItem = slot;
         }
+        // Update properties
+        ((ExWorldProperties)this.player.level.levelData).setMainhandSlot(this.selected);
+        ((ExWorldProperties)this.player.level.levelData).setOffhandSlot(this.offhandItem);
     }
 
     private void onItemAddToSlot(int slot, ItemInstance stack) {
