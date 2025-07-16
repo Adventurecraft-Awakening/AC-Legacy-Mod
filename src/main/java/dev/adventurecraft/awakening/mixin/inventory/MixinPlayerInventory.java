@@ -85,9 +85,7 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
 
     // Method specifically not for the stuff that abuses swappOffhandWithMain method
     public void swapOffhandWithMainSlot() {
-        int slot = this.selected;
-        this.selected = this.offhandItem;
-        this.offhandItem = slot;
+        swapOffhandWithMain();
         // Update properties
         ((ExWorldProperties)this.player.level.levelData).setMainhandSlot(this.selected);
         ((ExWorldProperties)this.player.level.levelData).setOffhandSlot(this.offhandItem);

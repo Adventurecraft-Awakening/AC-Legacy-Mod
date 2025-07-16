@@ -784,7 +784,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
                             this.gui.addMessage(String.format("Reach Changed to %d", AC_DebugMode.reachDistance));
                         } else {
                             if (ctrlDown) {
-                                ((ExPlayerInventory)this.player.inventory).swapOffhandWithMainSlot();
+                                ((ExPlayerInventory)this.player.inventory).swapOffhandWithMain();
                             }
 
                             this.player.inventory.swapPaint(wheelDelta);
