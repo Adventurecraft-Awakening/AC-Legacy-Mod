@@ -161,7 +161,7 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
             this.blit(barRect.left(), barRect.top(), 0, 0, barRect.width(), barRect.height());
 
             // Render off-hand slot outline.
-            int offhandLeft = barRect.left() - 1 + ((ExPlayerInventory) inv).getOffhandItem() * slotWidth;
+            int offhandLeft = barRect.left() - 1 + ((ExPlayerInventory) inv).getOffhandSlot() * slotWidth;
             this.blit(offhandLeft, barRect.top() - 1, 24, 22, 48, barRect.height());
 
             // Render main-hand slot outline.

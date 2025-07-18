@@ -10,11 +10,17 @@ public interface ExPlayerInventory {
 
     void selectSlot(int index);
 
-    int getOffhandItem();
+    int getOffhandSlot();
 
-    void setOffhandItem(int value);
+    void setOffhandSlot(int value);
+
+    int getMainhandSlot();
+
+    void setMainhandSlot(int value);
 
     ItemInstance getOffhandItemStack();
 
     void swapOffhandWithMain();
+
+    void swapOffhandWithMainSlot();
 }

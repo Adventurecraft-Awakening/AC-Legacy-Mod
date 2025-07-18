@@ -31,6 +31,8 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     private boolean canSleep = true;
     private boolean canUseHoe = true;
     private boolean canUseBonemeal = true;
+    private int mainHandSlot = 0;
+    private int offHandSlot = 1;
     public double tempOffset;
     private WorldGenProperties worldGenProps = new WorldGenProperties();
     public boolean iceMelts = true;
@@ -129,6 +131,9 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         this.canSleep = exTag.findBool("canSleep").orElse(true);
         this.canUseHoe = exTag.findBool("canUseHoe").orElse(true);
         this.canUseBonemeal = exTag.findBool("canUseBonemeal").orElse(true);
+
+        this.mainHandSlot = exTag.findInt("mainHandSlot").orElse(0);
+        this.offHandSlot = exTag.findInt("offHandSlot").orElse(1);
     }
 
     @Inject(
@@ -229,6 +234,8 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         tag.putBoolean("canSleep", this.canSleep);
         tag.putBoolean("canUseHoe", this.canUseHoe);
         tag.putBoolean("canUseBonemeal", this.canUseBonemeal);
+        tag.putInt("mainHandSlot",this.mainHandSlot);
+        tag.putInt("offHandSlot",this.offHandSlot);
     }
 
     @Override
@@ -587,4 +594,16 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     public @Override boolean getCanUseBonemeal() {
         return this.canUseBonemeal;
     }
+
+    @Override
+    public int getMainhandSlot(){return this.mainHandSlot;}
+
+    @Override
+    public void setMainhandSlot(int arg){this.mainHandSlot=arg;}
+
+    @Override
+    public int getOffhandSlot(){return this.offHandSlot;}
+
+    @Override
+    public void setOffhandSlot(int arg){this.offHandSlot=arg;}
 }

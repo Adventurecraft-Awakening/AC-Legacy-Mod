@@ -740,17 +740,17 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
                                     if (eventKey == Keyboard.KEY_1 + currentSlot) {
                                         if (!isControlPressed) {
-                                            if (currentSlot == ((ExPlayerInventory) this.player.inventory).getOffhandItem()) {
-                                                ((ExPlayerInventory) this.player.inventory).setOffhandItem(this.player.inventory.selected);
+                                            if (currentSlot == ((ExPlayerInventory) this.player.inventory).getOffhandSlot()) {
+                                                ((ExPlayerInventory) this.player.inventory).setOffhandSlot(this.player.inventory.selected);
                                             }
 
                                             this.player.inventory.selected = currentSlot;
                                         } else {
                                             if (currentSlot == this.player.inventory.selected) {
-                                                this.player.inventory.selected = ((ExPlayerInventory) this.player.inventory).getOffhandItem();
+                                                this.player.inventory.selected = ((ExPlayerInventory) this.player.inventory).getOffhandSlot();
                                             }
 
-                                            ((ExPlayerInventory) this.player.inventory).setOffhandItem(currentSlot);
+                                            ((ExPlayerInventory) this.player.inventory).setOffhandSlot(currentSlot);
                                         }
                                     }
 
@@ -783,16 +783,12 @@ public abstract class MixinMinecraft implements ExMinecraft {
                             this.gui.addMessage(String.format("Reach Changed to %d", AC_DebugMode.reachDistance));
                         } else {
                             if (ctrlDown) {
-                                int selectedSlot = this.player.inventory.selected;
-                                this.player.inventory.selected = ((ExPlayerInventory) this.player.inventory).getOffhandItem();
-                                ((ExPlayerInventory) this.player.inventory).setOffhandItem(selectedSlot);
+                                ((ExPlayerInventory)this.player.inventory).swapOffhandWithMain();
                             }
 
                             this.player.inventory.swapPaint(wheelDelta);
                             if (ctrlDown) {
-                                int selectedSlot = this.player.inventory.selected;
-                                this.player.inventory.selected = ((ExPlayerInventory) this.player.inventory).getOffhandItem();
-                                ((ExPlayerInventory) this.player.inventory).setOffhandItem(selectedSlot);
+                                ((ExPlayerInventory)this.player.inventory).swapOffhandWithMainSlot();
                             }
 
                             if (this.options.discreteMouseScroll) {
