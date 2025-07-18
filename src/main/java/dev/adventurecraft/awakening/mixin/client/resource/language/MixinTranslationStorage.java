@@ -55,7 +55,7 @@ public abstract class MixinTranslationStorage implements ExTranslationStorage {
 
     private void loadAcTranslations(String name) {
         try {
-            String acName = "/assets/adventurecraft" + name;
+            String acName = "/assets/" + ACMod.MOD_ID + name;
             InputStream stream = ACMod.class.getResourceAsStream(acName);
             if (stream != null) {
                 this.keys.load(new InputStreamReader(stream, StandardCharsets.UTF_8));

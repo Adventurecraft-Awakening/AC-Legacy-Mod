@@ -140,7 +140,6 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
         }
 
         TextRendererState state = this.createState();
-        state.bindTexture();
         state.setColor(Rgba.alphaOrOpaque(color));
         if (hasShadow) {
             state.setShadowOffset(sX, sY);

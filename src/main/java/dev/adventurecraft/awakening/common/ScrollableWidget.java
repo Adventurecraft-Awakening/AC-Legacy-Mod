@@ -348,7 +348,7 @@ public abstract class ScrollableWidget extends GuiComponent {
             Rect scrollHandleRect = Rect.fromEdges(scrollBarLeft, n, scrollBarRight, n + n2);
 
             ts.begin();
-            fillRect(ts, scrollBarBackRect, new IntCorner(0x7f000000), null);
+            fillRect(ts, scrollBarBackRect, 0x7f000000);
             DrawUtil.shadowRect(
                 ts,
                 scrollHandleRect,
