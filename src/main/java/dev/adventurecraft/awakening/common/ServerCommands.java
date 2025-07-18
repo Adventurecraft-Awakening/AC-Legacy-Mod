@@ -136,40 +136,35 @@ public class ServerCommands {
         }
 
         {
-            var node = dispatcher.register(requiredArg(literal("toggle"),
-                "case", StringArgumentType.greedyString(),
-                    (ctx, name) -> ServerCommands.cmdToggle(ctx,name)));
-            descs.attach(node.getChild("case").getCommand(), "Toggle: leaves, mobsburn, melting, bonemeal, bed, hoe");
+            var node = dispatcher.register(literal("gamerule")
+                            .executes((ctx) -> ServerCommands.cmdHelp(ctx,dispatcher,descs,"gamerule"))
+                            .then(literal("decay")
+                                    .executes((ctx) -> ServerCommands.cmdToggleDecay(ctx,null)))
+                            .then(literal("mobsburn")
+                                    .executes((ctx) -> ServerCommands.cmdMobsBurn(ctx, null)))
+                            .then(literal("melting")
+                                    .executes((ctx) -> ServerCommands.cmdToggleMelting(ctx,null)))
+                            .then(literal("bonemeal")
+                                    .executes((ctx) -> ServerCommands.cmdToggleBonemeal(ctx, null)))
+                            .then(literal("sleep")
+                                    .executes((ctx) -> ServerCommands.cmdToggleSleep(ctx, null)))
+                            .then(literal("hoe")
+                                    .executes((ctx) -> ServerCommands.cmdToggleHoe(ctx,null)))
+                    );
+            descs.attach(node.getCommand(), "Command to set different gamerules for your map");
+            descs.attach(node.getChild("decay").getCommand(), "Toggles leaf decay");
+            descs.attach(node.getChild("mobsburn").getCommand(),"Toggles mobs burning in daylight");
+            descs.attach(node.getChild("melting").getCommand(),"Toggles ice melting");
+            descs.attach(node.getChild("bonemeal").getCommand(),"Toggles bonemeal usage outside of Debug Mode");
+            descs.attach(node.getChild("sleep").getCommand(),"Toggles if player can sleep in beds");
+            descs.attach(node.getChild("hoe").getCommand(),"Toggles hoe usage outside of Debug Mode");
         }
+
         // TODO: save/restore for undostacks
         dispatcher.register(literal("undostack")
             .executes(descs.attach(ServerCommands::cmdUndoStack, "Gets info about the undo stack"))
             .then(literal("clear")
                 .executes(descs.attach(ServerCommands::cmdUndoStackClear, "Clears the undo stack"))));
-    }
-
-    public static int cmdToggle(CommandContext<ServerCommandSource> context,String pCase) {
-        // toggle commands
-        switch(pCase.toLowerCase()) {
-            case "leaves":
-                ServerCommands.cmdToggleDecay(context,null);
-                break;
-            case "mobsburn":
-                ServerCommands.cmdMobsBurn(context, null);
-                break;
-            case "melting":
-                ServerCommands.cmdToggleMelting(context, null);
-                break;
-            case "bonemeal":
-                ServerCommands.cmdToggleBonemeal(context, null);
-                break;
-            case "bed":
-                ServerCommands.cmdToggleSleep(context, null);
-                break;
-            case "hoe":
-                ServerCommands.cmdToggleHoe(context, null);
-        }
-        return 0;
     }
 
     public static int cmdConfig(CommandContext<ServerCommandSource> context) {
