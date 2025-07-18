@@ -112,30 +112,6 @@ public class ServerCommands {
             "value", BoolArgumentType.bool(),
             descs.attach(ServerCommands::cmdNoClip, "Toggles no clip")));
 
-        dispatcher.register(optionalArg(literal("togglemelting"),
-            "value", BoolArgumentType.bool(),
-            descs.attach(ServerCommands::cmdToggleMelting, "Toggles ice melting")));
-
-        dispatcher.register(optionalArg(literal("toggledecay"),
-            "value", BoolArgumentType.bool(),
-            descs.attach(ServerCommands::cmdToggleDecay, "Toggles leaf decay")));
-
-        dispatcher.register(optionalArg(literal("togglehoe"),
-            "value", BoolArgumentType.bool(),
-            descs.attach(ServerCommands::cmdToggleHoe, "Toggles hoe usage outside of Debug Mode")));
-
-        dispatcher.register(optionalArg(literal("togglebonemeal"),
-            "value", BoolArgumentType.bool(),
-            descs.attach(ServerCommands::cmdToggleBonemeal, "Toggles bonemeal usage outside of Debug Mode")));
-
-        dispatcher.register(optionalArg(literal("mobsburn"),
-            "value", BoolArgumentType.bool(),
-            descs.attach(ServerCommands::cmdMobsBurn, "Toggles mobs burning in daylight")));
-
-        dispatcher.register(optionalArg(literal("togglesleep"),
-            "value", BoolArgumentType.bool(),
-            descs.attach(ServerCommands::cmdToggleSleep, "Toggles if player can sleep in beds")));
-
         dispatcher.register(requiredArg(literal("cameraadd"),
             "time", FloatArgumentType.floatArg(),
             ServerCommands::cmdCameraAdd));
