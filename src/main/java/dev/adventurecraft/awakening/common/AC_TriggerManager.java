@@ -1,6 +1,8 @@
 package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.block.ExBlock;
+import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
@@ -8,16 +10,16 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.tile.Tile;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Map;
 
 public class AC_TriggerManager {
 
-    public Level world;
-    public HashMap<AC_CoordBlock, Int2ObjectOpenHashMap<AC_TriggerArea>> triggerAreas;
+    public final Level world;
+    private final Map<AC_CoordBlock, Int2ObjectMap<AC_TriggerArea>> triggerAreas;
 
     public AC_TriggerManager(Level world) {
         this.world = world;
-        this.triggerAreas = new HashMap<>();
+        this.triggerAreas = ((ExWorldProperties) world.levelData).getTriggerAreas();
     }
 
     public void addArea(int x, int y, int z, AC_TriggerArea area) {
@@ -26,11 +28,7 @@ public class AC_TriggerManager {
 
     public void addArea(int x, int y, int z, int id, AC_TriggerArea area) {
         var coord = new AC_CoordBlock(x, y, z);
-        var map = this.triggerAreas.get(coord);
-        if (map == null) {
-            map = new Int2ObjectOpenHashMap<>();
-            this.triggerAreas.put(coord, map);
-        }
+        var map = this.triggerAreas.computeIfAbsent(coord, key -> new Int2ObjectOpenHashMap<>());
 
         AC_TriggerArea previousArea = map.get(id);
         ArrayList<AC_CoordBlock> coords = this.findBlocksToActivate(area);
@@ -43,10 +41,10 @@ public class AC_TriggerManager {
 
     public void removeArea(int x, int y, int z) {
         var coord = new AC_CoordBlock(x, y, z);
-        var map = this.triggerAreas.get(coord);
+        var map = this.triggerAreas.remove(coord);
         if (map != null) {
-            for (int id : map.clone().keySet()) {
-                this.removeArea(coord, map, id);
+            for (AC_TriggerArea area : map.values()) {
+                this.deactivateArea(area);
             }
         }
     }
@@ -59,16 +57,18 @@ public class AC_TriggerManager {
         }
     }
 
-    private void removeArea(AC_CoordBlock coord, Int2ObjectOpenHashMap<AC_TriggerArea> map, int id) {
+    private void removeArea(AC_CoordBlock coord, Int2ObjectMap<AC_TriggerArea> map, int id) {
         AC_TriggerArea area = map.get(id);
-        if (area != null) {
-            map.remove(id);
-            if (map.isEmpty()) {
-                this.triggerAreas.remove(coord);
-            }
-
-            this.deactivateArea(area);
+        if (area == null) {
+            return;
         }
+
+        map.remove(id);
+        if (map.isEmpty()) {
+            this.triggerAreas.remove(coord);
+        }
+
+        this.deactivateArea(area);
     }
 
     public int getTriggerAmount(int x, int y, int z) {
@@ -103,7 +103,12 @@ public class AC_TriggerManager {
             for (AC_TriggerArea area : entry.getValue().values()) {
                 if (area.isPointInside(x, y, z)) {
                     AC_CoordBlock coord = entry.getKey();
-                    Minecraft.instance.gui.addMessage(String.format("Triggered by (%d, %d, %d)", coord.x, coord.y, coord.z));
+                    Minecraft.instance.gui.addMessage(String.format(
+                        "Triggered by (%d, %d, %d)",
+                        coord.x,
+                        coord.y,
+                        coord.z
+                    ));
                 }
             }
         }
@@ -151,11 +156,11 @@ public class AC_TriggerManager {
         }
     }
 
-    public CompoundTag getTagCompound() {
+    public static CompoundTag getTagCompound(Map<AC_CoordBlock, Int2ObjectMap<AC_TriggerArea>> areas) {
         var managerTag = new CompoundTag();
         int coordCount = 0;
 
-        for (var entry : this.triggerAreas.entrySet()) {
+        for (var entry : areas.entrySet()) {
             var coordTag = new CompoundTag();
             AC_CoordBlock coord = entry.getKey();
             coordTag.putInt("x", coord.x);
@@ -177,15 +182,14 @@ public class AC_TriggerManager {
         return managerTag;
     }
 
-    public void loadFromTagCompound(CompoundTag managerTag) {
-        this.triggerAreas.clear();
+    public static void loadFromTagCompound(Map<AC_CoordBlock, Int2ObjectMap<AC_TriggerArea>> areas, CompoundTag managerTag) {
         int coordCount = managerTag.getInt("numCoords");
 
         for (int i = 0; i < coordCount; ++i) {
             CompoundTag coordTag = managerTag.getCompoundTag(String.format("coord%d", i));
             var coord = new AC_CoordBlock(coordTag.getInt("x"), coordTag.getInt("y"), coordTag.getInt("z"));
-            Int2ObjectOpenHashMap<AC_TriggerArea> areaMap = new Int2ObjectOpenHashMap<>();
-            this.triggerAreas.put(coord, areaMap);
+            var areaMap = new Int2ObjectOpenHashMap<AC_TriggerArea>();
+            areas.put(coord, areaMap);
 
             int areaCount = coordTag.getInt("numAreas");
             for (int j = 0; j < areaCount; ++j) {

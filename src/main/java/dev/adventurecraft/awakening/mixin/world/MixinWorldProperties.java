@@ -1,12 +1,11 @@
 package dev.adventurecraft.awakening.mixin.world;
 
+import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.tile.AC_BlockEffect;
-import dev.adventurecraft.awakening.common.LightHelper;
-import dev.adventurecraft.awakening.common.WorldGenProperties;
 import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
-import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
-import net.minecraft.client.Minecraft;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
@@ -17,7 +16,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -35,7 +33,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     private WorldGenProperties worldGenProps = new WorldGenProperties();
     public boolean iceMelts = true;
     public boolean leavesDecay = false;
-    public CompoundTag triggerData = null;
+    public Map<AC_CoordBlock, Int2ObjectMap<AC_TriggerArea>> triggerAreas = new Object2ObjectOpenHashMap<>();
     float timeOfDay;
     float timeRate;
     public String playingMusic = "";
@@ -49,7 +47,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     public float fogEnd;
     public String overlay = "";
     CompoundTag replacementTag = null;
-    public HashMap<String, String> replacementTextures = new HashMap<>();
+    public Map<String, String> replacementTextures = new Object2ObjectOpenHashMap<>();
     public String onNewSaveScript = "";
     public String onLoadScript = "";
     public String onUpdateScript = "";
@@ -92,7 +90,9 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         exTag.findBool("leavesDecay").ifPresent(this::setLeavesDecay);
         exTag.findBool("mobsBurn").ifPresent(this::setMobsBurn);
 
-        exTag.findCompound("triggerAreas").ifPresent(c -> this.triggerData = c);
+        exTag.findCompound("triggerAreas").ifPresent(c -> {
+            AC_TriggerManager.loadFromTagCompound(this.triggerAreas, c);
+        });
 
         this.timeRate = exTag.findFloat("timeRate").orElse(1.0F);
         this.timeOfDay = exTag.findFloat("timeOfDay").orElse((float) this.time);
@@ -170,14 +170,10 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         tag.putDouble("volatility2", wgp.volatility2);
         tag.putDouble("volatilityWeight1", wgp.volatilityWeight1);
         tag.putDouble("volatilityWeight2", wgp.volatilityWeight2);
+
         tag.putBoolean("iceMelts", this.iceMelts);
         tag.putBoolean("leavesDecay", this.leavesDecay);
-        if (Minecraft.instance.level != null) {
-            var world = (ExWorld) Minecraft.instance.level;
-            if (world.getTriggerManager() != null) {
-                tag.putTag("triggerAreas", world.getTriggerManager().getTagCompound());
-            }
-        }
+        tag.putTag("triggerAreas", AC_TriggerManager.getTagCompound(this.triggerAreas));
 
         tag.putFloat("timeOfDay", this.timeOfDay);
         tag.putFloat("timeRate", this.timeRate);
@@ -237,8 +233,8 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     }
 
     @Override
-    public CompoundTag getTriggerData() {
-        return this.triggerData;
+    public Map<AC_CoordBlock, Int2ObjectMap<AC_TriggerArea>> getTriggerAreas() {
+        return this.triggerAreas;
     }
 
     @Override

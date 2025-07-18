@@ -1,7 +1,11 @@
 package dev.adventurecraft.awakening.extension.world;
 
+import dev.adventurecraft.awakening.common.AC_CoordBlock;
+import dev.adventurecraft.awakening.common.AC_TriggerArea;
 import dev.adventurecraft.awakening.common.WorldGenProperties;
 import java.util.Map;
+
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
 
@@ -9,7 +13,7 @@ public interface ExWorldProperties {
 
     WorldGenProperties getWorldGenProps();
 
-    CompoundTag getTriggerData();
+    Map<AC_CoordBlock, Int2ObjectMap<AC_TriggerArea>> getTriggerAreas();
 
     String getPlayingMusic();
 

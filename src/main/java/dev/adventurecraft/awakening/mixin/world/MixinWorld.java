@@ -294,7 +294,6 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         this.newSave = false;
         this.musicList = new ArrayList<>();
         this.soundList = new ArrayList<>();
-        this.triggerManager = new AC_TriggerManager((Level) (Object) this);
         this.undoStack = new AC_UndoStack();
         this.collisionDebugLists = new ArrayList<>();
         this.rayCheckedBlocks = new ArrayList<>();
@@ -364,9 +363,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         ((ExInGameHud) Minecraft.instance.gui).setHudEnabled(props.getHudEnabled());
 
         props.getWorldGenProps().useImages = AC_TerrainImage.isLoaded;
-        if (props.getTriggerData() != null) {
-            this.triggerManager.loadFromTagCompound(props.getTriggerData());
-        }
+        this.triggerManager = new AC_TriggerManager((Level) (Object) this);
 
         this.dimension.setLevel((Level) (Object) this);
         this.loadBrightness();
