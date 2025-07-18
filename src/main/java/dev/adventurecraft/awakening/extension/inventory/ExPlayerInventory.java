@@ -21,6 +21,4 @@ public interface ExPlayerInventory {
     ItemInstance getOffhandItemStack();
 
     void swapOffhandWithMain();
-
-    void swapOffhandWithMainSlot();
 }

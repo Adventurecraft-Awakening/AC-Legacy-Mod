@@ -1202,11 +1202,6 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             }
 
             this.firstTick = false;
-
-            for (Player player : this.players) {
-                ((ExPlayerInventory)player.inventory).setMainhandSlot(props.getMainhandSlot());
-                ((ExPlayerInventory)player.inventory).setOffhandSlot(props.getOffhandSlot());
-            }
         }
     }
 

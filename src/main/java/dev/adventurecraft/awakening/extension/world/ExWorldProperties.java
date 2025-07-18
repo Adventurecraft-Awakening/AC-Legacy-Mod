@@ -138,12 +138,4 @@ public interface ExWorldProperties {
     void setCanUseBonemeal(boolean arg);
 
     boolean getCanUseBonemeal();
-
-    int getMainhandSlot();
-
-    void setMainhandSlot(int arg);
-
-    int getOffhandSlot();
-
-    void setOffhandSlot(int arg);
 }

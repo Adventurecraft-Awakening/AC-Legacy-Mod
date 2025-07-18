@@ -11,6 +11,7 @@ import dev.adventurecraft.awakening.extension.item.ExArmorItem;
 import dev.adventurecraft.awakening.extension.item.ExItemStack;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -22,6 +23,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.LinkedList;
@@ -55,7 +57,6 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
     @Override
     public void setOffhandSlot(int value) {
         this.offhandItem = value;
-        ((ExWorldProperties)this.player.level.levelData).setOffhandSlot(this.offhandItem);
     }
 
     @Override
@@ -66,7 +67,6 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
     @Override
     public void setMainhandSlot(int value) {
         this.selected = value;
-        ((ExWorldProperties)this.player.level.levelData).setMainhandSlot(this.selected);
     }
 
     public ItemInstance getOffhandItemStack() {
@@ -77,14 +77,6 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
         int slot = this.selected;
         this.selected = this.offhandItem;
         this.offhandItem = slot;
-    }
-
-    // Method specifically not for the stuff that abuses swappOffhandWithMain method
-    public void swapOffhandWithMainSlot() {
-        swapOffhandWithMain();
-        // Update properties
-        ((ExWorldProperties)this.player.level.levelData).setMainhandSlot(this.selected);
-        ((ExWorldProperties)this.player.level.levelData).setOffhandSlot(this.offhandItem);
     }
 
     @Environment(EnvType.CLIENT)
@@ -112,9 +104,6 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
         if (this.selected == this.offhandItem) {
             this.offhandItem = slot;
         }
-        // Update properties
-        ((ExWorldProperties)this.player.level.levelData).setMainhandSlot(this.selected);
-        ((ExWorldProperties)this.player.level.levelData).setOffhandSlot(this.offhandItem);
     }
 
     private void onItemAddToSlot(int slot, ItemInstance stack) {
