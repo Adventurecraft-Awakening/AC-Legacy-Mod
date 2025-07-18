@@ -4,6 +4,8 @@ import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.image.ImageBuffer;
 import dev.adventurecraft.awakening.script.Script;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.util.ProgressListener;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
@@ -14,13 +16,20 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.mozilla.javascript.Scriptable;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.util.ArrayList;
 
 public interface ExWorld {
 
     void initWorld(
-        String mapName, LevelIO dimData, String saveName, long seed, Dimension dimension, ProgressListener progressListener);
+        String mapName,
+        LevelIO dimData,
+        String saveName,
+        long seed,
+        Dimension dimension,
+        @Nullable ProgressListener progressListener
+    );
 
     ImageBuffer loadMapTexture(String name);
 
@@ -28,9 +37,17 @@ public interface ExWorld {
 
     void loadBrightness();
 
+    @Environment(EnvType.CLIENT)
     void loadMapTextures();
 
+    @Environment(EnvType.CLIENT)
     void loadMapMusic();
+
+    @Environment(EnvType.CLIENT)
+    void loadMapSounds();
+
+    @Environment(EnvType.CLIENT)
+    void loadSoundOverrides();
 
     void ac$preTick();
 

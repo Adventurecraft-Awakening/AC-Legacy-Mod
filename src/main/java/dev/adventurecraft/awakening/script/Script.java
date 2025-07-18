@@ -4,6 +4,9 @@ import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.level.Level;
@@ -42,13 +45,13 @@ public class Script {
     ScriptEntityPlayer player;
     final ScriptChat chat;
     final ScriptWeather weather;
-    final ScriptEffect effect;
-    final ScriptParticle particle;
-    final ScriptSound sound;
-    final ScriptUI ui;
-    final ScriptRenderer renderer;
+    ScriptEffect effect;
+    ScriptParticle particle;
+    ScriptSound sound;
+    ScriptUI ui;
+    ScriptRenderer renderer;
     final ScriptScript script;
-    public final ScriptKeyboard keyboard;
+    public ScriptKeyboard keyboard;
     final List<ScriptContinuation> sleepingScripts = new ArrayList<>();
     final List<ScriptContinuation> removeMe = new ArrayList<>();
 
@@ -68,11 +71,10 @@ public class Script {
     }
 
     public Script(Level level) {
-        var gameOptions = (ExGameOptions) Minecraft.instance.options;
-
         this.cx = contextFactory.enterContext();
 
-        this.globalScope = gameOptions.getAllowJavaInScript()
+        boolean allowJavaInScript = this.getAllowJavaInScript();
+        this.globalScope = allowJavaInScript
             ? this.cx.initStandardObjects(null, false)
             : this.cx.initSafeStandardObjects(null, false);
         this.runScope = this.cx.newObject(this.globalScope);
@@ -82,30 +84,17 @@ public class Script {
         this.world = new ScriptWorld(level);
         this.chat = new ScriptChat();
         this.weather = new ScriptWeather(level);
-        this.effect = new ScriptEffect(level, Minecraft.instance.levelRenderer);
-        this.particle = new ScriptParticle(Minecraft.instance.levelRenderer);
-        this.sound = new ScriptSound(Minecraft.instance.soundEngine);
-        this.ui = new ScriptUI();
         this.script = new ScriptScript(level);
-        this.keyboard = new ScriptKeyboard(level, Minecraft.instance.options, this.getNewScope());
-        this.renderer = new ScriptRenderer(Minecraft.instance.levelRenderer);
 
         this.addObject("time", this.time);
         this.addObject("world", this.world);
         this.addObject("chat", this.chat);
         this.addObject("weather", this.weather);
-        this.addObject("effect", this.effect);
-        this.addObject("particle", this.particle);
-        this.addObject("sound", this.sound);
-        this.addObject("ui", this.ui);
-        this.addObject("screen", ((ExInGameHud) Minecraft.instance.gui).getScriptUI());
         this.addObject("script", this.script);
-        this.addObject("keyboard", this.keyboard);
         this.addObject("hitEntity", null);
         this.addObject("hitBlock", null);
-        this.addObject("renderer", this.renderer);
 
-        if (gameOptions.getAllowJavaInScript()) {
+        if (allowJavaInScript) {
             // Alias our package as `net.minecraft.script` for back-compat.
             String initStr = String.join("\n", new String[]{
                 String.format("net = { minecraft: { script: Packages.%s } };", SCRIPT_PACKAGE),
@@ -114,14 +103,50 @@ public class Script {
         }
 
         defineClass("Item", ScriptItem.class);
+        defineClass("Vec3", ScriptVec3.class);
+        defineClass("VecRot", ScriptVecRot.class);
+
+        if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT) {
+            this.defineClientState(level);
+        }
+    }
+
+    @Environment(EnvType.CLIENT)
+    private void defineClientState(Level level) {
+        this.effect = new ScriptEffect(level, Minecraft.instance.levelRenderer);
+        this.particle = new ScriptParticle(Minecraft.instance.levelRenderer);
+        this.sound = new ScriptSound(Minecraft.instance.soundEngine);
+        this.keyboard = new ScriptKeyboard(level, Minecraft.instance.options, this.getNewScope());
+        this.ui = new ScriptUI(Minecraft.instance);
+        this.renderer = new ScriptRenderer(Minecraft.instance.levelRenderer);
+
+        this.addObject("screen", ((ExInGameHud) Minecraft.instance.gui).getScriptUI());
+        this.addObject("effect", this.effect);
+        this.addObject("particle", this.particle);
+        this.addObject("sound", this.sound);
+        this.addObject("keyboard", this.keyboard);
+        this.addObject("ui", this.ui);
+        this.addObject("renderer", this.renderer);
+
         defineClass("UILabel", ScriptUILabel.class);
         defineClass("UISprite", ScriptUISprite.class);
         defineClass("UIRect", ScriptUIRect.class);
         defineClass("UIContainer", ScriptUIContainer.class);
         defineClass("Model", ScriptModel.class);
         defineClass("ModelBlockbench", ScriptModelBlockbench.class);
-        defineClass("Vec3", ScriptVec3.class);
-        defineClass("VecRot", ScriptVecRot.class);
+    }
+
+    private boolean getAllowJavaInScript() {
+        if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT) {
+            return this.client$getAllowJavaInScript();
+        }
+        return false; // TODO: drive from server config
+    }
+
+    @Environment(EnvType.CLIENT)
+    private boolean client$getAllowJavaInScript() {
+        var gameOptions = (ExGameOptions) Minecraft.instance.options;
+        return gameOptions.getAllowJavaInScript();
     }
 
     public Context getContext() {
@@ -145,6 +170,7 @@ public class Script {
     }
     */
 
+    @Environment(EnvType.CLIENT)
     public void initPlayer(LocalPlayer player) {
         this.player = new ScriptEntityPlayer(player);
         Object tmp = Context.javaToJS(this.player, this.globalScope);
@@ -166,7 +192,7 @@ public class Script {
         try {
             return this.cx.compileString(sourceCode, sourceName, 1, null);
         } catch (Exception e) {
-            Minecraft.instance.gui.addMessage("JS Compile: " + e.getMessage());
+            ACMod.addChatMessage("JS Compile: " + e.getMessage());
             return null;
         }
     }
@@ -245,7 +271,7 @@ public class Script {
 
     private void printRhinoException(RhinoException ex) {
         String message = ex.getMessage();
-        Minecraft.instance.gui.addMessage("JS: " + message);
+        ACMod.addChatMessage("JS: " + message);
 
         Exception logEx = ACMod.JS_LOGGER.isTraceEnabled() ? ex : null;
         ACMod.JS_LOGGER.warn("{}\n{}", message, ex.getScriptStackTrace(), logEx);

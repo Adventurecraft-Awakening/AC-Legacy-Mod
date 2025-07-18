@@ -13,13 +13,18 @@ public class ACPreLaunchFix implements PreLaunchEntrypoint {
         Field entrypointField;
         try {
             entrypointField = MinecraftGameProvider.class.getDeclaredField("entrypoint");
-        } catch (NoSuchFieldException e) {
+        }
+        catch (NoSuchFieldException e) {
             throw new RuntimeException(e);
         }
         entrypointField.setAccessible(true);
         try {
-            entrypointField.set(FabricLoaderImpl.INSTANCE.getGameProvider(), "net.minecraft.client.Minecraft");
-        } catch (IllegalAccessException e) {
+            var instance = FabricLoaderImpl.INSTANCE.getGameProvider();
+            if (entrypointField.get(instance).equals("net.minecraft.client.MinecraftApplet")) {
+                entrypointField.set(instance, "net.minecraft.client.Minecraft");
+            }
+        }
+        catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }
     }

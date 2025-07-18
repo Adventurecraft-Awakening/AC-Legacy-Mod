@@ -7,6 +7,8 @@ import dev.adventurecraft.awakening.common.AC_UndoStack;
 import dev.adventurecraft.awakening.extension.entity.ExBlockEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -79,6 +81,7 @@ public abstract class MixinChunk implements ExChunk {
         this.heightMap = new byte[256];
     }
 
+    @Environment(EnvType.CLIENT)
     @Redirect(method = "recalcHeightmapOnly", at = @At(
         value = "FIELD",
         target = "Lnet/minecraft/world/level/tile/Tile;lightBlock:[I",

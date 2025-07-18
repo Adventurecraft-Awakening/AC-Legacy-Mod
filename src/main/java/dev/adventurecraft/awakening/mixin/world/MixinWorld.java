@@ -2,7 +2,6 @@ package dev.adventurecraft.awakening.mixin.world;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
-import dev.adventurecraft.awakening.ACMainThread;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.client.render.AC_TextureBinder;
 import dev.adventurecraft.awakening.common.*;
@@ -37,10 +36,13 @@ import dev.adventurecraft.awakening.tile.entity.AC_TileEntityNpcPath;
 import dev.adventurecraft.awakening.util.RandomUtil;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockShapes;
 import net.minecraft.client.renderer.ptexture.*;
 import net.minecraft.locale.I18n;
+import net.minecraft.server.level.ServerChunkCache;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.util.ProgressListener;
 import net.minecraft.world.entity.Entity;
@@ -76,6 +78,7 @@ import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import javax.annotation.Nullable;
 import java.io.*;
 import java.util.*;
 
@@ -197,7 +200,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     private long sessionId;
 
     public File levelDir;
-    private int[] coordOrder;
+    private @Nullable int[] coordOrder;
     public ArrayList<String> musicList;
     public ArrayList<String> soundList;
     private LevelIO mapHandler;
@@ -284,22 +287,34 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     @Shadow
     protected abstract void setInitialSpawn();
 
-    @Override
-    public void initWorld(
-        String mapName, LevelIO dimData, String saveName, long seed, Dimension dimension, ProgressListener progressListener) {
-        this.addend = 1013904223;
-        this.fogColorOverridden = false;
-        this.fogDensityOverridden = false;
-        this.firstTick = true;
-        this.newSave = false;
+    @Unique
+    public void initFields() {
         this.musicList = new ArrayList<>();
         this.soundList = new ArrayList<>();
         this.undoStack = new AC_UndoStack();
         this.collisionDebugLists = new ArrayList<>();
         this.rayCheckedBlocks = new ArrayList<>();
         this.rayDebugLists = new ArrayList<>();
-        File gameDir = Minecraft.getWorkingDirectory();
-        File mapsDir = ACMainThread.getMapsDirectory();
+    }
+
+    @Override
+    public void initWorld(
+        String mapName,
+        LevelIO dimData,
+        String saveName,
+        long seed,
+        @Nullable Dimension dimension,
+        @Nullable ProgressListener progressListener
+    ) {
+        this.initFields();
+
+        this.addend = 1013904223;
+        this.fogColorOverridden = false;
+        this.fogDensityOverridden = false;
+        this.firstTick = true;
+        this.newSave = false;
+        File gameDir = FabricLoader.getInstance().getGameDir().toFile();
+        File mapsDir = ACMod.getMapsDir().toFile();
         File levelDir = new File(mapsDir, mapName);
         ((ExTranslationStorage) I18n.getInstance()).loadMapTranslation(levelDir);
         this.mapHandler = new McRegionLevelStorageSource(mapsDir, mapName, false);
@@ -358,13 +373,6 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             this.levelData.setLevelName(saveName);
         }
 
-        var props = (ExWorldProperties) this.levelData;
-        // Load current hud status
-        ((ExInGameHud) Minecraft.instance.gui).setHudEnabled(props.getHudEnabled());
-
-        props.getWorldGenProps().useImages = AC_TerrainImage.isLoaded;
-        this.triggerManager = new AC_TriggerManager((Level) (Object) this);
-
         this.dimension.setLevel((Level) (Object) this);
         this.loadBrightness();
         this.chunkSource = this.createLevelSource();
@@ -385,17 +393,33 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         this.updateSkyBrightness();
         this.prepareWeather();
 
-        this.loadMapMusic();
-        this.loadMapSounds();
+        if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT) {
+            this.loadMapMusic();
+            this.loadMapSounds();
+            this.loadSoundOverrides();
+        }
 
-        this.script = new Script((Level) (Object) this);
+        this.initWorldCommon();
+
+        this.scriptHandler.loadScripts(progressListener);
+    }
+
+    @Unique
+    public void initWorldCommon() {
+        var props = (ExWorldProperties) this.levelData;
+        var level = (Level) (Object) this;
+        
+        props.getWorldGenProps().useImages = AC_TerrainImage.isLoaded;
+
+        this.triggerManager = new AC_TriggerManager(level);
+
+        this.script = new Script(level);
 
         if (props.getGlobalScope() != null) {
             ScopeTag.loadScopeFromTag(this.script.globalScope, props.getGlobalScope());
         }
 
-        this.scriptHandler = new AC_JScriptHandler((Level) (Object) this, levelDir);
-        this.scriptHandler.loadScripts(progressListener);
+        this.scriptHandler = new AC_JScriptHandler(level, levelDir);
 
         this.musicScripts = new AC_MusicScripts(this.script, levelDir, this.scriptHandler);
         if (props.getMusicScope() != null) {
@@ -407,12 +431,12 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             ScopeTag.loadScopeFromTag(this.scope, props.getWorldScope());
         }
 
-        this.loadSoundOverrides();
         EntityDescriptions.loadDescriptions(new File(levelDir, "entitys"));
         AC_ItemCustom.loadItems(new File(levelDir, "items"));
         AC_TileEntityNpcPath.lastEntity = null;
     }
 
+    @Environment(EnvType.CLIENT)
     @Override
     public void loadMapTextures() {
         var texManager = ((ExTextureManager) Minecraft.instance.textures);
@@ -443,6 +467,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         ((ExWorldProperties) this.levelData).loadTextureReplacements(world);
     }
 
+    @Environment(EnvType.CLIENT)
     private void loadTextureAnimations() {
         var texManager = ((ExTextureManager) Minecraft.instance.textures);
         texManager.clearTextureAnimations();
@@ -507,20 +532,37 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         ChunkStorage io;
         if (this.levelIo == null) {
             io = this.mapHandler.readDimension(this.dimension);
-        } else {
+        }
+        else {
             io = this.levelIo.readDimension(this.dimension);
             if (this.mapHandler != null) {
                 io = new MapChunkLoader(this.mapHandler.readDimension(this.dimension), io);
             }
         }
 
+        ChunkSource source = this.dimension.createRandomLevelSource();
+
+        return switch (FabricLoader.getInstance().getEnvironmentType()) {
+            case CLIENT -> this.client$createChunkCache(io, source);
+            case SERVER -> this.server$createChunkCache(io, source);
+        };
+    }
+
+    @Environment(EnvType.CLIENT)
+    private ChunkSource client$createChunkCache(ChunkStorage io, ChunkSource source) {
         try {
             var cache = (ChunkCache) ACMod.UNSAFE.allocateInstance(ChunkCache.class);
-            ((ExChunkCache) cache).init((Level) (Object) this, io, this.dimension.createRandomLevelSource());
+            ((ExChunkCache) cache).init((Level) (Object) this, io, source);
             return cache;
-        } catch (InstantiationException e) {
+        }
+        catch (InstantiationException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Environment(EnvType.SERVER)
+    private ChunkSource server$createChunkCache(ChunkStorage io, ChunkSource source) {
+        return new ServerChunkCache((ServerLevel) (Object) this, io, source);
     }
 
     @Redirect(method = "setInitialSpawn", at = @At(
@@ -530,6 +572,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         this.levelData.setSpawnXYZ(x, this.getFirstUncoveredBlockY(x, z), z);
     }
 
+    @Environment(EnvType.CLIENT)
     @Inject(method = "validateSpawn", at = @At(
         value = "INVOKE",
         target = "Lnet/minecraft/world/level/storage/LevelData;setSpawnZ(I)V",
@@ -962,6 +1005,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         return this.dimension.getTimeOfDay(props.getTimeOfDay(), var1 * props.getTimeRate());
     }
 
+    @Environment(EnvType.CLIENT)
     @Inject(method = "getFogColor", at = @At("RETURN"))
     private void changeFogColor(float dt, CallbackInfoReturnable<Vec3> cir) {
         Vec3 rgb = cir.getReturnValue();
@@ -1011,6 +1055,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     }
 
     // This injection will be inverted at the target since the expression only captured the field access
+    @Environment(EnvType.CLIENT)
     @ModifyExpressionValue(
         method = "tickEntities",
         at = @At(
@@ -1472,6 +1517,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         this.tickNextTickSet.remove(entry);
     }
 
+    @Environment(EnvType.CLIENT)
     @Override
     public void loadMapMusic() {
         this.musicList.clear();
@@ -1497,6 +1543,8 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         }
     }
 
+    @Environment(EnvType.CLIENT)
+    @Override
     public void loadMapSounds() {
         this.soundList.clear();
 
@@ -1518,6 +1566,8 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         }
     }
 
+    @Environment(EnvType.CLIENT)
+    @Override
     public void loadSoundOverrides() {
         // TODO: unload sounds?
 
@@ -1535,7 +1585,9 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         float[] lightTable = new float[dimBrightness.length];
         float baseValue = 0.05F; // TODO: based on dimension
 
-        float ofBrightness = ((ExGameOptions) Minecraft.instance.options).ofBrightness();
+        // TODO: should game options affect the actual light values?
+        boolean isClient = FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT;
+        float ofBrightness = isClient ? this.getUserBrightness() : 0f;
         float factor = 3.0F * (1.0F - ofBrightness);
 
         for (int i = 0; i < lightTable.length; ++i) {
@@ -1546,6 +1598,11 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         AoHelper.setLightLevels(lightTable[0], lightTable[1]);
 
         System.arraycopy(lightTable, 0, this.dimension.brightnessRamp, 0, lightTable.length);
+    }
+
+    @Environment(EnvType.CLIENT)
+    private float getUserBrightness() {
+        return ((ExGameOptions) Minecraft.instance.options).ofBrightness();
     }
 
     @Override

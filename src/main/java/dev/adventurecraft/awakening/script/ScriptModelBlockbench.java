@@ -2,12 +2,7 @@ package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.extension.client.model.ExCuboid;
 import dev.adventurecraft.awakening.util.MathF;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.renderer.Textures;
-import net.minecraft.world.level.Level;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.vector.Matrix4f;
 
 public class ScriptModelBlockbench extends ScriptModelBase {

@@ -164,6 +164,7 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
     @Shadow
     protected abstract int getMaxHeadXRot();
 
+    @Environment(EnvType.CLIENT)
     @Shadow
     public abstract float getAttackAnim(float f);
 

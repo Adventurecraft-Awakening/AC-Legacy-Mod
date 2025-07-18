@@ -21,4 +21,6 @@ public interface ExPlayerEntity extends ExMob {
     String getCloakTexture();
 
     void setCloakTexture(String value);
+
+    void openPalette();
 }

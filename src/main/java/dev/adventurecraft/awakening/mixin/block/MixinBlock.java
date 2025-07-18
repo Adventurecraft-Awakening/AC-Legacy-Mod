@@ -101,14 +101,17 @@ public abstract class MixinBlock implements ExBlock {
     @Shadow
     public abstract int getTexture(int j, int l);
 
+    @Environment(EnvType.CLIENT)
     @Shadow
     public abstract int getTexture(LevelSource arg, int i, int j, int k, int l);
-    
+
+    @Environment(EnvType.CLIENT)
     @Shadow
     public int getColor(int meta) {
         throw new AssertionError();
     }
 
+    @Environment(EnvType.CLIENT)
     @Shadow
     public int getRenderShape() {
         throw new AssertionError();
@@ -190,6 +193,7 @@ public abstract class MixinBlock implements ExBlock {
         return (Tile) (Object) this;
     }
 
+    @Environment(EnvType.CLIENT)
     @Override
     public long getTextureForSideEx(LevelSource view, int x, int y, int z, int side) {
         return this.getTexture(view, x, y, z, side);

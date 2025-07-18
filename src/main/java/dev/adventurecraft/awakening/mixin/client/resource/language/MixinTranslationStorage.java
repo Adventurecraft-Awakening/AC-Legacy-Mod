@@ -3,6 +3,8 @@ package dev.adventurecraft.awakening.mixin.client.resource.language;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.client.resource.language.ExTranslationStorage;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -31,6 +33,7 @@ public abstract class MixinTranslationStorage implements ExTranslationStorage {
         this.loadAcTranslations();
     }
 
+    @Environment(EnvType.CLIENT)
     @Redirect(
         method = "getDescriptionString",
         at = @At(

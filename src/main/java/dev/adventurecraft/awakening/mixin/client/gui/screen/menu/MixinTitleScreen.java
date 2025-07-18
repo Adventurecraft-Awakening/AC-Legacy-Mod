@@ -45,6 +45,7 @@ public abstract class MixinTitleScreen extends Screen {
         this.buttons.add(new Button(6, this.width / 2 - 100, y, "New Save"));
         this.buttons.add(new Button(1, this.width / 2 - 100, y + 22, "Load Save"));
         this.buttons.add(new Button(7, this.width / 2 - 100, y + 44, "Craft a Map"));
+        this.buttons.add(this.multiplayerButton = new Button(2, this.width / 2 - 100, y + 66, ts.get("menu.multiplayer")));
 
         if (this.minecraft.appletMode) {
             this.buttons.add(new Button(0, this.width / 2 - 100, y + 88, ts.get("menu.options")));

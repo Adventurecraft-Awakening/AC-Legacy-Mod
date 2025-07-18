@@ -10,7 +10,6 @@ import dev.adventurecraft.awakening.common.gui.AC_GuiMapSelect;
 import dev.adventurecraft.awakening.common.gui.AC_GuiStore;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
-import dev.adventurecraft.awakening.extension.client.entity.player.ExAbstractClientPlayerEntity;
 import dev.adventurecraft.awakening.extension.client.gui.screen.ExScreen;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.render.ExWorldEventRenderer;
@@ -26,6 +25,8 @@ import dev.adventurecraft.awakening.script.ScriptEntity;
 import dev.adventurecraft.awakening.script.ScriptItem;
 import dev.adventurecraft.awakening.script.ScriptVec3;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.fabricmc.loader.impl.util.Arguments;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Option;
@@ -88,6 +89,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.io.*;
 import java.net.URL;
+import java.nio.file.Path;
 
 @Mixin(Minecraft.class)
 public abstract class MixinMinecraft implements ExMinecraft {
@@ -257,7 +259,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         ACMainThread.workDir = new File(arguments.getOrDefault("gameDir", "."));
 
         if (arguments.containsKey("mapsDir")) {
-            ACMainThread.mapsDirectory = new File(arguments.get("mapsDir"));
+            ACMod.setMapsDir(Path.of(arguments.get("mapsDir")));
         }
 
         ACMainThread.glDebugContext = arguments.getExtraArgs().contains("--glDebugContext");
@@ -705,8 +707,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
                                         }
 
                                     } else if (eventKey == Keyboard.KEY_F7 || (eventKey == this.options.keyInventory.key && isShiftPressed)) {
-                                        ((ExAbstractClientPlayerEntity) this.player).displayGUIPalette();
-
+                                        ((ExPlayerEntity) this.player).openPalette();
                                     } else if (eventKey == this.options.keyInventory.key) {
                                         this.setScreen(new InventoryScreen(this.player));
 
@@ -1144,6 +1145,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         }
     }
 
+    @Environment(EnvType.CLIENT)
     @Inject(
         method = "setLevel(Lnet/minecraft/world/level/Level;Ljava/lang/String;Lnet/minecraft/world/entity/player/Player;)V",
         at = @At(

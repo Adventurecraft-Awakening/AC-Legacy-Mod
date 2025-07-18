@@ -23,6 +23,7 @@
     "client.gui.screen.menu.MixinVideoSettingsScreen",
     "client.gui.widget.MixinScrollableBaseWidget",
     "client.model.MixinCuboid",
+    "client.multiplayer.MixinMultiPlayerLevel",
     "client.options.MixinGameOptions",
     "client.particle.MixinDiggingParticleEntity",
     "client.particle.MixinFootstepParticle",
@@ -127,13 +128,13 @@
     "item.MixinArmorItem",
     "item.MixinBlockItem",
     "item.MixinBowItem",
-    "item.MixinHoeItem",
     "item.MixinDyePowderItem",
+    "item.MixinHoeItem",
     "item.MixinItem",
-    "item.MixinTileItemWithoutTranslation",
     "item.MixinItemStack",
     "item.MixinRedstoneItem",
     "item.MixinSwordItem",
+    "item.MixinTileItemWithoutTranslation",
     "util.MixinMth",
     "util.io.MixinCompoundTag",
     "world.MixinCakeTile",
@@ -150,5 +151,9 @@
     "world.world.biome.MixinForestBiome",
     "world.world.biome.MixinHellBiome",
     "world.world.biome.MixinTaigaBiome"
+  ],
+  "server": [
+    "server.MixinMinecraftServer",
+    "server.level.MixinServerLevel"
   ]
 }

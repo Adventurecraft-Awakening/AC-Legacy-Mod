@@ -9,6 +9,8 @@ import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.block.ExGrassBlock;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.render.block.ExGrassColor;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelSource;
@@ -27,6 +29,7 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
         return (int) getTextureForSideEx(view, x, y, z, side);
     }
 
+    @Environment(EnvType.CLIENT)
     @Override
     public long getTextureForSideEx(LevelSource view, int x, int y, int z, int side) {
         if (side == 1) {
@@ -50,6 +53,7 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
         return getTexture(0, meta);
     }
 
+    @Environment(EnvType.CLIENT)
     private long getSideTexture(LevelSource view, int x, int y, int z, int side) {
         ConnectedGrassOption option = ((ExGameOptions) Minecraft.instance.options).ofConnectedGrass();
 
@@ -117,6 +121,7 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
         return meta == 0 ? 0 : 232 + meta - 1;
     }
 
+    @Environment(EnvType.CLIENT)
     @Override
     public int getRenderShape() {
         return ((ExGameOptions) Minecraft.instance.options).isGrass3d()

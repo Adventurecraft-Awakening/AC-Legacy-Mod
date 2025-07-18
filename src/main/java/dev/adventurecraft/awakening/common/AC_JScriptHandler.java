@@ -10,6 +10,7 @@ import net.minecraft.util.ProgressListener;
 import net.minecraft.world.level.Level;
 import org.mozilla.javascript.*;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -52,7 +53,7 @@ public class AC_JScriptHandler {
             .toArray(String[]::new);
     }
 
-    public void loadScripts(ProgressListener progressListener) {
+    public void loadScripts(@Nullable ProgressListener progressListener) {
         Stopwatch stopwatch = Stopwatch.createStarted();
         this.scripts.clear();
         this.scriptList.clear();

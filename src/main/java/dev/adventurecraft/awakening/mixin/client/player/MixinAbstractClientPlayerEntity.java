@@ -5,14 +5,13 @@ import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.common.gui.AC_GuiPalette;
-import dev.adventurecraft.awakening.extension.client.entity.player.ExAbstractClientPlayerEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
+import dev.adventurecraft.awakening.mixin.entity.player.MixinPlayerEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.User;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.player.input.Input;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
@@ -24,17 +23,13 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(LocalPlayer.class)
-public abstract class MixinAbstractClientPlayerEntity extends Player implements ExAbstractClientPlayerEntity {
+public abstract class MixinAbstractClientPlayerEntity extends MixinPlayerEntity {
 
     private CommandDispatcher<ServerCommandSource> commandDispatcher;
     private CommandDescriptions commandDescriptions;
 
     @Shadow
     protected Minecraft minecraft;
-
-    public MixinAbstractClientPlayerEntity(Level arg) {
-        super(arg);
-    }
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(Minecraft minecraft, Level world, User session, int dimensionId, CallbackInfo ci) {
@@ -103,7 +98,7 @@ public abstract class MixinAbstractClientPlayerEntity extends Player implements 
     }
 
     @Override
-    public void displayGUIPalette() {
+    public void openPalette() {
         var debugInventory = new InventoryDebug("Palette", Item.items.length);
         debugInventory.fillInventory(1);
 
@@ -113,7 +108,7 @@ public abstract class MixinAbstractClientPlayerEntity extends Player implements 
     @Overwrite
     public void chat(String message) {
         if (message.startsWith("/")) {
-            var source = new ServerCommandSource(this.minecraft, this.level, this);
+            var source = new ServerCommandSource(this.minecraft, this.level, (LocalPlayer) (Object) this);
             var reader = new StringReader(message.substring(1));
             var parsed = commandDispatcher.parse(reader, source);
             /*if (parsed.getReader().canRead() || parsed.getExceptions().size() > 0) {

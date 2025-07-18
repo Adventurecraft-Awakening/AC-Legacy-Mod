@@ -9,7 +9,8 @@ import dev.adventurecraft.awakening.item.AC_IItemLight;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.mixin.entity.MixinMob;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
-import net.minecraft.client.Minecraft;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.stats.Stat;
 import net.minecraft.stats.Stats;
@@ -46,6 +47,9 @@ public abstract class MixinPlayerEntity extends MixinMob implements ExPlayerEnti
     @Shadow
     public boolean swinging;
 
+    @Shadow
+    public String name;
+
     public boolean isSwingingOffhand;
     public int swingProgressIntOffhand;
     public float prevSwingProgressOffhand;
@@ -73,6 +77,8 @@ public abstract class MixinPlayerEntity extends MixinMob implements ExPlayerEnti
     @Shadow
     public abstract void stopSleepInBed(boolean bl, boolean bl2, boolean bl3);
 
+    @Shadow public AbstractContainerMenu containerMenu;
+
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(Level var1, CallbackInfo ci) {
         this.health = 12;
@@ -80,11 +86,13 @@ public abstract class MixinPlayerEntity extends MixinMob implements ExPlayerEnti
         this.updateContainer();
     }
 
+    @Environment(EnvType.CLIENT)
     @ModifyConstant(method = "resetPos", constant = @Constant(intValue = 20))
     private int useMaxHealth0(int constant) {
         return this.maxHealth;
     }
 
+    @Environment(EnvType.CLIENT)
     @Inject(method = "resetPos", at = @At("TAIL"))
     private void resetAfterSpawn(CallbackInfo ci) {
         AC_Items.hookshot.resetPlayerHookshotState();
@@ -127,7 +135,7 @@ public abstract class MixinPlayerEntity extends MixinMob implements ExPlayerEnti
 
     private void updateContainer() {
         if (inventoryMenu instanceof ExPlayerContainer exContainer) {
-            boolean allowsCrafting = ((ExWorldProperties) Minecraft.instance.level.levelData).getAllowsInventoryCrafting();
+            boolean allowsCrafting = ((ExWorldProperties) this.level.levelData).getAllowsInventoryCrafting();
             exContainer.setAllowsCrafting(allowsCrafting);
         }
     }
@@ -178,7 +186,7 @@ public abstract class MixinPlayerEntity extends MixinMob implements ExPlayerEnti
 
     @Inject(method = "startSleepInBed", at = @At(value = "HEAD"), cancellable = true)
     private void onlySleepWhenAllowed(CallbackInfoReturnable ci) {
-        boolean canSleepBool = ((ExWorldProperties) Minecraft.instance.level.levelData).getCanSleep();
+        boolean canSleepBool = ((ExWorldProperties) this.level.levelData).getCanSleep();
         if (!canSleepBool) {
             ci.cancel();
         }
@@ -442,6 +450,10 @@ public abstract class MixinPlayerEntity extends MixinMob implements ExPlayerEnti
     @Override
     public void setCloakTexture(String value) {
         this.cloakTexture = value;
+    }
+
+    @Override
+    public void openPalette() {
     }
 
     @Overwrite

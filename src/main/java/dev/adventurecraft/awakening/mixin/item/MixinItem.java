@@ -2,6 +2,8 @@ package dev.adventurecraft.awakening.mixin.item;
 
 import dev.adventurecraft.awakening.item.AC_ISlotCallbackItem;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -22,6 +24,7 @@ public abstract class MixinItem implements AC_ISlotCallbackItem {
     @Shadow
     public abstract boolean isStackedByData();
 
+    @Environment(EnvType.CLIENT)
     @Redirect(
         method = "getIcon(Lnet/minecraft/world/ItemInstance;)I",
         at = @At(

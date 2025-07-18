@@ -10,8 +10,6 @@ import java.io.File;
 @Environment(value = EnvType.CLIENT)
 public final class ACMainThread extends Minecraft {
 
-    public static File mapsDirectory;
-
     public static boolean glDebugContext;
     public static GlDebugSeverity glDebugLogSeverity = GlDebugSeverity.All;
     public static GlDebugSeverity glDebugTraceSeverity = GlDebugSeverity.High;
@@ -23,13 +21,6 @@ public final class ACMainThread extends Minecraft {
     @Override
     public void onCrash(CrashReport arg) {
         // TODO:
-    }
-
-    public static File getMapsDirectory() {
-        if (mapsDirectory == null) {
-            mapsDirectory = new File(getWorkingDirectory(), "../maps");
-        }
-        return mapsDirectory;
     }
 
     public enum GlDebugSeverity {

@@ -8,7 +8,11 @@ import net.minecraft.client.ScreenSizeCalculator;
 @SuppressWarnings("unused")
 public class ScriptUI {
 
-    Minecraft mc = Minecraft.instance;
+    final Minecraft mc;
+
+    public ScriptUI(Minecraft mc) {
+        this.mc = mc;
+    }
 
     public int getWidth() {
         ScreenSizeCalculator var1 = new ScreenSizeCalculator(this.mc.options, this.mc.width, this.mc.height);

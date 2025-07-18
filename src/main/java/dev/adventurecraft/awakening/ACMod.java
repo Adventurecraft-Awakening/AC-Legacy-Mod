@@ -1,9 +1,14 @@
 package dev.adventurecraft.awakening;
 
 import dev.adventurecraft.awakening.util.FabricUtil;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.packets.ChatPacket;
+import net.minecraft.server.MinecraftServer;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +17,7 @@ import sun.misc.Unsafe;
 
 import java.io.StringReader;
 import java.lang.reflect.Field;
+import java.nio.file.Path;
 import java.util.HashMap;
 
 public class ACMod implements ModInitializer {
@@ -32,6 +38,15 @@ public class ACMod implements ModInitializer {
 
     public static @Nullable ModContainer MOD_CONTAINER;
     public static @Nullable GitMetadata GIT_META;
+
+    private static Path mapsDir;
+
+    public static Path getMapsDir() {
+        if (mapsDir == null) {
+            mapsDir = FabricLoader.getInstance().getGameDir().resolve("../maps");
+        }
+        return mapsDir;
+    }
 
     @Override
     public void onInitialize() {
@@ -66,6 +81,28 @@ public class ACMod implements ModInitializer {
 
     public static String getResourceName(String name) {
         return "/assets/adventurecraft/" + name;
+    }
+
+    public static void setMapsDir(Path dir) {
+        mapsDir = dir;
+    }
+
+    public static void addChatMessage(String text) {
+        switch (FabricLoader.getInstance().getEnvironmentType()) {
+            case CLIENT -> client$sendMessage(text);
+            case SERVER -> server$sendMessage(text);
+        }
+    }
+
+    @Environment(EnvType.CLIENT)
+    private static void client$sendMessage(String text) {
+        Minecraft.instance.gui.addMessage(text);
+    }
+
+    @Environment(EnvType.SERVER)
+    private static void server$sendMessage(String text) {
+        var server = (MinecraftServer) FabricLoader.getInstance().getGameInstance();
+        server.playerList.broadcastAll(new ChatPacket(text));
     }
 
     static {

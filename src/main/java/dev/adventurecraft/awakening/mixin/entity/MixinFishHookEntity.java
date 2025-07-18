@@ -1,5 +1,7 @@
 package dev.adventurecraft.awakening.mixin.entity;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.FishingHook;
@@ -10,11 +12,13 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(FishingHook.class)
-public abstract class MixinFishHookEntity {
+public abstract class MixinFishHookEntity extends MixinEntity {
 
     @Shadow
     public Player owner;
 
+    // TODO: replace this whole inject with proper saving in player?
+    @Environment(EnvType.CLIENT)
     @Inject(method = "tick", at = @At("HEAD"))
     private void assignHook(CallbackInfo ci) {
         if (this.owner == null) {

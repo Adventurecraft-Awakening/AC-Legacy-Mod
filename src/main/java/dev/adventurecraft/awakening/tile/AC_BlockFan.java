@@ -7,6 +7,9 @@ import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.entity.AC_EntityAirFX;
 import dev.adventurecraft.awakening.extension.client.particle.ExParticleManager;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.FallingTile;
@@ -133,22 +136,27 @@ public class AC_BlockFan extends Tile {
         }
 
         entities.clear();
-        ((ExParticleManager) Minecraft.instance.particleEngine).getEffectsWithinAABB(aabb, entities);
+        if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT) {
+            this.getParticlesAndSpawnAir(world, x, y, z, rand, aabb, entities);
+        }
 
         for (Entity entity : entities) {
-            if (entity instanceof FallingTile) {
-                continue;
-            }
             double dist = entity.distanceTo(doX, doY, doZ) * doF;
             double speed = 0.03D / dist;
             entity.push(speed * (double) oX, speed * (double) oY, speed * (double) oZ);
         }
+    }
+
+    @Environment(EnvType.CLIENT)
+    private void getParticlesAndSpawnAir(Level world, int x, int y, int z, Random rand, AABB aabb, List<Entity> entities) {
+        ((ExParticleManager) Minecraft.instance.particleEngine).getEffectsWithinAABB(aabb, entities);
 
         Minecraft.instance.particleEngine.add(new AC_EntityAirFX(
             world,
             (double) x + rand.nextDouble(),
             (double) y + rand.nextDouble(),
-            (double) z + rand.nextDouble()));
+            (double) z + rand.nextDouble()
+        ));
     }
 
     @Override

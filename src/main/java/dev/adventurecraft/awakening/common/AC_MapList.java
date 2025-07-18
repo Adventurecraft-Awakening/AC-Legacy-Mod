@@ -16,7 +16,7 @@ public class AC_MapList {
     private File mapDir;
 
     public AC_MapList() {
-        this.mapDir = ACMainThread.getMapsDirectory();
+        this.mapDir = ACMod.getMapsDir().toFile();
         if (!this.mapDir.exists()) {
             this.mapDir.mkdirs();
         }
