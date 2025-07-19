@@ -172,12 +172,13 @@ public class ServerCommands {
             descs.attach(node.getChild("path").getCommand(), "Gets the description of a command node");
         }
         {
+            // TODO: store gamerules in "boxes" so we don't duplicate code for all the command methods
             var node = dispatcher.register(literal("gamerule")
                 .executes((ctx) -> ServerCommands.cmdHelp(ctx, dispatcher, descs, "gamerule"))
                 .then(defineGamerule("decay", descs.attach(ServerCommands::cmdToggleDecay, "Toggles leaf decay")))
                 .then(defineGamerule(
                     "mobsburn",
-                    descs.attach(ServerCommands::cmdMobsBurn, "Toggles mobs burning in daylight")
+                    descs.attach(ServerCommands::cmdToggleMobsBurn, "Toggles mobs burning in daylight")
                 ))
                 .then(defineGamerule("melting", descs.attach(ServerCommands::cmdToggleMelting, "Toggles ice melting")))
                 .then(defineGamerule(
@@ -441,9 +442,9 @@ public class ServerCommands {
         var source = context.getSource();
         var entity = source.getEntity();
         if (entity instanceof ExEntity exEntity) {
-            exEntity.setIsFlying(value != null ? value : !exEntity.handleFlying());
+            exEntity.setIsFlying(value != null ? value : !exEntity.getIsFlying());
 
-            source.getClient().gui.addMessage(String.format("Flying: %b", exEntity.handleFlying()));
+            source.getClient().gui.addMessage(String.format("Flying: %b", exEntity.getIsFlying()));
             return Command.SINGLE_SUCCESS;
         }
         return 0;
@@ -482,8 +483,9 @@ public class ServerCommands {
         var world = source.getWorld();
         if (world != null) {
             var props = (ExWorldProperties) world.levelData;
-            props.setLeavesDecay(value != null ? value : !props.getLeavesDecay());
-
+            if (value != null) {
+                props.setLeavesDecay(value);
+            }
             source.getClient().gui.addMessage(String.format("Leaves Decay: %b", props.getLeavesDecay()));
             return Command.SINGLE_SUCCESS;
         }
@@ -495,8 +497,9 @@ public class ServerCommands {
         var world = source.getWorld();
         if (world != null) {
             var props = (ExWorldProperties) world.levelData;
-            props.setCanUseHoe(value != null ? value : !props.getCanUseHoe());
-
+            if (value != null) {
+                props.setCanUseHoe(value);
+            }
             source.getClient().gui.addMessage(String.format("Hoe usable without Debug Mode: %b", props.getCanUseHoe()));
             return Command.SINGLE_SUCCESS;
         }
@@ -509,8 +512,9 @@ public class ServerCommands {
         var world = source.getWorld();
         if (world != null) {
             var props = (ExWorldProperties) world.levelData;
-            props.setCanUseBonemeal(value != null ? value : !props.getCanUseBonemeal());
-
+            if (value != null) {
+                props.setCanUseBonemeal(value);
+            }
             source.getClient().gui.addMessage(String.format(
                 "Bonemeal usable without Debug Mode: %b",
                 props.getCanUseBonemeal()
@@ -520,13 +524,14 @@ public class ServerCommands {
         return 0;
     }
 
-    public static int cmdMobsBurn(CommandContext<ServerCommandSource> context, Boolean value) {
+    public static int cmdToggleMobsBurn(CommandContext<ServerCommandSource> context, Boolean value) {
         var source = context.getSource();
         var world = source.getWorld();
         if (world != null) {
             var props = (ExWorldProperties) world.levelData;
-            props.setMobsBurn(value != null ? value : !props.getMobsBurn());
-
+            if (value != null) {
+                props.setMobsBurn(value);
+            }
             source.getClient().gui.addMessage(String.format("Mobs Burn in Daylight: %b", props.getMobsBurn()));
             return Command.SINGLE_SUCCESS;
         }
@@ -538,8 +543,9 @@ public class ServerCommands {
         var world = source.getWorld();
         if (world != null) {
             var props = (ExWorldProperties) world.levelData;
-            props.setCanSleep(value != null ? value : !props.getCanSleep());
-
+            if (value != null) {
+                props.setCanSleep(value);
+            }
             source.getClient().gui.addMessage(String.format("Player can sleep in beds: %b", props.getCanSleep()));
             return Command.SINGLE_SUCCESS;
         }

@@ -371,7 +371,7 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
             return;
         }
 
-        if (this.handleFlying()) {
+        if (this.getIsFlying()) {
             return;
         }
 
@@ -394,7 +394,7 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
 
     @Overwrite
     public void travel(float xInput, float zInput) {
-        if (this.handleFlying()) {
+        if (this.getIsFlying()) {
             double speed = Math.sqrt(xInput * xInput + zInput * zInput);
             double yVel = (double) (-0.1F * zInput) * Math.sin(this.xRot * Math.PI / 180.0);
             if (speed < 1.0D) {

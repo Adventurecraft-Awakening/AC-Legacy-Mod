@@ -13,7 +13,7 @@ public interface ExEntity extends AC_IMultiAttackEntity {
 
     void setRotation(double x, double y, double z);
 
-    boolean handleFlying();
+    boolean getIsFlying();
 
     void setIsFlying(boolean value);
 
