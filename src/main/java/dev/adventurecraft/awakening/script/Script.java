@@ -199,7 +199,7 @@ public class Script {
             this.curScope = scope;
             Object result = this.cx.executeScriptWithContinuations(script, scope);
             return result;
-        } catch (ContinuationPending e) {
+        } catch (ContinuationPending ignored) {
         } catch (RhinoException e) {
             this.printRhinoException(e);
         } finally {

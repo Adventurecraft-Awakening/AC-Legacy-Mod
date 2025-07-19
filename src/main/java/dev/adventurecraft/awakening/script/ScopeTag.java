@@ -19,7 +19,6 @@ public class ScopeTag {
                 saveProperty(tag, name, value);
             }
         }
-
         return tag;
     }
 

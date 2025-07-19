@@ -23,8 +23,7 @@ public abstract class MixinAC_EntityLivingScript extends MixinMob {
     public boolean attackEntityFromMulti(Entity entity, int damage) {
         Object jsEntity = Context.javaToJS(ScriptEntity.getEntityClass(entity), this.scope);
         ScriptableObject.putProperty(this.scope, "attackingEntity", jsEntity);
-        Object jsDamage = Context.javaToJS(damage, this.scope);
-        ScriptableObject.putProperty(this.scope, "attackingDamage", jsDamage);
+        ScriptableObject.putProperty(this.scope, "attackingDamage", damage);
         return this.runOnAttackedScript() && super.attackEntityFromMulti(entity, damage);
     }
 }

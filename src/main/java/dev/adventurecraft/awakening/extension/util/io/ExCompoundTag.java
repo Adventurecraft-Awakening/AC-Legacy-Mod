@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.extension.util.io;
 
 import net.minecraft.nbt.*;
 
+import javax.annotation.Nullable;
 import java.util.Optional;
 import java.util.Set;
 
@@ -44,4 +45,13 @@ public interface ExCompoundTag {
     Tag getTag(String key);
 
     Optional<Tag> findTag(String key);
+
+    void putString(String key, String val);
+
+    default void putNonEmptyString(String key, @Nullable String val) {
+        if (val == null || val.isEmpty()) {
+            return;
+        }
+        this.putString(key, val);
+    }
 }

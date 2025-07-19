@@ -26,13 +26,16 @@ public abstract class MixinCompoundTag implements ExCompoundTag {
     private Map<String, Tag> entries = new Object2ObjectOpenHashMap<>(4);
 
     @Shadow
-    public abstract void putByte(String var1, byte var2);
+    public abstract void putByte(String key, byte val);
 
     @Shadow
-    public abstract void putShort(String var1, short var2);
+    public abstract void putShort(String key, short val);
 
     @Shadow
-    public abstract void putInt(String var1, int var2);
+    public abstract void putInt(String key, int val);
+
+    @Shadow
+    public abstract void putString(String key, String val);
 
     @Inject(method = "putShort(Ljava/lang/String;S)V", at = @At("HEAD"), cancellable = true)
     private void putByteForShort(String var1, short var2, CallbackInfo ci) {

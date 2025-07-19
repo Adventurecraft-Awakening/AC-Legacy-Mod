@@ -105,8 +105,7 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
     public boolean hurt(Entity entity, int damage) {
         Object jsEntity = Context.javaToJS(ScriptEntity.getEntityClass(entity), this.scope);
         ScriptableObject.putProperty(this.scope, "attackingEntity", jsEntity);
-        Object jsDamage = Context.javaToJS(damage, this.scope);
-        ScriptableObject.putProperty(this.scope, "attackingDamage", jsDamage);
+        ScriptableObject.putProperty(this.scope, "attackingDamage", damage);
         return this.runOnAttackedScript() && super.hurt(entity, damage);
     }
 
@@ -124,34 +123,14 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-
-        if (this.descriptionName != null && !this.descriptionName.equals("")) {
-            tag.putString("descriptionName", this.descriptionName);
-        }
-
-        if (!this.onCreated.equals("")) {
-            tag.putString("onCreated", this.onCreated);
-        }
-
-        if (!this.onUpdate.equals("")) {
-            tag.putString("onUpdate", this.onUpdate);
-        }
-
-        if (!this.onPathReached.equals("")) {
-            tag.putString("onPathReached", this.onPathReached);
-        }
-
-        if (!this.onAttacked.equals("")) {
-            tag.putString("onAttacked", this.onAttacked);
-        }
-
-        if (!this.onDeath.equals("")) {
-            tag.putString("onDeath", this.onDeath);
-        }
-
-        if (!this.onInteraction.equals("")) {
-            tag.putString("onInteraction", this.onInteraction);
-        }
+        var exTag = (ExCompoundTag) tag;
+        exTag.putNonEmptyString("descriptionName", this.descriptionName);
+        exTag.putNonEmptyString("onCreated", this.onCreated);
+        exTag.putNonEmptyString("onUpdate", this.onUpdate);
+        exTag.putNonEmptyString("onPathReached", this.onPathReached);
+        exTag.putNonEmptyString("onAttacked", this.onAttacked);
+        exTag.putNonEmptyString("onDeath", this.onDeath);
+        exTag.putNonEmptyString("onInteraction", this.onInteraction);
 
         tag.putTag("scope", ScopeTag.getTagFromScope(this.scope));
     }
@@ -172,13 +151,7 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
 
     public void runCreatedScript() {
         if (!this.onCreated.equals("")) {
-            // Save curscope temporary
-            Scriptable tempScope = ((ExWorld) this.level).getScript().getCurScope();
-            ((ExWorld) this.level).getScript().setNewCurScope(this.scope);
-            // Run OnCreated Script
             ((ExWorld) this.level).getScriptHandler().runScript(this.onCreated, this.scope);
-            // Reset curScope afterwards! IMPORTANT for normal damage scripts
-            ((ExWorld) this.level).getScript().setNewCurScope(tempScope);
         }
     }
 
@@ -195,17 +168,12 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
     }
 
     private boolean runOnAttackedScript() {
-        if (!this.onAttacked.equals("")) {
-            // Save curscope temporary
-            Scriptable tempScope = ((ExWorld) this.level).getScript().getCurScope();
-            ((ExWorld) this.level).getScript().setNewCurScope(this.scope);
-            Object result = ((ExWorld) this.level).getScriptHandler().runScript(this.onAttacked, this.scope);
-            // Reset curScope afterwards! IMPORTANT for normal damage scripts
-            ((ExWorld) this.level).getScript().setNewCurScope(tempScope);
-            return result instanceof Boolean b ? b : true;
-        } else {
+        if (this.onAttacked.equals("")) {
             return true;
         }
+
+        Object result = ((ExWorld) this.level).getScriptHandler().runScript(this.onAttacked, this.scope);
+        return result instanceof Boolean b ? b : true;
     }
 
     private void runDeathScript() {
@@ -218,7 +186,8 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
         if (!this.onInteraction.equals("")) {
             Object result = ((ExWorld) this.level).getScriptHandler().runScript(this.onInteraction, this.scope);
             return result instanceof Boolean b ? b : true;
-        } else {
+        }
+        else {
             return true;
         }
     }
@@ -258,11 +227,19 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
             return;
         }
 
-        if (this.path == null || --this.nextPathIn <= 0 && this.pathToEntity != null && ((ExEntityPath) this.path).needNewPath(this.pathToEntity)) {
+        if (this.path == null || --this.nextPathIn <= 0 && this.pathToEntity != null &&
+            ((ExEntityPath) this.path).needNewPath(this.pathToEntity)) {
             if (this.pathToEntity != null) {
                 this.path = this.level.findPath(this, this.pathToEntity, this.maxPathDistance);
-            } else if (this.pathToVec != null) {
-                this.path = this.level.findPath(this, this.pathToVec.x, this.pathToVec.y, this.pathToVec.z, this.maxPathDistance);
+            }
+            else if (this.pathToVec != null) {
+                this.path = this.level.findPath(
+                    this,
+                    this.pathToVec.x,
+                    this.pathToVec.y,
+                    this.pathToVec.z,
+                    this.maxPathDistance
+                );
             }
 
             this.nextPathIn = this.level.random.nextInt(40) + 10;
