@@ -6,6 +6,7 @@ import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.tree.CommandNode;
 import dev.adventurecraft.awakening.common.gui.AC_GuiMapEditHUD;
@@ -173,25 +174,38 @@ public class ServerCommands {
         {
             var node = dispatcher.register(literal("gamerule")
                 .executes((ctx) -> ServerCommands.cmdHelp(ctx, dispatcher, descs, "gamerule"))
-                .then(literal("decay").executes((ctx) -> ServerCommands.cmdToggleDecay(ctx, null)))
-                .then(literal("mobsburn").executes((ctx) -> ServerCommands.cmdMobsBurn(ctx, null)))
-                .then(literal("melting").executes((ctx) -> ServerCommands.cmdToggleMelting(ctx, null)))
-                .then(literal("bonemeal").executes((ctx) -> ServerCommands.cmdToggleBonemeal(ctx, null)))
-                .then(literal("sleep").executes((ctx) -> ServerCommands.cmdToggleSleep(ctx, null)))
-                .then(literal("hoe").executes((ctx) -> ServerCommands.cmdToggleHoe(ctx, null))));
+                .then(defineGamerule("decay", descs.attach(ServerCommands::cmdToggleDecay, "Toggles leaf decay")))
+                .then(defineGamerule(
+                    "mobsburn",
+                    descs.attach(ServerCommands::cmdMobsBurn, "Toggles mobs burning in daylight")
+                ))
+                .then(defineGamerule("melting", descs.attach(ServerCommands::cmdToggleMelting, "Toggles ice melting")))
+                .then(defineGamerule(
+                    "bonemeal",
+                    descs.attach(ServerCommands::cmdToggleBonemeal, "Toggles bonemeal usage outside of Debug Mode")
+                ))
+                .then(defineGamerule(
+                    "sleep",
+                    descs.attach(ServerCommands::cmdToggleSleep, "Toggles if player can sleep in beds")
+                ))
+                .then(defineGamerule(
+                    "hoe",
+                    descs.attach(ServerCommands::cmdToggleHoe, "Toggles hoe usage outside of Debug Mode")
+                )));
             descs.attach(node.getCommand(), "Command to set different gamerules for your map");
-            descs.attach(node.getChild("decay").getCommand(), "Toggles leaf decay");
-            descs.attach(node.getChild("mobsburn").getCommand(), "Toggles mobs burning in daylight");
-            descs.attach(node.getChild("melting").getCommand(), "Toggles ice melting");
-            descs.attach(node.getChild("bonemeal").getCommand(), "Toggles bonemeal usage outside of Debug Mode");
-            descs.attach(node.getChild("sleep").getCommand(), "Toggles if player can sleep in beds");
-            descs.attach(node.getChild("hoe").getCommand(), "Toggles hoe usage outside of Debug Mode");
         }
 
         // TODO: save/restore for undostacks
         dispatcher.register(literal("undostack")
             .executes(descs.attach(ServerCommands::cmdUndoStack, "Gets info about the undo stack"))
             .then(literal("clear").executes(descs.attach(ServerCommands::cmdUndoStackClear, "Clears the undo stack"))));
+    }
+
+    private static LiteralArgumentBuilder<ServerCommandSource> defineGamerule(
+        String name,
+        CommandOpt<ServerCommandSource, Boolean> command
+    ) {
+        return optionalArg(literal(name), "value", BoolArgumentType.bool(), command);
     }
 
     public static int cmdConfig(CommandContext<ServerCommandSource> context) {
@@ -625,7 +639,6 @@ public class ServerCommands {
         CommandDescriptions descriptions,
         String path
     ) {
-
         var source = context.getSource();
         var client = source.getClient();
         var lines = new ArrayList<String>();
@@ -652,7 +665,7 @@ public class ServerCommands {
             lines.add(String.format("§cNo command node for \"§f%s§c\"", path));
             result = 0;
         }
-        client.gui.addMessage(String.join("\n", lines));
+        client.gui.addMessage(String.join("§r\n", lines));
         return result;
     }
 
