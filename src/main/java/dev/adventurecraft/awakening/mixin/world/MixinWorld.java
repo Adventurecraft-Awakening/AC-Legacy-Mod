@@ -1192,11 +1192,11 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         if (this.firstTick) {
             var props = (ExWorldProperties) this.levelData;
 
-            if (this.newSave && !props.getOnNewSaveScript().equals("")) {
+            if (this.newSave && !props.getOnNewSaveScript().isEmpty()) {
                 this.scriptHandler.runScript(props.getOnNewSaveScript(), this.scope);
             }
 
-            if (!props.getOnLoadScript().equals("")) {
+            if (!props.getOnLoadScript().isEmpty()) {
                 this.scriptHandler.runScript(props.getOnLoadScript(), this.scope);
             }
 
@@ -1240,7 +1240,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             this.DoSnowModUpdate();
         }
 
-        this.script.wakeupScripts(var4);
+        this.script.runContinuations(var4);
     }
 
     @Overwrite

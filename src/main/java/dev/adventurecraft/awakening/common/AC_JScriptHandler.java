@@ -148,13 +148,11 @@ public class AC_JScriptHandler {
         }
 
         long time = System.nanoTime();
-        Object result;
         try {
-            result = ((ExWorld) this.world).getScript().runScript(scriptInfo.compiledScript, scope);
+            return ((ExWorld) this.world).getScript().runScript(scriptInfo.compiledScript, scope);
         } finally {
             scriptInfo.addTime(System.nanoTime() - time);
         }
-        return result;
     }
 
     public Collection<AC_JScriptInfo> getScripts() {
