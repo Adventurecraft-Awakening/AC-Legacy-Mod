@@ -155,13 +155,21 @@ public class Script {
 
     public String runString(String sourceCode) {
         org.mozilla.javascript.Script script = this.compileString(sourceCode, "<cmd>");
-        if (script != null) {
-            Object result = this.runScript(script, this.runScope);
-            if (result != null) {
-                return Context.toString(result);
-            }
+        if (script == null) {
+            return null;
         }
-        return null;
+        Object result = this.runScript(script, this.runScope);
+        if (result == null) {
+            return null;
+        }
+
+        try {
+            return Context.toString(result);
+        }
+        catch (RhinoException e) {
+            this.printRhinoException(e);
+            return null;
+        }
     }
 
     public org.mozilla.javascript.Script compileString(String sourceCode, String sourceName) {
