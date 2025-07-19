@@ -70,9 +70,9 @@ public abstract class MixinSignRenderer extends TileEntityRenderer {
                 string = "> " + string + " <";
             }
             int tx = -state.measureText(string).width() / 2;
-            state.drawText(Tesselator.instance, string, tx, i * 10 - messages.length * 5);
+            state.drawText(string, tx, i * 10 - messages.length * 5);
         }
-        state.end(Tesselator.instance);
+        state.end();
         GL11.glDepthMask(true);
         GL11.glPopMatrix();
     }

@@ -8,11 +8,13 @@ import dev.adventurecraft.awakening.util.HexConvert;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.Tesselator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL11;
 
 public class TextRendererState implements TextMeasurer {
 
     private final Font font;
+    private @Nullable Tesselator tesselator;
 
     private int color;
     private int activeColor;
@@ -33,19 +35,23 @@ public class TextRendererState implements TextMeasurer {
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.font.fontTexture);
     }
 
-    public void begin(Tesselator tessallator) {
+    public void begin(Tesselator tesselator) {
         this.bindTexture();
 
-        tessallator.begin();
+        this.tesselator = tesselator;
+        this.tesselator.begin();
 
         this.resetFormat();
     }
 
-    public void end(Tesselator tessallator) {
-        tessallator.end();
+    public void end() {
+        assert this.tesselator != null;
+
+        this.tesselator.end();
+        this.tesselator = null;
     }
 
-    public void drawText(Tesselator ts, CharSequence text, int start, int end, float x, float y) {
+    public void drawText(CharSequence text, int start, int end, float x, float y) {
         if (text == null) {
             return;
         }
@@ -57,6 +63,9 @@ public class TextRendererState implements TextMeasurer {
         if (Rgba.getAlpha(this.activeColor) == 0) {
             return;
         }
+        var ts = this.tesselator;
+        assert ts != null;
+
         var exTs = (ExTesselator) ts;
         exTs.ac$color(this.activeColor);
 
@@ -108,8 +117,8 @@ public class TextRendererState implements TextMeasurer {
         }
     }
 
-    public void drawText(Tesselator ts, CharSequence text, float x, float y) {
-        this.drawText(ts, text, 0, text.length(), x, y);
+    public void drawText(CharSequence text, float x, float y) {
+        this.drawText(text, 0, text.length(), x, y);
     }
 
     public void setColor(int color) {

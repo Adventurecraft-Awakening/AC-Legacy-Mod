@@ -146,10 +146,9 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
             state.setShadow(Rgba.alphaOrOpaque(shadow));
         }
 
-        var ts = Tesselator.instance;
-        state.begin(ts);
-        state.drawText(ts, text, start, end, x, y);
-        state.end(ts);
+        state.begin(Tesselator.instance);
+        state.drawText(text, start, end, x, y);
+        state.end();
     }
 
     @Overwrite

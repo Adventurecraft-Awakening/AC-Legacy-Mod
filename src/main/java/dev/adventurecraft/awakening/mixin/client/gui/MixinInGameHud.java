@@ -314,12 +314,12 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
             textState.setShadowToColor();
             textState.begin(ts);
 
-            textState.drawText(ts, AC_Version.shortVersion, x, y);
-            textState.drawText(ts, mc.fpsString, x, y += 10);
-            textState.drawText(ts, mc.getChunkStatistics(), x, y += 10);
-            textState.drawText(ts, mc.getEntityStatistics(), x, y += 10);
-            textState.drawText(ts, mc.getParticleStatistics(), x, y += 10);
-            textState.drawText(ts, mc.getDebugInfo(), x, y += 10);
+            textState.drawText(AC_Version.shortVersion, x, y);
+            textState.drawText(mc.fpsString, x, y += 10);
+            textState.drawText(mc.getChunkStatistics(), x, y += 10);
+            textState.drawText(mc.getEntityStatistics(), x, y += 10);
+            textState.drawText(mc.getParticleStatistics(), x, y += 10);
+            textState.drawText(mc.getDebugInfo(), x, y += 10);
             y += 10;
 
             textState.setColor(Rgba.withAlpha(color1, 0xff));
@@ -336,16 +336,16 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
                 usedMem / 1024L / 1024L,
                 maxMem / 1024L / 1024L
             );
-            textState.drawText(ts, usedMsg, screenWidth - font.width(usedMsg) - 2, 2);
+            textState.drawText(usedMsg, screenWidth - font.width(usedMsg) - 2, 2);
 
             String allocMsg = "Allocated: %d%% (%dMB)".formatted(totMem * 100L / maxMem, totMem / 1024L / 1024L);
-            textState.drawText(ts, allocMsg, screenWidth - font.width(allocMsg) - 2, 12);
+            textState.drawText(allocMsg, screenWidth - font.width(allocMsg) - 2, 12);
 
-            textState.drawText(ts, "x: " + player.x, x, y += 8);
-            textState.drawText(ts, "y: " + player.y, x, y += 8);
-            textState.drawText(ts, "z: " + player.z, x, y += 8);
+            textState.drawText("x: " + player.x, x, y += 8);
+            textState.drawText("y: " + player.y, x, y += 8);
+            textState.drawText("z: " + player.z, x, y += 8);
             int facing = ((int) Math.floor((player.yRot * 4.0F / 360.0F) + 0.5D) & 3);
-            textState.drawText(ts, "f: " + facing, x, y += 8);
+            textState.drawText("f: " + facing, x, y += 8);
             y += 10;
 
             boolean useWorldGenImages = ((ExWorldProperties) mc.level.levelData).getWorldGenProps().useImages;
@@ -357,14 +357,14 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
                 double tTemp = AC_TerrainImage.getTerrainTemperature(pX, pY);
                 double tHumid = AC_TerrainImage.getTerrainHumidity(pX, pY);
                 String msg = String.format("T: %d W: %d Temp: %.2f Humid: %.2f", tH, wH, tTemp, tHumid);
-                textState.drawText(ts, msg, x, y += 10);
+                textState.drawText(msg, x, y += 10);
             }
 
             var exPlayer = (ExEntity) player;
             var collideMsg = String.format("Collide X: %d Z: %d", exPlayer.getCollisionX(), exPlayer.getCollisionZ());
-            textState.drawText(ts, collideMsg, x, y += 10);
+            textState.drawText(collideMsg, x, y += 10);
 
-            textState.end(ts);
+            textState.end();
         }
         else {
             int y = 2; // 12 prev
@@ -512,13 +512,13 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
             int totalLines = message.lines.size();
             for (int i = totalLines - usedLines; i < totalLines; i++) {
                 var line = message.lines.get(i);
-                textState.drawText(ts, text, line.start(), line.end(), x, y);
+                textState.drawText(text, line.start(), line.end(), x, y);
                 y += lineHeight;
             }
 
             stateHeight += msgHeight + messageSpacing;
         }
-        textState.end(ts);
+        textState.end();
 
         GL11.glDisable(GL11.GL_BLEND);
     }
