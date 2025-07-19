@@ -1,52 +1,66 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.util.HashCode;
 import net.minecraft.nbt.CompoundTag;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class AC_TriggerArea {
-    public int minX;
-    public int minY;
-    public int minZ;
-    public int maxX;
-    public int maxY;
-    public int maxZ;
+public final class AC_TriggerArea {
 
-    public AC_TriggerArea(int var1, int var2, int var3, int var4, int var5, int var6) {
-        this.minX = var1;
-        this.minY = var2;
-        this.minZ = var3;
-        this.maxX = var4;
-        this.maxY = var5;
-        this.maxZ = var6;
+    public final Coord min;
+    public final Coord max;
+
+    public AC_TriggerArea(@NotNull Coord min, @NotNull Coord max) {
+        this.min = min;
+        this.max = max;
     }
 
-    public boolean isPointInside(int var1, int var2, int var3) {
-        if (var1 >= this.minX && var1 <= this.maxX) {
-            if (var2 >= this.minY && var2 <= this.maxY) {
-                return this.minZ <= var3 && var3 <= this.maxZ;
+    public AC_TriggerArea(@NotNull Coord value) {
+        this(value, value);
+    }
+
+    public boolean isPointInside(int x, int y, int z) {
+        if (x >= this.min.x && x <= this.max.x) {
+            if (y >= this.min.y && y <= this.max.y) {
+                return this.min.z <= z && z <= this.max.z;
             }
-            return false;
         }
         return false;
     }
 
-    public CompoundTag getTagCompound() {
-        CompoundTag var1 = new CompoundTag();
-        var1.putInt("minX", this.minX);
-        var1.putInt("minY", this.minY);
-        var1.putInt("minZ", this.minZ);
-        var1.putInt("maxX", this.maxX);
-        var1.putInt("maxY", this.maxY);
-        var1.putInt("maxZ", this.maxZ);
-        return var1;
+    public boolean isPointInside(Coord coord) {
+        return this.isPointInside(coord.x, coord.y, coord.z);
     }
 
-    public static AC_TriggerArea getFromTagCompound(CompoundTag var0) {
-        int var1 = var0.getInt("minX");
-        int var2 = var0.getInt("minY");
-        int var3 = var0.getInt("minZ");
-        int var4 = var0.getInt("maxX");
-        int var5 = var0.getInt("maxY");
-        int var6 = var0.getInt("maxZ");
-        return new AC_TriggerArea(var1, var2, var3, var4, var5, var6);
+    public @Override boolean equals(@Nullable Object o) {
+        if (o instanceof AC_TriggerArea area) {
+            return this.min.equals(area.min) && this.max.equals(area.max);
+        }
+        return false;
+    }
+
+    public @Override int hashCode() {
+        return HashCode.combine(this.min.hashCode(), this.max.hashCode());
+    }
+
+    public @Override String toString() {
+        return "{" + "min=" + this.min + ", max=" + this.max + '}';
+    }
+
+    public CompoundTag getTagCompound() {
+        var tag = new CompoundTag();
+        tag.putInt("minX", this.min.x);
+        tag.putInt("minY", this.min.y);
+        tag.putInt("minZ", this.min.z);
+        tag.putInt("maxX", this.max.x);
+        tag.putInt("maxY", this.max.y);
+        tag.putInt("maxZ", this.max.z);
+        return tag;
+    }
+
+    public static AC_TriggerArea getFromTagCompound(CompoundTag tag) {
+        var min = new Coord(tag.getInt("minX"), tag.getInt("minY"), tag.getInt("minZ"));
+        var max = new Coord(tag.getInt("maxX"), tag.getInt("maxY"), tag.getInt("maxZ"));
+        return new AC_TriggerArea(min, max);
     }
 }

@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.mixin.world.gen;
 
 import dev.adventurecraft.awakening.common.AC_TerrainImage;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
+import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeSource;
@@ -9,6 +10,7 @@ import net.minecraft.world.level.levelgen.synth.PerlinSimplexNoise;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -16,126 +18,109 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(BiomeSource.class)
 public abstract class MixinBiomeSource {
 
-    @Shadow
-    private PerlinSimplexNoise temperatureMap;
-    @Shadow
-    private PerlinSimplexNoise downfallMap;
-    @Shadow
-    private PerlinSimplexNoise noiseMap;
-    @Shadow
-    public double[] temperatures;
-    @Shadow
-    public double[] downfalls;
-    @Shadow
-    public double[] noises;
+    @Shadow private PerlinSimplexNoise temperatureMap;
+    @Shadow private PerlinSimplexNoise downfallMap;
+    @Shadow private PerlinSimplexNoise noiseMap;
+    @Shadow public double[] temperatures;
+    @Shadow public double[] downfalls;
+    @Shadow public double[] noises;
 
-    private Level world;
+    private @Unique Level world;
 
-    @Inject(method = "<init>(Lnet/minecraft/world/level/Level;)V", at = @At("TAIL"))
+    @Inject(
+        method = "<init>(Lnet/minecraft/world/level/Level;)V",
+        at = @At("TAIL")
+    )
     private void init(Level world, CallbackInfo ci) {
         this.world = world;
     }
 
     @Overwrite
-    public double[] getTemperatureBlock(double[] var1, int var2, int var3, int var4, int var5) {
-        if (var1 == null || var1.length < var4 * var5) {
-            var1 = new double[var4 * var5];
+    public double[] getTemperatureBlock(double[] temps, int x, int z, int width, int depth) {
+        if (temps == null || temps.length < width * depth) {
+            temps = new double[width * depth];
         }
 
         boolean useImages = ((ExWorldProperties) this.world.levelData).getWorldGenProps().useImages;
 
         if (!useImages) {
-            var1 = this.temperatureMap.getRegion(var1, var2, var3, var4, var5, 0.025F, 0.025F, 0.25D);
-            this.noises = this.noiseMap.getRegion(this.noises, var2, var3, var4, var5, 0.25D, 0.25D, 0.5882352941176471D);
+            temps = this.temperatureMap.getRegion(temps, x, z, width, depth, 0.025F, 0.025F, 0.25D);
+            this.noises = this.noiseMap.getRegion(this.noises, x, z, width, depth, 0.25D, 0.25D, 0.5882352941176471D);
         }
 
-        int var6 = 0;
+        int idx = 0;
 
-        for (int var7 = 0; var7 < var4; ++var7) {
-            for (int var8 = 0; var8 < var5; ++var8) {
+        for (int iX = 0; iX < width; ++iX) {
+            for (int iZ = 0; iZ < depth; ++iZ) {
+                double temp;
                 if (useImages) {
-                    int var9 = var2 + var7;
-                    int var10 = var3 + var8;
-                    var1[var6] = AC_TerrainImage.getTerrainTemperature(var9, var10);
-                } else {
-                    double var17 = this.noises[var6] * 1.1D + 0.5D;
-                    double var11 = 0.01D;
-                    double var13 = 1.0D - var11;
-                    double var15 = (var1[var6] * 0.15D + 0.7D) * var13 + var17 * var11;
-                    var15 = 1.0D - (1.0D - var15) * (1.0D - var15);
-                    if (var15 < 0.0D) {
-                        var15 = 0.0D;
-                    }
-
-                    if (var15 > 1.0D) {
-                        var15 = 1.0D;
-                    }
-
-                    var1[var6] = var15;
+                    int infoX = x + iX;
+                    int infoZ = z + iZ;
+                    temp = AC_TerrainImage.getTerrainTemperature(infoX, infoZ);
+                }
+                else {
+                    double n0 = this.noises[idx] * 1.1D + 0.5D;
+                    double n1 = 0.01D;
+                    double n2 = 1.0D - n1;
+                    temp = (temps[idx] * 0.15D + 0.7D) * n2 + n0 * n1;
+                    temp = 1.0D - (1.0D - temp) * (1.0D - temp);
+                    temp = MathF.clamp(temp, 0.0D, 1.0D);
                 }
 
-                ++var6;
+                temps[idx] = temp;
+                ++idx;
             }
         }
 
-        return var1;
+        return temps;
     }
 
     @Overwrite
-    public Biome[] getBiomeBlock(Biome[] var1, int var2, int var3, int var4, int var5) {
-        if (var1 == null || var1.length < var4 * var5) {
-            var1 = new Biome[var4 * var5];
+    public Biome[] getBiomeBlock(Biome[] biomes, int x, int z, int width, int depth) {
+        if (biomes == null || biomes.length < width * depth) {
+            biomes = new Biome[width * depth];
         }
 
         boolean useImages = ((ExWorldProperties) this.world.levelData).getWorldGenProps().useImages;
 
-        this.temperatures = this.temperatureMap.getRegion(this.temperatures, var2, var3, var4, var4, 0.025F, 0.025F, 0.25D);
-        this.downfalls = this.downfallMap.getRegion(this.downfalls, var2, var3, var4, var4, 0.05F, 0.05F, 1.0D / 3.0D);
-        this.noises = this.noiseMap.getRegion(this.noises, var2, var3, var4, var4, 0.25D, 0.25D, 0.5882352941176471D);
-        int var6 = 0;
-        double var7;
-        double var9;
+        this.temperatures = this.temperatureMap.getRegion(this.temperatures, x, z, width, width, 0.025F, 0.025F, 0.25D);
+        this.downfalls = this.downfallMap.getRegion(this.downfalls, x, z, width, width, 0.05F, 0.05F, 1.0D / 3.0D);
+        this.noises = this.noiseMap.getRegion(this.noises, x, z, width, width, 0.25D, 0.25D, 0.5882352941176471D);
+        int idx = 0;
 
-        for (int var11 = 0; var11 < var4; ++var11) {
-            for (int var12 = 0; var12 < var5; ++var12) {
+        for (int iX = 0; iX < width; ++iX) {
+            for (int iZ = 0; iZ < depth; ++iZ) {
+                double temp;
+                double humidity;
+
                 if (useImages) {
-                    int var13 = var2 + var11;
-                    int var14 = var3 + var12;
-                    var7 = AC_TerrainImage.getTerrainTemperature(var13, var14);
-                    var9 = AC_TerrainImage.getTerrainHumidity(var13, var14);
-                } else {
-                    double var19 = this.noises[var6] * 1.1D + 0.5D;
-                    double var15 = 0.01D;
-                    double var17 = 1.0D - var15;
-                    var7 = (this.temperatures[var6] * 0.15D + 0.7D) * var17 + var19 * var15;
-                    var15 = 0.002D;
-                    var17 = 1.0D - var15;
-                    var9 = (this.downfalls[var6] * 0.15D + 0.5D) * var17 + var19 * var15;
-                    var7 = 1.0D - (1.0D - var7) * (1.0D - var7);
-                    if (var7 < 0.0D) {
-                        var7 = 0.0D;
-                    }
+                    int infoX = x + iX;
+                    int infoZ = z + iZ;
+                    temp = AC_TerrainImage.getTerrainTemperature(infoX, infoZ);
+                    humidity = AC_TerrainImage.getTerrainHumidity(infoX, infoZ);
+                }
+                else {
+                    double n0 = this.noises[idx] * 1.1D + 0.5D;
+                    double n1 = 0.01D;
+                    double n2 = 1.0D - n1;
+                    temp = (this.temperatures[idx] * 0.15D + 0.7D) * n2 + n0 * n1;
+                    n1 = 0.002D;
+                    n2 = 1.0D - n1;
 
-                    if (var9 < 0.0D) {
-                        var9 = 0.0D;
-                    }
+                    humidity = (this.downfalls[idx] * 0.15D + 0.5D) * n2 + n0 * n1;
+                    humidity = MathF.clamp(humidity, 0.0D, 1.0D);
 
-                    if (var7 > 1.0D) {
-                        var7 = 1.0D;
-                    }
-
-                    if (var9 > 1.0D) {
-                        var9 = 1.0D;
-                    }
+                    temp = 1.0D - (1.0D - temp) * (1.0D - temp);
+                    temp = MathF.clamp(temp, 0.0D, 1.0D);
                 }
 
-                this.temperatures[var6] = var7;
-                this.downfalls[var6] = var9;
-                var1[var6++] = Biome.getBiome(var7, var9);
+                this.temperatures[idx] = temp;
+                this.downfalls[idx] = humidity;
+                biomes[idx++] = Biome.getBiome(temp, humidity);
             }
         }
 
-        return var1;
+        return biomes;
     }
 }
 

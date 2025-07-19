@@ -3,12 +3,13 @@ package dev.adventurecraft.awakening.mixin.block;
 import dev.adventurecraft.awakening.tile.AC_IBlockColor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.ArrayList;
+
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelSource;
 import net.minecraft.world.level.material.Material;
@@ -19,20 +20,21 @@ import net.minecraft.world.phys.AABB;
 @Mixin(StairsTile.class)
 public abstract class MixinStairsBlock extends Tile implements AC_IBlockColor {
 
-    @Shadow
-    private Tile base;
-
-    private int defaultColor;
+    @Unique private int defaultColor;
 
     protected MixinStairsBlock(int i, Material arg) {
         super(i, arg);
     }
 
-    @Inject(method = "<init>", at = @At("TAIL"))
+    @Inject(
+        method = "<init>",
+        at = @At("TAIL")
+    )
     private void setColorOnInit(int id, Tile block, CallbackInfo ci) {
         if (block.material == Material.WOOD) {
             this.defaultColor = 16777215;
-        } else {
+        }
+        else {
             this.defaultColor = AC_IBlockColor.defaultColor;
         }
     }
@@ -154,39 +156,24 @@ public abstract class MixinStairsBlock extends Tile implements AC_IBlockColor {
         }
     }
 
-    @Override
-    public void dropResources(Level world, int x, int y, int z, int meta) {
-        this.base.dropResources(world, x, y, z, meta);
-    }
-
-    @Override
-    public int getFoliageColor(LevelSource view, int x, int y, int z) {
+    public @Override int getFoliageColor(LevelSource view, int x, int y, int z) {
         int meta = this.getColorMeta(view, x, y, z);
-        if (meta == 1) {
-            meta = 16775065;
-        } else if (meta == 2) {
-            meta = 16767663;
-        } else if (meta == 3) {
-            meta = 10736540;
-        } else if (meta == 4) {
-            meta = 9755639;
-        } else if (meta == 5) {
-            meta = 8880573;
-        } else if (meta == 6) {
-            meta = 15539236;
-        } else {
-            meta = this.defaultColor;
-        }
-        return meta;
+        return switch (meta) {
+            case 1 -> 16775065;
+            case 2 -> 16767663;
+            case 3 -> 10736540;
+            case 4 -> 9755639;
+            case 5 -> 8880573;
+            case 6 -> 15539236;
+            default -> this.defaultColor;
+        };
     }
 
-    @Override
-    public int getColorMeta(LevelSource view, int x, int y, int z) {
+    public @Override int getColorMeta(LevelSource view, int x, int y, int z) {
         return view.getData(x, y, z) >> 2;
     }
 
-    @Override
-    public void setColorMeta(Level world, int x, int y, int z, int meta) {
+    public @Override void setColorMeta(Level world, int x, int y, int z, int meta) {
         world.setData(x, y, z, world.getData(x, y, z) & 3 | meta << 2);
     }
 }

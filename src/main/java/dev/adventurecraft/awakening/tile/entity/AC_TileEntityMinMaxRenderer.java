@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.tile.entity;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
+import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 import net.minecraft.world.level.tile.Tile;
@@ -8,52 +9,71 @@ import net.minecraft.world.level.tile.entity.TileEntity;
 import org.lwjgl.opengl.GL11;
 
 public class AC_TileEntityMinMaxRenderer extends TileEntityRenderer {
+
     float r;
     float g;
     float b;
 
-    public AC_TileEntityMinMaxRenderer(float var1, float var2, float var3) {
-        this.r = var1;
-        this.g = var2;
-        this.b = var3;
+    public AC_TileEntityMinMaxRenderer(float r, float g, float b) {
+        this.r = r;
+        this.g = g;
+        this.b = b;
     }
 
-    public void render(AC_TileEntityMinMax var1, double var2, double var4, double var6, float var8) {
+    public void renderArea(AC_TileEntityMinMax entity, double x, double y, double z, float tickTime) {
         if (AC_DebugMode.active) {
-            GL11.glPushMatrix();
-            GL11.glEnable(GL11.GL_BLEND);
-            GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-            GL11.glDisable(GL11.GL_TEXTURE_2D);
-            GL11.glDisable(GL11.GL_LIGHTING);
-            GL11.glTranslatef((float) var2 + 0.5F, (float) var4 + 0.5F, (float) var6 + 0.5F);
-            GL11.glLineWidth(6.0F);
-            GL11.glShadeModel(GL11.GL_SMOOTH);
-            GL11.glBegin(GL11.GL_LINES);
-
-            for (int var9 = var1.minX; var9 <= var1.maxX; ++var9) {
-                for (int var10 = var1.minY; var10 <= var1.maxY; ++var10) {
-                    for (int var11 = var1.minZ; var11 <= var1.maxZ; ++var11) {
-                        Tile var12 = Tile.tiles[var1.level.getTile(var9, var10, var11)];
-                        if (var12 != null && ((ExBlock) var12).canBeTriggered()) {
-                            GL11.glColor3f(0.0F, 0.0F, 0.0F);
-                            GL11.glVertex3f(0.0F, 0.0F, 0.0F);
-                            GL11.glColor3f(this.r, this.g, this.b);
-                            GL11.glVertex3f((float) (var9 - var1.x), (float) (var10 - var1.y), (float) (var11 - var1.z));
-                        }
-                    }
-                }
-            }
-
-            GL11.glEnd();
-            GL11.glShadeModel(GL11.GL_FLAT);
-            GL11.glLineWidth(1.0F);
-            GL11.glEnable(GL11.GL_TEXTURE_2D);
-            GL11.glDisable(GL11.GL_BLEND);
-            GL11.glPopMatrix();
+            renderArea(entity.min(), entity.max(), entity, x, y, z, this.r, this.g, this.b);
         }
     }
 
-    public void render(TileEntity var1, double var2, double var4, double var6, float var8) {
-        this.render((AC_TileEntityMinMax) var1, var2, var4, var6, var8);
+    public static void renderArea(
+        Coord min,
+        Coord max,
+        TileEntity entity,
+        double x,
+        double y,
+        double z,
+        float r,
+        float g,
+        float b
+    ) {
+        if (max.sub(min).equals(0)) {
+            return;
+        }
+
+        GL11.glPushMatrix();
+        GL11.glEnable(GL11.GL_BLEND);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        GL11.glDisable(GL11.GL_LIGHTING);
+        GL11.glTranslatef((float) x + 0.5F, (float) y + 0.5F, (float) z + 0.5F);
+        GL11.glLineWidth(6.0F);
+        GL11.glShadeModel(GL11.GL_SMOOTH);
+        GL11.glBegin(GL11.GL_LINES);
+
+        for (int bX = min.x; bX <= max.x; bX++) {
+            for (int bY = min.y; bY <= max.y; bY++) {
+                for (int bZ = min.z; bZ <= max.z; bZ++) {
+                    Tile tile = Tile.tiles[entity.level.getTile(bX, bY, bZ)];
+                    if (tile != null && ((ExBlock) tile).canBeTriggered()) {
+                        GL11.glColor3f(0.0F, 0.0F, 0.0F);
+                        GL11.glVertex3f(0.0F, 0.0F, 0.0F);
+                        GL11.glColor3f(r, g, b);
+                        GL11.glVertex3f((float) (bX - entity.x), (float) (bY - entity.y), (float) (bZ - entity.z));
+                    }
+                }
+            }
+        }
+
+        GL11.glEnd();
+        GL11.glShadeModel(GL11.GL_FLAT);
+        GL11.glLineWidth(1.0F);
+        GL11.glEnable(GL11.GL_TEXTURE_2D);
+        GL11.glDisable(GL11.GL_BLEND);
+        GL11.glPopMatrix();
+    }
+
+    public @Override void render(TileEntity entity, double x, double y, double z, float tickTime) {
+        this.renderArea((AC_TileEntityMinMax) entity, x, y, z, tickTime);
     }
 }

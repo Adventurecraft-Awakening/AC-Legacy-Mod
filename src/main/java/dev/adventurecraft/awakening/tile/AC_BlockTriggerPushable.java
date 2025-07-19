@@ -44,24 +44,23 @@ public class AC_BlockTriggerPushable extends AC_BlockColorWithEntity {
                 entity.activated = false;
                 ((ExWorld) world).getTriggerManager().removeArea(x, y, z);
             }
-        } else if (pushable) {
+        }
+        else if (pushable) {
             entity.activated = true;
             if (!entity.resetOnTrigger) {
-                ((ExWorld) world).getTriggerManager().addArea(x, y, z, new AC_TriggerArea(entity.minX, entity.minY, entity.minZ, entity.maxX, entity.maxY, entity.maxZ));
-            } else {
-                ExBlock.resetArea(world, entity.minX, entity.minY, entity.minZ, entity.maxX, entity.maxY, entity.maxZ);
+                var area = new AC_TriggerArea(entity.min(), entity.max());
+                ((ExWorld) world).getTriggerManager().addArea(x, y, z, area);
+            }
+            else {
+                ExBlock.resetArea(world, entity.min(), entity.max());
             }
         }
     }
 
     public void setTriggerToSelection(Level world, int x, int y, int z) {
         var entity = (AC_TileEntityMinMax) world.getTileEntity(x, y, z);
-        entity.minX = AC_ItemCursor.minX;
-        entity.minY = AC_ItemCursor.minY;
-        entity.minZ = AC_ItemCursor.minZ;
-        entity.maxX = AC_ItemCursor.maxX;
-        entity.maxY = AC_ItemCursor.maxY;
-        entity.maxZ = AC_ItemCursor.maxZ;
+        entity.setMin(AC_ItemCursor.min());
+        entity.setMax(AC_ItemCursor.max());
     }
 
     @Override

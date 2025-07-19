@@ -36,20 +36,8 @@ public class AC_BlockTimer extends TileEntityTile implements AC_ITriggerDebugBlo
 
     public void setTriggerToSelection(Level world, int x, int y, int z) {
         var entity = (AC_TileEntityMinMax) world.getTileEntity(x, y, z);
-        if (entity.minX != AC_ItemCursor.minX ||
-            entity.minY != AC_ItemCursor.minY ||
-            entity.minZ != AC_ItemCursor.minZ ||
-            entity.maxX != AC_ItemCursor.maxX ||
-            entity.maxY != AC_ItemCursor.maxY ||
-            entity.maxZ != AC_ItemCursor.maxZ) {
-
-            entity.minX = AC_ItemCursor.minX;
-            entity.minY = AC_ItemCursor.minY;
-            entity.minZ = AC_ItemCursor.minZ;
-            entity.maxX = AC_ItemCursor.maxX;
-            entity.maxY = AC_ItemCursor.maxY;
-            entity.maxZ = AC_ItemCursor.maxZ;
-        }
+        entity.setMin(AC_ItemCursor.min());
+        entity.setMax(AC_ItemCursor.max());
     }
 
     @Override

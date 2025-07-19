@@ -2,22 +2,23 @@ package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.tile.Tile;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Map;
 
-public class AC_TriggerManager {
+public final class AC_TriggerManager {
 
-    public Level world;
-    public HashMap<AC_CoordBlock, Int2ObjectOpenHashMap<AC_TriggerArea>> triggerAreas;
+    public final Level world;
+    public final Map<Coord, Int2ObjectOpenHashMap<AC_TriggerArea>> triggerAreas;
 
     public AC_TriggerManager(Level world) {
         this.world = world;
-        this.triggerAreas = new HashMap<>();
+        this.triggerAreas = new Object2ObjectOpenHashMap<>();
     }
 
     public void addArea(int x, int y, int z, AC_TriggerArea area) {
@@ -25,7 +26,7 @@ public class AC_TriggerManager {
     }
 
     public void addArea(int x, int y, int z, int id, AC_TriggerArea area) {
-        var coord = new AC_CoordBlock(x, y, z);
+        var coord = new Coord(x, y, z);
         var map = this.triggerAreas.get(coord);
         if (map == null) {
             map = new Int2ObjectOpenHashMap<>();
@@ -33,7 +34,7 @@ public class AC_TriggerManager {
         }
 
         AC_TriggerArea previousArea = map.get(id);
-        ArrayList<AC_CoordBlock> coords = this.findBlocksToActivate(area);
+        ArrayList<Coord> coords = this.findBlocksToActivate(area);
         map.put(id, area);
         this.activateBlocks(coords);
         if (previousArea != null) {
@@ -42,7 +43,7 @@ public class AC_TriggerManager {
     }
 
     public void removeArea(int x, int y, int z) {
-        var coord = new AC_CoordBlock(x, y, z);
+        var coord = new Coord(x, y, z);
         var map = this.triggerAreas.get(coord);
         if (map != null) {
             for (int id : map.clone().keySet()) {
@@ -52,25 +53,27 @@ public class AC_TriggerManager {
     }
 
     public void removeArea(int x, int y, int z, int id) {
-        var coord = new AC_CoordBlock(x, y, z);
+        var coord = new Coord(x, y, z);
         var map = this.triggerAreas.get(coord);
         if (map != null) {
             this.removeArea(coord, map, id);
         }
     }
 
-    private void removeArea(AC_CoordBlock coord, Int2ObjectOpenHashMap<AC_TriggerArea> map, int id) {
+    private void removeArea(Coord coord, Int2ObjectOpenHashMap<AC_TriggerArea> map, int id) {
         AC_TriggerArea area = map.get(id);
-        if (area != null) {
-            map.remove(id);
-            if (map.isEmpty()) {
-                this.triggerAreas.remove(coord);
-            }
-
-            this.deactivateArea(area);
+        if (area == null) {
+            return;
         }
+
+        map.remove(id);
+        if (map.isEmpty()) {
+            this.triggerAreas.remove(coord);
+        }
+        this.deactivateArea(area);
     }
 
+    // TODO: optimize this calculation and respective callsites
     public int getTriggerAmount(int x, int y, int z) {
         int count = 0;
 
@@ -97,36 +100,39 @@ public class AC_TriggerManager {
     }
 
     public void outputTriggerSources(int x, int y, int z) {
-        Minecraft.instance.gui.addMessage(String.format("Outputting active triggerings for (%d, %d, %d)", x, y, z));
+        var gui = Minecraft.instance.gui;
+        gui.addMessage(String.format("Outputting active triggerings for (%d, %d, %d)", x, y, z));
 
         for (var entry : this.triggerAreas.entrySet()) {
             for (AC_TriggerArea area : entry.getValue().values()) {
-                if (area.isPointInside(x, y, z)) {
-                    AC_CoordBlock coord = entry.getKey();
-                    Minecraft.instance.gui.addMessage(String.format("Triggered by (%d, %d, %d)", coord.x, coord.y, coord.z));
+                if (!area.isPointInside(x, y, z)) {
+                    continue;
                 }
+                Coord coord = entry.getKey();
+                gui.addMessage(String.format("Triggered by (%d, %d, %d)", coord.x, coord.y, coord.z));
             }
         }
     }
 
-    private ArrayList<AC_CoordBlock> findBlocksToActivate(AC_TriggerArea area) {
-        ArrayList<AC_CoordBlock> coords = new ArrayList<>();
+    private ArrayList<Coord> findBlocksToActivate(AC_TriggerArea area) {
+        var coords = new ArrayList<Coord>();
+        Coord min = area.min;
+        Coord max = area.max;
 
-        for (int x = area.minX; x <= area.maxX; ++x) {
-            for (int y = area.minY; y <= area.maxY; ++y) {
-                for (int z = area.minZ; z <= area.maxZ; ++z) {
+        for (int x = min.x; x <= max.x; x++) {
+            for (int y = min.y; y <= max.y; y++) {
+                for (int z = min.z; z <= max.z; z++) {
                     if (this.getTriggerAmount(x, y, z) == 0) {
-                        coords.add(new AC_CoordBlock(x, y, z));
+                        coords.add(new Coord(x, y, z));
                     }
                 }
             }
         }
-
         return coords;
     }
 
-    private void activateBlocks(ArrayList<AC_CoordBlock> coords) {
-        for (AC_CoordBlock coord : coords) {
+    private void activateBlocks(ArrayList<Coord> coords) {
+        for (Coord coord : coords) {
             int id = this.world.getTile(coord.x, coord.y, coord.z);
             var block = (ExBlock) Tile.tiles[id];
             if (id != 0 && block.canBeTriggered()) {
@@ -136,15 +142,17 @@ public class AC_TriggerManager {
     }
 
     private void deactivateArea(AC_TriggerArea area) {
-        for (int x = area.minX; x <= area.maxX; ++x) {
-            for (int y = area.minY; y <= area.maxY; ++y) {
-                for (int z = area.minZ; z <= area.maxZ; ++z) {
-                    if (this.getTriggerAmount(x, y, z) == 0) {
-                        int id = this.world.getTile(x, y, z);
-                        var block = (ExBlock) Tile.tiles[id];
-                        if (id != 0 && block.canBeTriggered()) {
-                            block.onTriggerDeactivated(this.world, x, y, z);
-                        }
+        for (int x = area.min.x; x <= area.max.x; ++x) {
+            for (int y = area.min.y; y <= area.max.y; ++y) {
+                for (int z = area.min.z; z <= area.max.z; ++z) {
+                    if (this.getTriggerAmount(x, y, z) != 0) {
+                        continue;
+                    }
+
+                    int id = this.world.getTile(x, y, z);
+                    var block = (ExBlock) Tile.tiles[id];
+                    if (id != 0 && block.canBeTriggered()) {
+                        block.onTriggerDeactivated(this.world, x, y, z);
                     }
                 }
             }
@@ -157,12 +165,12 @@ public class AC_TriggerManager {
 
         for (var entry : this.triggerAreas.entrySet()) {
             var coordTag = new CompoundTag();
-            AC_CoordBlock coord = entry.getKey();
+            Coord coord = entry.getKey();
             coordTag.putInt("x", coord.x);
             coordTag.putInt("y", coord.y);
             coordTag.putInt("z", coord.z);
-            int areaCount = 0;
 
+            int areaCount = 0;
             for (var areaEntry : entry.getValue().int2ObjectEntrySet()) {
                 CompoundTag areaTag = areaEntry.getValue().getTagCompound();
                 areaTag.putInt("areaID", areaEntry.getIntKey());
@@ -183,8 +191,8 @@ public class AC_TriggerManager {
 
         for (int i = 0; i < coordCount; ++i) {
             CompoundTag coordTag = managerTag.getCompoundTag(String.format("coord%d", i));
-            var coord = new AC_CoordBlock(coordTag.getInt("x"), coordTag.getInt("y"), coordTag.getInt("z"));
-            Int2ObjectOpenHashMap<AC_TriggerArea> areaMap = new Int2ObjectOpenHashMap<>();
+            var coord = new Coord(coordTag.getInt("x"), coordTag.getInt("y"), coordTag.getInt("z"));
+            var areaMap = new Int2ObjectOpenHashMap<AC_TriggerArea>();
             this.triggerAreas.put(coord, areaMap);
 
             int areaCount = coordTag.getInt("numAreas");

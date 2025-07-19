@@ -10,6 +10,7 @@ import net.minecraft.client.gui.components.OptionButton;
 import net.minecraft.client.gui.screens.Screen;
 
 public class AC_GuiTimer extends Screen {
+
     boolean ignoreNext = false;
     private AC_TileEntityTimer timer;
     boolean useTextFields;
@@ -84,10 +85,8 @@ public class AC_GuiTimer extends Screen {
         this.fill(0, 0, this.width, this.height, Integer.MIN_VALUE);
 
         AC_TileEntityTimer t = this.timer;
-        int textColor = 14737632;
-
-        this.drawString(this.font, String.format("Min: (%d, %d, %d)", t.minX, t.minY, t.minZ), 4, 4, textColor);
-        this.drawString(this.font, String.format("Max: (%d, %d, %d)", t.maxX, t.maxY, t.maxZ), 4, 24, textColor);
+        int textColor = 0xe0e0e0;
+        AC_GuiStrings.drawMinMax(this, t, 4, 4, textColor);
 
         if (!t.active && t.canActivate) {
             this.drawString(this.font, "State: Ready", 4, 164, textColor);

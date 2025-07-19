@@ -10,47 +10,42 @@ import dev.adventurecraft.awakening.extension.block.ExGrassBlock;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.render.block.ExGrassColor;
 import net.minecraft.client.Minecraft;
+import net.minecraft.util.Facing;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelSource;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.tile.GrassTile;
 import net.minecraft.world.level.tile.Tile;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(GrassTile.class)
 public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock, AC_IBlockColor, AC_TexturedBlock {
 
-    @Override
-    public int getTexture(LevelSource view, int x, int y, int z, int side) {
+    public @Override int getTexture(LevelSource view, int x, int y, int z, int side) {
         return (int) getTextureForSideEx(view, x, y, z, side);
     }
 
-    @Override
-    public long getTextureForSideEx(LevelSource view, int x, int y, int z, int side) {
-        if (side == 1) {
-            return getTopTexture(view, x, y, z);
-        }
-        else if (side == 0) {
-            return 2;
-        }
-        else {
-            return getSideTexture(view, x, y, z, side);
-        }
+    public @Override long getTextureForSideEx(LevelSource view, int x, int y, int z, int side) {
+        return switch (side) {
+            case Facing.UP -> this.getTopTexture(view, x, y, z);
+            case Facing.DOWN -> Facing.NORTH;
+            default -> this.getSideTexture(view, x, y, z, side);
+        };
     }
 
-    @Override
-    public int getColor(int meta) {
+    public @Override int getColor(int meta) {
         return ExGrassColor.getBaseColor(meta);
     }
 
-    private int getTopTexture(LevelSource view, int x, int y, int z) {
+    private @Unique int getTopTexture(LevelSource view, int x, int y, int z) {
         int meta = view.getData(x, y, z);
-        return getTexture(0, meta);
+        return getTexture(Facing.DOWN, meta);
     }
 
-    private long getSideTexture(LevelSource view, int x, int y, int z, int side) {
+    private @Unique long getSideTexture(LevelSource view, int x, int y, int z, int side) {
         ConnectedGrassOption option = ((ExGameOptions) Minecraft.instance.options).ofConnectedGrass();
 
         Material material = view.getMaterial(x, y + 1, z);
@@ -62,10 +57,10 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
                 int nX = x;
                 int nZ = z;
                 switch (side) {
-                    case 2 -> --nZ;
-                    case 3 -> ++nZ;
-                    case 4 -> --nX;
-                    case 5 -> ++nX;
+                    case Facing.NORTH -> --nZ;
+                    case Facing.SOUTH -> ++nZ;
+                    case Facing.WEST -> --nX;
+                    case Facing.EAST -> ++nX;
                 }
 
                 int id = view.getTile(nX, y, nZ);
@@ -84,10 +79,10 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
             int nY = y - 1;
             int nZ = z;
             switch (side) {
-                case 2 -> --nZ;
-                case 3 -> ++nZ;
-                case 4 -> --nX;
-                case 5 -> ++nX;
+                case Facing.NORTH -> --nZ;
+                case Facing.SOUTH -> ++nZ;
+                case Facing.WEST -> --nX;
+                case Facing.EAST -> ++nX;
             }
 
             int id = view.getTile(nX, nY, nZ);
@@ -112,8 +107,7 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
         return result;
     }
 
-    @Override
-    public int getTexture(int var1, int meta) {
+    public @Override int getTexture(int side, int meta) {
         return meta == 0 ? 0 : 232 + meta - 1;
     }
 

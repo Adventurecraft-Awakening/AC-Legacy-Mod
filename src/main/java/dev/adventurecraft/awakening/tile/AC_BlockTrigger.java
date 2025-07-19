@@ -154,16 +154,19 @@ public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerDebugB
 
         if (!this.isAlreadyActivated(world, x, y, z)) {
             if (!e.resetOnTrigger) {
-                ((ExWorld) world).getTriggerManager().addArea(
-                    x, y, z, new AC_TriggerArea(e.minX, e.minY, e.minZ, e.maxX, e.maxY, e.maxZ));
-            } else {
-                ExBlock.resetArea(world, e.minX, e.minY, e.minZ, e.maxX, e.maxY, e.maxZ);
+                var area = new AC_TriggerArea(e.min(), e.max());
+                ((ExWorld) world).getTriggerManager().addArea(x, y, z, area);
+            }
+            else {
+                ExBlock.resetArea(world, e.min(), e.max());
             }
         }
+
         // If player is dead, set activated to 1 so that the triggerArea can be removed in AC_TileEntityTrigger!
         if (((Player) entity).health <= 0) {
             e.activated = 1;
-        } else {
+        }
+        else {
             e.activated = 2;
         }
     }
@@ -181,21 +184,13 @@ public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerDebugB
 
     public void setTriggerToSelection(Level world, int x, int y, int z) {
         var e = (AC_TileEntityMinMax) world.getTileEntity(x, y, z);
-        if (e.minX == AC_ItemCursor.minX &&
-            e.minY == AC_ItemCursor.minY &&
-            e.minZ == AC_ItemCursor.minZ &&
-            e.maxX == AC_ItemCursor.maxX &&
-            e.maxY == AC_ItemCursor.maxY &&
-            e.maxZ == AC_ItemCursor.maxZ) {
+        Coord min = AC_ItemCursor.min();
+        Coord max = AC_ItemCursor.max();
+        if (e.min().equals(min) && e.max().equals(max)) {
             return;
         }
-
-        e.minX = AC_ItemCursor.minX;
-        e.minY = AC_ItemCursor.minY;
-        e.minZ = AC_ItemCursor.minZ;
-        e.maxX = AC_ItemCursor.maxX;
-        e.maxY = AC_ItemCursor.maxY;
-        e.maxZ = AC_ItemCursor.maxZ;
+        e.setMin(min);
+        e.setMax(max);
 
         for (int bX = x - 1; bX <= x + 1; ++bX) {
             for (int bZ = z - 1; bZ <= z + 1; ++bZ) {

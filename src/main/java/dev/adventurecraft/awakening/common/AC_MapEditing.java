@@ -111,7 +111,13 @@ public class AC_MapEditing {
         GL11.glBlendFunc(GL14.GL_CONSTANT_ALPHA, GL14.GL_ONE_MINUS_CONSTANT_ALPHA);
         this.mc.textures.bind(this.mc.textures.loadTexture("/terrain.png"));
         ((ExBlockRenderer) this.renderBlocks).startRenderingBlocks(this.world);
-        this.drawBlock(this.cursor.x + this.getCursorXOffset(), this.cursor.y + this.getCursorYOffset(), this.cursor.z + this.getCursorZOffset(), this.selectedBlockID, this.selectedMetadata);
+        this.drawBlock(
+            this.cursor.x + this.getCursorXOffset(),
+            this.cursor.y + this.getCursorYOffset(),
+            this.cursor.z + this.getCursorZOffset(),
+            this.selectedBlockID,
+            this.selectedMetadata
+        );
         ((ExBlockRenderer) this.renderBlocks).stopRenderingBlocks();
         GL11.glDisable(GL11.GL_BLEND);
         GL11.glPopMatrix();
@@ -131,22 +137,25 @@ public class AC_MapEditing {
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL14.GL_CONSTANT_ALPHA, GL14.GL_ONE_MINUS_CONSTANT_ALPHA);
         Vec3 rot = entity.getLookAngle();
-        int rX = (int) (entity.x + (double) AC_DebugMode.reachDistance * rot.x) - AC_ItemCursor.minX;
-        int rY = (int) (entity.y + (double) AC_DebugMode.reachDistance * rot.y) - AC_ItemCursor.minY;
-        int rZ = (int) (entity.z + (double) AC_DebugMode.reachDistance * rot.z) - AC_ItemCursor.minZ;
+        int rX = (int) (entity.x + AC_DebugMode.reachDistance * rot.x) - AC_ItemCursor.min().x;
+        int rY = (int) (entity.y + AC_DebugMode.reachDistance * rot.y) - AC_ItemCursor.min().y;
+        int rZ = (int) (entity.z + AC_DebugMode.reachDistance * rot.z) - AC_ItemCursor.min().z;
 
         for (int texIndex = 0; texIndex <= 3; ++texIndex) {
             if (texIndex == 0) {
                 this.mc.textures.bind(this.mc.textures.loadTexture("/terrain.png"));
-            } else {
+            }
+            else {
                 this.mc.textures.bind(this.mc.textures.loadTexture(String.format("/terrain%d.png", texIndex)));
             }
 
             ((ExBlockRenderer) this.renderBlocks).startRenderingBlocks(this.world);
 
-            for (int x = AC_ItemCursor.minX; x <= AC_ItemCursor.maxX; ++x) {
-                for (int y = AC_ItemCursor.minY; y <= AC_ItemCursor.maxY; ++y) {
-                    for (int z = AC_ItemCursor.minZ; z <= AC_ItemCursor.maxZ; ++z) {
+            Coord min = AC_ItemCursor.min();
+            Coord max = AC_ItemCursor.max();
+            for (int x = min.x; x <= max.x; x++) {
+                for (int y = min.y; y <= max.y; y++) {
+                    for (int z = min.z; z <= max.z; z++) {
                         int id = this.mc.level.getTile(x, y, z);
                         Tile block = Tile.tiles[id];
                         if (block != null && ((ExBlock) block).getTextureNum() == texIndex) {
@@ -242,31 +251,36 @@ public class AC_MapEditing {
             ts.vertex(aabb.x1, aabb.y0, aabb.z1);
             ts.vertex(aabb.x0, aabb.y0, aabb.z1);
             ts.vertex(aabb.x0, aabb.y0, aabb.z0);
-        } else if (this.cursor.face == 1) {
+        }
+        else if (this.cursor.face == 1) {
             ts.vertex(aabb.x0, aabb.y1, aabb.z0);
             ts.vertex(aabb.x1, aabb.y1, aabb.z0);
             ts.vertex(aabb.x1, aabb.y1, aabb.z1);
             ts.vertex(aabb.x0, aabb.y1, aabb.z1);
             ts.vertex(aabb.x0, aabb.y1, aabb.z0);
-        } else if (this.cursor.face == 2) {
+        }
+        else if (this.cursor.face == 2) {
             ts.vertex(aabb.x0, aabb.y0, aabb.z0);
             ts.vertex(aabb.x1, aabb.y0, aabb.z0);
             ts.vertex(aabb.x1, aabb.y1, aabb.z0);
             ts.vertex(aabb.x0, aabb.y1, aabb.z0);
             ts.vertex(aabb.x0, aabb.y0, aabb.z0);
-        } else if (this.cursor.face == 3) {
+        }
+        else if (this.cursor.face == 3) {
             ts.vertex(aabb.x0, aabb.y0, aabb.z1);
             ts.vertex(aabb.x1, aabb.y0, aabb.z1);
             ts.vertex(aabb.x1, aabb.y1, aabb.z1);
             ts.vertex(aabb.x0, aabb.y1, aabb.z1);
             ts.vertex(aabb.x0, aabb.y0, aabb.z1);
-        } else if (this.cursor.face == 4) {
+        }
+        else if (this.cursor.face == 4) {
             ts.vertex(aabb.x0, aabb.y0, aabb.z0);
             ts.vertex(aabb.x0, aabb.y1, aabb.z0);
             ts.vertex(aabb.x0, aabb.y1, aabb.z1);
             ts.vertex(aabb.x0, aabb.y0, aabb.z1);
             ts.vertex(aabb.x0, aabb.y0, aabb.z0);
-        } else if (this.cursor.face == 5) {
+        }
+        else if (this.cursor.face == 5) {
             ts.vertex(aabb.x1, aabb.y0, aabb.z0);
             ts.vertex(aabb.x1, aabb.y1, aabb.z0);
             ts.vertex(aabb.x1, aabb.y1, aabb.z1);

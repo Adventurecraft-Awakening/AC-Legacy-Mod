@@ -66,18 +66,16 @@ public class AC_BlockTriggerInverter extends TileEntityTile implements AC_ITrigg
     @Override
     public void onTriggerDeactivated(Level world, int x, int y, int z) {
         var entity = (AC_TileEntityTriggerInverter) world.getTileEntity(x, y, z);
-        ((ExWorld) world).getTriggerManager().addArea(x, y, z, new AC_TriggerArea(entity.minX, entity.minY, entity.minZ, entity.maxX, entity.maxY, entity.maxZ));
+        var area = new AC_TriggerArea(entity.min(), entity.max());
+        ((ExWorld) world).getTriggerManager().addArea(x, y, z, area);
     }
 
     public void setTriggerToSelection(Level world, int x, int y, int z) {
         var entity = (AC_TileEntityTriggerInverter) world.getTileEntity(x, y, z);
-        if (entity.minX != AC_ItemCursor.minX ||
-            entity.minY != AC_ItemCursor.minY ||
-            entity.minZ != AC_ItemCursor.minZ ||
-            entity.maxX != AC_ItemCursor.maxX ||
-            entity.maxY != AC_ItemCursor.maxY ||
-            entity.maxZ != AC_ItemCursor.maxZ) {
-            entity.set(AC_ItemCursor.minX, AC_ItemCursor.minY, AC_ItemCursor.minZ, AC_ItemCursor.maxX, AC_ItemCursor.maxY, AC_ItemCursor.maxZ);
+        Coord min = AC_ItemCursor.min();
+        Coord max = AC_ItemCursor.max();
+        if (!entity.min().equals(min) || !entity.max().equals(max)) {
+            entity.set(min, max);
         }
     }
 

@@ -148,6 +148,7 @@
     "world.entity.MixinSynchedEntityData",
     "world.gen.MixinBiomeSource",
     "world.level.tile.MixinSignTile",
+    "world.level.chunk.storage.MixinRegionFile",
     "world.source.MixinOverworldWorldSource",
     "world.world.biome.MixinBiome",
     "world.world.biome.MixinForestBiome",

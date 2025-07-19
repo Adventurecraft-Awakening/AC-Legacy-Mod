@@ -49,18 +49,23 @@ public class AC_TileEntityNpcPath extends AC_TileEntityMinMax {
 
     public void pathEntity() {
         AC_EntityNPC npc = this.getNPC();
-        if (npc != null) {
-            this.npc.pathToPosition(this.x, this.y, this.z);
-            if (this.isSet()) {
-                this.npc.setTriggerOnPath(this);
-            }
+        if (npc == null) {
+            return;
+        }
+
+        this.npc.pathToPosition(this.x, this.y, this.z);
+        if (this.isSet()) {
+            this.npc.setTriggerOnPath(this);
         }
     }
 
     public void pathFinished() {
-        if (this.isSet()) {
-            ((ExWorld) this.level).getTriggerManager().addArea(this.x, this.y, this.z, new AC_TriggerArea(this.minX, this.minY, this.minZ, this.maxX, this.maxY, this.maxZ));
-            ((ExWorld) this.level).getTriggerManager().removeArea(this.x, this.y, this.z);
+        if (!this.isSet()) {
+            return;
         }
+
+        var area = new AC_TriggerArea(this.min(), this.max());
+        ((ExWorld) this.level).getTriggerManager().addArea(this.x, this.y, this.z, area);
+        ((ExWorld) this.level).getTriggerManager().removeArea(this.x, this.y, this.z);
     }
 }
