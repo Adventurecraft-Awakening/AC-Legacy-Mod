@@ -153,8 +153,7 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
             tag.putString("onInteraction", this.onInteraction);
         }
 
-        ((ExCompoundTag) tag).findCompound("scope")
-            .ifPresent(c -> ScopeTag.loadScopeFromTag(this.scope, c));
+        tag.putTag("scope", ScopeTag.getTagFromScope(this.scope));
     }
 
     @Override
@@ -167,7 +166,8 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
         this.onAttacked = tag.getString("onAttacked");
         this.onDeath = tag.getString("onDeath");
         this.onInteraction = tag.getString("onInteraction");
-        tag.putTag("scope", ScopeTag.getTagFromScope(this.scope));
+
+        ((ExCompoundTag) tag).findCompound("scope").ifPresent(c -> ScopeTag.loadScopeFromTag(this.scope, c));
     }
 
     public void runCreatedScript() {
