@@ -183,7 +183,7 @@ public class ServerCommands {
                 .then(defineGamerule("melting", descs.attach(ServerCommands::cmdToggleMelting, "Toggles ice melting")))
                 .then(defineGamerule(
                     "bonemeal",
-                    descs.attach(ServerCommands::cmdToggleBonemeal, "Toggles bonemeal usage outside of Debug Mode")
+                    descs.attach(ServerCommands::cmdToggleBonemeal, "Toggles bonemeal usage")
                 ))
                 .then(defineGamerule(
                     "sleep",
@@ -191,9 +191,9 @@ public class ServerCommands {
                 ))
                 .then(defineGamerule(
                     "hoe",
-                    descs.attach(ServerCommands::cmdToggleHoe, "Toggles hoe usage outside of Debug Mode")
+                    descs.attach(ServerCommands::cmdToggleHoe, "Toggles hoe usage")
                 )));
-            descs.attach(node.getCommand(), "Command to set different gamerules for your map");
+            descs.attach(node.getCommand(), "Set global rules for the map");
         }
 
         // TODO: save/restore for undostacks
