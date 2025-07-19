@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 
-@Mixin(ArgumentCommandNode.class)
+@Mixin(value = ArgumentCommandNode.class, remap = false)
 public abstract class MixinArgumentCommandNode<S, T> {
 
     @Shadow @Final private static String USAGE_ARGUMENT_OPEN;

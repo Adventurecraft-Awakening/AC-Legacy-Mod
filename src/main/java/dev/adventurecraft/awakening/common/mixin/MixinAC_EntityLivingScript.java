@@ -10,13 +10,13 @@ import org.mozilla.javascript.ScriptableObject;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-@Mixin(AC_EntityLivingScript.class)
+@Mixin(value = AC_EntityLivingScript.class, remap = false)
 public abstract class MixinAC_EntityLivingScript extends MixinMob {
 
-    @Shadow(remap = false)
+    @Shadow
     protected Scriptable scope;
 
-    @Shadow(remap = false)
+    @Shadow
     protected abstract boolean runOnAttackedScript();
 
     @Override
