@@ -3,14 +3,18 @@ package dev.adventurecraft.awakening.common;
 import dev.adventurecraft.awakening.extension.client.render.ExTesselator;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import dev.adventurecraft.awakening.image.Rgba;
+import dev.adventurecraft.awakening.text.TextMeasurer;
 import dev.adventurecraft.awakening.util.HexConvert;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.Tesselator;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL11;
 
-public class TextRendererState {
+public class TextRendererState implements TextMeasurer {
 
     private final Font font;
+    private @Nullable Tesselator tesselator;
 
     private int color;
     private int activeColor;
@@ -23,23 +27,31 @@ public class TextRendererState {
         this.font = font;
     }
 
+    public @NotNull TextRect measureText(CharSequence text, int start, int end, long maxWidth, boolean newLines) {
+        return ((ExTextRenderer) this.font).measureText(text, start, end, maxWidth, newLines);
+    }
+
     public void bindTexture() {
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.font.fontTexture);
     }
 
-    public void begin(Tesselator tessallator) {
+    public void begin(Tesselator tesselator) {
         this.bindTexture();
 
-        tessallator.begin();
+        this.tesselator = tesselator;
+        this.tesselator.begin();
 
         this.resetFormat();
     }
 
-    public void end(Tesselator tessallator) {
-        tessallator.end();
+    public void end() {
+        assert this.tesselator != null;
+
+        this.tesselator.end();
+        this.tesselator = null;
     }
 
-    public void drawText(Tesselator ts, CharSequence text, int start, int end, float x, float y) {
+    public void drawText(CharSequence text, int start, int end, float x, float y) {
         if (text == null) {
             return;
         }
@@ -51,6 +63,9 @@ public class TextRendererState {
         if (Rgba.getAlpha(this.activeColor) == 0) {
             return;
         }
+        var ts = this.tesselator;
+        assert ts != null;
+
         var exTs = (ExTesselator) ts;
         exTs.ac$color(this.activeColor);
 
@@ -102,8 +117,8 @@ public class TextRendererState {
         }
     }
 
-    public void drawText(Tesselator ts, CharSequence text, float x, float y) {
-        this.drawText(ts, text, 0, text.length(), x, y);
+    public void drawText(CharSequence text, float x, float y) {
+        this.drawText(text, 0, text.length(), x, y);
     }
 
     public void setColor(int color) {

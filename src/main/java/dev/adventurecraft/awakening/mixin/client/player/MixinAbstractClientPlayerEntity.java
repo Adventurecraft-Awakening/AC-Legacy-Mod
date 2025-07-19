@@ -83,8 +83,8 @@ public abstract class MixinAbstractClientPlayerEntity extends Player implements 
     }
 
     @Inject(method = "setKey", at = @At(value = "HEAD"), cancellable = true)
-    private void redirectMethod136ToScript(int var1, boolean var2, CallbackInfo ci) {
-        boolean press = ((ExWorld) this.level).getScript().keyboard.processPlayerKeyPress(var1, var2);
+    private void redirectMethod136ToScript(int key, boolean isDown, CallbackInfo ci) {
+        boolean press = ((ExWorld) this.level).getScript().keyboard.processPlayerKeyPress(key, isDown);
         if (!press) {
             ci.cancel();
         }

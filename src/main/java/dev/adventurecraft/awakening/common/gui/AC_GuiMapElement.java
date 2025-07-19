@@ -86,7 +86,7 @@ public class AC_GuiMapElement extends ScriptUIContainer {
             ++var13;
         }
 
-        if (var6.equals("")) {
+        if (var6.isEmpty()) {
             this.botFadeBack.removeFromScreen();
         }
 
@@ -105,7 +105,7 @@ public class AC_GuiMapElement extends ScriptUIContainer {
             ++var13;
         }
 
-        if (var5.equals("")) {
+        if (var5.isEmpty()) {
             this.topFadeBack.removeFromScreen();
         }
 
@@ -165,7 +165,7 @@ public class AC_GuiMapElement extends ScriptUIContainer {
 
         for (int var7 = 0; var7 < var6; ++var7) {
             String var8 = var5[var7];
-            if (var4.equals("")) {
+            if (var4.isEmpty()) {
                 var4 = var8;
             } else {
                 String var9 = var4 + " " + var8;
@@ -178,7 +178,7 @@ public class AC_GuiMapElement extends ScriptUIContainer {
             }
         }
 
-        if (!var4.equals("")) {
+        if (!var4.isEmpty()) {
             output.add(var4);
         }
     }

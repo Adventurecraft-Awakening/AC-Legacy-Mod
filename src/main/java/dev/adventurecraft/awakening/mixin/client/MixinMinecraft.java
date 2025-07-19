@@ -55,6 +55,7 @@ import net.minecraft.util.Vec3i;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
@@ -172,9 +173,6 @@ public abstract class MixinMinecraft implements ExMinecraft {
     public abstract void grabMouse();
 
     @Shadow
-    protected abstract void pickBlock();
-
-    @Shadow
     private int recheckPlayerIn;
 
     @Shadow
@@ -224,19 +222,20 @@ public abstract class MixinMinecraft implements ExMinecraft {
     @Shadow
     protected abstract void renderLoadingScreen();
 
-    private long previousNanoTime;
-    private double deltaTime;
-    private int rightMouseTicksRan;
-    public AC_MapList mapList;
-    public AC_CutsceneCamera cutsceneCamera = new AC_CutsceneCamera();
-    public AC_CutsceneCamera activeCutsceneCamera;
-    public boolean cameraActive;
-    public boolean cameraPause = true;
-    public Mob cutsceneCameraEntity;
-    public AC_GuiStore storeGUI = new AC_GuiStore();
-    ItemInstance lastItemUsed;
-    Entity lastEntityHit;
-    ScriptVec3 lastBlockHit;
+    @Unique private long previousNanoTime;
+    @Unique private double deltaTime;
+    @Unique private int rightMouseTicksRan;
+    @Unique private int middleMouseTicksRan;
+    @Unique public AC_MapList mapList;
+    @Unique public AC_CutsceneCamera cutsceneCamera = new AC_CutsceneCamera();
+    @Unique public AC_CutsceneCamera activeCutsceneCamera;
+    @Unique public boolean cameraActive;
+    @Unique public boolean cameraPause = true;
+    @Unique public Mob cutsceneCameraEntity;
+    @Unique public AC_GuiStore storeGUI = new AC_GuiStore();
+    @Unique ItemInstance lastItemUsed;
+    @Unique Entity lastEntityHit;
+    @Unique ScriptVec3 lastBlockHit;
 
     @Overwrite(remap = false)
     public static void main(String[] args) {
@@ -741,17 +740,17 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
                                     if (eventKey == Keyboard.KEY_1 + currentSlot) {
                                         if (!isControlPressed) {
-                                            if (currentSlot == ((ExPlayerInventory) this.player.inventory).getOffhandItem()) {
-                                                ((ExPlayerInventory) this.player.inventory).setOffhandItem(this.player.inventory.selected);
+                                            if (currentSlot == ((ExPlayerInventory) this.player.inventory).getOffhandSlot()) {
+                                                ((ExPlayerInventory) this.player.inventory).setOffhandSlot(this.player.inventory.selected);
                                             }
 
                                             this.player.inventory.selected = currentSlot;
                                         } else {
                                             if (currentSlot == this.player.inventory.selected) {
-                                                this.player.inventory.selected = ((ExPlayerInventory) this.player.inventory).getOffhandItem();
+                                                this.player.inventory.selected = ((ExPlayerInventory) this.player.inventory).getOffhandSlot();
                                             }
 
-                                            ((ExPlayerInventory) this.player.inventory).setOffhandItem(currentSlot);
+                                            ((ExPlayerInventory) this.player.inventory).setOffhandSlot(currentSlot);
                                         }
                                     }
 
@@ -784,16 +783,12 @@ public abstract class MixinMinecraft implements ExMinecraft {
                             this.gui.addMessage(String.format("Reach Changed to %d", AC_DebugMode.reachDistance));
                         } else {
                             if (ctrlDown) {
-                                int selectedSlot = this.player.inventory.selected;
-                                this.player.inventory.selected = ((ExPlayerInventory) this.player.inventory).getOffhandItem();
-                                ((ExPlayerInventory) this.player.inventory).setOffhandItem(selectedSlot);
+                                ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
                             }
 
                             this.player.inventory.swapPaint(wheelDelta);
                             if (ctrlDown) {
-                                int selectedSlot = this.player.inventory.selected;
-                                this.player.inventory.selected = ((ExPlayerInventory) this.player.inventory).getOffhandItem();
-                                ((ExPlayerInventory) this.player.inventory).setOffhandItem(selectedSlot);
+                                ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
                             }
 
                             if (this.options.discreteMouseScroll) {
@@ -879,6 +874,48 @@ public abstract class MixinMinecraft implements ExMinecraft {
         this.lastTickTime = System.currentTimeMillis();
     }
 
+    @Overwrite
+    private void pickBlock() {
+        var hit = this.hitResult;
+        if (hit == null) {
+            return;
+        }
+
+        int id = this.level.getTile(hit.x, hit.y, hit.z);
+        int meta = this.level.getData(hit.x, hit.y, hit.z);
+
+        Inventory inv = this.player.inventory;
+        int slotId = ((ExPlayerInventory) inv).getSlot(id, meta);
+        if (slotId >= 0 && slotId < 9) {
+            ((ExPlayerInventory) inv).selectSlot(slotId);
+            return;
+        }
+
+        ItemInstance handItem = inv.getItem(inv.selected);
+
+        ItemInstance pickItem;
+        if (slotId == -1) {
+            // Only grant items in debug mode.
+            if (!AC_DebugMode.active) {
+                return;
+            }
+            pickItem = new ItemInstance(id, -64, meta);
+        }
+        else {
+            pickItem = inv.getItem(slotId);
+            // Swap hand item into found slot.
+            inv.setItem(slotId, handItem);
+            handItem = null;
+        }
+
+        inv.setItem(inv.selected, pickItem);
+        if (handItem != null) {
+            if (!inv.add(handItem)) {
+                this.player.drop(handItem);
+            }
+        }
+    }
+
     @Redirect(
         method = {"handleMouseDown", "grabMouse"},
         at = @At(
@@ -916,8 +953,10 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
             if (mouseButton == 0) {
                 this.lastClickTick = this.ticks + useDelay;
-            } else {
+            } else if (mouseButton == 1) {
                 this.rightMouseTicksRan = this.ticks + useDelay;
+            } else if (mouseButton == 2) {
+                this.middleMouseTicksRan = this.ticks + useDelay;
             }
 
             if (stack != null &&
@@ -930,6 +969,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         } else {
             this.lastClickTick = this.ticks + 5;
             this.rightMouseTicksRan = this.ticks + 5;
+            this.middleMouseTicksRan = this.ticks + 5;
         }
 
         if (mouseButton == 0) {
@@ -972,7 +1012,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
                     if (stack != null && Item.items[stack.id] instanceof AC_ILeftClickItem leftClickItem) {
                         leftClickItem.onItemUseLeftClick(stack, this.player, this.level, bX, bY, bZ, bSide);
                     }
-                } else {
+                } else if (mouseButton == 1) {
                     int count = stack == null ? 0 : stack.count;
                     if (this.gameMode.useItemOn(this.player, this.level, stack, bX, bY, bZ, bSide)) {
                         useOnBlock = false;

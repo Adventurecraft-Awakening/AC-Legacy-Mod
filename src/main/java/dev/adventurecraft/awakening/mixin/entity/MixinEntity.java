@@ -330,7 +330,7 @@ public abstract class MixinEntity implements ExEntity {
     }
 
     @Override
-    public boolean handleFlying() {
+    public boolean getIsFlying() {
         return this.isFlying;
     }
 

@@ -15,7 +15,7 @@ public class AC_TileEntityMessage extends TileEntity {
 
 	public void save(CompoundTag var1) {
 		super.save(var1);
-		if(this.message != null && !this.message.equals("")) {
+		if(this.message != null && !this.message.isEmpty()) {
 			var1.putString("message", this.message);
 		}
 

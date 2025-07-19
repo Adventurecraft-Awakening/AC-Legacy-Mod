@@ -77,6 +77,18 @@ public class ScriptInventoryPlayer extends ScriptInventory {
         ((ExPlayerInventory) this.invPlayer).swapOffhandWithMain();
     }
 
+    public void setMainhandSlot(int slot) {
+        if(slot >= 0 && slot <9) {
+            ((ExPlayerInventory) this.invPlayer).setMainhandSlot(slot);
+        }
+    }
+
+    public void setOffhandSlot(int slot) {
+        if(slot >= 0 && slot <9) {
+            ((ExPlayerInventory) this.invPlayer).setOffhandSlot(slot);
+        }
+    }
+
     public boolean addItem(ScriptItem var1) {
         return this.invPlayer.add(var1.item);
     }

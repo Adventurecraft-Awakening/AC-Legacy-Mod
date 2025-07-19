@@ -61,23 +61,22 @@ public class ScriptUILabel extends UIElement {
         TextRendererState state = ((ExTextRenderer) textRenderer).createState();
         state.setShadowOffset(1, 1);
 
-        var ts = Tesselator.instance;
         state.setColor(color);
         state.setShadow(shadowColor);
 
-        state.begin(ts);
+        state.begin(Tesselator.instance);
         for (String line : lines) {
             float lineX = x;
             if (this.centered) {
                 lineX = x - (float) (textRenderer.width(line) / 2);
             }
 
-            state.drawText(ts, line, lineX, y);
+            state.drawText(line, lineX, y);
             state.resetFormat();
 
             y += 9.0F;
         }
-        state.end(ts);
+        state.end();
     }
 
     public String getText() {

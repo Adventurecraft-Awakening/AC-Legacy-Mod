@@ -70,7 +70,7 @@ public class AC_GuiMusic extends Screen {
 
     public void render(int mouseX, int mouseY, float deltaTime) {
         this.fill(0, 0, this.width, this.height, Integer.MIN_VALUE);
-        if (this.music.musicName.equals("")) {
+        if (this.music.musicName.isEmpty()) {
             this.drawString(this.font, "Music: Stop Music", 4, 4, 14737632);
         } else {
             this.drawString(this.font, String.format("Music: %s", this.music.musicName), 4, 4, 14737632);

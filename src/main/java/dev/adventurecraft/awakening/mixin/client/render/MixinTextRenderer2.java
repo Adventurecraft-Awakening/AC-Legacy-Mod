@@ -146,15 +146,14 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
             state.setShadow(Rgba.alphaOrOpaque(shadow));
         }
 
-        var ts = Tesselator.instance;
-        state.begin(ts);
-        state.drawText(ts, text, start, end, x, y);
-        state.end(ts);
+        state.begin(Tesselator.instance);
+        state.drawText(text, start, end, x, y);
+        state.end();
     }
 
     @Overwrite
     public int width(String text) {
-        var rect = this.getTextWidth(text, 0);
+        var rect = this.measureText(text, 0);
         return rect.width();
     }
 
@@ -166,7 +165,7 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
 
     @Override
     @NotNull
-    public TextRect getTextWidth(CharSequence text, int start, int end, long maxWidth, boolean newLines) {
+    public TextRect measureText(CharSequence text, int start, int end, long maxWidth, boolean newLines) {
         if (text == null) {
             return TextRect.empty;
         }

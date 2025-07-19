@@ -17,7 +17,7 @@ public class AC_TileEntityMusic extends TileEntity {
 
 	public void save(CompoundTag var1) {
 		super.save(var1);
-		if(this.musicName != null && !this.musicName.equals("")) {
+		if(this.musicName != null && !this.musicName.isEmpty()) {
 			var1.putString("musicName", this.musicName);
 		}
 

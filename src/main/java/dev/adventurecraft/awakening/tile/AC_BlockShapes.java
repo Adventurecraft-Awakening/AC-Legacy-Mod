@@ -11,4 +11,5 @@ public final class AC_BlockShapes {
     public static final int BLOCK_TREE = 36;
     public static final int BLOCK_OVERLAY = 37;
     public static final int BLOCK_SLOPE = 38;
+    public static final int BLOCK_SIGN = 39;
 }

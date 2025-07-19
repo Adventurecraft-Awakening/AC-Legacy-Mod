@@ -292,7 +292,7 @@ public class ScriptEntity {
     }
 
     public boolean getIsFlying() {
-        return ((ExEntity) this.entity).handleFlying();
+        return ((ExEntity) this.entity).getIsFlying();
     }
 
     public boolean getOnGround() {

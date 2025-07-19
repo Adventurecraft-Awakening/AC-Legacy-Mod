@@ -10,6 +10,8 @@ public interface ExCuboid {
 
     void setTHeight(int value);
 
+    boolean canRender();
+
     void render();
 
     void translateTo(Matrix4f transform);

@@ -44,7 +44,7 @@ public abstract class MixinTranslationStorage implements ExTranslationStorage {
         @Local(argsOnly = true) String originalKey) {
         // TODO: remove behavior of returning key when it's missing from translation files?
         String value = instance.getProperty(key, defaultValue);
-        if (originalKey != null && value.equals("")) {
+        if (originalKey != null && value.isEmpty()) {
             String[] parts = originalKey.split("\\.");
             value = parts[parts.length - 1];
             instance.setProperty(key, value);

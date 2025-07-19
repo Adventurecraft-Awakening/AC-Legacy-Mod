@@ -18,63 +18,71 @@ public final class CommandUtils {
     }
 
     public static <T> Class<T> getClass(ArgumentType<T> argumentType) {
-        Class<?> result;
-        if (argumentType instanceof FloatArgumentType) {
-            result = Float.class;
-        } else if (argumentType instanceof DoubleArgumentType) {
-            result = Double.class;
-        } else if (argumentType instanceof IntegerArgumentType) {
-            result = Integer.class;
-        } else if (argumentType instanceof LongArgumentType) {
-            result = Long.class;
-        } else if (argumentType instanceof BoolArgumentType) {
-            result = Boolean.class;
-        } else if (argumentType instanceof StringArgumentType) {
-            result = String.class;
-        } else {
-            result = null;
-        }
-        if (result == null) {
-            throw new IllegalArgumentException();
-        }
+        Class<?> result = switch (argumentType) {
+            case FloatArgumentType ignored -> Float.class;
+            case DoubleArgumentType ignored -> Double.class;
+            case IntegerArgumentType ignored -> Integer.class;
+            case LongArgumentType ignored -> Long.class;
+            case BoolArgumentType ignored -> Boolean.class;
+            case StringArgumentType ignored -> String.class;
+            default -> throw new IllegalArgumentException();
+        };
         //noinspection unchecked
         return (Class<T>) result;
+    }
+
+    public static <T> String getShortName(Class<T> cls) {
+        if (cls.equals(Float.class)) {
+            return "f32";
+        }
+        else if (cls.equals(Double.class)) {
+            return "f64";
+        }
+        else if (cls.equals((Integer.class))) {
+            return "i32";
+        }
+        else if (cls.equals(Long.class)) {
+            return "i64";
+        }
+        else if (cls.equals(Boolean.class)) {
+            return "bool";
+        }
+        else if (cls.equals(String.class)) {
+            return "str";
+        }
+        return cls.getSimpleName();
     }
 
     public static <T> LiteralArgumentBuilder<ServerCommandSource> optionalArg(
         LiteralArgumentBuilder<ServerCommandSource> builder,
         String argName,
-        ArgumentType<T> argumentType,
-        CommandOpt<ServerCommandSource, T> command) {
-
-        Class<T> argClass = getClass(argumentType);
-        builder
-            .then(argument(argName, argumentType)
-                .executes(ctx -> command.run(ctx, ctx.getArgument(argName, argClass))))
-            .executes(command);
-        return builder;
+        ArgumentType<T> argType,
+        CommandOpt<ServerCommandSource, T> command
+    ) {
+        return requiredArg(builder, argName, argType, command).executes(command);
     }
 
     public static <T> LiteralArgumentBuilder<ServerCommandSource> requiredArg(
         LiteralArgumentBuilder<ServerCommandSource> builder,
         String argName,
-        ArgumentType<T> argumentType,
-        CommandOpt<ServerCommandSource, T> command) {
-
-        Class<T> argClass = getClass(argumentType);
-        builder
-            .then(argument(argName, argumentType)
-                .executes(ctx -> command.run(ctx, ctx.getArgument(argName, argClass))));
-        return builder;
+        ArgumentType<T> argType,
+        CommandOpt<ServerCommandSource, T> command
+    ) {
+        return builder.then(argument(argName, argType).executes(ctx -> command.run(
+            ctx,
+            ctx.getArgument(argName, getClass(argType))
+        )));
     }
 
     @FunctionalInterface
     public interface CommandOpt<S, T> extends Command<S> {
 
-        int run(CommandContext<S> context, T argument) throws CommandSyntaxException;
+        int run(CommandContext<S> context, T argument)
+            throws CommandSyntaxException;
 
         @Override
-        default int run(CommandContext<S> context) throws CommandSyntaxException {
+        default int run(CommandContext<S> context)
+            throws CommandSyntaxException {
             return this.run(context, null);
         }
     }

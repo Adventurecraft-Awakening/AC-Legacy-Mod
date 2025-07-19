@@ -76,7 +76,7 @@ public class AC_GuiMapSelect extends Screen {
             }
             else {
                 if (this.saveName != null) {
-                    if (this.saveName.equals("")) {
+                    if (this.saveName.isEmpty()) {
                         File gameDir = Minecraft.getWorkingDirectory();
                         File savesDir = new File(gameDir, "saves");
                         int saveIndex = 1;
@@ -182,9 +182,9 @@ public class AC_GuiMapSelect extends Screen {
 
             if (this.selectedEntry == entryIndex || this.hoveredEntry == entryIndex) {
                 int size = 110;
-                int nameWidth = exText.getTextWidth(mapInfo.name, 0).width();
-                int desc1Width = exText.getTextWidth(mapInfo.description1, 0).width();
-                int desc2Width = exText.getTextWidth(mapInfo.description2, 0).width();
+                int nameWidth = exText.measureText(mapInfo.name, 0).width();
+                int desc1Width = exText.measureText(mapInfo.description1, 0).width();
+                int desc2Width = exText.measureText(mapInfo.description2, 0).width();
                 int textWidth = Math.max(nameWidth, Math.max(desc1Width, desc2Width));
                 int entryWidth = Math.max(size * 2, iconWidth + textWidth + 6);
                 var selectRect = new Rect(iconX - 2, iconY - 2, entryWidth, entryHeight);

@@ -6,6 +6,7 @@ import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.tree.CommandNode;
 import dev.adventurecraft.awakening.common.gui.AC_GuiMapEditHUD;
@@ -18,6 +19,7 @@ import dev.adventurecraft.awakening.extension.entity.ExMob;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -32,122 +34,132 @@ public class ServerCommands {
 
     public static final String DESCRIPTION_COLOR = "§e";
 
-    public static void registerCommands(
-        CommandDispatcher<ServerCommandSource> dispatcher,
-        CommandDescriptions descs) {
+    public static void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher, CommandDescriptions descs) {
 
-        dispatcher.register(literal("config").executes(
-            descs.attach(ServerCommands::cmdConfig, "Opens world configuration")));
+        dispatcher.register(literal("config").executes(descs.attach(
+            ServerCommands::cmdConfig,
+            "Opens world configuration"
+        )));
 
-        dispatcher.register(literal("test").executes(
-            ServerCommands::cmdTest));
+        dispatcher.register(literal("test").executes(ServerCommands::cmdTest));
 
-        dispatcher.register(literal("scriptstats").executes(
-            ServerCommands::cmdScriptStats));
+        dispatcher.register(literal("scriptstats").executes(ServerCommands::cmdScriptStats));
 
-        dispatcher.register(literal("day").executes(
-            descs.attach(ServerCommands::cmdDay, "Changes time to daytime")));
+        dispatcher.register(literal("day").executes(descs.attach(ServerCommands::cmdDay, "Changes time to daytime")));
 
-        dispatcher.register(literal("night").executes(
-            descs.attach(ServerCommands::cmdNight, "Changes time to nighttime")));
+        dispatcher.register(literal("night").executes(descs.attach(
+            ServerCommands::cmdNight,
+            "Changes time to nighttime"
+        )));
 
-        dispatcher.register(literal("removemobs").executes(
-            descs.attach(ServerCommands::cmdRemoveMobs, "Sets all mobs except the player as dead")));
+        dispatcher.register(literal("removemobs").executes(descs.attach(
+            ServerCommands::cmdRemoveMobs,
+            "Sets all mobs except the player as dead"
+        )));
 
-        dispatcher.register(literal("cameraclear").executes(
-            ServerCommands::cmdCameraClear));
+        dispatcher.register(literal("cameraclear").executes(ServerCommands::cmdCameraClear));
 
-        dispatcher.register(literal("fullbright").executes(
-            ServerCommands::cmdFullBright));
+        dispatcher.register(literal("fullbright").executes(ServerCommands::cmdFullBright));
 
-        dispatcher.register(literal("scriptstatreset").executes(
-            ServerCommands::cmdScriptStatReset));
+        dispatcher.register(literal("scriptstatreset").executes(ServerCommands::cmdScriptStatReset));
     }
 
     public static void registerCommandsWithArgs(
         CommandDispatcher<ServerCommandSource> dispatcher,
-        CommandDescriptions descs) {
+        CommandDescriptions descs
+    ) {
 
-        dispatcher.register(optionalArg(literal("health"),
-            "amount", IntegerArgumentType.integer(1),
-            descs.attach(ServerCommands::cmdHealth, "Sets health and max health")));
+        dispatcher.register(optionalArg(
+            literal("health"),
+            "amount",
+            IntegerArgumentType.integer(1),
+            descs.attach(ServerCommands::cmdHealth, "Sets health and max health")
+        ));
 
-        dispatcher.register(optionalArg(literal("undo"),
-            "amount", IntegerArgumentType.integer(1),
-            ServerCommands::cmdUndo));
+        dispatcher.register(optionalArg(
+            literal("undo"),
+            "amount",
+            IntegerArgumentType.integer(1),
+            ServerCommands::cmdUndo
+        ));
 
-        dispatcher.register(optionalArg(literal("redo"),
-            "amount", IntegerArgumentType.integer(1),
-            ServerCommands::cmdRedo));
+        dispatcher.register(optionalArg(
+            literal("redo"),
+            "amount",
+            IntegerArgumentType.integer(1),
+            ServerCommands::cmdRedo
+        ));
 
-        dispatcher.register(optionalArg(literal("mapedit"),
-            "value", BoolArgumentType.bool(),
-            descs.attach(ServerCommands::cmdMapEdit, "Toggles map editing mode")));
+        dispatcher.register(optionalArg(
+            literal("mapedit"),
+            "value",
+            BoolArgumentType.bool(),
+            descs.attach(ServerCommands::cmdMapEdit, "Toggles map editing mode")
+        ));
 
-        dispatcher.register(optionalArg(literal("renderpaths"),
-            "value", BoolArgumentType.bool(),
-            ServerCommands::cmdRenderPaths));
+        dispatcher.register(optionalArg(
+            literal("renderpaths"),
+            "value",
+            BoolArgumentType.bool(),
+            ServerCommands::cmdRenderPaths
+        ));
 
-        dispatcher.register(optionalArg(literal("renderfov"),
-            "value", BoolArgumentType.bool(),
-            ServerCommands::cmdRenderFov));
+        dispatcher.register(optionalArg(
+            literal("renderfov"),
+            "value",
+            BoolArgumentType.bool(),
+            ServerCommands::cmdRenderFov
+        ));
 
-        dispatcher.register(optionalArg(literal("rendercollisions"),
-            "value", BoolArgumentType.bool(),
-            ServerCommands::cmdRenderCollisions));
+        dispatcher.register(optionalArg(
+            literal("rendercollisions"),
+            "value",
+            BoolArgumentType.bool(),
+            ServerCommands::cmdRenderCollisions
+        ));
 
-        dispatcher.register(optionalArg(literal("renderrays"),
-            "value", BoolArgumentType.bool(),
-            ServerCommands::cmdRenderRays));
+        dispatcher.register(optionalArg(
+            literal("renderrays"),
+            "value",
+            BoolArgumentType.bool(),
+            ServerCommands::cmdRenderRays
+        ));
 
-        dispatcher.register(optionalArg(literal("fluidcollision"),
-            "value", BoolArgumentType.bool(),
-            ServerCommands::cmdFluidCollision));
+        dispatcher.register(optionalArg(
+            literal("fluidcollision"),
+            "value",
+            BoolArgumentType.bool(),
+            ServerCommands::cmdFluidCollision
+        ));
 
-        dispatcher.register(optionalArg(literal("fly"),
-            "value", BoolArgumentType.bool(),
-            descs.attach(ServerCommands::cmdFly, "Toggles flying")));
+        dispatcher.register(optionalArg(
+            literal("fly"),
+            "value",
+            BoolArgumentType.bool(),
+            descs.attach(ServerCommands::cmdFly, "Toggles flying")
+        ));
 
-        dispatcher.register(optionalArg(literal("noclip"),
-            "value", BoolArgumentType.bool(),
-            descs.attach(ServerCommands::cmdNoClip, "Toggles no clip")));
+        dispatcher.register(optionalArg(
+            literal("noclip"),
+            "value",
+            BoolArgumentType.bool(),
+            descs.attach(ServerCommands::cmdNoClip, "Toggles no clip")
+        ));
 
-        dispatcher.register(optionalArg(literal("togglemelting"),
-            "value", BoolArgumentType.bool(),
-            descs.attach(ServerCommands::cmdToggleMelting, "Toggles ice melting")));
-
-        dispatcher.register(optionalArg(literal("toggledecay"),
-            "value", BoolArgumentType.bool(),
-            descs.attach(ServerCommands::cmdToggleDecay, "Toggles leaf decay")));
-
-        dispatcher.register(optionalArg(literal("togglehoe"),
-            "value", BoolArgumentType.bool(),
-            descs.attach(ServerCommands::cmdToggleHoe, "Toggles hoe usage outside of Debug Mode")));
-
-        dispatcher.register(optionalArg(literal("togglebonemeal"),
-            "value", BoolArgumentType.bool(),
-            descs.attach(ServerCommands::cmdToggleBonemeal, "Toggles bonemeal usage outside of Debug Mode")));
-
-        dispatcher.register(optionalArg(literal("mobsburn"),
-            "value", BoolArgumentType.bool(),
-            descs.attach(ServerCommands::cmdMobsBurn, "Toggles mobs burning in daylight")));
-
-        dispatcher.register(optionalArg(literal("togglesleep"),
-            "value", BoolArgumentType.bool(),
-            descs.attach(ServerCommands::cmdToggleSleep, "Toggles if player can sleep in beds")));
-
-        dispatcher.register(requiredArg(literal("cameraadd"),
-            "time", FloatArgumentType.floatArg(),
-            ServerCommands::cmdCameraAdd));
+        dispatcher.register(requiredArg(
+            literal("cameraadd"),
+            "time",
+            FloatArgumentType.floatArg(),
+            ServerCommands::cmdCameraAdd
+        ));
 
         {
             var node = dispatcher.register(optionalArg(
-                literal("help"),
-                "page",
-                IntegerArgumentType.integer(1),
-                descs.attach(
+                literal("help"), "page", IntegerArgumentType.integer(1), descs.attach(
                     (ctx, page) -> ServerCommands.cmdHelp(ctx, dispatcher, descs, page),
-                    "Gets the first page of available commands")));
+                    "Gets the first page of available commands"
+                )
+            ));
             descs.attach(node.getChild("page").getCommand(), "Gets a page of available commands");
         }
         {
@@ -155,15 +167,46 @@ public class ServerCommands {
                 literal("help"),
                 "path",
                 StringArgumentType.greedyString(),
-                (ctx, name) -> ServerCommands.cmdHelp(ctx, dispatcher, descs, name)));
+                (ctx, name) -> ServerCommands.cmdHelp(ctx, dispatcher, descs, name)
+            ));
             descs.attach(node.getChild("path").getCommand(), "Gets the description of a command node");
+        }
+        {
+            // TODO: store gamerules in "boxes" so we don't duplicate code for all the command methods
+            var node = dispatcher.register(literal("gamerule")
+                .executes((ctx) -> ServerCommands.cmdHelp(ctx, dispatcher, descs, "gamerule"))
+                .then(defineGamerule("decay", descs.attach(ServerCommands::cmdToggleDecay, "Toggles leaf decay")))
+                .then(defineGamerule(
+                    "mobsburn",
+                    descs.attach(ServerCommands::cmdToggleMobsBurn, "Toggles mobs burning in daylight")
+                ))
+                .then(defineGamerule("melting", descs.attach(ServerCommands::cmdToggleMelting, "Toggles ice melting")))
+                .then(defineGamerule(
+                    "bonemeal",
+                    descs.attach(ServerCommands::cmdToggleBonemeal, "Toggles bonemeal usage")
+                ))
+                .then(defineGamerule(
+                    "sleep",
+                    descs.attach(ServerCommands::cmdToggleSleep, "Toggles if player can sleep in beds")
+                ))
+                .then(defineGamerule(
+                    "hoe",
+                    descs.attach(ServerCommands::cmdToggleHoe, "Toggles hoe usage")
+                )));
+            descs.attach(node.getCommand(), "Set global rules for the map");
         }
 
         // TODO: save/restore for undostacks
         dispatcher.register(literal("undostack")
             .executes(descs.attach(ServerCommands::cmdUndoStack, "Gets info about the undo stack"))
-            .then(literal("clear")
-                .executes(descs.attach(ServerCommands::cmdUndoStackClear, "Clears the undo stack"))));
+            .then(literal("clear").executes(descs.attach(ServerCommands::cmdUndoStackClear, "Clears the undo stack"))));
+    }
+
+    private static LiteralArgumentBuilder<ServerCommandSource> defineGamerule(
+        String name,
+        CommandOpt<ServerCommandSource, Boolean> command
+    ) {
+        return optionalArg(literal(name), "value", BoolArgumentType.bool(), command);
     }
 
     public static int cmdConfig(CommandContext<ServerCommandSource> context) {
@@ -315,7 +358,8 @@ public class ServerCommands {
                 "Undone %d actions (Undos left: %d, Redos left: %d)",
                 count,
                 undoStack.undoStack.size(),
-                undoStack.redoStack.size()));
+                undoStack.redoStack.size()
+            ));
             return count;
         }
         return 0;
@@ -339,7 +383,8 @@ public class ServerCommands {
                 "Redone %d actions (Undos left: %d, Redos left: %d)",
                 count,
                 undoStack.undoStack.size(),
-                undoStack.redoStack.size()));
+                undoStack.redoStack.size()
+            ));
             return count;
         }
         return 0;
@@ -397,9 +442,9 @@ public class ServerCommands {
         var source = context.getSource();
         var entity = source.getEntity();
         if (entity instanceof ExEntity exEntity) {
-            exEntity.setIsFlying(value != null ? value : !exEntity.handleFlying());
+            exEntity.setIsFlying(value != null ? value : !exEntity.getIsFlying());
 
-            source.getClient().gui.addMessage(String.format("Flying: %b", exEntity.handleFlying()));
+            source.getClient().gui.addMessage(String.format("Flying: %b", exEntity.getIsFlying()));
             return Command.SINGLE_SUCCESS;
         }
         return 0;
@@ -438,8 +483,9 @@ public class ServerCommands {
         var world = source.getWorld();
         if (world != null) {
             var props = (ExWorldProperties) world.levelData;
-            props.setLeavesDecay(value != null ? value : !props.getLeavesDecay());
-
+            if (value != null) {
+                props.setLeavesDecay(value);
+            }
             source.getClient().gui.addMessage(String.format("Leaves Decay: %b", props.getLeavesDecay()));
             return Command.SINGLE_SUCCESS;
         }
@@ -451,35 +497,41 @@ public class ServerCommands {
         var world = source.getWorld();
         if (world != null) {
             var props = (ExWorldProperties) world.levelData;
-            props.setCanUseHoe(value != null ? value : !props.getCanUseHoe());
-
+            if (value != null) {
+                props.setCanUseHoe(value);
+            }
             source.getClient().gui.addMessage(String.format("Hoe usable without Debug Mode: %b", props.getCanUseHoe()));
             return Command.SINGLE_SUCCESS;
         }
         return 0;
     }
-  
- 
+
+
     public static int cmdToggleBonemeal(CommandContext<ServerCommandSource> context, Boolean value) {
         var source = context.getSource();
         var world = source.getWorld();
         if (world != null) {
             var props = (ExWorldProperties) world.levelData;
-            props.setCanUseBonemeal(value != null ? value : !props.getCanUseBonemeal());
-
-            source.getClient().gui.addMessage(String.format("Bonemeal usable without Debug Mode: %b", props.getCanUseBonemeal()));
+            if (value != null) {
+                props.setCanUseBonemeal(value);
+            }
+            source.getClient().gui.addMessage(String.format(
+                "Bonemeal usable without Debug Mode: %b",
+                props.getCanUseBonemeal()
+            ));
             return Command.SINGLE_SUCCESS;
         }
         return 0;
     }
 
-    public static int cmdMobsBurn(CommandContext<ServerCommandSource> context, Boolean value) {
+    public static int cmdToggleMobsBurn(CommandContext<ServerCommandSource> context, Boolean value) {
         var source = context.getSource();
         var world = source.getWorld();
         if (world != null) {
             var props = (ExWorldProperties) world.levelData;
-            props.setMobsBurn(value != null ? value : !props.getMobsBurn());
-
+            if (value != null) {
+                props.setMobsBurn(value);
+            }
             source.getClient().gui.addMessage(String.format("Mobs Burn in Daylight: %b", props.getMobsBurn()));
             return Command.SINGLE_SUCCESS;
         }
@@ -491,8 +543,9 @@ public class ServerCommands {
         var world = source.getWorld();
         if (world != null) {
             var props = (ExWorldProperties) world.levelData;
-            props.setCanSleep(value != null ? value : !props.getCanSleep());
-
+            if (value != null) {
+                props.setCanSleep(value);
+            }
             source.getClient().gui.addMessage(String.format("Player can sleep in beds: %b", props.getCanSleep()));
             return Command.SINGLE_SUCCESS;
         }
@@ -523,7 +576,8 @@ public class ServerCommands {
         CommandContext<ServerCommandSource> context,
         CommandDispatcher<ServerCommandSource> dispatcher,
         CommandDescriptions descriptions,
-        Integer page) {
+        Integer page
+    ) {
 
         int commandsPerPage = 8;
         int currentPage = page != null ? (page - 1) : 0;
@@ -534,7 +588,9 @@ public class ServerCommands {
         int pageCount = (usageMap.size() + commandsPerPage - 1) / commandsPerPage;
         client.gui.addMessage(String.format("§2Help page %d out of %d:", currentPage + 1, pageCount));
 
-        int logCount = usageMap.keySet().stream()
+        int logCount = usageMap
+            .keySet()
+            .stream()
             .skip((long) currentPage * commandsPerPage)
             .limit(commandsPerPage)
             .map(node -> {
@@ -554,7 +610,8 @@ public class ServerCommands {
 
                 client.gui.addMessage(String.join("\n", lines));
                 return 1;
-            }).reduce(0, Integer::sum);
+            })
+            .reduce(0, Integer::sum);
         return logCount;
     }
 
@@ -562,7 +619,8 @@ public class ServerCommands {
         CommandNode<ServerCommandSource> node,
         CommandDescriptions descriptions,
         String prefix,
-        List<String> output) {
+        List<String> output
+    ) {
 
         var children = node.getChildren();
         for (var child : children) {
@@ -578,17 +636,15 @@ public class ServerCommands {
     }
 
     private static String prettifyUsage(String value) {
-        return value
-            .replace("<", "§a<§7")
-            .replace(">", "§a>§f");
+        return value.replace("<", "§a<§7").replace(":", "§r:§3").replace(">", "§a>§f");
     }
 
     public static int cmdHelp(
         CommandContext<ServerCommandSource> context,
         CommandDispatcher<ServerCommandSource> dispatcher,
         CommandDescriptions descriptions,
-        String path) {
-
+        String path
+    ) {
         var source = context.getSource();
         var client = source.getClient();
         var lines = new ArrayList<String>();
@@ -601,21 +657,21 @@ public class ServerCommands {
             lines.add(String.format("§2Command help for \"§f%s§2\"%s", path, rootDescC));
 
             var usageMap = dispatcher.getSmartUsage(rootNode, source);
-            result = usageMap.keySet().stream()
-                .map(node -> {
-                    String line = prettifyUsage(usageMap.get(node));
-                    String description = descriptions.getDescription(node.getCommand());
-                    if (description != null) {
-                        line += DESCRIPTION_COLOR + " - " + description;
-                    }
-                    lines.add(line);
-                    return 1;
-                }).reduce(0, Integer::sum);
-        } else {
+            result = usageMap.keySet().stream().map(node -> {
+                String line = prettifyUsage(usageMap.get(node));
+                String description = descriptions.getDescription(node.getCommand());
+                if (description != null) {
+                    line += DESCRIPTION_COLOR + " - " + description;
+                }
+                lines.add(line);
+                return 1;
+            }).reduce(0, Integer::sum);
+        }
+        else {
             lines.add(String.format("§cNo command node for \"§f%s§c\"", path));
             result = 0;
         }
-        client.gui.addMessage(String.join("\n", lines));
+        client.gui.addMessage(String.join("§r\n", lines));
         return result;
     }
 
@@ -628,7 +684,8 @@ public class ServerCommands {
             source.getClient().gui.addMessage(String.format(
                 "Undos left: %d, Redos left: %d",
                 undoStack.undoStack.size(),
-                undoStack.redoStack.size()));
+                undoStack.redoStack.size()
+            ));
             return Command.SINGLE_SUCCESS;
         }
         return 0;
@@ -644,7 +701,10 @@ public class ServerCommands {
             undoStack.clear();
 
             source.getClient().gui.addMessage(String.format(
-                "Undos cleared: %d, Redos cleared: %d", undoCount, redoCount));
+                "Undos cleared: %d, Redos cleared: %d",
+                undoCount,
+                redoCount
+            ));
             return Command.SINGLE_SUCCESS;
         }
         return 0;
