@@ -103,7 +103,7 @@ public abstract class ScrollableContainerScreen extends Screen {
             Rect renderRect = new Rect(renderPoint.x, renderPoint.y, 16, 16);
 
             DrawUtil.beginFill(ts);
-            DrawUtil.fillRect(ts, renderRect, new IntCorner(0x80ffffff), null);
+            DrawUtil.fillRect(ts, renderRect, 0x80ffffff);
             DrawUtil.endFill(ts);
 
             GL11.glEnable(GL11.GL_LIGHTING);
@@ -147,7 +147,7 @@ public abstract class ScrollableContainerScreen extends Screen {
                     var textRect = new Rect(textX, textY, textWidth, 8).expand(new Border(3));
 
                     DrawUtil.beginFill(ts);
-                    DrawUtil.fillRect(ts, textRect, new IntCorner(0xc0000000), null);
+                    DrawUtil.fillRect(ts, textRect, 0xc0000000);
                     DrawUtil.endFill(ts);
                     this.font.drawShadow(name, textX, textY, -1);
                 }

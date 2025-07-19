@@ -62,7 +62,6 @@ public class ScriptUILabel extends UIElement {
         state.setShadowOffset(1, 1);
 
         var ts = Tesselator.instance;
-        state.bindTexture();
         state.setColor(color);
         state.setShadow(shadowColor);
 
@@ -73,7 +72,7 @@ public class ScriptUILabel extends UIElement {
                 lineX = x - (float) (textRenderer.width(line) / 2);
             }
 
-            state.drawText(ts, line, 0, line.length(), lineX, y);
+            state.drawText(ts, line, lineX, y);
             state.resetFormat();
 
             y += 9.0F;

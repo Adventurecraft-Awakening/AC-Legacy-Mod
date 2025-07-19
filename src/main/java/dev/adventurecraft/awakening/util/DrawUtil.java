@@ -10,6 +10,7 @@ import org.lwjgl.opengl.GL11;
 import javax.annotation.Nullable;
 
 public final class DrawUtil {
+
     public static void beginFill(Tesselator ts) {
         GL11.glDisable(GL11.GL_TEXTURE_2D);
         GL11.glEnable(GL11.GL_BLEND);
@@ -51,10 +52,10 @@ public final class DrawUtil {
         Rect right = rect.alongRight(padding.right);
         Rect bot = rect.alongBot(padding.bot).shrink(offset);
 
-        fillRect(ts, left, new IntCorner(color.left), null);
-        fillRect(ts, top, new IntCorner(color.top), null);
-        fillRect(ts, right, new IntCorner(color.right), null);
-        fillRect(ts, bot, new IntCorner(color.bot), null);
+        fillRect(ts, left, color.left);
+        fillRect(ts, top, color.top);
+        fillRect(ts, right, color.right);
+        fillRect(ts, bot, color.bot);
     }
 
     public static void fillRect(Tesselator ts, Rect rect, IntCorner color, @Nullable Rect uv) {
@@ -84,6 +85,18 @@ public final class DrawUtil {
         if (uv != null) {
             ts.tex(uv.left(), uv.top());
         }
+        ts.vertex(rect.left(), rect.top(), 0.0);
+    }
+
+    public static void fillRect(Tesselator ts, Rect rect, int color) {
+        if (rect.isEmpty()) {
+            return;
+        }
+
+        color(ts, color);
+        ts.vertex(rect.left(), rect.bot(), 0.0);
+        ts.vertex(rect.right(), rect.bot(), 0.0);
+        ts.vertex(rect.right(), rect.top(), 0.0);
         ts.vertex(rect.left(), rect.top(), 0.0);
     }
 

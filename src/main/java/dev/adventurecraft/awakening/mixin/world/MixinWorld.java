@@ -18,6 +18,7 @@ import dev.adventurecraft.awakening.extension.client.resource.language.ExTransla
 import dev.adventurecraft.awakening.extension.client.sound.ExSoundHelper;
 import dev.adventurecraft.awakening.extension.entity.ExBlockEntity;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
+import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;

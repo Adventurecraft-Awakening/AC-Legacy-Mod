@@ -7,28 +7,33 @@ import java.util.ArrayList;
 public class AC_ChatMessage {
 
     public final String text;
+    public final long timestamp;
 
-    public int age;
-
-    public ArrayList<Line> lines;
+    public final ArrayList<Line> lines;
     public int width;
     public int height;
 
-    public AC_ChatMessage(String text) {
+    public AC_ChatMessage(String text, long timestamp) {
         this.text = text;
+        this.timestamp = timestamp;
         this.lines = new ArrayList<>();
     }
 
-    public void rebuild(ExTextRenderer renderer, long maxWidth) {
-        final int textLength = text.length();
+    public long getAgeInMillis() {
+        return System.currentTimeMillis() - this.timestamp;
+    }
+
+    public void rebuild(ExTextRenderer font, long maxWidth) {
+        final String text = this.text;
+        final int textLength = this.text.length();
+
         int offset = 0;
         int width = 0;
         int height = 0;
 
-        lines.clear();
-
+        this.lines.clear();
         do {
-            TextRect rect = renderer.getTextWidth(text, offset, textLength, maxWidth, true);
+            TextRect rect = font.getTextWidth(text, offset, textLength, maxWidth, true);
             if (rect.charCount() == 0) {
                 break;
             }
@@ -39,7 +44,7 @@ public class AC_ChatMessage {
                 lineEnd -= 1;
             }
 
-            lines.add(new Line(offset, lineEnd, rect.width()));
+            this.lines.add(new Line(offset, lineEnd, rect.width()));
 
             offset += rect.charCount();
             width = Math.max(rect.width(), width);

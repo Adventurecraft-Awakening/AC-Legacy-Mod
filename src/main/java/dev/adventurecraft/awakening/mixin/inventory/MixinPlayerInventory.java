@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.mixin.inventory;
 
 import com.llamalad7.mixinextras.sugar.Local;
+import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.item.AC_IItemReload;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.item.AC_ISlotCallbackItem;
@@ -10,6 +11,7 @@ import dev.adventurecraft.awakening.extension.item.ExArmorItem;
 import dev.adventurecraft.awakening.extension.item.ExItemStack;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -18,8 +20,10 @@ import net.minecraft.world.item.Item;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.LinkedList;
@@ -28,15 +32,11 @@ import java.util.List;
 @Mixin(Inventory.class)
 public abstract class MixinPlayerInventory implements ExPlayerInventory {
 
-    @Shadow
-    public ItemInstance[] items;
-    @Shadow
-    public int selected;
+    @Shadow public ItemInstance[] items;
+    @Shadow public int selected;
 
-    @Shadow
-    public Player player;
-    @Shadow
-    public ItemInstance[] armor;
+    @Shadow public Player player;
+    @Shadow public ItemInstance[] armor;
 
     @Shadow
     protected abstract int getFreeSlot();
@@ -47,17 +47,26 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
     @Shadow
     protected abstract int addResource(ItemInstance arg);
 
-    public int offhandItem = 1;
-    //public int[] consumeInventory = new int[36];
+    @Unique public int offhandItem = 1;
 
     @Override
-    public int getOffhandItem() {
+    public int getOffhandSlot() {
         return this.offhandItem;
     }
 
     @Override
-    public void setOffhandItem(int value) {
+    public void setOffhandSlot(int value) {
         this.offhandItem = value;
+    }
+
+    @Override
+    public int getMainhandSlot() {
+        return this.selected;
+    }
+
+    @Override
+    public void setMainhandSlot(int value) {
+        this.selected = value;
     }
 
     public ItemInstance getOffhandItemStack() {
@@ -115,11 +124,10 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
             value = "NEW",
             target = "(III)Lnet/minecraft/world/ItemInstance;",
             shift = At.Shift.AFTER,
-            ordinal = 0))
-    private void onAddOnMerge(
-        ItemInstance stack,
-        CallbackInfoReturnable<Integer> cir,
-        @Local(ordinal = 2) int slot) {
+            ordinal = 0
+        )
+    )
+    private void onAddOnMerge(ItemInstance stack, CallbackInfoReturnable<Integer> cir, @Local(ordinal = 2) int slot) {
         this.onItemAddToSlot(slot, stack);
     }
 
@@ -137,8 +145,7 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
                 exItem.setTimeLeft(exItem.getTimeLeft() - 1);
             }
 
-            if ((slot == this.selected || slot == this.offhandItem) &&
-                exItem.getTimeLeft() == 0 &&
+            if ((slot == this.selected || slot == this.offhandItem) && exItem.getTimeLeft() == 0 &&
                 exItem.getReloading()) {
                 if (Item.items[stack.id] instanceof AC_IItemReload itemReload) {
                     itemReload.reload(stack, this.player.level, this.player);
@@ -211,7 +218,8 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
             stack.count = 0;
             this.onItemAddToSlot(emptySlot, stack);
             return true;
-        } else {
+        }
+        else {
             return false;
         }
     }
@@ -233,7 +241,8 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
         if (stack.count <= count) {
             stacks[slot] = null;
             this.onItemRemovedFromSlot(originalSlot, stack);
-        } else {
+        }
+        else {
             stack = stack.shrink(count);
             if (stack.count == 0) {
                 stacks[slot] = null;
@@ -282,7 +291,8 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
 
         if (durability == 0) {
             return 0;
-        } else {
+        }
+        else {
             return (int) ((maxDamage - 1.0F) * (float) remaining) / durability + 1;
         }
     }
@@ -327,29 +337,29 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
     public boolean consumeItemAmount(int id, int meta, int count) {
         int remaining = count;
         List<Integer> slots = new LinkedList<>();
-        for(int i = 0; i < this.items.length; i++) {
+        for (int i = 0; i < this.items.length; i++) {
             ItemInstance itemStack = this.items[i];
 
             if (itemStack == null) {
                 continue;
             }
-            if (itemStack.id != id){
+            if (itemStack.id != id) {
                 continue;
             }
-            if(itemStack.getAuxValue() != meta){
+            if (itemStack.getAuxValue() != meta) {
                 continue;
             }
             slots.add(i);
             remaining -= itemStack.count;
-            if(remaining <= 0){
+            if (remaining <= 0) {
                 break;
             }
         }
 
-        if(remaining > 0){
+        if (remaining > 0) {
             return false;
         }
-        for(int slot : slots) {
+        for (int slot : slots) {
             ItemInstance itemStack = this.items[slot];
 
             if (itemStack.count > count) {
@@ -359,8 +369,25 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
             count -= itemStack.count;
             itemStack.count = 0;
             this.items[slot] = null;
-            this.onItemRemovedFromSlot(slot,itemStack);
+            this.onItemRemovedFromSlot(slot, itemStack);
         }
         return true;
+    }
+
+    public @Override int getSlot(int id, int meta) {
+        for (int i = 0; i < this.items.length; ++i) {
+            ItemInstance item = this.items[i];
+            if (item != null && item.id == id && item.getAuxValue() == meta) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public @Override void selectSlot(int index) {
+        if (this.offhandItem == index) {
+            this.offhandItem = this.selected;
+        }
+        this.selected = index;
     }
 }
