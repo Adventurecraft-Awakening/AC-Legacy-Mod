@@ -146,6 +146,7 @@
     "world.chunk.MixinServerChunkCache",
     "world.entity.MixinSynchedEntityData",
     "world.gen.MixinBiomeSource",
+    "world.level.tile.MixinSignTile",
     "world.source.MixinOverworldWorldSource",
     "world.world.biome.MixinBiome",
     "world.world.biome.MixinForestBiome",
