@@ -31,6 +31,28 @@ public final class CommandUtils {
         return (Class<T>) result;
     }
 
+    public static <T> String getShortName(Class<T> cls) {
+        if (cls.equals(Float.class)) {
+            return "f32";
+        }
+        else if (cls.equals(Double.class)) {
+            return "f64";
+        }
+        else if (cls.equals((Integer.class))) {
+            return "i32";
+        }
+        else if (cls.equals(Long.class)) {
+            return "i64";
+        }
+        else if (cls.equals(Boolean.class)) {
+            return "bool";
+        }
+        else if (cls.equals(String.class)) {
+            return "str";
+        }
+        return cls.getSimpleName();
+    }
+
     public static <T> LiteralArgumentBuilder<ServerCommandSource> optionalArg(
         LiteralArgumentBuilder<ServerCommandSource> builder,
         String argName,

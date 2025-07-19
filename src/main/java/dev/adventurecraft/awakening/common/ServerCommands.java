@@ -636,7 +636,7 @@ public class ServerCommands {
     }
 
     private static String prettifyUsage(String value) {
-        return value.replace("<", "§a<§7").replace(">", "§a>§f");
+        return value.replace("<", "§a<§7").replace(":", "§r:§3").replace(">", "§a>§f");
     }
 
     public static int cmdHelp(

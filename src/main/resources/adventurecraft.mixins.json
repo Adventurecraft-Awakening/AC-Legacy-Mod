@@ -69,6 +69,7 @@
     "defaultRequire": 1
   },
   "mixins": [
+    "MixinArgumentCommandNode",
     "MixinClass_417",
     "block.MixinAbstractFluidBlock",
     "block.MixinBlock",
@@ -127,13 +128,13 @@
     "item.MixinArmorItem",
     "item.MixinBlockItem",
     "item.MixinBowItem",
-    "item.MixinHoeItem",
     "item.MixinDyePowderItem",
+    "item.MixinHoeItem",
     "item.MixinItem",
-    "item.MixinTileItemWithoutTranslation",
     "item.MixinItemStack",
     "item.MixinRedstoneItem",
     "item.MixinSwordItem",
+    "item.MixinTileItemWithoutTranslation",
     "util.MixinMth",
     "util.io.MixinCompoundTag",
     "world.MixinCakeTile",
