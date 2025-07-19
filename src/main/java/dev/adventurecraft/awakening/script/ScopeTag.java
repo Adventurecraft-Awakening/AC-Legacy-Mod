@@ -10,14 +10,10 @@ public class ScopeTag {
 
     public static CompoundTag getTagFromScope(Scriptable scriptable) {
         var tag = new CompoundTag();
-        Object[] ids = scriptable.getIds();
-
-        for (Object id : ids) {
-            if (id instanceof CharSequence key) {
-                String name = key.toString();
-                Object value = scriptable.get(name, scriptable);
-                saveProperty(tag, name, value);
-            }
+        for (Object key : scriptable.getIds()) {
+            String name = key.toString();
+            Object value = scriptable.get(name, scriptable);
+            saveProperty(tag, name, value);
         }
         return tag;
     }
@@ -30,78 +26,76 @@ public class ScopeTag {
 
         if (value instanceof CharSequence string) {
             tag.putString("String_" + name, string.toString());
-        } else if (value instanceof Boolean bool) {
+        }
+        else if (value instanceof Boolean bool) {
             tag.putBoolean("Boolean_" + name, bool);
-        } else if (value instanceof Number number) {
+        }
+        else if (value instanceof Number number) {
             double doubleValue = number.doubleValue();
             float floatValue = number.floatValue();
-            long longValue = number.longValue();
-            int intValue = number.intValue();
-            short shortValue = number.shortValue();
-
             if (doubleValue != (double) floatValue) {
                 tag.putDouble("Double_" + name, doubleValue);
-            } else if (floatValue != (float) longValue) {
-                tag.putFloat("Float_" + name, floatValue);
-            } else if (longValue != (long) intValue) {
-                tag.putLong("Long_" + name, longValue);
-            } else if (intValue != shortValue) {
-                tag.putInt("Integer_" + name, intValue);
-            } else {
-                tag.putShort("Short_" + name, shortValue);
+                return;
             }
-        } else if (Undefined.isUndefined(value)) {
+
+            long longValue = number.longValue();
+            if (floatValue != (float) longValue) {
+                tag.putFloat("Float_" + name, floatValue);
+                return;
+            }
+
+            int intValue = number.intValue();
+            if (longValue != (long) intValue) {
+                tag.putLong("Long_" + name, longValue);
+                return;
+            }
+
+            short shortValue = number.shortValue();
+            if (intValue != (int) shortValue) {
+                tag.putInt("Integer_" + name, intValue);
+                return;
+            }
+            tag.putShort("Short_" + name, shortValue);
+        }
+        else if (Undefined.isUndefined(value)) {
             // Ignore
-        } else if (value instanceof Scriptable) {
+        }
+        else if (value instanceof Scriptable) {
             // Ignore
-        } else {
+        }
+        else {
             logUnsupportedProp("write", name, value);
         }
     }
 
     public static void loadScopeFromTag(Scriptable scriptable, CompoundTag tag) {
-        for (String key : ((ExCompoundTag) tag).getKeys()) {
+        var exTag = (ExCompoundTag) tag;
+        for (String key : exTag.getKeys()) {
             String[] elements = key.split("_", 2);
             if (elements.length != 2) {
-                logUnsupportedProp("decode", key, ((ExCompoundTag) tag).getTag(key));
+                logUnsupportedProp("decode", key, exTag.getTag(key));
                 continue;
             }
 
             String type = elements[0];
             String name = elements[1];
-            switch (type) {
-                case "String" -> {
-                    String value = tag.getString(key);
-                    scriptable.put(name, scriptable, value);
-                }
-                case "Boolean" -> {
-                    boolean value = tag.getBoolean(key);
-                    scriptable.put(name, scriptable, value);
-                }
-                case "Double" -> {
-                    double value = tag.getDouble(key);
-                    scriptable.put(name, scriptable, value);
-                }
-                case "Float" -> {
-                    float value = tag.getFloat(key);
-                    scriptable.put(name, scriptable, value);
-                }
-                case "Long" -> {
-                    long value = tag.getLong(key);
-                    scriptable.put(name, scriptable, value);
-                }
-                case "Integer" -> {
-                    int value = tag.getInt(key);
-                    scriptable.put(name, scriptable, value);
-                }
-                case "Short" -> {
-                    short value = tag.getShort(key);
-                    scriptable.put(name, scriptable, value);
-                }
+            Object value = switch (type) {
+                case "String" -> tag.getString(key);
+                case "Boolean" -> tag.getBoolean(key);
+                case "Double" -> tag.getDouble(key);
+                case "Float" -> tag.getFloat(key);
+                case "Long" -> tag.getLong(key);
+                case "Integer" -> tag.getInt(key);
+                case "Short" -> tag.getShort(key);
                 default -> {
-                    logUnsupportedProp("read", key, ((ExCompoundTag) tag).getTag(key));
+                    logUnsupportedProp("read", key, exTag.getTag(key));
+                    yield null;
                 }
+            };
+            if (value == null) {
+                continue;
             }
+            scriptable.put(name, scriptable, value);
         }
     }
 

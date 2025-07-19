@@ -8,6 +8,8 @@ import dev.adventurecraft.awakening.script.ScopeTag;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
+import javax.annotation.Nullable;
+
 public class AC_TileEntityScript extends TileEntity {
 
     public boolean checkTrigger = true;
@@ -16,20 +18,30 @@ public class AC_TileEntityScript extends TileEntity {
     public String onDetriggerScriptFile = "";
     public String onUpdateScriptFile = "";
     public Scriptable scope;
+    private @Nullable CompoundTag scopeTag;
 
-    private void initScope() {
-        this.scope = ((ExWorld) level).getScript().getNewScope();
-        ScriptableObject.putProperty(this.scope, "xCoord", this.x);
-        ScriptableObject.putProperty(this.scope, "yCoord", this.y);
-        ScriptableObject.putProperty(this.scope, "zCoord", this.z);
+    @Override
+    public void clearRemoved() {
+        super.clearRemoved();
+
+        // Workaround for tile-entities not having access to `level` during loading.
+        // Relies on the fact that `clearRemoved()` is called inside `LevelChunk.setTileEntity()`.
+
+        if (this.scope == null) {
+            this.scope = ((ExWorld) this.level).getScript().getNewScope();
+            ScriptableObject.putProperty(this.scope, "xCoord", this.x);
+            ScriptableObject.putProperty(this.scope, "yCoord", this.y);
+            ScriptableObject.putProperty(this.scope, "zCoord", this.z);
+        }
+
+        if (this.scopeTag != null) {
+            ScopeTag.loadScopeFromTag(this.scope, this.scopeTag);
+            this.scopeTag = null;
+        }
     }
 
     @Override
     public void tick() {
-        if (this.scope == null) {
-            this.initScope();
-        }
-
         if (this.checkTrigger) {
             this.isActivated = ((ExWorld) this.level).getTriggerManager().isActivated(this.x, this.y, this.z);
             this.checkTrigger = false;
@@ -48,7 +60,7 @@ public class AC_TileEntityScript extends TileEntity {
         this.onUpdateScriptFile = tag.getString("onUpdateScriptFile");
 
         this.isActivated = tag.getBoolean("isActivated");
-        ((ExCompoundTag) tag).findCompound("scope").ifPresent(c -> ScopeTag.loadScopeFromTag(this.scope, c));
+        this.scopeTag = tag.getCompoundTag("scope");
     }
 
     @Override
