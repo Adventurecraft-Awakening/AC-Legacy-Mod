@@ -87,7 +87,7 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
     @Override
     public void tick() {
         if (this.initDescTo != null) {
-            if (!this.initDescTo.equals("")) {
+            if (!this.initDescTo.isEmpty()) {
                 this.setEntityDescription(this.initDescTo, false);
             }
 
@@ -150,25 +150,25 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
     }
 
     public void runCreatedScript() {
-        if (!this.onCreated.equals("")) {
+        if (!this.onCreated.isEmpty()) {
             ((ExWorld) this.level).getScriptHandler().runScript(this.onCreated, this.scope);
         }
     }
 
     private void runUpdateScript() {
-        if (!this.onUpdate.equals("")) {
+        if (!this.onUpdate.isEmpty()) {
             ((ExWorld) this.level).getScriptHandler().runScript(this.onUpdate, this.scope);
         }
     }
 
     private void runPathCompletedScript() {
-        if (!this.onPathReached.equals("")) {
+        if (!this.onPathReached.isEmpty()) {
             ((ExWorld) this.level).getScriptHandler().runScript(this.onPathReached, this.scope);
         }
     }
 
     private boolean runOnAttackedScript() {
-        if (this.onAttacked.equals("")) {
+        if (this.onAttacked.isEmpty()) {
             return true;
         }
 
@@ -177,13 +177,13 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
     }
 
     private void runDeathScript() {
-        if (!this.onDeath.equals("")) {
+        if (!this.onDeath.isEmpty()) {
             ((ExWorld) this.level).getScriptHandler().runScript(this.onDeath, this.scope);
         }
     }
 
     private boolean runOnInteractionScript() {
-        if (!this.onInteraction.equals("")) {
+        if (!this.onInteraction.isEmpty()) {
             Object result = ((ExWorld) this.level).getScriptHandler().runScript(this.onInteraction, this.scope);
             return result instanceof Boolean b ? b : true;
         }

@@ -76,7 +76,7 @@ public class AC_GuiMapSelect extends Screen {
             }
             else {
                 if (this.saveName != null) {
-                    if (this.saveName.equals("")) {
+                    if (this.saveName.isEmpty()) {
                         File gameDir = Minecraft.getWorkingDirectory();
                         File savesDir = new File(gameDir, "saves");
                         int saveIndex = 1;

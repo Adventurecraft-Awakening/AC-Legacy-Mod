@@ -181,29 +181,29 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
 
         tag.putFloat("timeOfDay", this.timeOfDay);
         tag.putFloat("timeRate", this.timeRate);
-        if (!this.playingMusic.equals("")) {
+        if (!this.playingMusic.isEmpty()) {
             tag.putString("playingMusic", this.playingMusic);
         }
 
         tag.putBoolean("mobsBurn", this.mobsBurn);
-        if (!this.overlay.equals("")) {
+        if (!this.overlay.isEmpty()) {
             tag.putString("overlay", this.overlay);
         }
 
         tag.putCompoundTag("textureReplacements", this.getTextureReplacementTags());
-        if (!this.onNewSaveScript.equals("")) {
+        if (!this.onNewSaveScript.isEmpty()) {
             tag.putString("onNewSaveScript", this.onNewSaveScript);
         }
 
-        if (!this.onLoadScript.equals("")) {
+        if (!this.onLoadScript.isEmpty()) {
             tag.putString("onLoadScript", this.onLoadScript);
         }
 
-        if (!this.onUpdateScript.equals("")) {
+        if (!this.onUpdateScript.isEmpty()) {
             tag.putString("onUpdateScript", this.onUpdateScript);
         }
 
-        if (!this.playerName.equals("")) {
+        if (!this.playerName.isEmpty()) {
             tag.putString("playerName", this.playerName);
         }
 

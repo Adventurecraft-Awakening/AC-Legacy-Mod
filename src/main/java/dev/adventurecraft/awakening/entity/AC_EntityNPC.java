@@ -144,7 +144,7 @@ public class AC_EntityNPC extends AC_EntityLivingScript {
     @Override
     public boolean interact(Player entity) {
         if (super.interact(entity)) {
-            if (this.chatMsg != null && !this.chatMsg.equals("")) {
+            if (this.chatMsg != null && !this.chatMsg.isEmpty()) {
                 Minecraft.instance.gui.addMessage(String.format("<%s> %s", this.npcName, this.chatMsg));
             }
             return true;

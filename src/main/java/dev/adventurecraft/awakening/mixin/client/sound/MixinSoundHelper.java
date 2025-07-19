@@ -80,7 +80,7 @@ public abstract class MixinSoundHelper implements ExSoundHelper {
             return;
         }
 
-        if (id.equals("")) {
+        if (id.isEmpty()) {
             this.stopMusic();
         }
 

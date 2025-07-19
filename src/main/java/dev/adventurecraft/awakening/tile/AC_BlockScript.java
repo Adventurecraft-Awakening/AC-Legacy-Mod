@@ -46,7 +46,7 @@ public class AC_BlockScript extends TileEntityTile implements AC_ITriggerDebugBl
     @Override
     public void onTriggerActivated(Level world, int x, int y, int z) {
         var entity = (AC_TileEntityScript) world.getTileEntity(x, y, z);
-        if (!entity.onTriggerScriptFile.equals("")) {
+        if (!entity.onTriggerScriptFile.isEmpty()) {
             ((ExWorld) world).getScriptHandler().runScript(entity.onTriggerScriptFile, entity.scope);
         }
 
@@ -56,7 +56,7 @@ public class AC_BlockScript extends TileEntityTile implements AC_ITriggerDebugBl
     @Override
     public void onTriggerDeactivated(Level world, int x, int y, int z) {
         var entity = (AC_TileEntityScript) world.getTileEntity(x, y, z);
-        if (!entity.onDetriggerScriptFile.equals("")) {
+        if (!entity.onDetriggerScriptFile.isEmpty()) {
             ((ExWorld) world).getScriptHandler().runScript(entity.onDetriggerScriptFile, entity.scope);
         }
 

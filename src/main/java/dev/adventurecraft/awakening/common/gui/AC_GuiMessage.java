@@ -88,7 +88,7 @@ public class AC_GuiMessage extends Screen {
         int color = 14737632;
         this.drawString(this.font, String.format("Message: '%s'", this.msg.message), 4, 4, color);
 
-        if (!this.msg.sound.equals("")) {
+        if (!this.msg.sound.isEmpty()) {
             this.drawString(this.font, String.format("Sound: %s", this.msg.sound), 4, 24, color);
         } else {
             this.drawString(this.font, "Sound: None", 4, 24, color);

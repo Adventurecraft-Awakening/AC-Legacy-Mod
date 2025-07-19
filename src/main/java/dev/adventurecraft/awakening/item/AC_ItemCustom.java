@@ -104,7 +104,7 @@ public class AC_ItemCustom extends Item implements AC_IUseDelayItem {
 
     @Override
     public ItemInstance use(ItemInstance stack, Level world, Player player) {
-        if (!this.onItemUsedScript.equals("")) {
+        if (!this.onItemUsedScript.isEmpty()) {
             ScriptItem scriptItem = new ScriptItem(stack);
             Scriptable scope = ((ExWorld) world).getScope();
             Object jsObj = Context.javaToJS(scriptItem, scope);

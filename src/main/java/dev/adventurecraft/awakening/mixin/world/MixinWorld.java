@@ -1209,7 +1209,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         var props = (ExWorldProperties) this.levelData;
 
         ScriptModel.updateAll();
-        if (!props.getOnUpdateScript().equals("")) {
+        if (!props.getOnUpdateScript().isEmpty()) {
             this.scriptHandler.runScript(props.getOnUpdateScript(), this.scope);
         }
 
@@ -1495,7 +1495,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         }
 
         String playingMusic = ((ExWorldProperties) this.levelData).getPlayingMusic();
-        if (!playingMusic.equals("")) {
+        if (!playingMusic.isEmpty()) {
             ((ExSoundHelper) Minecraft.instance.soundEngine).playMusicFromStreaming(playingMusic, 0, 0);
         }
     }
