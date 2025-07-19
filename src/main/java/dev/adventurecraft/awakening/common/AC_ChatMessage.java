@@ -12,6 +12,7 @@ public class AC_ChatMessage {
     public final ArrayList<Line> lines;
     public int width;
     public int height;
+    public int maxWidth;
 
     public AC_ChatMessage(String text, long timestamp) {
         this.text = text;
@@ -23,7 +24,7 @@ public class AC_ChatMessage {
         return System.currentTimeMillis() - this.timestamp;
     }
 
-    public void rebuild(ExTextRenderer font, long maxWidth) {
+    public void rebuild(ExTextRenderer font, int maxWidth) {
         final String text = this.text;
         final int textLength = this.text.length();
 
@@ -54,6 +55,7 @@ public class AC_ChatMessage {
 
         this.width = width;
         this.height = height;
+        this.maxWidth = maxWidth;
     }
 
     public record Line(int start, int end, int width) {

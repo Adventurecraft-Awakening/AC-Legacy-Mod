@@ -70,7 +70,6 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
         "\033[0;97m", // WHITE
     };
 
-    private static final int CHAT_WIDTH = 320;
     private static final long MAX_MESSAGE_AGE = 200 * 50;
 
     @Shadow private Random random;
@@ -95,6 +94,7 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
     @Unique private ArrayDeque<AC_ChatMessage> chatMessages;
     @Unique public ScriptUIContainer scriptUI;
     @Unique public boolean hudEnabled = true;
+    @Unique private int chatWidth;
 
     @Inject(
         method = "<init>",
@@ -411,11 +411,11 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
         this.scriptUI.render(font, mc.textures, partialTick);
         GL11.glEnable(GL11.GL_DEPTH_TEST);
 
-        this.renderChat(screenHeight);
+        this.renderChat(screenWidth, screenHeight);
         GL11.glEnable(GL11.GL_ALPHA_TEST);
     }
 
-    private void renderChat(int screenHeight) {
+    private void renderChat(int screenWidth, int screenHeight) {
         final var ts = Tesselator.instance;
         final var exFont = (ExTextRenderer) this.minecraft.font;
         final ArrayDeque<AC_ChatMessage> messages = this.chatMessages;
@@ -434,6 +434,8 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
             maxChatHeight = 100;
             isChatOpen = false;
         }
+
+        this.chatWidth = Math.round(((ExGameOptions) this.minecraft.options).getChatWidth() * screenWidth);
 
         int chatHeight = 0;
         int chatY = screenHeight - 48;
@@ -459,11 +461,15 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
                 break;
             }
 
+            if (message.maxWidth != this.chatWidth) {
+                message.rebuild(exFont, this.chatWidth);
+            }
+
             int usedLines = Math.min(freeLines, message.lines.size());
             int msgHeight = usedLines * lineHeight;
             int y = chatY - chatHeight - msgHeight;
 
-            var rect = new Rect(x, y, CHAT_WIDTH, msgHeight).expand(shadowBorder);
+            var rect = new Rect(x, y, chatWidth, msgHeight).expand(shadowBorder);
             DrawUtil.fillRect(ts, rect, Rgba.withAlpha(0, alpha / 2));
 
             chatHeight += msgHeight + messageSpacing;
@@ -545,7 +551,7 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
         ACMod.CHAT_LOGGER.info(colorCodesToAnsi(message, 0, message.length()).toString());
 
         var entry = new AC_ChatMessage(message, System.currentTimeMillis());
-        entry.rebuild((ExTextRenderer) this.minecraft.font, CHAT_WIDTH);
+        entry.rebuild((ExTextRenderer) this.minecraft.font, this.chatWidth);
         this.chatMessages.addFirst(entry);
 
         int bufferLimit = ((ExGameOptions) minecraft.options).getChatMessageBufferLimit();

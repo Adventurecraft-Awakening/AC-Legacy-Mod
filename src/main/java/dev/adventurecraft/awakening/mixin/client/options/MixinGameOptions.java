@@ -138,6 +138,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
     public int chatMessageBufferLimit = 100;
     public int particleLimit = 1024 * 4;
     public boolean allowJavaInScript = false;
+    public float chatWidth = 0.5f;
 
     @Shadow
     public abstract float getProgressValue(Option option);
@@ -187,6 +188,8 @@ public abstract class MixinGameOptions implements ExGameOptions {
             this.chatMessageBufferLimit = (int) (value * (MAX_CHAT_BUFFER_LIMIT - 1)) + 1;
         } else if (option == OptionOF.PARTICLE_LIMIT) {
             this.particleLimit = (int) (value * MAX_PARTICLE_LIMIT);
+        } else if (option == OptionOF.CHAT_WIDTH) {
+            this.chatWidth = value;
         }
     }
 
@@ -517,6 +520,8 @@ public abstract class MixinGameOptions implements ExGameOptions {
             cir.setReturnValue((float) ((double) this.chatMessageBufferLimit / (MAX_CHAT_BUFFER_LIMIT - 1)));
         } else if (option == OptionOF.PARTICLE_LIMIT) {
             cir.setReturnValue((float) ((double) this.particleLimit / MAX_PARTICLE_LIMIT));
+        } else if(option == OptionOF.CHAT_WIDTH) {
+            cir.setReturnValue(this.chatWidth);
         }
     }
 
@@ -887,6 +892,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
                 this.particleLimit = Config.limit(this.particleLimit, 0, MAX_PARTICLE_LIMIT);
             }
             case "allowJavaInScript" -> this.allowJavaInScript = Boolean.parseBoolean(value);
+            case "chatWidth" -> this.chatWidth = Float.parseFloat(value);
         }
     }
 
@@ -940,6 +946,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
         writer.println("chatMessageBufferLimit:" + this.chatMessageBufferLimit);
         writer.println("particleLimit:" + this.particleLimit);
         writer.println("allowJavaInScript:" + this.allowJavaInScript);
+        writer.println("chatWidth:" + this.chatWidth);
     }
 
     @Override
@@ -1241,5 +1248,10 @@ public abstract class MixinGameOptions implements ExGameOptions {
     @Override
     public boolean getAllowJavaInScript() {
         return this.allowJavaInScript;
+    }
+
+    @Override
+    public float getChatWidth() {
+        return this.chatWidth;
     }
 }

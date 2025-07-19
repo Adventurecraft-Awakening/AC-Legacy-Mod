@@ -34,6 +34,7 @@ options.of.detail.connectedGrass=Connected Grass
 options.ac.detail.particleLimit=Particle Limit
 
 options.ac.chatMessageBufferLimit=Chat Buffer Limit
+options.ac.chatWidth=Chat Width
 
 ## Texture Settings names
 options.of.texture.animated.water=Animated Water
