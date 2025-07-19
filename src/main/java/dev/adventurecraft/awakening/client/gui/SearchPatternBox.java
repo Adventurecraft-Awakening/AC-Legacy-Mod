@@ -180,7 +180,7 @@ public class SearchPatternBox {
         var rect = editBox.getRect();
         var font = (ExTextRenderer) editBox.getFont();
 
-        int textWidth = font.getTextWidth(text, 0).width();
+        int textWidth = font.measureText(text, 0).width();
         int x = rect.x + rect.w - textWidth - 4;
         int y = rect.y + rect.h + 4;
         font.drawString(text, x, y, 0x8f, true);

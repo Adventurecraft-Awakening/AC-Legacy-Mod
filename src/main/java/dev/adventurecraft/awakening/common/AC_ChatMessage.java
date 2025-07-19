@@ -34,7 +34,7 @@ public class AC_ChatMessage {
 
         this.lines.clear();
         do {
-            TextRect rect = font.getTextWidth(text, offset, textLength, maxWidth, true);
+            TextRect rect = font.measureText(text, offset, textLength, maxWidth, true);
             if (rect.charCount() == 0) {
                 break;
             }

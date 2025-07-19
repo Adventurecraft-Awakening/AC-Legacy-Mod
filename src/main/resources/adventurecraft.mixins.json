@@ -52,6 +52,7 @@
     "client.render.entity.MixinItemRenderer",
     "client.render.entity.MixinPlayerRenderer",
     "client.render.entity.block.MixinPistonRenderer",
+    "client.renderer.tileentity.MixinSignRenderer",
     "client.resource.MixinTexturePack",
     "client.resource.MixinZippedTexturePack",
     "client.sound.MixinSoundHelper",

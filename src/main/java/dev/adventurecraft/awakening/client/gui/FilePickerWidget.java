@@ -109,7 +109,7 @@ public class FilePickerWidget extends ScrollableWidget {
         var boxPos = boxRect.botLeft();
 
         var exText = (ExTextRenderer) this.client.font;
-        int width = exText.getTextWidth(sizeText, 0).width();
+        int width = exText.measureText(sizeText, 0).width();
         int x = boxRect.right() - 6 - width;
 
         GL11.glEnable(GL11.GL_TEXTURE_2D);
@@ -123,7 +123,7 @@ public class FilePickerWidget extends ScrollableWidget {
         String displayName = entry.getDisplayName();
 
         if (this.selectedIndex == entryIndex || this.hoveredIndex == entryIndex) {
-            int width = exText.getTextWidth(displayName, 0).width() + 6;
+            int width = exText.measureText(displayName, 0).width() + 6;
             var selectRect = new Rect(entryLocation.x, entryLocation.y, width, entryHeight);
 
             boolean isHover = this.selectedIndex != entryIndex && this.hoveredIndex == entryIndex;

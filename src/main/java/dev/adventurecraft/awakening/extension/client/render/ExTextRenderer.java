@@ -1,13 +1,13 @@
 package dev.adventurecraft.awakening.extension.client.render;
 
-import dev.adventurecraft.awakening.common.TextRect;
 import dev.adventurecraft.awakening.common.TextRendererState;
+import dev.adventurecraft.awakening.text.TextMeasurer;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.Options;
 import net.minecraft.client.renderer.Textures;
 import org.jetbrains.annotations.NotNull;
 
-public interface ExTextRenderer {
+public interface ExTextRenderer extends TextMeasurer {
 
     void init(Options var1, String var2, Textures var3);
 
@@ -43,21 +43,6 @@ public interface ExTextRenderer {
     }
 
     @NotNull TextRendererState createState();
-
-    @NotNull TextRect getTextWidth(CharSequence text, int start, int end, long maxWidth, boolean newLines);
-
-    @NotNull
-    default TextRect getTextWidth(CharSequence text, int start, int end) {
-        return this.getTextWidth(text, start, end, Long.MAX_VALUE, false);
-    }
-
-    @NotNull
-    default TextRect getTextWidth(CharSequence text, int start) {
-        if (text == null) {
-            return TextRect.empty;
-        }
-        return this.getTextWidth(text, start, text.length());
-    }
 
     default int getCharIndex(int ch) {
         int index = SharedConstants.acceptableLetters.indexOf(ch);

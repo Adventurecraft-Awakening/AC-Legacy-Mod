@@ -3,12 +3,14 @@ package dev.adventurecraft.awakening.common;
 import dev.adventurecraft.awakening.extension.client.render.ExTesselator;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import dev.adventurecraft.awakening.image.Rgba;
+import dev.adventurecraft.awakening.text.TextMeasurer;
 import dev.adventurecraft.awakening.util.HexConvert;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.Tesselator;
+import org.jetbrains.annotations.NotNull;
 import org.lwjgl.opengl.GL11;
 
-public class TextRendererState {
+public class TextRendererState implements TextMeasurer {
 
     private final Font font;
 
@@ -21,6 +23,10 @@ public class TextRendererState {
 
     public TextRendererState(Font font) {
         this.font = font;
+    }
+
+    public @NotNull TextRect measureText(CharSequence text, int start, int end, long maxWidth, boolean newLines) {
+        return ((ExTextRenderer) this.font).measureText(text, start, end, maxWidth, newLines);
     }
 
     public void bindTexture() {
