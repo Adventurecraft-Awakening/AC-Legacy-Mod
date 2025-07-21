@@ -1,12 +1,15 @@
 package dev.adventurecraft.awakening.mixin.client.render.entity;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import dev.adventurecraft.awakening.item.AC_IItemReload;
+import dev.adventurecraft.awakening.common.AC_DebugMode;
+import dev.adventurecraft.awakening.common.ItemRenderLevel;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.client.render.entity.ExItemRenderer;
+import dev.adventurecraft.awakening.item.AC_IItemReload;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.client.renderer.Textures;
+import net.minecraft.client.renderer.TileRenderer;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.world.ItemInstance;
@@ -16,27 +19,43 @@ import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.*;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 @Mixin(ItemRenderer.class)
 public abstract class MixinItemRenderer extends EntityRenderer implements ExItemRenderer {
 
+    @Shadow public boolean field_1707;
+    @Shadow private TileRenderer tileRenderer;
+
+    @Unique private ItemRenderLevel level;
+    @Unique public float scale = 1.0F;
+
     @Shadow
     protected abstract void fillRect(Tesselator ts, int x, int y, int w, int h, int color);
 
     @Shadow
-    public abstract void renderGuiItem(
-        Font textRenderer, Textures texManager, int itemId, int meta, int texture, int x, int y);
+    public abstract void blit(int x, int y, int sx, int sy, int w, int h);
 
-    public float scale = 1.0F;
+    @Inject(
+        method = "<init>",
+        at = @At("TAIL")
+    )
+    private void setupLevel(CallbackInfo ci) {
+        this.level = new ItemRenderLevel();
+        this.tileRenderer = new TileRenderer(this.level);
+    }
 
     @ModifyArgs(
         method = "render(Lnet/minecraft/world/entity/item/ItemEntity;DDDFF)V",
         at = @At(
             value = "INVOKE",
             target = "Lorg/lwjgl/opengl/GL11;glScalef(FFF)V",
-            remap = false))
+            remap = false
+        )
+    )
     private void useScale(Args args) {
         float x = args.get(0);
         float y = args.get(1);
@@ -50,45 +69,23 @@ public abstract class MixinItemRenderer extends EntityRenderer implements ExItem
         method = "render(Lnet/minecraft/world/entity/item/ItemEntity;DDDFF)V",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/entity/ItemRenderer;bindTexture(Ljava/lang/String;)V"),
+            target = "Lnet/minecraft/client/renderer/entity/ItemRenderer;bindTexture(Ljava/lang/String;)V"
+        ),
         slice = @Slice(
             to = @At(
                 value = "INVOKE",
                 target = "Lnet/minecraft/client/renderer/entity/ItemRenderer;bindTexture(Ljava/lang/String;)V",
-                ordinal = 1)))
-    private void useTerrainTexture0(
-        ItemRenderer instance,
-        String s,
-        @Local ItemInstance stack) {
-
+                ordinal = 1
+            )
+        )
+    )
+    private void useTerrainTexture0(ItemRenderer instance, String s, @Local ItemInstance stack) {
         int texture = ((ExBlock) Tile.tiles[stack.id]).getTextureNum();
         if (texture == 0) {
             this.bindTexture("/terrain.png");
-        } else {
-            this.bindTexture(String.format("/terrain%d.png", texture));
         }
-    }
-
-    @Redirect(
-        method = "renderGuiItem",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/Textures;loadTexture(Ljava/lang/String;)I"),
-        slice = @Slice(
-            to = @At(
-                value = "INVOKE",
-                target = "Lnet/minecraft/client/renderer/Textures;loadTexture(Ljava/lang/String;)I",
-                ordinal = 1)))
-    private int useTerrainTexture1(
-        Textures instance,
-        String s,
-        @Local(index = 3, argsOnly = true) int id) {
-
-        int texture = ((ExBlock) Tile.tiles[id]).getTextureNum();
-        if (texture == 0) {
-            return instance.loadTexture("/terrain.png");
-        } else {
-            return instance.loadTexture(String.format("/terrain%d.png", texture));
+        else {
+            this.bindTexture(String.format("/terrain%d.png", texture));
         }
     }
 
@@ -120,9 +117,11 @@ public abstract class MixinItemRenderer extends EntityRenderer implements ExItem
         String countText;
         if (stack.count > 1) {
             countText = String.valueOf(stack.count);
-        } else if (stack.count < 0) {
+        }
+        else if (stack.count < 0) {
             countText = "\u00ec"; // infinity
-        } else {
+        }
+        else {
             countText = null;
         }
         if (countText != null) {
@@ -147,6 +146,75 @@ public abstract class MixinItemRenderer extends EntityRenderer implements ExItem
 
         GL11.glEnable(GL11.GL_LIGHTING);
         GL11.glEnable(GL11.GL_DEPTH_TEST);
+    }
+
+    @Overwrite
+    public void renderGuiItem(Font font, Textures textures, int item, int data, int icon, int x, int t) {
+        if (item < 256 && (TileRenderer.canRender(Tile.tiles[item].getRenderShape()) || AC_DebugMode.active)) {
+            Tile tile = Tile.tiles[item];
+            int texture = ((ExBlock) tile).getTextureNum();
+            String texName = texture == 0 ? "/terrain.png" : String.format("/terrain%d.png", texture);
+            textures.bind(textures.loadTexture(texName));
+
+            GL11.glPushMatrix();
+            int rgba = Item.items[item].getItemColor(data);
+            if (this.field_1707) {
+                float r = (float) (rgba >> 16 & 0xFF) / 255.0f;
+                float g = (float) (rgba >> 8 & 0xFF) / 255.0f;
+                float b = (float) (rgba & 0xFF) / 255.0f;
+                GL11.glColor4f(r, g, b, 1.0f);
+            }
+            this.tileRenderer.field_81 = this.field_1707;
+            if (AC_DebugMode.active) {
+                GL11.glTranslatef(x - 2, t + 3, 2.0f);
+                GL11.glScalef(10.0f, 10.0f, 10.0f);
+                GL11.glTranslatef(0.3f, 0.925f, 1.0f);
+                GL11.glScalef(1.0f, 1.0f, -1.0f);
+                GL11.glRotatef(210.0f, 1.0f, 0.0f, 0.0f);
+                GL11.glRotatef(45.0f, 0.0f, 1.0f, 0.0f);
+
+                Tesselator ts = Tesselator.instance;
+                GL11.glDisable(GL11.GL_LIGHTING);
+                ts.begin();
+                this.level.setTile(0, 0, 0, tile.id);
+                this.level.setData(0, 0, 0, data);
+                this.tileRenderer.tesselateInWorld(tile, 0, 0, 0);
+                ts.end();
+                GL11.glEnable(GL11.GL_LIGHTING);
+            }
+            else {
+                GL11.glTranslatef(x - 2, t + 3, -3.0F);
+                GL11.glScalef(10.0F, 10.0F, 10.0F);
+                GL11.glTranslatef(1.0F, 0.5F, 1.0F);
+                GL11.glScalef(1.0F, 1.0F, -1.0F);
+                GL11.glRotatef(210.0F, 1.0F, 0.0F, 0.0F);
+                GL11.glRotatef(45.0F, 0.0F, 1.0F, 0.0F);
+
+                this.tileRenderer.renderTile(tile, data, 1.0F);
+            }
+            this.tileRenderer.field_81 = true;
+            GL11.glPopMatrix();
+        }
+        else if (icon >= 0) {
+            if (item < 256) {
+                Tile tile = Tile.tiles[item];
+                int texture = ((ExBlock) tile).getTextureNum();
+                String texName = texture == 0 ? "/terrain.png" : String.format("/terrain%d.png", texture);
+                textures.bind(textures.loadTexture(texName));
+            }
+            else {
+                textures.bind(textures.loadTexture("/gui/items.png"));
+            }
+            int n = Item.items[item].getItemColor(data);
+            float f = (float) (n >> 16 & 0xFF) / 255.0f;
+            float f4 = (float) (n >> 8 & 0xFF) / 255.0f;
+            float f5 = (float) (n & 0xFF) / 255.0f;
+            if (this.field_1707) {
+                GL11.glColor4f(f, f4, f5, 1.0f);
+            }
+            this.blit(x, t, icon % 16 * 16, icon / 16 * 16, 16, 16);
+        }
+        GL11.glEnable(GL11.GL_CULL_FACE);
     }
 
     @Override
