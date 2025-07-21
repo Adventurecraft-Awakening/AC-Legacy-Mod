@@ -2,7 +2,9 @@ package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.level.Level;
 import org.lwjgl.input.Keyboard;
 import org.mozilla.javascript.Context;
@@ -48,35 +50,39 @@ public class ScriptKeyboard {
         this.allKeys = null;
     }
 
-    public void processKeyPress(int var1) {
+    public void processKeyPress(int key) {
         Scriptable scope = ((ExWorld) this.world).getScope();
 
         boolean isPut = false;
-        String binding = this.keyBinds.get(var1);
+        String binding = this.keyBinds.get(key);
         if (binding != null) {
             isPut = true;
-            ScriptableObject.putProperty(scope, "keyID", var1);
+            ScriptableObject.putProperty(scope, "keyID", key);
             ((ExWorld) this.world).getScriptHandler().runScript(binding, scope);
         }
 
         if (this.allKeys != null) {
             if (!isPut) {
-                ScriptableObject.putProperty(scope, "keyID", var1);
+                ScriptableObject.putProperty(scope, "keyID", key);
             }
             ((ExWorld) this.world).getScriptHandler().runScript(this.allKeys, scope);
         }
     }
 
-    public boolean isKeyDown(int var1) {
-        return Keyboard.isKeyDown(var1);
+    public boolean isKeyDown(int key) {
+        Screen screen = Minecraft.instance.screen;
+        if (screen == null || screen.passEvents) {
+            return Keyboard.isKeyDown(key);
+        }
+        return false;
     }
 
-    public String getKeyName(int var1) {
-        return Keyboard.getKeyName(var1);
+    public String getKeyName(int key) {
+        return Keyboard.getKeyName(key);
     }
 
-    public int getKeyID(String var1) {
-        return Keyboard.getKeyIndex(var1);
+    public int getKeyID(String keyName) {
+        return Keyboard.getKeyIndex(keyName);
     }
 
     public boolean processPlayerKeyPress(int key, boolean isDown) {
@@ -91,11 +97,14 @@ public class ScriptKeyboard {
 
         if (key == this.gameSettings.keyLeft.key) {
             script = this.keyLeftScript;
-        } else if (key == this.gameSettings.keyRight.key) {
+        }
+        else if (key == this.gameSettings.keyRight.key) {
             script = this.keyRightScript;
-        } else if (key == this.gameSettings.keyJump.key) {
+        }
+        else if (key == this.gameSettings.keyJump.key) {
             script = this.keyJumpScript;
-        } else if (key == this.gameSettings.keySneak.key) {
+        }
+        else if (key == this.gameSettings.keySneak.key) {
             script = this.keySneakScript;
         }
 
