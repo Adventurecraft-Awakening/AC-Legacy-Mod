@@ -11,6 +11,7 @@ import dev.adventurecraft.awakening.common.gui.AC_GuiStore;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.entity.player.ExAbstractClientPlayerEntity;
+import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import dev.adventurecraft.awakening.extension.client.gui.screen.ExScreen;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.render.ExWorldEventRenderer;
@@ -1138,6 +1139,16 @@ public abstract class MixinMinecraft implements ExMinecraft {
         if (AC_DebugMode.active) {
             exWorld.getUndoStack().stopRecording();
         }
+    }
+
+    @Inject(
+        method = "setLevel(Lnet/minecraft/world/level/Level;Ljava/lang/String;Lnet/minecraft/world/entity/player/Player;)V",
+        at = @At("HEAD")
+    )
+    private void resetStateOnInit(Level stage, String newPlayer, Player par3, CallbackInfo ci) {
+        ((ExInGameHud) this.gui).getScriptUI().clear();
+        this.setCameraActive(false);
+        ((ExSoundHelper) this.soundEngine).stopMusic();
     }
 
     @Inject(
