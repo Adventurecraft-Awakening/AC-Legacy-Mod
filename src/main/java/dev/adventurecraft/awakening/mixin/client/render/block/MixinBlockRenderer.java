@@ -1201,7 +1201,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             int texAngle = 8;
             double uSin = 0.0 * 8.0F / 256.0F;
             double uCos = 1.0 * 8.0F / 256.0F;
-            if (angle > -999.0F) {
+            if (angle >= -999.0F) {
                 texAngle = 16;
                 uSin = Mth.sin(angle) * 8.0F / 256.0F;
                 uCos = Mth.cos(angle) * 8.0F / 256.0F;
@@ -1217,10 +1217,10 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             float light = block.getBrightness(this.level, x, y, z);
 
             ts.color(light * red, light * green, light * blue);
-            ts.vertexUV(x, y + selfH, z, u - u0, v - u1);
-            ts.vertexUV(x, y + frontH, z + 1, u - u1, v + u1);
+            ts.vertexUV(x, y + selfH, z, u - u1, v - u0);
+            ts.vertexUV(x, y + frontH, z + 1, u - u0, v + u1);
             ts.vertexUV(x + 1, y + frontRightH, z + 1, u + u1, v + u0);
-            ts.vertexUV(x + 1, y + rightH, z, u + u0, v - u0);
+            ts.vertexUV(x + 1, y + rightH, z, u + u0, v - u1);
         }
 
         if (this.noCulling || faceDown) {
@@ -1253,18 +1253,18 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             int texture = block.getTexture(side + 2, meta);
             double texX = (texture & 15) << 4;
             double texY = texture & 240;
-
             double y0;
             double y1;
             double x0;
-            double z0;
             double x1;
+            double z0;
             double z1;
+
             if (side == 0) {
                 y0 = selfH;
                 y1 = rightH;
                 x0 = x;
-                x1 = (x + 1);
+                x1 = x + 1;
                 z0 = z;
                 z1 = z;
             }
