@@ -2527,7 +2527,6 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         float blue = (float) (colorMul & 255) / 255.0F;
         ts.color(brightness * red, brightness * green, brightness * blue);
 
-        double dY = y - 17.0 / 16.0;
         this.rand.setSeed(x * x * 3121L + x * 45238971L + z * z * 418711L + z * 13761L + y);
 
         int texId = 168;
@@ -2541,8 +2540,8 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
         double x0 = x + 0.05D;
         double x1 = x + 0.95D;
-        double y0 = dY;
-        double y1 = dY + 1.0D;
+        double y0 = y + 1.0D;
+        double y1 = y + 2.0D;
         double z0 = z + 0.05D;
         double z1 = z + 0.95D;
 
