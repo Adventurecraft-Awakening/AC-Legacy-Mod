@@ -2023,29 +2023,30 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         double u1 = (texX + 15.99D) / 256.0D;
         double v0 = texY / 256.0D;
         double v1 = (texY + 15.99D) / 256.0D;
+
+        block.setShape(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
         float brightness = block.getBrightness(this.level, x, y, z);
 
         double x1 = x + 1;
         double z1 = z + 1;
 
         ts.color(0.5F * brightness, 0.5F * brightness, 0.5F * brightness);
-        block.setShape(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
         ts.vertexUV(x, y, z, u0, v0);
         ts.vertexUV(x1, y, z, u1, v0);
         ts.vertexUV(x1, y, z1, u1, v1);
         ts.vertexUV(x, y, z1, u0, v1);
 
         if (coreMeta == 0) {
-            renderBlockSlope0(x, y, z, brightness, u0, u1, v0, v1);
+            this.renderBlockSlope0(x, y, z, brightness, u0, u1, v0, v1);
         }
         else if (coreMeta == 1) {
-            renderBlockSlope1(x, y, z, brightness, u0, u1, v0, v1);
+            this.renderBlockSlope1(x, y, z, brightness, u0, u1, v0, v1);
         }
         else if (coreMeta == 2) {
-            renderBlockSlope2(x, y, z, brightness, u0, u1, v0, v1);
+            this.renderBlockSlope2(x, y, z, brightness, u0, u1, v0, v1);
         }
         else if (coreMeta == 3) {
-            renderBlockSlope3(x, y, z, brightness, u0, u1, v0, v1);
+            this.renderBlockSlope3(x, y, z, brightness, u0, u1, v0, v1);
         }
         return true;
     }
