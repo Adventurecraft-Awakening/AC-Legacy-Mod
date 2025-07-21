@@ -1378,11 +1378,11 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         }
 
         if (!connectFront && !connectLeft && this.level.getTile(x - 1, y, z + 1) == block.id) {
-            tesselateFenceFrontLeft(block, x, y, z, maxZ, minZ);
+            this.tesselateFenceFrontLeft(block, x, y, z, maxZ, minZ);
         }
 
         if (!connectFront && !connectRight && this.level.getTile(x + 1, y, z + 1) == block.id) {
-            tesselateFenceFrontRight(block, x, y, z, maxZ, minZ);
+            this.tesselateFenceFrontRight(block, x, y, z, maxZ, minZ);
         }
 
         block.setShape(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
@@ -1403,86 +1403,90 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         int texture = block.getTexture(this.level, x, y, z, Facing.DOWN);
         double texX = (texture & 15) << 4;
         double texY = texture & 240;
+
         double u0 = texX / 256.0D;
-        double v0 = (texX + 16.0D - 0.01D) / 256.0D;
-        double u1 = (texY + 16.0D * maxY - 1.0D) / 256.0D;
+        double u1 = (texX + 16.0D - 0.01D) / 256.0D;
+        double v0 = (texY + 16.0D * maxY - 1.0D) / 256.0D;
         double v1 = (texY + 16.0D * minY - 1.0D - 0.01D) / 256.0D;
 
         float b0 = this.level.getBrightness(x, y, z);
         float b1 = this.level.getBrightness(x - 1, y, z + 1);
 
-        double x0 = minZ + x;
-        double x1 = x0 - 1.0;
-        double x2 = maxZ + x;
-        double x3 = x2 - 1.0;
+        double x1 = x - 1.0D;
+        double x2 = minZ + x;
+        double x3 = maxZ + x;
+        double x4 = minZ + x1;
+        double x5 = maxZ + x1;
 
         double y0 = minY + y;
         double y1 = maxY + y;
 
-        double z0 = minZ + z;
-        double z1 = z0 + 1.0;
-        double z2 = maxZ + z;
-        double z3 = z2 + 1.0;
+        double z1 = z + 1.0D;
+        double z2 = minZ + z;
+        double z3 = maxZ + z;
+        double z4 = minZ + z1;
+        double z5 = maxZ + z1;
 
         ts.color(b0 * 0.7F, b0 * 0.7F, b0 * 0.7F);
+        ts.vertexUV(x3, y0, z3, u0, v1);
+        ts.vertexUV(x3, y1, z3, u0, v0);
+        ts.color(b1 * 0.7F, b1 * 0.7F, b1 * 0.7F);
+        ts.vertexUV(x5, y1, z5, u1, v0);
+        ts.vertexUV(x5, y0, z5, u1, v1);
+        ts.vertexUV(x4, y0, z4, u1, v1);
+        ts.vertexUV(x4, y1, z4, u1, v0);
+        ts.color(b0 * 0.7F, b0 * 0.7F, b0 * 0.7F);
+        ts.vertexUV(x2, y1, z2, u0, v0);
         ts.vertexUV(x2, y0, z2, u0, v1);
-        ts.vertexUV(x2, y1, z2, u0, u1);
-        ts.color(b1 * 0.7F, b1 * 0.7F, b1 * 0.7F);
-        ts.vertexUV(x3, y1, z3, v0, u1);
-        ts.vertexUV(x3, y0, z3, v0, v1);
-        ts.color(b1 * 0.7F, b1 * 0.7F, b1 * 0.7F);
-        ts.vertexUV(x1, y0, z1, v0, v1);
-        ts.vertexUV(x1, y1, z1, v0, u1);
-        ts.color(b0 * 0.7F, b0 * 0.7F, b0 * 0.7F);
-        ts.vertexUV(x0, y1, z0, u0, u1);
-        ts.vertexUV(x0, y0, z0, u0, v1);
 
-        u1 = (texY + 16.0D * maxY) / 256.0D;
+        v0 = (texY + 16.0D * maxY) / 256.0D;
         v1 = (texY + 16.0D * maxY + 2.0D - 0.01D) / 256.0D;
         ts.color(b1 * 0.5F, b1 * 0.5F, b1 * 0.5F);
-        ts.vertexUV(x3, y0, z3, v0, u1);
-        ts.vertexUV(x1, y0, z1, v0, v1);
+        ts.vertexUV(x5, y0, z5, u1, v0);
+        ts.vertexUV(x4, y0, z4, u1, v1);
         ts.color(b0 * 0.5F, b0 * 0.5F, b0 * 0.5F);
-        ts.vertexUV(x0, y0, z0, u0, v1);
-        ts.vertexUV(x2, y0, z2, u0, u1);
+        ts.vertexUV(x2, y0, z2, u0, v1);
+        ts.vertexUV(x3, y0, z3, u0, v0);
         ts.color(b1, b1, b1);
-        ts.vertexUV(x1, y1, z1, v0, u1);
-        ts.vertexUV(x3, y1, z3, v0, v1);
+        ts.vertexUV(x4, y1, z4, u1, v0);
+        ts.vertexUV(x5, y1, z5, u1, v1);
         ts.color(b0, b0, b0);
-        ts.vertexUV(x2, y1, z2, u0, v1);
-        ts.vertexUV(x0, y1, z0, u0, u1);
+        ts.vertexUV(x3, y1, z3, u0, v1);
+        ts.vertexUV(x2, y1, z2, u0, v0);
 
         minY = 12.0 / 16.0;
         maxY = 15.0 / 16.0;
-        u1 = (texY + 16.0D * maxY - 1.0D) / 256.0D;
+        y0 = minY + y;
+        y1 = maxY + y;
+
+        v0 = (texY + 16.0D * maxY - 1.0D) / 256.0D;
         v1 = (texY + 16.0D * minY - 1.0D - 0.01D) / 256.0D;
         ts.color(b0 * 0.7F, b0 * 0.7F, b0 * 0.7F);
-        ts.vertexUV(x2, y0, z2, u0, v1);
-        ts.vertexUV(x2, y1, z2, u0, u1);
+        ts.vertexUV(x3, y0, z3, u0, v1);
+        ts.vertexUV(x3, y1, z3, u0, v0);
         ts.color(b1 * 0.7F, b1 * 0.7F, b1 * 0.7F);
-        ts.vertexUV(x3, y1, z3, v0, u1);
-        ts.vertexUV(x3, y0, z3, v0, v1);
-        ts.color(b1 * 0.7F, b1 * 0.7F, b1 * 0.7F);
-        ts.vertexUV(x1, y0, z1, v0, v1);
-        ts.vertexUV(x1, y1, z1, v0, u1);
+        ts.vertexUV(x5, y1, z5, u1, v0);
+        ts.vertexUV(x5, y0, z5, u1, v1);
+        ts.vertexUV(x4, y0, z4, u1, v1);
+        ts.vertexUV(x4, y1, z4, u1, v0);
         ts.color(b0 * 0.7F, b0 * 0.7F, b0 * 0.7F);
-        ts.vertexUV(x0, y1, z0, u0, u1);
-        ts.vertexUV(x0, y0, z0, u0, v1);
+        ts.vertexUV(x2, y1, z2, u0, v0);
+        ts.vertexUV(x2, y0, z2, u0, v1);
 
-        u1 = (texY + 16.0D * maxY) / 256.0D;
+        v0 = (texY + 16.0D * maxY) / 256.0D;
         v1 = (texY + 16.0D * maxY - 2.0D - 0.01D) / 256.0D;
         ts.color(b1 * 0.5F, b1 * 0.5F, b1 * 0.5F);
-        ts.vertexUV(x3, y0, z3, v0, u1);
-        ts.vertexUV(x1, y0, z1, v0, v1);
+        ts.vertexUV(x5, y0, z5, u1, v0);
+        ts.vertexUV(x4, y0, z4, u1, v1);
         ts.color(b0 * 0.5F, b0 * 0.5F, b0 * 0.5F);
-        ts.vertexUV(x0, y0, z0, u0, v1);
-        ts.vertexUV(x2, y0, z2, u0, u1);
+        ts.vertexUV(x2, y0, z2, u0, v1);
+        ts.vertexUV(x3, y0, z3, u0, v0);
         ts.color(b1, b1, b1);
-        ts.vertexUV(x1, y1, z1, v0, u1);
-        ts.vertexUV(x3, y1, z3, v0, v1);
+        ts.vertexUV(x4, y1, z4, u1, v0);
+        ts.vertexUV(x5, y1, z5, u1, v1);
         ts.color(b0, b0, b0);
-        ts.vertexUV(x2, y1, z2, u0, v1);
-        ts.vertexUV(x0, y1, z0, u0, u1);
+        ts.vertexUV(x3, y1, z3, u0, v1);
+        ts.vertexUV(x2, y1, z2, u0, v0);
     }
 
     private @Unique void tesselateFenceFrontRight(Tile block, int x, int y, int z, double maxZ, double minZ) {
@@ -1496,85 +1500,88 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         double texX = (texture & 15) << 4;
         double texY = texture & 240;
         double u0 = texX / 256.0D;
-        double v0 = (texX + 16.0D - 0.01D) / 256.0D;
-        double u1 = (texY + 16.0D * maxY - 1.0D) / 256.0D;
+        double u1 = (texX + 16.0D - 0.01D) / 256.0D;
+        double v0 = (texY + 16.0D * maxY - 1.0D) / 256.0D;
         double v1 = (texY + 16.0D * minY - 1.0D - 0.01D) / 256.0D;
 
         float b0 = this.level.getBrightness(x, y, z);
         float b1 = this.level.getBrightness(x - 1, y, z + 1);
 
-        double x0 = minZ + x;
-        double x1 = x0 + 1.0;
-        double x2 = maxZ + x;
-        double x3 = x2 + 1.0;
+        double x1 = x + 1.0D;
+        double x2 = minZ + x;
+        double x3 = maxZ + x;
+        double x4 = minZ + x1;
+        double x5 = maxZ + x1;
 
         double y0 = minY + y;
         double y1 = maxY + y;
 
-        double z0 = minZ + z;
-        double z1 = z0 + 1.0;
-        double z2 = maxZ + z;
-        double z3 = z2 + 1.0;
+        double z1 = z + 1.0D;
+        double z2 = minZ + z;
+        double z3 = maxZ + z;
+        double z4 = minZ + z1;
+        double z5 = maxZ + z1;
 
         ts.color(b0 * 0.7F, b0 * 0.7F, b0 * 0.7F);
-        ts.vertexUV(x2, y0, z0, u0, v1);
-        ts.vertexUV(x2, y1, z0, u0, u1);
+        ts.vertexUV(x3, y0, z2, u0, v1);
+        ts.vertexUV(x3, y1, z2, u0, v0);
         ts.color(b1 * 0.7F, b1 * 0.7F, b1 * 0.7F);
-        ts.vertexUV(x3, y1, z1, v0, u1);
-        ts.vertexUV(x3, y0, z1, v0, v1);
-        ts.color(b1 * 0.7F, b1 * 0.7F, b1 * 0.7F);
-        ts.vertexUV(x1, y0, z3, v0, v1);
-        ts.vertexUV(x1, y1, z3, v0, u1);
+        ts.vertexUV(x5, y1, z4, u1, v0);
+        ts.vertexUV(x5, y0, z4, u1, v1);
+        ts.vertexUV(x4, y0, z5, u1, v1);
+        ts.vertexUV(x4, y1, z5, u1, v0);
         ts.color(b0 * 0.7F, b0 * 0.7F, b0 * 0.7F);
-        ts.vertexUV(x0, y1, z2, u0, u1);
-        ts.vertexUV(x0, y0, z2, u0, v1);
+        ts.vertexUV(x2, y1, z3, u0, v0);
+        ts.vertexUV(x2, y0, z3, u0, v1);
 
-        u1 = (texY + 16.0D * maxY) / 256.0D;
+        v0 = (texY + 16.0D * maxY) / 256.0D;
         v1 = (texY + 16.0D * maxY + 2.0D - 0.01D) / 256.0D;
         ts.color(b1 * 0.5F, b1 * 0.5F, b1 * 0.5F);
-        ts.vertexUV(x3, y0, z1, v0, u1);
-        ts.vertexUV(x1, y0, z3, v0, v1);
+        ts.vertexUV(x5, y0, z4, u1, v0);
+        ts.vertexUV(x4, y0, z5, u1, v1);
         ts.color(b0 * 0.5F, b0 * 0.5F, b0 * 0.5F);
-        ts.vertexUV(x0, y0, z2, u0, v1);
-        ts.vertexUV(x2, y0, z0, u0, u1);
+        ts.vertexUV(x2, y0, z3, u0, v1);
+        ts.vertexUV(x3, y0, z2, u0, v0);
         ts.color(b1, b1, b1);
-        ts.vertexUV(x1, y1, z3, v0, u1);
-        ts.vertexUV(x3, y1, z1, v0, v1);
+        ts.vertexUV(x4, y1, z5, u1, v0);
+        ts.vertexUV(x5, y1, z4, u1, v1);
         ts.color(b0, b0, b0);
-        ts.vertexUV(x2, y1, z0, u0, v1);
-        ts.vertexUV(x0, y1, z2, u0, u1);
+        ts.vertexUV(x3, y1, z2, u0, v1);
+        ts.vertexUV(x2, y1, z3, u0, v0);
 
-        minY = 12.0F / 16.0F;
-        maxY = 15.0F / 16.0F;
-        u1 = (texY + 16.0D * maxY - 1.0D) / 256.0D;
+        minY = 12.0 / 16.0;
+        maxY = 15.0 / 16.0;
+        y0 = minY + y;
+        y1 = maxY + y;
+
+        v0 = (texY + 16.0D * maxY - 1.0D) / 256.0D;
         v1 = (texY + 16.0D * minY - 1.0D - 0.01D) / 256.0D;
         ts.color(b0 * 0.7F, b0 * 0.7F, b0 * 0.7F);
-        ts.vertexUV(x2, y0, z0, u0, v1);
-        ts.vertexUV(x2, y1, z0, u0, u1);
+        ts.vertexUV(x3, y0, z2, u0, v1);
+        ts.vertexUV(x3, y1, z2, u0, v0);
         ts.color(b1 * 0.7F, b1 * 0.7F, b1 * 0.7F);
-        ts.vertexUV(x3, y1, z1, v0, u1);
-        ts.vertexUV(x3, y0, z1, v0, v1);
-        ts.color(b1 * 0.7F, b1 * 0.7F, b1 * 0.7F);
-        ts.vertexUV(x1, y0, z3, v0, v1);
-        ts.vertexUV(x1, y1, z3, v0, u1);
+        ts.vertexUV(x5, y1, z4, u1, v0);
+        ts.vertexUV(x5, y0, z4, u1, v1);
+        ts.vertexUV(x4, y0, z5, u1, v1);
+        ts.vertexUV(x4, y1, z5, u1, v0);
         ts.color(b0 * 0.7F, b0 * 0.7F, b0 * 0.7F);
-        ts.vertexUV(x0, y1, z2, u0, u1);
-        ts.vertexUV(x0, y0, z2, u0, v1);
+        ts.vertexUV(x2, y1, z3, u0, v0);
+        ts.vertexUV(x2, y0, z3, u0, v1);
 
-        u1 = (texY + 16.0D * maxY) / 256.0D;
+        v0 = (texY + 16.0D * maxY) / 256.0D;
         v1 = (texY + 16.0D * maxY - 2.0D - 0.01D) / 256.0D;
         ts.color(b1 * 0.5F, b1 * 0.5F, b1 * 0.5F);
-        ts.vertexUV(x3, y0, z1, v0, u1);
-        ts.vertexUV(x1, y0, z3, v0, v1);
+        ts.vertexUV(x5, y0, z4, u1, v0);
+        ts.vertexUV(x4, y0, z5, u1, v1);
         ts.color(b0 * 0.5F, b0 * 0.5F, b0 * 0.5F);
-        ts.vertexUV(x0, y0, z2, u0, v1);
-        ts.vertexUV(x2, y0, z0, u0, u1);
+        ts.vertexUV(x2, y0, z3, u0, v1);
+        ts.vertexUV(x3, y0, z2, u0, v0);
         ts.color(b1, b1, b1);
-        ts.vertexUV(x1, y1, z3, v0, u1);
-        ts.vertexUV(x3, y1, z1, v0, v1);
+        ts.vertexUV(x4, y1, z5, u1, v0);
+        ts.vertexUV(x5, y1, z4, u1, v1);
         ts.color(b0, b0, b0);
-        ts.vertexUV(x2, y1, z0, u0, v1);
-        ts.vertexUV(x0, y1, z2, u0, u1);
+        ts.vertexUV(x3, y1, z2, u0, v1);
+        ts.vertexUV(x2, y1, z3, u0, v0);
     }
 
     @Overwrite
