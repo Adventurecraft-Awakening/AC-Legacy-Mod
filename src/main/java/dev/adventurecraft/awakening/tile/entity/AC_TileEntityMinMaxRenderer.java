@@ -37,16 +37,12 @@ public class AC_TileEntityMinMaxRenderer extends TileEntityRenderer {
         float g,
         float b
     ) {
-        if (max.sub(min).equals(0)) {
-            return;
-        }
-
         GL11.glPushMatrix();
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GL11.glDisable(GL11.GL_TEXTURE_2D);
         GL11.glDisable(GL11.GL_LIGHTING);
-        GL11.glTranslatef((float) x + 0.5F, (float) y + 0.5F, (float) z + 0.5F);
+        GL11.glTranslatef((float) (x + 0.5), (float) (y + 0.5), (float) (z + 0.5));
         GL11.glLineWidth(6.0F);
         GL11.glShadeModel(GL11.GL_SMOOTH);
         GL11.glBegin(GL11.GL_LINES);
@@ -59,7 +55,7 @@ public class AC_TileEntityMinMaxRenderer extends TileEntityRenderer {
                         GL11.glColor3f(0.0F, 0.0F, 0.0F);
                         GL11.glVertex3f(0.0F, 0.0F, 0.0F);
                         GL11.glColor3f(r, g, b);
-                        GL11.glVertex3f((float) (bX - entity.x), (float) (bY - entity.y), (float) (bZ - entity.z));
+                        GL11.glVertex3f(bX - entity.x, bY - entity.y, bZ - entity.z);
                     }
                 }
             }
