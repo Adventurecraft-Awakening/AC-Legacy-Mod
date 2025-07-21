@@ -48,6 +48,14 @@ public abstract class MixinTesselator implements ExTesselator {
         this.ac$packedColor(rgba);
     }
 
+    public @Override void ac$splatColor(float rgb) {
+        if (this.noColor) {
+            return;
+        }
+        int l = MathF.clamp((int) (rgb * 255.0F), 0, 255);
+        this.ac$color(l, l, l, 255);
+    }
+
     public @Overwrite void color(int r, int g, int b, int a) {
         if (this.noColor) {
             return;

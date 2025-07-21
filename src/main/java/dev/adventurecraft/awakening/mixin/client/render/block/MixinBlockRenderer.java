@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.mixin.client.render.block;
 
 import com.llamalad7.mixinextras.sugar.Local;
+import dev.adventurecraft.awakening.extension.client.render.ExTesselator;
 import dev.adventurecraft.awakening.tile.AC_BlockOverlay;
 import dev.adventurecraft.awakening.tile.AC_BlockShapes;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
@@ -1400,6 +1401,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         maxZ = fixupCrossFenceZ(maxZ);
 
         Tesselator ts = Tesselator.instance;
+        var exTs = (ExTesselator) ts;
         int texture = block.getTexture(this.level, x, y, z, Facing.DOWN);
         double texX = (texture & 15) << 4;
         double texY = texture & 240;
@@ -1427,30 +1429,30 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         double z4 = minZ + z1;
         double z5 = maxZ + z1;
 
-        ts.color(b0 * 0.7F, b0 * 0.7F, b0 * 0.7F);
+        exTs.ac$splatColor(b0 * 0.7F);
         ts.vertexUV(x3, y0, z3, u0, v1);
         ts.vertexUV(x3, y1, z3, u0, v0);
-        ts.color(b1 * 0.7F, b1 * 0.7F, b1 * 0.7F);
+        exTs.ac$splatColor(b1 * 0.7F);
         ts.vertexUV(x5, y1, z5, u1, v0);
         ts.vertexUV(x5, y0, z5, u1, v1);
         ts.vertexUV(x4, y0, z4, u1, v1);
         ts.vertexUV(x4, y1, z4, u1, v0);
-        ts.color(b0 * 0.7F, b0 * 0.7F, b0 * 0.7F);
+        exTs.ac$splatColor(b0 * 0.7F);
         ts.vertexUV(x2, y1, z2, u0, v0);
         ts.vertexUV(x2, y0, z2, u0, v1);
 
         v0 = (texY + 16.0D * maxY) / 256.0D;
         v1 = (texY + 16.0D * maxY + 2.0D - 0.01D) / 256.0D;
-        ts.color(b1 * 0.5F, b1 * 0.5F, b1 * 0.5F);
+        exTs.ac$splatColor(b1 * 0.5F);
         ts.vertexUV(x5, y0, z5, u1, v0);
         ts.vertexUV(x4, y0, z4, u1, v1);
-        ts.color(b0 * 0.5F, b0 * 0.5F, b0 * 0.5F);
+        exTs.ac$splatColor(b0 * 0.5F);
         ts.vertexUV(x2, y0, z2, u0, v1);
         ts.vertexUV(x3, y0, z3, u0, v0);
-        ts.color(b1, b1, b1);
+        exTs.ac$splatColor(b1);
         ts.vertexUV(x4, y1, z4, u1, v0);
         ts.vertexUV(x5, y1, z5, u1, v1);
-        ts.color(b0, b0, b0);
+        exTs.ac$splatColor(b0);
         ts.vertexUV(x3, y1, z3, u0, v1);
         ts.vertexUV(x2, y1, z2, u0, v0);
 
@@ -1461,30 +1463,30 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
         v0 = (texY + 16.0D * maxY - 1.0D) / 256.0D;
         v1 = (texY + 16.0D * minY - 1.0D - 0.01D) / 256.0D;
-        ts.color(b0 * 0.7F, b0 * 0.7F, b0 * 0.7F);
+        exTs.ac$splatColor(b0 * 0.7F);
         ts.vertexUV(x3, y0, z3, u0, v1);
         ts.vertexUV(x3, y1, z3, u0, v0);
-        ts.color(b1 * 0.7F, b1 * 0.7F, b1 * 0.7F);
+        exTs.ac$splatColor(b1 * 0.7F);
         ts.vertexUV(x5, y1, z5, u1, v0);
         ts.vertexUV(x5, y0, z5, u1, v1);
         ts.vertexUV(x4, y0, z4, u1, v1);
         ts.vertexUV(x4, y1, z4, u1, v0);
-        ts.color(b0 * 0.7F, b0 * 0.7F, b0 * 0.7F);
+        exTs.ac$splatColor(b0 * 0.7F);
         ts.vertexUV(x2, y1, z2, u0, v0);
         ts.vertexUV(x2, y0, z2, u0, v1);
 
         v0 = (texY + 16.0D * maxY) / 256.0D;
         v1 = (texY + 16.0D * maxY - 2.0D - 0.01D) / 256.0D;
-        ts.color(b1 * 0.5F, b1 * 0.5F, b1 * 0.5F);
+        exTs.ac$splatColor(b1 * 0.5F);
         ts.vertexUV(x5, y0, z5, u1, v0);
         ts.vertexUV(x4, y0, z4, u1, v1);
-        ts.color(b0 * 0.5F, b0 * 0.5F, b0 * 0.5F);
+        exTs.ac$splatColor(b0 * 0.5F);
         ts.vertexUV(x2, y0, z2, u0, v1);
         ts.vertexUV(x3, y0, z3, u0, v0);
-        ts.color(b1, b1, b1);
+        exTs.ac$splatColor(b1);
         ts.vertexUV(x4, y1, z4, u1, v0);
         ts.vertexUV(x5, y1, z5, u1, v1);
-        ts.color(b0, b0, b0);
+        exTs.ac$splatColor(b0);
         ts.vertexUV(x3, y1, z3, u0, v1);
         ts.vertexUV(x2, y1, z2, u0, v0);
     }
@@ -1496,6 +1498,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         maxZ = fixupCrossFenceZ(maxZ);
 
         Tesselator ts = Tesselator.instance;
+        var exTs = (ExTesselator) ts;
         int texture = block.getTexture(this.level, x, y, z, Facing.DOWN);
         double texX = (texture & 15) << 4;
         double texY = texture & 240;
@@ -1522,30 +1525,30 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         double z4 = minZ + z1;
         double z5 = maxZ + z1;
 
-        ts.color(b0 * 0.7F, b0 * 0.7F, b0 * 0.7F);
+        exTs.ac$splatColor(b0 * 0.7F);
         ts.vertexUV(x3, y0, z2, u0, v1);
         ts.vertexUV(x3, y1, z2, u0, v0);
-        ts.color(b1 * 0.7F, b1 * 0.7F, b1 * 0.7F);
+        exTs.ac$splatColor(b1 * 0.7F);
         ts.vertexUV(x5, y1, z4, u1, v0);
         ts.vertexUV(x5, y0, z4, u1, v1);
         ts.vertexUV(x4, y0, z5, u1, v1);
         ts.vertexUV(x4, y1, z5, u1, v0);
-        ts.color(b0 * 0.7F, b0 * 0.7F, b0 * 0.7F);
+        exTs.ac$splatColor(b0 * 0.7F);
         ts.vertexUV(x2, y1, z3, u0, v0);
         ts.vertexUV(x2, y0, z3, u0, v1);
 
         v0 = (texY + 16.0D * maxY) / 256.0D;
         v1 = (texY + 16.0D * maxY + 2.0D - 0.01D) / 256.0D;
-        ts.color(b1 * 0.5F, b1 * 0.5F, b1 * 0.5F);
+        exTs.ac$splatColor(b1 * 0.5F);
         ts.vertexUV(x5, y0, z4, u1, v0);
         ts.vertexUV(x4, y0, z5, u1, v1);
-        ts.color(b0 * 0.5F, b0 * 0.5F, b0 * 0.5F);
+        exTs.ac$splatColor(b0 * 0.5F);
         ts.vertexUV(x2, y0, z3, u0, v1);
         ts.vertexUV(x3, y0, z2, u0, v0);
-        ts.color(b1, b1, b1);
+        exTs.ac$splatColor(b1);
         ts.vertexUV(x4, y1, z5, u1, v0);
         ts.vertexUV(x5, y1, z4, u1, v1);
-        ts.color(b0, b0, b0);
+        exTs.ac$splatColor(b0);
         ts.vertexUV(x3, y1, z2, u0, v1);
         ts.vertexUV(x2, y1, z3, u0, v0);
 
@@ -1556,30 +1559,30 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
         v0 = (texY + 16.0D * maxY - 1.0D) / 256.0D;
         v1 = (texY + 16.0D * minY - 1.0D - 0.01D) / 256.0D;
-        ts.color(b0 * 0.7F, b0 * 0.7F, b0 * 0.7F);
+        exTs.ac$splatColor(b0 * 0.7F);
         ts.vertexUV(x3, y0, z2, u0, v1);
         ts.vertexUV(x3, y1, z2, u0, v0);
-        ts.color(b1 * 0.7F, b1 * 0.7F, b1 * 0.7F);
+        exTs.ac$splatColor(b1 * 0.7F);
         ts.vertexUV(x5, y1, z4, u1, v0);
         ts.vertexUV(x5, y0, z4, u1, v1);
         ts.vertexUV(x4, y0, z5, u1, v1);
         ts.vertexUV(x4, y1, z5, u1, v0);
-        ts.color(b0 * 0.7F, b0 * 0.7F, b0 * 0.7F);
+        exTs.ac$splatColor(b0 * 0.7F);
         ts.vertexUV(x2, y1, z3, u0, v0);
         ts.vertexUV(x2, y0, z3, u0, v1);
 
         v0 = (texY + 16.0D * maxY) / 256.0D;
         v1 = (texY + 16.0D * maxY - 2.0D - 0.01D) / 256.0D;
-        ts.color(b1 * 0.5F, b1 * 0.5F, b1 * 0.5F);
+        exTs.ac$splatColor(b1 * 0.5F);
         ts.vertexUV(x5, y0, z4, u1, v0);
         ts.vertexUV(x4, y0, z5, u1, v1);
-        ts.color(b0 * 0.5F, b0 * 0.5F, b0 * 0.5F);
+        exTs.ac$splatColor(b0 * 0.5F);
         ts.vertexUV(x2, y0, z3, u0, v1);
         ts.vertexUV(x3, y0, z2, u0, v0);
-        ts.color(b1, b1, b1);
+        exTs.ac$splatColor(b1);
         ts.vertexUV(x4, y1, z5, u1, v0);
         ts.vertexUV(x5, y1, z4, u1, v1);
-        ts.color(b0, b0, b0);
+        exTs.ac$splatColor(b0);
         ts.vertexUV(x3, y1, z2, u0, v1);
         ts.vertexUV(x2, y1, z3, u0, v0);
     }
@@ -1592,19 +1595,19 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
         int coreMeta = this.level.getData(x, y, z) & 3;
         if (coreMeta == 0) {
-            tesselateStairs0(block, x, y, z);
+            this.tesselateStairs0(block, x, y, z);
             renderAny = true;
         }
         else if (coreMeta == 1) {
-            tesselateStairs1(block, x, y, z);
+            this.tesselateStairs1(block, x, y, z);
             renderAny = true;
         }
         else if (coreMeta == 2) {
-            tesselateStairs2(block, x, y, z);
+            this.tesselateStairs2(block, x, y, z);
             renderAny = true;
         }
         else if (coreMeta == 3) {
-            tesselateStairs3(block, x, y, z);
+            this.tesselateStairs3(block, x, y, z);
             renderAny = true;
         }
 
@@ -2024,7 +2027,6 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
         double x1 = x + 1;
         double z1 = z + 1;
-        double y1 = y + 1;
 
         ts.color(0.5F * brightness, 0.5F * brightness, 0.5F * brightness);
         block.setShape(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
