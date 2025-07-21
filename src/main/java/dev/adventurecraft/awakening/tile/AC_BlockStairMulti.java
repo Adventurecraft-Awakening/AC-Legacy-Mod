@@ -42,6 +42,10 @@ public class AC_BlockStairMulti extends StairsTile implements AC_IBlockColor {
         return 16;
     }
 
+    public @Override int getFoliageColor(LevelSource view, int x, int y, int z) {
+        return 0xFFFFFF;
+    }
+
     public @Override int getColorMeta(LevelSource view, int x, int y, int z) {
         return view.getData(x, y, z) >> 2;
     }
