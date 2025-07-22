@@ -12,7 +12,7 @@ import java.util.List;
 
 public class AC_MapList {
 
-    private ArrayList<AC_MapInfo> maps = new ArrayList<>();
+    private List<AC_MapInfo> maps = new ArrayList<>();
     private File mapDir;
 
     public AC_MapList() {
@@ -46,7 +46,8 @@ public class AC_MapList {
                 try (var reader = new BufferedReader(new FileReader(descFile))) {
                     line1 = reader.readLine();
                     line2 = reader.readLine();
-                } catch (IOException ex) {
+                }
+                catch (IOException ex) {
                     ACMod.LOGGER.warn("Failed to read map description \"{}\".", descFile.getPath(), ex);
                 }
             }

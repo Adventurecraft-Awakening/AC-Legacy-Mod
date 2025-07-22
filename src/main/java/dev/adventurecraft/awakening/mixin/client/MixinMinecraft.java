@@ -227,7 +227,6 @@ public abstract class MixinMinecraft implements ExMinecraft {
     @Unique private double deltaTime;
     @Unique private int rightMouseTicksRan;
     @Unique private int middleMouseTicksRan;
-    @Unique public AC_MapList mapList;
     @Unique public AC_CutsceneCamera cutsceneCamera = new AC_CutsceneCamera();
     @Unique public AC_CutsceneCamera activeCutsceneCamera;
     @Unique public boolean cameraActive;
@@ -371,16 +370,6 @@ public abstract class MixinMinecraft implements ExMinecraft {
         }
 
         Display.create(pixelFormat.withDepthBits(0));
-    }
-
-    @Inject(
-        method = "init",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/skins/TexturePackRepository;<init>(Lnet/minecraft/client/Minecraft;Ljava/io/File;)V",
-            shift = At.Shift.AFTER))
-    private void init_createMapList(CallbackInfo ci) {
-        this.mapList = new AC_MapList();
     }
 
     @Inject(
@@ -1402,10 +1391,5 @@ public abstract class MixinMinecraft implements ExMinecraft {
     @Override
     public AC_GuiStore getStoreGUI() {
         return this.storeGUI;
-    }
-
-    @Override
-    public AC_MapList getMapList() {
-        return this.mapList;
     }
 }
