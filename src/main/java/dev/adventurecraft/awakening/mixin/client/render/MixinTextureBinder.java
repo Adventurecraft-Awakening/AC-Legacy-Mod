@@ -24,6 +24,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(DynamicTexture.class)
 public abstract class MixinTextureBinder implements AC_TextureBinder {
 
+    @Unique
+    private static final IntBuffer EMPTY_BUFFER = IntBuffer.allocate(0);
+
     @Shadow
     public byte[] pixels = new byte[0];
     @Shadow
@@ -92,6 +95,10 @@ public abstract class MixinTextureBinder implements AC_TextureBinder {
     public IntBuffer getBufferAtCurrentFrame() {
         int frameSize = this.width * this.height;
         int frameStart = this.curFrame * frameSize;
+        if (frameSize > this.imageData.limit() - frameStart) {
+            // TODO: warn about mismatched sizes
+            return EMPTY_BUFFER;
+        }
         return this.imageData.slice(frameStart, frameSize);
     }
 
