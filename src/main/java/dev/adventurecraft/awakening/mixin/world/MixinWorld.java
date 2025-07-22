@@ -77,6 +77,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Mixin(Level.class)
@@ -390,37 +391,32 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         }
 
         try {
-            var reader = new BufferedReader(new FileReader(file));
-            try {
-                while (reader.ready()) {
-                    String line = reader.readLine();
-                    String[] elements = line.split(",", 7);
-                    if (elements.length == 7) {
-                        try {
-                            String animName = elements[0].trim();
-                            String texName = elements[1].trim();
-                            String imageName = elements[2].trim();
-                            int x = Integer.parseInt(elements[3].trim());
-                            int y = Integer.parseInt(elements[4].trim());
-                            int w = Integer.parseInt(elements[5].trim());
-                            int h = Integer.parseInt(elements[6].trim());
-                            var instance = new AC_TextureAnimated(texName, x, y, w, h);
-                            //noinspection DataFlowIssue
-                            ((AC_TextureBinder) instance).loadImage(imageName, (Level) (Object) this);
-                            texManager.registerTextureAnimation(animName, instance);
-                        }
-                        catch (Exception var12) {
-                            var12.printStackTrace();
-                        }
+            var reader = new BufferedReader(new FileReader(file, StandardCharsets.ISO_8859_1));
+            while (reader.ready()) {
+                String line = reader.readLine();
+                String[] elements = line.split(",", 7);
+                if (elements.length == 7) {
+                    try {
+                        String animName = elements[0].trim();
+                        String texName = elements[1].trim();
+                        String imageName = elements[2].trim();
+                        int x = Integer.parseInt(elements[3].trim());
+                        int y = Integer.parseInt(elements[4].trim());
+                        int w = Integer.parseInt(elements[5].trim());
+                        int h = Integer.parseInt(elements[6].trim());
+                        var instance = new AC_TextureAnimated(texName, x, y, w, h);
+                        //noinspection DataFlowIssue
+                        ((AC_TextureBinder) instance).loadImage(imageName, (Level) (Object) this);
+                        texManager.registerTextureAnimation(animName, instance);
+                    }
+                    catch (Exception var12) {
+                        var12.printStackTrace();
                     }
                 }
             }
-            catch (IOException var13) {
-                var13.printStackTrace();
-            }
         }
-        catch (FileNotFoundException var14) {
-            var14.printStackTrace();
+        catch (IOException var13) {
+            var13.printStackTrace();
         }
     }
 
