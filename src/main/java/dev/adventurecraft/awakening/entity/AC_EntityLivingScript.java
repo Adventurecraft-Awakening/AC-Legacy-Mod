@@ -46,6 +46,8 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
     private double prevDistToPoint = 999999.0D;
     private AC_TileEntityNpcPath triggerOnPath = null;
 
+    private boolean ranOnCreate = false;
+
     public AC_EntityLivingScript(Level world) {
         super(world);
         this.scope = ((ExWorld) world).getScript().getNewScope();
@@ -94,6 +96,9 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
             }
 
             this.initDescTo = null;
+        }
+        if (!this.ranOnCreate) {
+            this.runCreatedScript();
         }
 
         this.prevWidth = this.bbWidth;
@@ -152,6 +157,7 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
     }
 
     public void runCreatedScript() {
+        this.ranOnCreate = true;
         if (!this.onCreated.isEmpty()) {
             ((ExWorld) this.level).getScriptHandler().runScript(this.onCreated, this.scope);
         }
@@ -320,4 +326,8 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
     public float getPrevHeight() {
         return prevHeight;
     }
+
+    public void setOnCreateRunFlag(boolean value) {this.ranOnCreate=value;}
+
+    public boolean getOnCreateRunFlag(){return this.ranOnCreate;}
 }

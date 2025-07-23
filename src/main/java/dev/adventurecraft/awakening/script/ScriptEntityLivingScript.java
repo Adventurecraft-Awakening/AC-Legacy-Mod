@@ -34,7 +34,7 @@ public class ScriptEntityLivingScript extends ScriptEntityLiving {
 
     public void setOnCreated(String var1) {
         this.entityLivingScript.onCreated = var1;
-        this.entityLivingScript.runCreatedScript();
+        this.entityLivingScript.setOnCreateRunFlag(false);
     }
 
     public String getOnUpdated() {

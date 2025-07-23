@@ -19,8 +19,6 @@ public class AC_EntityNPC extends AC_EntityLivingScript {
     public boolean trackPlayer = true;
     public boolean isAttackable = false;
     public Entity entityToTrack = null;
-    private boolean ranOnCreate = false;
-
 
     public AC_EntityNPC(Level world) {
         super(world);
@@ -35,11 +33,6 @@ public class AC_EntityNPC extends AC_EntityLivingScript {
 
     @Override
     public void tick() {
-        if (!this.ranOnCreate) {
-            this.ranOnCreate = true;
-            this.runCreatedScript();
-        }
-
         if (this.pathToHome && !this.isPathing() && this.distanceToSqr(this.spawnX, this.spawnY, this.spawnZ) > 4.0D) {
             this.pathToPosition((int) this.spawnX, (int) this.spawnY, (int) this.spawnZ);
         }
