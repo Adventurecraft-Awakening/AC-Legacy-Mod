@@ -340,6 +340,16 @@ public abstract class MixinEntity implements ExEntity {
     }
 
     @Override
+    public boolean getNoPhysics() {
+        return this.noPhysics;
+    }
+
+    @Override
+    public void setNoPhysics(boolean value) {
+        this.noPhysics = value;
+    }
+
+    @Override
     public boolean getCollidesWithClipBlocks() {
         return this.collidesWithClipBlocks;
     }

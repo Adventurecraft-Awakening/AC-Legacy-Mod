@@ -17,6 +17,10 @@ public interface ExEntity extends AC_IMultiAttackEntity {
 
     void setIsFlying(boolean value);
 
+    boolean getNoPhysics();
+
+    void setNoPhysics(boolean value);
+
     boolean getCollidesWithClipBlocks();
 
     void setCollidesWithClipBlocks(boolean value);

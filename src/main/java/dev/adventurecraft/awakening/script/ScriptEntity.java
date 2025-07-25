@@ -295,6 +295,14 @@ public class ScriptEntity {
         return ((ExEntity) this.entity).getIsFlying();
     }
 
+    public void setNoPhysics(boolean value) {
+        ((ExEntity) this.entity).setNoPhysics(value);
+    }
+
+    public boolean getNoPhysics() {
+        return ((ExEntity) this.entity).getNoPhysics();
+    }
+
     public boolean getOnGround() {
         return this.entity.onGround;
     }
