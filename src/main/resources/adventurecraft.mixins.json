@@ -15,7 +15,6 @@
     "client.gui.screen.MixinSelectWorldScreen",
     "client.gui.screen.container.MixinContainerScreen",
     "client.gui.screen.container.MixinPlayerInventoryScreen",
-    "client.gui.screen.ingame.MixinChatScreen",
     "client.gui.screen.ingame.MixinDeathScreen",
     "client.gui.screen.ingame.MixinStatsScreen",
     "client.gui.screen.menu.MixinTitleScreen",

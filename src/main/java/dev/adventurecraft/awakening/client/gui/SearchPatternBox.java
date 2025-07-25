@@ -1,13 +1,12 @@
 package dev.adventurecraft.awakening.client.gui;
 
-import dev.adventurecraft.awakening.extension.client.gui.components.ExEditBox;
+import dev.adventurecraft.awakening.client.gui.components.AC_EditBox;
 import dev.adventurecraft.awakening.extension.client.gui.screen.ExScreen;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import dev.adventurecraft.awakening.layout.IntPoint;
 import dev.adventurecraft.awakening.layout.IntRect;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 
 import javax.annotation.Nullable;
@@ -17,7 +16,8 @@ import java.util.regex.PatternSyntaxException;
 
 public class SearchPatternBox {
 
-    private final EditBox textBox;
+    private final AC_EditBox textBox;
+    private final Font font;
     private final Button matchCaseButton;
     private final Button matchWordsButton;
     private final Button useRegexButton;
@@ -31,14 +31,11 @@ public class SearchPatternBox {
     private @Nullable PatternSyntaxException syntaxError;
 
     public SearchPatternBox(Screen parent, IntRect layoutRect) {
-        Font font = ((ExScreen) parent).getFont();
-        int x = layoutRect.x;
-        int y = layoutRect.y;
+        this.textBox = new AC_EditBox(layoutRect, "");
+        this.font = ((ExScreen) parent).getFont();
 
-        this.textBox = new EditBox(parent, font, x, y, layoutRect.w, layoutRect.h, "");
-
-        int bX = x - 1;
-        int bY = y;
+        int bX = layoutRect.x - 1;
+        int bY = layoutRect.y;
         int bW = layoutRect.h + 1;
         int bH = layoutRect.h - 1;
 
@@ -96,7 +93,7 @@ public class SearchPatternBox {
     }
 
     public void render() {
-        this.textBox.render();
+        this.textBox.render(this.font);
 
         if (this.syntaxError != null) {
             this.renderSyntaxError(this.syntaxError);
@@ -140,7 +137,7 @@ public class SearchPatternBox {
         catch (PatternSyntaxException ex) {
             this.syntaxError = ex;
 
-            var box = (ExEditBox) this.textBox;
+            var box = this.textBox;
             box.setActiveTextColor(0xff0000);
             box.setInactiveTextColor(0x8f0000);
             return null;
@@ -161,7 +158,7 @@ public class SearchPatternBox {
     private void refresh() {
         this.syntaxError = null;
 
-        var box = (ExEditBox) this.textBox;
+        var box = this.textBox;
         box.resetActiveTextColor();
         box.resetInactiveTextColor();
     }
@@ -176,9 +173,8 @@ public class SearchPatternBox {
             text.append(index);
         }
 
-        var editBox = (ExEditBox) this.textBox;
-        var rect = editBox.getRect();
-        var font = (ExTextRenderer) editBox.getFont();
+        var rect = this.textBox.getRect();
+        var font = (ExTextRenderer) this.font;
 
         int textWidth = font.measureText(text, 0).width();
         int x = rect.x + rect.w - textWidth - 4;
@@ -187,6 +183,6 @@ public class SearchPatternBox {
     }
 
     public IntRect getBoxRect() {
-        return ((ExEditBox) this.textBox).getRect();
+        return this.textBox.getRect();
     }
 }

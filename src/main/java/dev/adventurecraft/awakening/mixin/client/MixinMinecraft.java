@@ -6,8 +6,10 @@ import dev.adventurecraft.awakening.ACMainThread;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.client.options.Config;
 import dev.adventurecraft.awakening.common.*;
+import dev.adventurecraft.awakening.client.gui.AC_ChatScreen;
 import dev.adventurecraft.awakening.common.gui.AC_GuiMapSelect;
 import dev.adventurecraft.awakening.common.gui.AC_GuiStore;
+import dev.adventurecraft.awakening.client.gui.AC_InBedChatScreen;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.entity.player.ExAbstractClientPlayerEntity;
@@ -37,9 +39,7 @@ import net.minecraft.client.User;
 import net.minecraft.client.gamemode.CreativeMode;
 import net.minecraft.client.gamemode.GameMode;
 import net.minecraft.client.gui.Gui;
-import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.DeathScreen;
-import net.minecraft.client.gui.screens.InBedChatScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.particle.ParticleEngine;
@@ -599,9 +599,9 @@ public abstract class MixinMinecraft implements ExMinecraft {
             if (this.player.health <= 0) {
                 this.setScreen(null);
             } else if (this.player.isSleeping() && this.level != null && this.level.isClientSide) {
-                this.setScreen(new InBedChatScreen());
+                this.setScreen(new AC_InBedChatScreen());
             }
-        } else if (this.screen != null && this.screen instanceof InBedChatScreen && !this.player.isSleeping()) {
+        } else if (this.screen != null && this.screen instanceof AC_InBedChatScreen && !this.player.isSleeping()) {
             this.setScreen(null);
         }
 
@@ -704,8 +704,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
                                         this.player.drop();
 
                                     } else if ((this.isOnline() || AC_DebugMode.active) && eventKey == this.options.keyChat.key) {
-                                        this.setScreen(new ChatScreen());
-
+                                        this.setScreen(new AC_ChatScreen());
                                     } else if (AC_DebugMode.active && isControlPressed) {
                                         if (eventKey == Keyboard.KEY_Z) { // Undo
                                             ServerCommands.cmdUndo(new ServerCommandSource(

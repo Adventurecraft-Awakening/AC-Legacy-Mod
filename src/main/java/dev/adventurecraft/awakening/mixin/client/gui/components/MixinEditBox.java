@@ -1,59 +1,72 @@
 package dev.adventurecraft.awakening.mixin.client.gui.components;
 
-import dev.adventurecraft.awakening.extension.client.gui.components.ExEditBox;
+import dev.adventurecraft.awakening.client.gui.components.AC_EditBox;
 import dev.adventurecraft.awakening.layout.IntRect;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.EditBox;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.Constant;
-import org.spongepowered.asm.mixin.injection.ModifyConstant;
+import net.minecraft.client.gui.screens.Screen;
+import org.spongepowered.asm.mixin.*;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+@SuppressWarnings("OverwriteAuthorRequired")
 @Mixin(EditBox.class)
-public abstract class MixinEditBox implements ExEditBox {
+public class MixinEditBox {
 
+    @Shadow private Screen parent;
     @Shadow @Final private Font font;
-    @Shadow @Final private int x;
-    @Shadow @Final private int y;
-    @Shadow @Final private int width;
-    @Shadow @Final private int height;
 
-    @Unique private int activeTextColor = 0xe0e0e0;
-    @Unique private int inactiveTextColor = 0x707070;
+    @Shadow public boolean active;
+    @Shadow public boolean visible;
+    @Unique private AC_EditBox editBox;
 
-    @ModifyConstant(method = "render", constant = @Constant(intValue = 0xe0e0e0))
-    private int useActiveTextColor(int constant) {
-        return this.activeTextColor;
+    @Inject(
+        method = "<init>",
+        at = @At("TAIL")
+    )
+    private void init(Screen screen, Font font, int x, int y, int width, int height, String value, CallbackInfo ci) {
+        this.editBox = new AC_EditBox(new IntRect(x, y, width, height), value);
     }
 
-    @ModifyConstant(method = "render", constant = @Constant(intValue = 0x707070))
-    private int useInactiveTextColor(int constant) {
-        return this.inactiveTextColor;
+    public @Overwrite void setValue(String msg) {
+        if (this.editBox != null) {
+            this.editBox.setValue(msg);
+        }
     }
 
-    public @Override IntRect getRect() {
-        return new IntRect(this.x, this.y, this.width, this.height);
+    public @Overwrite String getValue() {
+        return this.editBox.getValue();
     }
 
-    public @Override Font getFont() {
-        return this.font;
+    public @Overwrite void tick() {
+        this.editBox.setActive(this.active);
+        this.editBox.setVisible(this.visible);
+        this.editBox.tick();
     }
 
-    public @Override int getActiveTextColor() {
-        return activeTextColor;
+    public @Overwrite void charTyped(char codePoint, int key) {
+        if (codePoint == '\t') {
+            if (this.editBox.isVisible() && this.editBox.isActive()) {
+                this.parent.tab();
+            }
+        }
+        this.editBox.charTyped(codePoint, key);
     }
 
-    public @Override void setActiveTextColor(int color) {
-        this.activeTextColor = color;
+    public @Overwrite void clicked(int mouseX, int mouseY, int button) {
+        this.editBox.clicked(mouseX, mouseY, button);
     }
 
-    public @Override int getInactiveTextColor() {
-        return inactiveTextColor;
+    public @Overwrite void setActive(boolean active) {
+        this.editBox.setActive(active);
     }
 
-    public @Override void setInactiveTextColor(int color) {
-        this.inactiveTextColor = color;
+    public @Overwrite void render() {
+        this.editBox.render(this.font);
+    }
+
+    public @Overwrite void setMaxLength(int length) {
+        this.editBox.setMaxLength(length);
     }
 }
