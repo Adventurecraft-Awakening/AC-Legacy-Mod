@@ -51,23 +51,23 @@ public class TextRendererState implements TextMeasurer {
         this.tesselator = null;
     }
 
-    public void drawText(CharSequence text, int start, int end, float x, float y) {
-        this.drawText(text, start, end, x, y, false);
+    public TextRect drawText(CharSequence text, int start, int end, float x, float y) {
+        return this.drawText(text, start, end, x, y, false);
     }
 
     /**
      * Apply formatting without rendering text.
      */
-    public void formatText(CharSequence text, int start, int end) {
-        this.drawText(text, start, end, 0, 0, true);
+    public TextRect formatText(CharSequence text, int start, int end) {
+        return this.drawText(text, start, end, 0, 0, true);
     }
 
-    private void drawText(CharSequence text, int start, int end, float x, float y, boolean formatOnly) {
+    private TextRect drawText(CharSequence text, int start, int end, float x, float y, boolean formatOnly) {
         if (text == null) {
-            return;
+            return TextRect.EMPTY;
         }
         if (end - start == 0) {
-            return;
+            return TextRect.EMPTY;
         }
         validateCharSequence(text, start, end);
 
@@ -83,7 +83,7 @@ public class TextRendererState implements TextMeasurer {
         int[] colorPalette = font.getColorPalette();
         int[] widthLookup = font.getCharWidths();
 
-        float xOff = 0;
+        int xOff = 0;
 
         for (int i = start; i < end; ++i) {
             char c = text.charAt(i);
@@ -129,10 +129,11 @@ public class TextRendererState implements TextMeasurer {
             drawChar(ts, column, row, xOff + x, y);
             xOff += widthLookup[ch];
         }
+        return new TextRect(end - start, xOff);
     }
 
-    public void drawText(CharSequence text, float x, float y) {
-        this.drawText(text, 0, text.length(), x, y);
+    public TextRect drawText(CharSequence text, float x, float y) {
+        return this.drawText(text, 0, text.length(), x, y);
     }
 
     public void setColor(int color) {

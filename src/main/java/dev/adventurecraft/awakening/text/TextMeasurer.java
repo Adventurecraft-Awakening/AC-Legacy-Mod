@@ -14,7 +14,7 @@ public interface TextMeasurer {
 
     default @NotNull TextRect measureText(@Nullable CharSequence text, int start) {
         if (text == null) {
-            return TextRect.empty;
+            return TextRect.EMPTY;
         }
         return this.measureText(text, start, text.length());
     }

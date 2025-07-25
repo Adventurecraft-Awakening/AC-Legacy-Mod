@@ -167,11 +167,11 @@ public abstract class MixinTextRenderer2 implements ExTextRenderer {
     @NotNull
     public TextRect measureText(CharSequence text, int start, int end, long maxWidth, boolean newLines) {
         if (text == null) {
-            return TextRect.empty;
+            return TextRect.EMPTY;
         }
         TextRendererState.validateCharSequence(text, start, end);
         if (end - start == 0) {
-            return TextRect.empty;
+            return TextRect.EMPTY;
         }
 
         int[] widthLookup = this.getCharWidths();
