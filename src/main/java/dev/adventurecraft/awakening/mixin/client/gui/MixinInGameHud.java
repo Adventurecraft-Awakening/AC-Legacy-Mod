@@ -510,7 +510,15 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
             textState.resetFormat();
 
             int totalLines = message.lines.size();
-            for (int i = totalLines - usedLines; i < totalLines; i++) {
+            int startLine = totalLines - usedLines;
+
+            // Apply formatting of skipped lines.
+            for (int i = 0; i < startLine; i++) {
+                var line = message.lines.get(i);
+                textState.formatText(text, line.start(), line.end());
+            }
+
+            for (int i = startLine; i < totalLines; i++) {
                 var line = message.lines.get(i);
                 textState.drawText(text, line.start(), line.end(), x, y);
                 y += lineHeight;

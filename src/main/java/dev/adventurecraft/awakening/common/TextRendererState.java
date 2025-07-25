@@ -52,6 +52,17 @@ public class TextRendererState implements TextMeasurer {
     }
 
     public void drawText(CharSequence text, int start, int end, float x, float y) {
+        this.drawText(text, start, end, x, y, false);
+    }
+
+    /**
+     * Apply formatting without rendering text.
+     */
+    public void formatText(CharSequence text, int start, int end) {
+        this.drawText(text, start, end, 0, 0, true);
+    }
+
+    private void drawText(CharSequence text, int start, int end, float x, float y, boolean formatOnly) {
         if (text == null) {
             return;
         }
@@ -60,9 +71,8 @@ public class TextRendererState implements TextMeasurer {
         }
         validateCharSequence(text, start, end);
 
-        if (Rgba.getAlpha(this.activeColor) == 0) {
-            return;
-        }
+        formatOnly = formatOnly || (Rgba.getAlpha(this.activeColor) == 0);
+
         var ts = this.tesselator;
         assert ts != null;
 
@@ -97,6 +107,10 @@ public class TextRendererState implements TextMeasurer {
                     }
                 }
                 i++; // skip the format code digit
+                continue;
+            }
+
+            if (formatOnly) {
                 continue;
             }
 
