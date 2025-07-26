@@ -1412,6 +1412,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         if (this.coordOrder == null) {
             this.initCoordOrder();
         }
+        int[] coordOrder = this.coordOrder;
 
         for (Player player : this.players) {
             int pX = Mth.floor(player.x / 16.0D);
@@ -1419,29 +1420,28 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             int range = 9;
 
             for (int x = -range; x <= range; ++x) {
+                int t = x + (int) this.getTime();
                 for (int z = -range; z <= range; ++z) {
-                    long hash = x + z * 2L + this.getTime();
-                    if (hash % 14L != 0L || !this.hasChunk(x + pX, z + pZ)) {
+                    int hash = t + z * 2;
+                    if (hash % 14 != 0 || !this.hasChunk(x + pX, z + pZ)) {
                         continue;
                     }
-                    hash /= 14L;
+                    hash /= 14;
                     int hX = x + pX;
                     int hZ = z + pZ;
-                    hash += hX * hX * 3121L + hX * 45238971L + hZ * hZ * 418711L + hZ * 13761L;
-                    hash = Math.abs(hash);
-                    int bX = hX * 16 + this.coordOrder[(int) (hash % 256L)] % 16;
-                    int bZ = hZ * 16 + this.coordOrder[(int) (hash % 256L)] / 16;
+                    hash += hX * hX * 3121 + hX * 45238971 + hZ * hZ * 418711 + hZ * 13761;
+                    int order = coordOrder[Math.abs(hash) % coordOrder.length];
+                    int bX = hX * 16 + order % 16;
+                    int bZ = hZ * 16 + order / 16;
                     this.SnowModUpdate(bX, bZ);
                 }
             }
         }
     }
 
+    @Unique
     public boolean SnowModUpdate(int x, int z) {
-        int y = this.getTopSolidBlock(x, z);
-        if (y < 0) {
-            y = 0;
-        }
+        int y = Math.max(0, this.getTopSolidBlock(x, z));
 
         int idDown = this.getTile(x, y - 1, z);
         if (this.getTemperatureValue(x, z) < 0.5D) {
