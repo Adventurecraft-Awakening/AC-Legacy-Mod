@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 @Environment(EnvType.CLIENT)
 public class AC_EditBox extends GuiComponent {
 
-    private static final Pattern BOUNDARY_PATTERN = Pattern.compile("\\w\\W", Pattern.MULTILINE);
+    private static final Pattern BOUNDARY_PATTERN = Pattern.compile("\\W\\w", Pattern.MULTILINE);
 
     private IntRect rect;
     private StringBuilder value;
@@ -127,11 +127,15 @@ public class AC_EditBox extends GuiComponent {
             }
         }
         else if (sel != null && key == Keyboard.KEY_DELETE) {
-            this.expandSelection(sel, this.getForwardMoveAmount(sel, ctrlDown));
+            if (sel.isEmpty()) {
+                this.expandSelection(sel, this.getForwardMoveAmount(sel, ctrlDown));
+            }
             this.deleteSelection();
         }
         else if (sel != null && key == Keyboard.KEY_BACK) {
-            this.expandSelection(sel, this.getBackMoveAmount(sel, ctrlDown));
+            if (sel.isEmpty()) {
+                this.expandSelection(sel, this.getBackMoveAmount(sel, ctrlDown));
+            }
             this.deleteSelection();
         }
         else if (ctrlDown || metaDown) {
