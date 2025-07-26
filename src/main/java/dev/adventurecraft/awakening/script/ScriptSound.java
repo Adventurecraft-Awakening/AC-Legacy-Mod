@@ -2,14 +2,17 @@ package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.extension.client.sound.ExSoundHelper;
 import net.minecraft.client.sounds.SoundEngine;
+import net.minecraft.world.level.Level;
 
 @SuppressWarnings("unused")
 public class ScriptSound {
 
-    SoundEngine soundMgr;
+    final Level level;
+    final SoundEngine soundMgr;
 
-    ScriptSound(SoundEngine var1) {
-        this.soundMgr = var1;
+    ScriptSound(Level level, SoundEngine engine) {
+        this.level = level;
+        this.soundMgr = engine;
     }
 
     public void playSoundUI(String var1) {
@@ -33,14 +36,14 @@ public class ScriptSound {
     }
 
     public String getMusic() {
-        return ((ExSoundHelper) this.soundMgr).getMusicFromStreaming();
+        return ((ExSoundHelper) this.soundMgr).getMusicFromStreaming(this.level);
     }
 
     public void playMusic(String var1, int var2, int var3) {
-        ((ExSoundHelper) this.soundMgr).playMusicFromStreaming(var1.toLowerCase(), var2, var3);
+        ((ExSoundHelper) this.soundMgr).playMusicFromStreaming(this.level, var1.toLowerCase(), var2, var3);
     }
 
     public void stopMusic() {
-        ((ExSoundHelper) this.soundMgr).stopMusic();
+        ((ExSoundHelper) this.soundMgr).stopMusic(this.level);
     }
 }

@@ -1507,9 +1507,11 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             }
         }
 
+        // TODO: play after level is initialized
         String playingMusic = ((ExWorldProperties) this.levelData).getPlayingMusic();
         if (!playingMusic.isEmpty()) {
-            ((ExSoundHelper) Minecraft.instance.soundEngine).playMusicFromStreaming(playingMusic, 0, 0);
+            var level = (Level) (Object) this;
+            ((ExSoundHelper) Minecraft.instance.soundEngine).playMusicFromStreaming(level, playingMusic, 0, 0);
         }
     }
 
