@@ -9,167 +9,114 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
-// TODO: share code with AC_ItemPaste
-// TODO: share code between methods
-
+/**
+ * The Nudge tool allows players to move block selections in Adventurecraft.
+ * 
+ * This item moves all blocks within the current cursor selection by one block
+ * in the direction the player is looking. The operation is destructive - blocks
+ * are moved from their original location to the new location.
+ * 
+ * Usage:
+ * - Set a cursor selection using the cursor tool
+ * - Right-click to nudge the selection forward (in look direction)
+ * - Left-click to nudge the selection backward (opposite to look direction)
+ * - The cursor selection automatically follows the moved blocks
+ * 
+ * Note: This is a destructive operation that clears the original
+ * block locations and places blocks at the new location.
+ * 
+ * @author Adventurecraft Team
+ * @since 1.0
+ */
 public class AC_ItemNudge extends Item implements AC_ILeftClickItem {
 
+    /**
+     * Creates a new Nudge item with the specified ID.
+     * 
+     * @param id The item ID to assign to this nudge tool
+     */
     public AC_ItemNudge(int id) {
         super(id);
     }
 
+    /**
+     * Handles right-click usage of the nudge tool.
+     * 
+     * Nudges the current cursor selection forward by one block in the direction
+     * the player is looking. This is a destructive move operation that:
+     * 1. Copies all blocks from the current selection
+     * 2. Clears the original block locations
+     * 3. Places blocks at the new location (one block forward)
+     * 4. Updates the cursor selection to follow the moved blocks
+     * 
+     * If no cursor selection is set, the operation is silently ignored.
+     * 
+     * @param item The item stack being used
+     * @param world The world in which the nudge operation occurs
+     * @param player The player using the nudge tool
+     * @return The unchanged item stack
+     */
     @Override
-    public ItemInstance use(ItemInstance stack, Level world, Player player) {
+    public ItemInstance use(ItemInstance item, Level world, Player player) {
+        // Ensure cursor selection is properly set
         if (!AC_ItemCursor.bothSet) {
-            return stack;
+            return item;
         }
 
-        Mob viewEntity = Minecraft.instance.cameraEntity;
-        Vec3 viewRot = viewEntity.getLookAngle();
-        Coord min = AC_ItemCursor.min();
-        Coord delta = AC_ItemCursor.max().sub(min);
-        int width = delta.x + 1;
-        int height = delta.y + 1;
-        int depth = delta.z + 1;
-        int[] blockArray = new int[width * height * depth];
-        int[] metaArray = new int[width * height * depth];
-
-        for (int x = 0; x < width; ++x) {
-            for (int y = 0; y < height; ++y) {
-                for (int z = 0; z < depth; ++z) {
-                    int id = world.getTile(x + min.x, y + min.y, z + min.z);
-                    int meta = world.getData(x + min.x, y + min.y, z + min.z);
-                    int i = depth * (height * x + y) + z;
-                    blockArray[i] = id;
-                    metaArray[i] = meta;
-                    world.setTileNoUpdate(x + min.x, y + min.y, z + min.z, 0);
-                }
-            }
+        try {
+            // Get forward direction based on player's look direction
+            Mob viewEntity = Minecraft.instance.cameraEntity;
+            Vec3 lookDirection = viewEntity.getLookAngle();
+            Coord direction = AC_BlockCopyUtils.getUnitDirection(lookDirection);
+            
+            // Perform the nudge operation (destructive move)
+            AC_BlockCopyUtils.performNudge(world, direction);
+        } catch (Exception e) {
+            // Log error but don't crash the game
+            System.err.println("Error during forward nudge operation: " + e.getMessage());
         }
 
-        Coord dir = getUnitDirection(viewRot);
-        shiftCursor(dir);
-
-        int cX = dir.x + min.x;
-        int cY = dir.y + min.y;
-        int cZ = dir.z + min.z;
-
-        for (int x = 0; x < width; ++x) {
-            for (int y = 0; y < height; ++y) {
-                for (int z = 0; z < depth; ++z) {
-                    int i = depth * (height * x + y) + z;
-                    int id = blockArray[i];
-                    int meta = metaArray[i];
-                    world.setTileAndDataNoUpdate(cX + x, cY + y, cZ + z, id, meta);
-                }
-            }
-        }
-
-        for (int x = 0; x < width; ++x) {
-            for (int y = 0; y < height; ++y) {
-                for (int z = 0; z < depth; ++z) {
-                    int i = depth * (height * x + y) + z;
-                    int id = blockArray[i];
-                    int meta = metaArray[i];
-                    world.setTileAndDataNoUpdate(cX + x, cY + y, cZ + z, id, meta);
-                }
-            }
-        }
-
-        for (int x = 0; x < width; ++x) {
-            for (int y = 0; y < height; ++y) {
-                for (int z = 0; z < depth; ++z) {
-                    int id = blockArray[depth * (height * x + y) + z];
-                    world.tileUpdated(cX + x, cY + y, cZ + z, id);
-                }
-            }
-        }
-
-        return stack;
+        return item;
     }
 
+    /**
+     * Handles left-click usage of the nudge tool.
+     * 
+     * Nudges the current cursor selection backward by one block (opposite to the
+     * direction the player is looking). This is a destructive move operation that:
+     * 1. Copies all blocks from the current selection
+     * 2. Clears the original block locations
+     * 3. Places blocks at the new location (one block backward)
+     * 4. Updates the cursor selection to follow the moved blocks
+     * 
+     * If no cursor selection is set, the operation is ignored.
+     * 
+     * @param item The item stack being used
+     * @param world The world in which the nudge operation occurs
+     * @param player The player using the nudge tool
+     */
     @Override
-    public void onItemLeftClick(ItemInstance stack, Level world, Player player) {
+    public void onItemLeftClick(ItemInstance item, Level world, Player player) {
+        // Ensure cursor selection is properly set
         if (!AC_ItemCursor.bothSet) {
             return;
         }
 
-        Mob viewEntity = Minecraft.instance.cameraEntity;
-        Vec3 viewRot = viewEntity.getLookAngle();
-        Coord min = AC_ItemCursor.min();
-        Coord max = AC_ItemCursor.max();
-        Coord delta = max.sub(min);
-        int width = delta.x + 1;
-        int height = delta.y + 1;
-        int depth = delta.z + 1;
-        int[] blockArray = new int[width * height * depth];
-        int[] metaArray = new int[width * height * depth];
-
-        for (int x = 0; x < width; ++x) {
-            for (int y = 0; y < height; ++y) {
-                for (int z = 0; z < depth; ++z) {
-                    int id = world.getTile(x + min.x, y + min.y, z + min.z);
-                    int meta = world.getData(x + min.x, y + min.y, z + min.z);
-                    int i = depth * (height * x + y) + z;
-                    blockArray[i] = id;
-                    metaArray[i] = meta;
-                    world.setTileNoUpdate(x + min.x, y + min.y, z + min.z, 0);
-                }
-            }
-        }
-
-        Coord dir = getUnitDirection(viewRot);
-        shiftCursor(dir);
-
-        int minX = dir.x + min.x;
-        int minY = dir.y + min.y;
-        int minZ = dir.z + min.z;
-
-        for (int x = 0; x < width; ++x) {
-            for (int y = 0; y < height; ++y) {
-                for (int z = 0; z < depth; ++z) {
-                    int i = depth * (height * x + y) + z;
-                    int id = blockArray[i];
-                    int meta = metaArray[i];
-                    world.setTileAndDataNoUpdate(minX + x, minY + y, minZ + z, id, meta);
-                }
-            }
-        }
-
-        for (int x = 0; x < width; ++x) {
-            for (int y = 0; y < height; ++y) {
-                for (int z = 0; z < depth; ++z) {
-                    int id = blockArray[depth * (height * x + y) + z];
-                    world.tileUpdated(minX + x, minY + y, minZ + z, id);
-                }
-            }
+        try {
+            // Get backward direction (opposite to player's look direction)
+            Mob viewEntity = Minecraft.instance.cameraEntity;
+            Vec3 lookDirection = viewEntity.getLookAngle();
+            Coord direction = AC_BlockCopyUtils.getUnitDirection(lookDirection);
+            // Negate the direction for backward nudge
+            direction = new Coord(-direction.x, -direction.y, -direction.z);
+            
+            // Perform the nudge operation (destructive move)
+            AC_BlockCopyUtils.performNudge(world, direction);
+        } catch (Exception e) {
+            // Log error but don't crash the game
+            System.err.println("Error during backward nudge operation: " + e.getMessage());
         }
     }
 
-    private static Coord getUnitDirection(Vec3 vec) {
-        double viewX = Math.abs(vec.x);
-        double viewY = Math.abs(vec.y);
-        double viewZ = Math.abs(vec.z);
-        int x = 0;
-        int y = 0;
-        int z = 0;
 
-        if (viewX > viewY && viewX > viewZ) {
-            x = vec.x > 0.0D ? 1 : -1;
-        }
-        else if (viewY > viewZ) {
-            y = vec.y > 0.0D ? 1 : -1;
-        }
-        else {
-            z = vec.z > 0.0D ? 1 : -1;
-        }
-        return new Coord(x, y, z);
-    }
-
-    private static void shiftCursor(Coord amount) {
-        AC_ItemCursor.setMin(AC_ItemCursor.min().add(amount));
-        AC_ItemCursor.setMax(AC_ItemCursor.max().add(amount));
-        AC_ItemCursor.setOne(AC_ItemCursor.one().add(amount));
-        AC_ItemCursor.setTwo(AC_ItemCursor.two().add(amount));
-    }
 }
