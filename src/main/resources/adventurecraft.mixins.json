@@ -134,6 +134,8 @@
     "item.MixinRedstoneItem",
     "item.MixinSwordItem",
     "item.MixinTileItemWithoutTranslation",
+    "nbt.MixinListTag",
+    "nbt.MixinTag",
     "util.MixinMth",
     "util.io.MixinCompoundTag",
     "world.MixinCakeTile",

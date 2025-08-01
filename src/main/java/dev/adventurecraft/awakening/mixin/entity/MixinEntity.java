@@ -1,11 +1,15 @@
 package dev.adventurecraft.awakening.mixin.entity;
 
 import com.llamalad7.mixinextras.sugar.Local;
+import dev.adventurecraft.awakening.extension.nbt.ExListTag;
 import dev.adventurecraft.awakening.util.HashCode;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.util.RandomUtil;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import net.minecraft.nbt.ListTag;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
@@ -295,6 +299,18 @@ public abstract class MixinEntity implements ExEntity {
         target = "Lnet/minecraft/world/level/Level;isSolidBlockingTile(III)Z"))
     private boolean preventSuffocate(Level instance, int x, int y, int z) {
         return instance.isSolidBlockingTile(x, y, z) && instance.isSolidTile(x, y, z);
+    }
+
+    @SuppressWarnings("OverwriteModifiers")
+    @Overwrite
+    public ListTag newDoubleList(double ... doubles) {
+        return ExListTag.wrap(DoubleArrayList.wrap(doubles));
+    }
+
+    @SuppressWarnings("OverwriteModifiers")
+    @Overwrite
+    public ListTag newFloatList(float ... floats) {
+        return ExListTag.wrap(FloatArrayList.wrap(floats));
     }
 
     @Overwrite

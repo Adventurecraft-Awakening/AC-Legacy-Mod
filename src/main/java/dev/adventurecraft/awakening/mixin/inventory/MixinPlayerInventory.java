@@ -1,7 +1,6 @@
 package dev.adventurecraft.awakening.mixin.inventory;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.item.AC_IItemReload;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.item.AC_ISlotCallbackItem;
@@ -11,7 +10,6 @@ import dev.adventurecraft.awakening.extension.item.ExArmorItem;
 import dev.adventurecraft.awakening.extension.item.ExItemStack;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -23,7 +21,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.LinkedList;
