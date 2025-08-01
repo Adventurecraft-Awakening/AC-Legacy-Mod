@@ -4,12 +4,12 @@ import dev.adventurecraft.awakening.common.IEntityPather;
 import dev.adventurecraft.awakening.extension.entity.ExPathfinderMob;
 import dev.adventurecraft.awakening.extension.entity.ai.pathing.ExEntityPath;
 import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
+import dev.adventurecraft.awakening.util.MathF;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 
 import java.util.Collection;
-import java.util.Optional;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -18,17 +18,15 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(PathfinderMob.class)
 public abstract class MixinPathfinderMob extends MixinMob implements ExPathfinderMob, IEntityPather {
 
-    @Shadow
-    protected Entity attackTarget;
-    @Shadow
-    private Path path;
-    @Shadow
-    protected boolean holdGround;
+    @Shadow protected Entity attackTarget;
+    @Shadow private Path path;
+    @Shadow protected boolean holdGround;
 
     @Shadow
     protected abstract void method_632();
@@ -48,120 +46,115 @@ public abstract class MixinPathfinderMob extends MixinMob implements ExPathfinde
     @Shadow
     public abstract boolean hasPath();
 
-    public boolean canForgetTargetRandomly = true;
-    public int timeBeforeForget = 0;
-    public boolean canPathRandomly = true;
+    @Unique private boolean canForgetTargetRandomly = true;
+    @Unique protected int timeBeforeForget = 0;
+    @Unique private boolean canPathRandomly = true;
+    @Unique private float targetSearchRange = 16.0F; // TODO: expose to script
 
     @Overwrite
     public void serverAiStep() {
         this.holdGround = this.shouldHoldGround();
-        float var1 = 16.0F;
         if (this.attackTarget == null) {
             this.attackTarget = this.findAttackTarget();
             if (this.attackTarget != null) {
-                this.path = this.level.findPath((Entity) (Object) this, this.attackTarget, var1);
+                this.path = this.level.findPath((Entity) (Object) this, this.attackTarget, this.targetSearchRange);
                 this.timeBeforeForget = 40;
             }
-        } else if (!this.attackTarget.isAlive()) {
+        }
+        else if (!this.attackTarget.isAlive()) {
             this.attackTarget = null;
-        } else {
-            float var2 = this.attackTarget.distanceTo((Entity) (Object) this);
+        }
+        else {
+            float dist = this.attackTarget.distanceTo((Entity) (Object) this);
             if (this.canSee(this.attackTarget)) {
-                this.checkHurtTarget(this.attackTarget, var2);
-            } else {
-                this.resetAttack(this.attackTarget, var2);
+                this.checkHurtTarget(this.attackTarget, dist);
+            }
+            else {
+                this.resetAttack(this.attackTarget, dist);
             }
         }
 
-        boolean var21 = false;
-        if (this.attackTarget != null) {
-            var21 = this.canSee(this.attackTarget);
-        }
+        boolean canSee = this.attackTarget != null && this.canSee(this.attackTarget);
 
-        if (!this.holdGround && this.attackTarget != null && (this.path == null || this.random.nextInt(5) == 0 && ((ExEntityPath) this.path).needNewPath(this.attackTarget)) && var21) {
-            this.path = this.level.findPath((Entity) (Object) this, this.attackTarget, var1);
-        } else if (this.canPathRandomly && !this.holdGround && (this.path == null && this.random.nextInt(80) == 0 || this.random.nextInt(80) == 0)) {
+        if (!this.holdGround && this.attackTarget != null && (this.path == null ||
+            this.random.nextInt(5) == 0 && ((ExEntityPath) this.path).needNewPath(this.attackTarget)
+        ) && canSee) {
+            this.path = this.level.findPath((Entity) (Object) this, this.attackTarget, this.targetSearchRange);
+        }
+        else if (this.canPathRandomly && !this.holdGround &&
+            (this.path == null && this.random.nextInt(80) == 0 || this.random.nextInt(80) == 0)) {
             this.method_632();
         }
 
-        if (this.attackTarget != null && this.path == null && !var21) {
+        if (this.attackTarget != null && this.path == null && !canSee) {
             if (this.timeBeforeForget-- <= 0) {
                 this.attackTarget = null;
             }
-        } else {
+        }
+        else {
             this.timeBeforeForget = 40;
         }
 
-        int var3 = Mth.floor(this.bb.y0 + 0.5D);
-        boolean var4 = this.isInWater();
-        boolean var5 = this.isInLava();
+        int y = Mth.floor(this.bb.y0 + 0.5D);
         this.xRot = 0.0F;
-        if (this.path != null && (!this.canForgetTargetRandomly || this.random.nextInt(300) != 0)) {
-            Vec3 var6 = this.path.current((Entity) (Object) this);
-            double var7 = this.bbWidth * 2.0F;
 
-            while (var6 != null && var6.distanceToSqr(this.x, var6.y, this.z) < var7 * var7) {
+        if (this.path != null && (!this.canForgetTargetRandomly || this.random.nextInt(300) != 0)) {
+            boolean inWater = this.isInWater();
+            boolean inLava = this.isInLava();
+
+            Vec3 node = this.path.current((Entity) (Object) this);
+            double bbWidth = this.bbWidth * 2.0F;
+
+            while (node != null && node.distanceToSqr(this.x, node.y, this.z) < bbWidth * bbWidth) {
                 this.path.next();
                 if (this.path.isDone()) {
-                    var6 = null;
+                    node = null;
                     this.path = null;
-                } else {
-                    var6 = this.path.current((Entity) (Object) this);
+                }
+                else {
+                    node = this.path.current((Entity) (Object) this);
                 }
             }
 
             this.jumping = false;
-            if (var6 != null) {
-                var7 = var6.x - this.x;
-                double var9 = var6.z - this.z;
-                double var11 = var6.y - (double) var3;
-                float var13 = (float) (Math.atan2(var9, var7) * 180.0D / (double) ((float) Math.PI)) - 90.0F;
-                float var14 = var13 - this.yRot;
+            if (node != null) {
+                double dX = node.x - this.x;
+                double dZ = node.z - this.z;
+                double dY = node.y - (double) y;
+                float moveDir = (float) Math.toDegrees(Math.atan2(dZ, dX)) - 90.0F;
+                float moveRot = MathF.clampAngle(moveDir - this.yRot, -30.0F, 30.0F);
 
                 this.zza = this.runSpeed;
-                while (var14 < -180.0F) {
-                    var14 += 360.0F;
-                }
-
-                while (var14 >= 180.0F) {
-                    var14 -= 360.0F;
-                }
-
-                if (var14 > 30.0F) {
-                    var14 = 30.0F;
-                }
-
-                if (var14 < -30.0F) {
-                    var14 = -30.0F;
-                }
-
-                this.yRot += var14;
+                this.yRot += moveRot;
                 if (this.holdGround && this.attackTarget != null) {
-                    double var15 = this.attackTarget.x - this.x;
-                    double var17 = this.attackTarget.z - this.z;
-                    float var19 = this.yRot;
-                    this.yRot = (float) (Math.atan2(var17, var15) * 180.0D / (double) ((float) Math.PI)) - 90.0F;
-                    float var20 = (var19 - this.yRot + 90.0F) * 3.141593F / 180.0F;
-                    this.xxa = -Mth.sin(var20) * this.zza * 1.0F;
-                    this.zza = Mth.cos(var20) * this.zza * 1.0F;
+                    double atdX = this.attackTarget.x - this.x;
+                    double atdZ = this.attackTarget.z - this.z;
+                    float yRot0 = this.yRot;
+                    this.yRot = (float) Math.toDegrees(Math.atan2(atdZ, atdX)) - 90.0F;
+                    float attackDir = MathF.toRadians(yRot0 - this.yRot + 90.0F);
+                    this.xxa = -Mth.sin(attackDir) * this.zza;
+                    this.zza = Mth.cos(attackDir) * this.zza;
                 }
 
-                if (var11 > 0.0D) {
+                if (dY > 0.0D) {
                     this.jumping = true;
                 }
-            } else if (this.attackTarget != null) {
+            }
+            else if (this.attackTarget != null) {
                 this.setLookAt(this.attackTarget, 30.0F, 30.0F);
             }
 
-            if (this.horizontalCollision && !this.hasPath()) {
-                this.jumping = true;
-            }
+            if (!this.jumping) {
+                if (this.horizontalCollision && !this.hasPath()) {
+                    this.jumping = true;
+                }
 
-            if (this.random.nextFloat() < 0.8F && (var4 || var5)) {
-                this.jumping = true;
+                if (this.random.nextFloat() < 0.8F && (inWater || inLava)) {
+                    this.jumping = true;
+                }
             }
-
-        } else {
+        }
+        else {
             super.serverAiStep();
             this.path = null;
         }
