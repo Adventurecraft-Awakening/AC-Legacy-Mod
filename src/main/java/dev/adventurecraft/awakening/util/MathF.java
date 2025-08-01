@@ -116,4 +116,28 @@ public final class MathF {
         }
         return ((value >>> 1) | (value & 1)) * 2.0;
     }
+
+    public static double normalizeAngle(double a) {
+        while (a < -180.0D) {
+            a += 360.0D;
+        }
+        while (a >= 180.0D) {
+            a -= 360.0D;
+        }
+        return a;
+    }
+
+    public static float normalizeAngle(float a) {
+        while (a < -180.0F) {
+            a += 360.0F;
+        }
+        while (a >= 180.0F) {
+            a -= 360.0F;
+        }
+        return a;
+    }
+
+    public static float clampAngle(float a, float min, float max) {
+        return clamp(normalizeAngle(a), min, max);
+    }
 }

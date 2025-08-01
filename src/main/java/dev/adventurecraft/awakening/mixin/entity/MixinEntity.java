@@ -304,20 +304,20 @@ public abstract class MixinEntity implements ExEntity {
 
     @Override
     public Vec3 getRotation(float deltaTime) {
-        double pitch = this.xRotO + (this.xRot - this.xRotO) * deltaTime;
-        double yaw = this.yRotO + (this.yRot - this.yRotO) * deltaTime;
-        double yCos = Math.cos(-yaw * (Math.PI / 180) - Math.PI);
-        double ySin = Math.sin(-yaw * (Math.PI / 180) - Math.PI);
-        double pCos = -Math.cos(-pitch * (Math.PI / 180));
-        double pSin = Math.sin(-pitch * (Math.PI / 180));
+        double pitch = -Math.toRadians(this.xRotO + (this.xRot - this.xRotO) * deltaTime);
+        double yaw = -Math.toRadians(this.yRotO + (this.yRot - this.yRotO) * deltaTime);
+        double yCos = Math.cos(yaw - Math.PI);
+        double ySin = Math.sin(yaw - Math.PI);
+        double pCos = -Math.cos(pitch);
+        double pSin = Math.sin(pitch);
         return Vec3.newTemp(ySin * pCos, pSin, yCos * pCos);
     }
 
     @Override
     public void setRotation(double x, double y, double z) {
         double root = Math.sqrt(x * x + z * z);
-        double yDeg = (Math.atan2(z, x) * 180.0 / Math.PI) - 90.0;
-        double pDeg = -(Math.atan2(y, root) * 180.0 / Math.PI);
+        double yDeg = Math.toDegrees(Math.atan2(z, x)) - 90.0;
+        double pDeg = -Math.toDegrees(Math.atan2(y, root));
         this.xRotO = this.xRot;
         this.yRotO = this.yRot;
         this.xRot = (float) pDeg;

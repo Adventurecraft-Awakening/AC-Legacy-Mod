@@ -277,20 +277,10 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
             double dX = point.x - this.x;
             double dZ = point.z - this.z;
             double dY = point.y - (double) Mth.floor(this.bb.y0 + 0.5D);
-            float newYaw = (float) (Math.atan2(dZ, dX) * 180.0D / Math.PI) - 90.0F;
-            float extraYaw = newYaw - this.yRot;
+            float newYaw = (float) Math.toDegrees(Math.atan2(dZ, dX)) - 90.0F;
+            float extraYaw = MathF.clampAngle(newYaw - this.yRot, -30.0F, 30.0F);
 
             this.zza = this.runSpeed;
-            while (extraYaw < -180.0F) {
-                extraYaw += 360.0F;
-            }
-
-            while (extraYaw >= 180.0F) {
-                extraYaw -= 360.0F;
-            }
-
-            extraYaw = MathF.clamp(extraYaw, -30.0F, 30.0F);
-
             this.yRot += extraYaw;
             if (dY > 0.0D) {
                 this.jumping = true;

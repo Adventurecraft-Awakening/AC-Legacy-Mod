@@ -6,6 +6,7 @@ import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.extension.block.ExLadderBlock;
 import dev.adventurecraft.awakening.extension.entity.ExMob;
+import dev.adventurecraft.awakening.util.MathF;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.nbt.CompoundTag;
@@ -185,16 +186,8 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
 
     @Overwrite
     public boolean canSee(Entity entity) {
-        double entityYaw = -180.0D * Math.atan2(entity.x - this.x, entity.z - this.z) / Math.PI;
-
-        double viewYaw = entityYaw - this.yRot;
-        while (viewYaw < -180.0D) {
-            viewYaw += 360.0D;
-        }
-
-        while (viewYaw > 180.0D) {
-            viewYaw -= 360.0D;
-        }
+        double entityYaw = -Math.toDegrees(Math.atan2(entity.x - this.x, entity.z - this.z));
+        double viewYaw = MathF.normalizeAngle(entityYaw - this.yRot);
 
         if (Math.abs(viewYaw) > (this.fov / 2.0F + this.extraFov)) {
             return false;
@@ -282,7 +275,7 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
                     dZ = (this.random.nextFloat() - this.random.nextFloat()) * 0.01f;
                 }
 
-                this.hurtDir = (float) (Math.atan2(dZ, dX) * 180.0D / Math.PI) - this.yRot;
+                this.hurtDir = (float) Math.toDegrees(Math.atan2(dZ, dX)) - this.yRot;
                 this.knockback(entity, damage, dX, dZ);
             } else {
                 this.hurtDir = (float) ((int) (this.random.nextFloat() * 2.0F) * 180);
@@ -345,7 +338,7 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
                     dZ = (Math.random() - Math.random()) * 0.01D;
                 }
 
-                this.hurtDir = (float) (Math.atan2(dZ, dX) * 180.0D / Math.PI) - this.yRot;
+                this.hurtDir = (float) Math.toDegrees(Math.atan2(dZ, dX)) - this.yRot;
                 this.knockback(entity, damage, dX, dZ);
             } else {
                 this.hurtDir = (float) ((int) (Math.random() * 2.0D) * 180);
@@ -396,13 +389,11 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
     public void travel(float xInput, float zInput) {
         if (this.getIsFlying()) {
             double speed = Math.sqrt(xInput * xInput + zInput * zInput);
-            double yVel = (double) (-0.1F * zInput) * Math.sin(this.xRot * Math.PI / 180.0);
-            if (speed < 1.0D) {
-                yVel *= speed;
-            }
+            double xRot = Math.toRadians(this.xRot);
+            double yVel = (double) (-0.1F * zInput) * Math.sin(xRot) * Math.min(speed, 1.0D);
 
             this.yd += yVel;
-            float inputSpeed = (float) (0.1 * (Math.abs(zInput * Math.cos(this.xRot * Math.PI / 180.0)) + Math.abs(xInput)));
+            float inputSpeed = (float) (0.1 * (Math.abs(zInput * Math.cos(xRot)) + Math.abs(xInput)));
             this.moveRelative(xInput, zInput, inputSpeed);
             this.move(this.xd, this.yd, this.zd);
             this.fallDistance = 0.0F;
@@ -490,11 +481,9 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
                 }
 
                 this.fallDistance = 0.0F;
-                if (this.yd < -0.15D) {
-                    this.yd = -0.15D;
-                }
+                this.yd = Math.max(-0.15D, this.yd);
 
-                if (this.isSneaking() && this.yd < 0.0D) {
+                if (this.yd < 0.0D && this.isSneaking()) {
                     this.yd = 0.0D;
                 }
             }
@@ -526,12 +515,10 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
         if (isClimbable(this.level, x, y, z)) {
             return true;
         }
-        if (isClimbable(this.level, x, y + 1, z)) {
-            return true;
-        }
-        return false;
+        return isClimbable(this.level, x, y + 1, z);
     }
 
+    @Unique
     private static boolean isClimbable(LevelSource world, int x, int y, int z) {
         int id = world.getTile(x, y, z);
         if (ExLadderBlock.isLadderID(id)) {
@@ -542,10 +529,7 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
             id == AC_Blocks.ropes2.id ||
             id == AC_Blocks.chains.id) {
 
-            boolean meta = world.getData(x, y, z) % 3 == 0;
-            if (meta) {
-                return true;
-            }
+            return world.getData(x, y, z) % 3 == 0;
         }
         return false;
     }
@@ -629,26 +613,27 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
                 this.xd += (double) (-this.collisionX) * 0.325D;
                 this.zd += (double) (-this.collisionZ) * 0.325D;
 
-                this.moveYawOffset = (float) (180.0D * Math.atan2(-this.xd, this.zd) / Math.PI) - this.yRot;
-                while ((double) this.moveYawOffset >= 180.0D) {
-                    this.moveYawOffset = (float) ((double) this.moveYawOffset - 360.0D);
-                }
-                while ((double) this.moveYawOffset < -180.0D) {
-                    this.moveYawOffset = (float) ((double) this.moveYawOffset + 360.0D);
-                }
+                float jumpAngle = (float) Math.toDegrees(Math.atan2(-this.xd, this.zd));
+                this.moveYawOffset = MathF.normalizeAngle(jumpAngle - this.yRot);
 
-                for (int i = 0; i < 10; ++i) {
-                    this.level.addParticle("reddust", this.x + (this.random.nextFloat() * this.bbWidth * 2.0F) - this.bbWidth, this.y - 0.2, this.z + (this.random.nextFloat() * this.bbWidth * 2.0F) - this.bbWidth, 2.5D, 2.5D, 2.5D);
-                }
+                this.spawnWallJumpParticles();
             } else if (this.jumpsLeft > 0) {
                 --this.jumpsLeft;
                 this.jumpFromGround();
                 this.yd *= this.jumpInAirMultiplier;
 
-                for (int i = 0; i < 10; ++i) {
-                    this.level.addParticle("reddust", this.x + (this.random.nextFloat() * this.bbWidth * 2.0F) - this.bbWidth, this.y - 0.2, this.z + (this.random.nextFloat() * this.bbWidth * 2.0F) - this.bbWidth, 2.5D, 2.5D, 2.5D);
-                }
+                this.spawnWallJumpParticles();
             }
+        }
+    }
+
+    @Unique
+    private void spawnWallJumpParticles() {
+        double d = 2.5D;
+        for (int i = 0; i < 10; ++i) {
+            double x = this.x + (this.random.nextFloat() * this.bbWidth * 2.0F) - this.bbWidth;
+            double z = this.z + (this.random.nextFloat() * this.bbWidth * 2.0F) - this.bbWidth;
+            this.level.addParticle("reddust", x, this.y - 0.2, z, d, d, d);
         }
     }
 
@@ -747,17 +732,9 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
 
         double dX = this.x - x;
         double dZ = this.z - z;
-        float shieldYaw = (float) (-57.29578D * Math.atan2(dX, dZ) + 180.0D);
+        float shieldYaw = (float) (180.0D - Math.toDegrees(Math.atan2(dX, dZ)));
 
-        float protectYaw = Math.abs(shieldYaw - this.yRot);
-        while (protectYaw > 180.0F) {
-            protectYaw -= 360.0F;
-        }
-
-        while (protectYaw < -180.0F) {
-            protectYaw += 360.0F;
-        }
-
+        float protectYaw = MathF.normalizeAngle(Math.abs(shieldYaw - this.yRot));
         return protectYaw < 50.0F;
     }
 
