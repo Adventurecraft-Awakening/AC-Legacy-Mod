@@ -13,8 +13,7 @@ import org.spongepowered.asm.mixin.Shadow;
 @Mixin(value = AC_EntityLivingScript.class, remap = false)
 public abstract class MixinAC_EntityLivingScript extends MixinMob {
 
-    @Shadow
-    protected Scriptable scope;
+    @Shadow private Scriptable scope;
 
     @Shadow
     protected abstract boolean runOnAttackedScript();

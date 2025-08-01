@@ -27,26 +27,25 @@ import org.mozilla.javascript.ScriptableObject;
 
 public class AC_EntityLivingScript extends Mob implements IEntityPather {
 
-    String initDescTo;
-    String descriptionName;
+    private String initDescTo;
+    private String descriptionName;
     private float prevWidth = 0.6F;
     private float prevHeight = 1.8F;
-    protected Scriptable scope;
-    public String onCreated = "";
-    public String onUpdate = "";
-    public String onPathReached = "";
-    public String onAttacked = "";
-    public String onDeath = "";
-    public String onInteraction = "";
+    private Scriptable scope;
+    private String onCreated = "";
+    private String onUpdate = "";
+    private String onPathReached = "";
+    private String onAttacked = "";
+    private String onDeath = "";
+    private String onInteraction = "";
     private Path path;
     private Entity pathToEntity;
     private @Nullable Coord pathToVec;
-    public float maxPathDistance = 64.0F;
+    private float maxPathDistance = 64.0F;
     private int nextPathIn;
     private double prevDistToPoint = 999999.0D;
     private AC_TileEntityNpcPath triggerOnPath = null;
-
-    private boolean ranOnCreate = false;
+    private boolean ranOnCreated = false;
 
     public AC_EntityLivingScript(Level world) {
         super(world);
@@ -69,12 +68,12 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
         if (reset) {
             this.health = desc.health;
             ((ExMob) this).setMaxHealth(desc.health);
-            this.onCreated = desc.onCreated;
-            this.onUpdate = desc.onUpdate;
-            this.onPathReached = desc.onPathReached;
-            this.onAttacked = desc.onAttacked;
-            this.onDeath = desc.onDeath;
-            this.onInteraction = desc.onInteraction;
+            this.setOnCreated(desc.onCreated);
+            this.setOnUpdate(desc.onUpdate);
+            this.setOnPathReached(desc.onPathReached);
+            this.setOnAttacked(desc.onAttacked);
+            this.setOnDeath(desc.onDeath);
+            this.setOnInteraction(desc.onInteraction);
         }
 
         this.bbWidth = desc.width;
@@ -94,11 +93,12 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
             if (!this.initDescTo.isEmpty()) {
                 this.setEntityDescription(this.initDescTo, false);
             }
-
             this.initDescTo = null;
         }
-        if (!this.ranOnCreate) {
+
+        if (!this.ranOnCreated) {
             this.runCreatedScript();
+            this.ranOnCreated = true;
         }
 
         this.prevWidth = this.bbWidth;
@@ -132,12 +132,12 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
         super.addAdditionalSaveData(tag);
         var exTag = (ExCompoundTag) tag;
         exTag.putNonEmptyString("descriptionName", this.descriptionName);
-        exTag.putNonEmptyString("onCreated", this.onCreated);
-        exTag.putNonEmptyString("onUpdate", this.onUpdate);
-        exTag.putNonEmptyString("onPathReached", this.onPathReached);
-        exTag.putNonEmptyString("onAttacked", this.onAttacked);
-        exTag.putNonEmptyString("onDeath", this.onDeath);
-        exTag.putNonEmptyString("onInteraction", this.onInteraction);
+        exTag.putNonEmptyString("onCreated", this.getOnCreated());
+        exTag.putNonEmptyString("onUpdate", this.getOnUpdate());
+        exTag.putNonEmptyString("onPathReached", this.getOnPathReached());
+        exTag.putNonEmptyString("onAttacked", this.getOnAttacked());
+        exTag.putNonEmptyString("onDeath", this.getOnDeath());
+        exTag.putNonEmptyString("onInteraction", this.getOnInteraction());
 
         tag.putTag("scope", ScopeTag.getTagFromScope(this.scope));
     }
@@ -146,56 +146,47 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         this.initDescTo = tag.getString("descriptionName");
-        this.onCreated = tag.getString("onCreated");
-        this.onUpdate = tag.getString("onUpdate");
-        this.onPathReached = tag.getString("onPathReached");
-        this.onAttacked = tag.getString("onAttacked");
-        this.onDeath = tag.getString("onDeath");
-        this.onInteraction = tag.getString("onInteraction");
+        this.setOnCreated(tag.getString("onCreated"));
+        this.setOnUpdate(tag.getString("onUpdate"));
+        this.setOnPathReached(tag.getString("onPathReached"));
+        this.setOnAttacked(tag.getString("onAttacked"));
+        this.setOnDeath(tag.getString("onDeath"));
+        this.setOnInteraction(tag.getString("onInteraction"));
 
         ((ExCompoundTag) tag).findCompound("scope").ifPresent(c -> ScopeTag.loadScopeFromTag(this.scope, c));
     }
 
-    public void runCreatedScript() {
-        this.ranOnCreate = true;
-        if (!this.onCreated.isEmpty()) {
-            ((ExWorld) this.level).getScriptHandler().runScript(this.onCreated, this.scope);
+    private Object runScript(String name) {
+        if (name.isEmpty()) {
+            return null;
         }
+        return ((ExWorld) this.level).getScriptHandler().runScript(name, this.scope);
+    }
+
+    private void runCreatedScript() {
+        this.runScript(this.getOnCreated());
     }
 
     private void runUpdateScript() {
-        if (!this.onUpdate.isEmpty()) {
-            ((ExWorld) this.level).getScriptHandler().runScript(this.onUpdate, this.scope);
-        }
+        this.runScript(this.getOnUpdate());
     }
 
     private void runPathCompletedScript() {
-        if (!this.onPathReached.isEmpty()) {
-            ((ExWorld) this.level).getScriptHandler().runScript(this.onPathReached, this.scope);
-        }
+        this.runScript(this.getOnPathReached());
     }
 
     private boolean runOnAttackedScript() {
-        if (this.onAttacked.isEmpty()) {
-            return true;
-        }
-
-        Object result = ((ExWorld) this.level).getScriptHandler().runScript(this.onAttacked, this.scope);
+        Object result = this.runScript(this.getOnAttacked());
         return result instanceof Boolean b ? b : true;
     }
 
     private void runDeathScript() {
-        if (!this.onDeath.isEmpty()) {
-            ((ExWorld) this.level).getScriptHandler().runScript(this.onDeath, this.scope);
-        }
+        this.runScript(this.getOnDeath());
     }
 
     private boolean runOnInteractionScript() {
-        if (!this.onInteraction.isEmpty()) {
-            Object result = ((ExWorld) this.level).getScriptHandler().runScript(this.onInteraction, this.scope);
-            return result instanceof Boolean b ? b : true;
-        }
-        return true;
+        Object result = this.runScript(this.getOnInteraction());
+        return result instanceof Boolean b ? b : true;
     }
 
     public boolean isPathing() {
@@ -272,8 +263,9 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
                 point = null;
                 this.path = null;
                 this.runPathCompletedScript();
-                if (this.getTriggerOnPath() != null) {
-                    this.getTriggerOnPath().pathFinished();
+                var path = this.getTriggerOnPath();
+                if (path != null) {
+                    path.pathFinished();
                 }
                 return;
             }
@@ -327,7 +319,52 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
         return prevHeight;
     }
 
-    public void setOnCreateRunFlag(boolean value) {this.ranOnCreate=value;}
+    public String getOnInteraction() {
+        return onInteraction;
+    }
 
-    public boolean getOnCreateRunFlag(){return this.ranOnCreate;}
+    public void setOnInteraction(String onInteraction) {
+        this.onInteraction = onInteraction;
+    }
+
+    public String getOnDeath() {
+        return onDeath;
+    }
+
+    public void setOnDeath(String onDeath) {
+        this.onDeath = onDeath;
+    }
+
+    public String getOnAttacked() {
+        return onAttacked;
+    }
+
+    public void setOnAttacked(String onAttacked) {
+        this.onAttacked = onAttacked;
+    }
+
+    public String getOnPathReached() {
+        return onPathReached;
+    }
+
+    public void setOnPathReached(String onPathReached) {
+        this.onPathReached = onPathReached;
+    }
+
+    public String getOnUpdate() {
+        return onUpdate;
+    }
+
+    public void setOnUpdate(String onUpdate) {
+        this.onUpdate = onUpdate;
+    }
+
+    public String getOnCreated() {
+        return onCreated;
+    }
+
+    public void setOnCreated(String onCreated) {
+        this.onCreated = onCreated;
+        this.ranOnCreated = false;
+    }
 }
