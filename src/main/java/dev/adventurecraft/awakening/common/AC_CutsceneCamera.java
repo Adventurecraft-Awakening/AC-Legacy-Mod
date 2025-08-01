@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.common;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import dev.adventurecraft.awakening.entity.AC_EntityCamera;
 import dev.adventurecraft.awakening.util.MathF;
@@ -10,19 +11,27 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.lwjgl.opengl.GL11;
 
 public class AC_CutsceneCamera {
+
+    private final Level level;
 
     public long startTime;
     public AC_CutsceneCameraPoint curPoint = new AC_CutsceneCameraPoint(
         0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, AC_CutsceneCameraBlendType.NONE);
     public AC_CutsceneCameraPoint prevPrevPoint;
     public AC_CutsceneCameraPoint prevPoint;
+
     public ArrayList<AC_CutsceneCameraPoint> cameraPoints = new ArrayList<>();
     public ArrayList<Vec3> linePoints = new ArrayList<>();
     public AC_CutsceneCameraBlendType startType = AC_CutsceneCameraBlendType.QUADRATIC;
+
+    public AC_CutsceneCamera(Level level) {
+        this.level = Objects.requireNonNull(level);
+    }
 
     public void addCameraPoint(
         float time, float x, float y, float z, float yaw, float pitch, AC_CutsceneCameraBlendType type) {
@@ -40,20 +49,19 @@ public class AC_CutsceneCamera {
     }
 
     public void loadCameraEntities() {
-
-        for (Entity entity : (List<Entity>) Minecraft.instance.level.entities) {
+        for (Entity entity : (List<Entity>) this.level.entities) {
             if (entity instanceof AC_EntityCamera) {
                 entity.remove();
             }
         }
 
         for (AC_CutsceneCameraPoint point : this.cameraPoints) {
-            var camera = new AC_EntityCamera(Minecraft.instance.level, point.time, point.blendType, point.cameraID);
+            var camera = new AC_EntityCamera(this.level, point.time, point.blendType, point.cameraID);
             camera.absMoveTo(point.posX, point.posY, point.posZ, point.rotYaw, point.rotPitch);
-            Minecraft.instance.level.addEntity(camera);
+            this.level.addEntity(camera);
         }
 
-        var camera = new AC_CutsceneCamera();
+        var camera = new AC_CutsceneCamera(this.level);
 
         for (AC_CutsceneCameraPoint point : this.cameraPoints) {
             camera.addCameraPoint(
@@ -154,7 +162,7 @@ public class AC_CutsceneCamera {
     public void startCamera() {
         this.prevPrevPoint = null;
         this.prevPoint = null;
-        this.startTime = Minecraft.instance.level.getTime();
+        this.startTime = this.level.getTime();
     }
 
     public boolean isEmpty() {
@@ -166,7 +174,7 @@ public class AC_CutsceneCamera {
     }
 
     public AC_CutsceneCameraPoint getCurrentPoint(float time) {
-        float normalizedTime = ((float) (Minecraft.instance.level.getTime() - this.startTime) + time) / 20.0F;
+        float normalizedTime = ((float) (this.level.getTime() - this.startTime) + time) / 20.0F;
         return this.getPoint(normalizedTime);
     }
 

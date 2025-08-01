@@ -204,7 +204,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
     @Unique private double deltaTime;
     @Unique private int rightMouseTicksRan;
     @Unique private int middleMouseTicksRan;
-    @Unique public AC_CutsceneCamera cutsceneCamera = new AC_CutsceneCamera();
+    @Unique public AC_CutsceneCamera cutsceneCamera;
     @Unique public AC_CutsceneCamera activeCutsceneCamera;
     @Unique public boolean cameraActive;
     @Unique public boolean cameraPause = true;
@@ -1258,6 +1258,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         )
     )
     private void initPlayerOnInit(Level level, String stage, Player newPlayer, CallbackInfo ci) {
+        this.cutsceneCamera = new AC_CutsceneCamera(level);
         this.cutsceneCameraEntity = this.gameMode.createPlayer(level);
         ((ExWorld) level).getScript().initPlayer(this.player);
     }
