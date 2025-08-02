@@ -25,12 +25,13 @@ import javax.annotation.Nullable;
 import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 /**
  * GTK-based file icon renderer that uses GIO and GTK libraries to render file icons.
  * This implementation supports standard icons, symbolic icons, and preview thumbnails
  * through the GTK icon theme system.
- * 
+ *
  * @author Adventurecraft Team
  * @since 0.5.5
  */
@@ -38,10 +39,10 @@ public class GtkFileIconRenderer extends FileIconRenderer {
 
     /** GIO attribute for standard file icons */
     private static final String ATTR_ICON = GioConstants.FILE_ATTRIBUTE_STANDARD_ICON;
-    
+
     /** GIO attribute for symbolic file icons */
     private static final String ATTR_SYM_ICON = GioConstants.FILE_ATTRIBUTE_STANDARD_SYMBOLIC_ICON;
-    
+
     /** GIO attribute for preview icons/thumbnails */
     private static final String ATTR_PREVIEW_ICON = GioConstants.FILE_ATTRIBUTE_PREVIEW_ICON;
 
@@ -50,13 +51,13 @@ public class GtkFileIconRenderer extends FileIconRenderer {
 
     /** Signal handler for icon theme changes */
     private SignalHandler iconThemeChangedSignal;
-    
+
     /** Current icon theme instance */
     private IconTheme iconTheme;
 
     /**
      * Creates a new GTK file icon renderer.
-     * 
+     *
      * @param display the GTK display to use for rendering
      */
     public GtkFileIconRenderer(Display display) {
@@ -66,7 +67,7 @@ public class GtkFileIconRenderer extends FileIconRenderer {
     /**
      * Gets the current icon theme for the display.
      * Lazily initializes the theme and sets up change notifications.
-     * 
+     *
      * @return the current icon theme
      */
     public IconTheme getIconTheme() {
@@ -81,7 +82,7 @@ public class GtkFileIconRenderer extends FileIconRenderer {
 
     /**
      * Synchronously retrieves and renders a file icon.
-     * 
+     *
      * @param path the file path to get an icon for
      * @param options rendering options including size, format, and icon type flags
      * @return the rendered icon as an ImageBuffer, or null if no icon could be retrieved
@@ -101,7 +102,7 @@ public class GtkFileIconRenderer extends FileIconRenderer {
 
     /**
      * Asynchronously retrieves and renders a file icon.
-     * 
+     *
      * @param path the file path to get an icon for
      * @param options rendering options including size, format, and icon type flags
      * @param executor the executor service to run the operation on
@@ -133,7 +134,7 @@ public class GtkFileIconRenderer extends FileIconRenderer {
 
     /**
      * Renders a GIO Icon to an ImageBuffer using the GTK rendering pipeline.
-     * 
+     *
      * @param icon the GIO Icon to render
      * @param options rendering options including size, format, and scale
      * @return the rendered icon as an ImageBuffer
@@ -164,7 +165,7 @@ public class GtkFileIconRenderer extends FileIconRenderer {
     /**
      * Queries file information and retrieves the appropriate icon based on the requested flags.
      * Supports standard icons, symbolic icons, and preview thumbnails.
-     * 
+     *
      * @param file the GIO File to query
      * @param options options specifying which types of icons to retrieve
      * @param cancellable optional cancellable for the operation, may be null
@@ -174,7 +175,15 @@ public class GtkFileIconRenderer extends FileIconRenderer {
     @Nullable
     public static Icon queryIcon(ch.bailu.gtk.gio.File file, FileIconOptions options, @Nullable Cancellable cancellable)
         throws AllocationError {
-        String attributes = String.join(",", ATTR_ICON, ATTR_SYM_ICON, ATTR_PREVIEW_ICON);
+        if (options.flags().isEmpty()) {
+            return null;
+        }
+        String attributes = options
+            .flags()
+            .stream()
+            .map(GtkFileIconRenderer::iconFlagToAttr)
+            .collect(Collectors.joining(","));
+
         FileInfo info = file.queryInfo(attributes, FileQueryInfoFlags.NONE, cancellable);
 
         for (FileIconFlags flag : options.flags()) {
@@ -190,9 +199,17 @@ public class GtkFileIconRenderer extends FileIconRenderer {
         return null;
     }
 
+    private static String iconFlagToAttr(FileIconFlags flag) {
+        return switch (flag) {
+            case Icon -> ATTR_ICON;
+            case Symbolic -> ATTR_SYM_ICON;
+            case Thumbnail -> ATTR_PREVIEW_ICON;
+        };
+    }
+
     /**
      * Retrieves the standard icon from file information.
-     * 
+     *
      * @param info the FileInfo containing file attributes
      * @return the standard icon if available, null otherwise
      */
@@ -202,7 +219,7 @@ public class GtkFileIconRenderer extends FileIconRenderer {
 
     /**
      * Retrieves the symbolic icon from file information.
-     * 
+     *
      * @param info the FileInfo containing file attributes
      * @return the symbolic icon if available, null otherwise
      */
@@ -213,11 +230,13 @@ public class GtkFileIconRenderer extends FileIconRenderer {
     /**
      * Retrieves the preview icon/thumbnail from file information.
      * This provides a preview representation of the file content when available.
-     * 
+     *
      * @param info the FileInfo containing file attributes
      * @return the preview icon if available, null otherwise
+     * @implNote Only fetches existing/cached preview icons, and does not compute previews of media.
      */
     private static Icon getPreviewIcon(FileInfo info) {
+        // TODO: actually compute preview icon?
         if (!info.hasAttribute(ATTR_PREVIEW_ICON)) {
             return null;
         }
@@ -226,7 +245,7 @@ public class GtkFileIconRenderer extends FileIconRenderer {
 
     /**
      * Creates a GIO File from a Java Path.
-     * 
+     *
      * @param path the file path to convert
      * @return a GIO File representing the path
      */
@@ -237,7 +256,7 @@ public class GtkFileIconRenderer extends FileIconRenderer {
     /**
      * Creates an ImageBuffer from a GTK Texture by downloading the texture data
      * and copying it to a managed buffer.
-     * 
+     *
      * @param downloader the texture downloader to use
      * @param texture the source texture
      * @param format the desired image format for the output buffer
