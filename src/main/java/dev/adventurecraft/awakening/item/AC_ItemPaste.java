@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.item;
 
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.Coord;
+import dev.adventurecraft.awakening.world.AC_BlockCopyUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;

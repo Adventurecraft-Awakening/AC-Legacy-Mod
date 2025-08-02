@@ -1,81 +1,25 @@
-package dev.adventurecraft.awakening.item;
+package dev.adventurecraft.awakening.world;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.Coord;
+import dev.adventurecraft.awakening.item.AC_ItemCursor;
+import dev.adventurecraft.awakening.item.AC_ItemNudge;
+import dev.adventurecraft.awakening.item.AC_ItemPaste;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Utility class providing shared block copying, pasting, and manipulation functionality
- * for Adventurecraft building tools such as AC_ItemPaste and AC_ItemNudge.
+ * Utility for block copying, pasting, and manipulation functionality
+ * for tools such as {@link AC_ItemPaste} and {@link AC_ItemNudge}.
  * <p>
  * This class centralizes common operations to avoid code duplication and provides
  * a consistent interface for block region operations within the cursor selection system.
  *
  * @author Adventurecraft Team
  */
-public class AC_BlockCopyUtils {
-
-    /**
-     * Represents a copied block region containing block IDs, metadata, and dimensional information.
-     * <p>
-     * This immutable data structure stores a 3D array of blocks in a flattened format
-     * using the formula: index = depth * (height * x + y) + z
-     */
-    public static class BlockRegion {
-        /** Array of block IDs in the region */
-        public final int[] blockIds;
-        /** Array of block metadata values corresponding to blockIds */
-        public final int[] metadata;
-        /** Width of the region (X dimension) */
-        public final int width;
-        /** Height of the region (Y dimension) */
-        public final int height;
-        /** Depth of the region (Z dimension) */
-        public final int depth;
-
-        /**
-         * Creates a new BlockRegion with the specified data and dimensions.
-         *
-         * @param blockIds Array of block IDs (must not be null)
-         * @param metadata Array of metadata values (must not be null and same length as blockIds)
-         * @param width Width of the region (must be positive)
-         * @param height Height of the region (must be positive)
-         * @param depth Depth of the region (must be positive)
-         * @throws IllegalArgumentException if any parameter is invalid
-         */
-        public BlockRegion(int[] blockIds, int[] metadata, int width, int height, int depth) {
-            if (blockIds == null || metadata == null) {
-                throw new IllegalArgumentException("Block arrays cannot be null");
-            }
-            if (blockIds.length != metadata.length) {
-                throw new IllegalArgumentException("Block and metadata arrays must have the same length");
-            }
-            if (width <= 0 || height <= 0 || depth <= 0) {
-                throw new IllegalArgumentException("Dimensions must be positive");
-            }
-            if (blockIds.length != width * height * depth) {
-                throw new IllegalArgumentException("Array length must match dimensions");
-            }
-
-            this.blockIds = blockIds.clone();
-            this.metadata = metadata.clone();
-            this.width = width;
-            this.height = height;
-            this.depth = depth;
-        }
-
-        /**
-         * Gets the total number of blocks in this region.
-         *
-         * @return The total number of blocks (width * height * depth)
-         */
-        public int getBlockCount() {
-            return width * height * depth;
-        }
-    }
+public final class AC_BlockCopyUtils {
 
     /**
      * Copies blocks from the current cursor selection into a BlockRegion.
@@ -184,7 +128,7 @@ public class AC_BlockCopyUtils {
      * The paste position is determined by projecting from the camera entity's position
      * along their look direction by the configured reach distance.
      *
-     * @return Coord representing the calculated paste coordinates
+     * @return {@link Coord} representing the calculated paste coordinates
      * @throws IllegalStateException if camera entity is not available
      */
     public static Coord calculatePastePosition() {
@@ -209,7 +153,7 @@ public class AC_BlockCopyUtils {
      * This is useful for discrete block-based movement operations.
      *
      * @param vec The view rotation vector (must not be null)
-     * @return Unit direction as Coord with values of -1, 0, or 1 on each axis
+     * @return Unit direction as {@link Coord} with values of -1, 0, or 1 on each axis
      * @throws IllegalArgumentException if vec is null
      */
     public static Coord getUnitDirection(Vec3 vec) {
