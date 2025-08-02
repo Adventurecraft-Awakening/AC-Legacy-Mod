@@ -5,11 +5,13 @@
 [![Minecraft Version](https://img.shields.io/badge/Minecraft-Beta%201.7.3-green.svg)](https://minecraft.wiki/w/Java_Edition_Beta_1.7.3)
 [![Fabric](https://img.shields.io/badge/Mod%20Loader-Fabric-blue.svg)](https://fabricmc.net/)
 
-A comprehensive revival of the classic Adventurecraft mod for Minecraft Beta 1.7.3, bringing advanced scripting, map editing, and adventure creation tools to the modern Fabric ecosystem.
+A comprehensive revival of the classic Adventurecraft mod for Minecraft Beta 1.7.3, 
+bringing advanced scripting, map editing, and adventure creation tools to the modern Fabric ecosystem.
 
 ## 🎮 What is Adventurecraft?
 
-Adventurecraft Legacy is a powerful mod that transforms Minecraft into a comprehensive adventure creation platform. Originally created for beta Minecraft, this legacy version brings all the beloved features to Beta 1.7.3 with modern improvements and optimizations.
+Adventurecraft Legacy is a powerful mod that transforms Minecraft into a comprehensive adventure creation platform. 
+This version brings all the beloved features to Beta 1.7.3 with modern improvements and optimizations.
 
 ### Key Features
 
@@ -46,7 +48,7 @@ Adventurecraft Legacy is a powerful mod that transforms Minecraft into a compreh
 - **LWJGL3 Integration**: Modern OpenGL support with improved performance
 - **Debug Rendering**: Visual debugging tools for development
 - **Custom Textures**: Support for animated and dynamic textures
-- **Particle Effects**: Enhanced particle system for visual effects
+- **Particle Effects**: Optimized batching and interaction with wind
 
 ## 🚀 Installation
 
@@ -118,6 +120,10 @@ The mod provides extensive JavaScript APIs for:
 
 ## 🏗️ Project Structure
 
+<details>
+
+<summary>Directory overview</summary>
+
 ```
 src/main/java/dev/adventurecraft/awakening/
 ├── ACMod.java                 # Main mod class
@@ -139,6 +145,8 @@ src/main/java/dev/adventurecraft/awakening/
 └── extension/                 # Minecraft class extensions
 ```
 
+</details>
+
 ## 🤝 Contributing
 
 We welcome contributions from the community! Here's how you can help:
@@ -152,17 +160,7 @@ We welcome contributions from the community! Here's how you can help:
    ```
 3. **Make Your Changes**
 4. **Test Thoroughly**
-   ```bash
-   ./gradlew build
-   ./gradlew test
-   ```
 5. **Submit a Pull Request**
-
-### Contribution Guidelines
-
-- **Code Style**: Follow existing Java conventions
-- **Documentation**: Add Javadoc
-- **Testing**: Include tests for new features
 
 ### Areas for Contribution
 
