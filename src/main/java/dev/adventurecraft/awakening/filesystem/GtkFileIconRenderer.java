@@ -221,8 +221,7 @@ public class GtkFileIconRenderer extends FileIconRenderer {
         if (!info.hasAttribute(ATTR_PREVIEW_ICON)) {
             return null;
         }
-        Object previewObj = info.getAttributeObject(ATTR_PREVIEW_ICON);
-        return previewObj instanceof Icon ? (Icon) previewObj : null;
+        return new Icon(info.getAttributeObject(ATTR_PREVIEW_ICON).cast());
     }
 
     /**
