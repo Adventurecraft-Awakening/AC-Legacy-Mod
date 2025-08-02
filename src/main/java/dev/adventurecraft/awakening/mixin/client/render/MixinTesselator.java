@@ -3,28 +3,26 @@ package dev.adventurecraft.awakening.mixin.client.render;
 import dev.adventurecraft.awakening.extension.client.render.ExTesselator;
 import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.client.renderer.Tesselator;
-import org.spongepowered.asm.mixin.*;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 
 import java.nio.ByteOrder;
 
 @Mixin(Tesselator.class)
 public abstract class MixinTesselator implements ExTesselator {
 
+    @Shadow private static boolean TRIANGLE_MODE;
+    @Shadow private static boolean USE_VBO;
+
     @Shadow private boolean hasColor;
     @Shadow private int packedColor;
     @Shadow private boolean noColor;
 
-    @Redirect(
-        method = "<init>",
-        at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/client/renderer/Tesselator;USE_VBO:Z"
-        )
-    )
-    private boolean useVbo() {
-        return true;
+    static {
+        TRIANGLE_MODE = false;
+        USE_VBO = true;
     }
 
     private @Unique void ac$packedColor(int rgba) {
