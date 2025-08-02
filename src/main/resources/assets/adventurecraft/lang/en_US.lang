@@ -115,6 +115,17 @@ options.of.other.smoothFPS.tooltip="Stabilizes FPS by flushing the graphic drive
 options.of.other.smoothInput.tooltip="Fixes stuck keys, slow input response and sound lag", "  OFF - no fix for stuck keys", "  ON - fixes stuck keys", "This option adds a small delay (1ms) to the game loop", "which fixes the stuck keys, slow input and sound lag."
 options.of.other.fastDebugInfo.tooltip="Fast Debug Info", " OFF - default debug info screen, slower", " ON - debug info screen without lagometer, faster", "Removes the lagometer from the debug screen (F3)."
 
+command.gamerule.desc=Set global rules for the map
+command.gamerule.decay_leaves.desc=Toggles leaf decay
+command.gamerule.sunburn_undead.desc=Toggles mobs burning in daylight
+command.gamerule.melt_ice.desc=
+command.gamerule.freeze_water.desc=
+command.gamerule.allow_bed.desc=Toggles if player can sleep in beds
+command.gamerule.allow_bonemeal.desc=Toggles bonemeal usage
+command.gamerule.allow_hoe.desc=Toggles hoe usage
+command.gamerule.allow_inventory_crafting.desc=
+command.gamerule.snow_accumulation_height.desc=
+
 ## Adventurecraft Tiles
 tile.cage.name=Cage
 tile.camera.name=Camera Block
