@@ -1,6 +1,8 @@
 package dev.adventurecraft.awakening.item;
 
+import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.Coord;
+import net.minecraft.client.Minecraft;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -8,23 +10,23 @@ import net.minecraft.world.level.Level;
 
 /**
  * The Paste tool allows players to copy and paste block selections in Adventurecraft.
- * 
+ * <p>
  * This item copies all blocks within the current cursor selection and pastes them
  * at a position determined by the player's look direction and reach distance. The original
  * blocks remain unchanged (non-destructive copy operation).
- * 
+ * <p>
  * Usage:
  * - Set a cursor selection using the cursor tool
  * - Right-click with the paste tool to copy and paste the selection
  * - The paste location is calculated based on your look direction
- * 
+ *
  * @author Adventurecraft Team
  */
 public class AC_ItemPaste extends Item {
 
     /**
      * Creates a new Paste item with the specified ID.
-     * 
+     *
      * @param id The item ID to assign to this paste tool
      */
     public AC_ItemPaste(int id) {
@@ -33,14 +35,14 @@ public class AC_ItemPaste extends Item {
 
     /**
      * Handles right-click usage of the paste tool.
-     * 
+     * <p>
      * This method performs a non-destructive copy-paste operation:
      * 1. Copies all blocks from the current cursor selection
      * 2. Calculates paste position based on player's look direction
      * 3. Pastes the copied blocks at the calculated position
-     * 
+     * <p>
      * If no cursor selection is set, the operation is silently ignored.
-     * 
+     *
      * @param item The item stack being used
      * @param world The world in which the paste operation occurs
      * @param player The player using the paste tool
@@ -55,16 +57,18 @@ public class AC_ItemPaste extends Item {
 
         try {
             // Copy blocks from selection (non-destructive)
-            AC_BlockCopyUtils.BlockRegion region = AC_BlockCopyUtils.copyBlocksFromSelection(world, false);
-            
+            var region = AC_BlockCopyUtils.copyBlocksFromSelection(world, false);
+
             // Calculate where to paste based on player's look direction
             Coord pastePosition = AC_BlockCopyUtils.calculatePastePosition();
-            
+
             // Paste the copied blocks
             AC_BlockCopyUtils.pasteBlockRegion(world, region, pastePosition.x, pastePosition.y, pastePosition.z);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             // Log error but don't crash the game
-            System.err.println("Error during paste operation: " + e.getMessage());
+            ACMod.LOGGER.error("Failed to paste blocks: ", e);
+            Minecraft.instance.gui.addMessage("Failed to paste blocks: " + e.getMessage());
         }
 
         return item;
