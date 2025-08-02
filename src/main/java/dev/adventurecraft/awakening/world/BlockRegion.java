@@ -8,7 +8,7 @@ package dev.adventurecraft.awakening.world;
  *
  * @author Adventurecraft Team
  */
-public final class BlockRegion {
+public class BlockRegion {
 
     /** Array of block IDs in the region */
     public final int[] blockIds;
@@ -53,12 +53,51 @@ public final class BlockRegion {
         this.depth = depth;
     }
 
+    public BlockRegion(int width, int height, int depth) {
+        if (width <= 0 || height <= 0 || depth <= 0) {
+            throw new IllegalArgumentException("Dimensions must be positive");
+        }
+
+        int volume = calculateVolume(width, height, depth);
+        this.blockIds = new int[volume];
+        this.metadata = new int[volume];
+        this.width = width;
+        this.height = height;
+        this.depth = depth;
+    }
+
     /**
      * Gets the total number of blocks in this region.
      *
      * @return The total number of blocks (width * height * depth)
      */
-    public int getBlockCount() {
+    public final int getBlockCount() {
+        return calculateVolume(this.width, this.height, this.depth);
+    }
+
+    /**
+     * Calculates the array index for 3D coordinates in the flattened arrays.
+     */
+    public final int makeIndex(int x, int y, int z) {
+        return calculateArrayIndex(x, y, z, this.height, this.width);
+    }
+
+    /**
+     * Calculates the array index for 3D coordinates in a flattened array.
+     *
+     * @param x X coordinate within the region
+     * @param y Y coordinate within the region
+     * @param z Z coordinate within the region
+     * @param height Height dimension of the region
+     * @param depth Depth dimension of the region
+     * @return The calculated array index
+     * @implNote Uses the formula: {@code index = depth * (height * x + y) + z}
+     */
+    public static int calculateArrayIndex(int x, int y, int z, int height, int depth) {
+        return depth * (height * x + y) + z;
+    }
+
+    public static int calculateVolume(int width, int height, int depth) {
         return width * height * depth;
     }
 }

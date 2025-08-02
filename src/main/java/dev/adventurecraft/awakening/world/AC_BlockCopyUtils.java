@@ -48,8 +48,7 @@ public final class AC_BlockCopyUtils {
         int width = delta.x + 1;
         int height = delta.y + 1;
         int depth = delta.z + 1;
-        int[] blockIds = new int[width * height * depth];
-        int[] metadata = new int[width * height * depth];
+        var region = new BlockRegion(width, height, depth);
 
         // Copy blocks from the selection
         for (int x = 0; x < width; ++x) {
@@ -61,10 +60,9 @@ public final class AC_BlockCopyUtils {
 
                     int id = world.getTile(worldX, worldY, worldZ);
                     int meta = world.getData(worldX, worldY, worldZ);
-                    int index = calculateArrayIndex(x, y, z, height, depth);
-
-                    blockIds[index] = id;
-                    metadata[index] = meta;
+                    int index = region.makeIndex(x, y, z);
+                    region.blockIds[index] = id;
+                    region.metadata[index] = meta;
 
                     if (clearSource) {
                         world.setTileNoUpdate(worldX, worldY, worldZ, 0);
@@ -72,8 +70,7 @@ public final class AC_BlockCopyUtils {
                 }
             }
         }
-
-        return new BlockRegion(blockIds, metadata, width, height, depth);
+        return region;
     }
 
     /**
@@ -102,7 +99,7 @@ public final class AC_BlockCopyUtils {
         for (int x = 0; x < region.width; ++x) {
             for (int y = 0; y < region.height; ++y) {
                 for (int z = 0; z < region.depth; ++z) {
-                    int index = calculateArrayIndex(x, y, z, region.height, region.depth);
+                    int index = region.makeIndex(x, y, z);
                     int id = region.blockIds[index];
                     int meta = region.metadata[index];
                     world.setTileAndDataNoUpdate(baseX + x, baseY + y, baseZ + z, id, meta);
@@ -114,7 +111,7 @@ public final class AC_BlockCopyUtils {
         for (int x = 0; x < region.width; ++x) {
             for (int y = 0; y < region.height; ++y) {
                 for (int z = 0; z < region.depth; ++z) {
-                    int index = calculateArrayIndex(x, y, z, region.height, region.depth);
+                    int index = region.makeIndex(x, y, z);
                     int id = region.blockIds[index];
                     world.tileUpdated(baseX + x, baseY + y, baseZ + z, id);
                 }
@@ -238,21 +235,5 @@ public final class AC_BlockCopyUtils {
         // Paste blocks at the new location
         Coord newMin = AC_ItemCursor.min();
         pasteBlockRegion(world, region, newMin.x, newMin.y, newMin.z);
-    }
-
-    /**
-     * Calculates the array index for 3D coordinates in a flattened array.
-     * <p>
-     * Uses the formula: index = depth * (height * x + y) + z
-     *
-     * @param x X coordinate within the region
-     * @param y Y coordinate within the region
-     * @param z Z coordinate within the region
-     * @param height Height dimension of the region
-     * @param depth Depth dimension of the region
-     * @return The calculated array index
-     */
-    private static int calculateArrayIndex(int x, int y, int z, int height, int depth) {
-        return depth * (height * x + y) + z;
     }
 }
