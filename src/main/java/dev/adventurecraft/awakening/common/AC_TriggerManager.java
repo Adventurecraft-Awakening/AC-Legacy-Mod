@@ -29,9 +29,6 @@ public final class AC_TriggerManager {
     
     /** Maps trigger source coordinates to their trigger areas by ID */
     public final Map<Coord, Int2ObjectOpenHashMap<AC_TriggerArea>> triggerAreas;
-    
-    /** Spatial cache mapping coordinates to the number of trigger areas containing them */
-    private final Object2IntOpenHashMap<Coord> triggerCounts;
 
     /**
      * Creates a new trigger manager for the specified world.
@@ -41,7 +38,6 @@ public final class AC_TriggerManager {
     public AC_TriggerManager(Level world) {
         this.world = world;
         this.triggerAreas = new Object2ObjectOpenHashMap<>();
-        this.triggerCounts = new Object2IntOpenHashMap<>();
     }
 
     /**
@@ -75,14 +71,7 @@ public final class AC_TriggerManager {
         }
 
         AC_TriggerArea previousArea = map.get(id);
-        
-        // Remove previous area from cache if it exists
-        if (previousArea != null) {
-            this.updateTriggerCounts(previousArea, -1);
-        }
-        
-        // Add new area to cache and find blocks to activate
-        this.updateTriggerCounts(area, 1);
+
         ArrayList<Coord> coords = this.findBlocksToActivate(area);
         map.put(id, area);
         this.activateBlocks(coords);
@@ -139,8 +128,6 @@ public final class AC_TriggerManager {
             return;
         }
 
-        // Remove from cache and deactivate area
-        this.updateTriggerCounts(area, -1);
         map.remove(id);
         if (map.isEmpty()) {
             this.triggerAreas.remove(coord);
@@ -158,7 +145,15 @@ public final class AC_TriggerManager {
      * @return the number of trigger areas containing this point
      */
     public int getTriggerAmount(int x, int y, int z) {
-        return this.triggerCounts.getInt(new Coord(x, y, z));
+        int count = 0;
+        for (var map : this.triggerAreas.values()) {
+            for (AC_TriggerArea area : map.values()) {
+                if (area.isPointInside(x, y, z)) {
+                    ++count;
+                }
+            }
+        }
+        return count;
     }
 
     /**
@@ -170,7 +165,14 @@ public final class AC_TriggerManager {
      * @return true if the point is within at least one trigger area, false otherwise
      */
     public boolean isActivated(int x, int y, int z) {
-        return this.getTriggerAmount(x, y, z) > 0;
+        for (var map : this.triggerAreas.values()) {
+            for (AC_TriggerArea area : map.values()) {
+                if (area.isPointInside(x, y, z)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -193,30 +195,6 @@ public final class AC_TriggerManager {
                 }
                 Coord coord = entry.getKey();
                 gui.addMessage(String.format("Triggered by (%d, %d, %d)", coord.x, coord.y, coord.z));
-            }
-        }
-    }
-
-    /**
-     * Updates the trigger count cache for all coordinates within the specified area.
-     * 
-     * @param area the trigger area to update counts for
-     * @param delta the change in count (+1 for adding, -1 for removing)
-     */
-    private void updateTriggerCounts(AC_TriggerArea area, int delta) {
-        for (int x = area.min.x; x <= area.max.x; x++) {
-            for (int y = area.min.y; y <= area.max.y; y++) {
-                for (int z = area.min.z; z <= area.max.z; z++) {
-                    var coord = new Coord(x, y, z);
-                    int currentCount = this.triggerCounts.getInt(coord);
-                    int newCount = currentCount + delta;
-                    
-                    if (newCount <= 0) {
-                        this.triggerCounts.removeInt(coord);
-                    } else {
-                        this.triggerCounts.put(coord, newCount);
-                    }
-                }
             }
         }
     }
@@ -324,7 +302,6 @@ public final class AC_TriggerManager {
      */
     public void loadFromTagCompound(CompoundTag managerTag) {
         this.triggerAreas.clear();
-        this.triggerCounts.clear();
         int coordCount = managerTag.getInt("numCoords");
 
         for (int i = 0; i < coordCount; ++i) {
@@ -338,9 +315,6 @@ public final class AC_TriggerManager {
                 CompoundTag areaTag = coordTag.getCompoundTag(String.format("area%d", j));
                 AC_TriggerArea area = AC_TriggerArea.getFromTagCompound(areaTag);
                 areaMap.put(coordTag.getInt("areaID"), area);
-                
-                // Rebuild spatial cache for this area
-                this.updateTriggerCounts(area, 1);
             }
         }
     }
