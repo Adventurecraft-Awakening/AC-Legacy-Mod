@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.mixin;
 
+import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.collections.IdentityHashSet;
 import dev.adventurecraft.awakening.extension.ExClass_66;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
@@ -28,6 +29,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 @Mixin(
@@ -85,11 +87,24 @@ public abstract class MixinClass_66 implements ExClass_66 {
         ci.cancel();
     }
 
+    @Unique
+    private static void printTime(@Nullable StringBuilder builder, String prefix, long startTime) {
+        if (builder == null) {
+            return;
+        }
+
+        double millis = (System.nanoTime() - startTime) / 1000000.0;
+        builder.append(prefix).append(String.format(": %.3f ms\n", millis));
+    }
+
     @Overwrite
     public void rebuild() {
         if (!this.dirty) {
             return;
         }
+        long timeStart = System.nanoTime();
+        var timeBuilder = ACMod.LOGGER.isTraceEnabled() ? new StringBuilder() : null;
+        printTime(timeBuilder, "Start", timeStart);
 
         ++Chunk.updates;
         if (this.needsBoxUpdate && Minecraft.instance.options.advancedOpengl) {
@@ -104,6 +119,8 @@ public abstract class MixinClass_66 implements ExClass_66 {
             ));
             GL11.glEndList();
             this.needsBoxUpdate = false;
+
+            printTime(timeBuilder, "Box Update", timeStart);
         }
 
         this.occlusion_visible = true;
@@ -124,6 +141,8 @@ public abstract class MixinClass_66 implements ExClass_66 {
         var23.addAll(this.renderableTileEntities);
         this.renderableTileEntities.clear();
 
+        printTime(timeBuilder, "TileEntity Setup", timeStart);
+
         int regionPadding = 1;
         Region region = new Region(
             this.level,
@@ -137,11 +156,15 @@ public abstract class MixinClass_66 implements ExClass_66 {
         TileRenderer blockRenderer = new TileRenderer(region);
         Textures texMan = Minecraft.instance.textures;
 
+        printTime(timeBuilder, "Region Setup", timeStart);
+
         int[] textures = new int[4];
         textures[0] = texMan.loadTexture("/terrain.png");
         for (int texId = 2; texId < textures.length; texId++) {
             textures[texId] = texMan.loadTexture(String.format("/terrain%d.png", texId));
         }
+
+        printTime(timeBuilder, "Texture Setup", timeStart);
 
         for (int renderPass = 0; renderPass < 2; ++renderPass) {
             boolean needsNextPass = false;
@@ -206,6 +229,8 @@ public abstract class MixinClass_66 implements ExClass_66 {
 
                 if (hasTexture) {
                     tesselator.end();
+
+                    printTime(timeBuilder, "Texture Pass " + texId, timeStart);
                 }
             }
 
@@ -223,6 +248,8 @@ public abstract class MixinClass_66 implements ExClass_66 {
                 this.empty[renderPass] = false;
             }
 
+            printTime(timeBuilder, "Render Pass " + renderPass, timeStart);
+
             if (!needsNextPass) {
                 break;
             }
@@ -238,6 +265,12 @@ public abstract class MixinClass_66 implements ExClass_66 {
 
         this.skyLit = LevelChunk.touchedSky;
         this.compiled = true;
+
+        printTime(timeBuilder, "End", timeStart);
+
+        if (timeBuilder != null) {
+            ACMod.LOGGER.trace("Chunk build time: {}", timeBuilder);
+        }
     }
 
     @Inject(
