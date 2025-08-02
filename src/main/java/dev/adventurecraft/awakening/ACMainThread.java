@@ -14,7 +14,6 @@ import java.io.File;
  * maps directory management, and OpenGL debugging capabilities.
  * 
  * @author Adventurecraft Team
- * @since 1.0.0
  */
 @Environment(value = EnvType.CLIENT)
 public final class ACMainThread extends Minecraft {
@@ -54,28 +53,14 @@ public final class ACMainThread extends Minecraft {
     }
 
     /**
-     * Handles crash scenarios by performing emergency cleanup and saving operations.
-     * This method is called when the game encounters a critical error that requires
-     * immediate shutdown with data preservation.
+     * Called to display native dialog to user after the game loop handles a critical error.
      * 
      * @param crashReport The crash report containing details about the error
-     * @since 1.0.0
      */
     @Override
     public void onCrash(CrashReport crashReport) {
-        try {
-            // Perform emergency save to prevent data loss
-            this.emergencySave();
-            
-            // Log crash information for debugging
-            System.err.println("[ACMainThread] Game crashed with report: " + crashReport.toString());
-            System.err.println("[ACMainThread] Emergency save completed");
-            
-        } catch (Exception e) {
-            // Prevent crash handler from crashing
-            System.err.println("[ACMainThread] Error during crash handling: " + e.getMessage());
-            e.printStackTrace();
-        }
+        //noinspection StringConcatenationArgumentToLogCall: propagate throwable
+        ACMod.LOGGER.error("Game crashed - " + crashReport.title, crashReport.e);
     }
 
     /**
