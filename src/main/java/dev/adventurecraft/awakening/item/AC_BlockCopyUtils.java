@@ -15,7 +15,6 @@ import net.minecraft.world.phys.Vec3;
  * a consistent interface for block region operations within the cursor selection system.
  * 
  * @author Adventurecraft Team
- * @since 1.0
  */
 public class AC_BlockCopyUtils {
 

@@ -19,7 +19,6 @@ import net.minecraft.world.level.Level;
  * - The paste location is calculated based on your look direction
  * 
  * @author Adventurecraft Team
- * @since 1.0
  */
 public class AC_ItemPaste extends Item {
 

@@ -26,7 +26,6 @@ import net.minecraft.world.phys.Vec3;
  * block locations and places blocks at the new location.
  * 
  * @author Adventurecraft Team
- * @since 1.0
  */
 public class AC_ItemNudge extends Item implements AC_ILeftClickItem {
 

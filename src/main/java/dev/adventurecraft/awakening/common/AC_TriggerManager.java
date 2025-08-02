@@ -21,7 +21,6 @@ import java.util.Map;
  * contain them anymore.
  * 
  * @author Adventurecraft Team
- * @since 0.5.5
  */
 public final class AC_TriggerManager {
 

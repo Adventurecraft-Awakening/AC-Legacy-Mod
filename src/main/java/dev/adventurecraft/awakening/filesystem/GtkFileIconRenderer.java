@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
  * through the GTK icon theme system.
  *
  * @author Adventurecraft Team
- * @since 0.5.5
  */
 public class GtkFileIconRenderer extends FileIconRenderer {
 

@@ -80,8 +80,6 @@ public final class ACMainThread extends Minecraft {
     /**
      * Enumeration of OpenGL debug severity levels.
      * Used to control the verbosity of OpenGL debug output and stack traces.
-     * 
-     * @since 1.0.0
      */
     public enum GlDebugSeverity {
         /** Ignore all debug messages */
