@@ -90,6 +90,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
         if (!this.dirty) {
             return;
         }
+
         ++Chunk.updates;
         if (this.needsBoxUpdate && Minecraft.instance.options.advancedOpengl) {
             GL11.glNewList(this.lists + 2, GL11.GL_COMPILE);
@@ -122,6 +123,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
         var var23 = new IdentityHashSet<TileEntity>();
         var23.addAll(this.renderableTileEntities);
         this.renderableTileEntities.clear();
+
         int regionPadding = 1;
         Region region = new Region(
             this.level,
@@ -142,15 +144,15 @@ public abstract class MixinClass_66 implements ExClass_66 {
         }
 
         for (int renderPass = 0; renderPass < 2; ++renderPass) {
-            boolean var12 = false;
-            boolean var13 = false;
-            boolean var14 = false;
+            boolean needsNextPass = false;
+            boolean hasMesh = false;
+            boolean hasList = false;
 
             for (int texId = 0; texId < textures.length; ++texId) {
                 if (texId == 1) {
                     continue;
                 }
-                boolean var16 = false;
+                boolean hasTexture = false;
 
                 for (int x = startX; x < width; ++x) {
                     for (int z = startZ; z < depth; ++z) {
@@ -162,8 +164,8 @@ public abstract class MixinClass_66 implements ExClass_66 {
 
                             Tile block = Tile.tiles[blockId];
                             if (texId == ((ExBlock) block).getTextureNum()) {
-                                if (!var14) {
-                                    var14 = true;
+                                if (!hasList) {
+                                    hasList = true;
                                     GL11.glNewList(this.lists + renderPass, GL11.GL_COMPILE);
 
                                     //GL11.glPushMatrix();
@@ -174,8 +176,8 @@ public abstract class MixinClass_66 implements ExClass_66 {
                                     //GL11.glTranslatef((float) this.field_236 / 2.0F, (float) this.field_235 / 2.0F, (float) this.field_236 / 2.0F);
                                 }
 
-                                if (!var16) {
-                                    var16 = true;
+                                if (!hasTexture) {
+                                    hasTexture = true;
                                     GL11.glBindTexture(GL11.GL_TEXTURE_2D, textures[texId]);
 
                                     //((ExTessellator) tesselator).setRenderingChunk(true);
@@ -192,37 +194,36 @@ public abstract class MixinClass_66 implements ExClass_66 {
 
                                 int blockRenderPass = block.getRenderLayer();
                                 if (blockRenderPass != renderPass) {
-                                    var12 = true;
+                                    needsNextPass = true;
                                 }
                                 else {
-                                    var13 |= blockRenderer.tesselateInWorld(block, x, y, z);
+                                    hasMesh |= blockRenderer.tesselateInWorld(block, x, y, z);
                                 }
                             }
                         }
                     }
+                }
 
-                    if (var16) {
-                        tesselator.end();
-                        var16 = false;
-                    }
+                if (hasTexture) {
+                    tesselator.end();
                 }
             }
 
-            if (var14) {
+            if (hasList) {
                 //GL11.glPopMatrix();
                 GL11.glEndList();
                 //tesselator.setOffset(0.0D, 0.0D, 0.0D);
                 //((ExTessellator) tesselator).setRenderingChunk(false);
             }
             else {
-                var13 = false;
+                hasMesh = false;
             }
 
-            if (var13) {
+            if (hasMesh) {
                 this.empty[renderPass] = false;
             }
 
-            if (!var12) {
+            if (!needsNextPass) {
                 break;
             }
         }
@@ -234,6 +235,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
 
         var23.removeAll(this.renderableTileEntities);
         this.globalRenderableTileEntities.removeAll(var23);
+
         this.skyLit = LevelChunk.touchedSky;
         this.compiled = true;
     }
