@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.mixin.client.gui;
 
 import dev.adventurecraft.awakening.ACMod;
+import dev.adventurecraft.awakening.client.gui.AC_ChatScreen;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
@@ -426,8 +427,8 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
 
         final int maxChatHeight;
         final boolean isChatOpen;
-        if (this.minecraft.screen instanceof ChatScreen) {
-            maxChatHeight = 200; // TODO: use screen height?
+        if (this.minecraft.screen instanceof AC_ChatScreen) {
+            maxChatHeight = screenHeight - 48 * 3;
             isChatOpen = true;
         }
         else {
