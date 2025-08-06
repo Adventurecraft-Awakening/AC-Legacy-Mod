@@ -2,11 +2,15 @@ package dev.adventurecraft.awakening.extension.world.chunk;
 
 import net.minecraft.world.level.tile.entity.TileEntity;
 
+import java.nio.ByteBuffer;
+
 public interface ExChunk {
 
     boolean setBlockIDWithMetadataTemp(int x, int y, int z, int id, int meta);
 
     TileEntity getChunkBlockTileEntityDontCreate(int x, int y, int z);
+
+    void getTileColumn(ByteBuffer buffer, int x, int y0, int z, int y1);
 
     double getTemperatureValue(int x, int z);
 

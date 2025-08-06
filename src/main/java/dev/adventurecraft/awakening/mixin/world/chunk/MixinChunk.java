@@ -7,6 +7,7 @@ import dev.adventurecraft.awakening.common.AC_UndoStack;
 import dev.adventurecraft.awakening.extension.entity.ExBlockEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
+import dev.adventurecraft.awakening.util.BufferUtil;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -17,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.io.PrintStream;
+import java.nio.ByteBuffer;
 import java.util.Map;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
@@ -131,8 +133,8 @@ public abstract class MixinChunk implements ExChunk {
     }
 
     @Overwrite
-    public int getTile(int var1, int var2, int var3) {
-        return ExChunk.translate256(this.blocks[var1 << 11 | var3 << 7 | var2]);
+    public int getTile(int x, int y, int z) {
+        return ExChunk.translate256(this.blocks[x << 11 | z << 7 | y]);
     }
 
     @Redirect(method = "recalcHeightmap", at = @At(
@@ -346,6 +348,18 @@ public abstract class MixinChunk implements ExChunk {
         TilePos var4 = new TilePos(x, y, z);
         TileEntity var5 = this.tileEntities.get(var4);
         return var5;
+    }
+
+    public @Override void getTileColumn(ByteBuffer buffer, int x, int y0, int z, int y1) {
+        // Fill the entire requested range with values; out of bounds is zero.
+        if (y0 < 0) {
+            BufferUtil.repeat(buffer, (byte) 0, -y0);
+            y0 = 0;
+        }
+        buffer.put(this.blocks, (x << 11 | z << 7) + y0, Math.min(y1, 128) - y0);
+        if (y1 > 128) {
+            BufferUtil.repeat(buffer, (byte) 0, y1 - 128);
+        }
     }
 
     @Override
