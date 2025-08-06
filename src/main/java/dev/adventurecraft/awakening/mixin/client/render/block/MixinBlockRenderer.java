@@ -44,6 +44,7 @@ import org.spongepowered.asm.mixin.injection.Slice;
 public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
     @Unique private final Xoshiro128PP rand = new Xoshiro128PP();
+    @Unique private Tesselator tesselator;
 
     @Shadow public static boolean fancy;
     @Shadow public LevelSource level;
@@ -172,19 +173,29 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     @Shadow
     protected abstract float getWaterHeight(int x, int y, int z, Material material);
 
-    /*
-    @Inject(method = "render", at = @At(
-            value = "RETURN",
-            ordinal = 18),
-            locals = LocalCapture.CAPTURE_FAILHARD,
-            cancellable = true)
-    private void renderBlock(Block var1, int var2, int var3, int var4, CallbackInfoReturnable<Boolean> cir, int var5) {
-        if (Config.hasModLoader()) {
-            boolean v = Config.callBoolean("ModLoader", "RenderWorldBlock", this, this.blockView, var2, var3, var4, var1, var5);
-            cir.setReturnValue(v);
+    @SuppressWarnings("MixinAnnotationTarget")
+    @Redirect(
+        method = "*",
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/client/renderer/Tesselator;instance:Lnet/minecraft/client/renderer/Tesselator;",
+            opcode = Opcodes.GETSTATIC
+        )
+    )
+    private Tesselator tesselator() {
+        if (this.tesselator == null) {
+            return Tesselator.instance;
         }
+        return this.tesselator;
     }
-    */
+
+    public @Override Tesselator getTesselator() {
+        return this.tesselator;
+    }
+
+    public @Override void setTesselator(Tesselator tesselator) {
+        this.tesselator = tesselator;
+    }
 
     @Override
     public void startRenderingBlocks(Level world) {
@@ -193,14 +204,14 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             GL11.glShadeModel(GL11.GL_SMOOTH);
         }
 
-        Tesselator.instance.begin();
+        this.tesselator().begin();
         this.noCulling = true;
     }
 
     @Override
     public void stopRenderingBlocks() {
         this.noCulling = false;
-        Tesselator.instance.end();
+        this.tesselator().end();
         if (Minecraft.useAmbientOcclusion()) {
             GL11.glShadeModel(GL11.GL_FLAT);
         }
@@ -813,7 +824,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     public boolean tesselateBlockInWorld(Tile block, int x, int y, int z, float r, float g, float b) {
         this.blen = false;
         boolean doGrassEdges = fancy && block.id == Tile.GRASS.id;
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         boolean renderAny = false;
         float colorFactor0 = 0.5F;
         float colorFactor1 = 0.8F;
@@ -993,8 +1004,10 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
     private @Unique boolean tesselateRedstonePower(Tile block, int x, int y, int z) {
         boolean hasFaces = this.tesselateBlockInWorld(block, x, y, z);
+        // TODO: Change torch tile data on activation instead to rerender,
+        //       which will get rid of this hacky level access.
         if (((ExWorld) Minecraft.instance.level).getTriggerManager().isActivated(x, y, z)) {
-            Tesselator.instance.color(1.0F, 1.0F, 1.0F);
+            this.tesselator().color(1.0F, 1.0F, 1.0F);
             this.fixedTexture = 99;
         }
         else {
@@ -1034,7 +1047,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
     @Overwrite
     public boolean tesselateLadderInWorld(Tile block, int x, int y, int z) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         int meta = this.level.getData(x, y, z);
         int texture = block.getTexture(0, meta);
         if (this.fixedTexture >= 0) {
@@ -1119,7 +1132,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
     @Overwrite
     public void tesselateCrossTexture(Tile block, int meta, double x, double y, double z) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         int texture = block.getTexture(Facing.DOWN, meta);
         if (this.fixedTexture >= 0) {
             texture = this.fixedTexture;
@@ -1169,7 +1182,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
     @Overwrite
     public boolean tesselateWaterInWorld(Tile block, int x, int y, int z) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         boolean faceUp = block.shouldRenderFace(this.level, x, y + 1, z, 1);
         boolean faceDown = block.shouldRenderFace(this.level, x, y - 1, z, 0);
         boolean[] facesH = new boolean[] {
@@ -1400,7 +1413,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         minZ = fixupCrossFenceZ(minZ);
         maxZ = fixupCrossFenceZ(maxZ);
 
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         var exTs = (ExTesselator) ts;
         int texture = block.getTexture(this.level, x, y, z, Facing.DOWN);
         double texX = (texture & 15) << 4;
@@ -1497,7 +1510,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         minZ = fixupCrossFenceZ(minZ);
         maxZ = fixupCrossFenceZ(maxZ);
 
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         var exTs = (ExTesselator) ts;
         int texture = block.getTexture(this.level, x, y, z, Facing.DOWN);
         double texX = (texture & 15) << 4;
@@ -1769,7 +1782,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     public @Unique void renderCrossedSquaresUpsideDown(Tile block, int meta, double x, double y, double z) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         int texture = block.getTexture(Facing.DOWN, meta);
         if (this.fixedTexture >= 0) {
             texture = this.fixedTexture;
@@ -1818,7 +1831,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     public @Unique void renderCrossedSquaresEast(Tile block, int meta, double x, double y, double z) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         int texture = block.getTexture(Facing.DOWN, meta);
         if (this.fixedTexture >= 0) {
             texture = this.fixedTexture;
@@ -1867,7 +1880,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     public @Unique void renderCrossedSquaresWest(Tile block, int meta, double x, double y, double z) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         int texture = block.getTexture(Facing.DOWN, meta);
         if (this.fixedTexture >= 0) {
             texture = this.fixedTexture;
@@ -1916,7 +1929,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     public @Unique void renderCrossedSquaresNorth(Tile block, int meta, double x, double y, double z) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         int texture = block.getTexture(Facing.DOWN, meta);
         if (this.fixedTexture >= 0) {
             texture = this.fixedTexture;
@@ -1965,7 +1978,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     public @Unique void renderCrossedSquaresSouth(Tile block, int meta, double x, double y, double z) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         int texture = block.getTexture(Facing.DOWN, meta);
         if (this.fixedTexture >= 0) {
             texture = this.fixedTexture;
@@ -2014,7 +2027,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     public @Unique boolean renderBlockSlope(Tile block, int x, int y, int z) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         int coreMeta = this.level.getData(x, y, z) & 3;
         int coreTexture = block.getTexture(this.level, x, y, z, Facing.DOWN);
         double texX = (coreTexture & 15) << 4;
@@ -2052,7 +2065,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     private @Unique void renderBlockSlope0(int x, int y, int z, float b, double u0, double u1, double v0, double v1) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         double x1 = x + 1;
         double z1 = z + 1;
         double y1 = y + 1;
@@ -2167,7 +2180,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     private @Unique void renderBlockSlope1(int x, int y, int z, float b, double u0, double u1, double v0, double v1) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         double x1 = x + 1;
         double z1 = z + 1;
         double y1 = y + 1;
@@ -2283,7 +2296,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     private @Unique void renderBlockSlope2(int x, int y, int z, float b, double u0, double u1, double v0, double v1) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         double x1 = x + 1;
         double z1 = z + 1;
         double y1 = y + 1;
@@ -2403,7 +2416,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     private @Unique void renderBlockSlope3(int x, int y, int z, float b, double u0, double u1, double v0, double v1) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         double x1 = x + 1;
         double z1 = z + 1;
         double y1 = y + 1;
@@ -2529,7 +2542,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             return false;
         }
 
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         float brightness = block.getBrightness(this.level, x, y + 1, z) * grassMul;
         int colorMul = block.getFoliageColor(this.level, x, y, z);
         float red = (float) (colorMul >> 16 & 255) / 255.0F;
@@ -2583,7 +2596,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     public @Unique boolean renderSpikes(Tile block, int x, int y, int z) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         float brightness = block.getBrightness(this.level, x, y, z);
         ts.color(brightness, brightness, brightness);
 
@@ -2684,7 +2697,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     public @Unique boolean renderRope(Tile block, int x, int y, int z) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         float brightness = block.getBrightness(this.level, x, y, z);
         ts.color(brightness, brightness, brightness);
 
@@ -2699,7 +2712,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     public @Unique boolean renderBlockTree(Tile block, int x, int y, int z) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         float brightness = block.getBrightness(this.level, x, y, z);
         ts.color(brightness, brightness, brightness);
 
@@ -2764,7 +2777,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     public @Unique boolean renderBlockOverlay(Tile block, int x, int y, int z) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         float brightness = block.getBrightness(this.level, x, y, z);
         ts.color(brightness, brightness, brightness);
 
@@ -2798,39 +2811,4 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         }
         return true;
     }
-
-    // TODO: what is ModLoader?
-    /*
-    @Inject(method = "method_48", at = @At(
-            value = "INVOKE_ASSIGN",
-            target = "Lnet/minecraft/block/Block;getRenderType()I",
-            shift = At.Shift.AFTER))
-    private void renderModLoaderInvBlock(Block var1, int var2, float var3, CallbackInfo ci) {
-        int var5 = var1.getRenderType();
-        if (var5 != 0 && var5 != 16) {
-            if (var5 == 1) {
-            } else if (var5 == 13) {
-            } else if (var5 == 6) {
-            } else if (var5 == 2) {
-            } else {
-                if (var5 == 10) {
-                } else if (var5 == 11) {
-                } else if (Config.hasModLoader()) {
-                    Config.callVoid("ModLoader", "RenderInvBlock", this, var1, var2, var5);
-                }
-            }
-        }
-    }
-
-    @Inject(method = "method_42", at = @At(
-            value = "RETURN",
-            ordinal = 4),
-            cancellable = true)
-    private static void renderModLoaderBlockIsItemFull3D(int var1, CallbackInfoReturnable<Boolean> cir) {
-        if (var1 != 16 && Config.hasModLoader()) {
-            boolean v = Config.callBoolean("ModLoader", "RenderBlockIsItemFull3D", var1);
-            cir.setReturnValue(v);
-        }
-    }
-    */
 }
