@@ -6,7 +6,6 @@ import net.minecraft.client.renderer.Tesselator;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 
 import java.nio.ByteOrder;
 
@@ -20,12 +19,30 @@ public abstract class MixinTesselator implements ExTesselator {
     @Shadow private int packedColor;
     @Shadow private boolean noColor;
 
+    @Shadow private double u;
+    @Shadow private double v;
+
+    @Shadow
+    public abstract void vertex(double x, double y, double z);
+
+    @Shadow
+    public abstract void vertexUV(double x, double y, double z, double u, double v);
+
     static {
         TRIANGLE_MODE = false;
         USE_VBO = true;
     }
 
-    private @Unique void ac$packedColor(int rgba) {
+    public @Override void ac$vertex(float x, float y, float z) {
+        this.vertex(x, y, z);
+    }
+
+    public @Override void ac$tex(float u, float v) {
+        this.u = u;
+        this.v = v;
+    }
+
+    public @Override void ac$color(int rgba) {
         this.hasColor = true;
         if (ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN) {
             this.packedColor = rgba;
@@ -33,25 +50,6 @@ public abstract class MixinTesselator implements ExTesselator {
         else {
             this.packedColor = Integer.reverseBytes(rgba);
         }
-    }
-
-    private @Unique void ac$color(int r, int g, int b, int a) {
-        this.ac$packedColor(a << 24 | b << 16 | g << 8 | r);
-    }
-
-    public @Override void ac$color(int rgba) {
-        if (this.noColor) {
-            return;
-        }
-        this.ac$packedColor(rgba);
-    }
-
-    public @Override void ac$splatColor(float rgb) {
-        if (this.noColor) {
-            return;
-        }
-        int l = MathF.clamp((int) (rgb * 255.0F), 0, 255);
-        this.ac$color(l, l, l, 255);
     }
 
     public @Overwrite void color(int r, int g, int b, int a) {
@@ -66,12 +64,6 @@ public abstract class MixinTesselator implements ExTesselator {
     }
 
     public @Overwrite void color(int r, int g, int b) {
-        if (this.noColor) {
-            return;
-        }
-        r = MathF.clamp(r, 0, 255);
-        g = MathF.clamp(g, 0, 255);
-        b = MathF.clamp(b, 0, 255);
-        this.ac$color(r, g, b, 255);
+        this.color(r, g, b, 255);
     }
 }
