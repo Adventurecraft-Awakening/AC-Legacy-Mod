@@ -166,6 +166,9 @@ public abstract class MixinEntity implements ExEntity {
     @Shadow
     public abstract float distanceTo(Entity arg);
 
+    @Shadow
+    public abstract float getBrightness(float partialTick);
+
     @Inject(method = "move", at = @At(
         value = "FIELD",
         target = "Lnet/minecraft/world/entity/Entity;z:D",
@@ -181,6 +184,8 @@ public abstract class MixinEntity implements ExEntity {
         @Local(ordinal = 6) double var13,
         @Local(ordinal = 7) double var15) {
         this.collisionX = Double.compare(var11, var1);
+
+        // TODO: handle clipBlock elsewhere (probably in AABB producer)
 
         int yPos;
         boolean isCollidingWithBlock = false;

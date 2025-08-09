@@ -23,4 +23,16 @@ public interface ExTesselator {
         int l = MathF.clamp((int) (luma * 255.0F), 0, 255);
         this.ac$color(l, l, l, 255);
     }
+
+    default double getX() {
+        return 0;
+    }
+
+    default double getY() {
+        return 0;
+    }
+
+    default double getZ() {
+        return 0;
+    }
 }
