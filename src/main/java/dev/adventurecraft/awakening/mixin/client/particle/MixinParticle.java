@@ -48,9 +48,9 @@ public abstract class MixinParticle extends MixinEntity {
         float u1 = u0 + 0.0624375f;
         float v1 = v0 + 0.0624375f;
 
-        float px = (float) (et.getX() + this.xo - xOff) + (float) (this.x - this.xo) * partialTick;
-        float py = (float) (et.getY() + this.yo - yOff) + (float) (this.y - this.yo) * partialTick;
-        float pz = (float) (et.getZ() + this.zo - zOff) + (float) (this.z - this.zo) * partialTick;
+        float px = (float) (this.xo - xOff) + (float) (this.x - this.xo) * partialTick;
+        float py = (float) (this.yo - yOff) + (float) (this.y - this.yo) * partialTick;
+        float pz = (float) (this.zo - zOff) + (float) (this.z - this.zo) * partialTick;
 
         float s = 0.1f * this.size;
         float xA = x0 * s;
