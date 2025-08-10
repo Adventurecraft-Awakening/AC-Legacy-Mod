@@ -3,6 +3,7 @@ package dev.adventurecraft.awakening.client.rendering;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.client.renderer.MemoryMesh;
 import dev.adventurecraft.awakening.extension.client.render.ExTesselator;
+import dev.adventurecraft.awakening.util.GLUtil;
 import net.minecraft.client.renderer.Tesselator;
 
 import java.nio.ByteBuffer;
@@ -13,7 +14,7 @@ public final class MemoryTesselator extends Tesselator implements ExTesselator {
 
     public static final int BLOCK_SIZE = 1024 * 64 * 4;
 
-    private static final int BYTE_STRIDE = 8 * 4;
+    public static final int BYTE_STRIDE = 7 * 4;
 
     private static final ByteBuffer EMPTY_BLOCK = ByteBuffer.allocateDirect(0).order(ByteOrder.nativeOrder());
 
@@ -44,10 +45,6 @@ public final class MemoryTesselator extends Tesselator implements ExTesselator {
         catch (InstantiationException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public long size() {
-        return this.block.position() + (long) this.blocks.size() * BLOCK_SIZE;
     }
 
     public boolean isEmpty() {
@@ -96,7 +93,10 @@ public final class MemoryTesselator extends Tesselator implements ExTesselator {
         a.putInt(Float.floatToRawIntBits(v));
         a.putInt(this.rgba);
         a.putInt(this.normal);
-        a.putInt(0);
+    }
+
+    public @Override void normal(float x, float y, float z) {
+        this.normal = GLUtil.packByteNormal(x, y, z);
     }
 
     private ByteBuffer reserve(int count) {
@@ -115,8 +115,11 @@ public final class MemoryTesselator extends Tesselator implements ExTesselator {
         }
 
         if (this.block != EMPTY_BLOCK) {
-            assert this.block.limit() == BLOCK_SIZE;
-            this.blocks.add(this.block);
+            var fullBlock = this.block;
+            this.block = EMPTY_BLOCK;
+
+            assert fullBlock.limit() == BLOCK_SIZE;
+            this.blocks.add(fullBlock);
         }
 
         // TODO: allocate (smaller) blocks from Arena?

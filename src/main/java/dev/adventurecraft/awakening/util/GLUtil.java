@@ -31,4 +31,17 @@ public final class GLUtil {
             return Rect.fromEdges(x0, y0, x1, y1);
         }
     }
+
+    public static int packByteNormal(float x, float y, float z) {
+        int bx = floatToByte(x);
+        int by = floatToByte(y);
+        int bz = floatToByte(z);
+        return bx | (by << 8) | (bz << 16);
+    }
+
+    private static int floatToByte(float value) {
+        // https://www.khronos.org/opengl/wiki/Normalized_Integer#Signed
+        // Range depends on GL version... so use the somewhat sane, equal distribution:
+        return (int) (MathF.clamp(value, -1f, 1f) * 127f);
+    }
 }

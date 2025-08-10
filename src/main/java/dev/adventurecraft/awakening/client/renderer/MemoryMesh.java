@@ -6,7 +6,10 @@ import java.util.List;
 
 public class MemoryMesh {
 
-    public List<ByteBuffer> vertexBlocks = new ArrayList<>();
+    public final List<ByteBuffer> vertexBlocks = new ArrayList<>();
+
+    public MemoryMesh() {
+    }
 
     public long sizeInBytes() {
         long size = 0;

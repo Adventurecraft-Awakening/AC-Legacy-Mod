@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.mixin.client.render;
 
 import dev.adventurecraft.awakening.extension.client.render.ExTesselator;
+import dev.adventurecraft.awakening.util.GLUtil;
 import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.client.renderer.Tesselator;
 import org.spongepowered.asm.mixin.*;
@@ -13,8 +14,9 @@ public abstract class MixinTesselator implements ExTesselator {
     @Shadow private static boolean TRIANGLE_MODE;
     @Shadow private static boolean USE_VBO;
 
-    @Shadow private boolean hasTexture;
     @Shadow private boolean hasColor;
+    @Shadow private boolean hasTexture;
+    @Shadow private boolean hasNormal;
 
     @Shadow private double u;
     @Shadow private double v;
@@ -37,6 +39,7 @@ public abstract class MixinTesselator implements ExTesselator {
     @Shadow private int size;
 
     static {
+        // TODO: use index buffer
         TRIANGLE_MODE = false;
         USE_VBO = true;
     }
@@ -92,6 +95,11 @@ public abstract class MixinTesselator implements ExTesselator {
             (float) this.u,
             (float) this.v
         );
+    }
+
+    public @Overwrite void normal(float x, float y, float z) {
+        this.hasNormal = true;
+        this.normal = GLUtil.packByteNormal(x, y, z);
     }
 
     @Unique

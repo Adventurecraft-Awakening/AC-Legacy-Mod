@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.client.renderer;
 
 import dev.adventurecraft.awakening.client.gl.GLBuffer;
 import dev.adventurecraft.awakening.client.gl.GLDevice;
+import dev.adventurecraft.awakening.client.rendering.MemoryTesselator;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 
@@ -12,8 +13,6 @@ public class ChunkMesh {
     public static final int MAX_RENDER_LAYERS = 2;
     public static final int MAX_TEXTURES = 4;
 
-    private static final int BYTE_STRIDE = 32;
-
     public final GLBuffer vertexBuffer;
     public final int textureId;
 
@@ -22,16 +21,25 @@ public class ChunkMesh {
         this.textureId = textureId;
     }
 
+    private int getVertexStride() {
+        return MemoryTesselator.BYTE_STRIDE;
+    }
+
+    public long getVertexCount() {
+        return this.vertexBuffer.sizeInBytes() / this.getVertexStride();
+    }
+
     public void draw(GLDevice device) {
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.vertexBuffer.handle());
 
         // TODO: use VAO
-        GL11.glVertexPointer(3, GL11.GL_FLOAT, BYTE_STRIDE, 0L);
-        GL11.glTexCoordPointer(2, GL11.GL_FLOAT, BYTE_STRIDE, 12L);
-        GL11.glColorPointer(4, GL11.GL_UNSIGNED_BYTE, BYTE_STRIDE, 20L);
-        GL11.glNormalPointer(GL11.GL_BYTE, BYTE_STRIDE, 24L);
+        int stride = this.getVertexStride();
+        GL11.glVertexPointer(3, GL11.GL_FLOAT, stride, 0L);
+        GL11.glTexCoordPointer(2, GL11.GL_FLOAT, stride, 12L);
+        GL11.glColorPointer(4, GL11.GL_UNSIGNED_BYTE, stride, 20L);
+        GL11.glNormalPointer(GL11.GL_BYTE, stride, 24L);
 
-        GL11.glDrawArrays(GL11.GL_QUADS, 0, (int) (this.vertexBuffer.sizeInBytes() / BYTE_STRIDE));
+        GL11.glDrawArrays(GL11.GL_QUADS, 0, (int) this.getVertexCount());
     }
 
     public void delete(GLDevice device) {
