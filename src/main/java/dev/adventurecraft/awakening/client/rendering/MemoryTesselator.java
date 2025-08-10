@@ -1,29 +1,24 @@
 package dev.adventurecraft.awakening.client.rendering;
 
 import dev.adventurecraft.awakening.ACMod;
+import dev.adventurecraft.awakening.client.renderer.MemoryMesh;
 import dev.adventurecraft.awakening.extension.client.render.ExTesselator;
 import net.minecraft.client.renderer.Tesselator;
-import org.lwjgl.opengl.*;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.IntBuffer;
 import java.util.ArrayList;
 
 public final class MemoryTesselator extends Tesselator implements ExTesselator {
 
-    public static final int BLOCK_SIZE = 1024 * 64;
+    public static final int BLOCK_SIZE = 1024 * 64 * 4;
 
-    private static final int ATTR_STRIDE = 8;
-    private static final int BYTE_STRIDE = ATTR_STRIDE * 4;
+    private static final int BYTE_STRIDE = 8 * 4;
 
-    private static final IntBuffer EMPTY_BLOCK = ByteBuffer
-        .allocateDirect(0)
-        .order(ByteOrder.nativeOrder())
-        .asIntBuffer();
+    private static final ByteBuffer EMPTY_BLOCK = ByteBuffer.allocateDirect(0).order(ByteOrder.nativeOrder());
 
-    private IntBuffer block;
-    private ArrayList<IntBuffer> blocks;
+    private ByteBuffer block;
+    private ArrayList<ByteBuffer> blocks;
 
     private float u;
     private float v;
@@ -93,60 +88,54 @@ public final class MemoryTesselator extends Tesselator implements ExTesselator {
     }
 
     public @Override void ac$vertexUV(float x, float y, float z, float u, float v) {
-        var a = this.reserve(ATTR_STRIDE);
-        a.put(0, Float.floatToRawIntBits(x));
-        a.put(1, Float.floatToRawIntBits(y));
-        a.put(2, Float.floatToRawIntBits(z));
-        a.put(3, Float.floatToRawIntBits(u));
-        a.put(4, Float.floatToRawIntBits(v));
-        a.put(5, this.rgba);
-        a.put(6, this.normal);
-        a.put(7, 0);
+        var a = this.reserve(BYTE_STRIDE);
+        a.putInt(Float.floatToRawIntBits(x));
+        a.putInt(Float.floatToRawIntBits(y));
+        a.putInt(Float.floatToRawIntBits(z));
+        a.putInt(Float.floatToRawIntBits(u));
+        a.putInt(Float.floatToRawIntBits(v));
+        a.putInt(this.rgba);
+        a.putInt(this.normal);
+        a.putInt(0);
     }
 
-    private IntBuffer reserve(int count) {
-        IntBuffer b = this.block;
+    private ByteBuffer reserve(int count) {
+        ByteBuffer b = this.block;
         int start = b.position();
         int end = start + count;
         if (end <= b.limit()) {
-            var span = b.slice(start, count);
-            b.position(end);
-            return span;
+            return b;
         }
         return this.pushAndReserve(count);
     }
 
-    private IntBuffer pushAndReserve(int count) {
+    private ByteBuffer pushAndReserve(int count) {
+        if (count > BLOCK_SIZE) {
+            throw new IllegalArgumentException();
+        }
+
         if (this.block != EMPTY_BLOCK) {
             assert this.block.limit() == BLOCK_SIZE;
             this.blocks.add(this.block);
         }
 
-        IntBuffer b = ByteBuffer.allocateDirect(BLOCK_SIZE * 4).order(ByteOrder.nativeOrder()).asIntBuffer();
-        b.position(count);
+        // TODO: allocate (smaller) blocks from Arena?
+        ByteBuffer b = ByteBuffer.allocateDirect(BLOCK_SIZE).order(ByteOrder.nativeOrder());
         this.block = b;
-        return b.slice(0, count);
+        return b;
     }
 
-    public void render(final int target) {
-        long size = this.size() << 2;
-        // Re-allocate buffer for upload.
-        GL15.glBufferData(target, size, GL15.GL_STATIC_DRAW);
-
-        long offset = 0;
-        for (IntBuffer block : this.blocks) {
-            GL15.glBufferSubData(target, offset, block.flip());
-            offset += Integer.toUnsignedLong(block.remaining()) << 2;
+    public MemoryMesh takeMesh() {
+        var mesh = new MemoryMesh();
+        for (ByteBuffer block : this.blocks) {
+            mesh.vertexBlocks.add(block.flip());
         }
-        GL15.glBufferSubData(target, offset, this.block.flip());
-        offset += Integer.toUnsignedLong(this.block.remaining()) << 2;
-        assert offset == size;
+        this.blocks.clear();
 
-        GL11.glVertexPointer(3, GL11.GL_FLOAT, BYTE_STRIDE, 0L);
-        GL11.glTexCoordPointer(2, GL11.GL_FLOAT, BYTE_STRIDE, 12L);
-        GL11.glColorPointer(4, GL11.GL_UNSIGNED_BYTE, BYTE_STRIDE, 20L);
-        GL11.glNormalPointer(GL11.GL_BYTE, BYTE_STRIDE, 24L);
+        var lastBlock = this.block;
+        this.block = EMPTY_BLOCK;
+        mesh.vertexBlocks.add(lastBlock.flip());
 
-        GL11.glDrawArrays(this.mode, 0, (int) (size / BYTE_STRIDE));
+        return mesh;
     }
 }

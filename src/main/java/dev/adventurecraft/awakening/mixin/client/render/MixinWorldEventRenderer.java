@@ -2,6 +2,8 @@ package dev.adventurecraft.awakening.mixin.client.render;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
+import dev.adventurecraft.awakening.client.gl.GLDevice;
+import dev.adventurecraft.awakening.client.renderer.ChunkMesh;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.entity.AC_Particle;
 import dev.adventurecraft.awakening.extension.ExClass_66;
@@ -40,7 +42,6 @@ import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.level.tile.Tile;
 import net.minecraft.world.phys.Vec3;
-import org.lwjgl.BufferUtils;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.ARBOcclusionQuery;
 import org.lwjgl.opengl.GL11;
@@ -51,12 +52,14 @@ import org.lwjgl.util.vector.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.nio.IntBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -65,89 +68,63 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
 
     private static final int GL_QUERY_RESULT_NO_WAIT = 0x9194;
 
-    @Shadow
-    public List renderableTileEntities;
-    @Shadow
-    private Level level;
-    @Shadow
-    private Textures textures;
-    @Shadow
-    private List<Chunk> dirtyChunks;
-    @Shadow
-    private Chunk[] sortedChunks;
-    @Shadow
-    private Chunk[] chunks;
-    @Shadow
-    private int xChunks;
-    @Shadow
-    private int yChunks;
-    @Shadow
-    private int zChunks;
-    @Shadow
-    private int chunkLists;
-    @Shadow
-    private Minecraft mc;
-    @Shadow
-    private IntBuffer occlusionCheckIds;
-    @Shadow
-    private boolean occlusionCheck;
-    @Shadow
-    private int ticks;
-    @Shadow
-    private int xMinChunk;
-    @Shadow
-    private int yMinChunk;
-    @Shadow
-    private int zMinChunk;
-    @Shadow
-    private int xMaxChunk;
-    @Shadow
-    private int yMaxChunk;
-    @Shadow
-    private int zMaxChunk;
-    @Shadow
-    private int lastViewDistance;
-    @Shadow
-    private int noEntityRenderFrames;
-    @Shadow
-    int[] toRender;
-    @Shadow
-    IntBuffer resultBuffer;
-    @Shadow
-    private int totalChunks;
-    @Shadow
-    private int offscreenChunks;
-    @Shadow
-    private int occludedChunks;
-    @Shadow
-    private int renderedChunks;
-    @Shadow
-    private int emptyChunks;
-    @Shadow
-    private int chunkFixOffs;
-    @Shadow
-    private OffsettedRenderList[] renderLists;
-    @Shadow
-    double xOld;
-    @Shadow
-    double yOld;
-    @Shadow
-    double zOld;
+    @Shadow public List renderableTileEntities;
+    @Shadow private Level level;
+    @Shadow private Textures textures;
+    @Shadow private List<Chunk> dirtyChunks;
+    @Shadow private Chunk[] sortedChunks;
+    @Shadow private Chunk[] chunks;
+    @Shadow private int xChunks;
+    @Shadow private int yChunks;
+    @Shadow private int zChunks;
+    @Shadow private int chunkLists;
+    @Shadow private Minecraft mc;
+    @Shadow private IntBuffer occlusionCheckIds;
+    @Shadow private boolean occlusionCheck;
+    @Shadow private int ticks;
+    @Shadow private int xMinChunk;
+    @Shadow private int yMinChunk;
+    @Shadow private int zMinChunk;
+    @Shadow private int xMaxChunk;
+    @Shadow private int yMaxChunk;
+    @Shadow private int zMaxChunk;
+    @Shadow private int lastViewDistance;
+    @Shadow private int noEntityRenderFrames;
+    @Shadow int[] toRender;
+    @Shadow IntBuffer resultBuffer;
+    @Shadow private int totalChunks;
+    @Shadow private int offscreenChunks;
+    @Shadow private int occludedChunks;
+    @Shadow private int renderedChunks;
+    @Shadow private int emptyChunks;
+    @Shadow private int chunkFixOffs;
+    @Shadow private OffsettedRenderList[] renderLists;
+    @Shadow double xOld;
+    @Shadow double yOld;
+    @Shadow double zOld;
 
-    private long lastMovedTime = System.currentTimeMillis();
-    private IntBuffer renderListBuffer = BufferUtils.createIntBuffer(65536);
+    @Unique private long lastMovedTime = System.currentTimeMillis();
+    @Unique private List<ChunkMesh>[] renderBuffers = new List[ChunkMesh.MAX_TEXTURES];
 
-    double prevReposX;
-    double prevReposY;
-    double prevReposZ;
+    @Unique double prevReposX;
+    @Unique double prevReposY;
+    @Unique double prevReposZ;
 
     @Shadow
     protected abstract void resortChunks(int i, int j, int k);
 
-    @Inject(method = "<init>", at = @At("TAIL"))
-    private void removeNeedlessAllocs(Minecraft var1, Textures var2, CallbackInfo ci) {
+    @Inject(
+        method = "<init>",
+        at = @At("TAIL")
+    )
+    private void doInit(Minecraft var1, Textures var2, CallbackInfo ci) {
+        // Remove needless allocs
         this.renderLists = null;
         this.toRender = null;
+
+        for (int i = 0; i < this.renderBuffers.length; i++) {
+            this.renderBuffers[i] = new ArrayList<>();
+        }
     }
 
     @Overwrite
@@ -170,7 +147,8 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         if (options.ofFarView()) {
             if (renderDist < 512) {
                 renderDist *= 3;
-            } else {
+            }
+            else {
                 renderDist *= 2;
             }
         }
@@ -210,7 +188,15 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             for (int cY = 0; cY < this.yChunks; ++cY) {
                 for (int cZ = 0; cZ < this.zChunks; ++cZ) {
                     int vizIndex = (cZ * this.yChunks + cY) * this.xChunks + cX;
-                    Chunk viz = new Chunk(this.level, this.renderableTileEntities, cX * 16, cY * 16, cZ * 16, 16, this.chunkLists + var2);
+                    Chunk viz = new Chunk(
+                        this.level,
+                        this.renderableTileEntities,
+                        cX * 16,
+                        cY * 16,
+                        cZ * 16,
+                        16,
+                        this.chunkLists + var2
+                    );
                     this.sortedChunks[vizIndex] = viz;
 
                     if (this.occlusionCheck) {
@@ -305,7 +291,8 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             if (options.ofSmoothInput()) {
                 try {
                     Thread.sleep(1L);
-                } catch (InterruptedException e) {
+                }
+                catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
@@ -335,7 +322,8 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             int vizStart = vizEnd;
             if (vizOffset < vizLimit) {
                 ++vizOffset;
-            } else {
+            }
+            else {
                 --vizOffset;
             }
 
@@ -442,7 +430,8 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
                     continue;
                 }
                 viz.occlusion_querying = false;
-            } else {
+            }
+            else {
                 ARBOcclusionQuery.glGetQueryObjectuivARB(viz.occlusion_id, GL15.GL_QUERY_RESULT_AVAILABLE, buffer);
                 if (buffer.get(0) == 0) {
                     continue;
@@ -463,7 +452,9 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
 
     @Overwrite
     private int renderChunks(int vizStart, int vizEnd, int renderPass, double deltaTime) {
-        this.renderListBuffer.clear();
+        for (List<ChunkMesh> buffer : this.renderBuffers) {
+            buffer.clear();
+        }
 
         for (int vizIndex = vizStart; vizIndex < vizEnd; ++vizIndex) {
             Chunk viz = this.sortedChunks[vizIndex];
@@ -471,32 +462,85 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
                 ++this.totalChunks;
                 if (viz.empty[renderPass]) {
                     ++this.emptyChunks;
-                } else if (!viz.visible) {
+                }
+                else if (!viz.visible) {
                     ++this.offscreenChunks;
-                } else if (this.occlusionCheck && !viz.occlusion_visible) {
+                }
+                else if (this.occlusionCheck && !viz.occlusion_visible) {
                     ++this.occludedChunks;
-                } else {
+                }
+                else {
                     ++this.renderedChunks;
                 }
             }
 
-            if (!viz.empty[renderPass] && viz.visible && (!this.occlusionCheck || viz.occlusion_visible)) {
-                int renderListId = viz.getList(renderPass);
-                if (renderListId >= 0) {
-                    this.renderListBuffer.put(renderListId);
-                }
+            if (this.occlusionCheck && !viz.occlusion_visible) {
+                continue;
+            }
+
+            var renderList = ((ExClass_66) viz).getRenderList(renderPass);
+            if (renderList == null) {
+                continue;
+            }
+
+            //noinspection ForLoopReplaceableByForEach
+            for (int i = 0; i < renderList.size(); i++) {
+                ChunkMesh mesh = renderList.get(i);
+                this.renderBuffers[mesh.textureId].add(mesh);
             }
         }
 
-        this.renderListBuffer.flip();
         Mob entity = this.mc.cameraEntity;
         double eprprX = entity.xOld + (entity.x - entity.xOld) * deltaTime;
         double eprprY = entity.yOld + (entity.y - entity.yOld) * deltaTime;
         double eprprZ = entity.zOld + (entity.z - entity.zOld) * deltaTime;
+
+        GL11.glPushMatrix();
         GL11.glTranslated(-eprprX, -eprprY, -eprprZ);
-        GL11.glCallLists(this.renderListBuffer);
-        GL11.glTranslated(eprprX, eprprY, eprprZ);
-        return this.renderListBuffer.limit();
+
+        GLDevice glDevice = ((ExMinecraft) this.mc).getGlDevice();
+
+        GL11.glEnableClientState(GL11.GL_VERTEX_ARRAY);
+        GL11.glEnableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
+        GL11.glEnableClientState(GL11.GL_COLOR_ARRAY);
+        GL11.glEnableClientState(GL11.GL_NORMAL_ARRAY);
+
+        int renderCount = 0;
+
+        Textures texMan = Minecraft.instance.textures;
+        int[] textures = new int[] {
+            texMan.loadTexture("/terrain.png"), 0, texMan.loadTexture("/terrain2.png"),
+            texMan.loadTexture("/terrain3.png")
+        };
+
+        List<ChunkMesh>[] buffers = this.renderBuffers;
+        for (int texId = 0; texId < buffers.length; texId++) {
+            List<ChunkMesh> list = buffers[texId];
+            if (list.isEmpty()) {
+                continue;
+            }
+
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, textures[texId]);
+
+            //noinspection ForLoopReplaceableByForEach
+            for (int j = 0; j < list.size(); j++) {
+                ChunkMesh mesh = list.get(j);
+                mesh.draw(glDevice);
+            }
+            renderCount += list.size();
+        }
+
+        // Need to unbind buffer or unexpecting places try to read from it.
+        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+
+        GL11.glDisableClientState(GL11.GL_VERTEX_ARRAY);
+        GL11.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
+        GL11.glDisableClientState(GL11.GL_COLOR_ARRAY);
+        GL11.glDisableClientState(GL11.GL_NORMAL_ARRAY);
+
+        GL11.glPopMatrix();
+
+        return renderCount;
     }
 
     @Overwrite
@@ -504,40 +548,56 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         // Do not draw RenderLists
     }
 
-    @Redirect(method = "renderSky", at = @At(
+    @Redirect(
+        method = "renderSky",
+        at = @At(
             value = "INVOKE",
             target = "Lorg/lwjgl/opengl/GL11;glCallList(I)V",
             remap = false,
-        ordinal = 0))
+            ordinal = 0
+        )
+    )
     private void configurableSky1(int list) {
         if (((ExGameOptions) this.mc.options).ofSky()) {
             GL11.glCallList(list);
         }
     }
 
-    @Redirect(method = "renderSky", at = @At(
+    @Redirect(
+        method = "renderSky",
+        at = @At(
             value = "INVOKE",
             target = "Lorg/lwjgl/opengl/GL11;glCallList(I)V",
             remap = false,
-        ordinal = 2))
+            ordinal = 2
+        )
+    )
     private void configurableSky2(int list) {
         if (((ExGameOptions) this.mc.options).ofSky()) {
             GL11.glCallList(list);
         }
     }
 
-    @Redirect(method = "renderSky", at = @At(
+    @Redirect(
+        method = "renderSky",
+        at = @At(
             value = "INVOKE",
             target = "Lorg/lwjgl/opengl/GL11;glCallList(I)V",
             remap = false,
-        ordinal = 1))
+            ordinal = 1
+        )
+    )
     private void configurableStars(int list) {
         if (((ExGameOptions) this.mc.options).ofStars()) {
             GL11.glCallList(list);
         }
     }
 
-    @Inject(method = "renderClouds", at = @At("HEAD"), cancellable = true)
+    @Inject(
+        method = "renderClouds",
+        at = @At("HEAD"),
+        cancellable = true
+    )
     private void configurableClouds(float var1, CallbackInfo ci) {
         if (((ExGameOptions) this.mc.options).isCloudsOff()) {
             ci.cancel();
@@ -548,7 +608,9 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         method = "renderClouds",
         at = @At(
             value = "FIELD",
-            target = "Lnet/minecraft/client/Options;fancyGraphics:Z"))
+            target = "Lnet/minecraft/client/Options;fancyGraphics:Z"
+        )
+    )
     private boolean fancyClouds(Options instance) {
         return ((ExGameOptions) instance).isCloudsFancy();
     }
@@ -557,7 +619,9 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         method = "renderClouds",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/level/dimension/Dimension;getCloudHeight()F"))
+            target = "Lnet/minecraft/world/level/dimension/Dimension;getCloudHeight()F"
+        )
+    )
     private float redirectCloudHeight(Dimension instance) {
         float height = instance.getCloudHeight();
         height += ((ExGameOptions) this.mc.options).ofCloudsHeight() * 25.0F;
@@ -572,7 +636,8 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         Tesselator ts = Tesselator.instance;
         int tileWidth = 12;
         int tileHeight = 4;
-        double cloudX = (camera.xo + (camera.x - camera.xo) * deltaTime + ((double) this.ticks + deltaTime) * 0.03) / tileWidth;
+        double cloudX =
+            (camera.xo + (camera.x - camera.xo) * deltaTime + ((double) this.ticks + deltaTime) * 0.03) / tileWidth;
         double cloudZ = (camera.zo + (camera.z - camera.zo) * deltaTime) / tileWidth + 0.33;
         double cloudY = this.level.dimension.getCloudHeight() - cloudBaseY + 0.33;
         cloudY += ((ExGameOptions) this.mc.options).ofCloudsHeight() * 25.0;
@@ -610,13 +675,16 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         for (int renderPass = 0; renderPass < 2; ++renderPass) {
             if (renderPass == 0) {
                 GL11.glColorMask(false, false, false, false);
-            } else if (this.mc.options.anaglyph3d) {
+            }
+            else if (this.mc.options.anaglyph3d) {
                 if (GameRenderer.currentRenderLayer == 0) {
                     GL11.glColorMask(false, true, true, true);
-                } else {
+                }
+                else {
                     GL11.glColorMask(true, false, false, true);
                 }
-            } else {
+            }
+            else {
                 GL11.glColorMask(true, true, true, true);
             }
 
@@ -741,7 +809,8 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         if (options.ofChunkUpdatesDynamic() && !this.isMoving(var1)) {
             if (((ExMinecraft) this.mc).isCameraActive()) {
                 targetFrameUpdates *= 2;
-            } else {
+            }
+            else {
                 targetFrameUpdates *= 3;
             }
         }
@@ -842,30 +911,50 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         if (moving) {
             this.lastMovedTime = System.currentTimeMillis();
             return true;
-        } else {
+        }
+        else {
             return System.currentTimeMillis() - this.lastMovedTime < 2000L;
         }
     }
 
     private boolean isMovingNow(Mob entity) {
         double threshold = 0.001D;
-        if (entity.jumping) return true;
-        if (entity.isSneaking()) return true;
-        if (entity.oAttackAnim > threshold) return true;
-        if (this.mc.mouseHandler.xd != 0) return true;
-        if (this.mc.mouseHandler.yd != 0) return true;
-        if (Math.abs(entity.x - entity.xo) > threshold) return true;
-        if (Math.abs(entity.y - entity.yo) > threshold) return true;
+        if (entity.jumping) {
+            return true;
+        }
+        if (entity.isSneaking()) {
+            return true;
+        }
+        if (entity.oAttackAnim > threshold) {
+            return true;
+        }
+        if (this.mc.mouseHandler.xd != 0) {
+            return true;
+        }
+        if (this.mc.mouseHandler.yd != 0) {
+            return true;
+        }
+        if (Math.abs(entity.x - entity.xo) > threshold) {
+            return true;
+        }
+        if (Math.abs(entity.y - entity.yo) > threshold) {
+            return true;
+        }
         return Math.abs(entity.z - entity.zo) > threshold;
     }
 
     private boolean isActingNow() {
-        if (Mouse.isButtonDown(0))
+        if (Mouse.isButtonDown(0)) {
             return true;
+        }
         return Mouse.isButtonDown(1);
     }
 
-    @Inject(method = "skyColorChanged", at = @At("HEAD"), cancellable = true)
+    @Inject(
+        method = "skyColorChanged",
+        at = @At("HEAD"),
+        cancellable = true
+    )
     public void cancelOnNull(CallbackInfo ci) {
         if (this.chunks == null) {
             ci.cancel();
@@ -896,26 +985,35 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         }
     }
 
-    @Redirect(method = "renderEntities", at = @At(
+    @Redirect(
+        method = "renderEntities",
+        at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;render(Lnet/minecraft/world/entity/Entity;F)V",
-        ordinal = 1))
+            ordinal = 1
+        )
+    )
     private void renderEntityBasedOnCamera(EntityRenderDispatcher instance, Entity var7, float var3) {
         var exClient = (ExMinecraft) this.mc;
         if ((!exClient.isCameraActive() || !exClient.isCameraPause()) &&
             (!AC_DebugMode.active || var7 instanceof Player) && ((ExEntity) var7).getStunned() <= 0) {
             instance.render(var7, var3);
-        } else {
+        }
+        else {
             instance.render(var7, 1.0F);
         }
     }
 
-    @Inject(method = "renderEntities", at = @At(
+    @Inject(
+        method = "renderEntities",
+        at = @At(
             value = "INVOKE",
             target = "Ljava/util/List;size()I",
             shift = At.Shift.AFTER,
             ordinal = 0,
-        remap = false))
+            remap = false
+        )
+    )
     private void renderScriptModels(Vec3 var1, Culler var2, float partialTick, CallbackInfo ci) {
         var transform = new Matrix4f();
 
@@ -928,7 +1026,8 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         transform.translate(
             (float) -EntityRenderDispatcher.xOff,
             (float) -EntityRenderDispatcher.yOff,
-            (float) -EntityRenderDispatcher.zOff);
+            (float) -EntityRenderDispatcher.zOff
+        );
 
         GL11.glPushMatrix();
         ScriptModelBase.renderAll(partialTick, transform);
@@ -954,11 +1053,20 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     }
     */
 
-    @ModifyExpressionValue(method = "renderClouds", at = @At(
+    @ModifyExpressionValue(
+        method = "renderClouds",
+        at = @At(
             value = "FIELD",
             target = "Lnet/minecraft/world/entity/Mob;yOld:D",
-        ordinal = 0))
-    private double changeCameraY(double value, @Local(ordinal = 0, argsOnly = true) float var1) {
+            ordinal = 0
+        )
+    )
+    private double changeCameraY(
+        double value, @Local(
+            ordinal = 0,
+            argsOnly = true
+        ) float var1
+    ) {
         var exClient = (ExMinecraft) this.mc;
         if (exClient.isCameraActive()) {
             AC_CutsceneCameraPoint point = exClient.getCutsceneCamera().getCurrentPoint(var1);
@@ -967,11 +1075,20 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         return value;
     }
 
-    @ModifyExpressionValue(method = "renderClouds", at = @At(
+    @ModifyExpressionValue(
+        method = "renderClouds",
+        at = @At(
             value = "FIELD",
             target = "Lnet/minecraft/world/entity/Mob;xo:D",
-        ordinal = 0))
-    private double changeCameraX(double value, @Local(ordinal = 0, argsOnly = true) float var1) {
+            ordinal = 0
+        )
+    )
+    private double changeCameraX(
+        double value, @Local(
+            ordinal = 0,
+            argsOnly = true
+        ) float var1
+    ) {
         var exClient = (ExMinecraft) this.mc;
         if (exClient.isCameraActive()) {
             AC_CutsceneCameraPoint point = exClient.getCutsceneCamera().getCurrentPoint(var1);
@@ -980,11 +1097,20 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         return value;
     }
 
-    @ModifyExpressionValue(method = "renderClouds", at = @At(
+    @ModifyExpressionValue(
+        method = "renderClouds",
+        at = @At(
             value = "FIELD",
             target = "Lnet/minecraft/world/entity/Mob;xo:D",
-        ordinal = 0))
-    private double changeCameraZ(double value, @Local(ordinal = 0, argsOnly = true) float var1) {
+            ordinal = 0
+        )
+    )
+    private double changeCameraZ(
+        double value, @Local(
+            ordinal = 0,
+            argsOnly = true
+        ) float var1
+    ) {
         var exClient = (ExMinecraft) this.mc;
         if (exClient.isCameraActive()) {
             AC_CutsceneCameraPoint point = exClient.getCutsceneCamera().getCurrentPoint(var1);
@@ -1083,7 +1209,8 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         if (entity instanceof PathfinderMob mob && mob.getTarget() != null) {
             GL11.glColor4f(1.0F, 0.0F, 0.0F, 0.4F);
-        } else {
+        }
+        else {
             GL11.glColor4f(1.0F, 1.0F, 0.0F, 0.4F);
         }
 
@@ -1117,7 +1244,8 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         if (((ExMob) entity).getExtraFov() > 0.0F) {
             GL11.glColor4f(1.0F, 0.5F, 0.0F, 0.4F);
-        } else {
+        }
+        else {
             GL11.glColor4f(0.0F, 1.0F, 0.0F, 0.4F);
         }
 

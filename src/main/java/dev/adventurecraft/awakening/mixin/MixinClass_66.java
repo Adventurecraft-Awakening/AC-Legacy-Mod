@@ -1,10 +1,13 @@
 package dev.adventurecraft.awakening.mixin;
 
 import dev.adventurecraft.awakening.ACMod;
+import dev.adventurecraft.awakening.client.gl.GLDevice;
+import dev.adventurecraft.awakening.client.renderer.ChunkMesh;
 import dev.adventurecraft.awakening.client.rendering.MemoryTesselator;
 import dev.adventurecraft.awakening.collections.IdentityHashSet;
 import dev.adventurecraft.awakening.extension.ExClass_66;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
+import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.render.block.ExBlockRenderer;
 import dev.adventurecraft.awakening.extension.client.util.ExCameraView;
@@ -12,7 +15,6 @@ import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import dev.adventurecraft.awakening.extension.world.level.ExRegion;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Chunk;
-import net.minecraft.client.renderer.Textures;
 import net.minecraft.client.renderer.TileRenderer;
 import net.minecraft.client.renderer.culling.Culler;
 import net.minecraft.client.renderer.entity.ItemRenderer;
@@ -24,8 +26,6 @@ import net.minecraft.world.level.tile.Tile;
 import net.minecraft.world.level.tile.entity.TileEntity;
 import net.minecraft.world.phys.AABB;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL15;
-import org.lwjgl.system.MemoryUtil;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -36,7 +36,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -46,9 +46,6 @@ import java.util.Set;
     priority = 999
 )
 public abstract class MixinClass_66 implements ExClass_66 {
-
-    private static final int MAX_RENDER_LAYERS = 2;
-    private static final int MAX_TEXTURES = 4;
 
     @Shadow public Level level;
     @Shadow private int lists;
@@ -77,12 +74,23 @@ public abstract class MixinClass_66 implements ExClass_66 {
     @Unique private boolean needsBoxUpdate = false;
     @Unique public boolean isInFrustrumFully = false;
 
-    @Unique private final IntBuffer vertexBuffers = MemoryUtil.memAllocInt(MAX_RENDER_LAYERS * MAX_TEXTURES);
-
+    @Unique private GLDevice glDevice;
     @Unique private final Set<TileEntity> tileEntities = new IdentityHashSet<>();
+    @Unique private final List<ChunkMesh>[] meshLayers = new List[ChunkMesh.MAX_RENDER_LAYERS];
 
     @Shadow
     public abstract void setDirty();
+
+    @Inject(
+        method = "<init>",
+        at = @At("TAIL")
+    )
+    private void doInit(Level level, List<?> tileEntities, int x, int y, int z, int size, int lists, CallbackInfo ci) {
+        this.glDevice = ((ExMinecraft) Minecraft.instance).getGlDevice(); // TODO: get elsewhere
+        for (int i = 0; i < this.meshLayers.length; i++) {
+            this.meshLayers[i] = new ArrayList<>();
+        }
+    }
 
     @Inject(
         method = "setPos",
@@ -112,10 +120,17 @@ public abstract class MixinClass_66 implements ExClass_66 {
     }
 
     private @Unique void deleteBuffers() {
-        if (this.vertexBuffers.hasRemaining()) {
-            GL15.glDeleteBuffers(this.vertexBuffers);
+        for (List<ChunkMesh> list : this.meshLayers) {
+            if (list == null) {
+                continue;
+            }
+            //noinspection ForLoopReplaceableByForEach
+            for (int i = 0; i < list.size(); i++) {
+                ChunkMesh mesh = list.get(i);
+                mesh.delete(this.glDevice);
+            }
+            list.clear();
         }
-        this.vertexBuffers.clear();
     }
 
     @Inject(
@@ -178,14 +193,8 @@ public abstract class MixinClass_66 implements ExClass_66 {
         );
         printTime(timeBuilder, "Region Setup", timeStart);
 
-        Textures texMan = Minecraft.instance.textures;
-        int[] textures = new int[] {
-            texMan.loadTexture("/terrain.png"), 0, texMan.loadTexture("/terrain2.png"),
-            texMan.loadTexture("/terrain3.png")
-        };
-
-        var renderers = new TileRenderer[MAX_RENDER_LAYERS * textures.length];
-        var renderTracker = new boolean[MAX_RENDER_LAYERS];
+        var renderers = new TileRenderer[ChunkMesh.MAX_RENDER_LAYERS * ChunkMesh.MAX_TEXTURES];
+        var renderTracker = new boolean[ChunkMesh.MAX_RENDER_LAYERS];
 
         var newSet = new IdentityHashSet<TileEntity>();
         var oldSet = new IdentityHashSet<>(this.tileEntities);
@@ -238,7 +247,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
                     int texId = ((ExBlock) block).getTextureNum();
                     int layer = block.getRenderLayer();
 
-                    int meshIndex = (layer * textures.length) + texId;
+                    int meshIndex = (layer * ChunkMesh.MAX_TEXTURES) + texId;
                     var renderer = renderers[meshIndex];
                     if (renderer == null) {
                         renderer = new TileRenderer(region);
@@ -255,18 +264,13 @@ public abstract class MixinClass_66 implements ExClass_66 {
         }
         printTime(timeBuilder, "Tessellate", timeStart);
 
-        for (int layer = 0; layer < MAX_RENDER_LAYERS; ++layer) {
+        for (int layer = 0; layer < this.meshLayers.length; ++layer) {
             if (!renderTracker[layer]) {
-                // Clear the old list.
-                GL11.glNewList(this.lists + layer, GL11.GL_COMPILE);
-                GL11.glEndList();
                 continue;
             }
 
-            boolean hasMesh = false;
-
-            for (int texId = 0; texId < textures.length; ++texId) {
-                int meshIndex = (layer * textures.length) + texId;
+            for (int texId = 0; texId < ChunkMesh.MAX_TEXTURES; ++texId) {
+                int meshIndex = (layer * ChunkMesh.MAX_TEXTURES) + texId;
                 var renderer = renderers[meshIndex];
                 if (renderer == null) {
                     continue;
@@ -278,43 +282,15 @@ public abstract class MixinClass_66 implements ExClass_66 {
                     continue;
                 }
 
-                if (!hasMesh) {
-                    hasMesh = true;
-                    GL11.glNewList(this.lists + layer, GL11.GL_COMPILE);
-
-                    GL11.glEnableClientState(GL11.GL_VERTEX_ARRAY);
-                    GL11.glEnableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
-                    GL11.glEnableClientState(GL11.GL_COLOR_ARRAY);
-                    GL11.glEnableClientState(GL11.GL_NORMAL_ARRAY);
-                }
-
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, textures[texId]);
-
-                int vboId = GL15.glGenBuffers();
-                this.vertexBuffers.put(vboId);
-
-                final int target = GL15.GL_ARRAY_BUFFER;
-                GL15.glBindBuffer(target, vboId);
-                tesselator.render(target);
+                var data = tesselator.takeMesh();
+                var mesh = ChunkMesh.fromMemory(this.glDevice, data, texId);
+                this.meshLayers[layer].add(mesh);
 
                 printTime(timeBuilder, "  Render with Texture " + texId, timeStart);
             }
 
-            if (hasMesh) {
-                this.empty[layer] = false;
-
-                GL11.glDisableClientState(GL11.GL_VERTEX_ARRAY);
-                GL11.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
-                GL11.glDisableClientState(GL11.GL_COLOR_ARRAY);
-                GL11.glDisableClientState(GL11.GL_NORMAL_ARRAY);
-
-                GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
-                GL11.glEndList();
-
-                printTime(timeBuilder, "End Render Layer " + layer, timeStart);
-            }
+            this.empty[layer] = this.meshLayers[layer].isEmpty();
         }
-        this.vertexBuffers.flip();
 
         this.skyLit = LevelChunk.touchedSky; // TODO: move global into Region/TileRenderer
         this.compiled = true;
@@ -388,5 +364,15 @@ public abstract class MixinClass_66 implements ExClass_66 {
     @Override
     public boolean isInFrustrumFully() {
         return this.isInFrustrumFully;
+    }
+
+    public @Override @Nullable List<ChunkMesh> getRenderList(int layer) {
+        if (!this.visible) {
+            return null;
+        }
+        if (!this.empty[layer]) {
+            return this.meshLayers[layer];
+        }
+        return null;
     }
 }
