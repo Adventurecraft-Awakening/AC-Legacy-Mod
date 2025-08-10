@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.mixin.block;
 
+import dev.adventurecraft.awakening.extension.block.AC_TexturedBlock;
 import dev.adventurecraft.awakening.tile.AC_BlockColor;
 import dev.adventurecraft.awakening.item.AC_ItemSubtypes;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
@@ -155,6 +156,6 @@ public abstract class MixinBlock implements ExBlock {
 
     @Override
     public long getTextureForSideEx(LevelSource view, int x, int y, int z, int side) {
-        return this.getTexture(view, x, y, z, side);
+        return AC_TexturedBlock.fromTexture(this.getTexture(view, x, y, z, side));
     }
 }

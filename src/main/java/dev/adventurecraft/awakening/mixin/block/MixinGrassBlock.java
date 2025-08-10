@@ -25,13 +25,13 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock, AC_IBlockColor, AC_TexturedBlock {
 
     public @Override int getTexture(LevelSource view, int x, int y, int z, int side) {
-        return (int) getTextureForSideEx(view, x, y, z, side);
+        return AC_TexturedBlock.toTexture(this.getTextureForSideEx(view, x, y, z, side));
     }
 
     public @Override long getTextureForSideEx(LevelSource view, int x, int y, int z, int side) {
         return switch (side) {
             case Facing.UP -> this.getTopTexture(view, x, y, z);
-            case Facing.DOWN -> Facing.NORTH;
+            case Facing.DOWN -> AC_TexturedBlock.fromTexture(Tile.DIRT.tex);
             default -> this.getSideTexture(view, x, y, z, side);
         };
     }
@@ -40,9 +40,10 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
         return ExGrassColor.getBaseColor(meta);
     }
 
-    private @Unique int getTopTexture(LevelSource view, int x, int y, int z) {
+    private @Unique long getTopTexture(LevelSource view, int x, int y, int z) {
         int meta = view.getData(x, y, z);
-        return getTexture(Facing.DOWN, meta);
+        int tex = this.getTexture(Facing.UP, meta);
+        return AC_TexturedBlock.fromTexture(tex) | AC_TexturedBlock.BIOME_BIT;
     }
 
     private @Unique long getSideTexture(LevelSource view, int x, int y, int z, int side) {
@@ -53,17 +54,8 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
             if (option == ConnectedGrassOption.OFF) {
                 return 68;
             }
-            if (option == ConnectedGrassOption.FANCY) {
-                int nX = x;
-                int nZ = z;
-                switch (side) {
-                    case Facing.NORTH -> --nZ;
-                    case Facing.SOUTH -> ++nZ;
-                    case Facing.WEST -> --nX;
-                    case Facing.EAST -> ++nX;
-                }
-
-                int id = view.getTile(nX, y, nZ);
+            else if (option == ConnectedGrassOption.FANCY) {
+                int id = this.getSideTile(view, x, y, z, side);
                 if (id != Tile.SNOW_LAYER.id && id != Tile.SNOW.id) {
                     return 68;
                 }
@@ -74,23 +66,23 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
         if (option == ConnectedGrassOption.OFF) {
             return 3;
         }
-        if (option == ConnectedGrassOption.FANCY) {
-            int nX = x;
-            int nY = y - 1;
-            int nZ = z;
-            switch (side) {
-                case Facing.NORTH -> --nZ;
-                case Facing.SOUTH -> ++nZ;
-                case Facing.WEST -> --nX;
-                case Facing.EAST -> ++nX;
-            }
-
-            int id = view.getTile(nX, nY, nZ);
+        else if (option == ConnectedGrassOption.FANCY) {
+            int id = this.getSideTile(view, x, y - 1, z, side);
             if (id != GRASS.id) {
                 return 3;
             }
         }
-        return (long) getTopTexture(view, x, y, z) | (1L << 32);
+        return this.getTopTexture(view, x, y, z);
+    }
+
+    private @Unique int getSideTile(LevelSource view, int x, int y, int z, int side) {
+        switch (side) {
+            case Facing.NORTH -> --z;
+            case Facing.SOUTH -> ++z;
+            case Facing.WEST -> --x;
+            case Facing.EAST -> ++x;
+        }
+        return view.getTile(x, y, z);
     }
 
     @Redirect(
@@ -108,7 +100,7 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
     }
 
     public @Override int getTexture(int side, int meta) {
-        return meta == 0 ? 0 : 232 + meta - 1;
+        return (meta == 0) ? 0 : ((232 + meta) - 1);
     }
 
     @Override

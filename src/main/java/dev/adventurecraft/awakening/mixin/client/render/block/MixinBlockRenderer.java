@@ -219,10 +219,6 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         this.level = null;
     }
 
-    private static @Unique boolean hasColorBit(long textureId) {
-        return ((textureId >> 32) & 1) == 1;
-    }
-
     private @Unique boolean isTranslucent(int x, int y, int z) {
         return Tile.translucent[this.level.getTile(x, y, z)];
     }
@@ -548,13 +544,14 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         this.resetColor(useColor, r, g, b, 0.8F);
         this.applyColorBrightness(l1, l2, l3, l4);
 
-        long bTexture = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.NORTH);
-        if (hasColorBit(bTexture)) {
+        long textureKey = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.NORTH);
+        if (AC_TexturedBlock.hasBiomeBit(textureKey)) {
             this.multiplyColor(r, g, b);
         }
 
-        this.renderNorth(block, x, y, z, (int) bTexture);
-        if (doGrassEdges && bTexture == 3 && this.fixedTexture < 0) {
+        int texture = AC_TexturedBlock.toTexture(textureKey);
+        this.renderNorth(block, x, y, z, texture);
+        if (doGrassEdges && texture == 3 && this.fixedTexture < 0) {
             this.multiplyColor(r, g, b);
             this.renderNorth(block, x, y, z, 38);
         }
@@ -629,13 +626,14 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         this.resetColor(useColor, r, g, b, 0.8F);
         this.applyColorBrightness(l1, l2, l3, l4);
 
-        long bTexture = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.SOUTH);
-        if (hasColorBit(bTexture)) {
+        long textureKey = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.SOUTH);
+        if (AC_TexturedBlock.hasBiomeBit(textureKey)) {
             this.multiplyColor(r, g, b);
         }
 
-        this.renderSouth(block, x, y, z, (int) bTexture);
-        if (doGrassEdges && bTexture == 3 && this.fixedTexture < 0) {
+        int texture = AC_TexturedBlock.toTexture(textureKey);
+        this.renderSouth(block, x, y, z, texture);
+        if (doGrassEdges && texture == 3 && this.fixedTexture < 0) {
             this.multiplyColor(r, g, b);
             this.renderSouth(block, x, y, z, 38);
         }
@@ -710,13 +708,14 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         this.resetColor(useColor, r, g, b, 0.6F);
         this.applyColorBrightness(l1, l2, l3, l4);
 
-        long bTexture = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.WEST);
-        if (hasColorBit(bTexture)) {
+        long textureKey = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.WEST);
+        if (AC_TexturedBlock.hasBiomeBit(textureKey)) {
             this.multiplyColor(r, g, b);
         }
 
-        this.renderWest(block, x, y, z, (int) bTexture);
-        if (doGrassEdges && bTexture == 3 && this.fixedTexture < 0) {
+        int texture = AC_TexturedBlock.toTexture(textureKey);
+        this.renderWest(block, x, y, z, texture);
+        if (doGrassEdges && texture == 3 && this.fixedTexture < 0) {
             this.multiplyColor(r, g, b);
             this.renderWest(block, x, y, z, 38);
         }
@@ -791,13 +790,14 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         this.resetColor(useColor, r, g, b, 0.6F);
         this.applyColorBrightness(l1, l2, l3, l4);
 
-        long bTexture = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.EAST);
-        if (hasColorBit(bTexture)) {
+        long textureKey = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.EAST);
+        if (AC_TexturedBlock.hasBiomeBit(textureKey)) {
             this.multiplyColor(r, g, b);
         }
 
-        this.renderEast(block, x, y, z, (int) bTexture);
-        if (doGrassEdges && bTexture == 3 && this.fixedTexture < 0) {
+        int texture = AC_TexturedBlock.toTexture(textureKey);
+        this.renderEast(block, x, y, z, texture);
+        if (doGrassEdges && texture == 3 && this.fixedTexture < 0) {
             this.multiplyColor(r, g, b);
             this.renderEast(block, x, y, z, 38);
         }
@@ -873,16 +873,18 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         if (this.noCulling || block.shouldRenderFace(this.level, x, y, z - 1, Facing.NORTH)) {
             float brightness = block.zz0 > 0.0D ? coreBrightness : block.getBrightness(this.level, x, y, z - 1);
 
-            long bTexture = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.NORTH);
-            if (hasColorBit(bTexture)) {
+            long textureKey = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.NORTH);
+            if (AC_TexturedBlock.hasBiomeBit(textureKey)) {
                 ts.color(r_cf1 * brightness * r, g_cf1 * brightness * g, b_cf1 * brightness * b);
             }
             else {
                 ts.color(r_cf1 * brightness, g_cf1 * brightness, b_cf1 * brightness);
             }
-            this.renderNorth(block, x, y, z, (int) bTexture);
 
-            if (doGrassEdges && bTexture == 3 && this.fixedTexture < 0) {
+            int texture = AC_TexturedBlock.toTexture(textureKey);
+            this.renderNorth(block, x, y, z, texture);
+
+            if (doGrassEdges && texture == 3 && this.fixedTexture < 0) {
                 ts.color(r_cf1 * brightness * r, g_cf1 * brightness * g, b_cf1 * brightness * b);
                 this.renderNorth(block, x, y, z, 38);
             }
@@ -892,16 +894,18 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         if (this.noCulling || block.shouldRenderFace(this.level, x, y, z + 1, Facing.SOUTH)) {
             float brightness = block.zz1 < 1.0D ? coreBrightness : block.getBrightness(this.level, x, y, z + 1);
 
-            long bTexture = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.SOUTH);
-            if (hasColorBit(bTexture)) {
+            long textureKey = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.SOUTH);
+            if (AC_TexturedBlock.hasBiomeBit(textureKey)) {
                 ts.color(r_cf1 * brightness * r, g_cf1 * brightness * g, b_cf1 * brightness * b);
             }
             else {
                 ts.color(r_cf1 * brightness, g_cf1 * brightness, b_cf1 * brightness);
             }
-            this.renderSouth(block, x, y, z, (int) bTexture);
 
-            if (doGrassEdges && bTexture == 3 && this.fixedTexture < 0) {
+            int texture = AC_TexturedBlock.toTexture(textureKey);
+            this.renderSouth(block, x, y, z, texture);
+
+            if (doGrassEdges && texture == 3 && this.fixedTexture < 0) {
                 ts.color(r_cf1 * brightness * r, g_cf1 * brightness * g, b_cf1 * brightness * b);
                 this.renderSouth(block, x, y, z, 38);
             }
@@ -912,16 +916,18 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         if (this.noCulling || block.shouldRenderFace(this.level, x - 1, y, z, Facing.WEST)) {
             float brightness = block.xx0 > 0.0D ? coreBrightness : block.getBrightness(this.level, x - 1, y, z);
 
-            long bTexture = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.WEST);
-            if (hasColorBit(bTexture)) {
+            long textureKey = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.WEST);
+            if (AC_TexturedBlock.hasBiomeBit(textureKey)) {
                 ts.color(r_cf2 * brightness * r, g_cf2 * brightness * g, b_cf2 * brightness * b);
             }
             else {
                 ts.color(r_cf2 * brightness, g_cf2 * brightness, b_cf2 * brightness);
             }
-            this.renderWest(block, x, y, z, (int) bTexture);
 
-            if (doGrassEdges && bTexture == 3 && this.fixedTexture < 0) {
+            int texture = AC_TexturedBlock.toTexture(textureKey);
+            this.renderWest(block, x, y, z, texture);
+
+            if (doGrassEdges && texture == 3 && this.fixedTexture < 0) {
                 ts.color(r_cf2 * brightness * r, g_cf2 * brightness * g, b_cf2 * brightness * b);
                 this.renderWest(block, x, y, z, 38);
             }
@@ -931,16 +937,18 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         if (this.noCulling || block.shouldRenderFace(this.level, x + 1, y, z, Facing.EAST)) {
             float brightness = block.xx1 < 1.0D ? coreBrightness : block.getBrightness(this.level, x + 1, y, z);
 
-            long bTexture = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.EAST);
-            if (hasColorBit(bTexture)) {
+            long textureKey = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.EAST);
+            if (AC_TexturedBlock.hasBiomeBit(textureKey)) {
                 ts.color(r_cf2 * brightness * r, g_cf2 * brightness * g, b_cf2 * brightness * b);
             }
             else {
                 ts.color(r_cf2 * brightness, g_cf2 * brightness, b_cf2 * brightness);
             }
-            this.renderEast(block, x, y, z, (int) bTexture);
 
-            if (doGrassEdges && bTexture == 3 && this.fixedTexture < 0) {
+            int texture = AC_TexturedBlock.toTexture(textureKey);
+            this.renderEast(block, x, y, z, texture);
+
+            if (doGrassEdges && texture == 3 && this.fixedTexture < 0) {
                 ts.color(r_cf2 * brightness * r, g_cf2 * brightness * g, b_cf2 * brightness * b);
                 this.renderEast(block, x, y, z, 38);
             }

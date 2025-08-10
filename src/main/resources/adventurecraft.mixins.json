@@ -22,6 +22,7 @@
     "client.gui.widget.MixinScrollableBaseWidget",
     "client.model.MixinCuboid",
     "client.options.MixinGameOptions",
+    "client.particle.MixinBreakingItemParticle",
     "client.particle.MixinDiggingParticleEntity",
     "client.particle.MixinFootstepParticle",
     "client.particle.MixinParticle",
