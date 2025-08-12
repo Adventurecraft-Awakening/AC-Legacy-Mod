@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.common;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
+
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
 
@@ -17,8 +18,14 @@ public class AC_UndoStack {
     public LinkedList<AC_UndoSelection> undoSelectionStack = new LinkedList<>();
     public LinkedList<AC_UndoSelection> redoSelectionStack = new LinkedList<>();
 
+    private void assertRecording() {
+        if (!this.isRecording()) {
+            throw new AssertionError("already recording");
+        }
+    }
+
     public void startRecording() {
-        assert !this.isRecording();
+        this.assertRecording();
 
         this.isRecording = true;
         this.selection = new AC_UndoSelection();
@@ -28,9 +35,11 @@ public class AC_UndoStack {
     }
 
     public void stopRecording() {
-        assert this.isRecording();
+        if (this.isRecording()) {
+            throw new AssertionError("not recording");
+        }
 
-        if (this.actionList.size() != 0) {
+        if (!this.actionList.isEmpty()) {
             this.redoStack.clear();
             this.undoStack.addLast(this.actionList);
             if (this.undoStack.size() > MAX_UNDO) {
@@ -51,7 +60,7 @@ public class AC_UndoStack {
     }
 
     public void clear() {
-        assert !this.isRecording();
+        this.assertRecording();
 
         this.undoStack.clear();
         this.redoStack.clear();
@@ -64,18 +73,23 @@ public class AC_UndoStack {
     }
 
     public void recordChange(
-        int x, int y, int z, int cX, int cZ,
-        int prevBlockId, int prevBlockMeta, CompoundTag prevNbt,
-        int newBlockId, int newBlockMeta, CompoundTag newNbt) {
-
+        int x,
+        int y,
+        int z,
+        int cX,
+        int cZ,
+        int prevTile,
+        int prevMeta,
+        CompoundTag prevNbt,
+        int newTile,
+        int newMeta,
+        CompoundTag newNbt
+    ) {
         ArrayList<AC_EditAction> list = this.actionList;
         int bX = x + (cX << 4);
         int bZ = z + (cZ << 4);
 
-        var newAction = new AC_EditAction(
-            bX, y, bZ,
-            prevBlockId, prevBlockMeta, prevNbt,
-            newBlockId, newBlockMeta, newNbt);
+        var newAction = new AC_EditAction(bX, y, bZ, prevTile, prevMeta, prevNbt, newTile, newMeta, newNbt);
 
         list.add(newAction);
     }
