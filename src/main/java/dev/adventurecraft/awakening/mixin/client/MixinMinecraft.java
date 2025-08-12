@@ -73,10 +73,7 @@ import org.lwjgl.LWJGLException;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
-import org.lwjgl.opengl.Display;
-import org.lwjgl.opengl.DisplayMode;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.PixelFormat;
+import org.lwjgl.opengl.*;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
@@ -315,8 +312,10 @@ public abstract class MixinMinecraft implements ExMinecraft {
             createDisplay(pixelFormat, false);
         }
 
-        Config.logOpenGlCaps();
-        this.glDevice = new GLDevice();
+        var caps = GLContext.getCapabilities();
+        Config.logOpenGlCaps(caps);
+
+        this.glDevice = new GLDevice(caps);
     }
 
     private void createDisplay(PixelFormat pixelFormat, boolean rethrowLast)

@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.mixin.client.render;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
+import dev.adventurecraft.awakening.client.gl.GLBufferTarget;
 import dev.adventurecraft.awakening.client.gl.GLDevice;
 import dev.adventurecraft.awakening.client.renderer.ChunkMesh;
 import dev.adventurecraft.awakening.common.*;
@@ -498,7 +499,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         GL11.glPushMatrix();
         GL11.glTranslated(-eprprX, -eprprY, -eprprZ);
 
-        GLDevice glDevice = ((ExMinecraft) this.mc).getGlDevice();
+        GLDevice device = ((ExMinecraft) this.mc).getGlDevice();
 
         GL11.glEnableClientState(GL11.GL_VERTEX_ARRAY);
         GL11.glEnableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
@@ -525,13 +526,14 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             //noinspection ForLoopReplaceableByForEach
             for (int j = 0; j < list.size(); j++) {
                 ChunkMesh mesh = list.get(j);
-                mesh.draw(glDevice);
+                mesh.draw(device);
             }
             renderCount += list.size();
         }
 
-        // Need to unbind buffer or unexpecting places try to read from it.
-        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+        // Need to unbind buffers; unexpecting places may try to read from it.
+        device.unbind(GLBufferTarget.ARRAY_BUFFER);
+        device.unbind(GLBufferTarget.ELEMENT_BUFFER);
 
         GL11.glDisableClientState(GL11.GL_VERTEX_ARRAY);
         GL11.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);

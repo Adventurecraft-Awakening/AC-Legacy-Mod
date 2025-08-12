@@ -118,7 +118,9 @@ public final class MemoryTesselator extends Tesselator implements ExTesselator {
             var fullBlock = this.block;
             this.block = EMPTY_BLOCK;
 
-            assert fullBlock.limit() == BLOCK_SIZE;
+            if (fullBlock.limit() != BLOCK_SIZE) {
+                throw new AssertionError("incorrect block size");
+            }
             this.blocks.add(fullBlock);
         }
 

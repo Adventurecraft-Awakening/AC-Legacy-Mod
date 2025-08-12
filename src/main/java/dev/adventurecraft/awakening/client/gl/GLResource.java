@@ -7,6 +7,9 @@ public abstract sealed class GLResource permits GLBuffer {
     private int handle;
 
     protected GLResource(int handle) {
+        if (handle <= 0) {
+            throw new IllegalArgumentException("Handle may not be negative or zero.");
+        }
         this.handle = handle;
     }
 
@@ -27,7 +30,7 @@ public abstract sealed class GLResource permits GLBuffer {
 
     protected void checkHandle() {
         if (this.handle == INVALID_HANDLE) {
-            throw new IllegalStateException("Resource is disposed.");
+            throw new IllegalStateException("Invalid handle.");
         }
     }
 }
