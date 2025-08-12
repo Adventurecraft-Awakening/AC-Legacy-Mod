@@ -35,11 +35,11 @@ public abstract class MixinChunk implements ExChunk {
     @Shadow public byte[] heightMap;
     @Shadow public byte[] blocks;
     @Shadow public DataLayer data;
-    @Shadow public boolean unsaved;
     @Shadow public Level level;
 
     @Shadow @Final public int x;
     @Shadow @Final public int z;
+    @Shadow public Map<TilePos, TileEntity> tileEntities;
 
     @Unique public double[] temperatures;
     @Unique public long lastUpdated;
@@ -53,17 +53,14 @@ public abstract class MixinChunk implements ExChunk {
     @Shadow
     public abstract int getData(int i, int j, int k);
 
-    @Shadow public Map<TilePos, TileEntity> tileEntities;
+    @Shadow
+    public abstract void markUnsaved();
 
     @Inject(
         method = "<init>(Lnet/minecraft/world/level/Level;II)V",
         at = @At("TAIL")
     )
     private void initHeightMapAtInit(Level var1, int var2, int var3, CallbackInfo ci) {
-        this.initHeightMap();
-    }
-
-    public void initHeightMap() {
         this.heightMap = new byte[256];
     }
 
@@ -185,10 +182,14 @@ public abstract class MixinChunk implements ExChunk {
 
     @Overwrite
     public boolean setTileAndData(int x, int y, int z, int id, int meta) {
+        int prevId = this.getData(x, y, z);
+        int prevMeta = this.getData(x, y, z);
+        if (prevId == id && prevMeta == meta) {
+            return false;
+        }
+
         AC_UndoStack undoStack = ((ExWorld) this.level).getUndoStack();
         if (undoStack.isRecording()) {
-            int prevId = this.getTile(x, y, z);
-            int prevMeta = this.getData(x, y, z);
             TileEntity entity = this.getChunkBlockTileEntityDontCreate(x, y, z);
             CompoundTag prevNbt = null;
             if (entity != null) {
@@ -199,80 +200,17 @@ public abstract class MixinChunk implements ExChunk {
             undoStack.recordChange(x, y, z, this.x, this.z, prevId, prevMeta, prevNbt, id, meta, null);
         }
 
-        int id256 = ExChunk.translate256(id);
-        int height = this.heightMap[z << 4 | x] & 255;
-        int bId256 = ExChunk.translate256(this.blocks[x << 11 | z << 7 | y]) & 255;
-        if (bId256 == id && this.data.get(x, y, z) == meta) {
-            return false;
-        }
-
+        int newId = ExChunk.translate256(id);
         int bX = this.x * 16 + x;
         int bZ = this.z * 16 + z;
-        this.blocks[x << 11 | z << 7 | y] = (byte) ExChunk.translate128(id256);
-        if (bId256 != 0 && !this.level.isClientSide) {
-            Tile.tiles[bId256].onRemove(this.level, bX, y, bZ);
+        this.blocks[x << 11 | z << 7 | y] = (byte) ExChunk.translate128(newId);
+        if (prevId != 0 && !this.level.isClientSide) {
+            Tile.tiles[prevId].onRemove(this.level, bX, y, bZ);
         }
-
         this.data.set(x, y, z, meta);
-        if (!this.level.dimension.hasCeiling) {
-            if (Tile.lightBlock[id256 & 255] != 0) {
-                if (y >= height) {
-                    this.recalcHeight(x, y + 1, z);
-                }
-            }
-            else if (y == height - 1) {
-                this.recalcHeight(x, y, z);
-            }
 
-            this.level.updateLight(LightLayer.SKY, bX, y, bZ, bX, y, bZ);
-        }
-
-        this.level.updateLight(LightLayer.BLOCK, bX, y, bZ, bX, y, bZ);
-        this.lightGaps(x, z);
-        this.data.set(x, y, z, meta);
-        if (id != 0) {
-            Tile.tiles[id].onPlace(this.level, bX, y, bZ);
-        }
-
-        if (ACMod.chunkIsNotPopulating) {
-            this.unsaved = true;
-        }
-
-        return true;
-    }
-
-    @Overwrite
-    public boolean setTile(int x, int y, int z, int id) {
-        AC_UndoStack undoStack = ((ExWorld) this.level).getUndoStack();
-        if (undoStack.isRecording()) {
-            int prevId = this.getTile(x, y, z);
-            int prevMeta = this.getData(x, y, z);
-            TileEntity entity = this.getChunkBlockTileEntityDontCreate(x, y, z);
-            CompoundTag prevNbt = null;
-            if (entity != null) {
-                prevNbt = new CompoundTag();
-                entity.save(prevNbt);
-            }
-
-            undoStack.recordChange(x, y, z, this.x, this.z, prevId, prevMeta, prevNbt, id, 0, null);
-        }
-
-        int id256 = ExChunk.translate256(id);
         int height = this.heightMap[z << 4 | x] & 255;
-        int bId256 = ExChunk.translate256(this.blocks[x << 11 | z << 7 | y]) & 255;
-        if (bId256 == id) {
-            return false;
-        }
-
-        int bX = this.x * 16 + x;
-        int bZ = this.z * 16 + z;
-        this.blocks[x << 11 | z << 7 | y] = (byte) ExChunk.translate128(id256);
-        if (bId256 != 0) {
-            Tile.tiles[bId256].onRemove(this.level, bX, y, bZ);
-        }
-
-        this.data.set(x, y, z, 0);
-        if (Tile.lightBlock[id256 & 255] != 0) {
+        if (Tile.lightBlock[newId & 255] != 0) {
             if (y >= height) {
                 this.recalcHeight(x, y + 1, z);
             }
@@ -280,19 +218,23 @@ public abstract class MixinChunk implements ExChunk {
         else if (y == height - 1) {
             this.recalcHeight(x, y, z);
         }
-
         this.level.updateLight(LightLayer.SKY, bX, y, bZ, bX, y, bZ);
         this.level.updateLight(LightLayer.BLOCK, bX, y, bZ, bX, y, bZ);
         this.lightGaps(x, z);
+
         if (id != 0 && !this.level.isClientSide) {
             Tile.tiles[id].onPlace(this.level, bX, y, bZ);
         }
 
         if (ACMod.chunkIsNotPopulating) {
-            this.unsaved = true;
+            this.markUnsaved();
         }
-
         return true;
+    }
+
+    @Overwrite
+    public boolean setTile(int x, int y, int z, int id) {
+        return this.setTileAndData(x, y, z, id, 0);
     }
 
     @Overwrite
@@ -310,11 +252,10 @@ public abstract class MixinChunk implements ExChunk {
             undoStack.recordChange(x, y, z, this.x, this.z, id, prevMeta, prevNbt, id, newMeta, null);
         }
 
-        if (ACMod.chunkIsNotPopulating) {
-            this.unsaved = true;
-        }
-
         this.data.set(x, y, z, newMeta);
+        if (ACMod.chunkIsNotPopulating) {
+            this.markUnsaved();
+        }
     }
 
     @WrapWithCondition(
