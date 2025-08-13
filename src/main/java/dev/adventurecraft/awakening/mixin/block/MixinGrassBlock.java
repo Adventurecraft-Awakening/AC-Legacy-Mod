@@ -9,14 +9,18 @@ import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.block.ExGrassBlock;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.render.block.ExGrassColor;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Facing;
+import net.minecraft.world.level.GrassColor;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelSource;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.tile.GrassTile;
 import net.minecraft.world.level.tile.Tile;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -93,10 +97,24 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
         )
     )
     private boolean setChunkPopulatingOnSetBlock(Level instance, int j, int k, int l, int i) {
+        // TODO: why is this forcing chunkIsNotPopulating?
         ACMod.chunkIsNotPopulating = false;
         boolean result = instance.setTile(j, k, l, i);
         ACMod.chunkIsNotPopulating = true;
         return result;
+    }
+
+    /**
+     * @reason Store {@link Level#getBiomeSource} in local.
+     */
+    @Environment(EnvType.CLIENT)
+    @Overwrite
+    public int getFoliageColor(LevelSource level, int x, int y, int z) {
+        var source = level.getBiomeSource();
+        source.getBiomeBlock(x, z, 1, 1);
+        double temp = source.temperatures[0];
+        double downfall = source.downfalls[0];
+        return GrassColor.get(temp, downfall);
     }
 
     public @Override int getTexture(int side, int meta) {

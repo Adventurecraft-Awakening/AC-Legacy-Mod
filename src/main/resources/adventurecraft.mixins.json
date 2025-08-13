@@ -63,7 +63,8 @@
     "entity.player.MixinAbstractClientPlayerEntity",
     "entity.player.MixinRemoteClientPlayerEntity",
     "util.MixinProgressListenerImpl",
-    "world.chunk.MixinChunkCache"
+    "world.chunk.MixinChunkCache",
+    "world.level.MixinGrassColor"
   ],
   "injectors": {
     "defaultRequire": 1
@@ -148,8 +149,8 @@
     "world.chunk.MixinServerChunkCache",
     "world.entity.MixinSynchedEntityData",
     "world.gen.MixinBiomeSource",
-    "world.level.tile.MixinSignTile",
     "world.level.chunk.storage.MixinRegionFile",
+    "world.level.tile.MixinSignTile",
     "world.source.MixinOverworldWorldSource",
     "world.world.biome.MixinBiome",
     "world.world.biome.MixinForestBiome",

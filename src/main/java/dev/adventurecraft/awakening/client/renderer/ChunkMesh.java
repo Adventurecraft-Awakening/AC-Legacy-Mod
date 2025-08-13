@@ -3,11 +3,10 @@ package dev.adventurecraft.awakening.client.renderer;
 import dev.adventurecraft.awakening.client.gl.*;
 import dev.adventurecraft.awakening.client.rendering.MemoryTesselator;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL15;
 
 import java.nio.ByteBuffer;
 
-public class ChunkMesh {
+public final class ChunkMesh {
 
     public static final int MAX_RENDER_LAYERS = 2;
     public static final int MAX_TEXTURES = 4;
