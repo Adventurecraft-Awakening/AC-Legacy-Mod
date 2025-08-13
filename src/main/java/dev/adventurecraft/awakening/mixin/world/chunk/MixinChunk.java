@@ -182,7 +182,7 @@ public abstract class MixinChunk implements ExChunk {
 
     @Overwrite
     public boolean setTileAndData(int x, int y, int z, int id, int meta) {
-        int prevId = this.getData(x, y, z);
+        int prevId = this.getTile(x, y, z);
         int prevMeta = this.getData(x, y, z);
         if (prevId == id && prevMeta == meta) {
             return false;
