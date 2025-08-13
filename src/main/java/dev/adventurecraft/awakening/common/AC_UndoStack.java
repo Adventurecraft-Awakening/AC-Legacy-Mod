@@ -18,25 +18,22 @@ public class AC_UndoStack {
     public LinkedList<AC_UndoSelection> undoSelectionStack = new LinkedList<>();
     public LinkedList<AC_UndoSelection> redoSelectionStack = new LinkedList<>();
 
-    private void assertRecording() {
-        if (!this.isRecording()) {
-            throw new AssertionError("already recording");
+    public boolean startRecording() {
+        if (this.isRecording()) {
+            return false;
         }
-    }
-
-    public void startRecording() {
-        this.assertRecording();
 
         this.isRecording = true;
         this.selection = new AC_UndoSelection();
         if (this.actionList == null) {
             this.actionList = new ArrayList<>();
         }
+        return true;
     }
 
-    public void stopRecording() {
-        if (this.isRecording()) {
-            throw new AssertionError("not recording");
+    public boolean stopRecording() {
+        if (!this.isRecording()) {
+            return false;
         }
 
         if (!this.actionList.isEmpty()) {
@@ -57,11 +54,10 @@ public class AC_UndoStack {
         }
 
         this.isRecording = false;
+        return true;
     }
 
     public void clear() {
-        this.assertRecording();
-
         this.undoStack.clear();
         this.redoStack.clear();
         this.undoSelectionStack.clear();

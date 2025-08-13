@@ -990,9 +990,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         }
 
         var exWorld = (ExWorld) this.level;
-        if (AC_DebugMode.active) {
-            exWorld.getUndoStack().startRecording();
-        }
+        boolean hasRecording = AC_DebugMode.active && exWorld.getUndoStack().startRecording();
 
         boolean swapOffhand = false;
         ItemInstance stack = this.player.inventory.getSelected();
@@ -1084,7 +1082,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
                     }
 
                     if (stack == null) {
-                        endMouseClick(swapOffhand, exWorld);
+                        this.endMouseClick(swapOffhand, exWorld, hasRecording);
                         return;
                     }
 
@@ -1197,17 +1195,17 @@ public abstract class MixinMinecraft implements ExMinecraft {
         }
         exWorld.getScriptHandler().runScript(scriptName, exWorld.getScope(), false);
 
-        endMouseClick(swapOffhand, exWorld);
+        this.endMouseClick(swapOffhand, exWorld, hasRecording);
     }
 
     @Unique
-    private void endMouseClick(boolean swapOffhand, ExWorld exWorld) {
+    private void endMouseClick(boolean swapOffhand, ExWorld exWorld, boolean hasRecording) {
         if (swapOffhand) {
             ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
             ((ExPlayerEntity) this.player).setSwappedItems(false);
         }
 
-        if (AC_DebugMode.active) {
+        if (hasRecording) {
             exWorld.getUndoStack().stopRecording();
         }
     }
