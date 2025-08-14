@@ -108,6 +108,14 @@ public final class MathF {
         return (float) (degrees * DEGREES_TO_RADIANS);
     }
 
+    public static float toDegrees(float radians) {
+        return radians * (float) RADIANS_TO_DEGREES;
+    }
+
+    public static double toDegrees(double radians) {
+        return radians * RADIANS_TO_DEGREES;
+    }
+
     /// @see UnsignedLong#doubleValue()
     /// @see <a href="https://github.com/WebAssembly/spec/blob/1041527d508218acc40f0278d4abc3be9ba5e3bd/interpreter/exec/f64_convert.ml#L27-L37">f64_convert.ml</a>
     public static double unsignedLongToDouble(long value) {
