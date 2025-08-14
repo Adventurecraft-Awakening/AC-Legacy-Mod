@@ -145,6 +145,16 @@ public final class MathF {
         return a;
     }
 
+    public static float normalizeAngleDelta(float a, float origin) {
+        while (origin - a < -180.0F) {
+            a -= 360.0F;
+        }
+        while (origin - a >= 180.0F) {
+            a += 360.0F;
+        }
+        return a;
+    }
+
     public static float clampAngle(float a, float min, float max) {
         return clamp(normalizeAngle(a), min, max);
     }

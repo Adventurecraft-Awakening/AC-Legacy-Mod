@@ -111,6 +111,7 @@ public abstract class MixinArrowEntity extends MixinEntity implements ExArrowEnt
                 this.bb.expand(this.xd, this.yd, this.zd).inflate(1.0D, 1.0D, 1.0D)
             );
 
+            Entity hitEntity = null;
             double minDist = 0.0D;
             for (Entity entity : entities) {
                 if (entity.isPickable() && (entity != this.owner || this.flightTime >= 5)) {
@@ -120,11 +121,15 @@ public abstract class MixinArrowEntity extends MixinEntity implements ExArrowEnt
                     if (entityHit != null) {
                         double dist = start.distanceTo(entityHit.pos);
                         if (dist < minDist || minDist == 0.0D) {
-                            hit = entityHit;
+                            hitEntity = entity;
                             minDist = dist;
                         }
                     }
                 }
+            }
+
+            if (hitEntity != null) {
+                hit = new HitResult(hitEntity);
             }
 
             if (hit != null) {
@@ -157,8 +162,8 @@ public abstract class MixinArrowEntity extends MixinEntity implements ExArrowEnt
             this.yRot = MathF.toDegrees((float) Math.atan2(this.xd, this.zd));
             this.xRot = MathF.toDegrees((float) Math.atan2(this.yd, lenXZ));
 
-            this.xRotO = MathF.normalizeAngle(this.xRot - this.xRotO);
-            this.yRotO = MathF.normalizeAngle(this.yRot - this.yRotO);
+            this.xRotO = MathF.normalizeAngleDelta(this.xRotO, this.xRot);
+            this.yRotO = MathF.normalizeAngleDelta(this.yRotO, this.yRot);
 
             this.xRot = this.xRotO + (this.xRot - this.xRotO) * 0.2F;
             this.yRot = this.yRotO + (this.yRot - this.yRotO) * 0.2F;
