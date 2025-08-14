@@ -68,6 +68,8 @@ accessible field net/minecraft/world/entity/projectile/Arrow flightTime I
 
 accessible field net/minecraft/world/entity/item/ItemEntity health I
 
+accessible method net/minecraft/world/phys/Vec3 set (DDD)Lnet/minecraft/world/phys/Vec3;
+
 accessible field net/minecraft/client/renderer/TileRenderer level Lnet/minecraft/world/level/LevelSource;
 
 accessible field net/minecraft/client/renderer/GameRenderer fov F # field_2365

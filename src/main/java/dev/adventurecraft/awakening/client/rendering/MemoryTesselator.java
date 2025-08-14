@@ -99,6 +99,10 @@ public final class MemoryTesselator extends Tesselator implements ExTesselator {
         this.normal = GLUtil.packByteNormal(x, y, z);
     }
 
+    public @Override void ac$normal(float x, float y, float z) {
+        this.normal(x, y, z);
+    }
+
     private ByteBuffer reserve(int count) {
         ByteBuffer b = this.block;
         int start = b.position();

@@ -102,6 +102,10 @@ public abstract class MixinTesselator implements ExTesselator {
         this.normal = GLUtil.packByteNormal(x, y, z);
     }
 
+    public @Override void ac$normal(float x, float y, float z) {
+        this.normal(x, y, z);
+    }
+
     @Unique
     private void addVertex(float x, float y, float z, float u, float v) {
         ++this.count;
