@@ -115,7 +115,7 @@ public abstract class MixinParticleManager implements ExParticleManager {
         Particle.yOff = (camera.yOld - et.getY()) + (camera.y - camera.yOld) * (double) partialTick;
         Particle.zOff = (camera.zOld - et.getZ()) + (camera.z - camera.zOld) * (double) partialTick;
 
-        for (int tex = 0; tex < this.particles.length; ++tex) {
+        for (int tex = 0; tex < this.particles.length - 1; ++tex) {
             var list = this.particles[tex];
             if (list.isEmpty()) {
                 continue;
@@ -143,8 +143,7 @@ public abstract class MixinParticleManager implements ExParticleManager {
 
     @Overwrite
     public void renderLit(Entity player, float partialTick) {
-        int tex = 5; // TODO: nothing seems to be using particle texture 5...
-        var list = this.particles[tex];
+        var list = this.particles[this.particles.length - 1];
         if (list.isEmpty()) {
             return;
         }
