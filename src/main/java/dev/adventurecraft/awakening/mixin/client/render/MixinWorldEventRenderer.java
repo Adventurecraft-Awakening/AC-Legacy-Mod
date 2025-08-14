@@ -18,6 +18,7 @@ import dev.adventurecraft.awakening.extension.world.chunk.ExChunkCache;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.script.ScriptModelBase;
+import dev.adventurecraft.awakening.util.GLUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.particle.*;
@@ -1017,14 +1018,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         )
     )
     private void renderScriptModels(Vec3 var1, Culler var2, float partialTick, CallbackInfo ci) {
-        var transform = new Matrix4f();
-
-        try (var stack = MemoryStack.stackPush()) {
-            var matBuf = stack.mallocFloat(16);
-            GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, matBuf);
-            transform.load(matBuf);
-        }
-
+        var transform = GLUtil.getModelViewMatrix(new Matrix4f());
         transform.translate(
             (float) -EntityRenderDispatcher.xOff,
             (float) -EntityRenderDispatcher.yOff,
