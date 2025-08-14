@@ -40,7 +40,7 @@ public abstract class MixinArrowEntity extends MixinEntity implements ExArrowEnt
     @Shadow public int flightTime;
     @Shadow public Mob owner;
 
-    private int attackStrength = 2;
+    @Unique private int attackStrength = 2;
 
     @Inject(
         method = "defineSynchedData",
@@ -55,8 +55,8 @@ public abstract class MixinArrowEntity extends MixinEntity implements ExArrowEnt
         super.tick();
         if (this.xRotO == 0.0F && this.yRotO == 0.0F) {
             float len = Mth.sqrt(this.xd * this.xd + this.zd * this.zd);
-            this.yRotO = this.yRot = (float) Math.toDegrees(Math.atan2(this.xd, this.zd));
-            this.xRotO = this.xRot = (float) Math.toDegrees(Math.atan2(this.yd, len));
+            this.yRotO = this.yRot = MathF.toDegrees((float) Math.atan2(this.xd, this.zd));
+            this.xRotO = this.xRot = MathF.toDegrees((float) Math.atan2(this.yd, len));
         }
 
         int tileId = this.level.getTile(this.xTile, this.yTile, this.zTile);
@@ -97,10 +97,13 @@ public abstract class MixinArrowEntity extends MixinEntity implements ExArrowEnt
             Vec3 start = Vec3.newTemp(this.x, this.y, this.z);
             Vec3 end = Vec3.newTemp(this.x + this.xd, this.y + this.yd, this.z + this.zd);
             HitResult hit = ((ExWorld) this.level).rayTraceBlocks2(start, end, false, true, false);
-            start = Vec3.newTemp(this.x, this.y, this.z);
-            end = Vec3.newTemp(this.x + this.xd, this.y + this.yd, this.z + this.zd);
-            if (hit != null) {
-                end = Vec3.newTemp(hit.pos.x, hit.pos.y, hit.pos.z);
+
+            start.set(this.x, this.y, this.z);
+            if (hit == null) {
+                end.set(this.x + this.xd, this.y + this.yd, this.z + this.zd);
+            }
+            else {
+                end.set(hit.pos.x, hit.pos.y, hit.pos.z);
             }
 
             List<Entity> entities = this.level.getEntities(
@@ -151,8 +154,8 @@ public abstract class MixinArrowEntity extends MixinEntity implements ExArrowEnt
             this.y += this.yd;
             this.z += this.zd;
             float lenXZ = Mth.sqrt(this.xd * this.xd + this.zd * this.zd);
-            this.yRot = (float) Math.toDegrees(Math.atan2(this.xd, this.zd));
-            this.xRot = (float) Math.toDegrees(Math.atan2(this.yd, lenXZ));
+            this.yRot = MathF.toDegrees((float) Math.atan2(this.xd, this.zd));
+            this.xRot = MathF.toDegrees((float) Math.atan2(this.yd, lenXZ));
 
             this.xRotO = MathF.normalizeAngle(this.xRot - this.xRotO);
             this.yRotO = MathF.normalizeAngle(this.yRot - this.yRotO);
