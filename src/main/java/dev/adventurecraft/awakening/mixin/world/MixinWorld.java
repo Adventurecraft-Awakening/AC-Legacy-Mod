@@ -152,7 +152,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     public abstract int getLightLevel(int i, int j, int k);
 
     @Shadow
-    public abstract boolean hasChunkAt(int i, int j, int k);
+    public abstract boolean hasChunkAt(int x, int y, int z);
 
     @Shadow
     public abstract boolean isSkyLit(int i, int j, int k);
@@ -643,9 +643,13 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         return this.getBrightnessLevel(value);
     }
 
-    public float getDayLight() {
-        int var1 = 15 - this.skyDarken;
-        return this.dimension.brightnessRamp[var1];
+    @Override
+    public int getLightUpdateHash(int x, int y, int z) {
+        if (!this.hasChunkAt(x, y, z)) {
+            return 0;
+        }
+        LevelChunk levelChunk = this.getChunkAt(x, z);
+        return ((ExChunk) levelChunk).getLightUpdateHash(x, y, z);
     }
 
     @Overwrite

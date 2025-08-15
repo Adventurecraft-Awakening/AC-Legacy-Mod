@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.mixin.entity;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.extension.nbt.ExListTag;
+import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.util.RandomUtil;
@@ -27,8 +28,6 @@ import net.minecraft.world.phys.Vec3;
 
 @Mixin(Entity.class)
 public abstract class MixinEntity implements ExEntity {
-
-    private static final int BRIGHTNESS_CACHE_MASK = (-1) << 6; // 64 ticks per cycle
 
     @Shadow public int id;
     @Shadow public Entity rider;
@@ -278,28 +277,12 @@ public abstract class MixinEntity implements ExEntity {
         )
     )
     private float cacheGetBrightness(Level level, int x, int y, int z) {
-        int key = 1430287;
-        key = (7302013 * key) ^ x;
-        key = (7302013 * key) ^ y;
-        key = (7302013 * key) ^ z;
-
-        // TODO: use world event listener for light update instead?
-        if ((this.cachedBrightnessKey & BRIGHTNESS_CACHE_MASK) != (key & BRIGHTNESS_CACHE_MASK)) {
+        int key = ((ExWorld) level).getLightUpdateHash(x, y, z);
+        if (this.cachedBrightnessKey != key) {
             this.cachedBrightnessKey = key; // Store the low bits as variation.
             this.cachedBrightness = level.getBrightness(x, y, z);
         }
         return this.cachedBrightness;
-    }
-
-    @Inject(
-        method = "baseTick",
-        at = @At("TAIL")
-    )
-    private void tickBrightnessCache(CallbackInfo ci) {
-        // TODO: refresh if caught on fire?
-
-        // Increment the low bits of the key; when it exceeds the mask, it resets.
-        this.cachedBrightnessKey++;
     }
 
     @Redirect(

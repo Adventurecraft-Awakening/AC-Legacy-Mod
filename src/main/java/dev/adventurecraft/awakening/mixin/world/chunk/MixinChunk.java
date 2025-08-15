@@ -43,6 +43,7 @@ public abstract class MixinChunk implements ExChunk {
 
     @Unique public double[] temperatures;
     @Unique public long lastUpdated;
+    @Unique private int lightHash;
 
     @Shadow
     protected abstract void lightGaps(int i, int j);
@@ -60,8 +61,8 @@ public abstract class MixinChunk implements ExChunk {
         method = "<init>(Lnet/minecraft/world/level/Level;II)V",
         at = @At("TAIL")
     )
-    private void initHeightMapAtInit(Level var1, int var2, int var3, CallbackInfo ci) {
-        this.heightMap = new byte[256];
+    private void doInit(Level level, int x, int y, CallbackInfo ci) {
+        this.lightHash = level.random.nextInt();
     }
 
     @Redirect(
@@ -141,43 +142,17 @@ public abstract class MixinChunk implements ExChunk {
     }
 
     @Redirect(
-        method = "recalcHeightmap",
+        method = { "recalcHeightmap", "lightGap", "recalcHeight", "setBrightness" },
         at = @At(
             value = "FIELD",
             target = "Lnet/minecraft/world/level/chunk/LevelChunk;unsaved:Z"
         )
     )
-    private void removeWrite0_field967(LevelChunk instance, boolean value) {
-    }
-
-    @Redirect(
-        method = "lightGap",
-        at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/world/level/chunk/LevelChunk;unsaved:Z"
-        )
-    )
-    private void removeWrite1_field967(LevelChunk instance, boolean value) {
-    }
-
-    @Redirect(
-        method = "recalcHeight",
-        at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/world/level/chunk/LevelChunk;unsaved:Z"
-        )
-    )
-    private void removeWrite2_field967(LevelChunk instance, boolean value) {
-    }
-
-    @Redirect(
-        method = "setBrightness",
-        at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/world/level/chunk/LevelChunk;unsaved:Z"
-        )
-    )
-    private void removeWrite3_field967(LevelChunk instance, boolean value) {
+    private void markLightButUnsaved(LevelChunk instance, boolean value) {
+        this.updateLightHash();
+        // TODO: Maybe mark unsaved, at least in some situations?
+        //       Would be needed if we want to avoid light updates on load.
+        //       Could be good for [player] saves that are not in Editing mode...
     }
 
     @Overwrite
@@ -374,5 +349,23 @@ public abstract class MixinChunk implements ExChunk {
     @Override
     public void setLastUpdated(long value) {
         this.lastUpdated = value;
+    }
+
+    @Override
+    public int getLightUpdateHash(int x, int y, int z) {
+        int hash = this.lightHash;
+        hash = (7302013 * hash) + x;
+        hash = (7302013 * hash) + y;
+        hash = (7302013 * hash) + z;
+
+        // Not needed (until lightmaps); chunk updates affect this.lightHash
+        //hash = (7302013 * hash) + this.level.skyDarken * 1430287;
+
+        return hash;
+    }
+
+    @Override
+    public void updateLightHash() {
+        this.lightHash += 1;
     }
 }

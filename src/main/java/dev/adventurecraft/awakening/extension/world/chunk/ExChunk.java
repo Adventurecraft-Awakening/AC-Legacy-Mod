@@ -20,6 +20,10 @@ public interface ExChunk {
 
     void setLastUpdated(long value);
 
+    int getLightUpdateHash(int x, int y, int z);
+
+    void updateLightHash();
+
     static int translate128(int id) {
         return id > 127 ? -129 + (id - 127) : id;
     }

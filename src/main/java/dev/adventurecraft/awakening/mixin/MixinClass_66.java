@@ -181,6 +181,8 @@ public abstract class MixinClass_66 implements ExClass_66 {
 
         LevelChunk.touchedSky = false;
 
+        ((ExChunk) this.level.getChunkAt(this.x, this.z)).updateLightHash();
+
         int regionPadding = 1;
         var region = new Region(
             this.level,
