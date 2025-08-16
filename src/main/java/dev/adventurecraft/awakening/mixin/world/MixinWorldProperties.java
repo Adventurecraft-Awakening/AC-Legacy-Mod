@@ -56,7 +56,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     public CompoundTag worldScope = null;
     public CompoundTag musicScope = null;
     public boolean originallyFromAC = false;
-    private GameRules gameRules;
+    private GameRules gameRules = new GameRules();
 
     @Inject(
         method = "<init>(Lnet/minecraft/nbt/CompoundTag;)V",
@@ -117,7 +117,6 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
 
         this.hudEnabled = exTag.findBool("hudEnabled").orElse(true);
 
-        this.gameRules = new GameRules();
         exTag
             .findCompound("gameRules")
             .ifPresentOrElse(t -> this.gameRules.load(t), () -> this.convertToGameRules(exTag));
