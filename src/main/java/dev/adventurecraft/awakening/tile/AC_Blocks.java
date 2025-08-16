@@ -246,6 +246,11 @@ public class AC_Blocks {
             if (Tile.tiles[i] instanceof AC_BlockStairMulti) {
                 ExBlock.neighborLit[i] = true;
             }
+
+            if (Tile.tiles[i] instanceof AC_ITriggerDebugBlock) {
+                // TODO: is checking that interface good enough?
+                ExBlock.neighborLit[i] = true;
+            }
         }
 
         ExBlock.neighborLit[Tile.SLAB.id] = true;

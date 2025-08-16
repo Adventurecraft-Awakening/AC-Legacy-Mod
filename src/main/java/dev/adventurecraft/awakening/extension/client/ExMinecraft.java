@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.extension.client;
 
+import dev.adventurecraft.awakening.client.gl.GLDevice;
 import dev.adventurecraft.awakening.common.AC_CutsceneCamera;
 import dev.adventurecraft.awakening.common.gui.AC_GuiStore;
 import java.net.URL;
@@ -41,4 +42,6 @@ public interface ExMinecraft {
     Mob getCutsceneCameraEntity();
 
     AC_GuiStore getStoreGUI();
+
+    GLDevice getGlDevice();
 }

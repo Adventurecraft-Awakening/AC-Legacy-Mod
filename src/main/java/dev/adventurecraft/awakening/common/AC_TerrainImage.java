@@ -52,7 +52,7 @@ public class AC_TerrainImage {
             return 64;
         }
         int info = getTerrainInfo(x, z);
-        return (info >> 8 & 255) / 2;
+        return ((info >> 8) & 255) / 2;
     }
 
     public static int getWaterHeight(int x, int z) {
@@ -68,21 +68,21 @@ public class AC_TerrainImage {
             return false;
         }
         int info = getTerrainInfo(x, z);
-        return (info >> 16 & 255) > 127;
+        return ((info >> 16) & 255) > 127;
     }
 
-    public static double getTerrainHumidity(int x, int z) {
+    public static float getTerrainHumidity(int x, int z) {
         if (!isLoaded) {
-            return 0.25D;
+            return 0.25f;
         }
-        return (double) (getBiomeInfo(x, z) & 255) / 255.0D;
+        return (getBiomeInfo(x, z) & 255) / 255f;
     }
 
-    public static double getTerrainTemperature(int x, int z) {
+    public static float getTerrainTemperature(int x, int z) {
         if (!isLoaded) {
-            return 0.75D;
+            return 0.75f;
         }
-        return (double) (getBiomeInfo(x, z) >> 16 & 255) / 255.0D;
+        return ((getBiomeInfo(x, z) >> 16) & 255) / 255f;
     }
 
     private static ImageBuffer loadMapImage(File file) {

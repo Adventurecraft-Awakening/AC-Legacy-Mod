@@ -20,6 +20,8 @@ import org.lwjgl.opengl.GL14;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.glu.GLU;
 
+// TODO: optimize with batching (using MemoryTesselator?)
+
 public class AC_MapEditing {
     public Minecraft mc;
     public Level world;

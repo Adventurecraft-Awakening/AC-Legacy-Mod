@@ -1,10 +1,14 @@
 package dev.adventurecraft.awakening.mixin.client.particle;
 
-import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.particle.ExParticleManager;
+import dev.adventurecraft.awakening.extension.client.render.ExTesselator;
+import dev.adventurecraft.awakening.util.MathF;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.Tesselator;
+import net.minecraft.util.Mth;
+import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -24,18 +28,16 @@ import net.minecraft.world.phys.AABB;
 @Mixin(ParticleEngine.class)
 public abstract class MixinParticleManager implements ExParticleManager {
 
-    @Shadow
-    protected Level level;
+    @Shadow protected Level level;
+    @Shadow private List<Particle>[] particles;
+    @Shadow private Textures textureManager;
 
-    @Shadow
-    private List<Particle>[] particles;
+    @Unique private ObjectArrayList<Particle>[] bufferLists;
 
-    @Shadow
-    private Textures textureManager;
-
-    private ObjectArrayList<Particle>[] bufferLists;
-
-    @Inject(method = "<init>", at = @At("TAIL"))
+    @Inject(
+        method = "<init>",
+        at = @At("TAIL")
+    )
     private void init(Level var1, Textures var2, CallbackInfo ci) {
         this.particles = new List[6];
         this.bufferLists = new ObjectArrayList[particles.length];
@@ -53,7 +55,10 @@ public abstract class MixinParticleManager implements ExParticleManager {
         list.add(particle);
     }
 
-    @Inject(method = "tick", at = @At("HEAD"))
+    @Inject(
+        method = "tick",
+        at = @At("HEAD")
+    )
     private void flushParticleBuffers(CallbackInfo ci) {
         this.flushParticleBuffers();
     }
@@ -82,32 +87,82 @@ public abstract class MixinParticleManager implements ExParticleManager {
         }
     }
 
-    @Inject(method = "setLevel", at = @At("HEAD"))
+    @Inject(
+        method = "setLevel",
+        at = @At("HEAD")
+    )
     private void clearParticleBuffers(Level world, CallbackInfo ci) {
         for (ObjectArrayList<Particle> bufferList : this.bufferLists) {
             bufferList.clear();
         }
     }
 
-    @ModifyConstant(method = "render", constant = @Constant(intValue = 0, ordinal = 1))
-    private int bindTerrainTextures(int constant, @Local int i) {
-        if (i == 3) {
-            return this.textureManager.loadTexture("/terrain2.png");
+    @Overwrite
+    public void render(Entity camera, float partialTick) {
+        Tesselator tesselator = Tesselator.instance;
+        var et = (ExTesselator) tesselator;
+
+        float xRad = MathF.toRadians(camera.xRot);
+        float yRad = MathF.toRadians(camera.yRot);
+        float xSin = Mth.sin(xRad);
+        float x0 = Mth.cos(yRad);
+        float y0 = Mth.cos(xRad);
+        float z0 = Mth.sin(yRad);
+        float x1 = -z0 * xSin;
+        float z1 = x0 * xSin;
+
+        Particle.xOff = (camera.xOld - et.getX()) + (camera.x - camera.xOld) * (double) partialTick;
+        Particle.yOff = (camera.yOld - et.getY()) + (camera.y - camera.yOld) * (double) partialTick;
+        Particle.zOff = (camera.zOld - et.getZ()) + (camera.z - camera.zOld) * (double) partialTick;
+
+        for (int tex = 0; tex < this.particles.length - 1; ++tex) {
+            var list = this.particles[tex];
+            if (list.isEmpty()) {
+                continue;
+            }
+
+            int texName = switch (tex) {
+                case 0 -> this.textureManager.loadTexture("/particles.png");
+                case 1 -> this.textureManager.loadTexture("/terrain.png");
+                case 2 -> this.textureManager.loadTexture("/gui/items.png");
+                case 3 -> this.textureManager.loadTexture("/terrain2.png");
+                case 4 -> this.textureManager.loadTexture("/terrain3.png");
+                default -> 0;
+            };
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, texName);
+
+            tesselator.begin();
+            //noinspection ForLoopReplaceableByForEach
+            for (int j = 0; j < list.size(); ++j) {
+                Particle particle = list.get(j);
+                particle.render(tesselator, partialTick, x0, y0, z0, x1, z1);
+            }
+            tesselator.end();
         }
-        if (i == 4) {
-            return this.textureManager.loadTexture("/terrain3.png");
-        }
-        return constant;
     }
 
-    @ModifyConstant(method = {"tick", "setLevel"}, constant = @Constant(intValue = 4))
+    @Overwrite
+    public void renderLit(Entity player, float partialTick) {
+        var list = this.particles[this.particles.length - 1];
+        if (list.isEmpty()) {
+            return;
+        }
+
+        Tesselator tesselator = Tesselator.instance;
+        //noinspection ForLoopReplaceableByForEach
+        for (int i = 0; i < list.size(); ++i) {
+            Particle particle = list.get(i);
+            // TODO: provide non-zero coords?
+            particle.render(tesselator, partialTick, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+        }
+    }
+
+    @ModifyConstant(
+        method = {"tick", "setLevel"},
+        constant = @Constant(intValue = 4)
+    )
     private int returnListCount(int constant) {
         return this.particles.length;
-    }
-
-    @ModifyConstant(method = "renderLit", constant = @Constant(intValue = 3))
-    private int updateLastParticleType(int constant) {
-        return 5;
     }
 
     @Overwrite
@@ -124,7 +179,9 @@ public abstract class MixinParticleManager implements ExParticleManager {
         this.flushParticleBuffers();
 
         for (List<Particle> list : this.particles) {
-            for (Particle entity : list) {
+            //noinspection ForLoopReplaceableByForEach
+            for (int i = 0; i < list.size(); i++) {
+                Particle entity = list.get(i);
                 if (aabb.x0 <= entity.x &&
                     aabb.x1 >= entity.x &&
                     aabb.y0 <= entity.y &&

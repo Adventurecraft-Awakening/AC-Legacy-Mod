@@ -355,8 +355,8 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
                 int pY = (int) player.z;
                 int tH = AC_TerrainImage.getTerrainHeight(pX, pY);
                 int wH = AC_TerrainImage.getWaterHeight(pX, pY);
-                double tTemp = AC_TerrainImage.getTerrainTemperature(pX, pY);
-                double tHumid = AC_TerrainImage.getTerrainHumidity(pX, pY);
+                float tTemp = AC_TerrainImage.getTerrainTemperature(pX, pY);
+                float tHumid = AC_TerrainImage.getTerrainHumidity(pX, pY);
                 String msg = String.format("T: %d W: %d Temp: %.2f Humid: %.2f", tH, wH, tTemp, tHumid);
                 textState.drawText(msg, x, y += 10);
             }

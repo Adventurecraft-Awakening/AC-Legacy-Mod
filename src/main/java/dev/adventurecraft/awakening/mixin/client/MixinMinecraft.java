@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.ACMainThread;
 import dev.adventurecraft.awakening.ACMod;
+import dev.adventurecraft.awakening.client.gl.GLDevice;
 import dev.adventurecraft.awakening.client.options.Config;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.client.gui.AC_ChatScreen;
@@ -72,10 +73,7 @@ import org.lwjgl.LWJGLException;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
-import org.lwjgl.opengl.Display;
-import org.lwjgl.opengl.DisplayMode;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.PixelFormat;
+import org.lwjgl.opengl.*;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
@@ -104,28 +102,19 @@ public abstract class MixinMinecraft implements ExMinecraft {
     protected abstract void resize(int i, int j);
 
     @Shadow public GameRenderer gameRenderer;
-
     @Shadow public Gui gui;
-
     @Shadow public LocalPlayer player;
-
     @Shadow public Level level;
-
     @Shadow public volatile boolean pause;
-
     @Shadow public GameMode gameMode;
-
     @Shadow public Textures textures;
-
     @Shadow public Screen screen;
 
     @Shadow
     public abstract void setScreen(Screen arg);
 
     @Shadow private int lastClickTick;
-
     @Shadow private int ticks;
-
     @Shadow private int missTime;
 
     @Shadow
@@ -141,21 +130,18 @@ public abstract class MixinMinecraft implements ExMinecraft {
     protected abstract void reloadSound();
 
     @Shadow public Options options;
-
     @Shadow public LevelRenderer levelRenderer;
 
     @Shadow
     public abstract boolean isOnline();
 
     @Shadow long lastTickTime;
-
     @Shadow public boolean mouseGrabbed;
 
     @Shadow
     public abstract void grabMouse();
 
     @Shadow private int recheckPlayerIn;
-
     @Shadow public ParticleEngine particleEngine;
 
     @Shadow(
@@ -187,14 +173,12 @@ public abstract class MixinMinecraft implements ExMinecraft {
     protected abstract void convertWorld(String string, String string2);
 
     @Shadow public HitResult hitResult;
-
     @Shadow public StatsCounter statManager;
 
     @Shadow
     public abstract void setLevel(Level arg, String string);
 
     @Shadow public ProgressRenderer progressRenderer;
-
     @Shadow public SoundEngine soundEngine;
 
     @Shadow
@@ -213,6 +197,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
     @Unique ItemInstance lastItemUsed;
     @Unique Entity lastEntityHit;
     @Unique ScriptVec3 lastBlockHit;
+    @Unique private GLDevice glDevice;
 
     @Overwrite(remap = false)
     public static void main(String[] args) {
@@ -318,17 +303,19 @@ public abstract class MixinMinecraft implements ExMinecraft {
             GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_DEBUG_CONTEXT, 1);
         }
 
+        var pixelFormat = new PixelFormat();
         try {
-            createDisplay(new PixelFormat().withSamples(sampleCount), true);
-            Config.logOpenGlCaps();
-            return;
+            createDisplay(pixelFormat.withSamples(sampleCount), true);
         }
         catch (LWJGLException ex) {
             ACMod.LOGGER.warn("Error setting MSAA {}x: ", sampleCount, ex);
+            createDisplay(pixelFormat, false);
         }
 
-        createDisplay(new PixelFormat(), false);
-        Config.logOpenGlCaps();
+        var caps = GLContext.getCapabilities();
+        Config.logOpenGlCaps(caps);
+
+        this.glDevice = new GLDevice(caps);
     }
 
     private void createDisplay(PixelFormat pixelFormat, boolean rethrowLast)
@@ -1003,9 +990,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         }
 
         var exWorld = (ExWorld) this.level;
-        if (AC_DebugMode.active) {
-            exWorld.getUndoStack().startRecording();
-        }
+        boolean hasRecording = AC_DebugMode.active && exWorld.getUndoStack().startRecording();
 
         boolean swapOffhand = false;
         ItemInstance stack = this.player.inventory.getSelected();
@@ -1097,7 +1082,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
                     }
 
                     if (stack == null) {
-                        endMouseClick(swapOffhand, exWorld);
+                        this.endMouseClick(swapOffhand, exWorld, hasRecording);
                         return;
                     }
 
@@ -1210,17 +1195,17 @@ public abstract class MixinMinecraft implements ExMinecraft {
         }
         exWorld.getScriptHandler().runScript(scriptName, exWorld.getScope(), false);
 
-        endMouseClick(swapOffhand, exWorld);
+        this.endMouseClick(swapOffhand, exWorld, hasRecording);
     }
 
     @Unique
-    private void endMouseClick(boolean swapOffhand, ExWorld exWorld) {
+    private void endMouseClick(boolean swapOffhand, ExWorld exWorld, boolean hasRecording) {
         if (swapOffhand) {
             ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
             ((ExPlayerEntity) this.player).setSwappedItems(false);
         }
 
-        if (AC_DebugMode.active) {
+        if (hasRecording) {
             exWorld.getUndoStack().stopRecording();
         }
     }
@@ -1507,5 +1492,9 @@ public abstract class MixinMinecraft implements ExMinecraft {
     @Override
     public AC_GuiStore getStoreGUI() {
         return this.storeGUI;
+    }
+
+    public @Override GLDevice getGlDevice() {
+        return this.glDevice;
     }
 }
