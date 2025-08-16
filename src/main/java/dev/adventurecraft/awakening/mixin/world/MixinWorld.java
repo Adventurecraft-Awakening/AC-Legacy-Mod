@@ -83,6 +83,8 @@ import java.util.*;
 @Mixin(Level.class)
 public abstract class MixinWorld implements ExWorld, LevelSource {
 
+    private static final int MAX_LIGHT = 15;
+
     @Shadow static int maxLoop;
     @Shadow public LevelData levelData;
     @Shadow public DimensionDataStorage dataStorage;
@@ -544,22 +546,28 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             return -1;
         }
 
-        int topId = this.getRawBrightness(x, y + 1, z, false);
-        int rightId = this.getRawBrightness(x + 1, y, z, false);
-        int leftId = this.getRawBrightness(x - 1, y, z, false);
-        int frontId = this.getRawBrightness(x, y, z + 1, false);
-        int backId = this.getRawBrightness(x, y, z - 1, false);
-        topId = Math.max(rightId, topId);
-        topId = Math.max(leftId, topId);
-        topId = Math.max(frontId, topId);
-        topId = Math.max(backId, topId);
-        return topId;
+        int n = this.getClampedRawBrightness(x, y + 1, z, 0);
+        n = this.getClampedRawBrightness(x + 1, y, z, n);
+        n = this.getClampedRawBrightness(x - 1, y, z, n);
+        n = this.getClampedRawBrightness(x, y, z + 1, n);
+        n = this.getClampedRawBrightness(x, y, z - 1, n);
+        return n;
+    }
+
+    private @Unique int getClampedRawBrightness(int x, int y, int z, int value) {
+        if (value >= MAX_LIGHT || outOfBounds(x, z)) {
+            return MAX_LIGHT;
+        }
+        if (y < 0) {
+            return value;
+        }
+        return Math.max(value, this.getChunkBrightness(x, y, z));
     }
 
     @Overwrite
     public int getRawBrightness(int x, int y, int z, boolean checkNeighbors) {
         if (outOfBounds(x, z)) {
-            return 15;
+            return MAX_LIGHT;
         }
 
         if (checkNeighbors) {
@@ -568,11 +576,10 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
                 return n;
             }
         }
-
         if (y < 0) {
             return 0;
         }
-        return getChunkBrightness(x, y, z);
+        return this.getChunkBrightness(x, y, z);
     }
 
     private @Unique int getChunkBrightness(int x, int y, int z) {
