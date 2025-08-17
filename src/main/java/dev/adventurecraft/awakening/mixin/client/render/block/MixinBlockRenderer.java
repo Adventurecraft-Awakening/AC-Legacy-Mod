@@ -959,6 +959,59 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     @Overwrite
+    public boolean method_63(Tile tile, int x, int y, int z, float r, float g, float b) {
+        Tesselator tesselator = this.tesselator();
+        boolean hasFaces = false;
+
+        final float luma_lo = 0.5f;
+        final float luma_hi = 1.0f;
+        final float luma_z = 0.8f;
+        final float luma_x = 0.6f;
+
+        float offset = 0.0625f;
+        float luma = tile.getBrightness(this.level, x, y, z);
+
+        if (this.noCulling || tile.shouldRenderFace(this.level, x, y - 1, z, Facing.DOWN)) {
+            float f = luma_lo * tile.getBrightness(this.level, x, y - 1, z);
+            tesselator.color(r * f, g * f, b * f);
+            this.renderFaceDown(tile, x, y, z, tile.getTexture(this.level, x, y, z, Facing.DOWN));
+            hasFaces = true;
+        }
+        if (this.noCulling || tile.shouldRenderFace(this.level, x, y + 1, z, Facing.UP)) {
+            boolean contained = tile.yy1 != 1.0 && !tile.material.isLiquid();
+            float f = luma_hi * (contained ? luma : tile.getBrightness(this.level, x, y + 1, z));
+            tesselator.color(r * f, g * f, b * f);
+            this.renderFaceUp(tile, x, y, z, tile.getTexture(this.level, x, y, z, Facing.UP));
+            hasFaces = true;
+        }
+        if (this.noCulling || tile.shouldRenderFace(this.level, x, y, z - 1, Facing.NORTH)) {
+            float f = luma_z * (tile.zz0 > 0.0 ? luma : tile.getBrightness(this.level, x, y, z - 1));
+            tesselator.color(r * f, g * f, b * f);
+            this.renderNorth(tile, x, y, z + offset, tile.getTexture(this.level, x, y, z, Facing.NORTH));
+            hasFaces = true;
+        }
+        if (this.noCulling || tile.shouldRenderFace(this.level, x, y, z + 1, Facing.SOUTH)) {
+            float f = luma_z * (tile.zz1 < 1.0 ? luma : tile.getBrightness(this.level, x, y, z + 1));
+            tesselator.color(r * f, g * f, b * f);
+            this.renderSouth(tile, x, y, z - offset, tile.getTexture(this.level, x, y, z, Facing.SOUTH));
+            hasFaces = true;
+        }
+        if (this.noCulling || tile.shouldRenderFace(this.level, x - 1, y, z, Facing.WEST)) {
+            float f = luma_x * (tile.xx0 > 0.0 ? luma : tile.getBrightness(this.level, x - 1, y, z));
+            tesselator.color(r * f, g * f, b * f);
+            this.renderWest(tile, x + offset, y, z, tile.getTexture(this.level, x, y, z, Facing.WEST));
+            hasFaces = true;
+        }
+        if (this.noCulling || tile.shouldRenderFace(this.level, x + 1, y, z, Facing.EAST)) {
+            float f = luma_x * (tile.xx1 < 1.0 ? luma : tile.getBrightness(this.level, x + 1, y, z));
+            tesselator.color(r * f, g * f, b * f);
+            this.renderEast(tile, x - offset, y, z, tile.getTexture(this.level, x, y, z, Facing.EAST));
+            hasFaces = true;
+        }
+        return hasFaces;
+    }
+
+    @Overwrite
     public boolean tesselateInWorld(Tile block, int x, int y, int z) {
         int renderShape = ((ExBlock) block).getRenderShape(this.level, x, y, z);
         if (renderShape == BlockShapes.NONE) {
