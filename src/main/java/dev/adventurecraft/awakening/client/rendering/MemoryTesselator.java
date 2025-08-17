@@ -26,6 +26,10 @@ public final class MemoryTesselator extends Tesselator implements ExTesselator {
     private int rgba;
     private int normal;
 
+    private float xo;
+    private float yo;
+    private float zo;
+
     private MemoryTesselator() {
         super(0);
     }
@@ -86,9 +90,9 @@ public final class MemoryTesselator extends Tesselator implements ExTesselator {
 
     public @Override void ac$vertexUV(float x, float y, float z, float u, float v) {
         var a = this.reserve(BYTE_STRIDE);
-        a.putInt(Float.floatToRawIntBits(x));
-        a.putInt(Float.floatToRawIntBits(y));
-        a.putInt(Float.floatToRawIntBits(z));
+        a.putInt(Float.floatToRawIntBits(x + this.xo));
+        a.putInt(Float.floatToRawIntBits(y + this.yo));
+        a.putInt(Float.floatToRawIntBits(z + this.zo));
         a.putInt(Float.floatToRawIntBits(u));
         a.putInt(Float.floatToRawIntBits(v));
         a.putInt(this.rgba);
@@ -101,6 +105,18 @@ public final class MemoryTesselator extends Tesselator implements ExTesselator {
 
     public @Override void ac$normal(float x, float y, float z) {
         this.normal(x, y, z);
+    }
+
+    public @Override void offset(double x, double y, double z) {
+        this.xo = (float) x;
+        this.yo = (float) y;
+        this.zo = (float) z;
+    }
+
+    public @Override void addOffset(float xo, float yo, float zo) {
+        this.xo += xo;
+        this.yo += yo;
+        this.zo += zo;
     }
 
     private ByteBuffer reserve(int count) {
