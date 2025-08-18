@@ -84,8 +84,13 @@ public final class MemoryTesselator extends Tesselator implements ExTesselator {
         this.v = v;
     }
 
-    public @Override void ac$color(int rgba) {
+    public @Override void ac$color8(int rgba) {
+        // TODO: is endian correction here needed?
         this.rgba = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN ? rgba : Integer.reverseBytes(rgba);
+    }
+
+    public @Override void ac$color32(float r, float g, float b, float a) {
+        this.color(r, g, b, a);
     }
 
     public @Override void ac$vertexUV(float x, float y, float z, float u, float v) {
@@ -100,10 +105,14 @@ public final class MemoryTesselator extends Tesselator implements ExTesselator {
     }
 
     public @Override void normal(float x, float y, float z) {
-        this.normal = GLUtil.packByteNormal(x, y, z);
+        this.ac$normal8(GLUtil.packByteNormal(x, y, z));
     }
 
-    public @Override void ac$normal(float x, float y, float z) {
+    public @Override void ac$normal8(int xyz) {
+        this.normal = xyz;
+    }
+
+    public @Override void ac$normal32(float x, float y, float z) {
         this.normal(x, y, z);
     }
 
@@ -162,5 +171,17 @@ public final class MemoryTesselator extends Tesselator implements ExTesselator {
         mesh.vertexBlocks.add(lastBlock.flip());
 
         return mesh;
+    }
+
+    public @Override double getX() {
+        return this.xo;
+    }
+
+    public @Override double getY() {
+        return this.yo;
+    }
+
+    public @Override double getZ() {
+        return this.zo;
     }
 }

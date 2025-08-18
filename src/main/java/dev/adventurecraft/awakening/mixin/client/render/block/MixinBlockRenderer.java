@@ -33,9 +33,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.Slice;
+import org.spongepowered.asm.mixin.injection.*;
 
 @Mixin(
     value = TileRenderer.class,
@@ -189,11 +187,11 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         return this.tesselator;
     }
 
-    public @Override Tesselator getTesselator() {
+    public @Override Tesselator ac$getTesselator() {
         return this.tesselator;
     }
 
-    public @Override void setTesselator(Tesselator tesselator) {
+    public @Override void ac$setTesselator(Tesselator tesselator) {
         this.tesselator = tesselator;
     }
 
@@ -1503,30 +1501,30 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         double z4 = minZ + z1;
         double z5 = maxZ + z1;
 
-        exTs.ac$splatColor(b0 * 0.7F);
+        exTs.ac$splatColor32(b0 * 0.7F);
         ts.vertexUV(x3, y0, z3, u0, v1);
         ts.vertexUV(x3, y1, z3, u0, v0);
-        exTs.ac$splatColor(b1 * 0.7F);
+        exTs.ac$splatColor32(b1 * 0.7F);
         ts.vertexUV(x5, y1, z5, u1, v0);
         ts.vertexUV(x5, y0, z5, u1, v1);
         ts.vertexUV(x4, y0, z4, u1, v1);
         ts.vertexUV(x4, y1, z4, u1, v0);
-        exTs.ac$splatColor(b0 * 0.7F);
+        exTs.ac$splatColor32(b0 * 0.7F);
         ts.vertexUV(x2, y1, z2, u0, v0);
         ts.vertexUV(x2, y0, z2, u0, v1);
 
         v0 = (texY + 16.0D * maxY) / 256.0D;
         v1 = (texY + 16.0D * maxY + 2.0D - 0.01D) / 256.0D;
-        exTs.ac$splatColor(b1 * 0.5F);
+        exTs.ac$splatColor32(b1 * 0.5F);
         ts.vertexUV(x5, y0, z5, u1, v0);
         ts.vertexUV(x4, y0, z4, u1, v1);
-        exTs.ac$splatColor(b0 * 0.5F);
+        exTs.ac$splatColor32(b0 * 0.5F);
         ts.vertexUV(x2, y0, z2, u0, v1);
         ts.vertexUV(x3, y0, z3, u0, v0);
-        exTs.ac$splatColor(b1);
+        exTs.ac$splatColor32(b1);
         ts.vertexUV(x4, y1, z4, u1, v0);
         ts.vertexUV(x5, y1, z5, u1, v1);
-        exTs.ac$splatColor(b0);
+        exTs.ac$splatColor32(b0);
         ts.vertexUV(x3, y1, z3, u0, v1);
         ts.vertexUV(x2, y1, z2, u0, v0);
 
@@ -1537,30 +1535,30 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
         v0 = (texY + 16.0D * maxY - 1.0D) / 256.0D;
         v1 = (texY + 16.0D * minY - 1.0D - 0.01D) / 256.0D;
-        exTs.ac$splatColor(b0 * 0.7F);
+        exTs.ac$splatColor32(b0 * 0.7F);
         ts.vertexUV(x3, y0, z3, u0, v1);
         ts.vertexUV(x3, y1, z3, u0, v0);
-        exTs.ac$splatColor(b1 * 0.7F);
+        exTs.ac$splatColor32(b1 * 0.7F);
         ts.vertexUV(x5, y1, z5, u1, v0);
         ts.vertexUV(x5, y0, z5, u1, v1);
         ts.vertexUV(x4, y0, z4, u1, v1);
         ts.vertexUV(x4, y1, z4, u1, v0);
-        exTs.ac$splatColor(b0 * 0.7F);
+        exTs.ac$splatColor32(b0 * 0.7F);
         ts.vertexUV(x2, y1, z2, u0, v0);
         ts.vertexUV(x2, y0, z2, u0, v1);
 
         v0 = (texY + 16.0D * maxY) / 256.0D;
         v1 = (texY + 16.0D * maxY - 2.0D - 0.01D) / 256.0D;
-        exTs.ac$splatColor(b1 * 0.5F);
+        exTs.ac$splatColor32(b1 * 0.5F);
         ts.vertexUV(x5, y0, z5, u1, v0);
         ts.vertexUV(x4, y0, z4, u1, v1);
-        exTs.ac$splatColor(b0 * 0.5F);
+        exTs.ac$splatColor32(b0 * 0.5F);
         ts.vertexUV(x2, y0, z2, u0, v1);
         ts.vertexUV(x3, y0, z3, u0, v0);
-        exTs.ac$splatColor(b1);
+        exTs.ac$splatColor32(b1);
         ts.vertexUV(x4, y1, z4, u1, v0);
         ts.vertexUV(x5, y1, z5, u1, v1);
-        exTs.ac$splatColor(b0);
+        exTs.ac$splatColor32(b0);
         ts.vertexUV(x3, y1, z3, u0, v1);
         ts.vertexUV(x2, y1, z2, u0, v0);
     }
@@ -1599,30 +1597,30 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         double z4 = minZ + z1;
         double z5 = maxZ + z1;
 
-        exTs.ac$splatColor(b0 * 0.7F);
+        exTs.ac$splatColor32(b0 * 0.7F);
         ts.vertexUV(x3, y0, z2, u0, v1);
         ts.vertexUV(x3, y1, z2, u0, v0);
-        exTs.ac$splatColor(b1 * 0.7F);
+        exTs.ac$splatColor32(b1 * 0.7F);
         ts.vertexUV(x5, y1, z4, u1, v0);
         ts.vertexUV(x5, y0, z4, u1, v1);
         ts.vertexUV(x4, y0, z5, u1, v1);
         ts.vertexUV(x4, y1, z5, u1, v0);
-        exTs.ac$splatColor(b0 * 0.7F);
+        exTs.ac$splatColor32(b0 * 0.7F);
         ts.vertexUV(x2, y1, z3, u0, v0);
         ts.vertexUV(x2, y0, z3, u0, v1);
 
         v0 = (texY + 16.0D * maxY) / 256.0D;
         v1 = (texY + 16.0D * maxY + 2.0D - 0.01D) / 256.0D;
-        exTs.ac$splatColor(b1 * 0.5F);
+        exTs.ac$splatColor32(b1 * 0.5F);
         ts.vertexUV(x5, y0, z4, u1, v0);
         ts.vertexUV(x4, y0, z5, u1, v1);
-        exTs.ac$splatColor(b0 * 0.5F);
+        exTs.ac$splatColor32(b0 * 0.5F);
         ts.vertexUV(x2, y0, z3, u0, v1);
         ts.vertexUV(x3, y0, z2, u0, v0);
-        exTs.ac$splatColor(b1);
+        exTs.ac$splatColor32(b1);
         ts.vertexUV(x4, y1, z5, u1, v0);
         ts.vertexUV(x5, y1, z4, u1, v1);
-        exTs.ac$splatColor(b0);
+        exTs.ac$splatColor32(b0);
         ts.vertexUV(x3, y1, z2, u0, v1);
         ts.vertexUV(x2, y1, z3, u0, v0);
 
@@ -1633,30 +1631,30 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
         v0 = (texY + 16.0D * maxY - 1.0D) / 256.0D;
         v1 = (texY + 16.0D * minY - 1.0D - 0.01D) / 256.0D;
-        exTs.ac$splatColor(b0 * 0.7F);
+        exTs.ac$splatColor32(b0 * 0.7F);
         ts.vertexUV(x3, y0, z2, u0, v1);
         ts.vertexUV(x3, y1, z2, u0, v0);
-        exTs.ac$splatColor(b1 * 0.7F);
+        exTs.ac$splatColor32(b1 * 0.7F);
         ts.vertexUV(x5, y1, z4, u1, v0);
         ts.vertexUV(x5, y0, z4, u1, v1);
         ts.vertexUV(x4, y0, z5, u1, v1);
         ts.vertexUV(x4, y1, z5, u1, v0);
-        exTs.ac$splatColor(b0 * 0.7F);
+        exTs.ac$splatColor32(b0 * 0.7F);
         ts.vertexUV(x2, y1, z3, u0, v0);
         ts.vertexUV(x2, y0, z3, u0, v1);
 
         v0 = (texY + 16.0D * maxY) / 256.0D;
         v1 = (texY + 16.0D * maxY - 2.0D - 0.01D) / 256.0D;
-        exTs.ac$splatColor(b1 * 0.5F);
+        exTs.ac$splatColor32(b1 * 0.5F);
         ts.vertexUV(x5, y0, z4, u1, v0);
         ts.vertexUV(x4, y0, z5, u1, v1);
-        exTs.ac$splatColor(b0 * 0.5F);
+        exTs.ac$splatColor32(b0 * 0.5F);
         ts.vertexUV(x2, y0, z3, u0, v1);
         ts.vertexUV(x3, y0, z2, u0, v0);
-        exTs.ac$splatColor(b1);
+        exTs.ac$splatColor32(b1);
         ts.vertexUV(x4, y1, z5, u1, v0);
         ts.vertexUV(x5, y1, z4, u1, v1);
-        exTs.ac$splatColor(b0);
+        exTs.ac$splatColor32(b0);
         ts.vertexUV(x3, y1, z2, u0, v1);
         ts.vertexUV(x2, y1, z3, u0, v0);
     }

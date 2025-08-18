@@ -9,7 +9,7 @@ public interface ExBlockRenderer {
 
     void stopRenderingBlocks();
 
-    Tesselator getTesselator();
+    Tesselator ac$getTesselator();
 
-    void setTesselator(Tesselator tesselator);
+    void ac$setTesselator(Tesselator tesselator);
 }

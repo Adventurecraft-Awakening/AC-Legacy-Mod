@@ -86,7 +86,7 @@ public class TextRendererState implements TextMeasurer {
         formatOnly = formatOnly || (Rgba.getAlpha(this.activeColor) == 0);
 
         var exTs = (ExTesselator) assertBegun();
-        exTs.ac$color(this.activeColor);
+        exTs.ac$color8(this.activeColor);
 
         var font = (ExTextRenderer) this.font;
         int[] colorPalette = font.getColorPalette();
@@ -112,7 +112,7 @@ public class TextRendererState implements TextMeasurer {
                         this.activeShadow = Rgba.withRgb(this.activeShadow, colorPalette[colorIndex + 16]);
                     }
                     else {
-                        exTs.ac$color(this.activeColor);
+                        exTs.ac$color8(this.activeColor);
                     }
                 }
                 i++; // skip the format code digit
@@ -131,9 +131,9 @@ public class TextRendererState implements TextMeasurer {
             int column = ch % 16 * 8;
             int row = ch / 16 * 8;
             if (this.hasShadow()) {
-                exTs.ac$color(this.activeShadow);
+                exTs.ac$color8(this.activeShadow);
                 drawChar(exTs, column, row, xOff + x + this.shadowOffsetX, y + this.shadowOffsetY);
-                exTs.ac$color(this.activeColor);
+                exTs.ac$color8(this.activeColor);
             }
             drawChar(exTs, column, row, xOff + x, y);
             xOff += widthLookup[ch];

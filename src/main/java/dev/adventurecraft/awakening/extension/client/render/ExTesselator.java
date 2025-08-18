@@ -1,6 +1,5 @@
 package dev.adventurecraft.awakening.extension.client.render;
 
-import dev.adventurecraft.awakening.util.MathF;
 import org.lwjgl.util.vector.Vector3f;
 
 public interface ExTesselator {
@@ -9,12 +8,16 @@ public interface ExTesselator {
 
     void ac$tex(float u, float v);
 
-    void ac$color(int rgba);
+    void ac$color8(int rgba);
 
-    void ac$normal(float x, float y, float z);
+    void ac$color32(float r, float g, float b, float a);
 
-    default void ac$normal(Vector3f dir) {
-        this.ac$normal(dir.x, dir.y, dir.z);
+    void ac$normal8(int xyz);
+
+    void ac$normal32(float x, float y, float z);
+
+    default void ac$normal32(Vector3f dir) {
+        this.ac$normal32(dir.x, dir.y, dir.z);
     }
 
     default void ac$vertexUV(float x, float y, float z, float u, float v) {
@@ -26,13 +29,20 @@ public interface ExTesselator {
         this.ac$vertexUV(pos.x, pos.y, pos.z, u, v);
     }
 
-    default void ac$color(int r, int g, int b, int a) {
-        this.ac$color(a << 24 | b << 16 | g << 8 | r);
+    default void ac$color8(byte r, byte g, byte b, byte a) {
+        this.ac$color8(((a & 0xff) << 24) | ((b & 0xff) << 16) | ((g & 0xff) << 8) | (r & 0xff));
     }
 
-    default void ac$splatColor(float luma) {
-        int l = MathF.clamp((int) (luma * 255.0F), 0, 255);
-        this.ac$color(l, l, l, 255);
+    default void ac$color32(float r, float g, float b) {
+        this.ac$color32(r, g, b, 1.0f);
+    }
+
+    default void ac$splatColor8(byte luma) {
+        this.ac$color8(luma, luma, luma, (byte) 0xff);
+    }
+
+    default void ac$splatColor32(float luma) {
+        this.ac$color32(luma, luma, luma, 1.0f);
     }
 
     default double getX() {

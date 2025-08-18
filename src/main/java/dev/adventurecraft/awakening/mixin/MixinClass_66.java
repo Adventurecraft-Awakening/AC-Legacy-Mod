@@ -256,7 +256,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
                         var tesselator = MemoryTesselator.create();
                         tesselator.begin();
 
-                        ((ExBlockRenderer) renderer).setTesselator(tesselator);
+                        ((ExBlockRenderer) renderer).ac$setTesselator(tesselator);
                         renderers[meshIndex] = renderer;
                     }
 
@@ -278,7 +278,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
                     continue;
                 }
 
-                var tesselator = (MemoryTesselator) ((ExBlockRenderer) renderer).getTesselator();
+                var tesselator = (MemoryTesselator) ((ExBlockRenderer) renderer).ac$getTesselator();
                 tesselator.end();
                 if (tesselator.isEmpty()) {
                     continue;

@@ -69,14 +69,14 @@ public abstract class MixinArrowRenderer extends EntityRenderer {
         tesselator.begin();
 
         // Render feather.
-        ts.ac$normal(-1.0f, 0.0f, 0.0f);
+        ts.ac$normal32(-1.0f, 0.0f, 0.0f);
         ts.ac$vertexUV(-7.0f, -2.0f, -2.0f, f6, f8);
         ts.ac$vertexUV(-7.0f, -2.0f, +2.0f, f7, f8);
         ts.ac$vertexUV(-7.0f, +2.0f, +2.0f, f7, f9);
         ts.ac$vertexUV(-7.0f, +2.0f, -2.0f, f6, f9);
 
         // Render opposite feather.
-        ts.ac$normal(1.0f, 0.0f, 0.0f);
+        ts.ac$normal32(1.0f, 0.0f, 0.0f);
         ts.ac$vertexUV(-7.0f, +2.0f, -2.0f, f6, f8);
         ts.ac$vertexUV(-7.0f, +2.0f, +2.0f, f7, f8);
         ts.ac$vertexUV(-7.0f, -2.0f, +2.0f, f7, f9);
@@ -86,7 +86,7 @@ public abstract class MixinArrowRenderer extends EntityRenderer {
         var a = BODY_VECTORS;
         for (int i = 0; i < 4; ++i) {
             int j = i * 15;
-            ts.ac$normal(a[j++], a[j++], a[j++]);
+            ts.ac$normal32(a[j++], a[j++], a[j++]);
 
             ts.ac$vertexUV(a[j++], a[j++], a[j++], f2, f4);
             ts.ac$vertexUV(a[j++], a[j++], a[j++], f3, f4);

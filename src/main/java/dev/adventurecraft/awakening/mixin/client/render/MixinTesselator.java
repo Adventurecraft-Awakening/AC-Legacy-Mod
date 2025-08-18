@@ -47,6 +47,12 @@ public abstract class MixinTesselator implements ExTesselator {
     @Shadow
     public abstract void end();
 
+    @Shadow
+    public abstract void color(float r, float g, float b, float a);
+
+    @Shadow
+    public abstract void color(float r, float g, float b);
+
     public @Override void ac$vertex(float x, float y, float z) {
         this.addVertex(x, y, z, (float) this.u, (float) this.v);
     }
@@ -62,14 +68,17 @@ public abstract class MixinTesselator implements ExTesselator {
         this.addVertex(x, y, z, u, v);
     }
 
-    public @Override void ac$color(int rgba) {
+    public @Override void ac$color8(int rgba) {
         this.hasColor = true;
-        if (ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN) {
-            this.packedColor = rgba;
-        }
-        else {
-            this.packedColor = Integer.reverseBytes(rgba);
-        }
+        this.packedColor = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN ? rgba : Integer.reverseBytes(rgba);
+    }
+
+    public @Override void ac$color32(float r, float g, float b, float a) {
+        this.color(r, g, b, a);
+    }
+
+    public @Override void ac$color32(float r, float g, float b) {
+        this.color(r, g, b);
     }
 
     public @Overwrite void color(int r, int g, int b, int a) {
@@ -80,11 +89,7 @@ public abstract class MixinTesselator implements ExTesselator {
         g = MathF.clamp(g, 0, 255);
         b = MathF.clamp(b, 0, 255);
         a = MathF.clamp(a, 0, 255);
-        this.ac$color(r, g, b, a);
-    }
-
-    public @Overwrite void color(int r, int g, int b) {
-        this.color(r, g, b, 255);
+        this.ac$color8((byte) (r & 0xff), (byte) (g & 0xff), (byte) (b & 0xff), (byte) (a & 0xff));
     }
 
     public @Overwrite void vertex(double x, double y, double z) {
@@ -98,11 +103,15 @@ public abstract class MixinTesselator implements ExTesselator {
     }
 
     public @Overwrite void normal(float x, float y, float z) {
-        this.hasNormal = true;
-        this.normal = GLUtil.packByteNormal(x, y, z);
+        this.ac$normal8(GLUtil.packByteNormal(x, y, z));
     }
 
-    public @Override void ac$normal(float x, float y, float z) {
+    public @Override void ac$normal8(int xyz) {
+        this.hasNormal = true;
+        this.normal = xyz;
+    }
+
+    public @Override void ac$normal32(float x, float y, float z) {
         this.normal(x, y, z);
     }
 
@@ -151,15 +160,15 @@ public abstract class MixinTesselator implements ExTesselator {
         }
     }
 
-    public final @Override double getX() {
+    public @Override double getX() {
         return this.xo;
     }
 
-    public final @Override double getY() {
+    public @Override double getY() {
         return this.yo;
     }
 
-    public final @Override double getZ() {
+    public @Override double getZ() {
         return this.zo;
     }
 }
