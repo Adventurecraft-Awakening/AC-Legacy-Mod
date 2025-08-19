@@ -98,7 +98,6 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
 
         if (!this.ranOnCreated) {
             this.runCreatedScript();
-            this.ranOnCreated = true;
         }
 
         this.prevWidth = this.bbWidth;
@@ -165,6 +164,7 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
 
     private void runCreatedScript() {
         this.runScript(this.getOnCreated());
+        this.ranOnCreated = true;
     }
 
     private void runUpdateScript() {
