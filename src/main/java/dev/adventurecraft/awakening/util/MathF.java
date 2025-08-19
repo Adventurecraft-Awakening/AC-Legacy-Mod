@@ -4,6 +4,7 @@ import com.google.common.primitives.UnsignedLong;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Random;
 
 public final class MathF {
 
@@ -157,5 +158,9 @@ public final class MathF {
 
     public static float clampAngle(float a, float min, float max) {
         return clamp(normalizeAngle(a), min, max);
+    }
+
+    public static float nextSignedFloat(Random random) {
+        return (random.nextInt() >> 7) * 5.9604645E-8F;
     }
 }

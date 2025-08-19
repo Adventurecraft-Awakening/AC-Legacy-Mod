@@ -31,9 +31,8 @@ public abstract class MixinMonsterEntity extends MixinPathfinderMob implements E
                 }
             }
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     @Override

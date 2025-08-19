@@ -234,6 +234,16 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
 
     @Overwrite
     public boolean hurt(Entity entity, int damage) {
+        return this.hurtAtTick(entity, damage, this.hurtTime > 0);
+    }
+
+    @Override
+    public boolean attackEntityFromMulti(Entity entity, int damage) {
+        return this.hurtAtTick(entity, damage, this.hurtTick != this.level.getTime());
+    }
+
+    @Unique
+    private boolean hurtAtTick(Entity entity, int damage, boolean canHurt) {
         if (this.level.isClientSide) {
             return false;
         }
@@ -246,7 +256,7 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
         this.extraFov = 180.0F;
         this.walkAnimSpeed = 1.5F;
         boolean attacked = true;
-        if ((float) this.invulnerableTime > (float) this.invulnerableDuration / 2.0F && this.hurtTime > 0) {
+        if (this.invulnerableTime > this.invulnerableDuration / 2 && canHurt) {
             if (damage <= this.lastHurt) {
                 return false;
             }
@@ -263,96 +273,36 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
             this.hurtTick = this.level.getTime();
         }
 
+        var self = (Entity) (Object) this;
+
         this.hurtDir = 0.0F;
         if (attacked) {
-            this.level.broadcastEntityEvent((Entity) (Object) this, (byte) 2);
+            this.level.broadcastEntityEvent(self, (byte) 2);
             this.markHurt();
             if (entity != null) {
-                double dX = entity.x - this.x;
-                double dZ = entity.z - this.z;
+                float dX = (float) (entity.x - this.x);
+                float dZ = (float) (entity.z - this.z);
                 while (dX * dX + dZ * dZ < 1.0E-4D) {
                     dX = (this.random.nextFloat() - this.random.nextFloat()) * 0.01f;
                     dZ = (this.random.nextFloat() - this.random.nextFloat()) * 0.01f;
                 }
 
-                this.hurtDir = (float) Math.toDegrees(Math.atan2(dZ, dX)) - this.yRot;
+                this.hurtDir = MathF.toDegrees((float) Math.atan2(dZ, dX)) - this.yRot;
                 this.knockback(entity, damage, dX, dZ);
             } else {
-                this.hurtDir = (float) ((int) (this.random.nextFloat() * 2.0F) * 180);
+                this.hurtDir = this.random.nextFloat() * 360f;
             }
         }
 
         if (this.health <= 0) {
             if (attacked) {
-                this.level.playSound((Entity) (Object) this, this.getDeathSound(), this.getSoundVolume(), (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F);
+                float pitch = (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F;
+                this.level.playSound(self, this.getDeathSound(), this.getSoundVolume(), pitch);
             }
-
             this.die(entity);
         } else if (attacked) {
-            this.level.playSound((Entity) (Object) this, this.getHurtSound(), this.getSoundVolume(), (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F);
-        }
-
-        return true;
-    }
-
-    @Override
-    public boolean attackEntityFromMulti(Entity entity, int damage) {
-        if (this.level.isClientSide) {
-            return false;
-        }
-
-        this.noActionTime = 0;
-        if (this.health <= 0) {
-            return false;
-        }
-
-        this.extraFov = 180.0F;
-        this.walkAnimSpeed = 1.5F;
-        boolean attacked = true;
-        if ((float) this.invulnerableTime > (float) this.invulnerableDuration / 2.0F && this.hurtTick != this.level.getTime()) {
-            if (damage <= this.lastHurt) {
-                return false;
-            }
-
-            this.actuallyHurt(damage - this.lastHurt);
-            this.lastHurt = damage;
-            attacked = false;
-        } else {
-            this.lastHurt = damage;
-            this.lastHealth = this.health;
-            this.invulnerableTime = this.invulnerableDuration;
-            this.actuallyHurt(damage);
-            this.hurtTime = this.hurtDuration = 10;
-            this.hurtTick = this.level.getTime();
-        }
-
-        this.hurtDir = 0.0F;
-        if (attacked) {
-            this.level.broadcastEntityEvent((Entity) (Object) this, (byte) 2);
-            this.markHurt();
-            if (entity != null) {
-                double dX = entity.x - this.x;
-                double dZ = entity.z - this.z;
-                while (dX * dX + dZ * dZ < 1.0E-4D) {
-                    dX = (Math.random() - Math.random()) * 0.01D;
-                    dZ = (Math.random() - Math.random()) * 0.01D;
-                }
-
-                this.hurtDir = (float) Math.toDegrees(Math.atan2(dZ, dX)) - this.yRot;
-                this.knockback(entity, damage, dX, dZ);
-            } else {
-                this.hurtDir = (float) ((int) (Math.random() * 2.0D) * 180);
-            }
-        }
-
-        if (this.health <= 0) {
-            if (attacked) {
-                this.level.playSound((Entity) (Object) this, this.getDeathSound(), this.getSoundVolume(), (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F);
-            }
-
-            this.die(entity);
-        } else if (attacked) {
-            this.level.playSound((Entity) (Object) this, this.getHurtSound(), this.getSoundVolume(), (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F);
+            float pitch = (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F;
+            this.level.playSound(self, this.getHurtSound(), this.getSoundVolume(), pitch);
         }
 
         return true;
@@ -370,18 +320,20 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
 
         float amount = Math.max(var1 - 0.8F, 0.0F) / 0.08F;
         int ceilAmount = (int) Math.ceil(Math.pow(amount, 1.5D));
-        if (ceilAmount > 0) {
-            this.hurt(null, ceilAmount);
+        if (ceilAmount <= 0) {
+            return;
+        }
+        this.hurt(null, ceilAmount);
 
-            int id = this.level.getTile(
-                Mth.floor(this.x),
-                Mth.floor(this.y - 0.2 - this.heightOffset),
-                Mth.floor(this.z));
+        int id = this.level.getTile(
+            Mth.floor(this.x),
+            Mth.floor(this.y - 0.2 - this.heightOffset),
+            Mth.floor(this.z));
 
-            if (id > 0) {
-                SoundType block = Tile.tiles[id].soundType;
-                this.level.playSound((Entity) (Object) this, block.getStepSound(), block.getVolume() * 0.5F, block.getPitch() * (12.0F / 16.0F));
-            }
+        if (id > 0) {
+            SoundType block = Tile.tiles[id].soundType;
+            float pitch = block.getPitch() * (12.0F / 16.0F);
+            this.level.playSound((Entity) (Object) this, block.getStepSound(), block.getVolume() * 0.5F, pitch);
         }
     }
 
@@ -403,11 +355,9 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
             if (Math.abs(this.xd) < 0.01D) {
                 this.xd = 0.0D;
             }
-
             if (Math.abs(this.yd) < 0.01D) {
                 this.yd = 0.0D;
             }
-
             if (Math.abs(this.zd) < 0.01D) {
                 this.zd = 0.0D;
             }
@@ -464,21 +414,8 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
 
             if (this.onLadder()) {
                 double deceleration = 0.15F;
-                if (this.xd < -deceleration) {
-                    this.xd = -deceleration;
-                }
-
-                if (this.xd > deceleration) {
-                    this.xd = deceleration;
-                }
-
-                if (this.zd < -deceleration) {
-                    this.zd = -deceleration;
-                }
-
-                if (this.zd > deceleration) {
-                    this.zd = deceleration;
-                }
+                this.xd = MathF.clamp(this.xd, -deceleration, deceleration);
+                this.zd = MathF.clamp(this.zd, -deceleration, deceleration);
 
                 this.fallDistance = 0.0F;
                 this.yd = Math.max(-0.15D, this.yd);
@@ -651,8 +588,10 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
         this.xxa = 0.0F;
         this.zza = 0.0F;
         double searchDist = 8.0F;
+        var self = (Entity) (Object) this;
+
         if (this.random.nextFloat() < 0.02F) {
-            Player player = this.level.getNearestPlayer((Entity) (Object) this, searchDist);
+            Player player = this.level.getNearestPlayer(self, searchDist);
             if (player != null && this.canSee(player)) {
                 this.lookAt = player;
                 this.lookTime = 10 + this.random.nextInt(20);
@@ -661,7 +600,7 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
 
         if (this.lookAt != null) {
             this.setLookAt(this.lookAt, 10.0F, (float) this.getMaxHeadXRot());
-            if (this.lookTime-- <= 0 || this.lookAt.removed || this.lookAt.distanceToSqr((Entity) (Object) this) > (searchDist * searchDist)) {
+            if (this.lookTime-- <= 0 || this.lookAt.removed || this.lookAt.distanceToSqr(self) > (searchDist * searchDist)) {
                 this.lookAt = null;
             }
         } else if (this.canLookRandomly) {

@@ -317,19 +317,15 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
     private void spawnItemParticles(ItemEntity item) {
         double size = 10.0D;
         for (int i = 0; i < 20; ++i) {
-            double x = this.rand.nextGaussian() * 0.02D;
-            double y = this.rand.nextGaussian() * 0.02D;
-            double z = this.rand.nextGaussian() * 0.02D;
+            double dx = this.rand.nextGaussian() * 0.02D;
+            double dy = this.rand.nextGaussian() * 0.02D;
+            double dz = this.rand.nextGaussian() * 0.02D;
 
-            this.level.addParticle(
-                "explode",
-                item.x + (double) (this.rand.nextFloat() * 2.0F) - 1.0D - x * size,
-                item.y + (double) this.rand.nextFloat() - y * size,
-                item.z + (double) (this.rand.nextFloat() * 2.0F) - 1.0D - z * size,
-                x,
-                y,
-                z
-            );
+            double x = item.x + this.rand.nextSignedFloat() - dx * size;
+            double y = item.y + this.rand.nextFloat() - dy * size;
+            double z = item.z + this.rand.nextSignedFloat() - dz * size;
+            
+            this.level.addParticle("explode", x, y, z, dx, dy, dz);
         }
     }
 

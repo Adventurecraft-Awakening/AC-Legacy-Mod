@@ -2,7 +2,7 @@ package dev.adventurecraft.awakening.entity;
 
 import dev.adventurecraft.awakening.extension.entity.ExFlyingEntity;
 import dev.adventurecraft.awakening.extension.entity.ExMob;
-import net.minecraft.util.Mth;
+import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.FlyingMob;
 import net.minecraft.world.entity.monster.Enemy;
@@ -47,11 +47,11 @@ public class AC_EntityBat extends FlyingMob implements Enemy {
             }
         }
 
-        double var1 = this.waypointX - this.x;
-        double var3 = this.waypointY - this.y;
-        double var5 = this.waypointZ - this.z;
-        double var7 = (double) Mth.sqrt(var1 * var1 + var3 * var3 + var5 * var5);
-        if (var7 < 1.0D || var7 > 60.0D || this.random.nextInt(20) == 0) {
+        double dX = this.waypointX - this.x;
+        double dY = this.waypointY - this.y;
+        double dZ = this.waypointZ - this.z;
+        double len = Math.sqrt(dX * dX + dY * dY + dZ * dZ);
+        if (len < 1.0D || len > 60.0D || this.random.nextInt(20) == 0) {
             if (this.targetedEntity != null && this.random.nextInt(3) != 0) {
                 this.movingToTarget = true;
                 this.waypointX = this.targetedEntity.x;
@@ -59,19 +59,19 @@ public class AC_EntityBat extends FlyingMob implements Enemy {
                 this.waypointZ = this.targetedEntity.z;
             } else {
                 this.movingToTarget = false;
-                this.waypointX = this.x + (double) ((this.random.nextFloat() * 2.0F - 1.0F) * 4.0F);
-                this.waypointY = this.y + (double) ((this.random.nextFloat() * 2.0F - 1.0F) * 1.0F);
-                this.waypointZ = this.z + (double) ((this.random.nextFloat() * 2.0F - 1.0F) * 4.0F);
+                this.waypointX = this.x + MathF.nextSignedFloat(this.random) * 4.0F;
+                this.waypointY = this.y + MathF.nextSignedFloat(this.random);
+                this.waypointZ = this.z + MathF.nextSignedFloat(this.random) * 4.0F;
             }
         }
 
         if (this.courseChangeCooldown-- <= 0) {
             this.courseChangeCooldown += this.random.nextInt(5) + 2;
-            if (this.isCourseTraversable(this.waypointX, this.waypointY, this.waypointZ, var7)) {
-                this.xd += var1 / var7 * 0.08D;
-                this.yd += var3 / var7 * 0.08D;
-                this.zd += var5 / var7 * 0.08D;
-                this.yRot = -((float) Math.atan2(this.xd, this.zd)) * 180.0F / 3.141593F;
+            if (this.isCourseTraversable(this.waypointX, this.waypointY, this.waypointZ, len)) {
+                this.xd += dX / len * 0.08D;
+                this.yd += dY / len * 0.08D;
+                this.zd += dZ / len * 0.08D;
+                this.yRot = -MathF.toDegrees((float) Math.atan2(this.xd, this.zd));
             } else {
                 this.waypointX = this.x;
                 this.waypointY = this.y;
@@ -82,7 +82,7 @@ public class AC_EntityBat extends FlyingMob implements Enemy {
         if (this.targetedEntity != null) {
             double var9 = this.targetedEntity.x - this.x;
             double var11 = this.targetedEntity.z - this.z;
-            this.yHeadRot = -((float) Math.atan2(var9, var11)) * 180.0F / 3.141593F;
+            this.yHeadRot = -MathF.toDegrees((float) Math.atan2(var9, var11));
             if (this.movingToTarget && this.targetedEntity.distanceToSqr(this) < 2.25D) {
                 this.xd = 0.0D;
                 this.yd = 0.0D;
@@ -101,15 +101,15 @@ public class AC_EntityBat extends FlyingMob implements Enemy {
         }
     }
 
-    private boolean isCourseTraversable(double var1, double var3, double var5, double var7) {
-        double var9 = (this.waypointX - this.x) / var7;
-        double var11 = (this.waypointY - this.y) / var7;
-        double var13 = (this.waypointZ - this.z) / var7;
-        AABB var15 = this.bb.copy();
+    private boolean isCourseTraversable(double wX, double wY, double wZ, double len) {
+        double dX = (wX - this.x) / len;
+        double dY = (wY - this.y) / len;
+        double dZ = (wZ - this.z) / len;
+        AABB aabb = this.bb.copy();
 
-        for (int var16 = 1; (double) var16 < var7; ++var16) {
-            var15.grow(var9, var11, var13);
-            if (this.level.getCubes(this, var15).size() > 0) {
+        for (int i = 1; (double) i < len; ++i) {
+            aabb.grow(dX, dY, dZ);
+            if (!this.level.getCubes(this, aabb).isEmpty()) {
                 return false;
             }
         }
