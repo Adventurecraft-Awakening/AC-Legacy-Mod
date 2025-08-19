@@ -377,7 +377,7 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
     public boolean isTriggerSet(int id) {
         Coord min = this.minVec[id];
         Coord max = this.maxVec[id];
-        return min.equals(0) && max.equals(0);
+        return !min.equals(0) || !max.equals(0);
     }
 
     public void setTrigger(int id) {
