@@ -196,7 +196,7 @@ public class AC_GuiMapElement extends ScriptUIContainer {
     }
 
     @Override
-    public void render(Font textRenderer, Textures texManager, float deltaTime) {
+    public void render(Font font, Textures textures, float deltaTime) {
         if (this.fadeIn || this.fadeOut) {
             long var4 = System.nanoTime();
             long var6 = var4 - this.fadeTimePrev;
@@ -250,7 +250,7 @@ public class AC_GuiMapElement extends ScriptUIContainer {
             }
         }
 
-        super.render(textRenderer, texManager, deltaTime);
+        super.render(font, textures, deltaTime);
     }
 
     public void setAsDownloaded() {

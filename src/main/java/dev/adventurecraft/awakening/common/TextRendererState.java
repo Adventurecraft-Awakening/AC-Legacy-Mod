@@ -13,7 +13,7 @@ import org.lwjgl.opengl.GL11;
 
 import java.util.Objects;
 
-public class TextRendererState implements TextMeasurer {
+public final class TextRendererState implements TextMeasurer {
 
     private final Font font;
     private @Nullable Tesselator tesselator;

@@ -31,7 +31,7 @@ public class ScriptUIContainer extends UIElement {
     }
 
     @Override
-    public void render(Font textRenderer, Textures texManager, float deltaTime) {
+    public void render(Font font, Textures textures, float deltaTime) {
         float x = this.getXAtTime(deltaTime);
         float y = this.getYAtTime(deltaTime);
         if (x != 0.0F || y != 0.0F) {
@@ -40,7 +40,7 @@ public class ScriptUIContainer extends UIElement {
         }
 
         for (UIElement element : this.uiElements) {
-            element.render(textRenderer, texManager, deltaTime);
+            element.render(font, textures, deltaTime);
         }
 
         if (x != 0.0F || y != 0.0F) {
@@ -62,7 +62,7 @@ public class ScriptUIContainer extends UIElement {
             element.parent.remove(element);
         }
 
-        this.uiElements.add(0, element);
+        this.uiElements.addFirst(element);
         element.parent = this;
     }
 

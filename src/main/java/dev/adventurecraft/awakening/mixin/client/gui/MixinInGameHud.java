@@ -296,6 +296,8 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
             GL11.glEnable(GL11.GL_ALPHA_TEST);
             GL11.glEnable(GL11.GL_DEPTH_TEST);
         }
+        
+        GL11.glColor4f(1f, 1f, 1f, 1f);
 
         int x = 2;
         final int color0 = 0xffffff;
