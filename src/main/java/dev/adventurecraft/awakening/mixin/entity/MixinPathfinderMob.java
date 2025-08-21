@@ -5,12 +5,7 @@ import dev.adventurecraft.awakening.extension.entity.ExPathfinderMob;
 import dev.adventurecraft.awakening.extension.entity.ai.pathing.ExEntityPath;
 import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
 import dev.adventurecraft.awakening.util.MathF;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
-
-import java.util.Collection;
-
+import dev.adventurecraft.awakening.util.TagUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.util.Mth;
@@ -18,8 +13,13 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.Collection;
 
 @Mixin(PathfinderMob.class)
 public abstract class MixinPathfinderMob extends MixinMob implements ExPathfinderMob, IEntityPather {
@@ -172,12 +172,13 @@ public abstract class MixinPathfinderMob extends MixinMob implements ExPathfinde
         tag.putBoolean("canPathRandomly", this.canPathRandomly);
         tag.putBoolean("canForgetTargetRandomly", this.canForgetTargetRandomly);
 
-        if (!this.customData.isEmpty()) {
-            var customCompoundTag = new CompoundTag();
-            for (String key : this.customData.keySet()) {
-                customCompoundTag.putString(key, this.customData.get(key));
+        var exTag = (ExCompoundTag) tag;
+
+        var customTag = exTag.findCompound("custom");
+        if (customTag.isPresent()) {
+            for (Tag tags : (Collection<Tag>) customTag.get().getTags()) {
+                this.customData.put(tags.getType(), TagUtil.tagToObject(tags));
             }
-            tag.putCompoundTag("custom", customCompoundTag);
         }
     }
 
@@ -189,11 +190,15 @@ public abstract class MixinPathfinderMob extends MixinMob implements ExPathfinde
         exTag.findBool("canPathRandomly").ifPresent(this::setCanPathRandomly);
         exTag.findBool("canForgetTargetRandomly").ifPresent(this::setCanForgetTargetRandomly);
 
-        var customTag = exTag.findCompound("custom");
-        if (customTag.isPresent()) {
-            for (Tag tags : (Collection<Tag>) customTag.get().getTags()) {
-                this.customData.put(tags.getType(), tags.toString());
-            }
+        if (!this.customData.isEmpty()) {
+            var customCompoundTag = new CompoundTag();
+            this.customData.forEach((key, object) -> {
+                Tag tagFromPrimitive = TagUtil.wrapPrimitive(object);
+                if (tagFromPrimitive != null) {
+                    customCompoundTag.putTag(key, TagUtil.wrapPrimitive(object));
+                }
+            });
+            tag.putCompoundTag("custom", customCompoundTag);
         }
     }
 

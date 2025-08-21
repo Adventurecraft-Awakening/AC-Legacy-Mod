@@ -63,8 +63,29 @@ public final class TagUtil {
             case Long l -> new LongTag(l);
             case Float f -> new FloatTag(f);
             case Double d -> new DoubleTag(d);
+            case String st -> new StringTag(st);
             default -> {
                 throwInvalidType(primitive);
+                yield null;
+            }
+        };
+    }
+
+    public static Object tagToObject(Tag tag) {
+        return switch (tag) {
+            //case EndTag endTag -> null;
+            case ByteTag byteTag -> byteTag.data;
+            case ShortTag shortTag -> shortTag.data;
+            case IntTag intTag -> intTag.data;
+            case LongTag longTag -> longTag.data;
+            case FloatTag floatTag -> floatTag.data;
+            case DoubleTag doubleTag -> doubleTag.data;
+            //case ByteArrayTag byteArrayTag -> null;
+            case StringTag stringTag -> stringTag.contents;
+            //case ListTag listTag -> null;
+            //case CompoundTag compoundTag -> null;
+            default -> {
+                throwInvalidType(tag);
                 yield null;
             }
         };
