@@ -1,17 +1,25 @@
 package dev.adventurecraft.awakening.mixin.entity;
 
 import com.llamalad7.mixinextras.sugar.Local;
+import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.extension.nbt.ExListTag;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
-import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.util.RandomUtil;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.objectweb.asm.Opcodes;
-import org.spongepowered.asm.mixin.*;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -19,12 +27,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Map;
 import java.util.Random;
-
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 
 @Mixin(Entity.class)
 public abstract class MixinEntity implements ExEntity {
@@ -74,7 +76,7 @@ public abstract class MixinEntity implements ExEntity {
     private int cachedBrightnessKey = -1;
     private float cachedBrightness;
 
-    protected final Map<String, String> customData = new Object2ObjectOpenHashMap<>();
+    protected final Map<String, Object> customData = new Object2ObjectOpenHashMap<>();
 
     @Shadow
     protected abstract void causeFallDamage(float f);
@@ -418,26 +420,25 @@ public abstract class MixinEntity implements ExEntity {
     }
 
     @Override
-    public void setCustomTagString(String key, String value) {
+    public void setTag(String key, Object value) {
         this.customData.put(key, value);
     }
 
     @Override
-    public boolean hasCustomTagString(String key) {
+    public boolean hasTag(String key) {
         return this.customData.containsKey(key);
     }
 
     @Override
-    public String getOrCreateCustomTagString(String key, String defaultValue) {
-        if (this.customData.containsKey(key)) {
-            return this.customData.get(key);
+    public Object getOrSetTag(String key, Object defaultValue) {
+        if (!this.customData.containsKey(key)) {
+            this.customData.put(key, defaultValue);
         }
-        this.customData.put(key, defaultValue);
-        return defaultValue;
+        return this.customData.get(key);
     }
 
     @Override
-    public String getCustomTagString(String key) {
-        return customData.get(key);
+    public Object getTag(String key) {
+        return this.customData.getOrDefault(key, null);
     }
 }
