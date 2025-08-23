@@ -26,8 +26,6 @@ public abstract sealed class GLResource permits GLBuffer {
 
     public abstract long sizeInBytes();
 
-    protected abstract void delete();
-
     protected void checkHandle() {
         if (this.handle == INVALID_HANDLE) {
             throw new IllegalStateException("Invalid handle.");

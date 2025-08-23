@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.mixin.client.gui;
 
 import dev.adventurecraft.awakening.ACMod;
+import dev.adventurecraft.awakening.client.gl.GLDevice;
 import dev.adventurecraft.awakening.client.gui.AC_ChatScreen;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
@@ -25,7 +26,6 @@ import net.minecraft.client.ScreenSizeCalculator;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiComponent;
-import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.world.ItemInstance;
@@ -296,7 +296,7 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
             GL11.glEnable(GL11.GL_ALPHA_TEST);
             GL11.glEnable(GL11.GL_DEPTH_TEST);
         }
-        
+
         GL11.glColor4f(1f, 1f, 1f, 1f);
 
         int x = 2;
@@ -334,15 +334,23 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
             long freeMem = Runtime.getRuntime().freeMemory();
             long usedMem = totMem - freeMem;
 
+            int y1 = 2;
             String usedMsg = "Used: %d%% (%dMB) of %dMB".formatted(
                 usedMem * 100L / maxMem,
                 usedMem / 1024L / 1024L,
                 maxMem / 1024L / 1024L
             );
-            textState.drawText(usedMsg, screenWidth - font.width(usedMsg) - 2, 2);
+            textState.drawText(usedMsg, screenWidth - font.width(usedMsg) - 2, y1);
 
             String allocMsg = "Allocated: %d%% (%dMB)".formatted(totMem * 100L / maxMem, totMem / 1024L / 1024L);
-            textState.drawText(allocMsg, screenWidth - font.width(allocMsg) - 2, 12);
+            textState.drawText(allocMsg, screenWidth - font.width(allocMsg) - 2, y1 += 10);
+            y1 += 10;
+
+            GLDevice.DeviceInfo glDeviceInfo = ((ExMinecraft) mc).getGlDevice().getDeviceInfo();
+            long gpuBufMem = glDeviceInfo.bufferAllocatedBytes();
+            long gpuBufCount = glDeviceInfo.bufferCount();
+            String gpuBufMsg = "GL Buffers: %d | %dMB".formatted(gpuBufCount, gpuBufMem / 1024L / 1024L);
+            textState.drawText(gpuBufMsg, screenWidth - font.width(gpuBufMsg) - 2, y1 += 10);
 
             textState.drawText("x: " + player.x, x, y += 8);
             textState.drawText("y: " + player.y, x, y += 8);

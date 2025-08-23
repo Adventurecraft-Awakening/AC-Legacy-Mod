@@ -1,27 +1,38 @@
 package dev.adventurecraft.awakening.client.gl;
 
-import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.*;
 
 import java.nio.ByteBuffer;
 
 public final class GLDevice {
 
+    private final DeviceInfo info = new DeviceInfo();
+
     private GLBuffer shortElementCache;
     private GLBuffer intElementCache;
 
-    public GLDevice(ContextCapabilities caps)  {
-        if(!caps.OpenGL31) {
+    public GLDevice(ContextCapabilities caps) {
+        if (!caps.OpenGL31) {
             throw new UnsupportedOperationException("Unsupported OpenGL version.");
         }
     }
 
-    public GLBuffer newBuffer(long sizeInBytes) {
-        return new GLBuffer(sizeInBytes);
+    public DeviceInfo getDeviceInfo() {
+        return this.info;
     }
 
-    public void delete(GLResource resource) {
-        resource.delete();
+    public GLBuffer newBuffer(long sizeInBytes) {
+        var buffer = new GLBuffer(sizeInBytes);
+        this.info.bufferAllocatedBytes += sizeInBytes;
+        this.info.bufferCount += 1;
+        return buffer;
+    }
+
+    public void delete(GLBuffer buffer) {
+        int handle = buffer.takeHandle();
+        GL15.glDeleteBuffers(handle);
+        this.info.bufferAllocatedBytes -= buffer.sizeInBytes();
+        this.info.bufferCount -= 1;
     }
 
     public void bind(GLBufferTarget target, GLBuffer buffer) {
@@ -131,5 +142,18 @@ public final class GLDevice {
     private static long byteSizeForQuadElements(GLElementType type, long quadCount) {
         int bytesPerQuad = type.size * 6;
         return quadCount * (long) bytesPerQuad;
+    }
+
+    public static class DeviceInfo {
+        long bufferAllocatedBytes;
+        long bufferCount;
+
+        public long bufferAllocatedBytes() {
+            return this.bufferAllocatedBytes;
+        }
+
+        public long bufferCount() {
+            return this.bufferCount;
+        }
     }
 }

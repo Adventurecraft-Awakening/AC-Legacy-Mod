@@ -18,8 +18,4 @@ public final class GLBuffer extends GLResource {
     public @Override long sizeInBytes() {
         return this.sizeInBytes;
     }
-
-    protected @Override void delete() {
-        GL15.glDeleteBuffers(this.takeHandle());
-    }
 }
