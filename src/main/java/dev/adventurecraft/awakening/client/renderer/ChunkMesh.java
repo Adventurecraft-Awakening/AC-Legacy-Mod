@@ -51,6 +51,7 @@ public final class ChunkMesh {
 
     public void delete(GLDevice device) {
         device.delete(this.vertexBuffer);
+        device.delete(this.indexBuffer);
     }
 
     public static ChunkMesh fromMemory(GLDevice device, MemoryMesh mesh, int textureId) {
