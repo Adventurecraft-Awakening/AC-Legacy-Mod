@@ -26,6 +26,7 @@ public class AC_GuiMusicSheet extends Screen {
         this.notesPlayed = new IntArrayList();
         this.notesPlayedString = "";
         this.songPlayed = null;
+        this.passEvents = true;
     }
 
     public static final Note[] keyboardNotes = {
