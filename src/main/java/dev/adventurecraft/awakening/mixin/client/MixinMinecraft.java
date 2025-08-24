@@ -735,7 +735,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
                             }
                         }
                         else if (eventKey == Keyboard.KEY_F7 ||
-                            (eventKey == this.options.keyInventory.key && isShiftPressed)) {
+                            (AC_DebugMode.active && eventKey == this.options.keyInventory.key && isShiftPressed)) {
                             ((ExAbstractClientPlayerEntity) this.player).displayGUIPalette();
                         }
                         else if (eventKey == this.options.keyInventory.key) {
