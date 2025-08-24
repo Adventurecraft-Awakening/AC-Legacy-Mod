@@ -187,7 +187,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
     @Unique private long previousNanoTime;
     @Unique private double deltaTime;
-    @Unique private final int[] lastClickTick = new int[3];
+    @Unique private final int[] lastClickTicks = new int[3];
     @Unique public AC_CutsceneCamera cutsceneCamera;
     @Unique public AC_CutsceneCamera activeCutsceneCamera;
     @Unique public boolean cameraActive;
@@ -630,7 +630,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
         if (this.screen != null && !((ExScreen) this.screen).isDisabledInputGrabbing()) {
             // TODO: reset all values?
-            this.lastClickTick[0] = this.ticks + 10000;
+            this.lastClickTicks[0] = this.ticks + 10000;
 
             this.screen.updateEvents();
             if (this.screen != null) {
@@ -640,7 +640,9 @@ public abstract class MixinMinecraft implements ExMinecraft {
         }
 
         if (this.screen == null || this.screen.passEvents || ((ExScreen) this.screen).isDisabledInputGrabbing()) {
-            this.processInput();
+            //noinspection StatementWithEmptyBody
+            while (this.processInput()) {
+            }
         }
 
         if (this.level != null) {
@@ -651,214 +653,198 @@ public abstract class MixinMinecraft implements ExMinecraft {
     }
 
     @Unique
-    private void processInput() {
-        {
-            {
-                while (true) {
-                    long clickDelta;
-                    do {
-                        if (Mouse.next()) {
-                            clickDelta = System.currentTimeMillis() - this.lastTickTime;
-                            continue;
-                        }
+    private boolean processInput() {
+        long clickDelta;
+        do {
+            if (Mouse.next()) {
+                clickDelta = System.currentTimeMillis() - this.lastTickTime;
+                continue;
+            }
 
-                        if (this.missTime > 0) {
-                            --this.missTime;
-                        }
+            if (this.missTime > 0) {
+                --this.missTime;
+            }
 
-                        while (true) {
-                            do {
-                                if (Keyboard.next()) {
-                                    this.player.setKey(Keyboard.getEventKey(), Keyboard.getEventKeyState());
-                                    continue;
-                                }
-
-                                boolean handle =
-                                    this.screen == null || ((ExScreen) this.screen).isDisabledInputGrabbing();
-                                if (handle) {
-                                    for (int i = 0; i < this.lastClickTick.length; i++) {
-                                        int delta = this.ticks - this.lastClickTick[i];
-                                        if (Mouse.isButtonDown(i) && delta >= 0 && this.mouseGrabbed) {
-                                            this.handleMouseClick(i);
-                                        }
-                                    }
-                                }
-                                this.handleMouseDown(0, handle && Mouse.isButtonDown(0) && this.mouseGrabbed);
-                                return;
-                            }
-                            while (!Keyboard.getEventKeyState());
-
-                            int eventKey = Keyboard.getEventKey();
-                            boolean isShiftPressed =
-                                Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT);
-                            boolean isControlPressed =
-                                Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL);
-
-                            if (eventKey == Keyboard.KEY_F11) {
-                                this.toggleFullScreen();
-                            }
-                            else {
-                                if (this.screen != null && !((ExScreen) this.screen).isDisabledInputGrabbing()) {
-                                    // TODO: fix doubled events (one for key press, one for text input)
-                                    this.screen.keyboardEvent();
-                                }
-                                else {
-                                    // Not compile time constants, else-if is a must.
-                                    // Trust me, I tried to use a switch here.
-                                    if (eventKey == Keyboard.KEY_ESCAPE) {
-                                        this.pauseGame();
-                                    }
-                                    else if (eventKey == Keyboard.KEY_S && Keyboard.isKeyDown(Keyboard.KEY_F3)) {
-                                        this.reloadSound();
-                                    }
-                                    else if (eventKey == Keyboard.KEY_F1) {
-                                        this.options.hideGui = !this.options.hideGui;
-                                    }
-                                    else if (eventKey == Keyboard.KEY_F3) {
-                                        this.options.renderDebug = !this.options.renderDebug;
-                                    }
-                                    else if (eventKey == Keyboard.KEY_F4) {
-                                        AC_DebugMode.active = !AC_DebugMode.active;
-                                        if (AC_DebugMode.active) {
-                                            this.gui.addMessage("Debug Mode Active");
-                                        }
-                                        else {
-                                            this.gui.addMessage("Debug Mode Deactivated");
-                                        }
-                                        ((ExWorldEventRenderer) this.levelRenderer).updateAllTheRenderers();
-                                    }
-                                    else if (eventKey == Keyboard.KEY_F5) {
-                                        this.options.thirdPersonView = !this.options.thirdPersonView;
-                                    }
-                                    else if (eventKey == Keyboard.KEY_F6) {
-                                        if (AC_DebugMode.active) {
-                                            ((ExWorldEventRenderer) this.levelRenderer).resetAll();
-                                            this.gui.addMessage("Resetting all blocks in loaded chunks");
-                                        }
-                                    }
-                                    else if (eventKey == Keyboard.KEY_F7 ||
-                                        (eventKey == this.options.keyInventory.key && isShiftPressed)) {
-                                        ((ExAbstractClientPlayerEntity) this.player).displayGUIPalette();
-                                    }
-                                    else if (eventKey == this.options.keyInventory.key) {
-                                        this.setScreen(new InventoryScreen(this.player));
-                                    }
-                                    else if (eventKey == this.options.keyDrop.key) {
-                                        this.player.drop();
-                                    }
-                                    else if ((this.isOnline() || AC_DebugMode.active) &&
-                                        eventKey == this.options.keyChat.key) {
-                                        this.setScreen(new AC_ChatScreen());
-                                    }
-                                    else if (AC_DebugMode.active && isControlPressed) {
-                                        var mc = (Minecraft) (Object) this;
-                                        if (eventKey == Keyboard.KEY_Z) { // Undo
-                                            ServerCommands.cmdUndo(
-                                                new ServerCommandSource(mc, this.level, this.player),
-                                                null
-                                            );
-                                        }
-                                        else if (eventKey == Keyboard.KEY_Y) { // Redo
-                                            ServerCommands.cmdRedo(
-                                                new ServerCommandSource(mc, this.level, this.player),
-                                                null
-                                            );
-                                        }
-                                    }
-                                }
-
-                                int currentSlot = 0;
-
-                                while (true) {
-                                    if (currentSlot >= 9) {
-                                        if (eventKey == this.options.keyFog.key) {
-                                            this.options.toggle(Option.RENDER_DISTANCE, !isShiftPressed ? 1 : -1);
-                                        }
-                                        break;
-                                    }
-
-                                    if (eventKey == Keyboard.KEY_1 + currentSlot) {
-                                        if (!isControlPressed) {
-                                            if (currentSlot ==
-                                                ((ExPlayerInventory) this.player.inventory).getOffhandSlot()) {
-                                                ((ExPlayerInventory) this.player.inventory).setOffhandSlot(this.player.inventory.selected);
-                                            }
-
-                                            this.player.inventory.selected = currentSlot;
-                                        }
-                                        else {
-                                            if (currentSlot == this.player.inventory.selected) {
-                                                this.player.inventory.selected = ((ExPlayerInventory) this.player.inventory).getOffhandSlot();
-                                            }
-
-                                            ((ExPlayerInventory) this.player.inventory).setOffhandSlot(currentSlot);
-                                        }
-                                    }
-
-                                    ++currentSlot;
-                                }
-                            }
-
-                            if (this.level != null) {
-                                ((ExWorld) this.level).getScript().keyboard.processKeyPress(eventKey);
-                            }
-                        }
-
+            while (true) {
+                do {
+                    if (Keyboard.next()) {
+                        this.player.setKey(Keyboard.getEventKey(), Keyboard.getEventKeyState());
+                        continue;
                     }
-                    while (clickDelta > 200L);
 
-                    int wheelDelta = Mouse.getEventDWheel();
-                    if (wheelDelta != 0) {
-                        boolean ctrlDown =
-                            Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL);
-                        boolean menuDown =
-                            Keyboard.isKeyDown(Keyboard.KEY_LMENU) || Keyboard.isKeyDown(Keyboard.KEY_RMENU);
-
-                        // TODO: are these clamps appropriate?
-                        if (wheelDelta > 0) {
-                            wheelDelta = 1;
-                        }
-                        if (wheelDelta < 0) {
-                            wheelDelta = -1;
-                        }
-
-                        if (AC_DebugMode.active && menuDown) {
-                            AC_DebugMode.reachDistance += wheelDelta;
-                            AC_DebugMode.reachDistance = MathF.clamp(AC_DebugMode.reachDistance, 2, 100);
-                            this.gui.addMessage(String.format("Reach Changed to %d", AC_DebugMode.reachDistance));
-                        }
-                        else {
-                            if (ctrlDown) {
-                                ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
-                            }
-
-                            this.player.inventory.swapPaint(wheelDelta);
-                            if (ctrlDown) {
-                                ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
-                            }
-
-                            if (this.options.discreteMouseScroll) {
-                                this.options.accumulatedScroll += (float) wheelDelta * 0.25F;
+                    boolean handle = this.screen == null || ((ExScreen) this.screen).isDisabledInputGrabbing();
+                    if (handle) {
+                        for (int i = 0; i < this.lastClickTicks.length; i++) {
+                            int delta = this.ticks - this.lastClickTicks[i];
+                            if (Mouse.isButtonDown(i) && delta >= 0 && this.mouseGrabbed) {
+                                this.handleMouseClick(i);
                             }
                         }
                     }
+                    this.handleMouseDown(0, handle && Mouse.isButtonDown(0) && this.mouseGrabbed);
+                    return false;
+                }
+                while (!Keyboard.getEventKeyState());
 
+                int eventKey = Keyboard.getEventKey();
+                boolean isShiftPressed =
+                    Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT);
+                boolean isControlPressed =
+                    Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL);
+
+                if (eventKey == Keyboard.KEY_F11) {
+                    this.toggleFullScreen();
+                }
+                else {
                     if (this.screen != null && !((ExScreen) this.screen).isDisabledInputGrabbing()) {
-                        if (this.screen != null) {
-                            this.screen.mouseEvent();
-                        }
-                    }
-                    else if (!this.mouseGrabbed && Mouse.getEventButtonState()) {
-                        this.grabMouse();
+                        // TODO: fix doubled events (one for key press, one for text input)
+                        this.screen.keyboardEvent();
                     }
                     else {
-                        if (Mouse.getEventButtonState()) {
-                            this.handleMouseClick(Mouse.getEventButton());
+                        // Not compile time constants, else-if is a must.
+                        // Trust me, I tried to use a switch here.
+                        if (eventKey == Keyboard.KEY_ESCAPE) {
+                            this.pauseGame();
+                        }
+                        else if (eventKey == Keyboard.KEY_S && Keyboard.isKeyDown(Keyboard.KEY_F3)) {
+                            this.reloadSound();
+                        }
+                        else if (eventKey == Keyboard.KEY_F1) {
+                            this.options.hideGui = !this.options.hideGui;
+                        }
+                        else if (eventKey == Keyboard.KEY_F3) {
+                            this.options.renderDebug = !this.options.renderDebug;
+                        }
+                        else if (eventKey == Keyboard.KEY_F4) {
+                            AC_DebugMode.active = !AC_DebugMode.active;
+                            if (AC_DebugMode.active) {
+                                this.gui.addMessage("Debug Mode Active");
+                            }
+                            else {
+                                this.gui.addMessage("Debug Mode Deactivated");
+                            }
+                            ((ExWorldEventRenderer) this.levelRenderer).updateAllTheRenderers();
+                        }
+                        else if (eventKey == Keyboard.KEY_F5) {
+                            this.options.thirdPersonView = !this.options.thirdPersonView;
+                        }
+                        else if (eventKey == Keyboard.KEY_F6) {
+                            if (AC_DebugMode.active) {
+                                ((ExWorldEventRenderer) this.levelRenderer).resetAll();
+                                this.gui.addMessage("Resetting all blocks in loaded chunks");
+                            }
+                        }
+                        else if (eventKey == Keyboard.KEY_F7 ||
+                            (eventKey == this.options.keyInventory.key && isShiftPressed)) {
+                            ((ExAbstractClientPlayerEntity) this.player).displayGUIPalette();
+                        }
+                        else if (eventKey == this.options.keyInventory.key) {
+                            this.setScreen(new InventoryScreen(this.player));
+                        }
+                        else if (eventKey == this.options.keyDrop.key) {
+                            this.player.drop();
+                        }
+                        else if ((this.isOnline() || AC_DebugMode.active) && eventKey == this.options.keyChat.key) {
+                            this.setScreen(new AC_ChatScreen());
+                        }
+                        else if (AC_DebugMode.active && isControlPressed) {
+                            var mc = (Minecraft) (Object) this;
+                            if (eventKey == Keyboard.KEY_Z) { // Undo
+                                ServerCommands.cmdUndo(new ServerCommandSource(mc, this.level, this.player), null);
+                            }
+                            else if (eventKey == Keyboard.KEY_Y) { // Redo
+                                ServerCommands.cmdRedo(new ServerCommandSource(mc, this.level, this.player), null);
+                            }
                         }
                     }
+
+                    int currentSlot = 0;
+
+                    while (true) {
+                        if (currentSlot >= 9) {
+                            if (eventKey == this.options.keyFog.key) {
+                                this.options.toggle(Option.RENDER_DISTANCE, !isShiftPressed ? 1 : -1);
+                            }
+                            break;
+                        }
+
+                        if (eventKey == Keyboard.KEY_1 + currentSlot) {
+                            if (!isControlPressed) {
+                                if (currentSlot == ((ExPlayerInventory) this.player.inventory).getOffhandSlot()) {
+                                    ((ExPlayerInventory) this.player.inventory).setOffhandSlot(this.player.inventory.selected);
+                                }
+
+                                this.player.inventory.selected = currentSlot;
+                            }
+                            else {
+                                if (currentSlot == this.player.inventory.selected) {
+                                    this.player.inventory.selected = ((ExPlayerInventory) this.player.inventory).getOffhandSlot();
+                                }
+
+                                ((ExPlayerInventory) this.player.inventory).setOffhandSlot(currentSlot);
+                            }
+                        }
+
+                        ++currentSlot;
+                    }
+                }
+
+                if (this.level != null) {
+                    ((ExWorld) this.level).getScript().keyboard.processKeyPress(eventKey);
+                }
+            }
+
+        }
+        while (clickDelta > 200L);
+
+        int wheelDelta = Mouse.getEventDWheel();
+        if (wheelDelta != 0) {
+            boolean ctrlDown = Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL);
+            boolean menuDown = Keyboard.isKeyDown(Keyboard.KEY_LMENU) || Keyboard.isKeyDown(Keyboard.KEY_RMENU);
+
+            // TODO: are these clamps appropriate?
+            if (wheelDelta > 0) {
+                wheelDelta = 1;
+            }
+            if (wheelDelta < 0) {
+                wheelDelta = -1;
+            }
+
+            if (AC_DebugMode.active && menuDown) {
+                AC_DebugMode.reachDistance += wheelDelta;
+                AC_DebugMode.reachDistance = MathF.clamp(AC_DebugMode.reachDistance, 2, 100);
+                this.gui.addMessage(String.format("Reach Changed to %d", AC_DebugMode.reachDistance));
+            }
+            else {
+                if (ctrlDown) {
+                    ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
+                }
+
+                this.player.inventory.swapPaint(wheelDelta);
+                if (ctrlDown) {
+                    ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
+                }
+
+                if (this.options.discreteMouseScroll) {
+                    this.options.accumulatedScroll += (float) wheelDelta * 0.25F;
                 }
             }
         }
+
+        if (this.screen != null && !((ExScreen) this.screen).isDisabledInputGrabbing()) {
+            if (this.screen != null) {
+                this.screen.mouseEvent();
+            }
+        }
+        else if (!this.mouseGrabbed && Mouse.getEventButtonState()) {
+            this.grabMouse();
+        }
+        else {
+            if (Mouse.getEventButtonState()) {
+                this.handleMouseClick(Mouse.getEventButton());
+            }
+        }
+        return true;
     }
 
     @Unique
@@ -963,6 +949,17 @@ public abstract class MixinMinecraft implements ExMinecraft {
     private void keepAttackCooldown(Minecraft instance, int value) {
     }
 
+    @Redirect(
+        method = "grabMouse",
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/client/Minecraft;lastClickTick:I"
+        )
+    )
+    private void setLastClickTickOnGrab(Minecraft instance, int value) {
+        this.lastClickTicks[0] = value;
+    }
+
     @Overwrite
     private void handleMouseClick(int mouseButton) {
         if (mouseButton == 0 && this.missTime > 0) {
@@ -992,7 +989,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
                 useDelay = useDelayItem.getItemUseDelay();
             }
 
-            this.lastClickTick[mouseButton] = this.ticks + useDelay;
+            this.lastClickTicks[mouseButton] = this.ticks + useDelay;
 
             if (stack != null && (Item.items[stack.id] instanceof AC_ILeftClickItem leftClickItem) &&
                 leftClickItem.mainActionLeftClick()) {
@@ -1003,7 +1000,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
             }
         }
         else {
-            Arrays.fill(this.lastClickTick, this.ticks + 5);
+            Arrays.fill(this.lastClickTicks, this.ticks + 5);
         }
 
         if (mouseButton == 0) {
