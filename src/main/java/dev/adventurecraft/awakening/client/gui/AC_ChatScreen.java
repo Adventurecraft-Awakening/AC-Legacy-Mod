@@ -59,8 +59,8 @@ public class AC_ChatScreen extends Screen {
             this.minecraft.setScreen(null);
         }
         else if (eventKey == 28) {
-            this.submitMessage();
             this.minecraft.setScreen(null);
+            this.submitMessage();
         }
         else {
             this.messageBox.charTyped(eventCharacter, eventKey);
