@@ -31,6 +31,7 @@ import dev.adventurecraft.awakening.script.ScriptItem;
 import dev.adventurecraft.awakening.script.ScriptModel;
 import dev.adventurecraft.awakening.script.ScriptVec3;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
+import dev.adventurecraft.awakening.util.MathF;
 import net.fabricmc.loader.impl.util.Arguments;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Option;
@@ -88,6 +89,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.io.*;
 import java.net.URL;
+import java.util.Arrays;
 
 @Mixin(Minecraft.class)
 public abstract class MixinMinecraft implements ExMinecraft {
@@ -113,7 +115,6 @@ public abstract class MixinMinecraft implements ExMinecraft {
     @Shadow
     public abstract void setScreen(Screen arg);
 
-    @Shadow private int lastClickTick;
     @Shadow private int ticks;
     @Shadow private int missTime;
 
@@ -186,8 +187,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
     @Unique private long previousNanoTime;
     @Unique private double deltaTime;
-    @Unique private int rightMouseTicksRan;
-    @Unique private int middleMouseTicksRan;
+    @Unique private final int[] lastClickTick = new int[3];
     @Unique public AC_CutsceneCamera cutsceneCamera;
     @Unique public AC_CutsceneCamera activeCutsceneCamera;
     @Unique public boolean cameraActive;
@@ -225,13 +225,11 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
         ACMainThread.glDebugContext = arguments.getExtraArgs().contains("--glDebugContext");
 
-        ACMainThread.glDebugLogSeverity = ACMainThread.GlDebugSeverity.valueOf(arguments.getOrDefault(
-            "glDebugLogSeverity",
+        ACMainThread.glDebugLogSeverity = ACMainThread.GlDebugSeverity.valueOf(arguments.getOrDefault("glDebugLogSeverity",
             ACMainThread.glDebugLogSeverity.name()
         ));
 
-        ACMainThread.glDebugTraceSeverity = ACMainThread.GlDebugSeverity.valueOf(arguments.getOrDefault(
-            "glDebugTraceSeverity",
+        ACMainThread.glDebugTraceSeverity = ACMainThread.GlDebugSeverity.valueOf(arguments.getOrDefault("glDebugTraceSeverity",
             ACMainThread.glDebugTraceSeverity.name()
         ));
 
@@ -631,7 +629,8 @@ public abstract class MixinMinecraft implements ExMinecraft {
         }
 
         if (this.screen != null && !((ExScreen) this.screen).isDisabledInputGrabbing()) {
-            this.lastClickTick = this.ticks + 10000;
+            // TODO: reset all values?
+            this.lastClickTick[0] = this.ticks + 10000;
 
             this.screen.updateEvents();
             if (this.screen != null) {
@@ -641,13 +640,25 @@ public abstract class MixinMinecraft implements ExMinecraft {
         }
 
         if (this.screen == null || this.screen.passEvents || ((ExScreen) this.screen).isDisabledInputGrabbing()) {
-            label405:
-            while (true) {
+            this.processInput();
+        }
+
+        if (this.level != null) {
+            this.tickLevel();
+        }
+
+        this.lastTickTime = System.currentTimeMillis();
+    }
+
+    @Unique
+    private void processInput() {
+        {
+            {
                 while (true) {
-                    long var7;
+                    long clickDelta;
                     do {
                         if (Mouse.next()) {
-                            var7 = System.currentTimeMillis() - this.lastTickTime;
+                            clickDelta = System.currentTimeMillis() - this.lastTickTime;
                             continue;
                         }
 
@@ -656,31 +667,24 @@ public abstract class MixinMinecraft implements ExMinecraft {
                         }
 
                         while (true) {
-
                             do {
-                                if (!Keyboard.next()) {
-                                    if (this.screen == null || ((ExScreen) this.screen).isDisabledInputGrabbing()) {
-                                        if (Mouse.isButtonDown(0) &&
-                                            (float) (this.ticks - this.lastClickTick) >= 0.0F && this.mouseGrabbed) {
-                                            this.handleMouseClick(0);
-                                        }
-
-                                        if (Mouse.isButtonDown(1) &&
-                                            (float) (this.ticks - this.rightMouseTicksRan) >= 0.0F &&
-                                            this.mouseGrabbed) {
-                                            this.handleMouseClick(1);
-                                        }
-                                    }
-
-                                    this.handleMouseDown(
-                                        0,
-                                        (this.screen == null || ((ExScreen) this.screen).isDisabledInputGrabbing()) &&
-                                            Mouse.isButtonDown(0) && this.mouseGrabbed
-                                    );
-                                    break label405;
+                                if (Keyboard.next()) {
+                                    this.player.setKey(Keyboard.getEventKey(), Keyboard.getEventKeyState());
+                                    continue;
                                 }
 
-                                this.player.setKey(Keyboard.getEventKey(), Keyboard.getEventKeyState());
+                                boolean handle =
+                                    this.screen == null || ((ExScreen) this.screen).isDisabledInputGrabbing();
+                                if (handle) {
+                                    for (int i = 0; i < this.lastClickTick.length; i++) {
+                                        int delta = this.ticks - this.lastClickTick[i];
+                                        if (Mouse.isButtonDown(i) && delta >= 0 && this.mouseGrabbed) {
+                                            this.handleMouseClick(i);
+                                        }
+                                    }
+                                }
+                                this.handleMouseDown(0, handle && Mouse.isButtonDown(0) && this.mouseGrabbed);
+                                return;
                             }
                             while (!Keyboard.getEventKeyState());
 
@@ -703,19 +707,15 @@ public abstract class MixinMinecraft implements ExMinecraft {
                                     // Trust me, I tried to use a switch here.
                                     if (eventKey == Keyboard.KEY_ESCAPE) {
                                         this.pauseGame();
-
                                     }
                                     else if (eventKey == Keyboard.KEY_S && Keyboard.isKeyDown(Keyboard.KEY_F3)) {
                                         this.reloadSound();
-
                                     }
                                     else if (eventKey == Keyboard.KEY_F1) {
                                         this.options.hideGui = !this.options.hideGui;
-
                                     }
                                     else if (eventKey == Keyboard.KEY_F3) {
                                         this.options.renderDebug = !this.options.renderDebug;
-
                                     }
                                     else if (eventKey == Keyboard.KEY_F4) {
                                         AC_DebugMode.active = !AC_DebugMode.active;
@@ -726,54 +726,42 @@ public abstract class MixinMinecraft implements ExMinecraft {
                                             this.gui.addMessage("Debug Mode Deactivated");
                                         }
                                         ((ExWorldEventRenderer) this.levelRenderer).updateAllTheRenderers();
-
                                     }
                                     else if (eventKey == Keyboard.KEY_F5) {
                                         this.options.thirdPersonView = !this.options.thirdPersonView;
-
                                     }
                                     else if (eventKey == Keyboard.KEY_F6) {
                                         if (AC_DebugMode.active) {
                                             ((ExWorldEventRenderer) this.levelRenderer).resetAll();
                                             this.gui.addMessage("Resetting all blocks in loaded chunks");
                                         }
-
                                     }
                                     else if (eventKey == Keyboard.KEY_F7 ||
                                         (eventKey == this.options.keyInventory.key && isShiftPressed)) {
                                         ((ExAbstractClientPlayerEntity) this.player).displayGUIPalette();
-
                                     }
                                     else if (eventKey == this.options.keyInventory.key) {
                                         this.setScreen(new InventoryScreen(this.player));
-
                                     }
                                     else if (eventKey == this.options.keyDrop.key) {
                                         this.player.drop();
-
                                     }
                                     else if ((this.isOnline() || AC_DebugMode.active) &&
                                         eventKey == this.options.keyChat.key) {
                                         this.setScreen(new AC_ChatScreen());
                                     }
                                     else if (AC_DebugMode.active && isControlPressed) {
+                                        var mc = (Minecraft) (Object) this;
                                         if (eventKey == Keyboard.KEY_Z) { // Undo
                                             ServerCommands.cmdUndo(
-                                                new ServerCommandSource(
-                                                    (Minecraft) (Object) this,
-                                                    this.level,
-                                                    this.player
-                                                ), null
+                                                new ServerCommandSource(mc, this.level, this.player),
+                                                null
                                             );
-
                                         }
                                         else if (eventKey == Keyboard.KEY_Y) { // Redo
                                             ServerCommands.cmdRedo(
-                                                new ServerCommandSource(
-                                                    (Minecraft) (Object) this,
-                                                    this.level,
-                                                    this.player
-                                                ), null
+                                                new ServerCommandSource(mc, this.level, this.player),
+                                                null
                                             );
                                         }
                                     }
@@ -817,7 +805,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
                         }
 
                     }
-                    while (var7 > 200L);
+                    while (clickDelta > 200L);
 
                     int wheelDelta = Mouse.getEventDWheel();
                     if (wheelDelta != 0) {
@@ -825,17 +813,18 @@ public abstract class MixinMinecraft implements ExMinecraft {
                             Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL);
                         boolean menuDown =
                             Keyboard.isKeyDown(Keyboard.KEY_LMENU) || Keyboard.isKeyDown(Keyboard.KEY_RMENU);
+
+                        // TODO: are these clamps appropriate?
                         if (wheelDelta > 0) {
                             wheelDelta = 1;
                         }
-
                         if (wheelDelta < 0) {
                             wheelDelta = -1;
                         }
 
                         if (AC_DebugMode.active && menuDown) {
                             AC_DebugMode.reachDistance += wheelDelta;
-                            AC_DebugMode.reachDistance = Math.min(Math.max(AC_DebugMode.reachDistance, 2), 100);
+                            AC_DebugMode.reachDistance = MathF.clamp(AC_DebugMode.reachDistance, 2, 100);
                             this.gui.addMessage(String.format("Reach Changed to %d", AC_DebugMode.reachDistance));
                         }
                         else {
@@ -863,71 +852,62 @@ public abstract class MixinMinecraft implements ExMinecraft {
                         this.grabMouse();
                     }
                     else {
-                        if (Mouse.getEventButton() == 0 && Mouse.getEventButtonState()) {
-                            this.handleMouseClick(0);
-                        }
-
-                        if (Mouse.getEventButton() == 1 && Mouse.getEventButtonState()) {
-                            this.handleMouseClick(1);
-                        }
-
-                        if (Mouse.getEventButton() == 2 && Mouse.getEventButtonState()) {
-                            this.pickBlock();
+                        if (Mouse.getEventButtonState()) {
+                            this.handleMouseClick(Mouse.getEventButton());
                         }
                     }
                 }
             }
         }
+    }
 
-        if (this.level != null) {
-            if (this.player != null) {
-                ++this.recheckPlayerIn;
-                if (this.recheckPlayerIn == 30) {
-                    this.recheckPlayerIn = 0;
-                    this.level.ensureAdded(this.player);
-                }
-            }
-
-            this.level.difficulty = this.options.difficulty;
-            if (this.level.isClientSide) {
-                this.level.difficulty = 3;
-            }
-
-            if (!this.pause) {
-                this.gameRenderer.tick();
-            }
-
-            if (!this.pause) {
-                this.levelRenderer.tick();
-            }
-
-            if (!this.pause || this.isOnline()) {
-                ((ExWorld) this.level).ac$preTick();
-            }
-
-            if (!this.pause) {
-                if (this.level.skyFlashTime > 0) {
-                    --this.level.skyFlashTime;
-                }
-
-                this.level.tickEntities();
-            }
-
-            if (!this.pause || this.isOnline()) {
-                this.level.setSpawnSettings(this.options.difficulty > 0, true);
-                this.level.tick();
-            }
-
-            if (!this.pause && this.level != null) {
-                this.level.animateTick(Mth.floor(this.player.x), Mth.floor(this.player.y), Mth.floor(this.player.z));
-            }
-
-            if (!this.pause) {
-                this.particleEngine.tick();
+    @Unique
+    private void tickLevel() {
+        if (this.player != null) {
+            ++this.recheckPlayerIn;
+            if (this.recheckPlayerIn == 30) {
+                this.recheckPlayerIn = 0;
+                this.level.ensureAdded(this.player);
             }
         }
 
-        this.lastTickTime = System.currentTimeMillis();
+        this.level.difficulty = this.options.difficulty;
+        if (this.level.isClientSide) {
+            this.level.difficulty = 3;
+        }
+
+        if (!this.pause) {
+            this.gameRenderer.tick();
+        }
+
+        if (!this.pause) {
+            this.levelRenderer.tick();
+        }
+
+        if (!this.pause || this.isOnline()) {
+            ((ExWorld) this.level).ac$preTick();
+        }
+
+        if (!this.pause) {
+            if (this.level.skyFlashTime > 0) {
+                --this.level.skyFlashTime;
+            }
+
+            this.level.tickEntities();
+        }
+
+        if (!this.pause || this.isOnline()) {
+            this.level.setSpawnSettings(this.options.difficulty > 0, true);
+            this.level.tick();
+        }
+
+        if (!this.pause && this.level != null) {
+            this.level.animateTick(Mth.floor(this.player.x), Mth.floor(this.player.y), Mth.floor(this.player.z));
+        }
+
+        if (!this.pause) {
+            this.particleEngine.tick();
+        }
     }
 
     @Overwrite
@@ -989,6 +969,11 @@ public abstract class MixinMinecraft implements ExMinecraft {
             return;
         }
 
+        if (mouseButton == 2) {
+            this.pickBlock();
+            return;
+        }
+
         var exWorld = (ExWorld) this.level;
         boolean hasRecording = AC_DebugMode.active && exWorld.getUndoStack().startRecording();
 
@@ -1007,15 +992,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
                 useDelay = useDelayItem.getItemUseDelay();
             }
 
-            if (mouseButton == 0) {
-                this.lastClickTick = this.ticks + useDelay;
-            }
-            else if (mouseButton == 1) {
-                this.rightMouseTicksRan = this.ticks + useDelay;
-            }
-            else if (mouseButton == 2) {
-                this.middleMouseTicksRan = this.ticks + useDelay;
-            }
+            this.lastClickTick[mouseButton] = this.ticks + useDelay;
 
             if (stack != null && (Item.items[stack.id] instanceof AC_ILeftClickItem leftClickItem) &&
                 leftClickItem.mainActionLeftClick()) {
@@ -1026,9 +1003,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
             }
         }
         else {
-            this.lastClickTick = this.ticks + 5;
-            this.rightMouseTicksRan = this.ticks + 5;
-            this.middleMouseTicksRan = this.ticks + 5;
+            Arrays.fill(this.lastClickTick, this.ticks + 5);
         }
 
         if (mouseButton == 0) {
