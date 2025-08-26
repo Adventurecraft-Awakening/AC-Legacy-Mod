@@ -3,6 +3,7 @@ package dev.adventurecraft.awakening.client.gui.components;
 import dev.adventurecraft.awakening.client.gui.EditSelection;
 import dev.adventurecraft.awakening.common.ClipboardHandler;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
+import dev.adventurecraft.awakening.image.Rgba;
 import dev.adventurecraft.awakening.layout.IntBorder;
 import dev.adventurecraft.awakening.layout.IntRect;
 import dev.adventurecraft.awakening.util.DrawUtil;
@@ -42,10 +43,8 @@ public class AC_EditBox extends GuiComponent {
         this.maxLength = Integer.MAX_VALUE;
         this.value = new StringBuilder(value);
 
-        this.resetActiveTextColor();
-        this.resetInactiveTextColor();
-        this.resetBoxBackColor();
-        this.resetBoxBorderColor();
+        this.resetTextColor();
+        this.resetBoxColor();
     }
 
     public String getValue() {
@@ -239,7 +238,7 @@ public class AC_EditBox extends GuiComponent {
             int right = left + 1 + state.measureText(this.value, i, sel.absEnd()).width();
             var selRect = IntRect.fromEdges(left, rect.top(), right, rect.bot());
 
-            DrawUtil.fillRect(ts, selRect.asFloat(), 0xa00000ff);
+            DrawUtil.fillRect(ts, selRect.asFloat(), Rgba.fromRgba8(0, 0, 0xff, 0xa0));
         }
         DrawUtil.endFill(ts);
 
@@ -299,7 +298,7 @@ public class AC_EditBox extends GuiComponent {
     }
 
     public void resetActiveTextColor() {
-        this.setActiveTextColor(0xffe0e0e0);
+        this.setActiveTextColor(Rgba.fromRgb8(0xe0, 0xe0, 0xe0));
     }
 
     public int getInactiveTextColor() {
@@ -311,7 +310,12 @@ public class AC_EditBox extends GuiComponent {
     }
 
     public void resetInactiveTextColor() {
-        this.setInactiveTextColor(0xff707070);
+        this.setInactiveTextColor(Rgba.fromRgb8(0x70, 0x70, 0x70));
+    }
+
+    public void resetTextColor() {
+        this.resetActiveTextColor();
+        this.resetInactiveTextColor();
     }
 
     public int getBoxBackColor() {
@@ -323,7 +327,7 @@ public class AC_EditBox extends GuiComponent {
     }
 
     public void resetBoxBackColor() {
-        this.setBoxBackColor(0xff000000);
+        this.setBoxBackColor(Rgba.BLACK);
     }
 
     public int getBoxBorderColor() {
@@ -335,6 +339,11 @@ public class AC_EditBox extends GuiComponent {
     }
 
     public void resetBoxBorderColor() {
-        this.setBoxBorderColor(0xffa0a0a0);
+        this.setBoxBorderColor(Rgba.fromRgb8(0xa0, 0xa0, 0xa0));
+    }
+
+    public void resetBoxColor() {
+        this.resetBoxBackColor();
+        this.resetBoxBorderColor();
     }
 }

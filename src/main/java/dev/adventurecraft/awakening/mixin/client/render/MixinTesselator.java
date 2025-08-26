@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.mixin.client.render;
 
 import dev.adventurecraft.awakening.extension.client.render.ExTesselator;
+import dev.adventurecraft.awakening.image.Rgba;
 import dev.adventurecraft.awakening.util.GLUtil;
 import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.client.renderer.Tesselator;
@@ -89,7 +90,7 @@ public abstract class MixinTesselator implements ExTesselator {
         g = MathF.clamp(g, 0, 255);
         b = MathF.clamp(b, 0, 255);
         a = MathF.clamp(a, 0, 255);
-        this.ac$color8((byte) (r & 0xff), (byte) (g & 0xff), (byte) (b & 0xff), (byte) (a & 0xff));
+        this.ac$color8(Rgba.fromRgba8(r, g, b, a));
     }
 
     public @Overwrite void vertex(double x, double y, double z) {

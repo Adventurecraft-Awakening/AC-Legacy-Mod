@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.extension.client.render;
 
+import dev.adventurecraft.awakening.image.Rgba;
 import org.lwjgl.util.vector.Vector3f;
 
 public interface ExTesselator {
@@ -30,7 +31,7 @@ public interface ExTesselator {
     }
 
     default void ac$color8(byte r, byte g, byte b, byte a) {
-        this.ac$color8(((a & 0xff) << 24) | ((b & 0xff) << 16) | ((g & 0xff) << 8) | (r & 0xff));
+        this.ac$color8(Rgba.fromRgba8(r, g, b, a));
     }
 
     default void ac$color32(float r, float g, float b) {

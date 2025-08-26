@@ -3,6 +3,7 @@ package dev.adventurecraft.awakening.client.gui;
 import dev.adventurecraft.awakening.client.gui.components.AC_EditBox;
 import dev.adventurecraft.awakening.extension.client.gui.screen.ExScreen;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
+import dev.adventurecraft.awakening.image.Rgba;
 import dev.adventurecraft.awakening.layout.IntPoint;
 import dev.adventurecraft.awakening.layout.IntRect;
 import net.minecraft.client.gui.Font;
@@ -138,8 +139,8 @@ public class SearchPatternBox {
             this.syntaxError = ex;
 
             var box = this.textBox;
-            box.setActiveTextColor(0xff0000);
-            box.setInactiveTextColor(0x8f0000);
+            box.setActiveTextColor(Rgba.fromRgb8(0xff, 0, 0));
+            box.setInactiveTextColor(Rgba.fromRgb8(0x8f, 0, 0));
             return null;
         }
     }
@@ -157,10 +158,7 @@ public class SearchPatternBox {
 
     private void refresh() {
         this.syntaxError = null;
-
-        var box = this.textBox;
-        box.resetActiveTextColor();
-        box.resetInactiveTextColor();
+        this.textBox.resetTextColor();
     }
 
     private void renderSyntaxError(PatternSyntaxException error) {
