@@ -56,6 +56,7 @@ public class MixinEditBox {
 
     public @Overwrite void clicked(int mouseX, int mouseY, int button) {
         this.editBox.clicked(mouseX, mouseY, button);
+        this.active = this.editBox.isActive();
     }
 
     public @Overwrite void setActive(boolean active) {

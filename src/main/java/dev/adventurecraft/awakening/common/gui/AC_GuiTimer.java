@@ -147,19 +147,9 @@ public class AC_GuiTimer extends Screen {
 
     protected void keyPressed(char ch, int key) {
         if (this.useTextFields) {
-            boolean isMod = key == 14 || ch >= 48 && ch <= 57 || ch == 46 || ch == 9;
-
-            if (this.activeTimeText.active && isMod) {
-                this.activeTimeText.charTyped(ch, key);
-            }
-
-            if (this.deactiveTimeText.active && isMod) {
-                this.deactiveTimeText.charTyped(ch, key);
-            }
-
-            if (this.delayTimeText.active && isMod) {
-                this.delayTimeText.charTyped(ch, key);
-            }
+            this.activeTimeText.charTyped(ch, key);
+            this.deactiveTimeText.charTyped(ch, key);
+            this.delayTimeText.charTyped(ch, key);
         }
 
         super.keyPressed(ch, key);
