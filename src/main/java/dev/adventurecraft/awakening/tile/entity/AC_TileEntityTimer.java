@@ -9,7 +9,7 @@ public class AC_TileEntityTimer extends AC_TileEntityMinMax {
 
     public int ticks;
     public int timeActive;
-    public int timeDeactive;
+    public int timeInactive;
     public int timeDelay;
     public int ticksDelay;
     public boolean active = false;
@@ -42,7 +42,7 @@ public class AC_TileEntityTimer extends AC_TileEntityMinMax {
             if (this.active) {
                 this.active = false;
                 this.canActivate = false;
-                this.ticks = this.timeDeactive;
+                this.ticks = this.timeInactive;
                 if (!this.resetOnTrigger) {
                     ((ExWorld) this.level).getTriggerManager().removeArea(this.x, this.y, this.z);
                 }
@@ -56,11 +56,13 @@ public class AC_TileEntityTimer extends AC_TileEntityMinMax {
         }
     }
 
+    // TODO: fix NBT typos in future version?
+
     public void load(CompoundTag tag) {
         super.load(tag);
         this.resetOnTrigger = tag.getBoolean("resetOnTrigger");
         this.timeActive = tag.getInt("timeActive");
-        this.timeDeactive = tag.getInt("timeDeactive");
+        this.timeInactive = tag.getInt("timeDeactive");
         this.timeDelay = tag.getInt("timeDelay");
         this.ticks = tag.getInt("ticks");
         this.ticksDelay = tag.getInt("ticksDelay");
@@ -72,7 +74,7 @@ public class AC_TileEntityTimer extends AC_TileEntityMinMax {
         super.save(tag);
         tag.putBoolean("resetOnTrigger", this.resetOnTrigger);
         tag.putInt("timeActive", this.timeActive);
-        tag.putInt("timeDeactive", this.timeDeactive);
+        tag.putInt("timeDeactive", this.timeInactive);
         tag.putInt("timeDelay", this.timeDelay);
         tag.putInt("ticks", this.ticks);
         tag.putInt("ticksDelay", this.ticksDelay);

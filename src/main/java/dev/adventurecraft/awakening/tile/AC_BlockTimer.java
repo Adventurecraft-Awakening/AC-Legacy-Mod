@@ -34,12 +34,6 @@ public class AC_BlockTimer extends TileEntityTile implements AC_ITriggerDebugBlo
         return null;
     }
 
-    public void setTriggerToSelection(Level world, int x, int y, int z) {
-        var entity = (AC_TileEntityMinMax) world.getTileEntity(x, y, z);
-        entity.setMin(AC_ItemCursor.min());
-        entity.setMax(AC_ItemCursor.max());
-    }
-
     @Override
     public void onTriggerActivated(Level world, int x, int y, int z) {
         var entity = (AC_TileEntityTimer) world.getTileEntity(x, y, z);
