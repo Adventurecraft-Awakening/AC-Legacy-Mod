@@ -79,7 +79,7 @@ public class BlockRegion {
      * Calculates the array index for 3D coordinates in the flattened arrays.
      */
     public final int makeIndex(int x, int y, int z) {
-        return calculateArrayIndex(x, y, z, this.height, this.width);
+        return calculateArrayIndex(x, y, z, this.height, this.depth);
     }
 
     /**

@@ -66,7 +66,7 @@ public class AC_ItemNudge extends Item implements AC_ILeftClickItem {
         try {
             // Get forward direction based on player's look direction
             Mob viewEntity = Minecraft.instance.cameraEntity;
-            Coord direction = AC_BlockCopyUtils.getUnitDirection(viewEntity.getLookAngle());
+            Coord direction = AC_BlockCopyUtils.getUnitDirection(viewEntity.getLookAngle()).negate();
 
             // Perform the nudge operation (destructive move)
             AC_BlockCopyUtils.performNudge(world, direction);
@@ -103,7 +103,7 @@ public class AC_ItemNudge extends Item implements AC_ILeftClickItem {
         try {
             // Get backward direction (opposite to player's look direction)
             Mob viewEntity = Minecraft.instance.cameraEntity;
-            Coord direction = AC_BlockCopyUtils.getUnitDirection(viewEntity.getLookAngle()).negate();
+            Coord direction = AC_BlockCopyUtils.getUnitDirection(viewEntity.getLookAngle());
 
             // Perform the nudge operation (destructive move)
             AC_BlockCopyUtils.performNudge(world, direction);
