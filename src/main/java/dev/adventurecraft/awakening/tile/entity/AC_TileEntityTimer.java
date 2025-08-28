@@ -8,9 +8,9 @@ import net.minecraft.nbt.CompoundTag;
 public class AC_TileEntityTimer extends AC_TileEntityMinMax {
 
     public int ticks;
-    public int timeActive;
-    public int timeInactive;
-    public int timeDelay;
+    private int timeActive;
+    private int timeInactive;
+    private int timeDelay;
     public int ticksDelay;
     public boolean active = false;
     public boolean canActivate = true;
@@ -80,5 +80,38 @@ public class AC_TileEntityTimer extends AC_TileEntityMinMax {
         tag.putInt("ticksDelay", this.ticksDelay);
         tag.putBoolean("active", this.active);
         tag.putBoolean("canActivate", this.canActivate);
+    }
+
+    public int getTimeActive() {
+        return this.timeActive;
+    }
+
+    public void setTimeActive(int value) {
+        if (this.timeActive != value) {
+            this.timeActive = value;
+            this.setChanged();
+        }
+    }
+
+    public int getTimeInactive() {
+        return this.timeInactive;
+    }
+
+    public void setTimeInactive(int value) {
+        if (this.timeInactive != value) {
+            this.timeInactive = value;
+            this.setChanged();
+        }
+    }
+
+    public int getTimeDelay() {
+        return this.timeDelay;
+    }
+
+    public void setTimeDelay(int value) {
+        if (this.timeDelay != value) {
+            this.timeDelay = value;
+            this.setChanged();
+        }
     }
 }

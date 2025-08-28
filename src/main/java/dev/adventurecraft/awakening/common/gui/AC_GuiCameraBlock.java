@@ -8,53 +8,42 @@ import net.minecraft.client.gui.screens.Screen;
 
 public class AC_GuiCameraBlock extends Screen {
 
-    private AC_TileEntityCamera cam;
+    private AC_TileEntityCamera camera;
 
-    public AC_GuiCameraBlock(AC_TileEntityCamera var1) {
-        this.cam = var1;
+    public AC_GuiCameraBlock(AC_TileEntityCamera entity) {
+        this.camera = entity;
+    }
+
+    private static String getBlendMsg(AC_CutsceneCameraBlendType type) {
+        return switch (type) {
+            case LINEAR -> "Linear Interpolation";
+            case QUADRATIC -> "Quadratic Interpolation";
+            default -> "Skip to first point";
+        };
+    }
+
+    private static String getPauseMsg(boolean pauseGame) {
+        return pauseGame ? "Pause Game" : "Game Runs";
     }
 
     @Override
     public void init() {
-        {
-            var button = new Button(0, 4, 4, 160, 18, "Skip to first point");
-            if (this.cam.getBlendType() == AC_CutsceneCameraBlendType.LINEAR) {
-                button.message = "Linear Interpolation";
-            } else if (this.cam.getBlendType() == AC_CutsceneCameraBlendType.QUADRATIC) {
-                button.message = "Quadratic Interpolation";
-            }
-            this.buttons.add(button);
-        }
-        {
-            var button = new Button(1, 4, 24, 160, 18, "Pause Game");
-            if (!this.cam.pauseGame) {
-                button.message = "Game Runs";
-            }
-            this.buttons.add(button);
-        }
+        this.buttons.add(new Button(0, 4, 4, 160, 18, getBlendMsg(this.camera.getBlendType())));
+        this.buttons.add(new Button(1, 4, 24, 160, 18, getPauseMsg(this.camera.pauseGame)));
     }
 
     @Override
     protected void buttonClicked(Button button) {
         if (button.id == 0) {
-            int nextBlendType = (this.cam.getBlendType().value + 1) % AC_CutsceneCameraBlendType.MAX.value;
-            this.cam.setBlendType(AC_CutsceneCameraBlendType.get(nextBlendType));
-            if (this.cam.getBlendType() == AC_CutsceneCameraBlendType.LINEAR) {
-                button.message = "Linear Interpolation";
-            } else if (this.cam.getBlendType() == AC_CutsceneCameraBlendType.QUADRATIC) {
-                button.message = "Quadratic Interpolation";
-            } else {
-                button.message = "Skip to first point";
-            }
-        } else if (button.id == 1) {
-            this.cam.pauseGame = !this.cam.pauseGame;
-            button.message = "Pause Game";
-            if (!this.cam.pauseGame) {
-                button.message = "Game Runs";
-            }
+            this.camera.setBlendType(AC_CutsceneCameraBlendType.cycle(this.camera.getBlendType(), 1));
+            button.message = getBlendMsg(this.camera.getBlendType());
+        }
+        else if (button.id == 1) {
+            this.camera.pauseGame = !this.camera.pauseGame;
+            button.message = getPauseMsg(this.camera.pauseGame);
         }
 
-        this.cam.setChanged();
+        this.camera.setChanged();
     }
 
     @Override

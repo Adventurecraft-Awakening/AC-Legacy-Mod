@@ -1,9 +1,10 @@
 package dev.adventurecraft.awakening.common.gui;
 
-import dev.adventurecraft.awakening.client.gui.components.AC_EditBox;
-import dev.adventurecraft.awakening.image.Rgba;
+import dev.adventurecraft.awakening.client.gui.components.AC_ValueBox;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.layout.IntRect;
+import dev.adventurecraft.awakening.primitives.Property;
+import dev.adventurecraft.awakening.primitives.TickTime;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTimer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -11,12 +12,17 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.OptionButton;
 import net.minecraft.client.gui.screens.Screen;
 
+import java.text.Format;
+import java.text.NumberFormat;
+
 public class AC_GuiTimer extends Screen {
 
     private AC_TileEntityTimer timer;
-    private AC_EditBox activeTimeText;
-    private AC_EditBox inactiveTimeText;
-    private AC_EditBox delayTimeText;
+
+    private Format tickFormat;
+    private AC_ValueBox<TickTime> activeTimeText;
+    private AC_ValueBox<TickTime> inactiveTimeText;
+    private AC_ValueBox<TickTime> delayTimeText;
 
     public AC_GuiTimer(AC_TileEntityTimer entity) {
         this.timer = entity;
@@ -37,17 +43,26 @@ public class AC_GuiTimer extends Screen {
         this.buttons.add(new OptionButton(0, 4, 40, "Use Current Selection"));
         this.buttons.add(new OptionButton(1, 4, 60, getTypeMsg(this.timer)));
 
-        this.delayTimeText = new AC_EditBox(
+        this.tickFormat = new TickTime.TimeFormat(NumberFormat.getInstance());
+
+        AC_TileEntityTimer timer = this.timer;
+        this.delayTimeText = new AC_ValueBox<>(
             new IntRect(80, 81, 70, 16),
-            String.format("%.2f", (float) this.timer.timeDelay / 20.0F)
+            Property.of(timer::getTimeDelay, timer::setTimeDelay).map(TickTime::new, TickTime::ticks32),
+            this.tickFormat
+            //String.format("%.2f", TimeUtil.ticksToSeconds(this.timer.getTimeDelay()))
         );
-        this.activeTimeText = new AC_EditBox(
+        this.activeTimeText = new AC_ValueBox<>(
             new IntRect(80, 101, 70, 16),
-            String.format("%.2f", (float) this.timer.timeActive / 20.0F)
+            Property.of(timer::getTimeActive, timer::setTimeActive).map(TickTime::new, TickTime::ticks32),
+            this.tickFormat
+            //String.format("%.2f", TimeUtil.ticksToSeconds(this.timer.getTimeActive()))
         );
-        this.inactiveTimeText = new AC_EditBox(
+        this.inactiveTimeText = new AC_ValueBox<>(
             new IntRect(80, 121, 70, 16),
-            String.format("%.2f", (float) this.timer.timeInactive / 20.0F)
+            Property.of(timer::getTimeInactive, timer::setTimeInactive).map(TickTime::new, TickTime::ticks32),
+            this.tickFormat
+            //String.format("%.2f", TimeUtil.ticksToSeconds(this.timer.getTimeInactive()))
         );
     }
 
@@ -80,8 +95,8 @@ public class AC_GuiTimer extends Screen {
             this.drawString(font, stateMsg, 4, 164, textColor);
 
             String timeMsg = timer.ticksDelay > 0
-                ? String.format("Delay: %.2f", timer.ticksDelay * 0.05F)
-                : String.format("Time: %.2f", timer.ticks * 0.05F);
+                ? "Delay: " + this.tickFormat.format(timer.ticksDelay)
+                : "Time: " + this.tickFormat.format(timer.ticks);
             this.drawString(font, timeMsg, 4, 184, textColor);
         }
 
@@ -89,32 +104,11 @@ public class AC_GuiTimer extends Screen {
         this.drawString(font, "Active for:", 4, 104, textColor);
         this.drawString(font, "Inactive for:", 4, 124, textColor);
 
-        timer.timeActive = this.parseFloat(this.activeTimeText, timer.timeActive);
-        timer.timeInactive = this.parseFloat(this.inactiveTimeText, timer.timeInactive);
-        timer.timeDelay = this.parseFloat(this.delayTimeText, timer.timeDelay);
-
         this.activeTimeText.render(font);
         this.inactiveTimeText.render(font);
         this.delayTimeText.render(font);
 
         super.render(mouseX, mouseY, deltaTime);
-    }
-
-    private int parseFloat(AC_EditBox box, int previousValue) {
-        box.resetTextColor();
-        try {
-            float raw = Float.parseFloat(box.toString());
-            int value = (int) (raw * 20.0F);
-            if (value != previousValue) {
-                this.timer.setChanged();
-            }
-            return value;
-        }
-        catch (NumberFormatException ignored) {
-        }
-        box.setActiveTextColor(Rgba.fromRgb8(0xff, 0, 0));
-        box.setInactiveTextColor(Rgba.fromRgb8(0x8f, 0, 0));
-        return previousValue;
     }
 
     protected @Override void keyPressed(char ch, int key) {

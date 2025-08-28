@@ -18,6 +18,7 @@ import net.minecraft.client.renderer.Tesselator;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.input.Keyboard;
 
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 @Environment(EnvType.CLIENT)
@@ -47,6 +48,13 @@ public class AC_EditBox extends GuiComponent {
         this.resetBoxColor();
     }
 
+    protected void onValueChanged() {
+    }
+
+    public CharSequence getValueSpan() {
+        return this.value;
+    }
+
     public String getValue() {
         return this.value.toString();
     }
@@ -54,6 +62,7 @@ public class AC_EditBox extends GuiComponent {
     public void setValue(String msg) {
         this.value.setLength(0);
         this.value.append(msg);
+        this.onValueChanged();
     }
 
     public void append(CharSequence value) {
@@ -64,12 +73,14 @@ public class AC_EditBox extends GuiComponent {
         int len = Math.min(this.getFreeLength(), end - start);
         if (len > 0) {
             this.value.insert(this.turnSelectionIntoInsert(len), value, start, start + len);
+            this.onValueChanged();
         }
     }
 
     public void append(char value) {
         if (this.value.length() < this.maxLength) {
             this.value.insert(this.turnSelectionIntoInsert(1), value);
+            this.onValueChanged();
         }
     }
 
@@ -82,6 +93,7 @@ public class AC_EditBox extends GuiComponent {
         int start = sel.absStart();
         if (!sel.isEmpty()) {
             this.value.delete(start, sel.absEnd());
+            this.onValueChanged();
         }
 
         this.selection = new EditSelection(start + length);
@@ -96,6 +108,7 @@ public class AC_EditBox extends GuiComponent {
 
         int start = sel.absStart();
         this.value.delete(start, sel.absEnd());
+        this.onValueChanged();
         this.selection = new EditSelection(start);
     }
 
@@ -238,7 +251,7 @@ public class AC_EditBox extends GuiComponent {
             int right = left + 1 + state.measureText(this.value, i, sel.absEnd()).width();
             var selRect = IntRect.fromEdges(left, rect.top(), right, rect.bot());
 
-            DrawUtil.fillRect(ts, selRect.asFloat(), Rgba.fromRgba8(0, 0, 0xff, 0xa0));
+            DrawUtil.fillRect(ts, selRect.asFloat(), Rgba.fromRgba8(0xff, 0, 0, 0xa0));
         }
         DrawUtil.endFill(ts);
 
@@ -345,5 +358,17 @@ public class AC_EditBox extends GuiComponent {
     public void resetBoxColor() {
         this.resetBoxBackColor();
         this.resetBoxBorderColor();
+    }
+
+    public static Optional<Float> parseFloat(AC_EditBox box) {
+        box.resetTextColor();
+        try {
+            return Optional.of(Float.parseFloat(box.toString()));
+        }
+        catch (NumberFormatException ignored) {
+        }
+        box.setActiveTextColor(Rgba.fromRgb8(0xff, 0, 0));
+        box.setInactiveTextColor(Rgba.fromRgb8(0x8f, 0, 0));
+        return Optional.empty();
     }
 }

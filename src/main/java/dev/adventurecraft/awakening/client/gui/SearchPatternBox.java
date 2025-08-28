@@ -17,7 +17,7 @@ import java.util.regex.PatternSyntaxException;
 
 public class SearchPatternBox {
 
-    private final AC_EditBox textBox;
+    private final AC_EditBox textBox; // TODO: use AC_ValueBox<Pattern>
     private final Font font;
     private final Button matchCaseButton;
     private final Button matchWordsButton;

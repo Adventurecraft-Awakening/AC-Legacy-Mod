@@ -48,6 +48,7 @@ public class AC_CutsceneCamera {
         this.fixYawPitch(0.0F, 0.0F);
     }
 
+    // TODO: don't (ab)use loadCameraEntities around codebase when updating singular fields...
     public void loadCameraEntities() {
         for (Entity entity : (List<Entity>) this.level.entities) {
             if (entity instanceof AC_EntityCamera) {
