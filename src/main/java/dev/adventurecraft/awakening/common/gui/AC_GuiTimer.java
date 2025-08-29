@@ -89,9 +89,10 @@ public class AC_GuiTimer extends Screen {
             String stateMsg = timer.active ? "State: Active" : "State: Inactive";
             this.drawString(font, stateMsg, 4, 164, textColor);
 
+            var fmt = TickTime.FULL_TIME_FORMAT;
             String timeMsg = timer.ticksDelay > 0
-                ? "Delay: " + this.tickFormat.format(new TickTime(timer.ticksDelay))
-                : "Time: " + this.tickFormat.format(new TickTime(timer.ticks));
+                ? "Delay: " + fmt.format(new TickTime(timer.ticksDelay))
+                : "Time: " + fmt.format(new TickTime(timer.ticks));
             this.drawString(font, timeMsg, 4, 184, textColor);
         }
 

@@ -12,13 +12,18 @@ public record TickTime(long ticks) {
 
     public static final int TICKS_PER_SECOND = 20;
 
+    public static final TickFormat FULL_TIME_FORMAT;
     public static final TickFormat TIME_FORMAT;
     public static final TickFormat LONG_FORMAT;
 
     static {
-        var numFormat = NumberFormat.getInstance(Locale.ROOT);
+        var numFormat = (NumberFormat) NumberFormat.getInstance(Locale.ROOT).clone();
         numFormat.setGroupingUsed(false);
         numFormat.setMaximumFractionDigits(2);
+
+        var fullFormat = (NumberFormat) numFormat.clone();
+        fullFormat.setMinimumFractionDigits(2);
+        FULL_TIME_FORMAT = new TimeFormat(fullFormat);
 
         TIME_FORMAT = new TimeFormat(numFormat);
         LONG_FORMAT = new LongFormat(numFormat);
