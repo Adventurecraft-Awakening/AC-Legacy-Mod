@@ -1,6 +1,5 @@
 package dev.adventurecraft.awakening.common.gui;
 
-import java.text.NumberFormat;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -45,7 +44,7 @@ public class AC_GuiCamera extends Screen {
         this.timerText = new AC_ValueBox<>(
             new IntRect(80, 46, 70, 16),
             Property.of(this.camera::getTime, timeSetter).map(TickTime::fromSeconds, TickTime::seconds),
-            new TickTime.TimeFormat(NumberFormat.getInstance())
+            TickTime.TIME_FORMAT
         );
     }
 

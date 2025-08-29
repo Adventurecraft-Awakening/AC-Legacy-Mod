@@ -13,7 +13,6 @@ import net.minecraft.client.gui.components.OptionButton;
 import net.minecraft.client.gui.screens.Screen;
 
 import java.text.Format;
-import java.text.NumberFormat;
 
 public class AC_GuiTimer extends Screen {
 
@@ -43,26 +42,23 @@ public class AC_GuiTimer extends Screen {
         this.buttons.add(new OptionButton(0, 4, 40, "Use Current Selection"));
         this.buttons.add(new OptionButton(1, 4, 60, getTypeMsg(this.timer)));
 
-        this.tickFormat = new TickTime.TimeFormat(NumberFormat.getInstance());
+        this.tickFormat = TickTime.TIME_FORMAT;
 
         AC_TileEntityTimer timer = this.timer;
         this.delayTimeText = new AC_ValueBox<>(
             new IntRect(80, 81, 70, 16),
             Property.of(timer::getTimeDelay, timer::setTimeDelay).map(TickTime::new, TickTime::ticks32),
             this.tickFormat
-            //String.format("%.2f", TimeUtil.ticksToSeconds(this.timer.getTimeDelay()))
         );
         this.activeTimeText = new AC_ValueBox<>(
             new IntRect(80, 101, 70, 16),
             Property.of(timer::getTimeActive, timer::setTimeActive).map(TickTime::new, TickTime::ticks32),
             this.tickFormat
-            //String.format("%.2f", TimeUtil.ticksToSeconds(this.timer.getTimeActive()))
         );
         this.inactiveTimeText = new AC_ValueBox<>(
             new IntRect(80, 121, 70, 16),
             Property.of(timer::getTimeInactive, timer::setTimeInactive).map(TickTime::new, TickTime::ticks32),
             this.tickFormat
-            //String.format("%.2f", TimeUtil.ticksToSeconds(this.timer.getTimeInactive()))
         );
     }
 

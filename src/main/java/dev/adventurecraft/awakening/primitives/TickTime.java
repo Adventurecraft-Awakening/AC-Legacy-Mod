@@ -6,10 +6,23 @@ import java.text.FieldPosition;
 import java.text.Format;
 import java.text.NumberFormat;
 import java.text.ParsePosition;
+import java.util.Locale;
 
 public record TickTime(long ticks) {
 
     public static final int TICKS_PER_SECOND = 20;
+
+    public static final Format TIME_FORMAT;
+    public static final Format LONG_FORMAT;
+
+    static {
+        var numFormat = NumberFormat.getInstance(Locale.ROOT);
+        numFormat.setGroupingUsed(false);
+        numFormat.setMaximumFractionDigits(2);
+
+        TIME_FORMAT = new TimeFormat(numFormat);
+        LONG_FORMAT = new LongFormat(numFormat);
+    }
 
     public float seconds() {
         return ticks / (float) TICKS_PER_SECOND;
