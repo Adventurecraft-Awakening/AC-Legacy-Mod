@@ -90,8 +90,8 @@ public class AC_GuiTimer extends Screen {
             this.drawString(font, stateMsg, 4, 164, textColor);
 
             String timeMsg = timer.ticksDelay > 0
-                ? "Delay: " + this.tickFormat.format(timer.ticksDelay)
-                : "Time: " + this.tickFormat.format(timer.ticks);
+                ? "Delay: " + this.tickFormat.format(new TickTime(timer.ticksDelay))
+                : "Time: " + this.tickFormat.format(new TickTime(timer.ticks));
             this.drawString(font, timeMsg, 4, 184, textColor);
         }
 
