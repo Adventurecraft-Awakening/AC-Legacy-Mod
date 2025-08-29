@@ -13,6 +13,8 @@ import net.minecraft.client.gui.components.OptionButton;
 import net.minecraft.client.gui.screens.Screen;
 
 import java.text.Format;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class AC_GuiTimer extends Screen {
 
@@ -37,6 +39,11 @@ public class AC_GuiTimer extends Screen {
         return timer.resetOnTrigger ? "Reset Target" : "Trigger Target";
     }
 
+    private AC_ValueBox<TickTime> tickProperty(IntRect rect, Supplier<Integer> getter, Consumer<Integer> setter) {
+        var property = Property.of(getter, setter).map(TickTime::new, TickTime::ticks32);
+        return new AC_ValueBox<>(rect, property, this.tickFormat);
+    }
+
     public @Override void init() {
         this.buttons.clear();
         this.buttons.add(new OptionButton(0, 4, 40, "Use Current Selection"));
@@ -44,22 +51,14 @@ public class AC_GuiTimer extends Screen {
 
         this.tickFormat = TickTime.TIME_FORMAT;
 
-        AC_TileEntityTimer timer = this.timer;
-        this.delayTimeText = new AC_ValueBox<>(
-            new IntRect(80, 81, 70, 16),
-            Property.of(timer::getTimeDelay, timer::setTimeDelay).map(TickTime::new, TickTime::ticks32),
-            this.tickFormat
-        );
-        this.activeTimeText = new AC_ValueBox<>(
-            new IntRect(80, 101, 70, 16),
-            Property.of(timer::getTimeActive, timer::setTimeActive).map(TickTime::new, TickTime::ticks32),
-            this.tickFormat
-        );
-        this.inactiveTimeText = new AC_ValueBox<>(
-            new IntRect(80, 121, 70, 16),
-            Property.of(timer::getTimeInactive, timer::setTimeInactive).map(TickTime::new, TickTime::ticks32),
-            this.tickFormat
-        );
+        int x = 80;
+        int y = 81;
+        int w = 70;
+        int h = 16;
+        AC_TileEntityTimer t = this.timer;
+        this.delayTimeText = this.tickProperty(new IntRect(x, y, w, h), t::getTimeDelay, t::setTimeDelay);
+        this.activeTimeText = this.tickProperty(new IntRect(x, y + 20, w, h), t::getTimeActive, t::setTimeActive);
+        this.inactiveTimeText = this.tickProperty(new IntRect(x, y + 40, w, h), t::getTimeInactive, t::setTimeInactive);
     }
 
     protected @Override void buttonClicked(Button btn) {

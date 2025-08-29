@@ -51,6 +51,10 @@ public class AC_EditBox extends GuiComponent {
     protected void onValueChanged() {
     }
 
+    protected void onSubmit() {
+        this.setActive(false);
+    }
+
     public CharSequence getValueSpan() {
         return this.value;
     }
@@ -124,6 +128,11 @@ public class AC_EditBox extends GuiComponent {
         boolean ctrlDown = Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL);
         boolean metaDown = Keyboard.isKeyDown(Keyboard.KEY_LMETA) || Keyboard.isKeyDown(Keyboard.KEY_RMETA);
         boolean shiftDown = Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT);
+
+        if (key == Keyboard.KEY_RETURN) {
+            this.onSubmit();
+            return;
+        }
 
         EditSelection sel = this.selection;
         if (sel != null && (key == Keyboard.KEY_LEFT || key == Keyboard.KEY_RIGHT)) {
@@ -224,7 +233,10 @@ public class AC_EditBox extends GuiComponent {
             }
         }
         else {
-            this.selection = null;
+            if (this.selection != null) {
+                this.selection = null;
+                this.onSubmit();
+            }
         }
     }
 
