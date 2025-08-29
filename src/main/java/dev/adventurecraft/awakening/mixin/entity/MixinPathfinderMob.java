@@ -177,7 +177,7 @@ public abstract class MixinPathfinderMob extends MixinMob implements ExPathfinde
         var customTag = exTag.findCompound("custom");
         if (customTag.isPresent()) {
             for (Tag tags : (Collection<Tag>) customTag.get().getTags()) {
-                this.customData.put(tags.getType(), TagUtil.tagToObject(tags));
+                this.customData.put(tags.getType(), TagUtil.unwrap(tags));
             }
         }
     }
@@ -191,14 +191,11 @@ public abstract class MixinPathfinderMob extends MixinMob implements ExPathfinde
         exTag.findBool("canForgetTargetRandomly").ifPresent(this::setCanForgetTargetRandomly);
 
         if (!this.customData.isEmpty()) {
-            var customCompoundTag = new CompoundTag();
+            var customTag = new CompoundTag();
             this.customData.forEach((key, object) -> {
-                Tag tagFromPrimitive = TagUtil.wrapPrimitive(object);
-                if (tagFromPrimitive != null) {
-                    customCompoundTag.putTag(key, TagUtil.wrapPrimitive(object));
-                }
+                customTag.putTag(key, TagUtil.wrap(object));
             });
-            tag.putCompoundTag("custom", customCompoundTag);
+            tag.putCompoundTag("custom", customTag);
         }
     }
 

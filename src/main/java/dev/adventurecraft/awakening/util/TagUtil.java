@@ -50,12 +50,13 @@ public final class TagUtil {
             case Long l -> Tags.TAG_LONG;
             case Float f -> Tags.TAG_FLOAT;
             case Double d -> Tags.TAG_DOUBLE;
+            case String st -> Tags.TAG_STRING;
             case Tag tag -> tag.getId();
             default -> throwInvalidType(item);
         };
     }
 
-    public static Tag wrapPrimitive(Object primitive) {
+    public static Tag wrap(Object primitive) {
         return switch (primitive) {
             case Byte b -> new ByteTag(b);
             case Short s -> new ShortTag(s);
@@ -71,7 +72,7 @@ public final class TagUtil {
         };
     }
 
-    public static Object tagToObject(Tag tag) {
+    public static Object unwrap(Tag tag) {
         return switch (tag) {
             //case EndTag endTag -> null;
             case ByteTag byteTag -> byteTag.data;

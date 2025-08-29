@@ -93,7 +93,7 @@ public abstract class MixinListTag extends MixinTag implements ExListTag {
      */
     @Unique
     private Tag convertAndGet(int index) {
-        var tags = this.list.stream().map(TagUtil::wrapPrimitive).collect(Collectors.toList());
+        var tags = this.list.stream().map(TagUtil::wrap).collect(Collectors.toList());
         this.list = tags;
         return tags.get(index);
     }
