@@ -49,9 +49,8 @@ public class AC_BlockMobSpawner extends TileEntityTile implements AC_ITriggerDeb
             var entity = (AC_TileEntityMobSpawner) world.getTileEntity(x, y, z);
             AC_GuiMobSpawner.showUI(entity);
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     @Override
