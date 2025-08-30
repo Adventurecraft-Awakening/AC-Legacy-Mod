@@ -468,7 +468,7 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
 
             int freeHeight = maxChatHeight - chatHeight;
             int freeLines = freeHeight / lineHeight;
-            if (freeLines == 0) {
+            if (freeLines <= 0) {
                 break;
             }
 
@@ -506,11 +506,15 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
 
             int freeHeight = maxChatHeight - stateHeight;
             int freeLines = freeHeight / lineHeight;
-            if (freeLines == 0) {
+            if (freeLines <= 0) {
                 break;
             }
 
-            int usedLines = Math.min(freeLines, message.lines.size());
+            var lines = message.lines;
+            int totalLines = lines.size();
+            int usedLines = Math.min(freeLines, totalLines);
+            int startLine = totalLines - usedLines;
+
             int msgHeight = usedLines * lineHeight;
             int y = chatY - stateHeight - msgHeight;
 
@@ -520,17 +524,14 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
             textState.setShadowToColor();
             textState.resetFormat();
 
-            int totalLines = message.lines.size();
-            int startLine = totalLines - usedLines;
-
             // Apply formatting of skipped lines.
             for (int i = 0; i < startLine; i++) {
-                var line = message.lines.get(i);
+                var line = lines.get(i);
                 textState.formatText(text, line.start(), line.end());
             }
 
             for (int i = startLine; i < totalLines; i++) {
-                var line = message.lines.get(i);
+                var line = lines.get(i);
                 textState.drawText(text, line.start(), line.end(), x, y);
                 y += lineHeight;
             }
