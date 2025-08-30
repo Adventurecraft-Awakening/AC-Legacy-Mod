@@ -15,32 +15,32 @@ public class ScriptSound {
         this.soundMgr = engine;
     }
 
-    public void playSoundUI(String var1) {
-        this.soundMgr.playUI(var1.toLowerCase(), 1.0F, 1.0F);
+    public void playSoundUI(String fileName) {
+        this.soundMgr.playUI(fileName.toLowerCase(), 1.0F, 1.0F);
     }
 
-    public void playSoundUI(String var1, float var2, float var3) {
-        this.soundMgr.playUI(var1.toLowerCase(), var2, var3);
+    public void playSoundUI(String fileName, float volume, float pitch) {
+        this.soundMgr.playUI(fileName.toLowerCase(), volume, pitch);
     }
 
-    public void playSound3D(String var1, float var2, float var3, float var4) {
-        this.soundMgr.play(var1.toLowerCase(), var2, var3, var4, 1.0F, 1.0F);
+    public void playSound3D(String fileName, float x, float y, float z) {
+        this.soundMgr.play(fileName.toLowerCase(), x, y, z, 1.0F, 1.0F);
     }
 
-    public void playSound3D(String var1, float var2, float var3, float var4, float var5, float var6) {
-        this.soundMgr.play(var1.toLowerCase(), var2, var3, var4, var5, var6);
+    public void playSound3D(String fileName, float x, float y, float z, float volume, float pitch) {
+        this.soundMgr.play(fileName.toLowerCase(), x, y, z, volume, pitch);
     }
 
-    public void playMusic(String var1) {
-        playMusic(var1, 0, 0);
+    public void playMusic(String fileName) {
+        playMusic(fileName, 0, 0);
     }
 
     public String getMusic() {
         return ((ExSoundHelper) this.soundMgr).getMusicFromStreaming(this.level);
     }
 
-    public void playMusic(String var1, int var2, int var3) {
-        ((ExSoundHelper) this.soundMgr).playMusicFromStreaming(this.level, var1.toLowerCase(), var2, var3);
+    public void playMusic(String fileName, int fadeIn, int fadeOut) {
+        ((ExSoundHelper) this.soundMgr).playMusicFromStreaming(this.level, fileName.toLowerCase(), fadeIn, fadeOut);
     }
 
     public void stopMusic() {

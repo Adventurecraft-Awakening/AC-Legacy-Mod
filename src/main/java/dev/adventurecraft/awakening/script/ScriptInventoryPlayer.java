@@ -7,102 +7,120 @@ import net.minecraft.world.entity.player.Inventory;
 @SuppressWarnings("unused")
 public class ScriptInventoryPlayer extends ScriptInventory {
 
-    Inventory invPlayer;
+    private Inventory playerInventory;
 
-    ScriptInventoryPlayer(Inventory var1) {
-        super(var1);
-        this.invPlayer = var1;
+    ScriptInventoryPlayer(Inventory inventory) {
+        super(inventory);
+        this.playerInventory = inventory;
     }
 
-    public int getSlotContainingItem(int var1) {
-        int var2 = this.invPlayer.getSlot(var1);
-        if (var2 == -1) {
-            for (int var3 = 36; var3 < 40; ++var3) {
-                ItemInstance var4 = this.invPlayer.getItem(var3);
-                if (var4 != null && var4.id == var1) {
-                    return var3;
-                }
+    /**
+     * Searched in the Item & Armor Slots the desired Item by only the @itemId
+     *
+     * @param itemId Item ID
+     * @return returns the inventory slot (0-35 item slots, 36-39 armor slots), else returns -1 for no item found
+     */
+    public int getSlotContainingItem(int itemId) {
+        //Search Inventory slots 0 - 35
+        int inventorySlot = this.playerInventory.getSlot(itemId);
+        if (inventorySlot == -1) {
+            //Search Armor Slots 36 - 40
+            ExPlayerInventory playerInventory = (ExPlayerInventory) inv;
+            inventorySlot = playerInventory.getArmorSlot(itemId);
+            if (inventorySlot != -1) {
+                inventorySlot += this.playerInventory.items.length; //default length = 36;
             }
         }
-
-        return var2;
+        return inventorySlot;
     }
 
-    public int getSlotContainingItemDamage(int var1, int var2) {
-        for (int var3 = 0; var3 < this.invPlayer.getContainerSize(); ++var3) {
-            ItemInstance var4 = this.invPlayer.getItem(var3);
-            if (var4 != null && var4.id == var1 && var4.getAuxValue() == var2) {
-                return var3;
+    /**
+     * Searched in the Item & Armor Slots the desired Item by its @itemId and @itemDamage
+     *
+     * @param itemId Item ID
+     * @param itemDamage Item Damage Value or Sub Id
+     * @return returns the inventory slot (0-35 item slots, 36-39 armor slots), else returns -1 for no item found
+     */
+    public int getSlotContainingItemDamage(int itemId, int itemDamage) {
+        ExPlayerInventory playerInventory = (ExPlayerInventory) inv;
+
+        //Search Inventory slots 0 - 35
+        int inventorySlot = playerInventory.getSlot(itemId, itemDamage);
+        if (inventorySlot == -1) {
+            //Search Armor Slots 36 - 40
+            inventorySlot = playerInventory.getArmorSlot(itemId, itemDamage);
+            if (inventorySlot != -1) {
+                inventorySlot += this.playerInventory.items.length; //default length = 36;
             }
         }
-
-        return -1;
-    }
-
-    public void setCurrentItem(int var1) {
-        this.invPlayer.grabTexture(var1, false);
+        return inventorySlot; // return -1, if the desired item could'nt be found
     }
 
     public void changeCurrentItem(int var1) {
-        this.invPlayer.swapPaint(var1);
+        this.playerInventory.swapPaint(var1);
     }
 
     public boolean consumeItem(int var1) {
-        return this.invPlayer.removeResource(var1);
+        return this.playerInventory.removeResource(var1);
     }
 
     public boolean consumeItemAmount(int var1, int var2, int var3) {
-        return ((ExPlayerInventory) this.invPlayer).consumeItemAmount(var1, var2, var3);
+        return ((ExPlayerInventory) this.playerInventory).consumeItemAmount(var1, var2, var3);
     }
 
     public int getArmorValue() {
-        return this.invPlayer.getArmorValue();
+        return this.playerInventory.getArmorValue();
     }
 
     public void dropAllItems() {
-        this.invPlayer.dropAll();
+        this.playerInventory.dropAll();
     }
 
     public ScriptItem getCurrentItem() {
-        ItemInstance var1 = this.invPlayer.getSelected();
+        ItemInstance var1 = this.playerInventory.getSelected();
         return var1 != null && var1.id != 0 ? new ScriptItem(var1) : null;
     }
 
+    public void setCurrentItem(int var1) {
+        this.playerInventory.grabTexture(var1, false);
+    }
+
     public ScriptItem getOffhandItem() {
-        ItemInstance var1 = ((ExPlayerInventory) this.invPlayer).getOffhandItemStack();
+        ItemInstance var1 = ((ExPlayerInventory) this.playerInventory).getOffhandItemStack();
         return var1 != null && var1.id != 0 ? new ScriptItem(var1) : null;
     }
 
     public void swapOffhandWithMain() {
-        ((ExPlayerInventory) this.invPlayer).swapOffhandWithMain();
+        ((ExPlayerInventory) this.playerInventory).swapOffhandWithMain();
     }
 
     public void setMainhandSlot(int slot) {
-        if(slot >= 0 && slot <9) {
-            ((ExPlayerInventory) this.invPlayer).setMainhandSlot(slot);
+        if(slot >= 0 && slot < 9) {
+            ((ExPlayerInventory) this.playerInventory).setMainhandSlot(slot);
         }
     }
 
     public void setOffhandSlot(int slot) {
-        if(slot >= 0 && slot <9) {
-            ((ExPlayerInventory) this.invPlayer).setOffhandSlot(slot);
+        if(slot >= 0 && slot < 9) {
+            ((ExPlayerInventory) this.playerInventory).setOffhandSlot(slot);
         }
     }
 
     public boolean addItem(ScriptItem var1) {
-        return this.invPlayer.add(var1.item);
+        return this.playerInventory.add(var1.item);
     }
 
     public ScriptItem getCursorItem() {
-        ItemInstance var1 = this.invPlayer.getCarried();
+        ItemInstance var1 = this.playerInventory.getCarried();
         return var1 != null && var1.id != 0 ? new ScriptItem(var1) : null;
     }
 
     public void setCursorItem(ScriptItem var1) {
         if (var1 == null) {
-            this.invPlayer.setCarried(null);
-        } else {
-            this.invPlayer.setCarried(var1.item);
+            this.playerInventory.setCarried(null);
+        }
+        else {
+            this.playerInventory.setCarried(var1.item);
         }
     }
 }
