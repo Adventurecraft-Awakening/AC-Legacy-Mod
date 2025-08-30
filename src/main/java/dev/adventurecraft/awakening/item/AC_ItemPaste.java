@@ -3,6 +3,7 @@ package dev.adventurecraft.awakening.item;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.world.AC_BlockCopyUtils;
+import dev.adventurecraft.awakening.world.BlockTileEntityRegion;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;
@@ -58,7 +59,7 @@ public class AC_ItemPaste extends Item {
 
         try {
             // Copy blocks from selection (non-destructive)
-            var region = AC_BlockCopyUtils.copyBlocksFromSelection(world, false);
+            BlockTileEntityRegion region = AC_BlockCopyUtils.copyBlocksAndTilesFromSelection(world, false);
 
             // Calculate where to paste based on player's look direction
             Coord pastePosition = AC_BlockCopyUtils.calculatePastePosition();
