@@ -1,74 +1,76 @@
 package dev.adventurecraft.awakening.item;
 
-import dev.adventurecraft.awakening.common.AC_DebugMode;
+import dev.adventurecraft.awakening.ACMod;
+import dev.adventurecraft.awakening.common.Coord;
+import dev.adventurecraft.awakening.world.AC_BlockCopyUtils;
+import dev.adventurecraft.awakening.world.BlockTileEntityRegion;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.ItemInstance;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
 
+/**
+ * The Paste tool allows players to copy and paste block selections in Adventurecraft.
+ * <p>
+ * This item copies all blocks within the current cursor selection and pastes them
+ * at a position determined by the player's look direction and reach distance. The original
+ * blocks remain unchanged (non-destructive copy operation).
+ * <p>
+ * Usage:
+ * - Set a cursor selection using the cursor tool
+ * - Right-click with the paste tool to copy and paste the selection
+ * - The paste location is calculated based on your look direction
+ *
+ * @author Adventurecraft Team
+ */
 public class AC_ItemPaste extends Item {
 
+    /**
+     * Creates a new Paste item with the specified ID.
+     *
+     * @param id The item ID to assign to this paste tool
+     */
     public AC_ItemPaste(int id) {
         super(id);
     }
 
+    /**
+     * Handles right-click usage of the paste tool.
+     * <p>
+     * This method performs a non-destructive copy-paste operation:
+     * 1. Copies all blocks from the current cursor selection
+     * 2. Calculates paste position based on player's look direction
+     * 3. Pastes the copied blocks at the calculated position
+     * <p>
+     * If no cursor selection is set, the operation is silently ignored.
+     *
+     * @param item The item stack being used
+     * @param world The world in which the paste operation occurs
+     * @param player The player using the paste tool
+     * @return The unchanged item stack
+     */
     @Override
     public ItemInstance use(ItemInstance item, Level world, Player player) {
+        // Ensure cursor selection is properly set
         if (!AC_ItemCursor.bothSet) {
             return item;
         }
 
-        int minX = AC_ItemCursor.minX;
-        int minY = AC_ItemCursor.minY;
-        int minZ = AC_ItemCursor.minZ;
-        int maxX = AC_ItemCursor.maxX;
-        int maxY = AC_ItemCursor.maxY;
-        int maxZ = AC_ItemCursor.maxZ;
-        Mob entity = Minecraft.instance.cameraEntity;
-        Vec3 rot = entity.getLookAngle();
-        int width = maxX - minX + 1;
-        int height = maxY - minY + 1;
-        int depth = maxZ - minZ + 1;
-        int[] idArray = new int[width * height * depth];
-        int[] metaArray = new int[width * height * depth];
+        try {
+            // Copy blocks from selection (non-destructive)
+            BlockTileEntityRegion region = AC_BlockCopyUtils.copyBlocksAndTilesFromSelection(world, false);
 
-        for (int x = 0; x < width; ++x) {
-            for (int y = 0; y < height; ++y) {
-                for (int z = 0; z < depth; ++z) {
-                    int id = world.getTile(x + minX, y + minY, z + minZ);
-                    int meta = world.getData(x + minX, y + minY, z + minZ);
-                    int i = depth * (height * x + y) + z;
-                    idArray[i] = id;
-                    metaArray[i] = meta;
-                }
-            }
+            // Calculate where to paste based on player's look direction
+            Coord pastePosition = AC_BlockCopyUtils.calculatePastePosition();
+
+            // Paste the copied blocks
+            AC_BlockCopyUtils.pasteBlockRegion(world, region, pastePosition.x, pastePosition.y, pastePosition.z);
         }
-
-        int baseX = (int) (entity.x + (double) AC_DebugMode.reachDistance * rot.x);
-        int baseY = (int) (entity.y + (double) AC_DebugMode.reachDistance * rot.y);
-        int baseZ = (int) (entity.z + (double) AC_DebugMode.reachDistance * rot.z);
-
-        for (int x = 0; x < width; ++x) {
-            for (int y = 0; y < height; ++y) {
-                for (int z = 0; z < depth; ++z) {
-                    int i = depth * (height * x + y) + z;
-                    int id = idArray[i];
-                    int meta = metaArray[i];
-                    world.setTileAndDataNoUpdate(baseX + x, baseY + y, baseZ + z, id, meta);
-                }
-            }
-        }
-
-        for (int x = 0; x < width; ++x) {
-            for (int y = 0; y < height; ++y) {
-                for (int z = 0; z < depth; ++z) {
-                    int id = idArray[depth * (height * x + y) + z];
-                    world.tileUpdated(baseX + x, baseY + y, baseZ + z, id);
-                }
-            }
+        catch (Exception e) {
+            // Log error but don't crash the game
+            ACMod.LOGGER.error("Failed to paste blocks: ", e);
+            Minecraft.instance.gui.addMessage("Failed to paste blocks: " + e.getMessage());
         }
 
         return item;

@@ -66,6 +66,8 @@ public interface ExWorld {
 
     float getLightValue(int x, int y, int z);
 
+    int getLightUpdateHash(int x, int y, int z);
+
     void cancelBlockUpdate(int x, int y, int z, int var4);
 
     Entity getEntityByID(int id);

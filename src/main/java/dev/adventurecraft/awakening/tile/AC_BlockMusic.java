@@ -38,10 +38,10 @@ public class AC_BlockMusic extends TileEntityTile implements AC_ITriggerDebugBlo
     public void onTriggerActivated(Level world, int x, int y, int z) {
         var entity = (AC_TileEntityMusic) world.getTileEntity(x, y, z);
         var soundHelper = (ExSoundHelper) Minecraft.instance.soundEngine;
-        if (!entity.musicName.equals("")) {
-            soundHelper.playMusicFromStreaming(entity.musicName, entity.fadeOut, entity.fadeIn);
+        if (!entity.musicName.isEmpty()) {
+            soundHelper.playMusicFromStreaming(world, entity.musicName, entity.fadeOut, entity.fadeIn);
         } else {
-            soundHelper.stopMusic();
+            soundHelper.stopMusic(world);
         }
     }
 

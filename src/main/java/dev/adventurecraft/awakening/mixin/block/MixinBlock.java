@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.mixin.block;
 
+import dev.adventurecraft.awakening.extension.block.AC_TexturedBlock;
 import dev.adventurecraft.awakening.tile.AC_BlockColor;
 import dev.adventurecraft.awakening.item.AC_ItemSubtypes;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
@@ -24,86 +25,35 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(Tile.class)
 public abstract class MixinBlock implements ExBlock {
 
-    private int textureNum;
+    private @Unique int textureNum;
+
+    @Shadow @Final public static SoundType SOUND_STONE;
+    @Shadow @Final public static Tile[] tiles;
+    @Shadow @Final public static int[] lightEmission;
+    @Shadow @Final @Mutable public static Tile STONE;
+    @Shadow @Final public static GrassTile GRASS;
+    @Shadow @Final @Mutable public static Tile COBBLESTONE;
+    @Shadow @Final public static Tile FLOWING_WATER;
+    @Shadow @Final public static Tile WATER;
+    @Shadow @Final public static Tile FLOWING_LAVA;
+    @Shadow @Final public static Tile LAVA;
+    @Shadow @Final public static Tile SAND;
+    @Shadow @Final public static TallGrassTile TALL_GRASS;
+
+    @Shadow @Final public int id;
+    @Shadow public double xx0;
+    @Shadow public double yy0;
+    @Shadow public double zz0;
+    @Shadow public double xx1;
+    @Shadow public double yy1;
+    @Shadow public double zz1;
 
     @Shadow
-    @Final
-    public static SoundType SOUND_STONE;
-
-    @Shadow
-    @Final
-    public static Tile[] tiles;
-
-    @Shadow
-    @Final
-    public static int[] lightEmission;
-
-    @Shadow
-    @Final
-    @Mutable
-    public static Tile STONE;
-
-    @Shadow
-    @Final
-    public static GrassTile GRASS;
-
-    @Shadow
-    @Final
-    @Mutable
-    public static Tile COBBLESTONE;
-
-    @Shadow
-    @Final
-    public static Tile FLOWING_WATER;
-
-    @Shadow
-    @Final
-    public static Tile WATER;
-
-    @Shadow
-    @Final
-    public static Tile FLOWING_LAVA;
-
-    @Shadow
-    @Final
-    public static Tile LAVA;
-
-    @Shadow
-    @Final
-    public static Tile SAND;
-
-    @Shadow
-    @Final
-    public static TallGrassTile TALL_GRASS;
-
-    @Shadow
-    @Final
-    public int id;
-
-    @Shadow
-    public double xx0;
-
-    @Shadow
-    public double yy0;
-
-    @Shadow
-    public double zz0;
-
-    @Shadow
-    public double xx1;
-
-    @Shadow
-    public double yy1;
-
-    @Shadow
-    public double zz1;
-
-    @Shadow
-    public abstract int getTexture(int j, int l);
+    public abstract int getTexture(int side, int meta);
 
     @Environment(EnvType.CLIENT)
     @Shadow
-    public abstract int getTexture(LevelSource arg, int i, int j, int k, int l);
+    public abstract int getTexture(LevelSource view, int x, int y, int z, int side);
 
     @Environment(EnvType.CLIENT)
     @Shadow
@@ -123,18 +73,32 @@ public abstract class MixinBlock implements ExBlock {
             value = "FIELD",
             target = "Lnet/minecraft/world/item/Item;items:[Lnet/minecraft/world/item/Item;",
             shift = At.Shift.BEFORE,
-            ordinal = 0))
+            ordinal = 0
+        )
+    )
     private static void changeBlocksAndItems(CallbackInfo ci) {
         tiles[1] = null;
         tiles[4] = null;
 
-        STONE = (new StoneTile(1, 215)).setDestroyTime(1.5F).setExplodeable(10.0F).setSoundType(SOUND_STONE).setDescriptionId("stone");
+        STONE = (new StoneTile(1, 215))
+            .setDestroyTime(1.5F)
+            .setExplodeable(10.0F)
+            .setSoundType(SOUND_STONE)
+            .setDescriptionId("stone");
+
         ((ExBlock) GRASS).setSubTypes(5);
-        COBBLESTONE = (new AC_BlockColor(4, 214, Material.STONE)).setDestroyTime(2.0F).setExplodeable(10.0F).setSoundType(SOUND_STONE).setDescriptionId("stonebrick");
+
+        COBBLESTONE = (new AC_BlockColor(4, 214, Material.STONE))
+            .setDestroyTime(2.0F)
+            .setExplodeable(10.0F)
+            .setSoundType(SOUND_STONE)
+            .setDescriptionId("stonebrick");
+
         FLOWING_WATER.setDestroyTime(0.5F);
         WATER.setDestroyTime(0.5F);
         FLOWING_LAVA.setDestroyTime(0.5F);
         LAVA.setDestroyTime(0.5F);
+
         ((ExBlock) SAND).setSubTypes(4);
 
         Item.items[GRASS.id] = (new AC_ItemSubtypes(GRASS.id - 256)).setDescriptionId("grass");
@@ -196,6 +160,6 @@ public abstract class MixinBlock implements ExBlock {
     @Environment(EnvType.CLIENT)
     @Override
     public long getTextureForSideEx(LevelSource view, int x, int y, int z, int side) {
-        return this.getTexture(view, x, y, z, side);
+        return AC_TexturedBlock.fromTexture(this.getTexture(view, x, y, z, side));
     }
 }

@@ -3,17 +3,16 @@ package dev.adventurecraft.awakening.script;
 import dev.adventurecraft.awakening.extension.client.model.ExCuboid;
 import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.Textures;
 import net.minecraft.world.level.Level;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.vector.Matrix4f;
+import org.lwjgl.util.vector.Vector3f;
 
 import java.util.ArrayList;
-
-import net.minecraft.client.model.geom.ModelPart;
-import org.lwjgl.util.vector.Vector3f;
 
 public abstract class ScriptModelBase {
 
@@ -37,11 +36,11 @@ public abstract class ScriptModelBase {
     public float pitch;
     public float roll;
 
-    public int modes = 0;
-    public float colorRed = 1.0F;
-    public float colorGreen = 1.0F;
-    public float colorBlue = 1.0F;
-    public float colorAlpha = 1.0F;
+    public int colorMode = 0;
+    public float r = 1.0F;
+    public float g = 1.0F;
+    public float b = 1.0F;
+    public float a = 1.0F;
 
     protected int textureWidth = 64;
     protected int textureHeight = 32;
@@ -64,20 +63,21 @@ public abstract class ScriptModelBase {
             return;
         }
         Level world = Minecraft.instance.level;
-        Textures var3 = Minecraft.instance.textures;
+        Textures texMan = Minecraft.instance.textures;
         if (this.texture != null && !this.texture.isEmpty()) {
-            var3.bind(var3.loadTexture(this.texture));
+            texMan.bind(texMan.loadTexture(this.texture));
         }
 
         var localMat = new Matrix4f();
         this.transform(partialTick, localMat);
 
-        switch (this.modes) {
+        switch (this.colorMode) {
             case 1:
                 // using the position of the attached entity
-                if (this.attachedTo != null) {
+                if (this.attachedTo != null && this.attachedTo.entity != null) {
                     this.setBrightness(this.attachedTo.entity.getBrightness(partialTick));
                 }
+                //if the entity DON'T exist it's like setting it to mode 2
                 break;
             case 2:
                 // usage for custom RGB Values
@@ -85,44 +85,51 @@ public abstract class ScriptModelBase {
             case 3:
                 // use the lightning value of the attached model
                 if (this.modelAttachment != null) {
-                    this.colorRed = this.modelAttachment.colorRed;
-                    this.colorGreen = this.modelAttachment.colorGreen;
-                    this.colorBlue = this.modelAttachment.colorBlue;
+                    this.r = this.modelAttachment.r;
+                    this.g = this.modelAttachment.g;
+                    this.b = this.modelAttachment.b;
                 }
                 break;
             default:
                 // Default lightning values
                 var vr = Matrix4f.transform(localMat, new Vector3f(), new Vector3f());
-                setBrightness(world.getBrightness(Math.round(vr.x), Math.round(vr.y), Math.round(vr.z)));
+                setBrightness(world.getBrightness(
+                    Math.round(vr.x + 0.5F),
+                    Math.round(vr.y + 0.5F),
+                    Math.round(vr.z + 0.5F)
+                ));
                 break;
         }
 
-        float r = Math.min(this.colorRed, 1.0F);
-        float g = Math.min(this.colorGreen, 1.0F);
-        float b = Math.min(this.colorBlue, 1.0F);
-        if (this.colorAlpha < 1.0) {
+        if (this.a < 1.0) {
             GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
             GL11.glEnable(GL11.GL_BLEND);
-            GL11.glColor4f(r, g, b, Math.min(this.colorAlpha, 1.0F));
+            GL11.glColor4f(r, g, b, Math.min(this.a, 1.0F));
         } else {
             GL11.glColor3f(r, g, b);
         }
 
-        var cuboidMat = Matrix4f.mul(transform, localMat, localMat);
+        Matrix4f.mul(transform, localMat, localMat);
         try (var stack = MemoryStack.stackPush()) {
             var matBuf = stack.mallocFloat(16);
 
+            var mat = new Matrix4f();
             for (ModelPart cuboid : this.boxes) {
-                var mat = new Matrix4f(cuboidMat);
-                ((ExCuboid) cuboid).translateTo(mat);
+                var exCuboid = (ExCuboid) cuboid;
+                if (!exCuboid.canRender()) {
+                    continue;
+                }
+
+                mat.load(localMat);
+                exCuboid.translateTo(mat);
 
                 mat.store(matBuf);
                 GL11.glLoadMatrixf(matBuf.flip());
-                ((ExCuboid) cuboid).render();
+                exCuboid.render();
             }
         }
 
-        if (this.colorAlpha < 1.0) {
+        if (this.a < 1.0) {
             GL11.glDisable(GL11.GL_BLEND);
         }
     }
@@ -146,31 +153,109 @@ public abstract class ScriptModelBase {
     }
 
     public void setBrightness(float brightness) {
-        this.colorRed = this.colorGreen = this.colorBlue = brightness;
+        setRGB(brightness, brightness, brightness);
+    }
+
+    public void setBrightness(int brightness) {
+        this.setBrightness(Math.max(brightness, 255) / 256.0F);
+    }
+
+    public void setRGB(float r, float g, float b) {
+        this.r = r;
+        this.g = g;
+        this.b = b;
+    }
+
+    public void setRGBA(float r, float g, float b, float a) {
+        this.r = r;
+        this.g = g;
+        this.b = b;
+        this.a = a;
     }
 
     public void setPosition(double x, double y, double z) {
-        this.prevX = this.x = x;
-        this.prevY = this.y = y;
-        this.prevZ = this.z = z;
+        this.moveTo(x, y, z);
+        this.prevX = this.x;
+        this.prevY = this.y;
+        this.prevZ = this.z;
     }
 
     public void setPosition(ScriptVec3 vec) {
-        this.prevX = this.x = vec.x;
-        this.prevY = this.y = vec.y;
-        this.prevZ = this.z = vec.z;
+        this.setPosition(vec.x, vec.y, vec.z);
     }
 
     public ScriptVec3 getPosition() {
         return new ScriptVec3(x, y, z);
     }
 
-    public void setAlpha(float alpha) {
-        this.colorAlpha = alpha;
+    public void moveTo(double x, double y, double z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+
+    public void moveBy(double x, double y, double z) {
+        float yaw = MathF.toRadians(this.yaw);
+        float pitch = MathF.toRadians(this.pitch);
+        float roll = MathF.toRadians(this.roll);
+
+        float sinYaw = MathF.sin(yaw);
+        float cosYaw = MathF.cos(yaw);
+        double tempY = x * cosYaw + z * sinYaw;
+        z = z * cosYaw - x * sinYaw;
+        x = tempY;
+
+        float sinPitch = MathF.sin(pitch);
+        float cosPitch = MathF.cos(pitch);
+        tempY = z * cosPitch + y * sinPitch;
+        y = y * cosPitch - z * sinPitch;
+        z = tempY;
+
+        float sinRoll = MathF.sin(roll);
+        float cosRoll = MathF.cos(roll);
+        tempY = y * cosRoll + x * sinRoll;
+        x = x * cosRoll - y * sinRoll;
+
+        x += this.x;
+        tempY += this.y;
+        z += this.z;
+        this.moveTo(x, tempY, z);
+    }
+
+    public void rotateTo(float yaw, float pitch, float roll) {
+        this.yaw = yaw;
+        this.pitch = pitch;
+        this.roll = roll;
+    }
+
+    public void rotateBy(float yaw, float pitch, float roll) {
+        yaw += this.yaw;
+        pitch += this.pitch;
+        roll += this.roll;
+        this.rotateTo(yaw, pitch, roll);
+    }
+
+    public void setRotation(float yaw, float pitch, float roll) {
+        this.rotateTo(yaw, pitch, roll);
+        this.prevYaw = this.yaw;
+        this.prevPitch = this.pitch;
+        this.prevRoll = this.roll;
+    }
+
+    public void setRotation(ScriptVec3 vec) {
+        this.setRotation((float) vec.x, (float) vec.y, (float) vec.z);
+    }
+
+    public ScriptVec3 getRotation() {
+        return new ScriptVec3(this.yaw, this.pitch, this.roll);
     }
 
     public float getAlpha() {
-        return this.colorAlpha;
+        return this.a;
+    }
+
+    public void setAlpha(float alpha) {
+        this.a = alpha;
     }
 
     protected static final ArrayList<ScriptModelBase> activeModels = new ArrayList<>();

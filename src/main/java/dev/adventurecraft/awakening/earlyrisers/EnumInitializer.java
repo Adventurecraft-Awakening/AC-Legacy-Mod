@@ -21,6 +21,7 @@ public class EnumInitializer implements Runnable {
         addOptionEnum(type, "CHAT_MESSAGE_BUFFER_LIMIT", "options.ac.chatMessageBufferLimit", true, false);
         addOptionEnum(type, "PARTICLE_LIMIT", "options.ac.detail.particleLimit", true, false);
         addOptionEnum(type, "ALLOW_JAVA_IN_SCRIPT", "options.ac.world.allowJavaInScript", false, true);
+        addOptionEnum(type, "CHAT_WIDTH", "options.ac.chatWidth", true, false);
     }
 
     private void addOptifineOptions(String type) {

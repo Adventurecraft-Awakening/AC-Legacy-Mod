@@ -4,6 +4,7 @@ import dev.adventurecraft.awakening.common.TextRendererState;
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import dev.adventurecraft.awakening.image.Rgba;
+import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.Tesselator;
@@ -42,15 +43,15 @@ public class ScriptUILabel extends UIElement {
     }
 
     @Override
-    public void render(Font textRenderer, Textures textureManager, float deltaTime) {
-        int alpha = Math.max(Math.min((int) (this.alpha * 255.0F), 255), 0);
+    public void render(Font font, Textures textures, float deltaTime) {
+        int alpha = MathF.clamp((int) (this.alpha * 255.0F), 0, 255);
         if (alpha == 0) {
             return;
         }
 
-        int red = Math.max(Math.min((int) (this.red * 255.0F), 255), 0);
-        int green = Math.max(Math.min((int) (this.green * 255.0F), 255), 0);
-        int blue = Math.max(Math.min((int) (this.blue * 255.0F), 255), 0);
+        int red = MathF.clamp((int) (this.red * 255.0F), 0, 255);
+        int green = MathF.clamp((int) (this.green * 255.0F), 0, 255);
+        int blue = MathF.clamp((int) (this.blue * 255.0F), 0, 255);
         int color = Rgba.fromRgba8(red, green, blue, alpha);
 
         float x = this.getXAtTime(deltaTime);
@@ -58,26 +59,25 @@ public class ScriptUILabel extends UIElement {
         String[] lines = this.textLines;
         int shadowColor = this.shadow ? ExTextRenderer.getShadowColor(color) : 0;
 
-        TextRendererState state = ((ExTextRenderer) textRenderer).createState();
+        TextRendererState state = ((ExTextRenderer) font).createState();
         state.setShadowOffset(1, 1);
 
-        var ts = Tesselator.instance;
         state.setColor(color);
         state.setShadow(shadowColor);
 
-        state.begin(ts);
+        state.begin(Tesselator.instance);
         for (String line : lines) {
             float lineX = x;
             if (this.centered) {
-                lineX = x - (float) (textRenderer.width(line) / 2);
+                lineX = x - (float) (state.measureText(line).width() / 2);
             }
 
-            state.drawText(ts, line, lineX, y);
+            state.drawText(line, lineX, y);
             state.resetFormat();
 
             y += 9.0F;
         }
-        state.end(ts);
+        state.end();
     }
 
     public String getText() {

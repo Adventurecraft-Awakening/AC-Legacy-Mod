@@ -3,8 +3,6 @@ package dev.adventurecraft.awakening.tile;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.common.gui.AC_GuiTimer;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import dev.adventurecraft.awakening.item.AC_ItemCursor;
-import dev.adventurecraft.awakening.tile.entity.AC_TileEntityMinMax;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTimer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -32,24 +30,6 @@ public class AC_BlockTimer extends TileEntityTile implements AC_ITriggerDebugBlo
     @Override
     public AABB getAABB(Level world, int x, int y, int z) {
         return null;
-    }
-
-    public void setTriggerToSelection(Level world, int x, int y, int z) {
-        var entity = (AC_TileEntityMinMax) world.getTileEntity(x, y, z);
-        if (entity.minX != AC_ItemCursor.minX ||
-            entity.minY != AC_ItemCursor.minY ||
-            entity.minZ != AC_ItemCursor.minZ ||
-            entity.maxX != AC_ItemCursor.maxX ||
-            entity.maxY != AC_ItemCursor.maxY ||
-            entity.maxZ != AC_ItemCursor.maxZ) {
-
-            entity.minX = AC_ItemCursor.minX;
-            entity.minY = AC_ItemCursor.minY;
-            entity.minZ = AC_ItemCursor.minZ;
-            entity.maxX = AC_ItemCursor.maxX;
-            entity.maxY = AC_ItemCursor.maxY;
-            entity.maxZ = AC_ItemCursor.maxZ;
-        }
     }
 
     @Override

@@ -20,11 +20,7 @@ public abstract class MixinSingleplayerInteractionManager extends MixinClientInt
     @Overwrite
     public boolean destroyBlock(int x, int y, int z, int side) {
         AC_UndoStack undoStack = ((ExWorld) this.minecraft.level).getUndoStack();
-        boolean hasRecording = false;
-        if (!undoStack.isRecording()) {
-            undoStack.startRecording();
-            hasRecording = true;
-        }
+        boolean hasRecording = undoStack.startRecording();
         boolean broken = false;
 
         int destroyWidth = this.getDestroyExtraWidth();

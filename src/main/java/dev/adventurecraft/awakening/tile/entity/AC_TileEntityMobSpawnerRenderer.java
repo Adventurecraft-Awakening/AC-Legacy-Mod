@@ -10,14 +10,17 @@ import org.lwjgl.opengl.GL11;
 
 public class AC_TileEntityMobSpawnerRenderer extends TileEntityRenderer {
 
-    public void render(AC_TileEntityMobSpawner entity, double x, double y, double z, float var8) {
+    public void render(AC_TileEntityMobSpawner entity, double x, double y, double z, float tickTime) {
         if (!AC_DebugMode.active) {
             return;
         }
-        if(!entity.showDebugInfo){
+        if (!entity.showDebugInfo) {
             return;
         }
+        this.renderBounds(entity, x, y, z);
+    }
 
+    private void renderBounds(AC_TileEntityMobSpawner entity, double x, double y, double z) {
         GL11.glPushMatrix();
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
@@ -31,15 +34,14 @@ public class AC_TileEntityMobSpawnerRenderer extends TileEntityRenderer {
         for (int i = 0; i < 8; i++) {
             Coord min = entity.minVec[i];
             Coord max = entity.maxVec[i];
-
-            for (int bX = min.x; bX <= max.x; ++bX) {
-                for (int bY = min.y; bY <= max.y; ++bY) {
-                    for (int bZ = min.z; bZ <= max.z; ++bZ) {
+            for (int bX = min.x; bX <= max.x; bX++) {
+                for (int bY = min.y; bY <= max.y; bY++) {
+                    for (int bZ = min.z; bZ <= max.z; bZ++) {
                         Tile block = Tile.tiles[entity.level.getTile(bX, bY, bZ)];
                         if (block != null && ((ExBlock) block).canBeTriggered()) {
                             GL11.glColor3f(0.0F, 0.0F, 0.0F);
                             GL11.glVertex3f(0.0F, 0.0F, 0.0F);
-                            GL11.glColor3f(0.105F * i, (float) 1 /i, 0.486F);
+                            GL11.glColor3f(0.105F * i, 1f / i, 0.486F);
                             GL11.glVertex3f((float) (bX - entity.x), (float) (bY - entity.y), (float) (bZ - entity.z));
                         }
                     }
@@ -55,8 +57,7 @@ public class AC_TileEntityMobSpawnerRenderer extends TileEntityRenderer {
         GL11.glPopMatrix();
     }
 
-    @Override
-    public void render(TileEntity var1, double var2, double var4, double var6, float var8) {
-        this.render((AC_TileEntityMobSpawner) var1, var2, var4, var6, var8);
+    public @Override void render(TileEntity entity, double x, double y, double z, float tickTime) {
+        this.render((AC_TileEntityMobSpawner) entity, x, y, z, tickTime);
     }
 }

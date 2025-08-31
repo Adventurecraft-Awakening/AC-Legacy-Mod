@@ -35,11 +35,11 @@ public class AC_BlockMessage extends TileEntityTile implements AC_ITriggerDebugB
     @Override
     public void onTriggerActivated(Level world, int x, int y, int z) {
         var entity = (AC_TileEntityMessage) world.getTileEntity(x, y, z);
-        if (!entity.message.equals("")) {
+        if (!entity.message.isEmpty()) {
             Minecraft.instance.gui.addMessage(entity.message);
         }
 
-        if (!entity.sound.equals("")) {
+        if (!entity.sound.isEmpty()) {
             world.playSound(x + 0.5D, y + 0.5D, z + 0.5D, entity.sound, 1.0F, 1.0F);
         }
     }

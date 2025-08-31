@@ -4,6 +4,7 @@ import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.extension.container.ExPlayerContainer;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
+import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.item.AC_IItemLight;
 import dev.adventurecraft.awakening.item.AC_Items;
@@ -57,7 +58,6 @@ public abstract class MixinPlayerEntity extends MixinMob implements ExPlayerEnti
     private boolean swappedItems;
     private int numHeartPieces;
     public String cloakTexture;
-    private boolean allowsCrafting;
 
     @Shadow
     public abstract ItemInstance getSelectedItem();
@@ -228,12 +228,16 @@ public abstract class MixinPlayerEntity extends MixinMob implements ExPlayerEnti
     @Override
     protected void ac$readAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
         super.ac$readAdditionalSaveData(tag, ci);
+        var exTag = (ExCompoundTag) tag;
 
         this.numHeartPieces = tag.getInt("NumHeartPieces");
         if (this.maxHealth < 12) {
             this.health = this.health * 12 / this.maxHealth;
             this.maxHealth = 12;
         }
+
+        this.inventory.selected = exTag.findInt("MainHandSlot").orElse(0);
+        ((ExPlayerInventory) this.inventory).setOffhandSlot(exTag.findInt("OffHandSlot").orElse(1));
     }
 
     @Override
@@ -241,6 +245,9 @@ public abstract class MixinPlayerEntity extends MixinMob implements ExPlayerEnti
         super.ac$addAdditionalSaveData(tag, ci);
 
         tag.putInt("NumHeartPieces", this.numHeartPieces);
+
+        tag.putInt("MainHandSlot", this.inventory.selected);
+        tag.putInt("OffHandSlot", ((ExPlayerInventory) this.inventory).getOffhandSlot());
     }
 
     @Redirect(

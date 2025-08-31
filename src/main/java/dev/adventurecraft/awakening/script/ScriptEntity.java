@@ -1,9 +1,9 @@
 package dev.adventurecraft.awakening.script;
 
+import dev.adventurecraft.awakening.common.AC_UtilBullet;
 import dev.adventurecraft.awakening.entity.AC_EntityLivingScript;
 import dev.adventurecraft.awakening.entity.AC_EntityNPC;
 import dev.adventurecraft.awakening.entity.AC_Particle;
-import dev.adventurecraft.awakening.common.AC_UtilBullet;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.extension.entity.ExEntityRegistry;
 import net.minecraft.world.entity.Entity;
@@ -35,20 +35,22 @@ public class ScriptEntity {
     }
 
     public static ScriptEntity getEntityClass(Entity entity) {
-        if (entity == null) return null;
-        if (entity instanceof Player e) return new ScriptEntityPlayer(e);
-        if (entity instanceof Monster e) return new ScriptEntityMob(e);
-        if (entity instanceof Wolf e) return new ScriptEntityWolf(e);
-        if (entity instanceof PathfinderMob e) return new ScriptEntityCreature(e);
-        if (entity instanceof FlyingMob e) return new ScriptEntityFlying(e);
-        if (entity instanceof AC_EntityNPC e) return new ScriptEntityNPC(e);
-        if (entity instanceof AC_EntityLivingScript e) return new ScriptEntityLivingScript(e);
-        if (entity instanceof Slime e) return new ScriptEntitySlime(e);
-        if (entity instanceof Mob e) return new ScriptEntityLiving(e);
-        if (entity instanceof Arrow e) return new ScriptEntityArrow(e);
-        if (entity instanceof ItemEntity e) return new ScriptEntityItem(e);
-        if (entity instanceof AC_Particle e) return new ScriptParticleEntity(e);
-        return new ScriptEntity(entity);
+        return switch (entity) {
+            case null -> null;
+            case Player e -> new ScriptEntityPlayer(e);
+            case Monster e -> new ScriptEntityMob(e);
+            case Wolf e -> new ScriptEntityWolf(e);
+            case PathfinderMob e -> new ScriptEntityCreature(e);
+            case FlyingMob e -> new ScriptEntityFlying(e);
+            case AC_EntityNPC e -> new ScriptEntityNPC(e);
+            case AC_EntityLivingScript e -> new ScriptEntityLivingScript(e);
+            case Slime e -> new ScriptEntitySlime(e);
+            case Mob e -> new ScriptEntityLiving(e);
+            case Arrow e -> new ScriptEntityArrow(e);
+            case ItemEntity e -> new ScriptEntityItem(e);
+            case AC_Particle e -> new ScriptParticleEntity(e);
+            default -> new ScriptEntity(entity);
+        };
     }
 
     public void setCanGetFallDamage(boolean arg) {
@@ -292,7 +294,15 @@ public class ScriptEntity {
     }
 
     public boolean getIsFlying() {
-        return ((ExEntity) this.entity).handleFlying();
+        return ((ExEntity) this.entity).getIsFlying();
+    }
+
+    public void setNoPhysics(boolean value) {
+        ((ExEntity) this.entity).setNoPhysics(value);
+    }
+
+    public boolean getNoPhysics() {
+        return ((ExEntity) this.entity).getNoPhysics();
     }
 
     public boolean getOnGround() {
@@ -325,22 +335,21 @@ public class ScriptEntity {
         this.entity.heightOffset = value;
     }
 
-
-    public void setCustomTagString(String key, String value) {
-        ((ExEntity) this.entity).setCustomTagString(key, value);
+    public void setTag(String key, Object value) {
+        ((ExEntity) this.entity).setTag(key, value);
     }
 
-    public boolean hasCustomTagString(String key) {
-        return ((ExEntity) this.entity).hasCustomTagString(key);
-
+    public boolean hasTag(String key) {
+        return ((ExEntity) this.entity).hasTag(key);
     }
 
-    public String getOrCreateCustomTagString(String key, String defaultValue) {
-        return ((ExEntity) this.entity).getOrCreateCustomTagString(key, defaultValue);
+    public Object getOrSetTag(String key, Object defaultValue) {
+        return ((ExEntity) this.entity).getOrSetTag(key, defaultValue);
     }
 
-    public String getCustomTagString(String key) {
-        return ((ExEntity) this.entity).getCustomTagString(key);
+    public Object getTag(String key) {
+        return ((ExEntity) this.entity).getTag(key);
     }
+
 
 }

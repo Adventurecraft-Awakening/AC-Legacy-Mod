@@ -1,15 +1,20 @@
 package dev.adventurecraft.awakening.mixin;
 
-import dev.adventurecraft.awakening.common.AC_CoordBlock;
-import dev.adventurecraft.awakening.common.AC_LightCache;
+import dev.adventurecraft.awakening.ACMod;
+import dev.adventurecraft.awakening.client.gl.GLDevice;
+import dev.adventurecraft.awakening.client.renderer.ChunkMesh;
+import dev.adventurecraft.awakening.client.rendering.MemoryTesselator;
+import dev.adventurecraft.awakening.collections.IdentityHashSet;
 import dev.adventurecraft.awakening.extension.ExClass_66;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
+import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
+import dev.adventurecraft.awakening.extension.client.render.block.ExBlockRenderer;
 import dev.adventurecraft.awakening.extension.client.util.ExCameraView;
+import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
+import dev.adventurecraft.awakening.extension.world.level.ExRegion;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Chunk;
-import net.minecraft.client.renderer.Tesselator;
-import net.minecraft.client.renderer.Textures;
 import net.minecraft.client.renderer.TileRenderer;
 import net.minecraft.client.renderer.culling.Culler;
 import net.minecraft.client.renderer.entity.ItemRenderer;
@@ -24,82 +29,116 @@ import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.HashSet;
+import javax.annotation.Nullable;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
-@Mixin(value = Chunk.class, priority = 999)
+@Mixin(
+    value = Chunk.class,
+    priority = 999
+)
 public abstract class MixinClass_66 implements ExClass_66 {
 
-    @Shadow
-    public Level level;
-    @Shadow
-    private int lists;
-    @Shadow
-    private static Tesselator tesselator;
-    @Shadow
-    public int x;
-    @Shadow
-    public int y;
-    @Shadow
-    public int z;
-    @Shadow
-    public int xs;
-    @Shadow
-    public int ys;
-    @Shadow
-    public int zs;
-    @Shadow
-    public int xRenderOffs;
-    @Shadow
-    public int yRenderOffs;
-    @Shadow
-    public int zRenderOffs;
-    @Shadow
-    public boolean visible;
-    @Shadow
-    public boolean[] empty;
-    @Shadow
-    public boolean dirty;
-    @Shadow
-    public AABB bb;
-    @Shadow
-    public boolean occlusion_visible;
-    @Shadow
-    public boolean skyLit;
-    @Shadow
-    private boolean compiled;
-    @Shadow
-    public List<TileEntity> renderableTileEntities;
-    @Shadow
-    private List<TileEntity> globalRenderableTileEntities;
+    @Shadow public Level level;
+    @Shadow private int lists;
+    @Shadow public int x;
+    @Shadow public int y;
+    @Shadow public int z;
+    @Shadow public int xs;
+    @Shadow public int ys;
+    @Shadow public int zs;
+    @Shadow public int xRenderOffs;
+    @Shadow public int yRenderOffs;
+    @Shadow public int zRenderOffs;
+    @Shadow public boolean visible;
+    @Shadow public boolean[] empty;
+    @Shadow public boolean dirty;
+    @Shadow public AABB bb;
+    @Shadow public boolean occlusion_visible;
+    @Shadow public boolean skyLit;
+    @Shadow private boolean compiled;
+    @Shadow private List<TileEntity> globalRenderableTileEntities;
 
-    public boolean isVisibleFromPosition = false;
-    public double visibleFromX;
-    public double visibleFromY;
-    public double visibleFromZ;
-    private boolean needsBoxUpdate = false;
-    public boolean isInFrustrumFully = false;
+    @Unique public boolean isVisibleFromPosition = false;
+    @Unique public double visibleFromX;
+    @Unique public double visibleFromY;
+    @Unique public double visibleFromZ;
+    @Unique private boolean needsBoxUpdate = false;
+    @Unique public boolean isInFrustrumFully = false;
+
+    @Unique private GLDevice glDevice;
+    @Unique private final Set<TileEntity> tileEntities = new IdentityHashSet<>();
+    @Unique private final List<ChunkMesh>[] meshLayers = new List[ChunkMesh.MAX_RENDER_LAYERS];
 
     @Shadow
     public abstract void setDirty();
+
+    @Inject(
+        method = "<init>",
+        at = @At("TAIL")
+    )
+    private void doInit(Level level, List<?> tileEntities, int x, int y, int z, int size, int lists, CallbackInfo ci) {
+        this.glDevice = ((ExMinecraft) Minecraft.instance).getGlDevice(); // TODO: get elsewhere
+        for (int i = 0; i < this.meshLayers.length; i++) {
+            this.meshLayers[i] = new ArrayList<>();
+        }
+    }
 
     @Inject(
         method = "setPos",
         at = @At(
             value = "INVOKE_ASSIGN",
             target = "Lnet/minecraft/world/phys/AABB;create(DDDDDD)Lnet/minecraft/world/phys/AABB;",
-            shift = At.Shift.BEFORE),
-            cancellable = true)
-    public void setNeedsBoxUpdate(int i, int j, int k, CallbackInfo ci) {
-        this.bb = AABB.create((float) i, (float) j, (float) k, (float) (i + this.xs), (float) (j + this.ys), (float) (k + this.zs));
+            shift = At.Shift.BEFORE
+        ),
+        cancellable = true
+    )
+    public void setNeedsBoxUpdate(int x, int y, int z, CallbackInfo ci) {
+        this.bb = AABB.create(x, y, z, x + this.xs, y + this.ys, z + this.zs);
         this.needsBoxUpdate = true;
         this.setDirty();
         this.isVisibleFromPosition = false;
         ci.cancel();
+    }
+
+    @Unique
+    private static void printTime(@Nullable StringBuilder builder, String prefix, long startTime) {
+        if (builder == null) {
+            return;
+        }
+
+        double millis = (System.nanoTime() - startTime) / 1000000.0;
+        builder.append(prefix).append(String.format(": %.3f ms\n", millis));
+    }
+
+    private @Unique void deleteBuffers() {
+        for (List<ChunkMesh> list : this.meshLayers) {
+            if (list == null) {
+                continue;
+            }
+            //noinspection ForLoopReplaceableByForEach
+            for (int i = 0; i < list.size(); i++) {
+                ChunkMesh mesh = list.get(i);
+                mesh.delete(this.glDevice);
+            }
+            list.clear();
+        }
+    }
+
+    @Inject(
+        method = "reset",
+        at = @At("HEAD")
+    )
+    private void onReset(CallbackInfo ci) {
+        this.deleteBuffers();
     }
 
     @Overwrite
@@ -107,141 +146,171 @@ public abstract class MixinClass_66 implements ExClass_66 {
         if (!this.dirty) {
             return;
         }
+        long timeStart = System.nanoTime();
+        var timeBuilder = ACMod.LOGGER.isTraceEnabled() ? new StringBuilder() : null;
+
         ++Chunk.updates;
-        if (this.needsBoxUpdate) {
+        if (this.needsBoxUpdate && Minecraft.instance.options.advancedOpengl) {
             GL11.glNewList(this.lists + 2, GL11.GL_COMPILE);
-            ItemRenderer.renderFlat(AABB.newTemp((float) this.xRenderOffs, (float) this.yRenderOffs, (float) this.zRenderOffs, (float) (this.xRenderOffs + this.xs), (float) (this.yRenderOffs + this.ys), (float) (this.zRenderOffs + this.zs)));
+            ItemRenderer.renderFlat(AABB.newTemp(
+                this.xRenderOffs,
+                this.yRenderOffs,
+                this.zRenderOffs,
+                this.xRenderOffs + this.xs,
+                this.yRenderOffs + this.ys,
+                this.zRenderOffs + this.zs
+            ));
             GL11.glEndList();
             this.needsBoxUpdate = false;
+
+            printTime(timeBuilder, "Box Update", timeStart);
         }
 
         this.occlusion_visible = true;
         this.isVisibleFromPosition = false;
-        int startX = this.x;
-        int startY = this.y;
-        int startZ = this.z;
-        int width = this.x + this.xs;
-        int height = this.y + this.ys;
-        int depth = this.z + this.zs;
+        final int startX = this.x;
+        final int startY = this.y;
+        final int startZ = this.z;
+        final int endX = startX + this.xs;
+        final int endY = startY + this.ys;
+        final int endZ = startZ + this.zs;
 
-        for (int var7 = 0; var7 < 2; ++var7) {
-            this.empty[var7] = true;
-        }
+        Arrays.fill(this.empty, true);
+
+        this.deleteBuffers();
 
         LevelChunk.touchedSky = false;
-        HashSet<TileEntity> var23 = new HashSet<>();
-        var23.addAll(this.renderableTileEntities);
-        this.renderableTileEntities.clear();
-        byte var8 = 1;
-        Region region = new Region(this.level, startX - var8, startY - var8, startZ - var8, width + var8, height + var8, depth + var8);
-        TileRenderer blockRenderer = new TileRenderer(region);
-        Textures texMan = Minecraft.instance.textures;
 
-        int[] textures = new int[4];
-        textures[0] = texMan.loadTexture("/terrain.png");
-        for (int texId = 2; texId < textures.length; texId++) {
-            textures[texId] = texMan.loadTexture(String.format("/terrain%d.png", texId));
-        }
+        ((ExChunk) this.level.getChunkAt(this.x, this.z)).updateLightHash();
 
-        for (int renderPass = 0; renderPass < 2; ++renderPass) {
-            boolean var12 = false;
-            boolean var13 = false;
-            boolean var14 = false;
+        int regionPadding = 1;
+        var region = new Region(
+            this.level,
+            startX - regionPadding,
+            startY - regionPadding,
+            startZ - regionPadding,
+            endX + regionPadding,
+            endY + regionPadding,
+            endZ + regionPadding
+        );
+        printTime(timeBuilder, "Region Setup", timeStart);
 
-            for (int texId = 0; texId < textures.length; ++texId) {
-                if (texId == 1) {
-                    continue;
-                }
-                boolean var16 = false;
+        var renderers = new TileRenderer[ChunkMesh.MAX_RENDER_LAYERS * ChunkMesh.MAX_TEXTURES];
+        var renderTracker = new boolean[ChunkMesh.MAX_RENDER_LAYERS];
 
-                for (int x = startX; x < width; ++x) {
-                    for (int z = startZ; z < depth; ++z) {
-                        for (int y = startY; y < height; ++y) {
-                            int blockId = region.getTile(x, y, z);
-                            if (blockId > 0 && texId == ((ExBlock) Tile.tiles[blockId]).getTextureNum()) {
-                                if (!var14) {
-                                    var14 = true;
-                                    GL11.glNewList(this.lists + renderPass, GL11.GL_COMPILE);
+        var newSet = new IdentityHashSet<TileEntity>();
+        var oldSet = new IdentityHashSet<>(this.tileEntities);
 
-                                    //GL11.glPushMatrix();
-                                    //this.method_306();
-                                    //float var21 = 1.000001F;
-                                    //GL11.glTranslatef((float) (-this.field_236) / 2.0F, (float) (-this.field_235) / 2.0F, (float) (-this.field_236) / 2.0F);
-                                    //GL11.glScalef(var21, var21, var21);
-                                    //GL11.glTranslatef((float) this.field_236 / 2.0F, (float) this.field_235 / 2.0F, (float) this.field_236 / 2.0F);
-                                }
+        var blockBuffer = ByteBuffer.allocate((endX - startX) * (endZ - startZ) * (endY - startY));
 
-                                if (!var16) {
-                                    var16 = true;
-                                    GL11.glBindTexture(GL11.GL_TEXTURE_2D, textures[texId]);
+        for (int x = startX; x < endX; ++x) {
+            for (int z = startZ; z < endZ; ++z) {
+                int start = blockBuffer.position();
+                ((ExRegion) region).getTileColumn(blockBuffer, x, startY, z, endY);
 
-                                    //((ExTessellator) tesselator).setRenderingChunk(true);
-                                    tesselator.begin();
-                                    //tesselator.setOffset(-this.field_231, -this.field_232, -this.field_233);
-                                }
+                ByteBuffer column = blockBuffer.slice(start, endY - startY);
+                for (int y = startY; y < endY; ++y) {
+                    int blockId = ExChunk.translate256(column.get());
+                    if (!Tile.isEntityTile[blockId]) {
+                        continue;
+                    }
 
-                                if (renderPass == 0 && Tile.isEntityTile[blockId]) {
-                                    TileEntity entity = region.getTileEntity(x, y, z);
-                                    if (TileEntityRenderDispatcher.instance.hasTileEntityRenderer(entity)) {
-                                        this.renderableTileEntities.add(entity);
-                                    }
-                                }
-
-                                Tile block = Tile.tiles[blockId];
-                                int blockRenderPass = block.getRenderLayer();
-                                if (blockRenderPass != renderPass) {
-                                    var12 = true;
-                                } else {
-                                    var13 |= blockRenderer.tesselateInWorld(block, x, y, z);
-                                }
-                            }
+                    TileEntity entity = region.getTileEntity(x, y, z);
+                    if (TileEntityRenderDispatcher.instance.hasTileEntityRenderer(entity)) {
+                        if (this.tileEntities.add(entity)) {
+                            newSet.add(entity);
+                        }
+                        else {
+                            oldSet.remove(entity);
                         }
                     }
-
-                    if (var16) {
-                        tesselator.end();
-                        var16 = false;
-                    }
                 }
             }
+        }
+        blockBuffer.flip();
+        printTime(timeBuilder, "Tile Copy", timeStart);
 
-            if (var14) {
-                //GL11.glPopMatrix();
-                GL11.glEndList();
-                //tesselator.setOffset(0.0D, 0.0D, 0.0D);
-                //((ExTessellator) tesselator).setRenderingChunk(false);
-            } else {
-                var13 = false;
-            }
+        if (!oldSet.isEmpty()) {
+            this.tileEntities.removeAll(oldSet);
+            // TODO: turn global List into Set
+            this.globalRenderableTileEntities.removeAll(oldSet);
+        }
+        this.globalRenderableTileEntities.addAll(newSet);
 
-            if (var13) {
-                this.empty[renderPass] = false;
-            }
+        for (int x = startX; x < endX; ++x) {
+            for (int z = startZ; z < endZ; ++z) {
+                for (int y = startY; y < endY; ++y) {
+                    int blockId = ExChunk.translate256(blockBuffer.get());
+                    if (blockId <= 0) {
+                        continue;
+                    }
 
-            if (!var12) {
-                break;
+                    Tile block = Tile.tiles[blockId];
+                    int texId = ((ExBlock) block).getTextureNum();
+                    int layer = block.getRenderLayer();
+
+                    int meshIndex = (layer * ChunkMesh.MAX_TEXTURES) + texId;
+                    var renderer = renderers[meshIndex];
+                    if (renderer == null) {
+                        renderer = new TileRenderer(region);
+                        var tesselator = MemoryTesselator.create();
+                        tesselator.begin();
+
+                        ((ExBlockRenderer) renderer).ac$setTesselator(tesselator);
+                        renderers[meshIndex] = renderer;
+                    }
+
+                    renderTracker[layer] |= renderer.tesselateInWorld(block, x, y, z);
+                }
             }
         }
+        printTime(timeBuilder, "Tessellate", timeStart);
 
-        HashSet<TileEntity> var24 = new HashSet<>();
-        var24.addAll(this.renderableTileEntities);
-        var24.removeAll(var23);
-        this.globalRenderableTileEntities.addAll(var24);
+        for (int layer = 0; layer < this.meshLayers.length; ++layer) {
+            if (!renderTracker[layer]) {
+                continue;
+            }
 
-        var23.removeAll(this.renderableTileEntities);
-        this.globalRenderableTileEntities.removeAll(var23);
-        this.skyLit = LevelChunk.touchedSky;
+            for (int texId = 0; texId < ChunkMesh.MAX_TEXTURES; ++texId) {
+                int meshIndex = (layer * ChunkMesh.MAX_TEXTURES) + texId;
+                var renderer = renderers[meshIndex];
+                if (renderer == null) {
+                    continue;
+                }
+
+                var tesselator = (MemoryTesselator) ((ExBlockRenderer) renderer).ac$getTesselator();
+                tesselator.end();
+                if (tesselator.isEmpty()) {
+                    continue;
+                }
+
+                var data = tesselator.takeMesh();
+                var mesh = ChunkMesh.fromMemory(this.glDevice, data, texId);
+                this.meshLayers[layer].add(mesh);
+
+                printTime(timeBuilder, "  Render with Texture " + texId, timeStart);
+            }
+
+            this.empty[layer] = this.meshLayers[layer].isEmpty();
+        }
+
+        this.skyLit = LevelChunk.touchedSky; // TODO: move global into Region/TileRenderer
         this.compiled = true;
 
-        AC_LightCache.cache.clear();
-        AC_CoordBlock.resetPool();
+        if (timeBuilder != null) {
+            ACMod.LOGGER.trace("Chunk at X:{} Y:{} Z:{} - build time: \n{}", this.x, this.y, this.z, timeBuilder);
+        }
     }
 
-    @Inject(method = "cull", at = @At("TAIL"))
+    @Inject(
+        method = "cull",
+        at = @At("TAIL")
+    )
     private void fancyOcclusionCulling(Culler var1, CallbackInfo ci) {
         if (this.visible && ((ExGameOptions) Minecraft.instance.options).isOcclusionFancy()) {
             this.isInFrustrumFully = ((ExCameraView) var1).isBoundingBoxInFrustumFully(this.bb);
-        } else {
+        }
+        else {
             this.isInFrustrumFully = false;
         }
     }
@@ -297,5 +366,15 @@ public abstract class MixinClass_66 implements ExClass_66 {
     @Override
     public boolean isInFrustrumFully() {
         return this.isInFrustrumFully;
+    }
+
+    public @Override @Nullable List<ChunkMesh> getRenderList(int layer) {
+        if (!this.visible) {
+            return null;
+        }
+        if (!this.empty[layer]) {
+            return this.meshLayers[layer];
+        }
+        return null;
     }
 }

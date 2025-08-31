@@ -46,6 +46,7 @@ public class AC_BlockFan extends Tile {
     }
 
     private boolean canGoThroughBlock(int id) {
+        // TODO: more tiles, like tall grass, or anything that can be passed through?
         return Tile.tiles[id] != null &&
             Tile.tiles[id].material != Material.AIR &&
             Tile.tiles[id].material != Material.WATER &&
@@ -118,7 +119,7 @@ public class AC_BlockFan extends Tile {
         }
 
         AABB aabb = this.getAABB(world, x, y, z).expand(oX, oY, oZ);
-        var entities = (List<Entity>) world.getEntitiesOfClass(Entity.class, aabb);
+        var entities = (List<Entity>) world.getEntities(null, aabb);
         double doX = (double) x + 0.5D;
         double doY = (double) y + 0.5D;
         double doZ = (double) z + 0.5D;
@@ -129,9 +130,8 @@ public class AC_BlockFan extends Tile {
                 continue;
             }
             double dist = entity.distanceTo(doX, doY, doZ) * doF;
-            double speed = entity instanceof ExPlayerEntity exPlayer && exPlayer.isUsingUmbrella()
-                ? 0.14D / dist
-                : 0.07D / dist;
+            double speed =
+                (entity instanceof ExPlayerEntity exPlayer && exPlayer.isUsingUmbrella() ? 0.14D : 0.07D) / dist;
             entity.push(speed * (double) oX, speed * (double) oY, speed * (double) oZ);
         }
 
@@ -149,9 +149,10 @@ public class AC_BlockFan extends Tile {
 
     @Environment(EnvType.CLIENT)
     private void getParticlesAndSpawnAir(Level world, int x, int y, int z, Random rand, AABB aabb, List<Entity> entities) {
-        ((ExParticleManager) Minecraft.instance.particleEngine).getEffectsWithinAABB(aabb, entities);
+        var particles = Minecraft.instance.particleEngine;
+        ((ExParticleManager) particles).getEffectsWithinAABB(aabb, entities);
 
-        Minecraft.instance.particleEngine.add(new AC_EntityAirFX(
+        particles.add(new AC_EntityAirFX(
             world,
             (double) x + rand.nextDouble(),
             (double) y + rand.nextDouble(),
@@ -168,13 +169,12 @@ public class AC_BlockFan extends Tile {
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active) {
-            world.setData(x, y, z, (world.getData(x, y, z) + 1) % 6);
-            world.setTileDirty(x, y, z);
-            return true;
-        } else {
+        if (!AC_DebugMode.active) {
             return false;
         }
+        world.setData(x, y, z, (world.getData(x, y, z) + 1) % 6);
+        world.setTileDirty(x, y, z);
+        return true;
     }
 
     @Override

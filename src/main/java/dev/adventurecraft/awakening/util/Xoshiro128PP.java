@@ -82,7 +82,7 @@ public final class Xoshiro128PP implements RandomGenerator.LeapableGenerator {
                 s0 ^= this.s0;
                 s1 ^= this.s1;
             }
-            nextLong();
+            this.nextLong();
         }
 
         for (int b = 0; b < 64; b++) {
@@ -90,11 +90,15 @@ public final class Xoshiro128PP implements RandomGenerator.LeapableGenerator {
                 s0 ^= this.s0;
                 s1 ^= this.s1;
             }
-            nextLong();
+            this.nextLong();
         }
 
         this.s0 = s0;
         this.s1 = s1;
+    }
+
+    public float nextSignedFloat() {
+        return (float)(this.nextInt() >> 7) * 5.9604645E-8F;
     }
 
     public static final class RandomWrapper extends Random implements RandomGenerator {

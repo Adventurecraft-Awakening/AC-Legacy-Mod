@@ -116,4 +116,6 @@ public interface ExGameOptions {
     int getParticleLimit();
 
     boolean getAllowJavaInScript();
+
+    float getChatWidth();
 }

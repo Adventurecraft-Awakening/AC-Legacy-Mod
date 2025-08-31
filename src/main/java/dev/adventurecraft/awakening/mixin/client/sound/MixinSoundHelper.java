@@ -10,6 +10,7 @@ import net.minecraft.client.sounds.Sound;
 import net.minecraft.client.sounds.SoundEngine;
 import net.minecraft.client.sounds.SoundRepository;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -63,10 +64,10 @@ public abstract class MixinSoundHelper implements ExSoundHelper {
         soundSystem.setPosition("BgMusic", (float) var4, (float) var6, (float) var8);
     }
 
-    public String getMusicFromStreaming() {
+    public String getMusicFromStreaming(Level level) {
         if (Minecraft.instance.level != null) {
             // getPlayingMusic with substring 6 to get rid of "music." at the beginning the music name
-            String curMusic = ((ExWorldProperties) Minecraft.instance.level.levelData).getPlayingMusic();
+            String curMusic = ((ExWorldProperties) level.levelData).getPlayingMusic();
             curMusic = curMusic.length() <= 0 ? "" : curMusic.substring(6);
             return curMusic;
         } else {
@@ -75,13 +76,13 @@ public abstract class MixinSoundHelper implements ExSoundHelper {
     }
 
     @Override
-    public void playMusicFromStreaming(String id, int var2, int var3) {
+    public void playMusicFromStreaming(Level level, String id, int var2, int var3) {
         if (!loaded) {
             return;
         }
 
-        if (id.equals("")) {
-            this.stopMusic();
+        if (id.isEmpty()) {
+            this.stopMusic(level);
         }
 
         Sound entry = this.streamingSounds.get(id);
@@ -106,21 +107,22 @@ public abstract class MixinSoundHelper implements ExSoundHelper {
         soundSystem.setVolume("BgMusic", this.options.music);
         soundSystem.play("BgMusic");
         this.currentSoundName = entry.name;
-        if (Minecraft.instance.level != null) {
-            ((ExWorldProperties) Minecraft.instance.level.levelData).setPlayingMusic(id);
+
+        if (level != null) {
+            ((ExWorldProperties) level.levelData).setPlayingMusic(id);
         }
     }
 
     @Override
-    public void stopMusic() {
+    public void stopMusic(Level level) {
         if (!loaded) {
             return;
         }
 
         if (soundSystem != null && soundSystem.playing("BgMusic")) {
             soundSystem.stop("BgMusic");
-            if (Minecraft.instance.level != null) {
-                ((ExWorldProperties) Minecraft.instance.level.levelData).setPlayingMusic("");
+            if (level != null) {
+                ((ExWorldProperties) level.levelData).setPlayingMusic("");
             }
         }
     }

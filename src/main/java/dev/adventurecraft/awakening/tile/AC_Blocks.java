@@ -237,11 +237,25 @@ public class AC_Blocks {
         Item.items[slopes3.id] = (new AC_ItemSubtypes(slopes3.id - 256)).setDescriptionId("slopes");
         Item.items[slopes4.id] = (new AC_ItemSubtypes(slopes4.id - 256)).setDescriptionId("slopes");
 
-        for (int var0 = 0; var0 < 256; ++var0) {
-            if (Tile.tiles[var0] != null && Item.items[var0] == null) {
-                Item.items[var0] = new TileItem(var0 - 256);
-                Tile.tiles[var0].registerBurnables();
+        for (int i = 0; i < 256; ++i) {
+            if (Tile.tiles[i] != null && Item.items[i] == null) {
+                Item.items[i] = new TileItem(i - 256);
+                Tile.tiles[i].registerBurnables();
+            }
+
+            if (Tile.tiles[i] instanceof AC_BlockStairMulti) {
+                ExBlock.neighborLit[i] = true;
+            }
+
+            if (Tile.tiles[i] instanceof AC_ITriggerDebugBlock) {
+                // TODO: is checking that interface good enough?
+                ExBlock.neighborLit[i] = true;
             }
         }
+
+        ExBlock.neighborLit[Tile.SLAB.id] = true;
+        ExBlock.neighborLit[Tile.FARMLAND.id] = true;
+        ExBlock.neighborLit[Tile.WOOD_STAIRS.id] = true;
+        ExBlock.neighborLit[Tile.COBBLESTONE_STAIRS.id] = true;
     }
 }

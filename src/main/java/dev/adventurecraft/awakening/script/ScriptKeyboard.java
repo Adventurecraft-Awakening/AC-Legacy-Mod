@@ -2,7 +2,9 @@ package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.level.Level;
 import org.lwjgl.input.Keyboard;
 import org.mozilla.javascript.Context;
@@ -48,75 +50,76 @@ public class ScriptKeyboard {
         this.allKeys = null;
     }
 
-    public void processKeyPress(int var1) {
+    public void processKeyPress(int key) {
         Scriptable scope = ((ExWorld) this.world).getScope();
 
-        boolean var2 = false;
-        String var3 = this.keyBinds.get(var1);
-        Object var4;
-        if (var3 != null) {
-            var2 = true;
-            var4 = Context.javaToJS(var1, scope);
-            ScriptableObject.putProperty(scope, "keyID", var4);
-            ((ExWorld) this.world).getScriptHandler().runScript(var3, scope);
+        boolean isPut = false;
+        String binding = this.keyBinds.get(key);
+        if (binding != null) {
+            isPut = true;
+            ScriptableObject.putProperty(scope, "keyID", key);
+            ((ExWorld) this.world).getScriptHandler().runScript(binding, scope);
         }
 
         if (this.allKeys != null) {
-            if (!var2) {
-                var4 = Context.javaToJS(var1, scope);
-                ScriptableObject.putProperty(scope, "keyID", var4);
+            if (!isPut) {
+                ScriptableObject.putProperty(scope, "keyID", key);
             }
-
             ((ExWorld) this.world).getScriptHandler().runScript(this.allKeys, scope);
         }
     }
 
-    public boolean isKeyDown(int var1) {
-        return Keyboard.isKeyDown(var1);
+    public boolean isKeyDown(int key) {
+        Screen screen = Minecraft.instance.screen;
+        if (screen == null || screen.passEvents) {
+            return Keyboard.isKeyDown(key);
+        }
+        return false;
     }
 
-    public String getKeyName(int var1) {
-        return Keyboard.getKeyName(var1);
+    public String getKeyName(int key) {
+        return Keyboard.getKeyName(key);
     }
 
-    public int getKeyID(String var1) {
-        return Keyboard.getKeyIndex(var1);
+    public int getKeyID(String keyName) {
+        return Keyboard.getKeyIndex(keyName);
     }
 
-    public boolean processPlayerKeyPress(int var1, boolean var2) {
-        boolean var3 = true;
-        String var4 = "";
-        if (var1 == this.gameSettings.keyUp.key) {
-            var4 = this.keyForwardScript;
+    public boolean processPlayerKeyPress(int key, boolean isDown) {
+        String script = "";
+        if (key == this.gameSettings.keyUp.key) {
+            script = this.keyForwardScript;
         }
 
-        if (var1 == this.gameSettings.keyDown.key) {
-            var4 = this.keyBackScript;
+        if (key == this.gameSettings.keyDown.key) {
+            script = this.keyBackScript;
         }
 
-        if (var1 == this.gameSettings.keyLeft.key) {
-            var4 = this.keyLeftScript;
-        } else if (var1 == this.gameSettings.keyRight.key) {
-            var4 = this.keyRightScript;
-        } else if (var1 == this.gameSettings.keyJump.key) {
-            var4 = this.keyJumpScript;
-        } else if (var1 == this.gameSettings.keySneak.key) {
-            var4 = this.keySneakScript;
+        if (key == this.gameSettings.keyLeft.key) {
+            script = this.keyLeftScript;
+        }
+        else if (key == this.gameSettings.keyRight.key) {
+            script = this.keyRightScript;
+        }
+        else if (key == this.gameSettings.keyJump.key) {
+            script = this.keyJumpScript;
+        }
+        else if (key == this.gameSettings.keySneak.key) {
+            script = this.keySneakScript;
         }
 
-        if (var4 != null && !var4.equals("")) {
-            var3 = this.runScript(var4, var1, var2);
+        boolean result = true;
+        if (script != null && !script.isEmpty()) {
+            result = this.runScript(script, key, isDown);
         }
-
-        return var3;
+        return result;
     }
 
-    private boolean runScript(String var1, int var2, boolean var3) {
-        Object var4 = Context.javaToJS(var2, ((ExWorld) this.world).getScope());
-        ScriptableObject.putProperty(((ExWorld) this.world).getScope(), "keyID", var4);
-        var4 = Context.javaToJS(var3, this.scope);
-        ScriptableObject.putProperty(this.scope, "keyState", var4);
-        Object var5 = ((ExWorld) this.world).getScriptHandler().runScript(var1, this.scope);
+    private boolean runScript(String script, int key, boolean isDown) {
+        var world = (ExWorld) this.world;
+        ScriptableObject.putProperty(world.getScope(), "keyID", key);
+        ScriptableObject.putProperty(this.scope, "keyState", isDown);
+        Object var5 = world.getScriptHandler().runScript(script, this.scope);
         return var5 instanceof Boolean b ? b : true;
     }
 }

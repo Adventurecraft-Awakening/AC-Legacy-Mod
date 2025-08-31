@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.common.gui;
 
 import dev.adventurecraft.awakening.common.AC_MapInfo;
+import dev.adventurecraft.awakening.common.AC_MapList;
 import dev.adventurecraft.awakening.common.GuiCreateNewMap;
 import dev.adventurecraft.awakening.common.ScrollableWidget;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
@@ -29,17 +30,19 @@ public class AC_GuiMapSelect extends Screen {
 
     protected Screen parent;
     private String saveName;
+    private AC_MapList mapList;
 
-    private MapList mapList;
+    private MapListWidget listWidget;
 
     public AC_GuiMapSelect(Screen parent, String saveName) {
         this.parent = parent;
         this.saveName = saveName;
+
+        this.mapList = new AC_MapList();
     }
 
     @Override
     public void init() {
-        ((ExMinecraft) this.minecraft).getMapList().findMaps();
         var ts = I18n.getInstance();
         if (this.saveName == null) {
             this.buttons.add(new OptionButton(6, this.width / 2 + 5, this.height - 48, ts.get("gui.done")));
@@ -49,7 +52,9 @@ public class AC_GuiMapSelect extends Screen {
             this.buttons.add(new OptionButton(6, this.width / 2 - 75, this.height - 48, ts.get("gui.done")));
         }
 
-        this.mapList = new MapList();
+        this.listWidget = new MapListWidget();
+
+        this.mapList.findMaps();
     }
 
     @Override
@@ -58,7 +63,7 @@ public class AC_GuiMapSelect extends Screen {
 
         this.executor.shutdownNow();
 
-        for (AC_MapInfo info : this.mapList.maps) {
+        for (AC_MapInfo info : this.listWidget.maps) {
             info.releaseTexture(this.minecraft.textures);
         }
     }
@@ -70,13 +75,13 @@ public class AC_GuiMapSelect extends Screen {
         }
 
         if (button.id == 6) {
-            AC_MapInfo selectedMap = this.mapList.selectedMap;
+            AC_MapInfo selectedMap = this.listWidget.selectedMap;
             if (selectedMap == null) {
                 this.minecraft.setScreen(this.parent);
             }
             else {
                 if (this.saveName != null) {
-                    if (this.saveName.equals("")) {
+                    if (this.saveName.isEmpty()) {
                         File gameDir = Minecraft.getWorkingDirectory();
                         File savesDir = new File(gameDir, "saves");
                         int saveIndex = 1;
@@ -105,14 +110,14 @@ public class AC_GuiMapSelect extends Screen {
     @Override
     public void mouseEvent() {
         super.mouseEvent();
-        this.mapList.onMouseEvent();
+        this.listWidget.onMouseEvent();
     }
 
     @Override
     public void render(int mouseX, int mouseY, float tickTime) {
         this.renderBackground();
 
-        this.mapList.render(new IntPoint(mouseX, mouseY), tickTime);
+        this.listWidget.render(new IntPoint(mouseX, mouseY), tickTime);
 
         var translation = I18n.getInstance();
         this.drawCenteredString(this.font, translation.get("mapList.title"), this.width / 2, 16, 16777215);
@@ -124,14 +129,14 @@ public class AC_GuiMapSelect extends Screen {
     }
 
     @Environment(value = EnvType.CLIENT)
-    public class MapList extends ScrollableWidget {
+    public class MapListWidget extends ScrollableWidget {
 
-        private List<AC_MapInfo> maps;
         private int hoveredEntry = -1;
         private int selectedEntry = -1;
         private AC_MapInfo selectedMap;
+        private List<AC_MapInfo> maps;
 
-        public MapList() {
+        public MapListWidget() {
             super(
                 AC_GuiMapSelect.this.minecraft,
                 new IntRect(0, 0, AC_GuiMapSelect.this.width, AC_GuiMapSelect.this.height),
@@ -140,7 +145,7 @@ public class AC_GuiMapSelect extends Screen {
             this.setLayoutPadding(new IntBorder(AC_GuiMapSelect.this.width / 2 - 110, 4));
             this.setLayoutBorder(new IntBorder(0, 0, 32, 54));
 
-            this.maps = ((ExMinecraft) this.client).getMapList().getMaps();
+            this.maps = AC_GuiMapSelect.this.mapList.getMaps();
         }
 
         @Override
@@ -182,9 +187,9 @@ public class AC_GuiMapSelect extends Screen {
 
             if (this.selectedEntry == entryIndex || this.hoveredEntry == entryIndex) {
                 int size = 110;
-                int nameWidth = exText.getTextWidth(mapInfo.name, 0).width();
-                int desc1Width = exText.getTextWidth(mapInfo.description1, 0).width();
-                int desc2Width = exText.getTextWidth(mapInfo.description2, 0).width();
+                int nameWidth = exText.measureText(mapInfo.name, 0).width();
+                int desc1Width = exText.measureText(mapInfo.description1, 0).width();
+                int desc2Width = exText.measureText(mapInfo.description2, 0).width();
                 int textWidth = Math.max(nameWidth, Math.max(desc1Width, desc2Width));
                 int entryWidth = Math.max(size * 2, iconWidth + textWidth + 6);
                 var selectRect = new Rect(iconX - 2, iconY - 2, entryWidth, entryHeight);

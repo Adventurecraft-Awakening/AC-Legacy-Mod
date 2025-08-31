@@ -31,12 +31,6 @@ public abstract class MixinTitleScreen extends Screen {
     @Shadow
     private Button multiplayerButton;
 
-    @Inject(method = "<init>", at = @At("TAIL"))
-    private void init(CallbackInfo ci) {
-        ScriptModel.clearAll();
-        ((ExSoundHelper) Minecraft.instance.soundEngine).stopMusic();
-    }
-
     @Overwrite
     public void init() {
         this.splash = "A Minecraft Total Conversion!";

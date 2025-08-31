@@ -68,6 +68,8 @@ accessible field net/minecraft/world/entity/projectile/Arrow flightTime I
 
 accessible field net/minecraft/world/entity/item/ItemEntity health I
 
+accessible method net/minecraft/world/phys/Vec3 set (DDD)Lnet/minecraft/world/phys/Vec3;
+
 accessible field net/minecraft/client/renderer/TileRenderer level Lnet/minecraft/world/level/LevelSource;
 
 accessible field net/minecraft/client/renderer/GameRenderer fov F # field_2365
@@ -78,6 +80,11 @@ accessible field net/minecraft/world/level/FoliageColor pixels [I
 accessible field net/minecraft/client/renderer/Textures idMap Ljava/util/HashMap;
 accessible field net/minecraft/client/renderer/Textures skins Lnet/minecraft/client/skins/TexturePackRepository;
 
+accessible method net/minecraft/client/renderer/Tesselator <init> (I)V
+extendable method net/minecraft/client/renderer/Tesselator clear ()V
+accessible field net/minecraft/client/renderer/Tesselator tesselating Z
+accessible field net/minecraft/client/renderer/Tesselator mode I
+
 accessible field net/minecraft/client/gui/screens/Screen buttons Ljava/util/List;
 accessible field net/minecraft/client/gui/screens/Screen font Lnet/minecraft/client/gui/Font;
 accessible field net/minecraft/client/gui/screens/Screen clickedButton Lnet/minecraft/client/gui/components/Button;
@@ -87,3 +94,5 @@ accessible class net/minecraft/client/gui/screens/SelectWorldScreen$WorldSelecti
 accessible method net/minecraft/client/gui/GuiComponent fillGradient (IIIIII)V
 
 accessible field net/minecraft/client/gui/components/SliderButton option Lnet/minecraft/client/Option;
+
+accessible class net/minecraft/world/level/chunk/storage/RegionFile$ChunkBuffer

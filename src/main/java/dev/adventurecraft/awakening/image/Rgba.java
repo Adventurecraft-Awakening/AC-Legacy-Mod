@@ -2,6 +2,9 @@ package dev.adventurecraft.awakening.image;
 
 public final class Rgba {
 
+    public static final int WHITE = 0xffffffff;
+    public static final int BLACK = 0xff000000;
+
     public static int fromBgra(int bgra) {
         return fromRgba8(bgra >>> 16, bgra >>> 8, bgra, bgra >>> 24);
     }

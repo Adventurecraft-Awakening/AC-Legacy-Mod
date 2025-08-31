@@ -1,19 +1,24 @@
 package dev.adventurecraft.awakening.extension.world;
 
-import dev.adventurecraft.awakening.common.AC_CoordBlock;
 import dev.adventurecraft.awakening.common.AC_TriggerArea;
+import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.common.WorldGenProperties;
+
 import java.util.Map;
+
+import dev.adventurecraft.awakening.world.GameRules;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
 
+// TODO: cache GameRules lookups
+
 public interface ExWorldProperties {
 
     WorldGenProperties getWorldGenProps();
 
-    Map<AC_CoordBlock, Int2ObjectMap<AC_TriggerArea>> getTriggerAreas();
+    Map<Coord, Int2ObjectMap<AC_TriggerArea>> getTriggerAreas();
 
     String getPlayingMusic();
 
@@ -55,17 +60,17 @@ public interface ExWorldProperties {
 
     void setOverrideFogColor(boolean value);
 
-    boolean getIceMelts();
+    default boolean getIceMelts() {
+        return this.getGameRules().find(GameRules.MELT_ICE).getBool();
+    }
 
-    void setIceMelts(boolean value);
+    default boolean getLeavesDecay() {
+        return this.getGameRules().find(GameRules.DECAY_LEAVES).getBool();
+    }
 
-    boolean getLeavesDecay();
-
-    void setLeavesDecay(boolean value);
-
-    boolean getMobsBurn();
-
-    void setMobsBurn(boolean value);
+    default boolean getMobsBurn() {
+        return this.getGameRules().find(GameRules.SUNBURN_UNDEAD).getBool();
+    }
 
     float getFogR();
 
@@ -99,9 +104,13 @@ public interface ExWorldProperties {
 
     boolean isOriginallyFromAC();
 
-    boolean getAllowsInventoryCrafting();
+    default boolean getAllowsInventoryCrafting() {
+        return this.getGameRules().find(GameRules.ALLOW_INVENTORY_CRAFTING).get();
+    }
 
-    void setAllowsInventoryCrafting(boolean value);
+    default void setAllowsInventoryCrafting(boolean value) {
+        this.getGameRules().find(GameRules.ALLOW_INVENTORY_CRAFTING).set(value);
+    }
 
     String getOnNewSaveScript();
 
@@ -131,15 +140,17 @@ public interface ExWorldProperties {
 
     boolean getHudEnabled();
 
-    void setCanSleep(boolean arg);
+    GameRules getGameRules();
 
-    boolean getCanSleep();
-  
-    void setCanUseHoe(boolean arg);
+    default boolean getCanSleep() {
+        return this.getGameRules().find(GameRules.ALLOW_BED).getBool();
+    }
 
-    boolean getCanUseHoe();
-  
-    void setCanUseBonemeal(boolean arg);
+    default boolean getCanUseHoe() {
+        return this.getGameRules().find(GameRules.ALLOW_HOE).getBool();
+    }
 
-    boolean getCanUseBonemeal();
+    default boolean getCanUseBonemeal() {
+        return this.getGameRules().find(GameRules.ALLOW_BONEMEAL).getBool();
+    }
 }

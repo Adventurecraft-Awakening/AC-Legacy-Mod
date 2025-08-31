@@ -13,9 +13,13 @@ public interface ExEntity extends AC_IMultiAttackEntity {
 
     void setRotation(double x, double y, double z);
 
-    boolean handleFlying();
+    boolean getIsFlying();
 
     void setIsFlying(boolean value);
+
+    boolean getNoPhysics();
+
+    void setNoPhysics(boolean value);
 
     boolean getCollidesWithClipBlocks();
 
@@ -33,13 +37,13 @@ public interface ExEntity extends AC_IMultiAttackEntity {
 
     boolean isIgnoreCobwebCollision();
 
-    void setCustomTagString(String key,String value);
+    void setTag(String key, Object value);
 
-    boolean hasCustomTagString(String key);
+    boolean hasTag(String key);
 
-    String getOrCreateCustomTagString(String key,String defaultValue);
+    Object getOrSetTag(String key, Object defaultValue);
 
-    String getCustomTagString(String key);
+    Object getTag(String key);
 
 
 }

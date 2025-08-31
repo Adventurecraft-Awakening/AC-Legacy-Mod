@@ -10,21 +10,19 @@ import org.mozilla.javascript.ScriptableObject;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-@Mixin(AC_EntityLivingScript.class)
+@Mixin(value = AC_EntityLivingScript.class, remap = false)
 public abstract class MixinAC_EntityLivingScript extends MixinMob {
 
-    @Shadow(remap = false)
-    protected Scriptable scope;
+    @Shadow private Scriptable scope;
 
-    @Shadow(remap = false)
+    @Shadow
     protected abstract boolean runOnAttackedScript();
 
     @Override
     public boolean attackEntityFromMulti(Entity entity, int damage) {
         Object jsEntity = Context.javaToJS(ScriptEntity.getEntityClass(entity), this.scope);
         ScriptableObject.putProperty(this.scope, "attackingEntity", jsEntity);
-        Object jsDamage = Context.javaToJS(damage, this.scope);
-        ScriptableObject.putProperty(this.scope, "attackingDamage", jsDamage);
+        ScriptableObject.putProperty(this.scope, "attackingDamage", damage);
         return this.runOnAttackedScript() && super.attackEntityFromMulti(entity, damage);
     }
 }

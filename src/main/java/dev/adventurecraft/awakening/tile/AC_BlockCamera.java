@@ -55,8 +55,8 @@ public class AC_BlockCamera extends TileEntityTile implements AC_ITriggerDebugBl
 
         Minecraft.instance.gui.addMessage("Set Active Editing Camera");
         var entity = (AC_TileEntityCamera) world.getTileEntity(x, y, z);
-        ((ExMinecraft) Minecraft.instance).setActiveCutsceneCamera(entity.camera);
-        entity.camera.loadCameraEntities();
+        ((ExMinecraft) Minecraft.instance).setActiveCutsceneCamera(entity.getCamera());
+        entity.getCamera().loadCameraEntities();
         AC_GuiCameraBlock.showUI(entity);
         return true;
     }

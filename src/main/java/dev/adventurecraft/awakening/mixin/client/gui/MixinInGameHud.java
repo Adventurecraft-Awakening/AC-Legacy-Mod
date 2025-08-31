@@ -1,6 +1,8 @@
 package dev.adventurecraft.awakening.mixin.client.gui;
 
 import dev.adventurecraft.awakening.ACMod;
+import dev.adventurecraft.awakening.client.gl.GLDevice;
+import dev.adventurecraft.awakening.client.gui.AC_ChatScreen;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
@@ -24,7 +26,6 @@ import net.minecraft.client.ScreenSizeCalculator;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiComponent;
-import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.world.ItemInstance;
@@ -70,7 +71,6 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
         "\033[0;97m", // WHITE
     };
 
-    private static final int CHAT_WIDTH = 320;
     private static final long MAX_MESSAGE_AGE = 200 * 50;
 
     @Shadow private Random random;
@@ -95,6 +95,7 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
     @Unique private ArrayDeque<AC_ChatMessage> chatMessages;
     @Unique public ScriptUIContainer scriptUI;
     @Unique public boolean hudEnabled = true;
+    @Unique private int chatWidth;
 
     @Inject(
         method = "<init>",
@@ -161,7 +162,7 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
             this.blit(barRect.left(), barRect.top(), 0, 0, barRect.width(), barRect.height());
 
             // Render off-hand slot outline.
-            int offhandLeft = barRect.left() - 1 + ((ExPlayerInventory) inv).getOffhandItem() * slotWidth;
+            int offhandLeft = barRect.left() - 1 + ((ExPlayerInventory) inv).getOffhandSlot() * slotWidth;
             this.blit(offhandLeft, barRect.top() - 1, 24, 22, 48, barRect.height());
 
             // Render main-hand slot outline.
@@ -296,6 +297,8 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
             GL11.glEnable(GL11.GL_DEPTH_TEST);
         }
 
+        GL11.glColor4f(1f, 1f, 1f, 1f);
+
         int x = 2;
         final int color0 = 0xffffff;
         final int color1 = 0xe0e0e0;
@@ -314,12 +317,12 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
             textState.setShadowToColor();
             textState.begin(ts);
 
-            textState.drawText(ts, AC_Version.shortVersion, x, y);
-            textState.drawText(ts, mc.fpsString, x, y += 10);
-            textState.drawText(ts, mc.getChunkStatistics(), x, y += 10);
-            textState.drawText(ts, mc.getEntityStatistics(), x, y += 10);
-            textState.drawText(ts, mc.getParticleStatistics(), x, y += 10);
-            textState.drawText(ts, mc.getDebugInfo(), x, y += 10);
+            textState.drawText(AC_Version.shortVersion, x, y);
+            textState.drawText(mc.fpsString, x, y += 10);
+            textState.drawText(mc.getChunkStatistics(), x, y += 10);
+            textState.drawText(mc.getEntityStatistics(), x, y += 10);
+            textState.drawText(mc.getParticleStatistics(), x, y += 10);
+            textState.drawText(mc.getDebugInfo(), x, y += 10);
             y += 10;
 
             textState.setColor(Rgba.withAlpha(color1, 0xff));
@@ -331,21 +334,29 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
             long freeMem = Runtime.getRuntime().freeMemory();
             long usedMem = totMem - freeMem;
 
+            int y1 = 2;
             String usedMsg = "Used: %d%% (%dMB) of %dMB".formatted(
                 usedMem * 100L / maxMem,
                 usedMem / 1024L / 1024L,
                 maxMem / 1024L / 1024L
             );
-            textState.drawText(ts, usedMsg, screenWidth - font.width(usedMsg) - 2, 2);
+            textState.drawText(usedMsg, screenWidth - font.width(usedMsg) - 2, y1);
 
             String allocMsg = "Allocated: %d%% (%dMB)".formatted(totMem * 100L / maxMem, totMem / 1024L / 1024L);
-            textState.drawText(ts, allocMsg, screenWidth - font.width(allocMsg) - 2, 12);
+            textState.drawText(allocMsg, screenWidth - font.width(allocMsg) - 2, y1 += 10);
+            y1 += 10;
 
-            textState.drawText(ts, "x: " + player.x, x, y += 8);
-            textState.drawText(ts, "y: " + player.y, x, y += 8);
-            textState.drawText(ts, "z: " + player.z, x, y += 8);
+            GLDevice.DeviceInfo glDeviceInfo = ((ExMinecraft) mc).getGlDevice().getDeviceInfo();
+            long gpuBufMem = glDeviceInfo.bufferAllocatedBytes();
+            long gpuBufCount = glDeviceInfo.bufferCount();
+            String gpuBufMsg = "GL Buffers: %d | %dMB".formatted(gpuBufCount, gpuBufMem / 1024L / 1024L);
+            textState.drawText(gpuBufMsg, screenWidth - font.width(gpuBufMsg) - 2, y1 += 10);
+
+            textState.drawText("x: " + player.x, x, y += 8);
+            textState.drawText("y: " + player.y, x, y += 8);
+            textState.drawText("z: " + player.z, x, y += 8);
             int facing = ((int) Math.floor((player.yRot * 4.0F / 360.0F) + 0.5D) & 3);
-            textState.drawText(ts, "f: " + facing, x, y += 8);
+            textState.drawText("f: " + facing, x, y += 8);
             y += 10;
 
             boolean useWorldGenImages = ((ExWorldProperties) mc.level.levelData).getWorldGenProps().useImages;
@@ -354,17 +365,17 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
                 int pY = (int) player.z;
                 int tH = AC_TerrainImage.getTerrainHeight(pX, pY);
                 int wH = AC_TerrainImage.getWaterHeight(pX, pY);
-                double tTemp = AC_TerrainImage.getTerrainTemperature(pX, pY);
-                double tHumid = AC_TerrainImage.getTerrainHumidity(pX, pY);
+                float tTemp = AC_TerrainImage.getTerrainTemperature(pX, pY);
+                float tHumid = AC_TerrainImage.getTerrainHumidity(pX, pY);
                 String msg = String.format("T: %d W: %d Temp: %.2f Humid: %.2f", tH, wH, tTemp, tHumid);
-                textState.drawText(ts, msg, x, y += 10);
+                textState.drawText(msg, x, y += 10);
             }
 
             var exPlayer = (ExEntity) player;
             var collideMsg = String.format("Collide X: %d Z: %d", exPlayer.getCollisionX(), exPlayer.getCollisionZ());
-            textState.drawText(ts, collideMsg, x, y += 10);
+            textState.drawText(collideMsg, x, y += 10);
 
-            textState.end(ts);
+            textState.end();
         }
         else {
             int y = 2; // 12 prev
@@ -411,11 +422,11 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
         this.scriptUI.render(font, mc.textures, partialTick);
         GL11.glEnable(GL11.GL_DEPTH_TEST);
 
-        this.renderChat(screenHeight);
+        this.renderChat(screenWidth, screenHeight);
         GL11.glEnable(GL11.GL_ALPHA_TEST);
     }
 
-    private void renderChat(int screenHeight) {
+    private void renderChat(int screenWidth, int screenHeight) {
         final var ts = Tesselator.instance;
         final var exFont = (ExTextRenderer) this.minecraft.font;
         final ArrayDeque<AC_ChatMessage> messages = this.chatMessages;
@@ -426,14 +437,16 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
 
         final int maxChatHeight;
         final boolean isChatOpen;
-        if (this.minecraft.screen instanceof ChatScreen) {
-            maxChatHeight = 200; // TODO: use screen height?
+        if (this.minecraft.screen instanceof AC_ChatScreen) {
+            maxChatHeight = screenHeight - 48 * 3;
             isChatOpen = true;
         }
         else {
             maxChatHeight = 100;
             isChatOpen = false;
         }
+
+        this.chatWidth = Math.round(((ExGameOptions) this.minecraft.options).getChatWidth() * screenWidth);
 
         int chatHeight = 0;
         int chatY = screenHeight - 48;
@@ -455,15 +468,19 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
 
             int freeHeight = maxChatHeight - chatHeight;
             int freeLines = freeHeight / lineHeight;
-            if (freeLines == 0) {
+            if (freeLines <= 0) {
                 break;
+            }
+
+            if (message.maxWidth != this.chatWidth) {
+                message.rebuild(exFont, this.chatWidth);
             }
 
             int usedLines = Math.min(freeLines, message.lines.size());
             int msgHeight = usedLines * lineHeight;
             int y = chatY - chatHeight - msgHeight;
 
-            var rect = new Rect(x, y, CHAT_WIDTH, msgHeight).expand(shadowBorder);
+            var rect = new Rect(x, y, chatWidth, msgHeight).expand(shadowBorder);
             DrawUtil.fillRect(ts, rect, Rgba.withAlpha(0, alpha / 2));
 
             chatHeight += msgHeight + messageSpacing;
@@ -489,11 +506,15 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
 
             int freeHeight = maxChatHeight - stateHeight;
             int freeLines = freeHeight / lineHeight;
-            if (freeLines == 0) {
+            if (freeLines <= 0) {
                 break;
             }
 
-            int usedLines = Math.min(freeLines, message.lines.size());
+            var lines = message.lines;
+            int totalLines = lines.size();
+            int usedLines = Math.min(freeLines, totalLines);
+            int startLine = totalLines - usedLines;
+
             int msgHeight = usedLines * lineHeight;
             int y = chatY - stateHeight - msgHeight;
 
@@ -503,16 +524,21 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
             textState.setShadowToColor();
             textState.resetFormat();
 
-            int totalLines = message.lines.size();
-            for (int i = totalLines - usedLines; i < totalLines; i++) {
-                var line = message.lines.get(i);
-                textState.drawText(ts, text, line.start(), line.end(), x, y);
+            // Apply formatting of skipped lines.
+            for (int i = 0; i < startLine; i++) {
+                var line = lines.get(i);
+                textState.formatText(text, line.start(), line.end());
+            }
+
+            for (int i = startLine; i < totalLines; i++) {
+                var line = lines.get(i);
+                textState.drawText(text, line.start(), line.end(), x, y);
                 y += lineHeight;
             }
 
             stateHeight += msgHeight + messageSpacing;
         }
-        textState.end(ts);
+        textState.end();
 
         GL11.glDisable(GL11.GL_BLEND);
     }
@@ -545,7 +571,7 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
         ACMod.CHAT_LOGGER.info(colorCodesToAnsi(message, 0, message.length()).toString());
 
         var entry = new AC_ChatMessage(message, System.currentTimeMillis());
-        entry.rebuild((ExTextRenderer) this.minecraft.font, CHAT_WIDTH);
+        entry.rebuild((ExTextRenderer) this.minecraft.font, this.chatWidth);
         this.chatMessages.addFirst(entry);
 
         int bufferLimit = ((ExGameOptions) minecraft.options).getChatMessageBufferLimit();

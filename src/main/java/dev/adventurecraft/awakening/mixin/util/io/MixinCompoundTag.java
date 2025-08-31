@@ -1,13 +1,9 @@
 package dev.adventurecraft.awakening.mixin.util.io;
 
 import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
+import it.unimi.dsi.fastutil.bytes.ByteArrays;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.minecraft.nbt.ByteTag;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.IntTag;
-import net.minecraft.nbt.LongTag;
-import net.minecraft.nbt.ShortTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.*;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -16,109 +12,104 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 @Mixin(CompoundTag.class)
 public abstract class MixinCompoundTag implements ExCompoundTag {
 
-    @Shadow
-    private Map<String, Tag> entries = new Object2ObjectOpenHashMap<>(4);
+    @Shadow private Map<String, Tag> entries = new Object2ObjectOpenHashMap<>(4);
 
     @Shadow
-    public abstract void putByte(String var1, byte var2);
+    public abstract void putByte(String key, byte val);
 
     @Shadow
-    public abstract void putShort(String var1, short var2);
+    public abstract void putShort(String key, short val);
 
     @Shadow
-    public abstract void putInt(String var1, int var2);
+    public abstract void putInt(String key, int val);
 
-    @Inject(method = "putShort(Ljava/lang/String;S)V", at = @At("HEAD"), cancellable = true)
-    private void putByteForShort(String var1, short var2, CallbackInfo ci) {
-        if ((byte) var2 == var2) {
-            this.putByte(var1, (byte) var2);
+    @Shadow
+    public abstract void putString(String key, String val);
+
+    @Inject(
+        method = "putShort(Ljava/lang/String;S)V",
+        at = @At("HEAD"),
+        cancellable = true
+    )
+    private void putByteForShort(String key, short val, CallbackInfo ci) {
+        byte n = (byte) val;
+        if (n == val) {
+            this.putByte(key, n);
             ci.cancel();
         }
     }
 
-    @Inject(method = "putInt(Ljava/lang/String;I)V", at = @At("HEAD"), cancellable = true)
-    private void putShortForInt(String var1, int var2, CallbackInfo ci) {
-        if ((short) var2 == var2) {
-            this.putShort(var1, (short) var2);
+    @Inject(
+        method = "putInt(Ljava/lang/String;I)V",
+        at = @At("HEAD"),
+        cancellable = true
+    )
+    private void putShortForInt(String key, int val, CallbackInfo ci) {
+        short n = (short) val;
+        if (n == val) {
+            this.putShort(key, n);
             ci.cancel();
         }
     }
 
-    @Inject(method = "putLong(Ljava/lang/String;J)V", at = @At("HEAD"), cancellable = true)
-    private void putIntForLong(String var1, long var2, CallbackInfo ci) {
-        if ((int) var2 == var2) {
-            this.putInt(var1, (int) var2);
+    @Inject(
+        method = "putLong(Ljava/lang/String;J)V",
+        at = @At("HEAD"),
+        cancellable = true
+    )
+    private void putIntForLong(String key, long val, CallbackInfo ci) {
+        int n = (int) val;
+        if (n == val) {
+            this.putInt(key, n);
             ci.cancel();
         }
     }
 
-    @Override
-    public Optional<Byte> findByte(String key) {
-        Tag tag = this.getTag(key);
-        if (tag instanceof ByteTag bTag) {
-            return Optional.of(bTag.data);
-        }
-        return Optional.empty();
+    public @Overwrite byte getByte(String key) {
+        return this.findByte(key).orElse((byte) 0);
     }
 
-    @Override
-    public Optional<Short> findShort(String key) {
-        Tag tag = this.getTag(key);
-        if (tag instanceof ShortTag sTag) {
-            return Optional.of(sTag.data);
-        } else if (tag instanceof ByteTag bTag) {
-            return Optional.of((short) bTag.data);
-        }
-        return Optional.empty();
-    }
-
-    @Overwrite
-    public short getShort(String key) {
+    public @Overwrite short getShort(String key) {
         return this.findShort(key).orElse((short) 0);
     }
 
-    @Override
-    public Optional<Integer> findInt(String key) {
-        Tag tag = this.getTag(key);
-        if (tag instanceof IntTag iTag) {
-            return Optional.of(iTag.data);
-        } else if (tag instanceof ShortTag sTag) {
-            return Optional.of((int) sTag.data);
-        } else if (tag instanceof ByteTag bTag) {
-            return Optional.of((int) bTag.data);
-        }
-        return Optional.empty();
-    }
-
-    @Overwrite
-    public int getInt(String key) {
+    public @Overwrite int getInt(String key) {
         return this.findInt(key).orElse(0);
     }
 
-    @Override
-    public Optional<Long> findLong(String key) {
-        Tag tag = this.getTag(key);
-        if (tag instanceof LongTag lTag) {
-            return Optional.of(lTag.data);
-        } else if (tag instanceof IntTag iTag) {
-            return Optional.of((long) iTag.data);
-        } else if (tag instanceof ShortTag sTag) {
-            return Optional.of((long) sTag.data);
-        } else if (tag instanceof ByteTag bTag) {
-            return Optional.of((long) bTag.data);
-        }
-        return Optional.empty();
+    public @Overwrite long getLong(String key) {
+        return this.findLong(key).orElse(0L);
     }
 
-    @Overwrite
-    public long getLong(String key) {
-        return this.findLong(key).orElse(0L);
+    // Overwrite further getters to avoid double map lookups.
+
+    public @Overwrite float getFloat(String key) {
+        return this.findFloat(key).orElse(0.0F);
+    }
+
+    public @Overwrite double getDouble(String key) {
+        return this.findDouble(key).orElse(0.0);
+    }
+
+    public @Overwrite String getString(String key) {
+        return this.findString(key).orElse("");
+    }
+
+    public @Overwrite byte[] getByteArray(String key) {
+        return this.findByteArray(key).orElse(ByteArrays.EMPTY_ARRAY);
+    }
+
+    public @Overwrite CompoundTag getCompoundTag(String key) {
+        return this.findCompound(key).orElseGet(CompoundTag::new);
+    }
+
+    public @Overwrite ListTag getList(String key) {
+        return this.findList(key).orElseGet(ListTag::new);
     }
 
     @Override
@@ -129,10 +120,5 @@ public abstract class MixinCompoundTag implements ExCompoundTag {
     @Override
     public Tag getTag(String key) {
         return this.entries.get(key);
-    }
-
-    @Override
-    public Optional<Tag> findTag(String key) {
-        return Optional.ofNullable(this.getTag(key));
     }
 }

@@ -86,7 +86,7 @@ public class AC_GuiMapElement extends ScriptUIContainer {
             ++var13;
         }
 
-        if (var6.equals("")) {
+        if (var6.isEmpty()) {
             this.botFadeBack.removeFromScreen();
         }
 
@@ -105,7 +105,7 @@ public class AC_GuiMapElement extends ScriptUIContainer {
             ++var13;
         }
 
-        if (var5.equals("")) {
+        if (var5.isEmpty()) {
             this.topFadeBack.removeFromScreen();
         }
 
@@ -165,7 +165,7 @@ public class AC_GuiMapElement extends ScriptUIContainer {
 
         for (int var7 = 0; var7 < var6; ++var7) {
             String var8 = var5[var7];
-            if (var4.equals("")) {
+            if (var4.isEmpty()) {
                 var4 = var8;
             } else {
                 String var9 = var4 + " " + var8;
@@ -178,7 +178,7 @@ public class AC_GuiMapElement extends ScriptUIContainer {
             }
         }
 
-        if (!var4.equals("")) {
+        if (!var4.isEmpty()) {
             output.add(var4);
         }
     }
@@ -196,7 +196,7 @@ public class AC_GuiMapElement extends ScriptUIContainer {
     }
 
     @Override
-    public void render(Font textRenderer, Textures texManager, float deltaTime) {
+    public void render(Font font, Textures textures, float deltaTime) {
         if (this.fadeIn || this.fadeOut) {
             long var4 = System.nanoTime();
             long var6 = var4 - this.fadeTimePrev;
@@ -250,7 +250,7 @@ public class AC_GuiMapElement extends ScriptUIContainer {
             }
         }
 
-        super.render(textRenderer, texManager, deltaTime);
+        super.render(font, textures, deltaTime);
     }
 
     public void setAsDownloaded() {

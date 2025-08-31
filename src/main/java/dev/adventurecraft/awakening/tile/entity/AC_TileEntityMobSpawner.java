@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.tile.entity;
 
 import java.util.*;
 
+import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.entity.AC_EntityLivingScript;
 import dev.adventurecraft.awakening.entity.AC_EntitySkeletonSword;
@@ -25,13 +26,13 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.ItemInstance;
 import dev.adventurecraft.awakening.script.ScopeTag;
 import dev.adventurecraft.awakening.script.ScriptEntity;
-import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.CompoundTag;
 import org.mozilla.javascript.Scriptable;
 
 public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
 
     private static final Map<String, String> ALTERNATIVE_NAMES = new HashMap<>();
+
     public int delay = -1;
     public String entityID = "Pig";
     public int spawnNumber;
@@ -40,13 +41,13 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
     public boolean hasDroppedItem;
     public boolean spawnOnTrigger;
     public boolean spawnOnDetrigger;
-    public List<Entity> spawnedEntities;
-    public List<Entity> entitiesLeft;
+    public final List<Entity> spawnedEntities;
+    public final List<Entity> entitiesLeft;
     public int spawnID;
     public int spawnMeta;
     private final Xoshiro128PP rand;
-    public Coord[] minVec;
-    public Coord[] maxVec;
+    public final Coord[] minVec;
+    public final Coord[] maxVec;
     public Coord minSpawnVec;
     public Coord maxSpawnVec;
     public int ticksBeforeLoad = 20;
@@ -72,13 +73,11 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
         this.minVec = new Coord[8];
         this.maxVec = new Coord[8];
 
-        for (int id = 0; id < 8; ++id) {
-            this.minVec[id] = new Coord();
-            this.maxVec[id] = new Coord();
-        }
+        Arrays.fill(this.minVec, Coord.zero);
+        Arrays.fill(this.maxVec, Coord.zero);
 
-        this.minSpawnVec = new Coord();
-        this.maxSpawnVec = new Coord();
+        this.minSpawnVec = Coord.zero;
+        this.maxSpawnVec = Coord.zero;
         this.delayLoadData = null;
         this.scope = ((ExWorld) Minecraft.instance.level).getScript().getNewScope();
     }
@@ -86,9 +85,11 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
     public int getNumAlive() {
         int count = 0;
 
-        for (Entity entity : this.spawnedEntities) {
+        var iterator = this.entitiesLeft.iterator();
+        while (iterator.hasNext()) {
+            Entity entity = iterator.next();
             if (entity.removed) {
-                this.entitiesLeft.remove(entity);
+                iterator.remove();
                 continue;
             }
             count++;
@@ -113,8 +114,7 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
         if (ignoreSpawnConditions) {
             return true;
         }
-        return this.level.isUnobstructed(entity.bb) &&
-            this.level.getCubes(entity, entity.bb).isEmpty() &&
+        return this.level.isUnobstructed(entity.bb) && this.level.getCubes(entity, entity.bb).isEmpty() &&
             !this.level.containsAnyLiquid(entity.bb);
     }
 
@@ -125,18 +125,19 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
     }
 
     public void spawnMobs() {
-        if (this.delay > 0 ||
-            this.getNumAlive() > 0 ||
-            this.delayLoadData != null) {
+        if (this.delay > 0 || this.getNumAlive() > 0 || this.delayLoadData != null) {
             return;
         }
+
         int spawnedCount = 0;
         while (true) {
             if (spawnedCount < this.spawnNumber * 6) {
                 String id = this.entityID;
-                if (ALTERNATIVE_NAMES.containsKey(this.entityID)) {
-                    id = ALTERNATIVE_NAMES.get(this.entityID);
-                } else if (this.entityID.endsWith("(Scripted)")) {
+                String altId = ALTERNATIVE_NAMES.get(this.entityID);
+                if (altId != null) {
+                    id = altId;
+                }
+                else if (this.entityID.endsWith("(Scripted)")) {
                     id = "Script";
                 }
 
@@ -159,9 +160,10 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
 
                 Entity entity = EntityIO.newEntity(id, this.level);
                 if (entity == null) {
-                    System.out.println("NULL");
+                    ACMod.LOGGER.error("Missing entity for id {}", id);
                     return;
                 }
+
                 switch (id) {
                     case "FallingSand":
                         if (this.spawnID >= 256 || Tile.tiles[this.spawnID] == null) {
@@ -198,11 +200,16 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
                 }
                 double y = this.y + this.maxSpawnVec.y;
                 if (this.maxSpawnVec.y != this.minSpawnVec.y) {
-                    y = this.y + this.minSpawnVec.y + this.level.random.nextInt(this.maxSpawnVec.y - this.minSpawnVec.y);
+                    // TODO: use nextDouble()?
+                    int bound = this.maxSpawnVec.y - this.minSpawnVec.y;
+                    y = this.y + this.minSpawnVec.y + this.level.random.nextInt(bound);
                 }
 
-                double x = (double) (this.x + this.minSpawnVec.x) + this.level.random.nextDouble() * (double) (this.maxSpawnVec.x - this.minSpawnVec.x) + 0.5D;
-                double z = (double) (this.z + this.minSpawnVec.z) + this.level.random.nextDouble() * (double) (this.maxSpawnVec.z - this.minSpawnVec.z) + 0.5D;
+                double x = (double) (this.x + this.minSpawnVec.x) +
+                    this.level.random.nextDouble() * (double) (this.maxSpawnVec.x - this.minSpawnVec.x) + 0.5D;
+
+                double z = (double) (this.z + this.minSpawnVec.z) +
+                    this.level.random.nextDouble() * (double) (this.maxSpawnVec.z - this.minSpawnVec.z) + 0.5D;
 
                 float yaw = 0.0F;
                 if (!id.equalsIgnoreCase("FallingSand")) {
@@ -265,7 +272,8 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
             if (this.spawnNumber > 0 && this.spawnedEntities.isEmpty()) {
                 this.delay = 20;
                 this.spawnStill = true;
-            } else {
+            }
+            else {
                 this.activateTriggers();
                 this.executeScript(this.onTriggerScriptFile);
                 this.spawnStill = false;
@@ -274,31 +282,80 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
         }
     }
 
-    public void tick() {
+    private void loadFromTag(CompoundTag tag) {
+        short entityCount = tag.getShort("numEntities");
+        for (int id = 0; id < entityCount; ++id) {
+            int entityId = tag.getInt(String.format("entID_%d", id));
 
-        if (this.delayLoadData != null) {
-            if (this.ticksBeforeLoad == 0) {
-                short entityCount = this.delayLoadData.getShort("numEntities");
-                for (int id = 0; id < entityCount; ++id) {
-                    int entityId = this.delayLoadData.getInt(String.format("entID_%d", id));
-
-                    for (Entity entity : (List<Entity>) this.level.entities) {
-                        if (entity.id == entityId) {
-                            this.spawnedEntities.add(entity);
-                            if (entity.isAlive()) {
-                                this.entitiesLeft.add(entity);
-                            }
-                            break;
-                        }
+            for (Entity entity : (List<Entity>) this.level.entities) {
+                if (entity.id == entityId) {
+                    this.spawnedEntities.add(entity);
+                    if (entity.isAlive()) {
+                        this.entitiesLeft.add(entity);
                     }
-                }
-
-                this.delayLoadData = null;
-                if (entityCount > 0) {
-                    this.executeScript(this.onTriggerScriptFile);
+                    break;
                 }
             }
+        }
 
+        if (entityCount > 0) {
+            this.executeScript(this.onTriggerScriptFile);
+        }
+    }
+
+    private void spawnItem() {
+        var instance = new ItemInstance(this.dropItem, 1, 0);
+        var item = new ItemEntity(this.level, this.x + 0.5D, this.y + 0.5D, this.z + 0.5D, instance);
+        item.throwTime = 10;
+        this.level.addEntity(item);
+
+        if (this.showParticles) {
+            this.spawnItemParticles(item);
+        }
+    }
+
+    private void spawnItemParticles(ItemEntity item) {
+        double size = 10.0D;
+        for (int i = 0; i < 20; ++i) {
+            double dx = this.rand.nextGaussian() * 0.02D;
+            double dy = this.rand.nextGaussian() * 0.02D;
+            double dz = this.rand.nextGaussian() * 0.02D;
+
+            double x = item.x + this.rand.nextSignedFloat() - dx * size;
+            double y = item.y + this.rand.nextFloat() - dy * size;
+            double z = item.z + this.rand.nextSignedFloat() - dz * size;
+            
+            this.level.addParticle("explode", x, y, z, dx, dy, dz);
+        }
+    }
+
+    private void detrigger() {
+        this.spawnedEntities.clear();
+        this.entitiesLeft.clear();
+        this.delay = this.respawnDelay;
+
+        if (this.dropItem > 0 && !this.hasDroppedItem) {
+            this.spawnItem();
+            this.hasDroppedItem = true;
+        }
+
+        this.executeScript(this.onDetriggerScriptFile);
+
+        for (int id = 4; id < 8; ++id) {
+            if (this.isTriggerSet(id)) {
+                this.activateTrigger(id, this.minVec[id], this.maxVec[id]);
+            }
+        }
+
+        this.deactivateTriggers();
+    }
+
+    public void tick() {
+        if (this.delayLoadData != null) {
+            if (this.ticksBeforeLoad == 0) {
+                this.loadFromTag(this.delayLoadData);
+                this.delayLoadData = null;
+            }
             --this.ticksBeforeLoad;
             return;
         }
@@ -306,42 +363,12 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
             --this.delay;
             return;
         }
+
         if (!this.spawnedEntities.isEmpty()) {
             if (this.getNumAlive() == 0) {
-                this.spawnedEntities.clear();
-                this.entitiesLeft.clear();
-                this.delay = this.respawnDelay;
-                if (this.dropItem > 0 && !this.hasDroppedItem) {
-                    var item = new ItemEntity(this.level, (double) this.x + 0.5D, (double) this.y + 0.5D, (double) this.z + 0.5D, new ItemInstance(this.dropItem, 1, 0));
-                    item.throwTime = 10;
-                    this.level.addEntity(item);
-
-                    if (this.showParticles) {
-                        for (int i = 0; i < 20; ++i) {
-                            double x = this.rand.nextGaussian() * 0.02D;
-                            double y = this.rand.nextGaussian() * 0.02D;
-                            double z = this.rand.nextGaussian() * 0.02D;
-                            double var9 = 10.0D;
-                            this.level.addParticle(
-                                "explode",
-                                item.x + (double) (this.rand.nextFloat() * 2.0F) - 1.0D - x * var9,
-                                item.y + (double) this.rand.nextFloat() - y * var9,
-                                item.z + (double) (this.rand.nextFloat() * 2.0F) - 1.0D - z * var9, x, y, z);
-                        }
-                    }
-                    this.hasDroppedItem = true;
-                }
-
-                this.executeScript(this.onDetriggerScriptFile);
-
-                for (int id = 4; id < 8; ++id) {
-                    if (this.isTriggerSet(id)) {
-                        this.activateTrigger(id, this.minVec[id], this.maxVec[id]);
-                    }
-                }
-
-                this.deactivateTriggers();
-            } else {
+                this.detrigger();
+            }
+            else {
                 this.executeScript(this.onUpdateScriptFile);
             }
             return;
@@ -355,37 +382,30 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
     }
 
     public void setSpawnVec() {
-        this.minSpawnVec.set(AC_ItemCursor.minX - this.x, AC_ItemCursor.minY - this.y, AC_ItemCursor.minZ - this.z);
-        this.maxSpawnVec.set(AC_ItemCursor.maxX - this.x, AC_ItemCursor.maxY - this.y, AC_ItemCursor.maxZ - this.z);
+        var origin = new Coord(this.x, this.y, this.z);
+        this.minSpawnVec = AC_ItemCursor.min().sub(origin);
+        this.maxSpawnVec = AC_ItemCursor.max().sub(origin);
     }
 
     public boolean isTriggerSet(int id) {
-        boolean set = this.minVec[id].x != 0;
-        set = set || this.minVec[id].y != 0;
-        set = set || this.minVec[id].z != 0;
-        set = set || this.maxVec[id].x != 0;
-        set = set || this.maxVec[id].y != 0;
-        set = set || this.maxVec[id].z != 0;
-        return set;
+        Coord min = this.minVec[id];
+        Coord max = this.maxVec[id];
+        return !min.equals(0) || !max.equals(0);
     }
 
     public void setTrigger(int id) {
-        this.minVec[id].set(AC_ItemCursor.minX, AC_ItemCursor.minY, AC_ItemCursor.minZ);
-        this.maxVec[id].set(AC_ItemCursor.maxX, AC_ItemCursor.maxY, AC_ItemCursor.maxZ);
+        this.minVec[id] = AC_ItemCursor.min();
+        this.maxVec[id] = AC_ItemCursor.max();
     }
 
     public void setCursor(int id) {
-        AC_ItemCursor.oneX = AC_ItemCursor.minX = this.minVec[id].x;
-        AC_ItemCursor.oneY = AC_ItemCursor.minY = this.minVec[id].y;
-        AC_ItemCursor.oneZ = AC_ItemCursor.minZ = this.minVec[id].z;
-        AC_ItemCursor.twoX = AC_ItemCursor.maxX = this.maxVec[id].x;
-        AC_ItemCursor.twoY = AC_ItemCursor.maxY = this.maxVec[id].y;
-        AC_ItemCursor.twoZ = AC_ItemCursor.maxZ = this.maxVec[id].z;
+        AC_ItemCursor.setOne(AC_ItemCursor.setMin(this.minVec[id]));
+        AC_ItemCursor.setTwo(AC_ItemCursor.setMax(this.maxVec[id]));
     }
 
     public void clearTrigger(int id) {
-        this.minVec[id].x = this.minVec[id].y = this.minVec[id].z = 0;
-        this.maxVec[id].x = this.maxVec[id].y = this.maxVec[id].z = 0;
+        this.minVec[id] = Coord.zero;
+        this.maxVec[id] = Coord.zero;
     }
 
     private void activateTriggers() {
@@ -397,11 +417,11 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
     }
 
     private void activateTrigger(int id, Coord min, Coord max) {
-        if (min.x != 0 || min.y != 0 || min.z != 0 ||
-            max.x != 0 || max.y != 0 || max.z != 0) {
-            ((ExWorld) this.level).getTriggerManager().addArea(
-                this.x, this.y, this.z, id, new AC_TriggerArea(min.x, min.y, min.z, max.x, max.y, max.z));
+        if (min.equals(0) && max.equals(0)) {
+            return;
         }
+        var area = new AC_TriggerArea(min, max);
+        ((ExWorld) this.level).getTriggerManager().addArea(this.x, this.y, this.z, id, area);
     }
 
     private void deactivateTriggers() {
@@ -426,28 +446,20 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
         exTag.findBool("ShowDebugInfo").ifPresent(b -> this.showDebugInfo = b);
         exTag.findBool("ShowParticles").ifPresent(b -> this.showParticles = b);
 
+        // TODO: replace with NBT int arrays
         for (int id = 0; id < 8; ++id) {
-            this.minVec[id].x = tag.getInt("minX".concat(Integer.toString(id)));
-            this.minVec[id].y = tag.getInt("minY".concat(Integer.toString(id)));
-            this.minVec[id].z = tag.getInt("minZ".concat(Integer.toString(id)));
-            this.maxVec[id].x = tag.getInt("maxX".concat(Integer.toString(id)));
-            this.maxVec[id].y = tag.getInt("maxY".concat(Integer.toString(id)));
-            this.maxVec[id].z = tag.getInt("maxZ".concat(Integer.toString(id)));
+            this.minVec[id] = new Coord(tag.getInt("minX" + id), tag.getInt("minY" + id), tag.getInt("minZ" + id));
+            this.maxVec[id] = new Coord(tag.getInt("maxX" + id), tag.getInt("maxY" + id), tag.getInt("maxZ" + id));
         }
-        this.minSpawnVec.x = tag.getInt("minSpawnX");
-        this.minSpawnVec.y = tag.getInt("minSpawnY");
-        this.minSpawnVec.z = tag.getInt("minSpawnZ");
-        this.maxSpawnVec.x = tag.getInt("maxSpawnX");
-        this.maxSpawnVec.y = tag.getInt("maxSpawnY");
-        this.maxSpawnVec.z = tag.getInt("maxSpawnZ");
+        this.minSpawnVec = new Coord(tag.getInt("minSpawnX"), tag.getInt("minSpawnY"), tag.getInt("minSpawnZ"));
+        this.maxSpawnVec = new Coord(tag.getInt("maxSpawnX"), tag.getInt("maxSpawnY"), tag.getInt("maxSpawnZ"));
 
         if (exTag.findShort("numEntities").filter(n -> n > 0).isPresent()) {
             this.ticksBeforeLoad = 20;
             this.delayLoadData = tag;
         }
 
-        exTag.findCompound("scope")
-            .ifPresent(c -> ScopeTag.loadScopeFromTag(this.scope, c));
+        exTag.findCompound("scope").ifPresent(c -> ScopeTag.loadScopeFromTag(this.scope, c));
     }
 
     @Override
@@ -467,12 +479,14 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
         tag.putBoolean("ShowParticles", this.showParticles);
 
         for (int id = 0; id < 8; ++id) {
-            tag.putInt("minX".concat(Integer.toString(id)), this.minVec[id].x);
-            tag.putInt("minY".concat(Integer.toString(id)), this.minVec[id].y);
-            tag.putInt("minZ".concat(Integer.toString(id)), this.minVec[id].z);
-            tag.putInt("maxX".concat(Integer.toString(id)), this.maxVec[id].x);
-            tag.putInt("maxY".concat(Integer.toString(id)), this.maxVec[id].y);
-            tag.putInt("maxZ".concat(Integer.toString(id)), this.maxVec[id].z);
+            Coord min = this.minVec[id];
+            Coord max = this.maxVec[id];
+            tag.putInt("minX" + id, min.x);
+            tag.putInt("minY" + id, min.y);
+            tag.putInt("minZ" + id, min.z);
+            tag.putInt("maxX" + id, max.x);
+            tag.putInt("maxY" + id, max.y);
+            tag.putInt("maxZ" + id, max.z);
         }
 
         tag.putInt("minSpawnX", this.minSpawnVec.x);

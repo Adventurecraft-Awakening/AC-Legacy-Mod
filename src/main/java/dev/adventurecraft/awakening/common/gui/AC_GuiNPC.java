@@ -16,7 +16,7 @@ public class AC_GuiNPC extends Screen {
     private AC_EntityNPC npc;
     private EditBox npcName;
     private EditBox chatMsg;
-    int selectedID = 0;
+    private int selectedID = 0;
     private Button setOnCreated;
     private Button setOnUpdate;
     private Button setOnPathReached;
@@ -91,7 +91,8 @@ public class AC_GuiNPC extends Screen {
                     }
                 }
             }
-        } else if (this.page == 1) {
+        }
+        else if (this.page == 1) {
             this.selectedID = 0;
 
             this.setOnCreated = new Button(0, 4, 24, "");
@@ -144,31 +145,39 @@ public class AC_GuiNPC extends Screen {
             if (btn.id == -1) {
                 this.npc.remove();
                 Minecraft.instance.setScreen(null);
-            } else if (btn.id == -2) {
+            }
+            else if (btn.id == -2) {
                 this.npc.pathToHome = !this.npc.pathToHome;
                 if (this.npc.pathToHome) {
                     btn.message = "Path To Home";
-                } else {
+                }
+                else {
                     btn.message = "Don't Path Home";
                 }
-            } else if (btn.id == -3) {
+            }
+            else if (btn.id == -3) {
                 this.npc.trackPlayer = !this.npc.trackPlayer;
                 if (this.npc.trackPlayer) {
                     btn.message = "Track Player";
-                } else {
+                }
+                else {
                     this.npc.entityToTrack = null;
                     btn.message = "Don't Track Player";
                 }
-            } else if (btn.id == -4) {
+            }
+            else if (btn.id == -4) {
                 this.npc.isAttackable = !this.npc.isAttackable;
                 if (this.npc.isAttackable) {
                     btn.message = "Can be attacked";
-                } else {
+                }
+                else {
                     btn.message = "Can't be attacked";
                 }
-            } else if (btn.id == 0) {
+            }
+            else if (btn.id == 0) {
                 ((ExMob) this.npc).setTexture("/mob/char.png");
-            } else if (btn.id > 0) {
+            }
+            else if (btn.id > 0) {
                 File npcDir = new File(((ExWorld) Minecraft.instance.level).getLevelDir(), "npc");
                 File[] files = npcDir.listFiles();
                 if (files != null) {
@@ -177,14 +186,18 @@ public class AC_GuiNPC extends Screen {
                     }
                 }
             }
-        } else if (this.page == 1) {
+        }
+        else if (this.page == 1) {
             if (btn.id < 6) {
                 this.selectedID = btn.id;
-            } else if (btn.id == 6) {
+            }
+            else if (btn.id == 6) {
                 ((ExWorld) Minecraft.instance.level).getScriptHandler().loadScripts();
-            } else if (btn.id == 7) {
+            }
+            else if (btn.id == 7) {
                 this.updateScriptFile("");
-            } else {
+            }
+            else {
                 this.updateScriptFile(btn.message);
             }
 
@@ -196,26 +209,23 @@ public class AC_GuiNPC extends Screen {
 
     private void updateScriptFile(String name) {
         switch (this.selectedID) {
-            case 0 -> {
-                this.npc.onCreated = name;
-                this.npc.runCreatedScript();
-            }
-            case 1 -> this.npc.onUpdate = name;
-            case 2 -> this.npc.onPathReached = name;
-            case 3 -> this.npc.onAttacked = name;
-            case 4 -> this.npc.onDeath = name;
-            case 5 -> this.npc.onInteraction = name;
+            case 0 -> this.npc.setOnCreated(name);
+            case 1 -> this.npc.setOnUpdate(name);
+            case 2 -> this.npc.setOnPathReached(name);
+            case 3 -> this.npc.setOnAttacked(name);
+            case 4 -> this.npc.setOnDeath(name);
+            case 5 -> this.npc.setOnInteraction(name);
         }
     }
 
     private void resetScriptNames() {
         AC_EntityNPC npc = this.npc;
-        this.setMessage(this.setOnCreated, "OnNewSave", npc.onCreated);
-        this.setMessage(this.setOnUpdate, "OnUpdate", npc.onUpdate);
-        this.setMessage(this.setOnPathReached, "OnPathReached", npc.onPathReached);
-        this.setMessage(this.setOnAttacked, "OnAttacked", npc.onAttacked);
-        this.setMessage(this.setOnDeath, "OnDeath", npc.onDeath);
-        this.setMessage(this.setOnInteraction, "OnInteraction", npc.onInteraction);
+        this.setMessage(this.setOnCreated, "OnNewSave", npc.getOnCreated());
+        this.setMessage(this.setOnUpdate, "OnUpdate", npc.getOnUpdate());
+        this.setMessage(this.setOnPathReached, "OnPathReached", npc.getOnPathReached());
+        this.setMessage(this.setOnAttacked, "OnAttacked", npc.getOnAttacked());
+        this.setMessage(this.setOnDeath, "OnDeath", npc.getOnDeath());
+        this.setMessage(this.setOnInteraction, "OnInteraction", npc.getOnInteraction());
     }
 
     private void setMessage(Button button, String label, String value) {

@@ -1,47 +1,72 @@
 package dev.adventurecraft.awakening.extension.util.io;
 
+import dev.adventurecraft.awakening.util.TagUtil;
 import net.minecraft.nbt.*;
 
+import javax.annotation.Nullable;
 import java.util.Optional;
 import java.util.Set;
 
 public interface ExCompoundTag {
 
     default Optional<Boolean> findBool(String key) {
-        return this.findByte(key).map(b -> b != 0);
+        return TagUtil.toBool(this.getTag(key));
     }
 
     default Optional<Float> findFloat(String key) {
-        return this.findTag(key).map(tag -> tag instanceof FloatTag dTag ? dTag.data : null);
+        return Optional.ofNullable(this.getTag(key) instanceof FloatTag tag ? tag.data : null);
     }
 
     default Optional<Double> findDouble(String key) {
-        return this.findTag(key).map(tag -> tag instanceof DoubleTag dTag ? dTag.data : null);
+        return Optional.ofNullable(this.getTag(key) instanceof DoubleTag tag ? tag.data : null);
     }
 
-    Optional<Byte> findByte(String key);
+    default Optional<Byte> findByte(String key) {
+        return TagUtil.toByte(this.getTag(key));
+    }
 
-    Optional<Short> findShort(String key);
+    default Optional<Short> findShort(String key) {
+        return TagUtil.widenToShort(this.getTag(key));
+    }
 
-    Optional<Integer> findInt(String key);
+    default Optional<Integer> findInt(String key) {
+        return TagUtil.widenToInt(this.getTag(key));
+    }
 
-    Optional<Long> findLong(String key);
+    default Optional<Long> findLong(String key) {
+        return TagUtil.widenToLong(this.getTag(key));
+    }
 
     default Optional<String> findString(String key) {
-        return this.findTag(key).map(tag -> tag instanceof StringTag sTag ? sTag.contents : null);
+        return Optional.ofNullable(this.getTag(key) instanceof StringTag tag ? tag.contents : null);
     }
 
     default Optional<byte[]> findByteArray(String key) {
-        return this.findTag(key).map(tag -> tag instanceof ByteArrayTag aTag ? aTag.data : null);
+        return Optional.ofNullable(this.getTag(key) instanceof ByteArrayTag tag ? tag.data : null);
     }
 
     default Optional<CompoundTag> findCompound(String key) {
-        return this.findTag(key).map(tag -> tag instanceof CompoundTag cTag ? cTag : null);
+        return Optional.ofNullable(this.getTag(key) instanceof CompoundTag tag ? tag : null);
+    }
+
+    default Optional<ListTag> findList(String key) {
+        return Optional.ofNullable(this.getTag(key) instanceof ListTag tag ? tag : null);
     }
 
     Set<String> getKeys();
 
     Tag getTag(String key);
 
-    Optional<Tag> findTag(String key);
+    default Optional<Tag> findTag(String key) {
+        return Optional.ofNullable(this.getTag(key));
+    }
+
+    void putString(String key, String val);
+
+    default void putNonEmptyString(String key, @Nullable String val) {
+        if (val == null || val.isEmpty()) {
+            return;
+        }
+        this.putString(key, val);
+    }
 }

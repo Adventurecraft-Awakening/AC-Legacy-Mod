@@ -8,6 +8,7 @@ import net.minecraft.client.gui.components.OptionButton;
 import net.minecraft.client.gui.screens.Screen;
 
 public class AC_GuiTriggerPushable extends Screen {
+
     private AC_TileEntityTriggerPushable trigger;
 
     public AC_GuiTriggerPushable(AC_TileEntityTriggerPushable entity) {
@@ -30,17 +31,15 @@ public class AC_GuiTriggerPushable extends Screen {
     protected void buttonClicked(Button btn) {
         AC_TileEntityTriggerPushable trigger = this.trigger;
         if (btn.id == 0) {
-            trigger.minX = AC_ItemCursor.minX;
-            trigger.minY = AC_ItemCursor.minY;
-            trigger.minZ = AC_ItemCursor.minZ;
-            trigger.maxX = AC_ItemCursor.maxX;
-            trigger.maxY = AC_ItemCursor.maxY;
-            trigger.maxZ = AC_ItemCursor.maxZ;
-        } else if (btn.id == 1) {
+            trigger.setMin(AC_ItemCursor.min());
+            trigger.setMax(AC_ItemCursor.max());
+        }
+        else if (btn.id == 1) {
             trigger.resetOnTrigger = !trigger.resetOnTrigger;
             if (trigger.resetOnTrigger) {
                 btn.message = "Reset Target";
-            } else {
+            }
+            else {
                 btn.message = "Trigger Target";
             }
         }
@@ -50,12 +49,7 @@ public class AC_GuiTriggerPushable extends Screen {
 
     public void render(int mouseX, int mouseY, float tick) {
         this.fill(0, 0, this.width, this.height, Integer.MIN_VALUE);
-
-        AC_TileEntityTriggerPushable t = this.trigger;
-        int color = 14737632;
-        this.drawString(this.font, String.format("Min: (%d, %d, %d)", t.minX, t.minY, t.minZ), 4, 4, color);
-        this.drawString(this.font, String.format("Max: (%d, %d, %d)", t.maxX, t.maxY, t.maxZ), 4, 24, color);
-
+        AC_GuiStrings.drawMinMax(this, this.trigger, 4, 4, 0xe0e0e0);
         super.render(mouseX, mouseY, tick);
     }
 

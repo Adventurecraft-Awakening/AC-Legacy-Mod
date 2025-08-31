@@ -1,177 +1,124 @@
 package dev.adventurecraft.awakening.common.gui;
 
-import dev.adventurecraft.awakening.tile.AC_Blocks;
+import dev.adventurecraft.awakening.client.gui.components.AC_ValueBox;
+import dev.adventurecraft.awakening.item.AC_ItemCursor;
+import dev.adventurecraft.awakening.layout.IntRect;
+import dev.adventurecraft.awakening.primitives.Property;
+import dev.adventurecraft.awakening.primitives.TickTime;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTimer;
-import dev.adventurecraft.awakening.common.GuiSlider2;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.OptionButton;
 import net.minecraft.client.gui.screens.Screen;
 
+import java.text.Format;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
 public class AC_GuiTimer extends Screen {
-    boolean ignoreNext = false;
+
     private AC_TileEntityTimer timer;
-    boolean useTextFields;
-    GuiSlider2 activeTime;
-    GuiSlider2 deactiveTime;
-    GuiSlider2 delayTime;
-    private EditBox activeTimeText;
-    private EditBox deactiveTimeText;
-    private EditBox delayTimeText;
+
+    private Format tickFormat;
+    private AC_ValueBox<TickTime> activeTimeText;
+    private AC_ValueBox<TickTime> inactiveTimeText;
+    private AC_ValueBox<TickTime> delayTimeText;
 
     public AC_GuiTimer(AC_TileEntityTimer entity) {
         this.timer = entity;
     }
 
-    public void tick() {
-        if (this.useTextFields) {
-            this.delayTimeText.tick();
-            this.activeTimeText.tick();
-            this.deactiveTimeText.tick();
-        }
+    public @Override void tick() {
+        this.delayTimeText.tick();
+        this.activeTimeText.tick();
+        this.inactiveTimeText.tick();
     }
 
-    public void init() {
+    private static String getTypeMsg(AC_TileEntityTimer timer) {
+        return timer.resetOnTrigger ? "Reset Target" : "Trigger Target";
+    }
+
+    private AC_ValueBox<TickTime> tickProperty(IntRect rect, Supplier<Integer> getter, Consumer<Integer> setter) {
+        var property = Property.of(getter, setter).map(TickTime::new, TickTime::ticks32);
+        return new AC_ValueBox<>(rect, property, this.tickFormat);
+    }
+
+    public @Override void init() {
         this.buttons.clear();
         this.buttons.add(new OptionButton(0, 4, 40, "Use Current Selection"));
+        this.buttons.add(new OptionButton(1, 4, 60, getTypeMsg(this.timer)));
 
-        var var1 = new OptionButton(1, 4, 60, "Trigger Target");
-        if (this.timer.resetOnTrigger) {
-            var1.message = "Reset Target";
-        }
-        this.buttons.add(var1);
+        this.tickFormat = TickTime.TIME_FORMAT;
 
-        if (!this.useTextFields) {
-            this.delayTime = new GuiSlider2(4, 4, 80, 10, String.format("Delay for: %.2fs", (float) this.timer.timeDelay / 20.0F), (float) this.timer.timeDelay / 20.0F / 60.0F);
-            this.buttons.add(this.delayTime);
-            this.activeTime = new GuiSlider2(2, 4, 100, 10, String.format("Active for: %.2fs", (float) this.timer.timeActive / 20.0F), (float) this.timer.timeActive / 20.0F / 60.0F);
-            this.buttons.add(this.activeTime);
-            this.deactiveTime = new GuiSlider2(3, 4, 120, 10, String.format("Deactive for: %.2fs", (float) this.timer.timeDeactive / 20.0F), (float) this.timer.timeDeactive / 20.0F / 60.0F);
-            this.buttons.add(this.deactiveTime);
-        } else {
-            this.delayTimeText = new EditBox(this, this.font, 80, 81, 70, 16, String.format("%.2f", (float) this.timer.timeDelay / 20.0F));
-            this.activeTimeText = new EditBox(this, this.font, 80, 101, 70, 16, String.format("%.2f", (float) this.timer.timeActive / 20.0F));
-            this.deactiveTimeText = new EditBox(this, this.font, 80, 121, 70, 16, String.format("%.2f", (float) this.timer.timeDeactive / 20.0F));
-        }
-
-        this.buttons.add(new OptionButton(5, 4, 140, "Switch Input Mode"));
+        int x = 80;
+        int y = 81;
+        int w = 70;
+        int h = 16;
+        AC_TileEntityTimer t = this.timer;
+        this.delayTimeText = this.tickProperty(new IntRect(x, y, w, h), t::getTimeDelay, t::setTimeDelay);
+        this.activeTimeText = this.tickProperty(new IntRect(x, y + 20, w, h), t::getTimeActive, t::setTimeActive);
+        this.inactiveTimeText = this.tickProperty(new IntRect(x, y + 40, w, h), t::getTimeInactive, t::setTimeInactive);
     }
 
-    protected void buttonClicked(Button btn) {
+    protected @Override void buttonClicked(Button btn) {
         AC_TileEntityTimer timer = this.timer;
         if (btn.id == 0) {
-            int id = timer.level.getTile(timer.x, timer.y, timer.z);
-            if (id == AC_Blocks.timer.id) {
-                AC_Blocks.timer.setTriggerToSelection(timer.level, timer.x, timer.y, timer.z);
-            }
-        } else if (btn.id == 1) {
+            timer.setMin(AC_ItemCursor.min());
+            timer.setMax(AC_ItemCursor.max());
+        }
+        else if (btn.id == 1) {
             timer.resetOnTrigger = !timer.resetOnTrigger;
-            if (timer.resetOnTrigger) {
-                btn.message = "Reset Target";
-            } else {
-                btn.message = "Trigger Target";
-            }
-        } else if (btn.id == 5 && !this.ignoreNext) {
-            this.useTextFields = !this.useTextFields;
-            this.init();
-            this.ignoreNext = true;
+            btn.message = getTypeMsg(timer);
         }
     }
 
-    public void render(int var1, int var2, float var3) {
-        this.ignoreNext = false;
+    public @Override void render(int mouseX, int mouseY, float deltaTime) {
         this.fill(0, 0, this.width, this.height, Integer.MIN_VALUE);
 
-        AC_TileEntityTimer t = this.timer;
-        int textColor = 14737632;
+        AC_TileEntityTimer timer = this.timer;
+        Font font = this.font;
+        int textColor = 0xe0e0e0;
 
-        this.drawString(this.font, String.format("Min: (%d, %d, %d)", t.minX, t.minY, t.minZ), 4, 4, textColor);
-        this.drawString(this.font, String.format("Max: (%d, %d, %d)", t.maxX, t.maxY, t.maxZ), 4, 24, textColor);
+        AC_GuiStrings.drawMinMax(this, timer, 4, 4, textColor);
 
-        if (!t.active && t.canActivate) {
-            this.drawString(this.font, "State: Ready", 4, 164, textColor);
-        } else {
-            if (t.active) {
-                this.drawString(this.font, "State: Active", 4, 164, textColor);
-            } else if (!t.canActivate) {
-                this.drawString(this.font, "State: Deactive", 4, 164, textColor);
-            }
+        if (!timer.active && timer.canActivate) {
+            this.drawString(font, "State: Ready", 4, 164, textColor);
+        }
+        else {
+            String stateMsg = timer.active ? "State: Active" : "State: Inactive";
+            this.drawString(font, stateMsg, 4, 164, textColor);
 
-            if (this.timer.ticksDelay > 0) {
-                this.drawString(this.font, String.format("Delay: %.2f", t.ticksDelay * 0.05F), 4, 184, textColor);
-            } else {
-                this.drawString(this.font, String.format("Time: %.2f", t.ticks * 0.05F), 4, 184, textColor);
-            }
+            var fmt = TickTime.FULL_TIME_FORMAT;
+            String timeMsg = timer.ticksDelay > 0
+                ? "Delay: " + fmt.format(new TickTime(timer.ticksDelay))
+                : "Time: " + fmt.format(new TickTime(timer.ticks));
+            this.drawString(font, timeMsg, 4, 184, textColor);
         }
 
-        if (!this.useTextFields) {
-            this.timer.timeActive = (int) (this.activeTime.sliderValue * 60.0F * 20.0F);
-            this.timer.timeDeactive = (int) (this.deactiveTime.sliderValue * 60.0F * 20.0F);
-            this.timer.timeDelay = (int) (this.delayTime.sliderValue * 60.0F * 20.0F);
+        this.drawString(font, "Delay for:", 4, 84, textColor);
+        this.drawString(font, "Active for:", 4, 104, textColor);
+        this.drawString(font, "Inactive for:", 4, 124, textColor);
 
-            this.delayTime.message = String.format("Delay for: %.2fs", t.timeDelay / 20.0F);
-            this.activeTime.message = String.format("Active for: %.2fs", t.timeActive / 20.0F);
-            this.deactiveTime.message = String.format("Deactive for: %.2fs", t.timeDeactive / 20.0F);
-        } else {
-            this.drawString(this.font, "Delay For:", 4, 84, textColor);
-            this.drawString(this.font, "Active For:", 4, 104, textColor);
-            this.drawString(this.font, "Deactive For:", 4, 124, textColor);
+        this.activeTimeText.render(font);
+        this.inactiveTimeText.render(font);
+        this.delayTimeText.render(font);
 
-            this.activeTimeText.render();
-            this.deactiveTimeText.render();
-            this.delayTimeText.render();
-
-            try {
-                float var4 = Float.parseFloat(this.activeTimeText.getValue());
-                t.timeActive = (int) (var4 * 20.0F);
-            } catch (NumberFormatException ignored) {
-            }
-
-            try {
-                float var4 = Float.parseFloat(this.deactiveTimeText.getValue());
-                t.timeDeactive = (int) (var4 * 20.0F);
-            } catch (NumberFormatException ignored) {
-            }
-
-            try {
-                float var4 = Float.parseFloat(this.delayTimeText.getValue());
-                t.timeDelay = (int) (var4 * 20.0F);
-            } catch (NumberFormatException ignored) {
-            }
-        }
-
-        t.setChanged();
-
-        super.render(var1, var2, var3);
+        super.render(mouseX, mouseY, deltaTime);
     }
 
-    protected void keyPressed(char ch, int key) {
-        if (this.useTextFields) {
-            boolean isMod = key == 14 || ch >= 48 && ch <= 57 || ch == 46 || ch == 9;
-
-            if (this.activeTimeText.active && isMod) {
-                this.activeTimeText.charTyped(ch, key);
-            }
-
-            if (this.deactiveTimeText.active && isMod) {
-                this.deactiveTimeText.charTyped(ch, key);
-            }
-
-            if (this.delayTimeText.active && isMod) {
-                this.delayTimeText.charTyped(ch, key);
-            }
-        }
+    protected @Override void keyPressed(char ch, int key) {
+        this.activeTimeText.charTyped(ch, key);
+        this.inactiveTimeText.charTyped(ch, key);
+        this.delayTimeText.charTyped(ch, key);
 
         super.keyPressed(ch, key);
     }
 
-    protected void mouseClicked(int x, int y, int button) {
-        if (this.useTextFields) {
-            this.delayTimeText.clicked(x, y, button);
-            this.activeTimeText.clicked(x, y, button);
-            this.deactiveTimeText.clicked(x, y, button);
-        }
+    protected @Override void mouseClicked(int x, int y, int button) {
+        this.delayTimeText.clicked(x, y, button);
+        this.activeTimeText.clicked(x, y, button);
+        this.inactiveTimeText.clicked(x, y, button);
 
         super.mouseClicked(x, y, button);
     }
@@ -180,7 +127,7 @@ public class AC_GuiTimer extends Screen {
         Minecraft.instance.setScreen(new AC_GuiTimer(entity));
     }
 
-    public boolean isPauseScreen() {
+    public @Override boolean isPauseScreen() {
         return false;
     }
 }

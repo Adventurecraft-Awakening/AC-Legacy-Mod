@@ -9,4 +9,8 @@ public class ScriptVecRot {
         this.yaw = yaw;
         this.pitch = pitch;
     }
+
+    public int getFacing() {
+        return ((int) Math.floor((yaw * 4.0F / 360.0F) + 0.5D) & 3);
+    }
 }
