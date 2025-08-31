@@ -11,6 +11,7 @@ import net.minecraft.world.level.tile.Tile;
 
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Manages trigger areas in the world, providing efficient spatial queries and activation/deactivation
@@ -266,27 +267,27 @@ public final class AC_TriggerManager {
      */
     public static CompoundTag getTagCompound(Map<Coord, Int2ObjectMap<AC_TriggerArea>> areas) {
         var managerTag = new CompoundTag();
-        int coordCount = 0;
+        var coordCount = new AtomicInteger();
+        // TODO: store lists of compounds instead
 
-        for (var entry : areas.entrySet()) {
+        areas.forEach((coord, map) -> {
             var coordTag = new CompoundTag();
-            Coord coord = entry.getKey();
             coordTag.putInt("x", coord.x);
             coordTag.putInt("y", coord.y);
             coordTag.putInt("z", coord.z);
 
-            int areaCount = 0;
-            for (var areaEntry : entry.getValue().int2ObjectEntrySet()) {
-                CompoundTag areaTag = areaEntry.getValue().getTagCompound();
-                areaTag.putInt("areaID", areaEntry.getIntKey());
-                coordTag.putTag("area" + (areaCount++), areaTag);
-            }
+            var areaCount = new AtomicInteger();
+            map.forEach((areaId, areaEntry) -> {
+                CompoundTag areaTag = areaEntry.getTagCompound();
+                areaTag.putInt("areaID", areaId);
+                coordTag.putTag("area" + (areaCount.getAndIncrement()), areaTag);
+            });
 
-            coordTag.putInt("numAreas", areaCount);
-            managerTag.putTag("coord" + (coordCount++), coordTag);
-        }
+            coordTag.putInt("numAreas", areaCount.get());
+            managerTag.putTag("coord" + (coordCount.getAndIncrement()), coordTag);
+        });
 
-        managerTag.putInt("numCoords", coordCount);
+        managerTag.putInt("numCoords", coordCount.get());
         return managerTag;
     }
 
