@@ -85,7 +85,7 @@ public abstract class MixinPathNodeNavigator implements ExPathNodeNavigator {
             return null;
         }
 
-        ArrayList<Node> var3 = new ArrayList<>();
+        var var3 = new ArrayList<Node>();
         Node var4 = null;
         Node var5 = null;
         Node var6 = null;

@@ -3,6 +3,7 @@ package dev.adventurecraft.awakening.item;
 import dev.adventurecraft.awakening.common.AC_UtilBullet;
 import dev.adventurecraft.awakening.extension.item.ExItemStack;
 import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
@@ -48,12 +49,12 @@ class AC_ItemShotgun extends Item implements AC_IItemReload, AC_IItemLight, AC_I
     }
 
     @Override
-    public boolean isLighting(ItemInstance stack) {
+    public boolean isLighting(Entity entity, ItemInstance stack) {
         return ((ExItemStack) stack).getTimeLeft() > 42;
     }
 
     @Override
-    public boolean isMuzzleFlash(ItemInstance stack) {
+    public boolean isMuzzleFlash(Entity entity, ItemInstance stack) {
         return ((ExItemStack) stack).getTimeLeft() > 35;
     }
 
@@ -63,6 +64,7 @@ class AC_ItemShotgun extends Item implements AC_IItemReload, AC_IItemLight, AC_I
         if (stack.getAuxValue() > 0 && player.inventory.removeResource(AC_Items.shotgunAmmo.id)) {
             stack.setDamage(stack.getAuxValue() - 1);
             exStack.setTimeLeft(20);
+
             world.playSound(player, "items.shotgun.reload", 1.0F, 1.0F);
             if (stack.getAuxValue() == 0) {
                 exStack.setReloading(false);

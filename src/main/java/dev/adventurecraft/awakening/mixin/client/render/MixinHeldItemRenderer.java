@@ -199,7 +199,7 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
         }
 
         var9.end();
-        if (Item.items[var2.id] instanceof AC_IItemLight lightItem && lightItem.isMuzzleFlash(var2)) {
+        if (Item.items[var2.id] instanceof AC_IItemLight lightItem && lightItem.isMuzzleFlash(var1, var2)) {
             this.renderMuzzleFlash();
         }
 

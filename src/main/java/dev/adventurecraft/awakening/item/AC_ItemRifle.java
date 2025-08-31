@@ -3,6 +3,7 @@ package dev.adventurecraft.awakening.item;
 import dev.adventurecraft.awakening.common.AC_UtilBullet;
 import dev.adventurecraft.awakening.extension.item.ExItemStack;
 import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
@@ -46,13 +47,13 @@ class AC_ItemRifle extends Item implements AC_IItemReload, AC_IItemLight, AC_IUs
     }
 
     @Override
-    public boolean isLighting(ItemInstance stack) {
+    public boolean isLighting(Entity entity, ItemInstance stack) {
         var exStack = (ExItemStack) stack;
         return !exStack.getJustReloaded() && exStack.getTimeLeft() > 3;
     }
 
     @Override
-    public boolean isMuzzleFlash(ItemInstance stack) {
+    public boolean isMuzzleFlash(Entity entity, ItemInstance stack) {
         var exStack = (ExItemStack) stack;
         return !exStack.getJustReloaded() && exStack.getTimeLeft() > 3;
     }
@@ -61,11 +62,10 @@ class AC_ItemRifle extends Item implements AC_IItemReload, AC_IItemLight, AC_IUs
     public void reload(ItemInstance stack, Level world, Player player) {
         var exStack = (ExItemStack) stack;
         if (stack.getAuxValue() > 0 && player.inventory.removeResource(AC_Items.rifleAmmo.id)) {
-            stack.setDamage(stack.getAuxValue() - 1);
-
-            while (stack.getAuxValue() > 0 && player.inventory.removeResource(AC_Items.rifleAmmo.id)) {
+            do {
                 stack.setDamage(stack.getAuxValue() - 1);
             }
+            while (stack.getAuxValue() > 0 && player.inventory.removeResource(AC_Items.rifleAmmo.id));
 
             exStack.setTimeLeft(32);
             world.playSound(player, "items.clipReload", 1.0F, 1.0F);

@@ -8,6 +8,7 @@
     "client.MixinClientInteractionManager",
     "client.MixinMinecraft",
     "client.MixinSingleplayerInteractionManager",
+    "client.gamemode.MixinCreativeMode",
     "client.gui.MixinAchievementWidget",
     "client.gui.MixinInGameHud",
     "client.gui.components.MixinEditBox",
