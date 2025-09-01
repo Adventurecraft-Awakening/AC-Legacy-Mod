@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.extension.entity.player;
 
+import dev.adventurecraft.awakening.entity.player.GameMode;
 import dev.adventurecraft.awakening.extension.entity.ExMob;
 
 public interface ExPlayerEntity extends ExMob {
@@ -23,4 +24,6 @@ public interface ExPlayerEntity extends ExMob {
     void setCloakTexture(String value);
 
     void openPalette();
+
+    GameMode getGameMode();
 }
