@@ -46,6 +46,7 @@ import org.lwjgl.opengl.NVFogDistance;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -151,23 +152,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         target = "Lnet/minecraft/client/renderer/GameRenderer;renderDistance:F",
         ordinal = 0))
     private void redirectFarPlane(GameRenderer instance, float v) {
-        float value = this.getFarPlane();
-        var options = (ExGameOptions) this.mc.options;
-
-        if (options.ofFarView()) {
-            if (value < 512) {
-                value *= 3.0F;
-            } else {
-                value *= 2.0F;
-            }
-        }
-
-        if (GLContext.getCapabilities().GL_NV_fog_distance && options.ofFogFancy()) {
-            value *= 0.95F;
-        } else {
-            value *= 0.83F;
-        }
-        renderDistance = value;
+        this.renderDistance = this.getFarPlane();
     }
 
     @ModifyConstant(method = "setupCamera", constant = @Constant(floatValue = 2.0F),
@@ -952,24 +937,29 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         return constant;
     }
 
+    @Unique
     public void resetZoom() {
         this.zoom = 1.0D;
     }
 
+    @Unique
     public float getFarPlane() {
-        float dist = (float) (256 >> this.mc.options.viewDistance);
-        if (((ExGameOptions) this.mc.options).isAutoFarClip()) {
-            double avgTime = ((ExMinecraft) this.mc).getFrameTime();
-            if (avgTime > 0.033) {
-                this.farClipAdjustment *= 0.99F;
-            } else if (avgTime < 0.02) {
-                this.farClipAdjustment *= 1.01F;
-            }
-
-            this.farClipAdjustment = Math.max(Math.min(this.farClipAdjustment, 1.0F), 0.25F);
-            dist *= this.farClipAdjustment;
+        var options = (ExGameOptions) this.mc.options;
+        int range = options.ofFarView() ? 1024 : 256;
+        float dist = 0.75f * (range >> this.mc.options.viewDistance);
+        if (!options.isAutoFarClip()) {
+            return dist;
         }
-        return dist;
+
+        double avgTime = ((ExMinecraft) this.mc).getFrameTime();
+        if (avgTime > 0.033) {
+            this.farClipAdjustment *= 0.99F;
+        } else if (avgTime < 0.02) {
+            this.farClipAdjustment *= 1.01F;
+        }
+
+        this.farClipAdjustment = Math.max(Math.min(this.farClipAdjustment, 1.0F), 0.25F);
+        return dist * this.farClipAdjustment;
     }
 
     @Override
