@@ -1,15 +1,17 @@
 package dev.adventurecraft.awakening.mixin.entity;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
-import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
-import dev.adventurecraft.awakening.tile.AC_Blocks;
-import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.extension.block.ExLadderBlock;
 import dev.adventurecraft.awakening.extension.entity.ExMob;
+import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
+import dev.adventurecraft.awakening.item.AC_Items;
+import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.util.MathF;
+import dev.adventurecraft.awakening.util.TagUtil;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.Entity;
@@ -27,6 +29,8 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.Collection;
 
 @Mixin(Mob.class)
 public abstract class MixinMob extends MixinEntity implements ExMob {
@@ -504,6 +508,27 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
         exTag.findInt("randomLookRate").ifPresent(this::setRandomLookRate);
         exTag.findInt("randomLookRateVariation").ifPresent(this::setRandomLookRateVariation);
         exTag.findBool("canGetFallDamage").ifPresent(this::setCanGetFallDamage);
+
+        var customTag = exTag.findCompound("custom");
+        if (customTag.isPresent()) {
+            for (Tag tags : (Collection<Tag>) customTag.get().getTags()) {
+                this.customData.put(tags.getType(), TagUtil.unwrap(tags));
+            }
+        }
+    }
+
+    @Inject(
+        method = "addAdditionalSaveData",
+        at = @At("TAIL")
+    )
+    protected void ac$adAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
+        if (!this.customData.isEmpty()) {
+            var customTag = new CompoundTag();
+            this.customData.forEach((key, object) -> {
+                customTag.putTag(key, TagUtil.wrap(object));
+            });
+            tag.putCompoundTag("custom", customTag);
+        }
     }
 
     @Inject(
