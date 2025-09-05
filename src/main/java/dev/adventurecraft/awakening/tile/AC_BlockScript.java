@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.tile;
 
-import dev.adventurecraft.awakening.common.AC_DebugMode;
+import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityScript;
 import dev.adventurecraft.awakening.common.gui.AC_GuiScript;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
@@ -40,7 +40,7 @@ public class AC_BlockScript extends TileEntityTile implements AC_ITriggerDebugBl
 
     @Override
     public boolean mayPick() {
-        return AC_DebugMode.active;
+        return false;
     }
 
     @Override
@@ -59,13 +59,12 @@ public class AC_BlockScript extends TileEntityTile implements AC_ITriggerDebugBl
         if (!entity.onDetriggerScriptFile.isEmpty()) {
             ((ExWorld) world).getScriptHandler().runScript(entity.onDetriggerScriptFile, entity.scope);
         }
-
         entity.isActivated = false;
     }
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active) {
+        if (((ExPlayerEntity) player).isDebugMode()) {
             var entity = (AC_TileEntityScript) world.getTileEntity(x, y, z);
             AC_GuiScript.showUI(entity);
         }

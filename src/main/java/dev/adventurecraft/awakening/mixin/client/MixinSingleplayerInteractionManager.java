@@ -83,12 +83,12 @@ public abstract class MixinSingleplayerInteractionManager extends MixinClientInt
             value = "INVOKE",
             target = "Lnet/minecraft/client/gamemode/SurvivalGameMode;destroyBlock(IIII)Z"))
     private boolean onlyBreakBlockInDebugMode(SurvivalGameMode instance, int var1, int var2, int var3, int var4) {
-        return AC_DebugMode.active;
+        return AC_DebugMode.isActive();
     }
 
     @Inject(method = "continueDestroyBlock", at = @At("HEAD"), cancellable = true)
     private void onlyDigInDebugMode(int var1, int var2, int var3, int var4, CallbackInfo ci) {
-        if (!AC_DebugMode.active) {
+        if (!AC_DebugMode.isActive()) {
             ci.cancel();
         }
     }
@@ -99,7 +99,7 @@ public abstract class MixinSingleplayerInteractionManager extends MixinClientInt
         if (heldItem != null && heldItem.id == AC_Items.quill.id) {
             return 500.0F;
         }
-        if (AC_DebugMode.active) {
+        if (AC_DebugMode.isActive()) {
             return (float) AC_DebugMode.reachDistance;
         }
         return 4.0F;

@@ -9,7 +9,6 @@ import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.block.ExLadderBlock;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.ExTextureManager;
-import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.render.block.ExFoliageColor;
 import dev.adventurecraft.awakening.extension.client.render.block.ExGrassColor;
@@ -31,18 +30,20 @@ import dev.adventurecraft.awakening.script.ScopeTag;
 import dev.adventurecraft.awakening.script.Script;
 import dev.adventurecraft.awakening.script.ScriptModel;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
+import dev.adventurecraft.awakening.tile.AC_ITriggerDebugBlock;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityNpcPath;
 import dev.adventurecraft.awakening.util.MathF;
 import dev.adventurecraft.awakening.util.RandomUtil;
+import dev.adventurecraft.awakening.world.RayFlags;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BlockShapes;
 import net.minecraft.client.renderer.ptexture.*;
 import net.minecraft.locale.I18n;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Facing;
 import net.minecraft.util.Mth;
 import net.minecraft.util.ProgressListener;
 import net.minecraft.world.entity.Entity;
@@ -691,18 +692,13 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     }
 
     @Overwrite
-    public HitResult clip(Vec3 pointA, Vec3 pointB, boolean var3, boolean var4) {
-        return this.rayTraceBlocks2(pointA, pointB, var3, var4, true);
+    public HitResult clip(Vec3 pointA, Vec3 pointB, boolean checkLiquid, boolean checkShapes) {
+        int flags = RayFlags.CLIP | (checkLiquid ? RayFlags.LIQUID : 0) | (checkShapes ? RayFlags.SHAPE : 0);
+        return this.rayTraceBlocks2(pointA, pointB, flags);
     }
 
     @Override
-    public HitResult rayTraceBlocks2(
-        Vec3 pointA,
-        Vec3 pointB,
-        boolean blockCollidableFlag,
-        boolean useCollisionShapes,
-        boolean collideWithClip
-    ) {
+    public HitResult rayTraceBlocks2(Vec3 pointA, Vec3 pointB, int flags) {
         if (Double.isNaN(pointA.x) || Double.isNaN(pointA.y) || Double.isNaN(pointA.z)) {
             return null;
         }
@@ -715,13 +711,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         double paY = pointA.y;
         double paZ = pointA.z;
 
-        HitResult hit = this.rayTraceBlocksCore(
-            pointA,
-            pointB,
-            blockCollidableFlag,
-            useCollisionShapes,
-            collideWithClip
-        );
+        HitResult hit = this.rayTraceBlocksCore(pointA, pointB, flags);
 
         if (AC_DebugMode.renderRays) {
             this.recordRayDebugList(paX, paY, paZ, pointB.x, pointB.y, pointB.z, hit);
@@ -731,7 +721,6 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
 
     @Override
     public void recordRayDebugList(double aX, double aY, double aZ, double bX, double bY, double bZ, HitResult hit) {
-
         var blocksCollisionsArray = saveAsFloatArray(this.rayCheckedBlocks);
         this.rayCheckedBlocks.clear();
 
@@ -744,42 +733,47 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         return id == AC_Blocks.clipBlock.id || ExLadderBlock.isLadderID(id);
     }
 
-    @Override
-    public HitResult rayTraceBlocksCore(
-        Vec3 pointA,
-        Vec3 pointB,
-        boolean blockCollidableFlag,
-        boolean useCollisionShapes,
-        boolean collideWithClip
-    ) {
-        int bX = Mth.floor(pointB.x);
-        int bY = Mth.floor(pointB.y);
-        int bZ = Mth.floor(pointB.z);
-        int aX = Mth.floor(pointA.x);
-        int aY = Mth.floor(pointA.y);
-        int aZ = Mth.floor(pointA.z);
-        int aId = this.getTile(aX, aY, aZ);
-        Tile aBlock = Tile.tiles[aId];
-        AABB aAabb = null;
-        if (aBlock != null &&
-            (!useCollisionShapes || (aAabb = aBlock.getAABB((Level) (Object) this, aX, aY, aZ)) != null) &&
-            (aId > 0 && (collideWithClip || !this.isClippingBlock(aId)) &&
-                aBlock.mayPick(this.getData(aX, aY, aZ), blockCollidableFlag)
-            )) {
-
-            if (aAabb != null && AC_DebugMode.renderRays) {
-                this.rayCheckedBlocks.add(aAabb);
-            }
-
-            HitResult hit = aBlock.clip((Level) (Object) this, aX, aY, aZ, pointA, pointB);
-            if (hit != null) {
-                return hit;
+    @Unique
+    private boolean mayPickBlock(Tile block, int x, int y, int z, int rayFlags) {
+        if ((rayFlags & RayFlags.DEBUG) != 0) {
+            if (block instanceof AC_ITriggerDebugBlock) {
+                return true;
             }
         }
+        return block.mayPick(this.getData(x, y, z), (rayFlags & RayFlags.LIQUID) != 0);
+    }
+
+    @Unique
+    private HitResult rayTraceBlocksCore(Vec3 pointA, Vec3 pointB, int flags) {
+        int bX = (int) Math.floor(pointB.x);
+        int bY = (int) Math.floor(pointB.y);
+        int bZ = (int) Math.floor(pointB.z);
+        int aX = (int) Math.floor(pointA.x);
+        int aY = (int) Math.floor(pointA.y);
+        int aZ = (int) Math.floor(pointA.z);
+        var self = (Level) (Object) this;
 
         int stepsLeft = 200;
+        do {
+            int id = this.getTile(aX, aY, aZ);
+            Tile block = Tile.tiles[id];
+            if (block != null && id != 0) {
+                AABB aabb = null;
+                if (((flags & RayFlags.SHAPE) == 0 || (aabb = block.getAABB(self, aX, aY, aZ)) != null) &&
+                    ((flags & RayFlags.CLIP) != 0 || !this.isClippingBlock(block.id)) &&
+                    this.mayPickBlock(block, aX, aY, aZ, flags)) {
 
-        while (stepsLeft-- >= 0) {
+                    if (aabb != null && AC_DebugMode.renderRays) {
+                        this.rayCheckedBlocks.add(aabb);
+                    }
+
+                    HitResult hit = block.clip(self, aX, aY, aZ, pointA, pointB);
+                    if (hit != null) {
+                        return hit;
+                    }
+                }
+            }
+
             if (Double.isNaN(pointA.x) || Double.isNaN(pointA.y) || Double.isNaN(pointA.z)) {
                 return null;
             }
@@ -790,34 +784,34 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             boolean moveX = true;
             boolean moveY = true;
             boolean moveZ = true;
-            double startX = 999.0D;
-            double startY = 999.0D;
-            double startZ = 999.0D;
+            int startX = 999;
+            int startY = 999;
+            int startZ = 999;
             if (bX > aX) {
-                startX = (double) aX + 1.0D;
+                startX = aX + 1;
             }
             else if (bX < aX) {
-                startX = (double) aX + 0.0D;
+                startX = aX;
             }
             else {
                 moveX = false;
             }
 
             if (bY > aY) {
-                startY = (double) aY + 1.0D;
+                startY = aY + 1;
             }
             else if (bY < aY) {
-                startY = (double) aY + 0.0D;
+                startY = aY;
             }
             else {
                 moveY = false;
             }
 
             if (bZ > aZ) {
-                startZ = (double) aZ + 1.0D;
+                startZ = aZ + 1;
             }
             else if (bZ < aZ) {
-                startZ = (double) aZ + 0.0D;
+                startZ = aZ;
             }
             else {
                 moveZ = false;
@@ -844,10 +838,10 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             int side;
             if (distX < distY && distX < distZ) {
                 if (bX > aX) {
-                    side = 4;
+                    side = Facing.WEST;
                 }
                 else {
-                    side = 5;
+                    side = Facing.EAST;
                 }
 
                 pointA.x = startX;
@@ -856,10 +850,10 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             }
             else if (distY < distZ) {
                 if (bY > aY) {
-                    side = 0;
+                    side = Facing.DOWN;
                 }
                 else {
-                    side = 1;
+                    side = Facing.UP;
                 }
 
                 pointA.x += deltaX * distY;
@@ -868,10 +862,10 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             }
             else {
                 if (bZ > aZ) {
-                    side = 2;
+                    side = Facing.NORTH;
                 }
                 else {
-                    side = 3;
+                    side = Facing.SOUTH;
                 }
 
                 pointA.x += deltaX * distZ;
@@ -879,40 +873,22 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
                 pointA.z = startZ;
             }
 
-            aX = Mth.floor(pointA.x);
-            if (side == 5) {
+            aX = (int) Math.floor(pointA.x);
+            if (side == Facing.EAST) {
                 --aX;
             }
 
-            aY = Mth.floor(pointA.y);
-            if (side == 1) {
+            aY = (int) Math.floor(pointA.y);
+            if (side == Facing.UP) {
                 --aY;
             }
 
-            aZ = Mth.floor(pointA.z);
-            if (side == 3) {
+            aZ = (int) Math.floor(pointA.z);
+            if (side == Facing.SOUTH) {
                 --aZ;
             }
-
-            int id = this.getTile(aX, aY, aZ);
-            Tile block = Tile.tiles[id];
-            AABB aabb = null;
-            if (block != null &&
-                (!useCollisionShapes || (aabb = block.getAABB((Level) (Object) this, aX, aY, aZ)) != null) && id != 0 &&
-                block.mayPick(this.getData(aX, aY, aZ), blockCollidableFlag) &&
-                // TODO: is getRenderShape check needed after mayPick?
-                ((ExBlock) block).getRenderShape(this, aX, aY, aZ) != BlockShapes.NONE) {
-
-                if (aabb != null && AC_DebugMode.renderRays) {
-                    this.rayCheckedBlocks.add(aabb);
-                }
-
-                HitResult hit = block.clip((Level) (Object) this, aX, aY, aZ, pointA, pointB);
-                if (hit != null && (collideWithClip || !this.isClippingBlock(block.id))) {
-                    return hit;
-                }
-            }
         }
+        while (stepsLeft-- >= 0);
         return null;
     }
 
@@ -1058,9 +1034,9 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         )
     )
     private boolean fixupRemoveCondition(boolean value, @Local Entity entity) {
-        ExMinecraft mc = (ExMinecraft) Minecraft.instance;
+        var mc = (ExMinecraft) Minecraft.instance;
         return !(!entity.removed && (!mc.isCameraActive() || !mc.isCameraPause()) &&
-            (!AC_DebugMode.active || entity instanceof Player)
+            (!AC_DebugMode.isActive() || entity instanceof Player)
         );
     }
 
@@ -1789,5 +1765,9 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     @Override
     public ArrayList<RayDebugList> getRayDebugLists() {
         return this.rayDebugLists;
+    }
+
+    public @Override boolean isDebugMode() {
+        return ((ExWorldProperties) this.levelData).isDebugMode();
     }
 }

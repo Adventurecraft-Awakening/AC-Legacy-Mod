@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.tile;
 
-import dev.adventurecraft.awakening.common.AC_DebugMode;
+import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityMessage;
 import dev.adventurecraft.awakening.common.gui.AC_GuiMessage;
 import net.minecraft.client.Minecraft;
@@ -46,17 +46,16 @@ public class AC_BlockMessage extends TileEntityTile implements AC_ITriggerDebugB
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active) {
+        if (((ExPlayerEntity) player).isDebugMode()) {
             var entity = (AC_TileEntityMessage) world.getTileEntity(x, y, z);
             AC_GuiMessage.showUI(entity);
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     @Override
     public boolean mayPick() {
-        return AC_DebugMode.active;
+        return false;
     }
 }

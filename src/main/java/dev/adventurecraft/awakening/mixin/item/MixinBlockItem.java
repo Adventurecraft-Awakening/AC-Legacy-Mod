@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.mixin.item;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
+import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.extension.item.ExTileItem;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;
@@ -31,7 +32,7 @@ public abstract class MixinBlockItem implements ExTileItem {
         int face,
         CallbackInfoReturnable<Boolean> cir
     ) {
-        if (!AC_DebugMode.active) {
+        if (!((ExPlayerEntity) player).isDebugMode()) {
             cir.setReturnValue(false);
         }
     }

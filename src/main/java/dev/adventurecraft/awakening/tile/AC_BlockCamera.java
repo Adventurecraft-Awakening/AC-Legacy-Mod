@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.tile;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
+import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityCamera;
 import dev.adventurecraft.awakening.common.gui.AC_GuiCameraBlock;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
@@ -49,7 +50,7 @@ public class AC_BlockCamera extends TileEntityTile implements AC_ITriggerDebugBl
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (!AC_DebugMode.active) {
+        if (!((ExPlayerEntity) player).isDebugMode()) {
             return false;
         }
 
@@ -63,6 +64,6 @@ public class AC_BlockCamera extends TileEntityTile implements AC_ITriggerDebugBl
 
     @Override
     public boolean mayPick() {
-        return AC_DebugMode.active;
+        return false;
     }
 }

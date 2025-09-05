@@ -1000,7 +1000,8 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         var mc = (ExMinecraft) this.mc;
         // TODO: move cameraPaused out of render loop?
         boolean cameraPaused = (mc.isCameraActive() && mc.isCameraPause());
-        if (cameraPaused || (mc.isDebugMode() && !(entity instanceof Player)) || ((ExEntity) entity).getStunned() > 0) {
+        boolean isDebugMode = !(entity instanceof Player) && AC_DebugMode.isActive();
+        if (cameraPaused || isDebugMode || ((ExEntity) entity).getStunned() > 0) {
             tickTime = 1.0F;
         }
         instance.render(entity, tickTime);

@@ -3,10 +3,10 @@ package dev.adventurecraft.awakening.tile;
 import java.util.List;
 import java.util.Random;
 
-import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.entity.AC_EntityAirFX;
 import dev.adventurecraft.awakening.extension.client.particle.ExParticleManager;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
+import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
@@ -47,10 +47,8 @@ public class AC_BlockFan extends Tile {
 
     private boolean canGoThroughBlock(int id) {
         // TODO: more tiles, like tall grass, or anything that can be passed through?
-        return Tile.tiles[id] != null &&
-            Tile.tiles[id].material != Material.AIR &&
-            Tile.tiles[id].material != Material.WATER &&
-            Tile.tiles[id].material != Material.LAVA;
+        return Tile.tiles[id] != null && Tile.tiles[id].material != Material.AIR &&
+            Tile.tiles[id].material != Material.WATER && Tile.tiles[id].material != Material.LAVA;
     }
 
     @Override
@@ -60,7 +58,7 @@ public class AC_BlockFan extends Tile {
         }
 
         world.addToTickNextTick(x, y, z, this.id, this.getTickDelay());
-        if (AC_DebugMode.active) {
+        if (((ExWorld) world).isDebugMode()) {
             return;
         }
 
@@ -76,7 +74,8 @@ public class AC_BlockFan extends Tile {
                     break;
                 }
             }
-        } else if (meta == 1) {
+        }
+        else if (meta == 1) {
             for (oY = 1; oY <= 4; ++oY) {
                 int id = world.getTile(x, y + oY, z);
                 if (this.canGoThroughBlock(id)) {
@@ -84,7 +83,8 @@ public class AC_BlockFan extends Tile {
                     break;
                 }
             }
-        } else if (meta == 2) {
+        }
+        else if (meta == 2) {
             for (oZ = -1; oZ >= -4; --oZ) {
                 int id = world.getTile(x, y, z + oZ);
                 if (this.canGoThroughBlock(id)) {
@@ -92,7 +92,8 @@ public class AC_BlockFan extends Tile {
                     break;
                 }
             }
-        } else if (meta == 3) {
+        }
+        else if (meta == 3) {
             for (oZ = 1; oZ <= 4; ++oZ) {
                 int id = world.getTile(x, y, z + oZ);
                 if (this.canGoThroughBlock(id)) {
@@ -100,7 +101,8 @@ public class AC_BlockFan extends Tile {
                     break;
                 }
             }
-        } else if (meta == 4) {
+        }
+        else if (meta == 4) {
             for (oX = -1; oX >= -4; --oX) {
                 int id = world.getTile(x + oX, y, z);
                 if (this.canGoThroughBlock(id)) {
@@ -108,7 +110,8 @@ public class AC_BlockFan extends Tile {
                     break;
                 }
             }
-        } else if (meta == 5) {
+        }
+        else if (meta == 5) {
             for (oX = 1; oX <= 4; ++oX) {
                 int id = world.getTile(x + oX, y, z);
                 if (this.canGoThroughBlock(id)) {
@@ -148,7 +151,15 @@ public class AC_BlockFan extends Tile {
     }
 
     @Environment(EnvType.CLIENT)
-    private void getParticlesAndSpawnAir(Level world, int x, int y, int z, Random rand, AABB aabb, List<Entity> entities) {
+    private void getParticlesAndSpawnAir(
+        Level world,
+        int x,
+        int y,
+        int z,
+        Random rand,
+        AABB aabb,
+        List<Entity> entities
+    ) {
         var particles = Minecraft.instance.particleEngine;
         ((ExParticleManager) particles).getEffectsWithinAABB(aabb, entities);
 
@@ -169,7 +180,7 @@ public class AC_BlockFan extends Tile {
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (!AC_DebugMode.active) {
+        if (!((ExPlayerEntity) player).isDebugMode()) {
             return false;
         }
         world.setData(x, y, z, (world.getData(x, y, z) + 1) % 6);
@@ -188,7 +199,8 @@ public class AC_BlockFan extends Tile {
                 int meta = world.getData(x, y, z);
                 world.setTileAndData(x, y, z, AC_Blocks.fanOff.id, meta);
             }
-        } else if (!this.fanOn) {
+        }
+        else if (!this.fanOn) {
             int meta = world.getData(x, y, z);
             world.setTileAndData(x, y, z, AC_Blocks.fan.id, meta);
             world.addToTickNextTick(x, y, z, AC_Blocks.fan.id, this.getTickDelay());

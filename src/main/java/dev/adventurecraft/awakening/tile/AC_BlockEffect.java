@@ -12,18 +12,19 @@ import dev.adventurecraft.awakening.common.gui.AC_GuiEffect;
 import dev.adventurecraft.awakening.extension.client.ExTextureManager;
 import dev.adventurecraft.awakening.extension.client.render.block.ExFoliageColor;
 import dev.adventurecraft.awakening.extension.client.render.block.ExGrassColor;
+import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityEffect;
 import net.minecraft.client.Minecraft;
-//import net.minecraft.client.render.*;
 import net.minecraft.client.renderer.ptexture.FireTexture;
 import net.minecraft.client.renderer.ptexture.LavaSideTexture;
 import net.minecraft.client.renderer.ptexture.LavaTexture;
 import net.minecraft.client.renderer.ptexture.PortalTexture;
 import net.minecraft.client.renderer.ptexture.WaterSideTexture;
 import net.minecraft.client.renderer.ptexture.WaterTexture;
+import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Material;
@@ -56,12 +57,12 @@ public class AC_BlockEffect extends TileEntityTile implements AC_ITriggerDebugBl
 
     @Override
     public boolean mayPick() {
-        return AC_DebugMode.active;
+        return false;
     }
 
     @Override
     public void onTriggerActivated(Level world, int x, int y, int z) {
-        ExWorldProperties worldProps = (ExWorldProperties) world.levelData;
+        var worldProps = (ExWorldProperties) world.levelData;
 
         var entity = (AC_TileEntityEffect) world.getTileEntity(x, y, z);
         entity.isActivated = true;
@@ -71,7 +72,8 @@ public class AC_BlockEffect extends TileEntityTile implements AC_ITriggerDebugBl
             worldProps.setFogR(entity.fogR);
             worldProps.setFogG(entity.fogG);
             worldProps.setFogB(entity.fogB);
-        } else if (entity.changeFogColor == 2) {
+        }
+        else if (entity.changeFogColor == 2) {
             worldProps.setOverrideFogColor(false);
         }
 
@@ -79,7 +81,8 @@ public class AC_BlockEffect extends TileEntityTile implements AC_ITriggerDebugBl
             worldProps.setOverrideFogDensity(true);
             worldProps.setFogStart(entity.fogStart);
             worldProps.setFogEnd(entity.fogEnd);
-        } else if (entity.changeFogDensity == 2) {
+        }
+        else if (entity.changeFogDensity == 2) {
             worldProps.setOverrideFogDensity(false);
         }
 
@@ -89,7 +92,8 @@ public class AC_BlockEffect extends TileEntityTile implements AC_ITriggerDebugBl
 
         if (entity.replaceTextures) {
             this.replaceTextures(world, entity.textureReplacement);
-        } else if (entity.revertTextures) {
+        }
+        else if (entity.revertTextures) {
             revertTextures(world);
         }
     }
@@ -132,10 +136,12 @@ public class AC_BlockEffect extends TileEntityTile implements AC_ITriggerDebugBl
                         replaced |= replaceTexture(keyName, items[0], items[1]);
                     }
                 }
-            } catch (IOException e) {
+            }
+            catch (IOException e) {
                 e.printStackTrace();
             }
-        } catch (FileNotFoundException e) {
+        }
+        catch (FileNotFoundException e) {
             e.printStackTrace();
         }
 
@@ -149,41 +155,52 @@ public class AC_BlockEffect extends TileEntityTile implements AC_ITriggerDebugBl
         var texManager = (ExTextureManager) Minecraft.instance.textures;
         if (!((ExWorldProperties) world.levelData).addReplacementTexture(keyName, replacementName)) {
             return false;
-        } else if (key.equals("/watermap.png")) {
+        }
+        else if (key.equals("/watermap.png")) {
             AC_TerrainImage.loadWaterMap(new File(((ExWorld) world).getLevelDir(), replacementName));
             needsReloadForRevert = true;
             return true;
-        } else if (key.equals("/biomemap.png")) {
+        }
+        else if (key.equals("/biomemap.png")) {
             AC_TerrainImage.loadBiomeMap(new File(((ExWorld) world).getLevelDir(), replacementName));
             needsReloadForRevert = true;
             return true;
-        } else if (key.equals("/misc/grasscolor.png")) {
+        }
+        else if (key.equals("/misc/grasscolor.png")) {
             ExGrassColor.loadGrass(replacementName, world);
             needsReloadForRevert = true;
             return true;
-        } else if (key.equals("/misc/foliagecolor.png")) {
+        }
+        else if (key.equals("/misc/foliagecolor.png")) {
             ExFoliageColor.loadFoliage(replacementName, world);
             needsReloadForRevert = true;
             return true;
-        } else if (key.equals("/custom_fire.png")) {
+        }
+        else if (key.equals("/custom_fire.png")) {
             AC_TextureBinder.loadImages(texManager, FireTexture.class, replacementName, world);
             return true;
-        } else if (key.equals("/custom_lava_flowing.png")) {
+        }
+        else if (key.equals("/custom_lava_flowing.png")) {
             AC_TextureBinder.loadImages(texManager, LavaSideTexture.class, replacementName, world);
             return true;
-        } else if (key.equals("/custom_lava_still.png")) {
+        }
+        else if (key.equals("/custom_lava_still.png")) {
             AC_TextureBinder.loadImages(texManager, LavaTexture.class, replacementName, world);
             return true;
-        } else if (key.equals("/custom_portal.png")) {
+        }
+        else if (key.equals("/custom_portal.png")) {
             AC_TextureBinder.loadImages(texManager, PortalTexture.class, replacementName, world);
             return true;
-        } else if (key.equals("/custom_water_flowing.png")) {
+        }
+        else if (key.equals("/custom_water_flowing.png")) {
             AC_TextureBinder.loadImages(texManager, WaterSideTexture.class, replacementName, world);
             return true;
-        } else if (key.equals("/custom_water_still.png")) {
+        }
+        else if (key.equals("/custom_water_still.png")) {
             AC_TextureBinder.loadImages(texManager, WaterTexture.class, replacementName, world);
             return true;
-        } else {
+        }
+        else {
             texManager.replaceTexture(keyName, replacementName);
             return false;
         }
@@ -197,12 +214,15 @@ public class AC_BlockEffect extends TileEntityTile implements AC_ITriggerDebugBl
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active && (player.getSelectedItem() == null || player.getSelectedItem().id == AC_Items.cursor.id)) {
-            var entity = (AC_TileEntityEffect) world.getTileEntity(x, y, z);
-            AC_GuiEffect.showUI(entity);
-            return true;
-        } else {
+        if (!((ExPlayerEntity) player).isDebugMode()) {
             return false;
         }
+        ItemInstance item = player.getSelectedItem();
+        if (item != null && item.id != AC_Items.cursor.id) {
+            return false;
+        }
+        var entity = (AC_TileEntityEffect) world.getTileEntity(x, y, z);
+        AC_GuiEffect.showUI(entity);
+        return true;
     }
 }

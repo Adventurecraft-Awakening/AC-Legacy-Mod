@@ -4,6 +4,7 @@ import java.util.Random;
 
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.common.gui.AC_GuiTriggerInverter;
+import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTriggerInverter;
@@ -55,7 +56,7 @@ public class AC_BlockTriggerInverter extends TileEntityTile implements AC_ITrigg
 
     @Override
     public boolean mayPick() {
-        return AC_DebugMode.active;
+        return false;
     }
 
     @Override
@@ -81,13 +82,14 @@ public class AC_BlockTriggerInverter extends TileEntityTile implements AC_ITrigg
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active) {
-            ItemInstance item = player.getSelectedItem();
-            if (item == null || item.id == AC_Items.cursor.id) {
-                var entity = (AC_TileEntityTriggerInverter) world.getTileEntity(x, y, z);
-                AC_GuiTriggerInverter.showUI(entity);
-                return true;
-            }
+        if (!((ExPlayerEntity) player).isDebugMode()) {
+            return false;
+        }
+        ItemInstance item = player.getSelectedItem();
+        if (item == null || item.id == AC_Items.cursor.id) {
+            var entity = (AC_TileEntityTriggerInverter) world.getTileEntity(x, y, z);
+            AC_GuiTriggerInverter.showUI(entity);
+            return true;
         }
         return false;
     }

@@ -379,7 +379,7 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
         }
         else {
             int y = 2; // 12 prev
-            if (AC_DebugMode.active) {
+            if (AC_DebugMode.isActive()) {
                 font.drawShadow(AC_Version.shortVersion, x, y, color0);
                 y += 10;
 

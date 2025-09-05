@@ -26,21 +26,22 @@ public class AC_BlockTriggeredDoor extends Tile implements AC_ITriggerDebugBlock
 
     @Override
     public boolean mayPick() {
-        return AC_DebugMode.active || this.isActived;
+        return this.isActived;
     }
 
     @Override
     public int getRenderShape(LevelSource view, int x, int y, int z) {
-        if (AC_DebugMode.active || ((ExWorld) Minecraft.instance.level).getTriggerManager().isActivated(x, y, z)) {
+        if (AC_DebugMode.isActive() || ((ExWorld) Minecraft.instance.level).getTriggerManager().isActivated(x, y, z)) {
             return this.getRenderShape();
         }
         return BlockShapes.NONE;
     }
 
     @Override
-    public AABB getAABB(Level world, int x, int y, int z) {
-        if (((ExWorld) world).getTriggerManager().isActivated(x, y, z) && !AC_DebugMode.active) {
-            return super.getAABB(world, x, y, z);
+    public AABB getAABB(Level level, int x, int y, int z) {
+        var exLevel = (ExWorld) level;
+        if (exLevel.getTriggerManager().isActivated(x, y, z) && !exLevel.isDebugMode()) {
+            return super.getAABB(level, x, y, z);
         }
         return null;
     }

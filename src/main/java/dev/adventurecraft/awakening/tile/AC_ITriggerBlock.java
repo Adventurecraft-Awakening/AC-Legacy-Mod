@@ -1,5 +1,7 @@
 package dev.adventurecraft.awakening.tile;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelSource;
 
@@ -9,8 +11,10 @@ public interface AC_ITriggerBlock {
         return 0;
     }
 
+    @Environment(EnvType.CLIENT)
     int getRenderShape();
 
+    @Environment(EnvType.CLIENT)
     default int getRenderShape(LevelSource view, int x, int y, int z) {
         return this.getRenderShape();
     }

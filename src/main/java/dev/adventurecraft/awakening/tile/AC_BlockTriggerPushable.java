@@ -3,6 +3,7 @@ package dev.adventurecraft.awakening.tile;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.common.gui.AC_GuiTriggerPushable;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
+import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.item.AC_Items;
@@ -65,13 +66,14 @@ public class AC_BlockTriggerPushable extends AC_BlockColorWithEntity {
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active) {
-            ItemInstance item = player.getSelectedItem();
-            if (item == null || item.id == AC_Items.cursor.id) {
-                var entity = (AC_TileEntityTriggerPushable) world.getTileEntity(x, y, z);
-                AC_GuiTriggerPushable.showUI(entity);
-                return true;
-            }
+        if (!((ExPlayerEntity) player).isDebugMode()) {
+            return false;
+        }
+        ItemInstance item = player.getSelectedItem();
+        if (item == null || item.id == AC_Items.cursor.id) {
+            var entity = (AC_TileEntityTriggerPushable) world.getTileEntity(x, y, z);
+            AC_GuiTriggerPushable.showUI(entity);
+            return true;
         }
         return false;
     }

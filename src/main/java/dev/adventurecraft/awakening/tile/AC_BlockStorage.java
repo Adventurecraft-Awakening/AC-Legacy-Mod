@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.tile;
 
-import dev.adventurecraft.awakening.common.AC_DebugMode;
+import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityStorage;
 import dev.adventurecraft.awakening.common.gui.AC_GuiStorage;
 import net.minecraft.world.entity.player.Player;
@@ -39,7 +39,7 @@ public class AC_BlockStorage extends TileEntityTile implements AC_ITriggerDebugB
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active) {
+        if (((ExPlayerEntity) player).isDebugMode()) {
             var entity = (AC_TileEntityStorage) world.getTileEntity(x, y, z);
             AC_GuiStorage.showUI(entity);
         }
@@ -48,6 +48,6 @@ public class AC_BlockStorage extends TileEntityTile implements AC_ITriggerDebugB
 
     @Override
     public boolean mayPick() {
-        return AC_DebugMode.active;
+        return false;
     }
 }

@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.tile;
 
-import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.common.gui.AC_GuiTimer;
+import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTimer;
 import net.minecraft.world.entity.player.Player;
@@ -42,7 +42,7 @@ public class AC_BlockTimer extends TileEntityTile implements AC_ITriggerDebugBlo
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active) {
+        if (((ExPlayerEntity) player).isDebugMode()) {
             var entity = (AC_TileEntityTimer) world.getTileEntity(x, y, z);
             AC_GuiTimer.showUI(entity);
         }
@@ -51,7 +51,7 @@ public class AC_BlockTimer extends TileEntityTile implements AC_ITriggerDebugBlo
 
     @Override
     public boolean mayPick() {
-        return AC_DebugMode.active;
+        return false;
     }
 
     @Override

@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.tile;
 
-import dev.adventurecraft.awakening.common.AC_DebugMode;
+import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTree;
 import dev.adventurecraft.awakening.common.gui.AC_GuiTree;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
@@ -34,7 +34,7 @@ public class AC_BlockTree extends TileEntityTile implements AC_IBlockColor {
 
     @Override
     public boolean mayPick() {
-        return AC_DebugMode.active;
+        return false;
     }
 
     @Override
@@ -54,7 +54,7 @@ public class AC_BlockTree extends TileEntityTile implements AC_IBlockColor {
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active) {
+        if (((ExPlayerEntity) player).isDebugMode()) {
             var entity = (AC_TileEntityTree) world.getTileEntity(x, y, z);
             AC_GuiTree.showUI(entity);
         }

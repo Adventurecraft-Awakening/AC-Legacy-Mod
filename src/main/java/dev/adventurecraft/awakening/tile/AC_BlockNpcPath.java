@@ -1,9 +1,10 @@
 package dev.adventurecraft.awakening.tile;
 
-import dev.adventurecraft.awakening.common.AC_DebugMode;
+import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityNpcPath;
 import dev.adventurecraft.awakening.common.gui.AC_GuiNpcPath;
+import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Material;
@@ -34,7 +35,7 @@ public class AC_BlockNpcPath extends TileEntityTile implements AC_ITriggerDebugB
 
     @Override
     public boolean mayPick() {
-        return AC_DebugMode.active;
+        return false;
     }
 
     @Override
@@ -47,15 +48,17 @@ public class AC_BlockNpcPath extends TileEntityTile implements AC_ITriggerDebugB
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active && (player.getSelectedItem() == null || player.getSelectedItem().id == AC_Items.cursor.id)) {
+        if (!((ExPlayerEntity) player).isDebugMode()) {
+            return false;
+        }
+        ItemInstance item = player.getSelectedItem();
+        if (item == null || item.id == AC_Items.cursor.id) {
             var entity = (AC_TileEntityNpcPath) world.getTileEntity(x, y, z);
             if (entity != null) {
                 AC_GuiNpcPath.showUI(entity);
             }
-
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 }

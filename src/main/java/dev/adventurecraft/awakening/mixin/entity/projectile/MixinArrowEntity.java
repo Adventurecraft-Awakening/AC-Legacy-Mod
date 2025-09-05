@@ -7,6 +7,7 @@ import dev.adventurecraft.awakening.extension.entity.projectile.ExArrowEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.mixin.entity.MixinEntity;
 import dev.adventurecraft.awakening.util.MathF;
+import dev.adventurecraft.awakening.world.RayFlags;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -96,7 +97,7 @@ public abstract class MixinArrowEntity extends MixinEntity implements ExArrowEnt
             ++this.flightTime;
             Vec3 start = Vec3.newTemp(this.x, this.y, this.z);
             Vec3 end = Vec3.newTemp(this.x + this.xd, this.y + this.yd, this.z + this.zd);
-            HitResult hit = ((ExWorld) this.level).rayTraceBlocks2(start, end, false, true, false);
+            HitResult hit = ((ExWorld) this.level).rayTraceBlocks2(start, end, RayFlags.SHAPE);
 
             start.set(this.x, this.y, this.z);
             if (hit == null) {

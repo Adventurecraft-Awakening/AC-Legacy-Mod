@@ -21,6 +21,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.LevelSource;
 import net.minecraft.world.level.tile.SoundType;
 import net.minecraft.world.level.tile.Tile;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -172,6 +173,13 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
     @Environment(EnvType.CLIENT)
     @Shadow
     public abstract float getAttackAnim(float f);
+
+    @Environment(value=EnvType.CLIENT)
+    @Shadow
+    public abstract HitResult pick(double pickRange, float partialTick);
+
+    @Shadow
+    public abstract Vec3 getPos(float partialTick);
 
     @Shadow
     public void baseTick() {

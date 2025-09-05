@@ -33,12 +33,12 @@ public class AC_TileEntityStoreRenderer extends TileEntityRenderer {
         }
 
         AC_TriggerArea area = tileEntity.tradeTrigger;
-        if (AC_DebugMode.active && area != null) {
+        if (area != null && AC_DebugMode.isActive()) {
             AC_TileEntityMinMaxRenderer.renderArea(area.min, area.max, tileEntity, x, y, z, 1, 1, 1);
         }
     }
 
-    public void render(TileEntity entity, double x, double y, double z, float deltaTime) {
+    public @Override void render(TileEntity entity, double x, double y, double z, float deltaTime) {
         this.renderTileEntityStore((AC_TileEntityStore) entity, x, y, z, deltaTime);
     }
 

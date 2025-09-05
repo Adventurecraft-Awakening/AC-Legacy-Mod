@@ -11,7 +11,7 @@ import org.lwjgl.opengl.GL11;
 public class AC_TileEntityMobSpawnerRenderer extends TileEntityRenderer {
 
     public void render(AC_TileEntityMobSpawner entity, double x, double y, double z, float tickTime) {
-        if (!AC_DebugMode.active) {
+        if (!AC_DebugMode.isActive()) {
             return;
         }
         if (!entity.showDebugInfo) {

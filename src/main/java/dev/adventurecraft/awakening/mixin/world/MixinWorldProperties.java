@@ -55,6 +55,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     public CompoundTag musicScope = null;
     public boolean originallyFromAC = false;
     private GameRules gameRules = new GameRules();
+    private boolean isDebugMode;
 
     @Inject(
         method = "<init>(Lnet/minecraft/nbt/CompoundTag;)V",
@@ -531,5 +532,14 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
 
     public @Override GameRules getGameRules() {
         return this.gameRules;
+    }
+
+    public @Override boolean isDebugMode() {
+        return this.isDebugMode;
+    }
+
+    public @Override void setDebugMode(boolean value) {
+        // TODO: notify clients
+        this.isDebugMode = value;
     }
 }

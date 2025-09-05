@@ -39,7 +39,7 @@ public class AC_BlockSpawn extends Tile implements AC_ITriggerDebugBlock {
 
     @Override
     public boolean mayPick() {
-        return AC_DebugMode.active;
+        return false;
     }
 
     @Override

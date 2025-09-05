@@ -153,4 +153,8 @@ public interface ExWorldProperties {
     default boolean getCanUseBonemeal() {
         return this.getGameRules().find(GameRules.ALLOW_BONEMEAL).getBool();
     }
+
+    boolean isDebugMode();
+
+    void setDebugMode(boolean value);
 }

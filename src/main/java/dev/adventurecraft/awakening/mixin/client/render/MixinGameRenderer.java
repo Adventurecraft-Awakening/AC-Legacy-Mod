@@ -377,14 +377,17 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         GameRenderer instance,
         float deltaTime,
         @Local LevelRenderer worldRenderer,
-        @Local Mob viewEntity) {
-
+        @Local Mob viewEntity
+    ) {
         var wer = (ExWorldEventRenderer) worldRenderer;
 
         GL11.glDisable(GL11.GL_ALPHA_TEST);
-        wer.drawCursorSelection(viewEntity, ((Player) viewEntity).inventory.getSelected(), deltaTime);
 
-        if (AC_DebugMode.active) {
+        if (viewEntity instanceof Player player) {
+            wer.drawCursorSelection(viewEntity, player.inventory.getSelected(), deltaTime);
+        }
+
+        if (AC_DebugMode.isActive()) {
             AC_CutsceneCamera activeCamera = ((ExMinecraft) this.mc).getActiveCutsceneCamera();
             if (activeCamera != null) {
                 activeCamera.drawLines(viewEntity, deltaTime);

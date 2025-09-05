@@ -27,20 +27,20 @@ public class AC_BlockLockedDoor extends Tile implements AC_ITriggerDebugBlock {
     }
 
     @Override
-    public HitResult clip(Level var1, int var2, int var3, int var4, Vec3 var5, Vec3 var6) {
-        int var7 = var1.getData(var2, var3, var4);
-        return !AC_DebugMode.active && var7 == 1 ? null : super.clip(var1, var2, var3, var4, var5, var6);
+    public HitResult clip(Level level, int x, int y, int z, Vec3 var5, Vec3 var6) {
+        int data = level.getData(x, y, z);
+        return data == 1 ? null : super.clip(level, x, y, z, var5, var6);
     }
 
     @Override
-    public AABB getAABB(Level var1, int var2, int var3, int var4) {
-        int var5 = var1.getData(var2, var3, var4);
-        return !AC_DebugMode.active && var5 != 1 ? super.getAABB(var1, var2, var3, var4) : null;
+    public AABB getAABB(Level level, int x, int y, int z) {
+        int data = level.getData(x, y, z);
+        return data != 1 ? super.getAABB(level, x, y, z) : null;
     }
 
     @Override
     public int getRenderShape(LevelSource view, int x, int y, int z) {
-        if (AC_DebugMode.active || view.getData(x, y, z) == 0) {
+        if (AC_DebugMode.isActive() || view.getData(x, y, z) == 0) {
             return this.getRenderShape();
         }
         return BlockShapes.NONE;

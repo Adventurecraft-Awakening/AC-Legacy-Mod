@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.mixin.entity.projectile;
 
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.mixin.entity.MixinEntity;
+import dev.adventurecraft.awakening.world.RayFlags;
 import net.minecraft.world.entity.projectile.Snowball;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.HitResult;
@@ -25,7 +26,7 @@ public abstract class MixinSnowballEntity extends MixinEntity {
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/level/Level;clip(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/HitResult;"))
-    private HitResult useRayTrace2(Level instance, Vec3 var1, Vec3 var2) {
-        return ((ExWorld) this.level).rayTraceBlocks2(var1, var2, false, true, false);
+    private HitResult useRayTrace2(Level instance, Vec3 pointA, Vec3 pointB) {
+        return ((ExWorld) this.level).rayTraceBlocks2(pointA, pointB, RayFlags.SHAPE);
     }
 }

@@ -5,6 +5,7 @@ import java.util.List;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.util.MathF;
+import dev.adventurecraft.awakening.world.RayFlags;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
@@ -30,7 +31,7 @@ public class AC_UtilBullet {
     }
 
     public static HitResult rayTraceBlocks(Level world, Vec3 pointA, Vec3 pointB) {
-        return ((ExWorld) world).rayTraceBlocks2(pointA, pointB, false, false, false);
+        return ((ExWorld) world).rayTraceBlocks2(pointA, pointB, RayFlags.NONE);
     }
 
     static HitResult findHit(Level world, Mob caster, float spread) {

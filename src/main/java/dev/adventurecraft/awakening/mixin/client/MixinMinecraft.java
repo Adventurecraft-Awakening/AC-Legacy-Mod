@@ -11,6 +11,8 @@ import dev.adventurecraft.awakening.client.gui.AC_ChatScreen;
 import dev.adventurecraft.awakening.common.gui.AC_GuiMapSelect;
 import dev.adventurecraft.awakening.common.gui.AC_GuiStore;
 import dev.adventurecraft.awakening.client.gui.AC_InBedChatScreen;
+import dev.adventurecraft.awakening.entity.player.AdventureGameMode;
+import dev.adventurecraft.awakening.entity.player.DebugGameMode;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
@@ -718,8 +720,13 @@ public abstract class MixinMinecraft implements ExMinecraft {
                             this.options.renderDebug = !this.options.renderDebug;
                         }
                         else if (eventKey == Keyboard.KEY_F4) {
-                            AC_DebugMode.active = !AC_DebugMode.active;
-                            if (AC_DebugMode.active) {
+                            var exPlayer = (ExPlayerEntity) this.player;
+                            //noinspection SwitchStatementWithTooFewBranches
+                            exPlayer.setGameMode(switch (exPlayer.getGameMode()) {
+                                case AdventureGameMode ignored -> new DebugGameMode();
+                                default -> new AdventureGameMode();
+                            });
+                            if (AC_DebugMode.isActive()) {
                                 this.gui.addMessage("Debug Mode Active");
                             }
                             else {
@@ -731,13 +738,13 @@ public abstract class MixinMinecraft implements ExMinecraft {
                             this.options.thirdPersonView = !this.options.thirdPersonView;
                         }
                         else if (eventKey == Keyboard.KEY_F6) {
-                            if (AC_DebugMode.active) {
+                            if (AC_DebugMode.isActive()) {
                                 ((ExWorldEventRenderer) this.levelRenderer).resetAll();
                                 this.gui.addMessage("Resetting all blocks in loaded chunks");
                             }
                         }
                         else if (eventKey == Keyboard.KEY_F7 ||
-                            (AC_DebugMode.active && eventKey == this.options.keyInventory.key && isShiftPressed)) {
+                            (AC_DebugMode.isActive() && eventKey == this.options.keyInventory.key && isShiftPressed)) {
                             ((ExPlayerEntity) this.player).openPalette();
                         }
                         else if (eventKey == this.options.keyInventory.key) {
@@ -746,10 +753,10 @@ public abstract class MixinMinecraft implements ExMinecraft {
                         else if (eventKey == this.options.keyDrop.key) {
                             this.player.drop();
                         }
-                        else if ((this.isOnline() || AC_DebugMode.active) && eventKey == this.options.keyChat.key) {
+                        else if ((this.isOnline() || AC_DebugMode.isActive()) && eventKey == this.options.keyChat.key) {
                             this.setScreen(new AC_ChatScreen());
                         }
-                        else if (AC_DebugMode.active && isControlPressed) {
+                        else if (AC_DebugMode.isActive() && isControlPressed) {
                             var mc = (Minecraft) (Object) this;
                             if (eventKey == Keyboard.KEY_Z) { // Undo
                                 ServerCommands.cmdUndo(new ServerCommandSource(mc, this.level, this.player), null);
@@ -812,7 +819,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
                 wheelDelta = -1;
             }
 
-            if (AC_DebugMode.active && menuDown) {
+            if (AC_DebugMode.isActive() && menuDown) {
                 AC_DebugMode.reachDistance += wheelDelta;
                 AC_DebugMode.reachDistance = MathF.clamp(AC_DebugMode.reachDistance, 2, 100);
                 this.gui.addMessage(String.format("Reach Changed to %d", AC_DebugMode.reachDistance));
@@ -920,7 +927,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         ItemInstance pickItem;
         if (slotId == -1) {
             // Only grant items in debug mode.
-            if (!AC_DebugMode.active) {
+            if (!AC_DebugMode.isActive()) {
                 return;
             }
             pickItem = new ItemInstance(id, -64, meta);
@@ -974,11 +981,11 @@ public abstract class MixinMinecraft implements ExMinecraft {
         }
 
         var exWorld = (ExWorld) this.level;
-        boolean hasRecording = AC_DebugMode.active && exWorld.getUndoStack().startRecording();
+        boolean hasRecording = AC_DebugMode.isActive() && exWorld.getUndoStack().startRecording();
 
         boolean swapOffhand = false;
         ItemInstance stack = this.player.inventory.getSelected();
-        if (!AC_DebugMode.active) {
+        if (!AC_DebugMode.isActive()) {
             if (mouseButton == 0) {
                 stack = ((ExPlayerInventory) this.player.inventory).getOffhandItemStack();
                 ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
@@ -1031,11 +1038,11 @@ public abstract class MixinMinecraft implements ExMinecraft {
             int bSide = this.hitResult.face;
             Tile block = Tile.tiles[this.level.getTile(bX, bY, bZ)];
             if (block != null) {
-                if (!AC_DebugMode.active && (block.id == Tile.CHEST.id || block.id == AC_Blocks.store.id)) {
+                if (!AC_DebugMode.isActive() && (block.id == Tile.CHEST.id || block.id == AC_Blocks.store.id)) {
                     mouseButton = 1;
                 }
 
-                if (!AC_DebugMode.active) {
+                if (!AC_DebugMode.isActive()) {
                     int var11 = ((ExBlock) block).alwaysUseClick(this.level, bX, bY, bZ);
                     if (var11 != -1) {
                         mouseButton = var11;
@@ -1311,7 +1318,6 @@ public abstract class MixinMinecraft implements ExMinecraft {
         }
         else {
             // TODO: reset global state in consistent matter
-            AC_DebugMode.active = false;
             AC_DebugMode.levelEditing = false;
             LevelIO dimData = null;
             if (worldName != null) {

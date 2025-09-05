@@ -21,7 +21,7 @@ public class AC_TileEntityMinMaxRenderer extends TileEntityRenderer {
     }
 
     public void renderArea(AC_TileEntityMinMax entity, double x, double y, double z, float tickTime) {
-        if (AC_DebugMode.active) {
+        if (AC_DebugMode.isActive()) {
             renderArea(entity.min(), entity.max(), entity, x, y, z, this.r, this.g, this.b);
         }
     }

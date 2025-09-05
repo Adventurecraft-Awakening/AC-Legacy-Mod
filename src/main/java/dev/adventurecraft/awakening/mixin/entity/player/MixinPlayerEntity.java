@@ -8,11 +8,13 @@ import dev.adventurecraft.awakening.extension.container.ExPlayerContainer;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
+import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.item.AC_IItemLight;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.mixin.entity.MixinMob;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
+import dev.adventurecraft.awakening.world.RayFlags;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.nbt.CompoundTag;
@@ -30,6 +32,8 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.tile.Tile;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -54,6 +58,7 @@ public abstract class MixinPlayerEntity extends MixinMob implements ExPlayerEnti
     private boolean swappedItems;
     private int numHeartPieces;
     public String cloakTexture;
+    private GameMode gameMode = new AdventureGameMode();
 
     @Shadow
     public abstract ItemInstance getSelectedItem();
@@ -309,7 +314,9 @@ public abstract class MixinPlayerEntity extends MixinMob implements ExPlayerEnti
         cancellable = true
     )
     private void noDamageInDebugMode(int var1, CallbackInfo ci) {
-        if (AC_DebugMode.active) {
+        // TODO: check GameMode whether damage can be taken
+        // TODO: cancel "hurt" instead? would cause things to properly "miss"
+        if (this.isDebugMode()) {
             ci.cancel();
         }
     }
@@ -394,6 +401,17 @@ public abstract class MixinPlayerEntity extends MixinMob implements ExPlayerEnti
 
             this.awardStat(Stats.DAMAGE_DEALT, attackDamage);
         }
+    }
+
+    @Environment(value = EnvType.CLIENT)
+    @Override
+    public HitResult pick(double pickRange, float partialTick) {
+        Vec3 pointA = this.getPos(partialTick);
+        Vec3 dir = this.getViewVector(partialTick);
+        Vec3 pointB = pointA.add(dir.x * pickRange, dir.y * pickRange, dir.z * pickRange);
+
+        int flags = this.isDebugMode() ? (RayFlags.DEBUG | (AC_DebugMode.isFluidHittable ? RayFlags.LIQUID : 0)) : 0;
+        return ((ExWorld) this.level).rayTraceBlocks2(pointA, pointB, flags);
     }
 
     @Override
@@ -486,9 +504,11 @@ public abstract class MixinPlayerEntity extends MixinMob implements ExPlayerEnti
         return destroySpeed;
     }
 
-    @Override
-    public GameMode getGameMode() {
-        // TODO: store as field after AC_DebugMode.active is migrated
-        return AC_DebugMode.active ? new DebugGameMode() : new AdventureGameMode();
+    public @Override GameMode getGameMode() {
+        return this.gameMode;
+    }
+
+    public @Override void setGameMode(GameMode mode) {
+        this.gameMode = mode;
     }
 }

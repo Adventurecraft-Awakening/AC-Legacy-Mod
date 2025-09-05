@@ -1,7 +1,6 @@
 package dev.adventurecraft.awakening.mixin.block;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.AC_TerrainImage;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelSource;
@@ -26,14 +25,6 @@ public abstract class MixinAbstractFluidBlock extends Tile {
             }
         }
         return -1;
-    }
-
-    public boolean mayPick(int var1, boolean var2) {
-        return AC_DebugMode.active && AC_DebugMode.isFluidHittable || var2 && var1 == 0;
-    }
-
-    public boolean mayPick() {
-        return AC_DebugMode.active &&  AC_DebugMode.isFluidHittable;
     }
 
     @Redirect(

@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.tile;
 
 import dev.adventurecraft.awakening.common.*;
+import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTeleport;
@@ -12,6 +13,7 @@ import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.tile.TileEntityTile;
 import net.minecraft.world.level.tile.entity.TileEntity;
 import net.minecraft.world.phys.AABB;
+
 import java.util.List;
 
 public class AC_BlockTeleport extends TileEntityTile implements AC_ITriggerDebugBlock {
@@ -54,24 +56,26 @@ public class AC_BlockTeleport extends TileEntityTile implements AC_ITriggerDebug
 
     @Override
     public boolean mayPick() {
-        return AC_DebugMode.active;
+        return false;
     }
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active) {
-            ItemInstance heldItem = player.getSelectedItem();
-            if (heldItem != null && heldItem.id == AC_Items.cursor.id) {
-                var entity = (AC_TileEntityTeleport) world.getTileEntity(x, y, z);
-                Coord pos = AC_ItemCursor.min();
-                entity.x = pos.x;
-                entity.y = pos.y;
-                entity.z = pos.z;
-                entity.hasPosition = true;
-                Minecraft.instance.gui.addMessage(String.format("Setting Teleport (%d, %d, %d)", entity.x, entity.y, entity.z));
-                return true;
-            }
+        if (!((ExPlayerEntity) player).isDebugMode()) {
+            return false;
         }
-        return false;
+        ItemInstance heldItem = player.getSelectedItem();
+        if (heldItem == null || heldItem.id != AC_Items.cursor.id) {
+            return false;
+        }
+
+        var entity = (AC_TileEntityTeleport) world.getTileEntity(x, y, z);
+        Coord pos = AC_ItemCursor.min();
+        entity.x = pos.x;
+        entity.y = pos.y;
+        entity.z = pos.z;
+        entity.hasPosition = true;
+        Minecraft.instance.gui.addMessage(String.format("Setting Teleport (%d, %d, %d)", entity.x, entity.y, entity.z));
+        return true;
     }
 }

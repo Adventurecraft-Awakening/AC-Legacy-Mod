@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.tile;
 
-import dev.adventurecraft.awakening.common.AC_DebugMode;
+import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityUrl;
 import dev.adventurecraft.awakening.common.gui.AC_GuiUrl;
 import dev.adventurecraft.awakening.common.gui.AC_GuiUrlRequest;
@@ -42,17 +42,16 @@ public class AC_BlockUrl extends TileEntityTile implements AC_ITriggerDebugBlock
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active) {
+        if (((ExPlayerEntity) player).isDebugMode()) {
             var entity = (AC_TileEntityUrl) world.getTileEntity(x, y, z);
             AC_GuiUrl.showUI(entity);
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     @Override
     public boolean mayPick() {
-        return AC_DebugMode.active;
+        return false;
     }
 }

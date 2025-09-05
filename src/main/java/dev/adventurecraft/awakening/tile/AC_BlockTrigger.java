@@ -4,6 +4,7 @@ import java.util.Random;
 
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.common.gui.AC_GuiTrigger;
+import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityMinMax;
@@ -58,7 +59,7 @@ public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerDebugB
 
     @Override
     public boolean mayPick() {
-        return AC_DebugMode.active;
+        return false;
     }
 
     public @Override boolean canBeTriggered() {
@@ -139,7 +140,7 @@ public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerDebugB
 
     @Override
     public void entityInside(Level world, int x, int y, int z, Entity entity) {
-        if (AC_DebugMode.active) {
+        if (((ExWorld) world).isDebugMode()) {
             return;
         }
         if (!(entity instanceof Player)) {
@@ -223,13 +224,14 @@ public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerDebugB
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active) {
-            ItemInstance item = player.getSelectedItem();
-            if (item == null || item.id == AC_Items.cursor.id) {
-                var entity = (AC_TileEntityTrigger) world.getTileEntity(x, y, z);
-                AC_GuiTrigger.showUI(entity);
-                return true;
-            }
+        if (!((ExPlayerEntity) player).isDebugMode()) {
+            return false;
+        }
+        ItemInstance item = player.getSelectedItem();
+        if (item == null || item.id == AC_Items.cursor.id) {
+            var entity = (AC_TileEntityTrigger) world.getTileEntity(x, y, z);
+            AC_GuiTrigger.showUI(entity);
+            return true;
         }
         return false;
     }

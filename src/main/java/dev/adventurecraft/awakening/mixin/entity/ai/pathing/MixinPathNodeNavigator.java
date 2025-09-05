@@ -65,23 +65,9 @@ public abstract class MixinPathNodeNavigator implements ExPathNodeNavigator {
         }
     }
 
-    @Redirect(method = "isFree", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/material/Material;blocksMotion()Z"))
-    private boolean refinedMoveBlockCheck(
-        Material instance,
-        @Local(ordinal = 3) int x,
-        @Local(ordinal = 4) int y,
-        @Local(ordinal = 5) int z,
-        @Local(ordinal = 6) int id) {
-        if (Tile.tiles[id].mayPick()) {
-            AABB box = Tile.tiles[id].getAABB(Minecraft.instance.level, x, y, z);
-            return box != null;
-        }
-        return false;
-    }
-
     @Override
-    public Path simplifyPath(Path var1, Node var2) {
-        if (var1 == null) {
+    public Path simplifyPath(Path path, Node var2) {
+        if (path == null) {
             return null;
         }
 
@@ -91,10 +77,9 @@ public abstract class MixinPathNodeNavigator implements ExPathNodeNavigator {
         Node var6 = null;
         int var7 = 0;
         boolean var8 = false;
-        Node[] var9 = var1.nodes;
 
-        for (Node pathNode : var9) {
-            if (var7++ >= var1.pos) {
+        for (Node pathNode :  path.nodes) {
+            if (var7++ >= path.pos) {
                 if (var8) {
                     var3.add(pathNode);
                 } else if (var4 == null) {
@@ -183,11 +168,11 @@ public abstract class MixinPathNodeNavigator implements ExPathNodeNavigator {
             }
         }
 
-        var1.nodes = var3.toArray(new Node[0]);
-        var1.length = var3.size();
-        var1.pos = 0;
-        ((ExEntityPath) var1).setNavigator((PathFinder) (Object) this);
-        ((ExEntityPath) var1).setClearSize(var2);
-        return var1;
+        path.nodes = var3.toArray(new Node[0]);
+        path.length = var3.size();
+        path.pos = 0;
+        ((ExEntityPath) path).setNavigator((PathFinder) (Object) this);
+        ((ExEntityPath) path).setClearSize(var2);
+        return path;
     }
 }

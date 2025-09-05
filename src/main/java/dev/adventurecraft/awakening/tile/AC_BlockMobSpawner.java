@@ -3,6 +3,7 @@ package dev.adventurecraft.awakening.tile;
 import java.util.Random;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
+import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityMobSpawner;
 import dev.adventurecraft.awakening.common.gui.AC_GuiMobSpawner;
 import net.minecraft.world.entity.player.Player;
@@ -45,7 +46,7 @@ public class AC_BlockMobSpawner extends TileEntityTile implements AC_ITriggerDeb
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active) {
+        if (((ExPlayerEntity) player).isDebugMode()) {
             var entity = (AC_TileEntityMobSpawner) world.getTileEntity(x, y, z);
             AC_GuiMobSpawner.showUI(entity);
             return true;
@@ -71,7 +72,7 @@ public class AC_BlockMobSpawner extends TileEntityTile implements AC_ITriggerDeb
 
     @Override
     public boolean mayPick() {
-        return AC_DebugMode.active;
+        return false;
     }
 
     @Override

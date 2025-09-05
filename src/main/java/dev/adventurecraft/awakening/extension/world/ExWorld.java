@@ -51,16 +51,9 @@ public interface ExWorld {
 
     void ac$preTick();
 
-    HitResult rayTraceBlocks2(
-        Vec3 pointA, Vec3 pointB,
-        boolean blockCollidableFlag, boolean useCollisionShapes, boolean collideWithClip);
+    HitResult rayTraceBlocks2(Vec3 pointA, Vec3 pointB, int flags);
 
-    HitResult rayTraceBlocksCore(
-        Vec3 pointA, Vec3 pointB,
-        boolean blockCollidableFlag, boolean useCollisionShapes, boolean collideWithClip);
-
-    void recordRayDebugList(
-        double aX, double aY, double aZ, double bX, double bY, double bZ, HitResult hit);
+    void recordRayDebugList(double aX, double aY, double aZ, double bX, double bY, double bZ, HitResult hit);
 
     boolean setBlockAndMetadataTemp(int x, int y, int z, int id, int meta);
 
@@ -116,18 +109,33 @@ public interface ExWorld {
 
     ArrayList<RayDebugList> getRayDebugLists();
 
+    boolean isDebugMode();
+
     static Level createWorld(
-        String mapName, LevelIO dimData, String saveName, long seed, Dimension dimension, ProgressListener progressListener) {
+        String mapName,
+        LevelIO dimData,
+        String saveName,
+        long seed,
+        Dimension dimension,
+        ProgressListener progressListener
+    ) {
         try {
             var world = (Level) ACMod.UNSAFE.allocateInstance(Level.class);
             ((ExWorld) world).initWorld(mapName, dimData, saveName, seed, dimension, progressListener);
             return world;
-        } catch (InstantiationException e) {
+        }
+        catch (InstantiationException e) {
             throw new RuntimeException(e);
         }
     }
 
-    static Level createWorld(String mapName, LevelIO dimData, String saveName, long seed, ProgressListener progressListener) {
+    static Level createWorld(
+        String mapName,
+        LevelIO dimData,
+        String saveName,
+        long seed,
+        ProgressListener progressListener
+    ) {
         return createWorld(mapName, dimData, saveName, seed, null, progressListener);
     }
 
