@@ -27,6 +27,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Map;
 import java.util.Random;
+import java.util.function.BiFunction;
 
 @Mixin(Entity.class)
 public abstract class MixinEntity implements ExEntity {
@@ -431,10 +432,12 @@ public abstract class MixinEntity implements ExEntity {
 
     @Override
     public Object getOrSetTag(String key, Object defaultValue) {
-        if (!this.customData.containsKey(key)) {
-            this.customData.put(key, defaultValue);
-        }
-        return this.customData.get(key);
+        return this.customData.computeIfAbsent(key, (_key) -> defaultValue);
+    }
+
+    @Override
+    public Object computeTag(String key, BiFunction<String, Object, Object> mapper) {
+        return this.customData.compute(key, mapper);
     }
 
     @Override
