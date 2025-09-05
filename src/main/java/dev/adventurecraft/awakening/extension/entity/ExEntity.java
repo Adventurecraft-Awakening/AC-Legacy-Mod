@@ -3,6 +3,8 @@ package dev.adventurecraft.awakening.extension.entity;
 import dev.adventurecraft.awakening.entity.AC_IMultiAttackEntity;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.function.BiFunction;
+
 public interface ExEntity extends AC_IMultiAttackEntity {
 
     void setCanGetFallDamage(boolean arg);
@@ -43,7 +45,7 @@ public interface ExEntity extends AC_IMultiAttackEntity {
 
     Object getOrSetTag(String key, Object defaultValue);
 
+    Object computeTag(String key, BiFunction<String, Object, Object> mapper);
+
     Object getTag(String key);
-
-
 }

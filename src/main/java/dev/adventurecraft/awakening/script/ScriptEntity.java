@@ -24,6 +24,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiFunction;
 
 @SuppressWarnings("unused")
 public class ScriptEntity {
@@ -347,9 +348,11 @@ public class ScriptEntity {
         return ((ExEntity) this.entity).getOrSetTag(key, defaultValue);
     }
 
+    public Object computeTag(String key, BiFunction<String, Object, Object> mapper) {
+        return ((ExEntity) this.entity).computeTag(key, mapper);
+    }
+
     public Object getTag(String key) {
         return ((ExEntity) this.entity).getTag(key);
     }
-
-
 }

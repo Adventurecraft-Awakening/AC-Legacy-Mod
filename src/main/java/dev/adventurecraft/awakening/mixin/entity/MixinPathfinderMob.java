@@ -5,9 +5,7 @@ import dev.adventurecraft.awakening.extension.entity.ExPathfinderMob;
 import dev.adventurecraft.awakening.extension.entity.ai.pathing.ExEntityPath;
 import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
 import dev.adventurecraft.awakening.util.MathF;
-import dev.adventurecraft.awakening.util.TagUtil;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.PathfinderMob;
@@ -18,8 +16,6 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import java.util.Collection;
 
 @Mixin(PathfinderMob.class)
 public abstract class MixinPathfinderMob extends MixinMob implements ExPathfinderMob, IEntityPather {
@@ -171,15 +167,6 @@ public abstract class MixinPathfinderMob extends MixinMob implements ExPathfinde
 
         tag.putBoolean("canPathRandomly", this.canPathRandomly);
         tag.putBoolean("canForgetTargetRandomly", this.canForgetTargetRandomly);
-
-        var exTag = (ExCompoundTag) tag;
-
-        var customTag = exTag.findCompound("custom");
-        if (customTag.isPresent()) {
-            for (Tag tags : (Collection<Tag>) customTag.get().getTags()) {
-                this.customData.put(tags.getType(), TagUtil.unwrap(tags));
-            }
-        }
     }
 
     @Override
@@ -189,14 +176,6 @@ public abstract class MixinPathfinderMob extends MixinMob implements ExPathfinde
 
         exTag.findBool("canPathRandomly").ifPresent(this::setCanPathRandomly);
         exTag.findBool("canForgetTargetRandomly").ifPresent(this::setCanForgetTargetRandomly);
-
-        if (!this.customData.isEmpty()) {
-            var customTag = new CompoundTag();
-            this.customData.forEach((key, object) -> {
-                customTag.putTag(key, TagUtil.wrap(object));
-            });
-            tag.putCompoundTag("custom", customTag);
-        }
     }
 
     @Override
