@@ -90,6 +90,14 @@ public class AC_GuiPalette extends ScrollableContainerScreen {
         }
     }
 
+    @Override
+    protected void mouseReleased(int mouseX, int mouseY, int button) {
+        if (this.clickedButton != null && button == 0) {
+            this.clickedButton.mouseReleased(mouseX, mouseY);
+            this.clickedButton = null;
+        }
+    }
+
     private void goToPageRelative(int count) {
         double row = MathF.roundToZero(this.itemList.getScrollRow() / this.rowsPerPage);
         double newRow = (row + count) * this.rowsPerPage;
