@@ -178,6 +178,7 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
     @Shadow
     public abstract HitResult pick(double pickRange, float partialTick);
 
+    @Environment(EnvType.CLIENT)
     @Shadow
     public abstract Vec3 getPos(float partialTick);
 
