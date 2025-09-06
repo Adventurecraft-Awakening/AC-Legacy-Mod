@@ -37,6 +37,10 @@ public final class Coord {
         return new Coord(Math.max(this.x, other.x), Math.max(this.y, other.y), Math.max(this.z, other.z));
     }
 
+    public Coord negate() {
+        return new Coord(-this.x, -this.y, -this.z);
+    }
+
     public boolean equalsAny(int x, int y, int z) {
         return this.x == x || this.y == y || this.z == z;
     }

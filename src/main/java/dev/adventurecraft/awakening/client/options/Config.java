@@ -30,7 +30,7 @@ public class Config {
     public static final int DEF_UPDATES_PER_FRAME = 3;
     public static final boolean DEF_DYNAMIC_UPDATES = false;
 
-    public static void logOpenGlCaps() {
+    public static void logOpenGlCaps(ContextCapabilities caps) {
         Logger logger = ACMod.LOGGER;
 
         logger.info("OS: {} ({}) version {}", System.getProperty("os.name"), System.getProperty("os.arch"), System.getProperty("os.version"));
@@ -41,7 +41,6 @@ public class Config {
         logger.info("OpenGL GL_VERSION: {}", GL11.glGetString(GL11.GL_VERSION));
         logger.info("OpenGL GL_VENDOR: {}", GL11.glGetString(GL11.GL_VENDOR));
 
-        var caps = GLContext.getCapabilities();
         int glVersion = getOpenGlVersion(caps);
         logger.info("OpenGL Version: {}.{}", glVersion / 10, glVersion % 10);
 

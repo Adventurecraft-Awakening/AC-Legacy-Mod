@@ -3,6 +3,8 @@ package dev.adventurecraft.awakening.extension.entity;
 import dev.adventurecraft.awakening.entity.AC_IMultiAttackEntity;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.function.BiFunction;
+
 public interface ExEntity extends AC_IMultiAttackEntity {
 
     void setCanGetFallDamage(boolean arg);
@@ -16,6 +18,10 @@ public interface ExEntity extends AC_IMultiAttackEntity {
     boolean getIsFlying();
 
     void setIsFlying(boolean value);
+
+    boolean getNoPhysics();
+
+    void setNoPhysics(boolean value);
 
     boolean getCollidesWithClipBlocks();
 
@@ -33,13 +39,13 @@ public interface ExEntity extends AC_IMultiAttackEntity {
 
     boolean isIgnoreCobwebCollision();
 
-    void setCustomTagString(String key,String value);
+    void setTag(String key, Object value);
 
-    boolean hasCustomTagString(String key);
+    boolean hasTag(String key);
 
-    String getOrCreateCustomTagString(String key,String defaultValue);
+    Object getOrSetTag(String key, Object defaultValue);
 
-    String getCustomTagString(String key);
+    Object computeTag(String key, BiFunction<String, Object, Object> mapper);
 
-
+    Object getTag(String key);
 }

@@ -4,6 +4,7 @@ import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.client.render.block.ExBlockRenderer;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
+import dev.adventurecraft.awakening.world.AC_BlockCopyUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.client.renderer.TileRenderer;
@@ -19,6 +20,8 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.glu.GLU;
+
+// TODO: optimize with batching (using MemoryTesselator?)
 
 public class AC_MapEditing {
     public Minecraft mc;
@@ -136,10 +139,8 @@ public class AC_MapEditing {
         GL14.glBlendColor(1.0F, 1.0F, 1.0F, 0.4F);
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL14.GL_CONSTANT_ALPHA, GL14.GL_ONE_MINUS_CONSTANT_ALPHA);
-        Vec3 rot = entity.getLookAngle();
-        int rX = (int) (entity.x + AC_DebugMode.reachDistance * rot.x) - AC_ItemCursor.min().x;
-        int rY = (int) (entity.y + AC_DebugMode.reachDistance * rot.y) - AC_ItemCursor.min().y;
-        int rZ = (int) (entity.z + AC_DebugMode.reachDistance * rot.z) - AC_ItemCursor.min().z;
+
+        Coord coord = AC_BlockCopyUtils.calculatePastePosition().sub(AC_ItemCursor.min());
 
         for (int texIndex = 0; texIndex <= 3; ++texIndex) {
             if (texIndex == 0) {
@@ -160,12 +161,11 @@ public class AC_MapEditing {
                         Tile block = Tile.tiles[id];
                         if (block != null && ((ExBlock) block).getTextureNum() == texIndex) {
                             int meta = this.mc.level.getData(x, y, z);
-                            this.drawBlock(x + rX, y + rY, z + rZ, id, meta);
+                            this.drawBlock(x + coord.x, y + coord.y, z + coord.z, id, meta);
                         }
                     }
                 }
             }
-
             ((ExBlockRenderer) this.renderBlocks).stopRenderingBlocks();
         }
 

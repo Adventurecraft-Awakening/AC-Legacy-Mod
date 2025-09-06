@@ -2,11 +2,15 @@ package dev.adventurecraft.awakening.extension.world.chunk;
 
 import net.minecraft.world.level.tile.entity.TileEntity;
 
+import java.nio.ByteBuffer;
+
 public interface ExChunk {
 
     boolean setBlockIDWithMetadataTemp(int x, int y, int z, int id, int meta);
 
     TileEntity getChunkBlockTileEntityDontCreate(int x, int y, int z);
+
+    void getTileColumn(ByteBuffer buffer, int x, int y0, int z, int y1);
 
     double getTemperatureValue(int x, int z);
 
@@ -15,6 +19,10 @@ public interface ExChunk {
     long getLastUpdated();
 
     void setLastUpdated(long value);
+
+    int getLightUpdateHash(int x, int y, int z);
+
+    void updateLightHash();
 
     static int translate128(int id) {
         return id > 127 ? -129 + (id - 127) : id;

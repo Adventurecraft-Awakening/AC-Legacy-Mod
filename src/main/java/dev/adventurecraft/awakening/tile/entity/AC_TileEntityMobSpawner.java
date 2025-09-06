@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.tile.entity;
 
 import java.util.*;
 
+import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.entity.AC_EntityLivingScript;
 import dev.adventurecraft.awakening.entity.AC_EntitySkeletonSword;
@@ -31,6 +32,7 @@ import org.mozilla.javascript.Scriptable;
 public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
 
     private static final Map<String, String> ALTERNATIVE_NAMES = new HashMap<>();
+
     public int delay = -1;
     public String entityID = "Pig";
     public int spawnNumber;
@@ -39,8 +41,8 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
     public boolean hasDroppedItem;
     public boolean spawnOnTrigger;
     public boolean spawnOnDetrigger;
-    public List<Entity> spawnedEntities;
-    public List<Entity> entitiesLeft;
+    public final List<Entity> spawnedEntities;
+    public final List<Entity> entitiesLeft;
     public int spawnID;
     public int spawnMeta;
     private final Xoshiro128PP rand;
@@ -83,9 +85,11 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
     public int getNumAlive() {
         int count = 0;
 
-        for (Entity entity : this.spawnedEntities) {
+        var iterator = this.entitiesLeft.iterator();
+        while (iterator.hasNext()) {
+            Entity entity = iterator.next();
             if (entity.removed) {
-                this.entitiesLeft.remove(entity);
+                iterator.remove();
                 continue;
             }
             count++;
@@ -129,8 +133,9 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
         while (true) {
             if (spawnedCount < this.spawnNumber * 6) {
                 String id = this.entityID;
-                if (ALTERNATIVE_NAMES.containsKey(this.entityID)) {
-                    id = ALTERNATIVE_NAMES.get(this.entityID);
+                String altId = ALTERNATIVE_NAMES.get(this.entityID);
+                if (altId != null) {
+                    id = altId;
                 }
                 else if (this.entityID.endsWith("(Scripted)")) {
                     id = "Script";
@@ -155,9 +160,10 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
 
                 Entity entity = EntityIO.newEntity(id, this.level);
                 if (entity == null) {
-                    System.out.println("NULL");
+                    ACMod.LOGGER.error("Missing entity for id {}", id);
                     return;
                 }
+
                 switch (id) {
                     case "FallingSand":
                         if (this.spawnID >= 256 || Tile.tiles[this.spawnID] == null) {
@@ -276,31 +282,80 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
         }
     }
 
-    public void tick() {
+    private void loadFromTag(CompoundTag tag) {
+        short entityCount = tag.getShort("numEntities");
+        for (int id = 0; id < entityCount; ++id) {
+            int entityId = tag.getInt(String.format("entID_%d", id));
 
-        if (this.delayLoadData != null) {
-            if (this.ticksBeforeLoad == 0) {
-                short entityCount = this.delayLoadData.getShort("numEntities");
-                for (int id = 0; id < entityCount; ++id) {
-                    int entityId = this.delayLoadData.getInt(String.format("entID_%d", id));
-
-                    for (Entity entity : (List<Entity>) this.level.entities) {
-                        if (entity.id == entityId) {
-                            this.spawnedEntities.add(entity);
-                            if (entity.isAlive()) {
-                                this.entitiesLeft.add(entity);
-                            }
-                            break;
-                        }
+            for (Entity entity : (List<Entity>) this.level.entities) {
+                if (entity.id == entityId) {
+                    this.spawnedEntities.add(entity);
+                    if (entity.isAlive()) {
+                        this.entitiesLeft.add(entity);
                     }
-                }
-
-                this.delayLoadData = null;
-                if (entityCount > 0) {
-                    this.executeScript(this.onTriggerScriptFile);
+                    break;
                 }
             }
+        }
 
+        if (entityCount > 0) {
+            this.executeScript(this.onTriggerScriptFile);
+        }
+    }
+
+    private void spawnItem() {
+        var instance = new ItemInstance(this.dropItem, 1, 0);
+        var item = new ItemEntity(this.level, this.x + 0.5D, this.y + 0.5D, this.z + 0.5D, instance);
+        item.throwTime = 10;
+        this.level.addEntity(item);
+
+        if (this.showParticles) {
+            this.spawnItemParticles(item);
+        }
+    }
+
+    private void spawnItemParticles(ItemEntity item) {
+        double size = 10.0D;
+        for (int i = 0; i < 20; ++i) {
+            double dx = this.rand.nextGaussian() * 0.02D;
+            double dy = this.rand.nextGaussian() * 0.02D;
+            double dz = this.rand.nextGaussian() * 0.02D;
+
+            double x = item.x + this.rand.nextSignedFloat() - dx * size;
+            double y = item.y + this.rand.nextFloat() - dy * size;
+            double z = item.z + this.rand.nextSignedFloat() - dz * size;
+            
+            this.level.addParticle("explode", x, y, z, dx, dy, dz);
+        }
+    }
+
+    private void detrigger() {
+        this.spawnedEntities.clear();
+        this.entitiesLeft.clear();
+        this.delay = this.respawnDelay;
+
+        if (this.dropItem > 0 && !this.hasDroppedItem) {
+            this.spawnItem();
+            this.hasDroppedItem = true;
+        }
+
+        this.executeScript(this.onDetriggerScriptFile);
+
+        for (int id = 4; id < 8; ++id) {
+            if (this.isTriggerSet(id)) {
+                this.activateTrigger(id, this.minVec[id], this.maxVec[id]);
+            }
+        }
+
+        this.deactivateTriggers();
+    }
+
+    public void tick() {
+        if (this.delayLoadData != null) {
+            if (this.ticksBeforeLoad == 0) {
+                this.loadFromTag(this.delayLoadData);
+                this.delayLoadData = null;
+            }
             --this.ticksBeforeLoad;
             return;
         }
@@ -308,52 +363,10 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
             --this.delay;
             return;
         }
+
         if (!this.spawnedEntities.isEmpty()) {
             if (this.getNumAlive() == 0) {
-                this.spawnedEntities.clear();
-                this.entitiesLeft.clear();
-                this.delay = this.respawnDelay;
-                if (this.dropItem > 0 && !this.hasDroppedItem) {
-                    var instance = new ItemInstance(this.dropItem, 1, 0);
-                    var item = new ItemEntity(
-                        this.level,
-                        (double) this.x + 0.5D,
-                        (double) this.y + 0.5D,
-                        (double) this.z + 0.5D,
-                        instance
-                    );
-                    item.throwTime = 10;
-                    this.level.addEntity(item);
-
-                    if (this.showParticles) {
-                        double size = 10.0D;
-                        for (int i = 0; i < 20; ++i) {
-                            double x = this.rand.nextGaussian() * 0.02D;
-                            double y = this.rand.nextGaussian() * 0.02D;
-                            double z = this.rand.nextGaussian() * 0.02D;
-                            this.level.addParticle(
-                                "explode",
-                                item.x + (double) (this.rand.nextFloat() * 2.0F) - 1.0D - x * size,
-                                item.y + (double) this.rand.nextFloat() - y * size,
-                                item.z + (double) (this.rand.nextFloat() * 2.0F) - 1.0D - z * size,
-                                x,
-                                y,
-                                z
-                            );
-                        }
-                    }
-                    this.hasDroppedItem = true;
-                }
-
-                this.executeScript(this.onDetriggerScriptFile);
-
-                for (int id = 4; id < 8; ++id) {
-                    if (this.isTriggerSet(id)) {
-                        this.activateTrigger(id, this.minVec[id], this.maxVec[id]);
-                    }
-                }
-
-                this.deactivateTriggers();
+                this.detrigger();
             }
             else {
                 this.executeScript(this.onUpdateScriptFile);
@@ -377,7 +390,7 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
     public boolean isTriggerSet(int id) {
         Coord min = this.minVec[id];
         Coord max = this.maxVec[id];
-        return min.equals(0) && max.equals(0);
+        return !min.equals(0) || !max.equals(0);
     }
 
     public void setTrigger(int id) {

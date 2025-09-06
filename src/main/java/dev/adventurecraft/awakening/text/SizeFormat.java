@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.text;
 
 import dev.adventurecraft.awakening.util.MathF;
+import org.apache.commons.lang3.NotImplementedException;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
@@ -34,7 +35,7 @@ public abstract class SizeFormat extends Format {
 
     @Override
     public Object parseObject(String source, @NotNull ParsePosition pos) {
-        return null;
+        throw new NotImplementedException();
     }
 
     public String getSeparator() {
@@ -58,7 +59,8 @@ public abstract class SizeFormat extends Format {
         @NotNull FieldPosition pos
     ) {
         Number scaledValue = getScaledValue(value, log, this.getNumberBase());
-        return this.numberFormat.format(scaledValue, toAppendTo, pos)
+        return this.numberFormat
+            .format(scaledValue, toAppendTo, pos)
             .append(this.getSeparator())
             .append(this.getSuffix(log));
     }

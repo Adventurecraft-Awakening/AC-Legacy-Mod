@@ -1,6 +1,9 @@
 package dev.adventurecraft.awakening.mixin.entity.player;
 
 import dev.adventurecraft.awakening.common.*;
+import dev.adventurecraft.awakening.entity.player.AdventureGameMode;
+import dev.adventurecraft.awakening.entity.player.DebugGameMode;
+import dev.adventurecraft.awakening.entity.player.GameMode;
 import dev.adventurecraft.awakening.extension.container.ExPlayerContainer;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
@@ -455,5 +458,11 @@ public abstract class MixinPlayerEntity extends MixinMob implements ExPlayerEnti
     public float getDestroySpeed(Tile tile) {
         float destroySpeed = this.inventory.getDestroySpeed(tile);
         return destroySpeed;
+    }
+
+    @Override
+    public GameMode getGameMode() {
+        // TODO: store as field after AC_DebugMode.active is migrated
+        return AC_DebugMode.active ? new DebugGameMode() : new AdventureGameMode();
     }
 }

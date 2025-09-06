@@ -77,10 +77,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Mixin(Level.class)
 public abstract class MixinWorld implements ExWorld, LevelSource {
+
+    private static final int MAX_LIGHT = 15;
 
     @Shadow static int maxLoop;
     @Shadow public LevelData levelData;
@@ -151,7 +154,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     public abstract int getLightLevel(int i, int j, int k);
 
     @Shadow
-    public abstract boolean hasChunkAt(int i, int j, int k);
+    public abstract boolean hasChunkAt(int x, int y, int z);
 
     @Shadow
     public abstract boolean isSkyLit(int i, int j, int k);
@@ -390,37 +393,32 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         }
 
         try {
-            var reader = new BufferedReader(new FileReader(file));
-            try {
-                while (reader.ready()) {
-                    String line = reader.readLine();
-                    String[] elements = line.split(",", 7);
-                    if (elements.length == 7) {
-                        try {
-                            String animName = elements[0].trim();
-                            String texName = elements[1].trim();
-                            String imageName = elements[2].trim();
-                            int x = Integer.parseInt(elements[3].trim());
-                            int y = Integer.parseInt(elements[4].trim());
-                            int w = Integer.parseInt(elements[5].trim());
-                            int h = Integer.parseInt(elements[6].trim());
-                            var instance = new AC_TextureAnimated(texName, x, y, w, h);
-                            //noinspection DataFlowIssue
-                            ((AC_TextureBinder) instance).loadImage(imageName, (Level) (Object) this);
-                            texManager.registerTextureAnimation(animName, instance);
-                        }
-                        catch (Exception var12) {
-                            var12.printStackTrace();
-                        }
+            var reader = new BufferedReader(new FileReader(file, StandardCharsets.ISO_8859_1));
+            while (reader.ready()) {
+                String line = reader.readLine();
+                String[] elements = line.split(",", 7);
+                if (elements.length == 7) {
+                    try {
+                        String animName = elements[0].trim();
+                        String texName = elements[1].trim();
+                        String imageName = elements[2].trim();
+                        int x = Integer.parseInt(elements[3].trim());
+                        int y = Integer.parseInt(elements[4].trim());
+                        int w = Integer.parseInt(elements[5].trim());
+                        int h = Integer.parseInt(elements[6].trim());
+                        var instance = new AC_TextureAnimated(texName, x, y, w, h);
+                        //noinspection DataFlowIssue
+                        ((AC_TextureBinder) instance).loadImage(imageName, (Level) (Object) this);
+                        texManager.registerTextureAnimation(animName, instance);
+                    }
+                    catch (Exception var12) {
+                        var12.printStackTrace();
                     }
                 }
             }
-            catch (IOException var13) {
-                var13.printStackTrace();
-            }
         }
-        catch (FileNotFoundException var14) {
-            var14.printStackTrace();
+        catch (IOException var13) {
+            var13.printStackTrace();
         }
     }
 
@@ -548,22 +546,28 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             return -1;
         }
 
-        int topId = this.getRawBrightness(x, y + 1, z, false);
-        int rightId = this.getRawBrightness(x + 1, y, z, false);
-        int leftId = this.getRawBrightness(x - 1, y, z, false);
-        int frontId = this.getRawBrightness(x, y, z + 1, false);
-        int backId = this.getRawBrightness(x, y, z - 1, false);
-        topId = Math.max(rightId, topId);
-        topId = Math.max(leftId, topId);
-        topId = Math.max(frontId, topId);
-        topId = Math.max(backId, topId);
-        return topId;
+        int n = this.getClampedRawBrightness(x, y + 1, z, 0);
+        n = this.getClampedRawBrightness(x + 1, y, z, n);
+        n = this.getClampedRawBrightness(x - 1, y, z, n);
+        n = this.getClampedRawBrightness(x, y, z + 1, n);
+        n = this.getClampedRawBrightness(x, y, z - 1, n);
+        return n;
+    }
+
+    private @Unique int getClampedRawBrightness(int x, int y, int z, int value) {
+        if (value >= MAX_LIGHT || outOfBounds(x, z)) {
+            return MAX_LIGHT;
+        }
+        if (y < 0) {
+            return value;
+        }
+        return Math.max(value, this.getChunkBrightness(x, y, z));
     }
 
     @Overwrite
     public int getRawBrightness(int x, int y, int z, boolean checkNeighbors) {
         if (outOfBounds(x, z)) {
-            return 15;
+            return MAX_LIGHT;
         }
 
         if (checkNeighbors) {
@@ -572,11 +576,10 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
                 return n;
             }
         }
-
         if (y < 0) {
             return 0;
         }
-        return getChunkBrightness(x, y, z);
+        return this.getChunkBrightness(x, y, z);
     }
 
     private @Unique int getChunkBrightness(int x, int y, int z) {
@@ -647,9 +650,13 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         return this.getBrightnessLevel(value);
     }
 
-    public float getDayLight() {
-        int var1 = 15 - this.skyDarken;
-        return this.dimension.brightnessRamp[var1];
+    @Override
+    public int getLightUpdateHash(int x, int y, int z) {
+        if (!this.hasChunkAt(x, y, z)) {
+            return 0;
+        }
+        LevelChunk levelChunk = this.getChunkAt(x, z);
+        return ((ExChunk) levelChunk).getLightUpdateHash(x, y, z);
     }
 
     @Overwrite
@@ -1416,6 +1423,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         if (this.coordOrder == null) {
             this.initCoordOrder();
         }
+        int[] coordOrder = this.coordOrder;
 
         for (Player player : this.players) {
             int pX = Mth.floor(player.x / 16.0D);
@@ -1423,29 +1431,28 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             int range = 9;
 
             for (int x = -range; x <= range; ++x) {
+                int t = x + (int) this.getTime();
                 for (int z = -range; z <= range; ++z) {
-                    long hash = x + z * 2L + this.getTime();
-                    if (hash % 14L != 0L || !this.hasChunk(x + pX, z + pZ)) {
+                    int hash = t + z * 2;
+                    if (hash % 14 != 0 || !this.hasChunk(x + pX, z + pZ)) {
                         continue;
                     }
-                    hash /= 14L;
+                    hash /= 14;
                     int hX = x + pX;
                     int hZ = z + pZ;
-                    hash += hX * hX * 3121L + hX * 45238971L + hZ * hZ * 418711L + hZ * 13761L;
-                    hash = Math.abs(hash);
-                    int bX = hX * 16 + this.coordOrder[(int) (hash % 256L)] % 16;
-                    int bZ = hZ * 16 + this.coordOrder[(int) (hash % 256L)] / 16;
+                    hash += hX * hX * 3121 + hX * 45238971 + hZ * hZ * 418711 + hZ * 13761;
+                    int order = coordOrder[Math.abs(hash) % coordOrder.length];
+                    int bX = hX * 16 + order % 16;
+                    int bZ = hZ * 16 + order / 16;
                     this.SnowModUpdate(bX, bZ);
                 }
             }
         }
     }
 
+    @Unique
     public boolean SnowModUpdate(int x, int z) {
-        int y = this.getTopSolidBlock(x, z);
-        if (y < 0) {
-            y = 0;
-        }
+        int y = Math.max(0, this.getTopSolidBlock(x, z));
 
         int idDown = this.getTile(x, y - 1, z);
         if (this.getTemperatureValue(x, z) < 0.5D) {
@@ -1511,9 +1518,11 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             }
         }
 
+        // TODO: play after level is initialized
         String playingMusic = ((ExWorldProperties) this.levelData).getPlayingMusic();
         if (!playingMusic.isEmpty()) {
-            ((ExSoundHelper) Minecraft.instance.soundEngine).playMusicFromStreaming(playingMusic, 0, 0);
+            var level = (Level) (Object) this;
+            ((ExSoundHelper) Minecraft.instance.soundEngine).playMusicFromStreaming(level, playingMusic, 0, 0);
         }
     }
 

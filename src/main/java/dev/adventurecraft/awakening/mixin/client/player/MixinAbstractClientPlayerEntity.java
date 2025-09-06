@@ -45,6 +45,8 @@ public abstract class MixinAbstractClientPlayerEntity extends Player implements 
         this.commandDescriptions = new CommandDescriptions();
         ServerCommands.registerCommands(this.commandDispatcher, this.commandDescriptions);
         ServerCommands.registerCommandsWithArgs(this.commandDispatcher, this.commandDescriptions);
+
+        // TODO: register custom per-world gamerules for "gamerule" command
     }
 
     @Redirect(method = "serverAiStep", at = @At(

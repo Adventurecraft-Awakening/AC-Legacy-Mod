@@ -84,7 +84,7 @@ public class Script {
         this.weather = new ScriptWeather(level);
         this.effect = new ScriptEffect(level, Minecraft.instance.levelRenderer);
         this.particle = new ScriptParticle(Minecraft.instance.levelRenderer);
-        this.sound = new ScriptSound(Minecraft.instance.soundEngine);
+        this.sound = new ScriptSound(level, Minecraft.instance.soundEngine);
         this.ui = new ScriptUI();
         this.script = new ScriptScript(level);
         this.keyboard = new ScriptKeyboard(level, Minecraft.instance.options, this.getNewScope());
@@ -194,13 +194,13 @@ public class Script {
     }
 
     public Object runScript(org.mozilla.javascript.Script script, Scriptable scope) {
-        // FIXME: this exec should not be needed but continuations need top-call
-        if (this.curScope != null) {
-            return script.exec(this.cx, this.curScope);
-        }
-
         Scriptable prevScope = this.curScope;
         try {
+            // FIXME: this exec should not be needed but continuations need top-call
+            if (this.curScope != null) {
+                return script.exec(this.cx, this.curScope);
+            }
+
             this.curScope = scope;
             return this.cx.executeScriptWithContinuations(script, this.curScope);
         }

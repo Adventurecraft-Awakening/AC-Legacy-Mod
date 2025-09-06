@@ -4,6 +4,7 @@ import java.util.List;
 
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
+import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
@@ -36,9 +37,9 @@ public class AC_UtilBullet {
         double dist = 256.0D;
         Vec3 pointA = caster.getPos(1.0F);
         Vec3 dir = caster.getViewVector(1.0F);
-        dir.x += (double) spread * (2.0D * world.random.nextDouble() - 1.0D);
-        dir.y += (double) spread * (2.0D * world.random.nextDouble() - 1.0D);
-        dir.z += (double) spread * (2.0D * world.random.nextDouble() - 1.0D);
+        dir.x += spread * MathF.nextSignedFloat(world.random);
+        dir.y += spread * MathF.nextSignedFloat(world.random);
+        dir.z += spread * MathF.nextSignedFloat(world.random);
         Vec3 pointB = pointA.add(dir.x * dist, dir.y * dist, dir.z * dist);
         if (caster.heightOffset == 0.0F) {
             pointA.y += caster.bbHeight / 2.0F;

@@ -475,7 +475,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
 
             acBinder.onTick(texSize);
 
-            var srcPixels = acBinder.getBufferAtCurrentFrame();
+            IntBuffer srcPixels = acBinder.getBufferAtCurrentFrame();
             if (srcPixels.limit() == 0) {
                 continue;
             }

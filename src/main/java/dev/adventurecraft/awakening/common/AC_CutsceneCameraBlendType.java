@@ -4,8 +4,9 @@ public enum AC_CutsceneCameraBlendType {
 
     NONE(0),
     LINEAR(1),
-    QUADRATIC(2),
-    MAX(3);
+    QUADRATIC(2);
+
+    public static final int MAX = 3;
 
     public final int value;
 
@@ -13,12 +14,15 @@ public enum AC_CutsceneCameraBlendType {
         this.value = value;
     }
 
-    public static AC_CutsceneCameraBlendType get(int value){
+    public static AC_CutsceneCameraBlendType cycle(AC_CutsceneCameraBlendType type, int direction) {
+        return get(Integer.remainderUnsigned(type.value + direction, MAX));
+    }
+
+    public static AC_CutsceneCameraBlendType get(int value) {
         return switch (value) {
             case 0 -> NONE;
             case 1 -> LINEAR;
             case 2 -> QUADRATIC;
-            case 3 -> MAX;
             default -> throw new IllegalStateException("Unexpected value: " + value);
         };
     }

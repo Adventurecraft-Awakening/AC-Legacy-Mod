@@ -83,6 +83,9 @@ public final class HashCode {
         return hash;
     }
 
+    /**
+     * Diffuse bits in the hashcode.
+     */
     public static int combine(int hc1) {
         int hash = mixEmptyState();
         hash += 4;

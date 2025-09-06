@@ -17,41 +17,41 @@ public class ScriptUIRect extends UIElement {
     public float blue;
     public float alpha;
 
-    public ScriptUIRect(float var1, float var2, float var3, float var4, float var5, float var6, float var7, float var8) {
-        this(var1, var2, var3, var4, var5, var6, var7, var8, ((ExInGameHud) Minecraft.instance.gui).getScriptUI());
+    public ScriptUIRect(float x, float y, float width, float height, float red, float green, float blue, float alpha) {
+        this(x, y, width, height, red, green, blue, alpha, ((ExInGameHud) Minecraft.instance.gui).getScriptUI());
     }
 
-    public ScriptUIRect(float var1, float var2, float var3, float var4, float var5, float var6, float var7, float var8, ScriptUIContainer var9) {
+    public ScriptUIRect(float x, float y, float width, float height, float red, float green, float blue, float alpha, ScriptUIContainer container) {
         this.red = 1.0F;
         this.green = 1.0F;
         this.blue = 1.0F;
         this.alpha = 1.0F;
-        this.prevX = this.curX = var1;
-        this.prevY = this.curY = var2;
-        this.width = var3;
-        this.height = var4;
-        this.red = var5;
-        this.green = var6;
-        this.blue = var7;
-        this.alpha = var8;
-        if (var9 != null) {
-            var9.add(this);
+        this.prevX = this.curX = x;
+        this.prevY = this.curY = y;
+        this.width = width;
+        this.height = height;
+        this.red = red;
+        this.green = green;
+        this.blue = blue;
+        this.alpha = alpha;
+        if (container != null) {
+            container.add(this);
         }
     }
 
     @Override
-    public void render(Font var1, Textures var2, float var3) {
-        float var4 = this.getXAtTime(var3);
-        float var5 = this.getYAtTime(var3);
-        Tesselator var6 = Tesselator.instance;
+    public void render(Font font, Textures textures, float deltaTime) {
+        float x = this.getXAtTime(deltaTime);
+        float y = this.getYAtTime(deltaTime);
+        Tesselator ts = Tesselator.instance;
         GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glColor4f(this.red, this.green, this.blue, this.alpha);
-        var6.begin();
-        var6.vertex(var4, var5 + this.height, 0.0D);
-        var6.vertex(var4 + this.width, var5 + this.height, 0.0D);
-        var6.vertex(var4 + this.width, var5, 0.0D);
-        var6.vertex(var4, var5, 0.0D);
-        var6.end();
+        ts.begin();
+        ts.color(this.red, this.green, this.blue, this.alpha);
+        ts.vertex(x, y + this.height, 0.0D);
+        ts.vertex(x + this.width, y + this.height, 0.0D);
+        ts.vertex(x + this.width, y, 0.0D);
+        ts.vertex(x, y, 0.0D);
+        ts.end();
         GL11.glEnable(GL11.GL_TEXTURE_2D);
     }
 }

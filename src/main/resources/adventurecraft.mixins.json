@@ -15,7 +15,6 @@
     "client.gui.screen.MixinSelectWorldScreen",
     "client.gui.screen.container.MixinContainerScreen",
     "client.gui.screen.container.MixinPlayerInventoryScreen",
-    "client.gui.screen.ingame.MixinChatScreen",
     "client.gui.screen.ingame.MixinDeathScreen",
     "client.gui.screen.ingame.MixinStatsScreen",
     "client.gui.screen.menu.MixinTitleScreen",
@@ -23,6 +22,7 @@
     "client.gui.widget.MixinScrollableBaseWidget",
     "client.model.MixinCuboid",
     "client.options.MixinGameOptions",
+    "client.particle.MixinBreakingItemParticle",
     "client.particle.MixinDiggingParticleEntity",
     "client.particle.MixinFootstepParticle",
     "client.particle.MixinParticle",
@@ -51,6 +51,7 @@
     "client.render.entity.MixinItemRenderer",
     "client.render.entity.MixinPlayerRenderer",
     "client.render.entity.block.MixinPistonRenderer",
+    "client.renderer.entity.MixinArrowRenderer",
     "client.renderer.tileentity.MixinSignRenderer",
     "client.resource.MixinTexturePack",
     "client.resource.MixinZippedTexturePack",
@@ -63,7 +64,8 @@
     "entity.player.MixinAbstractClientPlayerEntity",
     "entity.player.MixinRemoteClientPlayerEntity",
     "util.MixinProgressListenerImpl",
-    "world.chunk.MixinChunkCache"
+    "world.chunk.MixinChunkCache",
+    "world.level.MixinGrassColor"
   ],
   "injectors": {
     "defaultRequire": 1
@@ -135,6 +137,8 @@
     "item.MixinRedstoneItem",
     "item.MixinSwordItem",
     "item.MixinTileItemWithoutTranslation",
+    "nbt.MixinListTag",
+    "nbt.MixinTag",
     "util.MixinMth",
     "util.io.MixinCompoundTag",
     "world.MixinCakeTile",

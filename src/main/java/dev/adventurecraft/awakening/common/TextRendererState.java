@@ -11,7 +11,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL11;
 
-public class TextRendererState implements TextMeasurer {
+import java.util.Objects;
+
+public final class TextRendererState implements TextMeasurer {
 
     private final Font font;
     private @Nullable Tesselator tesselator;
@@ -35,7 +37,18 @@ public class TextRendererState implements TextMeasurer {
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.font.fontTexture);
     }
 
+    private @NotNull Tesselator assertBegun() {
+        if (this.tesselator == null) {
+            throw new AssertionError("not started");
+        }
+        return this.tesselator;
+    }
+
     public void begin(Tesselator tesselator) {
+        Objects.requireNonNull(tesselator);
+        if (this.tesselator != null) {
+            throw new AssertionError("already started");
+        }
         this.bindTexture();
 
         this.tesselator = tesselator;
@@ -45,35 +58,41 @@ public class TextRendererState implements TextMeasurer {
     }
 
     public void end() {
-        assert this.tesselator != null;
-
-        this.tesselator.end();
+        Tesselator ts = this.assertBegun();
+        ts.end();
         this.tesselator = null;
     }
 
-    public void drawText(CharSequence text, int start, int end, float x, float y) {
+    public TextRect drawText(CharSequence text, int start, int end, float x, float y) {
+        return this.drawText(text, start, end, x, y, false);
+    }
+
+    /**
+     * Apply formatting without rendering text.
+     */
+    public TextRect formatText(CharSequence text, int start, int end) {
+        return this.drawText(text, start, end, 0, 0, true);
+    }
+
+    private TextRect drawText(CharSequence text, int start, int end, float x, float y, boolean formatOnly) {
         if (text == null) {
-            return;
+            return TextRect.EMPTY;
         }
         if (end - start == 0) {
-            return;
+            return TextRect.EMPTY;
         }
         validateCharSequence(text, start, end);
 
-        if (Rgba.getAlpha(this.activeColor) == 0) {
-            return;
-        }
-        var ts = this.tesselator;
-        assert ts != null;
+        formatOnly = formatOnly || (Rgba.getAlpha(this.activeColor) == 0);
 
-        var exTs = (ExTesselator) ts;
-        exTs.ac$color(this.activeColor);
+        var exTs = (ExTesselator) assertBegun();
+        exTs.ac$color8(this.activeColor);
 
         var font = (ExTextRenderer) this.font;
         int[] colorPalette = font.getColorPalette();
         int[] widthLookup = font.getCharWidths();
 
-        float xOff = 0;
+        int xOff = 0;
 
         for (int i = start; i < end; ++i) {
             char c = text.charAt(i);
@@ -93,10 +112,14 @@ public class TextRendererState implements TextMeasurer {
                         this.activeShadow = Rgba.withRgb(this.activeShadow, colorPalette[colorIndex + 16]);
                     }
                     else {
-                        exTs.ac$color(this.activeColor);
+                        exTs.ac$color8(this.activeColor);
                     }
                 }
                 i++; // skip the format code digit
+                continue;
+            }
+
+            if (formatOnly) {
                 continue;
             }
 
@@ -108,17 +131,18 @@ public class TextRendererState implements TextMeasurer {
             int column = ch % 16 * 8;
             int row = ch / 16 * 8;
             if (this.hasShadow()) {
-                exTs.ac$color(this.activeShadow);
-                drawChar(ts, column, row, xOff + x + this.shadowOffsetX, y + this.shadowOffsetY);
-                exTs.ac$color(this.activeColor);
+                exTs.ac$color8(this.activeShadow);
+                drawChar(exTs, column, row, xOff + x + this.shadowOffsetX, y + this.shadowOffsetY);
+                exTs.ac$color8(this.activeColor);
             }
-            drawChar(ts, column, row, xOff + x, y);
+            drawChar(exTs, column, row, xOff + x, y);
             xOff += widthLookup[ch];
         }
+        return new TextRect(end - start, xOff);
     }
 
-    public void drawText(CharSequence text, float x, float y) {
-        this.drawText(text, 0, text.length(), x, y);
+    public TextRect drawText(CharSequence text, float x, float y) {
+        return this.drawText(text, 0, text.length(), x, y);
     }
 
     public void setColor(int color) {
@@ -155,15 +179,15 @@ public class TextRendererState implements TextMeasurer {
         this.setShadowOffsetY(offsetY);
     }
 
-    private static void drawChar(Tesselator ts, int column, int row, float x, float y) {
+    private static void drawChar(ExTesselator ts, int column, int row, float x, float y) {
         float u = column / 128f;
         float v = row / 128f;
         float f = 7.99f;
         float t = f / 128f;
-        ts.vertexUV(x, y + f, 0.0, u, v + t);
-        ts.vertexUV(x + f, y + f, 0.0, u + t, v + t);
-        ts.vertexUV(x + f, y, 0.0, u + t, v);
-        ts.vertexUV(x, y, 0.0, u, v);
+        ts.ac$vertexUV(x, y + f, 0, u, v + t);
+        ts.ac$vertexUV(x + f, y + f, 0, u + t, v + t);
+        ts.ac$vertexUV(x + f, y, 0, u + t, v);
+        ts.ac$vertexUV(x, y, 0, u, v);
     }
 
     public static void validateCharSequence(CharSequence text, int start, int end) {

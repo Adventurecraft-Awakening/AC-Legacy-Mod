@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.mixin.client.particle;
 
-import com.llamalad7.mixinextras.sugar.Local;
+import dev.adventurecraft.awakening.extension.block.AC_TexturedBlock;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.TerrainParticle;
@@ -9,36 +9,51 @@ import net.minecraft.world.level.tile.Tile;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.Constant;
-import org.spongepowered.asm.mixin.injection.ModifyConstant;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(TerrainParticle.class)
 public abstract class MixinDiggingParticleEntity extends Particle {
 
-    @Shadow
-    private Tile tile;
+    @Shadow private Tile tile;
+    @Shadow private int face;
 
     public MixinDiggingParticleEntity(Level world, double x, double y, double z, double vX, double vY, double vZ) {
         super(world, x, y, z, vX, vY, vZ);
     }
 
-    @ModifyConstant(method = "<init>", constant = @Constant(intValue = 0))
-    private int useBlockMeta(int constant, @Local(ordinal = 0, argsOnly = true) int meta) {
-        return meta;
+    @Redirect(
+        method = "<init>",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/level/tile/Tile;getTexture(II)I"
+        )
+    )
+    private int useBlockFace(Tile tile, int side, int meta) {
+        return 0;
     }
 
     @Overwrite
     public TerrainParticle init(int x, int y, int z) {
-        int n = this.tile.getFoliageColor(this.level, x, y, z);
-        this.rCol *= (float) (n >> 16 & 0xFF) / 255.0f;
-        this.gCol *= (float) (n >> 8 & 0xFF) / 255.0f;
-        this.bCol *= (float) (n & 0xFF) / 255.0f;
+        long textureKey = ((ExBlock) this.tile).getTextureForSideEx(this.level, x, y, z, this.face);
+        this.texture = AC_TexturedBlock.toTexture(textureKey);
+
+        // TODO: make less magical in future
+        if (this.tile.id != Tile.GRASS.id || AC_TexturedBlock.hasBiomeBit(textureKey)) {
+            int n = this.tile.getFoliageColor(this.level, x, y, z);
+            this.rCol *= (float) ((n >> 16) & 0xFF) / 255.0f;
+            this.gCol *= (float) ((n >> 8) & 0xFF) / 255.0f;
+            this.bCol *= (float) (n & 0xFF) / 255.0f;
+        }
         return (TerrainParticle) (Object) this;
     }
 
     @Overwrite
     public int getParticleTexture() {
-        int texture = ((ExBlock) this.tile).getTextureNum();
-        return texture == 2 ? 3 : (texture == 3 ? 4 : 1);
+        return switch (((ExBlock) this.tile).getTextureNum()) {
+            case 2 -> 3;
+            case 3 -> 4;
+            default -> 1;
+        };
     }
 }

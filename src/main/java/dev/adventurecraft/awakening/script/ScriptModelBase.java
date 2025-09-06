@@ -3,17 +3,16 @@ package dev.adventurecraft.awakening.script;
 import dev.adventurecraft.awakening.extension.client.model.ExCuboid;
 import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.Textures;
 import net.minecraft.world.level.Level;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.vector.Matrix4f;
+import org.lwjgl.util.vector.Vector3f;
 
 import java.util.ArrayList;
-
-import net.minecraft.client.model.geom.ModelPart;
-import org.lwjgl.util.vector.Vector3f;
 
 public abstract class ScriptModelBase {
 
@@ -37,11 +36,11 @@ public abstract class ScriptModelBase {
     public float pitch;
     public float roll;
 
-    public int modes = 0;
-    public float colorRed = 1.0F;
-    public float colorGreen = 1.0F;
-    public float colorBlue = 1.0F;
-    public float colorAlpha = 1.0F;
+    public int colorMode = 0;
+    public float r = 1.0F;
+    public float g = 1.0F;
+    public float b = 1.0F;
+    public float a = 1.0F;
 
     protected int textureWidth = 64;
     protected int textureHeight = 32;
@@ -72,41 +71,40 @@ public abstract class ScriptModelBase {
         var localMat = new Matrix4f();
         this.transform(partialTick, localMat);
 
-        switch (this.modes) {
+        switch (this.colorMode) {
             case 1:
                 // using the position of the attached entity
-                if (this.attachedTo != null) {
+                if (this.attachedTo != null && this.attachedTo.entity != null) {
                     this.setBrightness(this.attachedTo.entity.getBrightness(partialTick));
                 }
+                //if the entity DON'T exist it's like setting it to mode 2
                 break;
-
             case 2:
                 // usage for custom RGB Values
                 break;
-
             case 3:
                 // use the lightning value of the attached model
                 if (this.modelAttachment != null) {
-                    this.colorRed = this.modelAttachment.colorRed;
-                    this.colorGreen = this.modelAttachment.colorGreen;
-                    this.colorBlue = this.modelAttachment.colorBlue;
+                    this.r = this.modelAttachment.r;
+                    this.g = this.modelAttachment.g;
+                    this.b = this.modelAttachment.b;
                 }
                 break;
-
             default:
                 // Default lightning values
                 var vr = Matrix4f.transform(localMat, new Vector3f(), new Vector3f());
-                setBrightness(world.getBrightness(Math.round(vr.x), Math.round(vr.y), Math.round(vr.z)));
+                setBrightness(world.getBrightness(
+                    Math.round(vr.x + 0.5F),
+                    Math.round(vr.y + 0.5F),
+                    Math.round(vr.z + 0.5F)
+                ));
                 break;
         }
 
-        float r = Math.min(this.colorRed, 1.0F);
-        float g = Math.min(this.colorGreen, 1.0F);
-        float b = Math.min(this.colorBlue, 1.0F);
-        if (this.colorAlpha < 1.0) {
+        if (this.a < 1.0) {
             GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
             GL11.glEnable(GL11.GL_BLEND);
-            GL11.glColor4f(r, g, b, Math.min(this.colorAlpha, 1.0F));
+            GL11.glColor4f(r, g, b, Math.min(this.a, 1.0F));
         } else {
             GL11.glColor3f(r, g, b);
         }
@@ -131,7 +129,7 @@ public abstract class ScriptModelBase {
             }
         }
 
-        if (this.colorAlpha < 1.0) {
+        if (this.a < 1.0) {
             GL11.glDisable(GL11.GL_BLEND);
         }
     }
@@ -155,11 +153,24 @@ public abstract class ScriptModelBase {
     }
 
     public void setBrightness(float brightness) {
-        this.colorRed = this.colorGreen = this.colorBlue = brightness;
+        setRGB(brightness, brightness, brightness);
     }
 
     public void setBrightness(int brightness) {
         this.setBrightness(Math.max(brightness, 255) / 256.0F);
+    }
+
+    public void setRGB(float r, float g, float b) {
+        this.r = r;
+        this.g = g;
+        this.b = b;
+    }
+
+    public void setRGBA(float r, float g, float b, float a) {
+        this.r = r;
+        this.g = g;
+        this.b = b;
+        this.a = a;
     }
 
     public void setPosition(double x, double y, double z) {
@@ -239,12 +250,12 @@ public abstract class ScriptModelBase {
         return new ScriptVec3(this.yaw, this.pitch, this.roll);
     }
 
-    public void setAlpha(float alpha) {
-        this.colorAlpha = alpha;
+    public float getAlpha() {
+        return this.a;
     }
 
-    public float getAlpha() {
-        return this.colorAlpha;
+    public void setAlpha(float alpha) {
+        this.a = alpha;
     }
 
     protected static final ArrayList<ScriptModelBase> activeModels = new ArrayList<>();

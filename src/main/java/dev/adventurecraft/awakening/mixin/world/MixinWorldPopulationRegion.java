@@ -2,6 +2,8 @@ package dev.adventurecraft.awakening.mixin.world;
 
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.common.AC_PlayerTorch;
+import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
+import dev.adventurecraft.awakening.extension.world.level.ExRegion;
 import dev.adventurecraft.awakening.util.MathF;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -13,8 +15,10 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 
+import java.nio.ByteBuffer;
+
 @Mixin(Region.class)
-public abstract class MixinWorldPopulationRegion {
+public abstract class MixinWorldPopulationRegion implements ExRegion {
 
     @Shadow private int xc1;
     @Shadow private int zc1;
@@ -112,5 +116,22 @@ public abstract class MixinWorldPopulationRegion {
         int cX = (x >> 4) - this.xc1;
         int cZ = (z >> 4) - this.zc1;
         return this.chunks[cX][cZ].getRawBrightness(x & 15, y, z & 15, this.level.skyDarken);
+    }
+
+    public @Override void getTileColumn(ByteBuffer buffer, int x, int y0, int z, int y1) {
+        int cX = (x >> 4) - this.xc1;
+        if (cX < 0 || cX >= this.chunks.length) {
+            return;
+        }
+        var row = this.chunks[cX];
+        int cZ = (z >> 4) - this.zc1;
+        if (cZ < 0 || cZ >= row.length) {
+            return;
+        }
+        LevelChunk chunk = row[cZ];
+        if (chunk == null) {
+            return;
+        }
+        ((ExChunk) chunk).getTileColumn(buffer, x & 0xF, Math.min(y0, y1), z & 0xF, Math.max(y0, y1));
     }
 }

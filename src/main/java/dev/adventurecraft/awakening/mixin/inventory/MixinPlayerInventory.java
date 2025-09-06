@@ -1,17 +1,15 @@
 package dev.adventurecraft.awakening.mixin.inventory;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
-import dev.adventurecraft.awakening.item.AC_IItemReload;
-import dev.adventurecraft.awakening.item.AC_Items;
-import dev.adventurecraft.awakening.item.AC_ISlotCallbackItem;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import dev.adventurecraft.awakening.extension.item.ExArmorItem;
 import dev.adventurecraft.awakening.extension.item.ExItemStack;
+import dev.adventurecraft.awakening.item.AC_IItemReload;
+import dev.adventurecraft.awakening.item.AC_ISlotCallbackItem;
+import dev.adventurecraft.awakening.item.AC_Items;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -23,7 +21,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.LinkedList;
@@ -374,10 +371,10 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
         return true;
     }
 
-    public @Override int getSlot(int id, int meta) {
+    public @Override int getSlot(int itemId, int itemDamage) {
         for (int i = 0; i < this.items.length; ++i) {
             ItemInstance item = this.items[i];
-            if (item != null && item.id == id && item.getAuxValue() == meta) {
+            if (item != null && item.id == itemId && item.getAuxValue() == itemDamage) {
                 return i;
             }
         }
@@ -389,5 +386,26 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
             this.offhandItem = this.selected;
         }
         this.selected = index;
+    }
+
+    public @Override int getArmorSlot(int itemId) {
+        for (int i = 0; i < armor.length; i++) {
+            ItemInstance item = this.armor[i];
+            if (item != null && item.id == itemId) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public @Override int getArmorSlot(int itemId, int itemDamage) {
+
+        for (int i = 0; i < armor.length; i++) {
+            ItemInstance item = this.armor[i];
+            if (item != null && item.id == itemId && item.getAuxValue() == itemDamage) {
+                return i;
+            }
+        }
+        return -1;
     }
 }

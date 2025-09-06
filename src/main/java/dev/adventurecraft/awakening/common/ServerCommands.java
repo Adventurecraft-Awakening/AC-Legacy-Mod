@@ -2,11 +2,7 @@ package dev.adventurecraft.awakening.common;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.BoolArgumentType;
-import com.mojang.brigadier.arguments.FloatArgumentType;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
-import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.arguments.*;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.tree.CommandNode;
 import dev.adventurecraft.awakening.common.gui.AC_GuiMapEditHUD;
@@ -20,10 +16,9 @@ import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
+import dev.adventurecraft.awakening.world.GameRules;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
@@ -162,51 +157,40 @@ public class ServerCommands {
             ));
             descs.attach(node.getChild("page").getCommand(), "Gets a page of available commands");
         }
+
+        var helpNode = dispatcher.register(requiredArg(
+            literal("help"),
+            "path",
+            StringArgumentType.greedyString(),
+            (ctx, name) -> ServerCommands.cmdHelp(ctx, dispatcher, descs, name)
+        ));
+        descs.attach(helpNode.getChild("path").getCommand(), "Gets the description of a command node");
+
         {
-            var node = dispatcher.register(requiredArg(
-                literal("help"),
-                "path",
-                StringArgumentType.greedyString(),
-                (ctx, name) -> ServerCommands.cmdHelp(ctx, dispatcher, descs, name)
-            ));
-            descs.attach(node.getChild("path").getCommand(), "Gets the description of a command node");
-        }
-        {
-            // TODO: store gamerules in "boxes" so we don't duplicate code for all the command methods
-            var node = dispatcher.register(literal("gamerule")
-                .executes((ctx) -> ServerCommands.cmdHelp(ctx, dispatcher, descs, "gamerule"))
-                .then(defineGamerule("decay", descs.attach(ServerCommands::cmdToggleDecay, "Toggles leaf decay")))
-                .then(defineGamerule(
-                    "mobsburn",
-                    descs.attach(ServerCommands::cmdToggleMobsBurn, "Toggles mobs burning in daylight")
-                ))
-                .then(defineGamerule("melting", descs.attach(ServerCommands::cmdToggleMelting, "Toggles ice melting")))
-                .then(defineGamerule(
-                    "bonemeal",
-                    descs.attach(ServerCommands::cmdToggleBonemeal, "Toggles bonemeal usage")
-                ))
-                .then(defineGamerule(
-                    "sleep",
-                    descs.attach(ServerCommands::cmdToggleSleep, "Toggles if player can sleep in beds")
-                ))
-                .then(defineGamerule(
-                    "hoe",
-                    descs.attach(ServerCommands::cmdToggleHoe, "Toggles hoe usage")
-                )));
-            descs.attach(node.getCommand(), "Set global rules for the map");
+            var builder = literal("gamerule").executes( //
+                (ctx) -> ServerCommands.cmdHelp(ctx, dispatcher, descs, "gamerule"));
+
+            for (var entry : GameRules.internalEntries()) {
+                var key = entry.getKey();
+                String name = key.id().split(":")[1]; // FIXME: proper registry ID
+
+                //noinspection unchecked
+                var argType = (ArgumentType<Object>) entry.getValue().getArgumentType();
+                var ruleBuilder = optionalArg(
+                    literal(name),
+                    "value",
+                    argType,
+                    (ctx, val) -> cmdSetGameRule(ctx, key, val)
+                );
+                builder = builder.then(ruleBuilder);
+            }
+            dispatcher.register(builder);
         }
 
         // TODO: save/restore for undostacks
         dispatcher.register(literal("undostack")
             .executes(descs.attach(ServerCommands::cmdUndoStack, "Gets info about the undo stack"))
             .then(literal("clear").executes(descs.attach(ServerCommands::cmdUndoStackClear, "Clears the undo stack"))));
-    }
-
-    private static LiteralArgumentBuilder<ServerCommandSource> defineGamerule(
-        String name,
-        CommandOpt<ServerCommandSource, Boolean> command
-    ) {
-        return optionalArg(literal(name), "value", BoolArgumentType.bool(), command);
     }
 
     public static int cmdConfig(CommandContext<ServerCommandSource> context) {
@@ -465,91 +449,20 @@ public class ServerCommands {
         return 0;
     }
 
-    public static int cmdToggleMelting(CommandContext<ServerCommandSource> context, Boolean value) {
+    public static int cmdSetGameRule(CommandContext<ServerCommandSource> context, GameRules.Key<?> key, Object value) {
         var source = context.getSource();
         var world = source.getWorld();
-        if (world != null) {
-            var props = (ExWorldProperties) world.levelData;
-            props.setIceMelts(value != null ? value : !props.getIceMelts());
-
-            source.getClient().gui.addMessage(String.format("Ice Melts: %b", props.getIceMelts()));
-            return Command.SINGLE_SUCCESS;
+        if (world == null) {
+            return 0;
         }
-        return 0;
-    }
 
-    public static int cmdToggleDecay(CommandContext<ServerCommandSource> context, Boolean value) {
-        var source = context.getSource();
-        var world = source.getWorld();
-        if (world != null) {
-            var props = (ExWorldProperties) world.levelData;
-            if (value != null) {
-                props.setLeavesDecay(value);
-            }
-            source.getClient().gui.addMessage(String.format("Leaves Decay: %b", props.getLeavesDecay()));
-            return Command.SINGLE_SUCCESS;
+        var props = (ExWorldProperties) world.levelData;
+        var rule = props.getGameRules().find(key);
+        if (value != null) {
+            rule.set(value);
         }
-        return 0;
-    }
-
-    public static int cmdToggleHoe(CommandContext<ServerCommandSource> context, Boolean value) {
-        var source = context.getSource();
-        var world = source.getWorld();
-        if (world != null) {
-            var props = (ExWorldProperties) world.levelData;
-            if (value != null) {
-                props.setCanUseHoe(value);
-            }
-            source.getClient().gui.addMessage(String.format("Hoe usable without Debug Mode: %b", props.getCanUseHoe()));
-            return Command.SINGLE_SUCCESS;
-        }
-        return 0;
-    }
-
-
-    public static int cmdToggleBonemeal(CommandContext<ServerCommandSource> context, Boolean value) {
-        var source = context.getSource();
-        var world = source.getWorld();
-        if (world != null) {
-            var props = (ExWorldProperties) world.levelData;
-            if (value != null) {
-                props.setCanUseBonemeal(value);
-            }
-            source.getClient().gui.addMessage(String.format(
-                "Bonemeal usable without Debug Mode: %b",
-                props.getCanUseBonemeal()
-            ));
-            return Command.SINGLE_SUCCESS;
-        }
-        return 0;
-    }
-
-    public static int cmdToggleMobsBurn(CommandContext<ServerCommandSource> context, Boolean value) {
-        var source = context.getSource();
-        var world = source.getWorld();
-        if (world != null) {
-            var props = (ExWorldProperties) world.levelData;
-            if (value != null) {
-                props.setMobsBurn(value);
-            }
-            source.getClient().gui.addMessage(String.format("Mobs Burn in Daylight: %b", props.getMobsBurn()));
-            return Command.SINGLE_SUCCESS;
-        }
-        return 0;
-    }
-
-    public static int cmdToggleSleep(CommandContext<ServerCommandSource> context, Boolean value) {
-        var source = context.getSource();
-        var world = source.getWorld();
-        if (world != null) {
-            var props = (ExWorldProperties) world.levelData;
-            if (value != null) {
-                props.setCanSleep(value);
-            }
-            source.getClient().gui.addMessage(String.format("Player can sleep in beds: %b", props.getCanSleep()));
-            return Command.SINGLE_SUCCESS;
-        }
-        return 0;
+        source.getClient().gui.addMessage(String.format("%s = %b", key.id(), rule.get()));
+        return Command.SINGLE_SUCCESS;
     }
 
     public static int cmdCameraAdd(CommandContext<ServerCommandSource> context, float time) {
@@ -595,17 +508,20 @@ public class ServerCommands {
             .limit(commandsPerPage)
             .map(node -> {
                 var lines = new ArrayList<String>();
+                var stack = new ArrayDeque<CommandNode<ServerCommandSource>>();
+                stack.push(node);
 
                 String message = "/" + prettifyUsage(usageMap.get(node));
-                String description = descriptions.getDescription(node.getCommand());
-                if (description != null) {
+                String description = descriptions.getDescription(stack);
+                if (!description.isEmpty()) {
                     message += DESCRIPTION_COLOR + " - " + description;
                 }
                 lines.add(message);
 
-                var children = node.getChildren();
-                for (var child : children) {
-                    createCommandTree(child, descriptions, "  ", lines);
+                for (var child : node.getChildren()) {
+                    stack.push(child);
+                    createCommandTree(stack, descriptions, "  ", lines);
+                    stack.pop();
                 }
 
                 client.gui.addMessage(String.join("\n", lines));
@@ -616,19 +532,20 @@ public class ServerCommands {
     }
 
     private static void createCommandTree(
-        CommandNode<ServerCommandSource> node,
+        Deque<CommandNode<ServerCommandSource>> nodeStack,
         CommandDescriptions descriptions,
         String prefix,
         List<String> output
     ) {
-
-        var children = node.getChildren();
-        for (var child : children) {
-            createCommandTree(child, descriptions, "  " + prefix, output);
+        var node = nodeStack.peek();
+        for (var child : node.getChildren()) {
+            nodeStack.push(child);
+            createCommandTree(nodeStack, descriptions, "  " + prefix, output);
+            nodeStack.pop();
         }
 
-        String description = descriptions.getDescription(node.getCommand());
-        if (description != null) {
+        String description = descriptions.getDescription(nodeStack);
+        if (!description.isEmpty()) {
             String message = prefix + "§f" + prettifyUsage(node.getUsageText());
             message += DESCRIPTION_COLOR + " - " + description;
             output.add(message);
@@ -650,20 +567,24 @@ public class ServerCommands {
         var lines = new ArrayList<String>();
         int result;
 
-        var rootNode = dispatcher.findNode(Arrays.asList(path.split(" ")));
-        if (rootNode != null) {
-            String rootDesc = descriptions.getDescription(rootNode.getCommand());
-            String rootDescC = rootDesc != null ? DESCRIPTION_COLOR + " - " + rootDesc : "";
+        var stack = new ArrayDeque<CommandNode<ServerCommandSource>>();
+        findNode(dispatcher.getRoot(), Arrays.asList(path.split(" ")), stack);
+
+        if (!stack.isEmpty()) {
+            String rootDesc = descriptions.getDescription(stack);
+            String rootDescC = !rootDesc.isEmpty() ? DESCRIPTION_COLOR + " - " + rootDesc : "";
             lines.add(String.format("§2Command help for \"§f%s§2\"%s", path, rootDescC));
 
-            var usageMap = dispatcher.getSmartUsage(rootNode, source);
+            var usageMap = dispatcher.getSmartUsage(stack.peek(), source);
             result = usageMap.keySet().stream().map(node -> {
+                stack.push(node);
                 String line = prettifyUsage(usageMap.get(node));
-                String description = descriptions.getDescription(node.getCommand());
-                if (description != null) {
+                String description = descriptions.getDescription(stack);
+                if (!description.isEmpty()) {
                     line += DESCRIPTION_COLOR + " - " + description;
                 }
                 lines.add(line);
+                stack.pop();
                 return 1;
             }).reduce(0, Integer::sum);
         }
@@ -709,4 +630,18 @@ public class ServerCommands {
         }
         return 0;
     }
+
+    private static <S> int findNode(CommandNode<S> root, Collection<String> path, Deque<CommandNode<S>> stack) {
+        int count = 0;
+        for (String name : path) {
+            root = root.getChild(name);
+            if (root == null) {
+                break;
+            }
+            stack.push(root);
+            count++;
+        }
+        return count;
+    }
 }
+

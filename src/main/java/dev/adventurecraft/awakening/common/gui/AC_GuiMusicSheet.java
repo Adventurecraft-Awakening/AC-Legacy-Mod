@@ -16,7 +16,7 @@ public class AC_GuiMusicSheet extends Screen {
 
     private final IInstrumentConfig instrument;
     private final IntArrayList notesPlayed;
-    private String notesPlayedString;
+    private StringBuilder notesPlayedString;
     private int spaceTaken;
     private AC_MusicScriptEntry songPlayed;
     private long timeToFade;
@@ -24,8 +24,9 @@ public class AC_GuiMusicSheet extends Screen {
     public AC_GuiMusicSheet(IInstrumentConfig instrument) {
         this.instrument = instrument;
         this.notesPlayed = new IntArrayList();
-        this.notesPlayedString = "";
+        this.notesPlayedString = new StringBuilder();
         this.songPlayed = null;
+        this.passEvents = true;
     }
 
     public static final Note[] keyboardNotes = {
@@ -53,8 +54,8 @@ public class AC_GuiMusicSheet extends Screen {
         boolean canBeSharp = (key == Keyboard.KEY_1 || key == Keyboard.KEY_3 || key == Keyboard.KEY_4 || key == Keyboard.KEY_5 || key == Keyboard.KEY_7 || key == Keyboard.KEY_8 || key == Keyboard.KEY_0);
         boolean noteIsSharp = shiftDown && canBeSharp;
 
-        int NOTE_SIZE = 11;
-        int MAX_NOTE_SPACE = 168;
+        final int NOTE_SIZE = 11;
+        final int MAX_NOTE_SPACE = 168;
 
         if (noteIsSharp) {
             int NOTE_MODIFIER_SIZE = 14;
@@ -63,7 +64,7 @@ public class AC_GuiMusicSheet extends Screen {
 
             if (totalSpaceTaken >= MAX_NOTE_SPACE) {
                 this.notesPlayed.clear();
-                this.notesPlayedString = "";
+                this.notesPlayedString.setLength(0);
                 this.spaceTaken = 0;
             }
 
@@ -76,7 +77,7 @@ public class AC_GuiMusicSheet extends Screen {
 
         if (totalSpaceTaken >= MAX_NOTE_SPACE) {
             this.notesPlayed.clear();
-            this.notesPlayedString = "";
+            this.notesPlayedString.setLength(0);
             this.spaceTaken = 0;
         }
 
@@ -84,7 +85,7 @@ public class AC_GuiMusicSheet extends Screen {
         this.notesPlayed.add(key);
 
         Note noteToPlay = keyboardNotes[key - Keyboard.KEY_1];
-        this.notesPlayedString += Keyboard.getKeyName(key);
+        this.notesPlayedString.append(Keyboard.getKeyName(key));
 
 
         if (noteToPlay != null) {

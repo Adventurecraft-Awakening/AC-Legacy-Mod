@@ -33,9 +33,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.Slice;
+import org.spongepowered.asm.mixin.injection.*;
 
 @Mixin(
     value = TileRenderer.class,
@@ -44,6 +42,7 @@ import org.spongepowered.asm.mixin.injection.Slice;
 public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
     @Unique private final Xoshiro128PP rand = new Xoshiro128PP();
+    @Unique private Tesselator tesselator;
 
     @Shadow public static boolean fancy;
     @Shadow public LevelSource level;
@@ -172,19 +171,29 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     @Shadow
     protected abstract float getWaterHeight(int x, int y, int z, Material material);
 
-    /*
-    @Inject(method = "render", at = @At(
-            value = "RETURN",
-            ordinal = 18),
-            locals = LocalCapture.CAPTURE_FAILHARD,
-            cancellable = true)
-    private void renderBlock(Block var1, int var2, int var3, int var4, CallbackInfoReturnable<Boolean> cir, int var5) {
-        if (Config.hasModLoader()) {
-            boolean v = Config.callBoolean("ModLoader", "RenderWorldBlock", this, this.blockView, var2, var3, var4, var1, var5);
-            cir.setReturnValue(v);
+    @SuppressWarnings("MixinAnnotationTarget")
+    @Redirect(
+        method = "*",
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/client/renderer/Tesselator;instance:Lnet/minecraft/client/renderer/Tesselator;",
+            opcode = Opcodes.GETSTATIC
+        )
+    )
+    private Tesselator tesselator() {
+        if (this.tesselator == null) {
+            return Tesselator.instance;
         }
+        return this.tesselator;
     }
-    */
+
+    public @Override Tesselator ac$getTesselator() {
+        return this.tesselator;
+    }
+
+    public @Override void ac$setTesselator(Tesselator tesselator) {
+        this.tesselator = tesselator;
+    }
 
     @Override
     public void startRenderingBlocks(Level world) {
@@ -193,23 +202,19 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             GL11.glShadeModel(GL11.GL_SMOOTH);
         }
 
-        Tesselator.instance.begin();
+        this.tesselator().begin();
         this.noCulling = true;
     }
 
     @Override
     public void stopRenderingBlocks() {
         this.noCulling = false;
-        Tesselator.instance.end();
+        this.tesselator().end();
         if (Minecraft.useAmbientOcclusion()) {
             GL11.glShadeModel(GL11.GL_FLAT);
         }
 
         this.level = null;
-    }
-
-    private static @Unique boolean hasColorBit(long textureId) {
-        return ((textureId >> 32) & 1) == 1;
     }
 
     private @Unique boolean isTranslucent(int x, int y, int z) {
@@ -537,13 +542,14 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         this.resetColor(useColor, r, g, b, 0.8F);
         this.applyColorBrightness(l1, l2, l3, l4);
 
-        long bTexture = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.NORTH);
-        if (hasColorBit(bTexture)) {
+        long textureKey = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.NORTH);
+        if (AC_TexturedBlock.hasBiomeBit(textureKey)) {
             this.multiplyColor(r, g, b);
         }
 
-        this.renderNorth(block, x, y, z, (int) bTexture);
-        if (doGrassEdges && bTexture == 3 && this.fixedTexture < 0) {
+        int texture = AC_TexturedBlock.toTexture(textureKey);
+        this.renderNorth(block, x, y, z, texture);
+        if (doGrassEdges && texture == 3 && this.fixedTexture < 0) {
             this.multiplyColor(r, g, b);
             this.renderNorth(block, x, y, z, 38);
         }
@@ -618,13 +624,14 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         this.resetColor(useColor, r, g, b, 0.8F);
         this.applyColorBrightness(l1, l2, l3, l4);
 
-        long bTexture = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.SOUTH);
-        if (hasColorBit(bTexture)) {
+        long textureKey = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.SOUTH);
+        if (AC_TexturedBlock.hasBiomeBit(textureKey)) {
             this.multiplyColor(r, g, b);
         }
 
-        this.renderSouth(block, x, y, z, (int) bTexture);
-        if (doGrassEdges && bTexture == 3 && this.fixedTexture < 0) {
+        int texture = AC_TexturedBlock.toTexture(textureKey);
+        this.renderSouth(block, x, y, z, texture);
+        if (doGrassEdges && texture == 3 && this.fixedTexture < 0) {
             this.multiplyColor(r, g, b);
             this.renderSouth(block, x, y, z, 38);
         }
@@ -699,13 +706,14 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         this.resetColor(useColor, r, g, b, 0.6F);
         this.applyColorBrightness(l1, l2, l3, l4);
 
-        long bTexture = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.WEST);
-        if (hasColorBit(bTexture)) {
+        long textureKey = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.WEST);
+        if (AC_TexturedBlock.hasBiomeBit(textureKey)) {
             this.multiplyColor(r, g, b);
         }
 
-        this.renderWest(block, x, y, z, (int) bTexture);
-        if (doGrassEdges && bTexture == 3 && this.fixedTexture < 0) {
+        int texture = AC_TexturedBlock.toTexture(textureKey);
+        this.renderWest(block, x, y, z, texture);
+        if (doGrassEdges && texture == 3 && this.fixedTexture < 0) {
             this.multiplyColor(r, g, b);
             this.renderWest(block, x, y, z, 38);
         }
@@ -780,13 +788,14 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         this.resetColor(useColor, r, g, b, 0.6F);
         this.applyColorBrightness(l1, l2, l3, l4);
 
-        long bTexture = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.EAST);
-        if (hasColorBit(bTexture)) {
+        long textureKey = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.EAST);
+        if (AC_TexturedBlock.hasBiomeBit(textureKey)) {
             this.multiplyColor(r, g, b);
         }
 
-        this.renderEast(block, x, y, z, (int) bTexture);
-        if (doGrassEdges && bTexture == 3 && this.fixedTexture < 0) {
+        int texture = AC_TexturedBlock.toTexture(textureKey);
+        this.renderEast(block, x, y, z, texture);
+        if (doGrassEdges && texture == 3 && this.fixedTexture < 0) {
             this.multiplyColor(r, g, b);
             this.renderEast(block, x, y, z, 38);
         }
@@ -813,7 +822,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     public boolean tesselateBlockInWorld(Tile block, int x, int y, int z, float r, float g, float b) {
         this.blen = false;
         boolean doGrassEdges = fancy && block.id == Tile.GRASS.id;
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         boolean renderAny = false;
         float colorFactor0 = 0.5F;
         float colorFactor1 = 0.8F;
@@ -862,16 +871,18 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         if (this.noCulling || block.shouldRenderFace(this.level, x, y, z - 1, Facing.NORTH)) {
             float brightness = block.zz0 > 0.0D ? coreBrightness : block.getBrightness(this.level, x, y, z - 1);
 
-            long bTexture = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.NORTH);
-            if (hasColorBit(bTexture)) {
+            long textureKey = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.NORTH);
+            if (AC_TexturedBlock.hasBiomeBit(textureKey)) {
                 ts.color(r_cf1 * brightness * r, g_cf1 * brightness * g, b_cf1 * brightness * b);
             }
             else {
                 ts.color(r_cf1 * brightness, g_cf1 * brightness, b_cf1 * brightness);
             }
-            this.renderNorth(block, x, y, z, (int) bTexture);
 
-            if (doGrassEdges && bTexture == 3 && this.fixedTexture < 0) {
+            int texture = AC_TexturedBlock.toTexture(textureKey);
+            this.renderNorth(block, x, y, z, texture);
+
+            if (doGrassEdges && texture == 3 && this.fixedTexture < 0) {
                 ts.color(r_cf1 * brightness * r, g_cf1 * brightness * g, b_cf1 * brightness * b);
                 this.renderNorth(block, x, y, z, 38);
             }
@@ -881,16 +892,18 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         if (this.noCulling || block.shouldRenderFace(this.level, x, y, z + 1, Facing.SOUTH)) {
             float brightness = block.zz1 < 1.0D ? coreBrightness : block.getBrightness(this.level, x, y, z + 1);
 
-            long bTexture = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.SOUTH);
-            if (hasColorBit(bTexture)) {
+            long textureKey = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.SOUTH);
+            if (AC_TexturedBlock.hasBiomeBit(textureKey)) {
                 ts.color(r_cf1 * brightness * r, g_cf1 * brightness * g, b_cf1 * brightness * b);
             }
             else {
                 ts.color(r_cf1 * brightness, g_cf1 * brightness, b_cf1 * brightness);
             }
-            this.renderSouth(block, x, y, z, (int) bTexture);
 
-            if (doGrassEdges && bTexture == 3 && this.fixedTexture < 0) {
+            int texture = AC_TexturedBlock.toTexture(textureKey);
+            this.renderSouth(block, x, y, z, texture);
+
+            if (doGrassEdges && texture == 3 && this.fixedTexture < 0) {
                 ts.color(r_cf1 * brightness * r, g_cf1 * brightness * g, b_cf1 * brightness * b);
                 this.renderSouth(block, x, y, z, 38);
             }
@@ -901,16 +914,18 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         if (this.noCulling || block.shouldRenderFace(this.level, x - 1, y, z, Facing.WEST)) {
             float brightness = block.xx0 > 0.0D ? coreBrightness : block.getBrightness(this.level, x - 1, y, z);
 
-            long bTexture = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.WEST);
-            if (hasColorBit(bTexture)) {
+            long textureKey = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.WEST);
+            if (AC_TexturedBlock.hasBiomeBit(textureKey)) {
                 ts.color(r_cf2 * brightness * r, g_cf2 * brightness * g, b_cf2 * brightness * b);
             }
             else {
                 ts.color(r_cf2 * brightness, g_cf2 * brightness, b_cf2 * brightness);
             }
-            this.renderWest(block, x, y, z, (int) bTexture);
 
-            if (doGrassEdges && bTexture == 3 && this.fixedTexture < 0) {
+            int texture = AC_TexturedBlock.toTexture(textureKey);
+            this.renderWest(block, x, y, z, texture);
+
+            if (doGrassEdges && texture == 3 && this.fixedTexture < 0) {
                 ts.color(r_cf2 * brightness * r, g_cf2 * brightness * g, b_cf2 * brightness * b);
                 this.renderWest(block, x, y, z, 38);
             }
@@ -920,16 +935,18 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         if (this.noCulling || block.shouldRenderFace(this.level, x + 1, y, z, Facing.EAST)) {
             float brightness = block.xx1 < 1.0D ? coreBrightness : block.getBrightness(this.level, x + 1, y, z);
 
-            long bTexture = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.EAST);
-            if (hasColorBit(bTexture)) {
+            long textureKey = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.EAST);
+            if (AC_TexturedBlock.hasBiomeBit(textureKey)) {
                 ts.color(r_cf2 * brightness * r, g_cf2 * brightness * g, b_cf2 * brightness * b);
             }
             else {
                 ts.color(r_cf2 * brightness, g_cf2 * brightness, b_cf2 * brightness);
             }
-            this.renderEast(block, x, y, z, (int) bTexture);
 
-            if (doGrassEdges && bTexture == 3 && this.fixedTexture < 0) {
+            int texture = AC_TexturedBlock.toTexture(textureKey);
+            this.renderEast(block, x, y, z, texture);
+
+            if (doGrassEdges && texture == 3 && this.fixedTexture < 0) {
                 ts.color(r_cf2 * brightness * r, g_cf2 * brightness * g, b_cf2 * brightness * b);
                 this.renderEast(block, x, y, z, 38);
             }
@@ -937,6 +954,59 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         }
 
         return renderAny;
+    }
+
+    @Overwrite
+    public boolean method_63(Tile tile, int x, int y, int z, float r, float g, float b) {
+        Tesselator tesselator = this.tesselator();
+        boolean hasFaces = false;
+
+        final float luma_lo = 0.5f;
+        final float luma_hi = 1.0f;
+        final float luma_z = 0.8f;
+        final float luma_x = 0.6f;
+
+        float offset = 0.0625f;
+        float luma = tile.getBrightness(this.level, x, y, z);
+
+        if (this.noCulling || tile.shouldRenderFace(this.level, x, y - 1, z, Facing.DOWN)) {
+            float f = luma_lo * tile.getBrightness(this.level, x, y - 1, z);
+            tesselator.color(r * f, g * f, b * f);
+            this.renderFaceDown(tile, x, y, z, tile.getTexture(this.level, x, y, z, Facing.DOWN));
+            hasFaces = true;
+        }
+        if (this.noCulling || tile.shouldRenderFace(this.level, x, y + 1, z, Facing.UP)) {
+            boolean contained = tile.yy1 != 1.0 && !tile.material.isLiquid();
+            float f = luma_hi * (contained ? luma : tile.getBrightness(this.level, x, y + 1, z));
+            tesselator.color(r * f, g * f, b * f);
+            this.renderFaceUp(tile, x, y, z, tile.getTexture(this.level, x, y, z, Facing.UP));
+            hasFaces = true;
+        }
+        if (this.noCulling || tile.shouldRenderFace(this.level, x, y, z - 1, Facing.NORTH)) {
+            float f = luma_z * (tile.zz0 > 0.0 ? luma : tile.getBrightness(this.level, x, y, z - 1));
+            tesselator.color(r * f, g * f, b * f);
+            this.renderNorth(tile, x, y, z + offset, tile.getTexture(this.level, x, y, z, Facing.NORTH));
+            hasFaces = true;
+        }
+        if (this.noCulling || tile.shouldRenderFace(this.level, x, y, z + 1, Facing.SOUTH)) {
+            float f = luma_z * (tile.zz1 < 1.0 ? luma : tile.getBrightness(this.level, x, y, z + 1));
+            tesselator.color(r * f, g * f, b * f);
+            this.renderSouth(tile, x, y, z - offset, tile.getTexture(this.level, x, y, z, Facing.SOUTH));
+            hasFaces = true;
+        }
+        if (this.noCulling || tile.shouldRenderFace(this.level, x - 1, y, z, Facing.WEST)) {
+            float f = luma_x * (tile.xx0 > 0.0 ? luma : tile.getBrightness(this.level, x - 1, y, z));
+            tesselator.color(r * f, g * f, b * f);
+            this.renderWest(tile, x + offset, y, z, tile.getTexture(this.level, x, y, z, Facing.WEST));
+            hasFaces = true;
+        }
+        if (this.noCulling || tile.shouldRenderFace(this.level, x + 1, y, z, Facing.EAST)) {
+            float f = luma_x * (tile.xx1 < 1.0 ? luma : tile.getBrightness(this.level, x + 1, y, z));
+            tesselator.color(r * f, g * f, b * f);
+            this.renderEast(tile, x - offset, y, z, tile.getTexture(this.level, x, y, z, Facing.EAST));
+            hasFaces = true;
+        }
+        return hasFaces;
     }
 
     @Overwrite
@@ -993,8 +1063,10 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
     private @Unique boolean tesselateRedstonePower(Tile block, int x, int y, int z) {
         boolean hasFaces = this.tesselateBlockInWorld(block, x, y, z);
+        // TODO: Change torch tile data on activation instead to rerender,
+        //       which will get rid of this hacky level access.
         if (((ExWorld) Minecraft.instance.level).getTriggerManager().isActivated(x, y, z)) {
-            Tesselator.instance.color(1.0F, 1.0F, 1.0F);
+            this.tesselator().color(1.0F, 1.0F, 1.0F);
             this.fixedTexture = 99;
         }
         else {
@@ -1034,7 +1106,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
     @Overwrite
     public boolean tesselateLadderInWorld(Tile block, int x, int y, int z) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         int meta = this.level.getData(x, y, z);
         int texture = block.getTexture(0, meta);
         if (this.fixedTexture >= 0) {
@@ -1119,7 +1191,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
     @Overwrite
     public void tesselateCrossTexture(Tile block, int meta, double x, double y, double z) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         int texture = block.getTexture(Facing.DOWN, meta);
         if (this.fixedTexture >= 0) {
             texture = this.fixedTexture;
@@ -1169,7 +1241,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
     @Overwrite
     public boolean tesselateWaterInWorld(Tile block, int x, int y, int z) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         boolean faceUp = block.shouldRenderFace(this.level, x, y + 1, z, 1);
         boolean faceDown = block.shouldRenderFace(this.level, x, y - 1, z, 0);
         boolean[] facesH = new boolean[] {
@@ -1400,7 +1472,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         minZ = fixupCrossFenceZ(minZ);
         maxZ = fixupCrossFenceZ(maxZ);
 
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         var exTs = (ExTesselator) ts;
         int texture = block.getTexture(this.level, x, y, z, Facing.DOWN);
         double texX = (texture & 15) << 4;
@@ -1429,30 +1501,30 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         double z4 = minZ + z1;
         double z5 = maxZ + z1;
 
-        exTs.ac$splatColor(b0 * 0.7F);
+        exTs.ac$splatColor32(b0 * 0.7F);
         ts.vertexUV(x3, y0, z3, u0, v1);
         ts.vertexUV(x3, y1, z3, u0, v0);
-        exTs.ac$splatColor(b1 * 0.7F);
+        exTs.ac$splatColor32(b1 * 0.7F);
         ts.vertexUV(x5, y1, z5, u1, v0);
         ts.vertexUV(x5, y0, z5, u1, v1);
         ts.vertexUV(x4, y0, z4, u1, v1);
         ts.vertexUV(x4, y1, z4, u1, v0);
-        exTs.ac$splatColor(b0 * 0.7F);
+        exTs.ac$splatColor32(b0 * 0.7F);
         ts.vertexUV(x2, y1, z2, u0, v0);
         ts.vertexUV(x2, y0, z2, u0, v1);
 
         v0 = (texY + 16.0D * maxY) / 256.0D;
         v1 = (texY + 16.0D * maxY + 2.0D - 0.01D) / 256.0D;
-        exTs.ac$splatColor(b1 * 0.5F);
+        exTs.ac$splatColor32(b1 * 0.5F);
         ts.vertexUV(x5, y0, z5, u1, v0);
         ts.vertexUV(x4, y0, z4, u1, v1);
-        exTs.ac$splatColor(b0 * 0.5F);
+        exTs.ac$splatColor32(b0 * 0.5F);
         ts.vertexUV(x2, y0, z2, u0, v1);
         ts.vertexUV(x3, y0, z3, u0, v0);
-        exTs.ac$splatColor(b1);
+        exTs.ac$splatColor32(b1);
         ts.vertexUV(x4, y1, z4, u1, v0);
         ts.vertexUV(x5, y1, z5, u1, v1);
-        exTs.ac$splatColor(b0);
+        exTs.ac$splatColor32(b0);
         ts.vertexUV(x3, y1, z3, u0, v1);
         ts.vertexUV(x2, y1, z2, u0, v0);
 
@@ -1463,30 +1535,30 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
         v0 = (texY + 16.0D * maxY - 1.0D) / 256.0D;
         v1 = (texY + 16.0D * minY - 1.0D - 0.01D) / 256.0D;
-        exTs.ac$splatColor(b0 * 0.7F);
+        exTs.ac$splatColor32(b0 * 0.7F);
         ts.vertexUV(x3, y0, z3, u0, v1);
         ts.vertexUV(x3, y1, z3, u0, v0);
-        exTs.ac$splatColor(b1 * 0.7F);
+        exTs.ac$splatColor32(b1 * 0.7F);
         ts.vertexUV(x5, y1, z5, u1, v0);
         ts.vertexUV(x5, y0, z5, u1, v1);
         ts.vertexUV(x4, y0, z4, u1, v1);
         ts.vertexUV(x4, y1, z4, u1, v0);
-        exTs.ac$splatColor(b0 * 0.7F);
+        exTs.ac$splatColor32(b0 * 0.7F);
         ts.vertexUV(x2, y1, z2, u0, v0);
         ts.vertexUV(x2, y0, z2, u0, v1);
 
         v0 = (texY + 16.0D * maxY) / 256.0D;
         v1 = (texY + 16.0D * maxY - 2.0D - 0.01D) / 256.0D;
-        exTs.ac$splatColor(b1 * 0.5F);
+        exTs.ac$splatColor32(b1 * 0.5F);
         ts.vertexUV(x5, y0, z5, u1, v0);
         ts.vertexUV(x4, y0, z4, u1, v1);
-        exTs.ac$splatColor(b0 * 0.5F);
+        exTs.ac$splatColor32(b0 * 0.5F);
         ts.vertexUV(x2, y0, z2, u0, v1);
         ts.vertexUV(x3, y0, z3, u0, v0);
-        exTs.ac$splatColor(b1);
+        exTs.ac$splatColor32(b1);
         ts.vertexUV(x4, y1, z4, u1, v0);
         ts.vertexUV(x5, y1, z5, u1, v1);
-        exTs.ac$splatColor(b0);
+        exTs.ac$splatColor32(b0);
         ts.vertexUV(x3, y1, z3, u0, v1);
         ts.vertexUV(x2, y1, z2, u0, v0);
     }
@@ -1497,7 +1569,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         minZ = fixupCrossFenceZ(minZ);
         maxZ = fixupCrossFenceZ(maxZ);
 
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         var exTs = (ExTesselator) ts;
         int texture = block.getTexture(this.level, x, y, z, Facing.DOWN);
         double texX = (texture & 15) << 4;
@@ -1525,30 +1597,30 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         double z4 = minZ + z1;
         double z5 = maxZ + z1;
 
-        exTs.ac$splatColor(b0 * 0.7F);
+        exTs.ac$splatColor32(b0 * 0.7F);
         ts.vertexUV(x3, y0, z2, u0, v1);
         ts.vertexUV(x3, y1, z2, u0, v0);
-        exTs.ac$splatColor(b1 * 0.7F);
+        exTs.ac$splatColor32(b1 * 0.7F);
         ts.vertexUV(x5, y1, z4, u1, v0);
         ts.vertexUV(x5, y0, z4, u1, v1);
         ts.vertexUV(x4, y0, z5, u1, v1);
         ts.vertexUV(x4, y1, z5, u1, v0);
-        exTs.ac$splatColor(b0 * 0.7F);
+        exTs.ac$splatColor32(b0 * 0.7F);
         ts.vertexUV(x2, y1, z3, u0, v0);
         ts.vertexUV(x2, y0, z3, u0, v1);
 
         v0 = (texY + 16.0D * maxY) / 256.0D;
         v1 = (texY + 16.0D * maxY + 2.0D - 0.01D) / 256.0D;
-        exTs.ac$splatColor(b1 * 0.5F);
+        exTs.ac$splatColor32(b1 * 0.5F);
         ts.vertexUV(x5, y0, z4, u1, v0);
         ts.vertexUV(x4, y0, z5, u1, v1);
-        exTs.ac$splatColor(b0 * 0.5F);
+        exTs.ac$splatColor32(b0 * 0.5F);
         ts.vertexUV(x2, y0, z3, u0, v1);
         ts.vertexUV(x3, y0, z2, u0, v0);
-        exTs.ac$splatColor(b1);
+        exTs.ac$splatColor32(b1);
         ts.vertexUV(x4, y1, z5, u1, v0);
         ts.vertexUV(x5, y1, z4, u1, v1);
-        exTs.ac$splatColor(b0);
+        exTs.ac$splatColor32(b0);
         ts.vertexUV(x3, y1, z2, u0, v1);
         ts.vertexUV(x2, y1, z3, u0, v0);
 
@@ -1559,30 +1631,30 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
         v0 = (texY + 16.0D * maxY - 1.0D) / 256.0D;
         v1 = (texY + 16.0D * minY - 1.0D - 0.01D) / 256.0D;
-        exTs.ac$splatColor(b0 * 0.7F);
+        exTs.ac$splatColor32(b0 * 0.7F);
         ts.vertexUV(x3, y0, z2, u0, v1);
         ts.vertexUV(x3, y1, z2, u0, v0);
-        exTs.ac$splatColor(b1 * 0.7F);
+        exTs.ac$splatColor32(b1 * 0.7F);
         ts.vertexUV(x5, y1, z4, u1, v0);
         ts.vertexUV(x5, y0, z4, u1, v1);
         ts.vertexUV(x4, y0, z5, u1, v1);
         ts.vertexUV(x4, y1, z5, u1, v0);
-        exTs.ac$splatColor(b0 * 0.7F);
+        exTs.ac$splatColor32(b0 * 0.7F);
         ts.vertexUV(x2, y1, z3, u0, v0);
         ts.vertexUV(x2, y0, z3, u0, v1);
 
         v0 = (texY + 16.0D * maxY) / 256.0D;
         v1 = (texY + 16.0D * maxY - 2.0D - 0.01D) / 256.0D;
-        exTs.ac$splatColor(b1 * 0.5F);
+        exTs.ac$splatColor32(b1 * 0.5F);
         ts.vertexUV(x5, y0, z4, u1, v0);
         ts.vertexUV(x4, y0, z5, u1, v1);
-        exTs.ac$splatColor(b0 * 0.5F);
+        exTs.ac$splatColor32(b0 * 0.5F);
         ts.vertexUV(x2, y0, z3, u0, v1);
         ts.vertexUV(x3, y0, z2, u0, v0);
-        exTs.ac$splatColor(b1);
+        exTs.ac$splatColor32(b1);
         ts.vertexUV(x4, y1, z5, u1, v0);
         ts.vertexUV(x5, y1, z4, u1, v1);
-        exTs.ac$splatColor(b0);
+        exTs.ac$splatColor32(b0);
         ts.vertexUV(x3, y1, z2, u0, v1);
         ts.vertexUV(x2, y1, z3, u0, v0);
     }
@@ -1769,7 +1841,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     public @Unique void renderCrossedSquaresUpsideDown(Tile block, int meta, double x, double y, double z) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         int texture = block.getTexture(Facing.DOWN, meta);
         if (this.fixedTexture >= 0) {
             texture = this.fixedTexture;
@@ -1818,7 +1890,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     public @Unique void renderCrossedSquaresEast(Tile block, int meta, double x, double y, double z) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         int texture = block.getTexture(Facing.DOWN, meta);
         if (this.fixedTexture >= 0) {
             texture = this.fixedTexture;
@@ -1867,7 +1939,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     public @Unique void renderCrossedSquaresWest(Tile block, int meta, double x, double y, double z) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         int texture = block.getTexture(Facing.DOWN, meta);
         if (this.fixedTexture >= 0) {
             texture = this.fixedTexture;
@@ -1916,7 +1988,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     public @Unique void renderCrossedSquaresNorth(Tile block, int meta, double x, double y, double z) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         int texture = block.getTexture(Facing.DOWN, meta);
         if (this.fixedTexture >= 0) {
             texture = this.fixedTexture;
@@ -1965,7 +2037,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     public @Unique void renderCrossedSquaresSouth(Tile block, int meta, double x, double y, double z) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         int texture = block.getTexture(Facing.DOWN, meta);
         if (this.fixedTexture >= 0) {
             texture = this.fixedTexture;
@@ -2014,7 +2086,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     public @Unique boolean renderBlockSlope(Tile block, int x, int y, int z) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         int coreMeta = this.level.getData(x, y, z) & 3;
         int coreTexture = block.getTexture(this.level, x, y, z, Facing.DOWN);
         double texX = (coreTexture & 15) << 4;
@@ -2052,7 +2124,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     private @Unique void renderBlockSlope0(int x, int y, int z, float b, double u0, double u1, double v0, double v1) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         double x1 = x + 1;
         double z1 = z + 1;
         double y1 = y + 1;
@@ -2167,7 +2239,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     private @Unique void renderBlockSlope1(int x, int y, int z, float b, double u0, double u1, double v0, double v1) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         double x1 = x + 1;
         double z1 = z + 1;
         double y1 = y + 1;
@@ -2283,7 +2355,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     private @Unique void renderBlockSlope2(int x, int y, int z, float b, double u0, double u1, double v0, double v1) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         double x1 = x + 1;
         double z1 = z + 1;
         double y1 = y + 1;
@@ -2403,7 +2475,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     private @Unique void renderBlockSlope3(int x, int y, int z, float b, double u0, double u1, double v0, double v1) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         double x1 = x + 1;
         double z1 = z + 1;
         double y1 = y + 1;
@@ -2529,7 +2601,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             return false;
         }
 
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         float brightness = block.getBrightness(this.level, x, y + 1, z) * grassMul;
         int colorMul = block.getFoliageColor(this.level, x, y, z);
         float red = (float) (colorMul >> 16 & 255) / 255.0F;
@@ -2583,7 +2655,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     public @Unique boolean renderSpikes(Tile block, int x, int y, int z) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         float brightness = block.getBrightness(this.level, x, y, z);
         ts.color(brightness, brightness, brightness);
 
@@ -2684,7 +2756,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     public @Unique boolean renderRope(Tile block, int x, int y, int z) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         float brightness = block.getBrightness(this.level, x, y, z);
         ts.color(brightness, brightness, brightness);
 
@@ -2699,7 +2771,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     public @Unique boolean renderBlockTree(Tile block, int x, int y, int z) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         float brightness = block.getBrightness(this.level, x, y, z);
         ts.color(brightness, brightness, brightness);
 
@@ -2764,7 +2836,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     }
 
     public @Unique boolean renderBlockOverlay(Tile block, int x, int y, int z) {
-        Tesselator ts = Tesselator.instance;
+        Tesselator ts = this.tesselator();
         float brightness = block.getBrightness(this.level, x, y, z);
         ts.color(brightness, brightness, brightness);
 
@@ -2798,39 +2870,4 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         }
         return true;
     }
-
-    // TODO: what is ModLoader?
-    /*
-    @Inject(method = "method_48", at = @At(
-            value = "INVOKE_ASSIGN",
-            target = "Lnet/minecraft/block/Block;getRenderType()I",
-            shift = At.Shift.AFTER))
-    private void renderModLoaderInvBlock(Block var1, int var2, float var3, CallbackInfo ci) {
-        int var5 = var1.getRenderType();
-        if (var5 != 0 && var5 != 16) {
-            if (var5 == 1) {
-            } else if (var5 == 13) {
-            } else if (var5 == 6) {
-            } else if (var5 == 2) {
-            } else {
-                if (var5 == 10) {
-                } else if (var5 == 11) {
-                } else if (Config.hasModLoader()) {
-                    Config.callVoid("ModLoader", "RenderInvBlock", this, var1, var2, var5);
-                }
-            }
-        }
-    }
-
-    @Inject(method = "method_42", at = @At(
-            value = "RETURN",
-            ordinal = 4),
-            cancellable = true)
-    private static void renderModLoaderBlockIsItemFull3D(int var1, CallbackInfoReturnable<Boolean> cir) {
-        if (var1 != 16 && Config.hasModLoader()) {
-            boolean v = Config.callBoolean("ModLoader", "RenderBlockIsItemFull3D", var1);
-            cir.setReturnValue(v);
-        }
-    }
-    */
 }

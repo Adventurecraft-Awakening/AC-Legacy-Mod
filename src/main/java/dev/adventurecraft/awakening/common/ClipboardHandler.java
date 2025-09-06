@@ -1,5 +1,7 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.ACMod;
+
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
@@ -9,27 +11,27 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 
 public class ClipboardHandler {
-    public static String getClipboard() {
-        String var0 = "";
-        Clipboard var1 = Toolkit.getDefaultToolkit().getSystemClipboard();
-        Transferable var2 = var1.getContents(null);
-        boolean var3 = var2 != null && var2.isDataFlavorSupported(DataFlavor.stringFlavor);
-        if (var3) {
-            try {
-                var0 = (String) var2.getTransferData(DataFlavor.stringFlavor);
-            } catch (UnsupportedFlavorException var5) {
-                var5.printStackTrace();
-            } catch (IOException var6) {
-                var6.printStackTrace();
-            }
-        }
 
-        return var0;
+    private static Clipboard getSystemClipboard() {
+        return Toolkit.getDefaultToolkit().getSystemClipboard();
     }
 
-    public static void setClipboard(String var0) {
-        Clipboard var1 = Toolkit.getDefaultToolkit().getSystemClipboard();
-        StringSelection var2 = new StringSelection(var0);
-        var1.setContents(var2, var2);
+    public static String getClipboard() {
+        Transferable transferable = getSystemClipboard().getContents(null);
+        boolean isString = transferable != null && transferable.isDataFlavorSupported(DataFlavor.stringFlavor);
+        if (isString) {
+            try {
+                return (String) transferable.getTransferData(DataFlavor.stringFlavor);
+            }
+            catch (UnsupportedFlavorException | IOException ex) {
+                ACMod.LOGGER.warn("Failed to decode clipboard contents.", ex);
+            }
+        }
+        return "";
+    }
+
+    public static void setClipboard(String text) {
+        var transferable = new StringSelection(text);
+        getSystemClipboard().setContents(transferable, transferable);
     }
 }

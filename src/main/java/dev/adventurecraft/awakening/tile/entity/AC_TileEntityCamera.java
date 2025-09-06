@@ -13,17 +13,17 @@ public class AC_TileEntityCamera extends TileEntity {
 
     public String message;
     public String sound;
-    public AC_CutsceneCamera camera = new AC_CutsceneCamera();
+    private AC_CutsceneCamera camera;
     private AC_CutsceneCameraBlendType type = AC_CutsceneCameraBlendType.QUADRATIC;
     public boolean pauseGame = true;
 
     public void loadCamera() {
-        this.copyCamera(this.camera, ((ExMinecraft) Minecraft.instance).getCutsceneCamera());
+        this.copyCamera(this.getCamera(), ((ExMinecraft) Minecraft.instance).getCutsceneCamera());
         ((ExMinecraft) Minecraft.instance).getCutsceneCamera().startType = this.getBlendType();
     }
 
     public void saveCamera() {
-        this.copyCamera(((ExMinecraft) Minecraft.instance).getCutsceneCamera(), this.camera);
+        this.copyCamera(((ExMinecraft) Minecraft.instance).getCutsceneCamera(), this.getCamera());
     }
 
     private void copyCamera(AC_CutsceneCamera src, AC_CutsceneCamera dst) {
@@ -40,7 +40,6 @@ public class AC_TileEntityCamera extends TileEntity {
         var exTag = (ExCompoundTag) tag;
 
         int pointCount = tag.getInt("numPoints");
-
         for (int i = 0; i < pointCount; ++i) {
             this.readPointTag(tag.getCompoundTag(String.format("point%d", i)));
         }
@@ -54,7 +53,7 @@ public class AC_TileEntityCamera extends TileEntity {
         super.save(tag);
 
         int pointCount = 0;
-        for (AC_CutsceneCameraPoint point : this.camera.cameraPoints) {
+        for (AC_CutsceneCameraPoint point : this.getCamera().cameraPoints) {
             tag.putCompoundTag(String.format("point%d", pointCount), this.getPointTag(point));
             ++pointCount;
         }
@@ -84,11 +83,12 @@ public class AC_TileEntityCamera extends TileEntity {
         float yaw = tag.getFloat("yaw");
         float pitch = tag.getFloat("pitch");
 
-        var type = ((ExCompoundTag) tag).findByte("type")
+        var type = ((ExCompoundTag) tag)
+            .findByte("type")
             .map(AC_CutsceneCameraBlendType::get)
             .orElse(AC_CutsceneCameraBlendType.QUADRATIC);
 
-        this.camera.addCameraPoint(time, x, y, z, yaw, pitch, type);
+        this.getCamera().addCameraPoint(time, x, y, z, yaw, pitch, type);
     }
 
     public AC_CutsceneCameraBlendType getBlendType() {
@@ -97,5 +97,13 @@ public class AC_TileEntityCamera extends TileEntity {
 
     public void setBlendType(AC_CutsceneCameraBlendType type) {
         this.type = type;
+    }
+
+    public AC_CutsceneCamera getCamera() {
+        if (this.camera == null) {
+            // FIXME: this.level is null on load...
+            this.camera = new AC_CutsceneCamera(Minecraft.instance.level);
+        }
+        return this.camera;
     }
 }
