@@ -1,7 +1,8 @@
 package dev.adventurecraft.awakening.common;
 
 import java.util.Random;
-import net.minecraft.client.gamemode.SurvivalGameMode;
+
+import dev.adventurecraft.awakening.client.gamemode.AdventureGameMode;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -136,7 +137,7 @@ public class GuiCreateNewMap extends Screen {
                 }
             }
 
-            this.minecraft.gameMode = new SurvivalGameMode(this.minecraft);
+            this.minecraft.gameMode = new AdventureGameMode(this.minecraft);
             AC_DebugMode.levelEditing = true;
             String wName = this.textboxMapName.getValue().trim();
             ((ExMinecraft) this.minecraft).saveMapUsed(wName, wName);

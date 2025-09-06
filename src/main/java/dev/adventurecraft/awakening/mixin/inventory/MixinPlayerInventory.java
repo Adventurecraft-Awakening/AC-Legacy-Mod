@@ -15,6 +15,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.tile.Tile;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -103,12 +104,25 @@ public abstract class MixinPlayerInventory implements ExPlayerInventory {
         }
     }
 
+    @Inject(
+        method = "canDestroy",
+        at = @At("HEAD"),
+        cancellable = true
+    )
+    private void ignoreNull(Tile tile, CallbackInfoReturnable<Boolean> cir) {
+        if (tile == null) {
+            cir.setReturnValue(false);
+        }
+    }
+
+    @Unique
     private void onItemAddToSlot(int slot, ItemInstance stack) {
         if (Item.items[stack.id] instanceof AC_ISlotCallbackItem slotCallbackItem) {
             slotCallbackItem.onAddToSlot(this.player, slot, stack);
         }
     }
 
+    @Unique
     private void onItemRemovedFromSlot(int slot, ItemInstance stack) {
         if (Item.items[stack.id] instanceof AC_ISlotCallbackItem slotCallbackItem) {
             slotCallbackItem.onRemovedFromSlot(this.player, slot, stack);

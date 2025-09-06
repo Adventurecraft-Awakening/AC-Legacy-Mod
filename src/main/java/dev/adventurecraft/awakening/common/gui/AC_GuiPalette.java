@@ -4,7 +4,7 @@ import dev.adventurecraft.awakening.common.GuiSlider2;
 import dev.adventurecraft.awakening.common.InventoryDebug;
 import dev.adventurecraft.awakening.common.ScrollableContainer;
 import dev.adventurecraft.awakening.common.ScrollableContainerScreen;
-import dev.adventurecraft.awakening.extension.client.ExInteractionManager;
+import dev.adventurecraft.awakening.extension.client.gamemode.ExGameMode;
 import dev.adventurecraft.awakening.util.MathF;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
@@ -45,7 +45,7 @@ public class AC_GuiPalette extends ScrollableContainerScreen {
     @Override
     public void init() {
         super.init();
-        var intMan = (ExInteractionManager) this.minecraft.gameMode;
+        var intMan = (ExGameMode) this.minecraft.gameMode;
 
         int sliderID = 50; // Same for both for some reason
 
@@ -110,19 +110,19 @@ public class AC_GuiPalette extends ScrollableContainerScreen {
         GL11.glEnable(GL11.GL_LIGHTING);
         GL11.glEnable(GL11.GL_DEPTH_TEST);
         GL11.glPopMatrix();
-        var intMan = (ExInteractionManager) this.minecraft.gameMode;
-        intMan.setDestroyExtraDepth((int) Math.min(16.0F * this.extraDepth.sliderValue, 15.0F));
-        intMan.setDestroyExtraWidth((int) Math.min(5.0F * this.extraWidth.sliderValue, 4.0F));
-        this.extraWidth.message = String.format("Extra Width: %d", intMan.getDestroyExtraWidth());
-        this.extraDepth.message = String.format("Extra Depth: %d", intMan.getDestroyExtraDepth());
+        var mode = (ExGameMode) this.minecraft.gameMode;
+        mode.setDestroyExtraDepth((int) Math.min(16.0F * this.extraDepth.sliderValue, 15.0F));
+        mode.setDestroyExtraWidth((int) Math.min(5.0F * this.extraWidth.sliderValue, 4.0F));
+        this.extraWidth.message = String.format("Extra Width: %d", mode.getDestroyExtraWidth());
+        this.extraDepth.message = String.format("Extra Depth: %d", mode.getDestroyExtraDepth());
     }
 
     @Override
     protected void buttonClicked(Button buttonWidget) {
         if (buttonWidget == this.nextPageButton) {
-            goToPageRelative(1);
+            this.goToPageRelative(1);
         } else if (buttonWidget == this.previousPageButton) {
-            goToPageRelative(-1);
+            this.goToPageRelative(-1);
         } else {
             super.buttonClicked(buttonWidget);
         }

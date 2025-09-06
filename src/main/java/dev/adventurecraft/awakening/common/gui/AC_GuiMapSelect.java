@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.common.gui;
 
+import dev.adventurecraft.awakening.client.gamemode.AdventureGameMode;
 import dev.adventurecraft.awakening.common.AC_MapInfo;
 import dev.adventurecraft.awakening.common.AC_MapList;
 import dev.adventurecraft.awakening.common.GuiCreateNewMap;
@@ -10,7 +11,6 @@ import dev.adventurecraft.awakening.layout.*;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gamemode.SurvivalGameMode;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.OptionButton;
 import net.minecraft.client.gui.screens.Screen;
@@ -98,7 +98,7 @@ public class AC_GuiMapSelect extends Screen {
                     ((ExMinecraft) this.minecraft).saveMapUsed(this.saveName, selectedMap.name);
                 }
 
-                this.minecraft.gameMode = new SurvivalGameMode(this.minecraft);
+                this.minecraft.gameMode = new AdventureGameMode(this.minecraft);
                 ((ExMinecraft) this.minecraft).startWorld(this.saveName, this.saveName, 0L, selectedMap.name);
             }
         }
