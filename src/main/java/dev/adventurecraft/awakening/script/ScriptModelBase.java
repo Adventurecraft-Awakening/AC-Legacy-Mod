@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.extension.client.model.ExCuboid;
+import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;
@@ -41,6 +42,7 @@ public abstract class ScriptModelBase {
     public float g = 1.0F;
     public float b = 1.0F;
     public float a = 1.0F;
+    private int cachedBrightnessKey = -1;
 
     protected int textureWidth = 64;
     protected int textureHeight = 32;
@@ -53,7 +55,8 @@ public abstract class ScriptModelBase {
             matrix.translate((float) position.x, (float) position.y, (float) position.z);
             matrix.rotateY(MathF.toRadians(-rotation.yaw));
             matrix.rotateX(MathF.toRadians(rotation.pitch));
-        } else if (this.modelAttachment != null) {
+        }
+        else if (this.modelAttachment != null) {
             this.modelAttachment.transform(partialTick, matrix);
         }
     }
@@ -92,12 +95,16 @@ public abstract class ScriptModelBase {
                 break;
             default:
                 // Default lightning values
-                var vr = Matrix4f.transform(localMat, new Vector3f(), new Vector3f());
-                setBrightness(world.getBrightness(
-                    Math.round(vr.x + 0.5F),
-                    Math.round(vr.y + 0.5F),
-                    Math.round(vr.z + 0.5F)
-                ));
+                var vr = Matrix4f.transform(localMat, 0f, 0f, 0f, new Vector3f());
+                int vX = (int) Math.floor(vr.x);
+                int vY = (int) Math.floor(vr.y);
+                int vZ = (int) Math.floor(vr.z);
+
+                int key = ((ExWorld) world).getLightUpdateHash(vX, vY, vZ);
+                if (this.cachedBrightnessKey != key) {
+                    this.cachedBrightnessKey = key;
+                    this.setBrightness(world.getBrightness(vX, vY, vZ));
+                }
                 break;
         }
 
@@ -105,7 +112,8 @@ public abstract class ScriptModelBase {
             GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
             GL11.glEnable(GL11.GL_BLEND);
             GL11.glColor4f(r, g, b, Math.min(this.a, 1.0F));
-        } else {
+        }
+        else {
             GL11.glColor3f(r, g, b);
         }
 
@@ -153,7 +161,7 @@ public abstract class ScriptModelBase {
     }
 
     public void setBrightness(float brightness) {
-        setRGB(brightness, brightness, brightness);
+        this.setRGB(brightness, brightness, brightness);
     }
 
     public void setBrightness(int brightness) {
