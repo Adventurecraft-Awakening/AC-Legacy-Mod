@@ -254,6 +254,10 @@ public class Script {
 
     public void sleep(float seconds) {
         int ticks = (int) (20.0F * seconds);
+        if (ticks <= 0) {
+            return;
+        }
+
         long wakeUp = this.time.getTickCount() + (long) ticks;
         ContinuationPending continuation = this.cx.captureContinuation();
         continuation.setApplicationState(new ScriptContinuation(wakeUp, this.curScope));
