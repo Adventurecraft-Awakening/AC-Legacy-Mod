@@ -1265,7 +1265,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             this.DoSnowModUpdate();
         }
 
-        this.script.runContinuations(var4);
+        this.script.processContinuations(var4);
     }
 
     @Overwrite

@@ -214,7 +214,16 @@ public class Script {
         return null;
     }
 
-    public void runContinuations(long currentTime) {
+    public void processContinuations(long currentTime) {
+        this.continuations.addAll(this.newContinuations);
+        this.newContinuations.clear();
+
+        if (!this.continuations.isEmpty()) {
+            this.executeContinuations(currentTime);
+        }
+    }
+
+    private void executeContinuations(long currentTime) {
         var iterator = this.continuations.iterator();
         while (iterator.hasNext()) {
             var item = iterator.next();
@@ -241,8 +250,6 @@ public class Script {
                 this.curScope = prevScope;
             }
         }
-        this.continuations.addAll(this.newContinuations);
-        this.newContinuations.clear();
     }
 
     public void sleep(float seconds) {
