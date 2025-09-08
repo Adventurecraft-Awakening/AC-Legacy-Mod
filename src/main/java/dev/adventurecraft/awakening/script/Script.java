@@ -75,6 +75,7 @@ public class Script {
         this.globalScope = gameOptions.getAllowJavaInScript()
             ? this.cx.initStandardObjects(null, false)
             : this.cx.initSafeStandardObjects(null, false);
+        this.curScope = this.globalScope;
         this.runScope = this.cx.newObject(this.globalScope);
         this.runScope.setParentScope(this.globalScope);
 
@@ -196,16 +197,13 @@ public class Script {
     public Object runScript(org.mozilla.javascript.Script script, Scriptable scope) {
         Scriptable prevScope = this.curScope;
         try {
-            // FIXME: this exec should not be needed but continuations need top-call
-            if (this.curScope != null) {
-                return script.exec(this.cx, this.curScope);
+            if (scope != null) {
+                this.curScope = scope;
             }
-
-            this.curScope = scope;
             return this.cx.executeScriptWithContinuations(script, this.curScope);
         }
         catch (ContinuationPending c) {
-            this.continuations.add(c);
+            this.newContinuations.add(c);
         }
         catch (RhinoException e) {
             this.printRhinoException(e);

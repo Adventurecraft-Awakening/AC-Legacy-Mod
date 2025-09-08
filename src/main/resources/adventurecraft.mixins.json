@@ -137,6 +137,7 @@
     "item.MixinRedstoneItem",
     "item.MixinSwordItem",
     "item.MixinTileItemWithoutTranslation",
+    "js.MixinContext",
     "nbt.MixinListTag",
     "nbt.MixinTag",
     "util.MixinMth",
