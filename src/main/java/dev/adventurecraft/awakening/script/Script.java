@@ -52,9 +52,7 @@ public class Script {
     final List<ContinuationPending> continuations = new ArrayList<>();
     final List<ContinuationPending> newContinuations = new ArrayList<>();
 
-    public static final ContextFactory contextFactory = new CustomContextFactory();
-
-    static class CustomContextFactory extends ContextFactory {
+    public static class CustomContextFactory extends ContextFactory {
 
         @Override
         protected Context makeContext() {
@@ -70,7 +68,7 @@ public class Script {
     public Script(Level level) {
         var gameOptions = (ExGameOptions) Minecraft.instance.options;
 
-        this.cx = contextFactory.enterContext();
+        this.cx = ContextFactory.getGlobal().enterContext();
 
         this.globalScope = gameOptions.getAllowJavaInScript()
             ? this.cx.initStandardObjects(null, false)
