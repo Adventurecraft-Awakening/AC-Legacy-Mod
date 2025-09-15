@@ -16,12 +16,12 @@ public enum GLElementType {
         this.size = size;
     }
 
-    public int minIndex() {
+    public long minIndex() {
         return 0;
     }
 
-    public int maxIndex() {
-        return (1 << (size * 8)) - 1;
+    public long maxIndex() {
+        return (-1L) >>> (64 - this.size * 8);
     }
 
     public static GLElementType fromCount(long count) {
@@ -29,10 +29,10 @@ public enum GLElementType {
             throw new IllegalArgumentException("negative count is invalid");
         }
 
-        if (count <= SHORT.maxIndex()) {
+        if (Long.compareUnsigned(count, SHORT.maxIndex()) <= 0) {
             return SHORT;
         }
-        if (count <= INT.maxIndex()) {
+        if (Long.compareUnsigned(count, INT.maxIndex()) <= 0) {
             return INT;
         }
         throw new IllegalArgumentException("size limit exceeded");
