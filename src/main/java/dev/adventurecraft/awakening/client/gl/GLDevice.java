@@ -83,7 +83,7 @@ public final class GLDevice {
         long newCount = switch (indexType) {
             case BYTE, SHORT -> indexType.maxIndex();
             case INT -> {
-                int multiple = GLElementType.SHORT.maxIndex();
+                long multiple = GLElementType.SHORT.maxIndex();
                 yield Math.ceilDiv(minQuadCount, multiple) * multiple;
             }
         };
