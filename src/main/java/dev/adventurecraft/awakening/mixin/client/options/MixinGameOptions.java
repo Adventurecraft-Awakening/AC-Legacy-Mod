@@ -11,6 +11,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Option;
 import net.minecraft.client.Options;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.locale.I18n;
 import net.minecraft.util.Language;
 import net.minecraft.world.level.chunk.ChunkSource;
@@ -256,6 +257,17 @@ public abstract class MixinGameOptions implements ExGameOptions {
         }
 
         ((ExWorldEventRenderer) this.minecraft.levelRenderer).setAllRenderersVisible();
+    }
+
+    @Redirect(
+        method = "toggle",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/LevelRenderer;allChanged()V",
+            ordinal = 0
+        )
+    )
+    private void disableChangeEventForAdvancedOpenGL(LevelRenderer instance) {
     }
 
     @Redirect(

@@ -342,10 +342,6 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             GL11.glColorMask(false, false, false, false);
             GL11.glDepthMask(false);
             this.checkOcclusionQueryResult(vizStart, vizEnd, entity.x, entity.y, entity.z);
-            GL11.glPushMatrix();
-            double xOffset = 0.0;
-            double yOffset = 0.0;
-            double zOffset = 0.0;
             boolean isOcclusionFancy = options.isOcclusionFancy();
 
             for (int vizIndex = vizStart; vizIndex < vizEnd; ++vizIndex) {
@@ -382,24 +378,17 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
                 double dX = viz.xRender - peX;
                 double dY = viz.yRender - peY;
                 double dZ = viz.zRender - peZ;
-                double mX = dX - xOffset;
-                double mY = dY - yOffset;
-                double mZ = dZ - zOffset;
-                if (mX != 0.0 || mY != 0.0 || mZ != 0.0) {
-                    GL11.glTranslated(mX, mY, mZ);
-                    xOffset += mX;
-                    yOffset += mY;
-                    zOffset += mZ;
-                }
 
                 ARBOcclusionQuery.glBeginQueryARB(GL15.GL_SAMPLES_PASSED, viz.occlusion_id);
-                viz.renderBB();
+                var ts = Tesselator.instance;
+                ts.begin();
+                exViz.ac$renderQueryBox(ts, dX, dY, dZ);
+                ts.end();
                 ARBOcclusionQuery.glEndQueryARB(GL15.GL_SAMPLES_PASSED);
                 viz.occlusion_querying = true;
                 ++queryCount;
             }
 
-            GL11.glPopMatrix();
             GL11.glColorMask(true, true, true, true);
             GL11.glDepthMask(true);
             GL11.glEnable(GL11.GL_TEXTURE_2D);
@@ -411,6 +400,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         return chunkCount;
     }
 
+    @Unique
     private void checkOcclusionQueryResult(int vizStart, int vizEnd, double x, double y, double z) {
         var glCaps = GLContext.getCapabilities();
         boolean noWait = glCaps.GL_ARB_query_buffer_object || glCaps.OpenGL44;

@@ -103,4 +103,36 @@ public final class DrawUtil {
     private static void color(Tesselator ts, int rgba) {
         ts.color(rgba, rgba >>> 24);
     }
+
+    public static void fillCube(Tesselator ts, double x0, double y0, double z0, double x1, double y1, double z1) {
+        ts.vertex(x0, y1, z0);
+        ts.vertex(x1, y1, z0);
+        ts.vertex(x1, y0, z0);
+        ts.vertex(x0, y0, z0);
+
+        ts.vertex(x0, y0, z1);
+        ts.vertex(x1, y0, z1);
+        ts.vertex(x1, y1, z1);
+        ts.vertex(x0, y1, z1);
+
+        ts.vertex(x0, y0, z0);
+        ts.vertex(x1, y0, z0);
+        ts.vertex(x1, y0, z1);
+        ts.vertex(x0, y0, z1);
+
+        ts.vertex(x0, y1, z1);
+        ts.vertex(x1, y1, z1);
+        ts.vertex(x1, y1, z0);
+        ts.vertex(x0, y1, z0);
+
+        ts.vertex(x0, y0, z1);
+        ts.vertex(x0, y1, z1);
+        ts.vertex(x0, y1, z0);
+        ts.vertex(x0, y0, z0);
+
+        ts.vertex(x1, y0, z0);
+        ts.vertex(x1, y1, z0);
+        ts.vertex(x1, y1, z1);
+        ts.vertex(x1, y0, z1);
+    }
 }

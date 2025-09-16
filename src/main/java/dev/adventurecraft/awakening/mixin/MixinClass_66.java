@@ -13,11 +13,12 @@ import dev.adventurecraft.awakening.extension.client.render.block.ExBlockRendere
 import dev.adventurecraft.awakening.extension.client.util.ExCameraView;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import dev.adventurecraft.awakening.extension.world.level.ExRegion;
+import dev.adventurecraft.awakening.util.DrawUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Chunk;
+import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.client.renderer.TileRenderer;
 import net.minecraft.client.renderer.culling.Culler;
-import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.tileentity.TileEntityRenderDispatcher;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.Region;
@@ -25,7 +26,6 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.tile.Tile;
 import net.minecraft.world.level.tile.entity.TileEntity;
 import net.minecraft.world.phys.AABB;
-import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -48,7 +48,6 @@ import java.util.Set;
 public abstract class MixinClass_66 implements ExClass_66 {
 
     @Shadow public Level level;
-    @Shadow private int lists;
     @Shadow public int x;
     @Shadow public int y;
     @Shadow public int z;
@@ -71,7 +70,6 @@ public abstract class MixinClass_66 implements ExClass_66 {
     @Unique public double visibleFromX;
     @Unique public double visibleFromY;
     @Unique public double visibleFromZ;
-    @Unique private boolean needsBoxUpdate = false;
     @Unique public boolean isInFrustrumFully = false;
 
     @Unique private GLDevice glDevice;
@@ -103,7 +101,6 @@ public abstract class MixinClass_66 implements ExClass_66 {
     )
     public void setNeedsBoxUpdate(int x, int y, int z, CallbackInfo ci) {
         this.bb = AABB.create(x, y, z, x + this.xs, y + this.ys, z + this.zs);
-        this.needsBoxUpdate = true;
         this.setDirty();
         this.isVisibleFromPosition = false;
         ci.cancel();
@@ -119,7 +116,8 @@ public abstract class MixinClass_66 implements ExClass_66 {
         builder.append(prefix).append(String.format(": %.3f ms\n", millis));
     }
 
-    private @Unique void deleteBuffers() {
+    @Unique
+    private void deleteBuffers() {
         for (List<ChunkMesh> list : this.meshLayers) {
             if (list == null) {
                 continue;
@@ -150,21 +148,6 @@ public abstract class MixinClass_66 implements ExClass_66 {
         var timeBuilder = ACMod.LOGGER.isTraceEnabled() ? new StringBuilder() : null;
 
         ++Chunk.updates;
-        if (this.needsBoxUpdate && Minecraft.instance.options.advancedOpengl) {
-            GL11.glNewList(this.lists + 2, GL11.GL_COMPILE);
-            ItemRenderer.renderFlat(AABB.newTemp(
-                this.xRenderOffs,
-                this.yRenderOffs,
-                this.zRenderOffs,
-                this.xRenderOffs + this.xs,
-                this.yRenderOffs + this.ys,
-                this.zRenderOffs + this.zs
-            ));
-            GL11.glEndList();
-            this.needsBoxUpdate = false;
-
-            printTime(timeBuilder, "Box Update", timeStart);
-        }
 
         this.occlusion_visible = true;
         this.isVisibleFromPosition = false;
@@ -316,6 +299,17 @@ public abstract class MixinClass_66 implements ExClass_66 {
     }
 
     @Override
+    public void ac$renderQueryBox(Tesselator ts, double x, double y, double z) {
+        double x0 = x + this.xRenderOffs;
+        double y0 = y + this.yRenderOffs;
+        double z0 = z + this.zRenderOffs;
+        double x1 = x0 + this.xs;
+        double y1 = y0 + this.ys;
+        double z1 = z0 + this.zs;
+        DrawUtil.fillCube(ts, x0, y0, z0, x1, y1, z1);
+    }
+
+    @Override
     public void setVisibleFromPosition(double x, double y, double z, boolean value) {
         this.visibleFromX = x;
         this.visibleFromY = y;
@@ -339,28 +333,13 @@ public abstract class MixinClass_66 implements ExClass_66 {
     }
 
     @Override
-    public void setVisibleFromX(double x) {
-        this.visibleFromX = x;
-    }
-
-    @Override
     public double visibleFromY() {
         return this.visibleFromY;
     }
 
     @Override
-    public void setVisibleFromY(double y) {
-        this.visibleFromY = y;
-    }
-
-    @Override
     public double visibleFromZ() {
         return this.visibleFromZ;
-    }
-
-    @Override
-    public void setVisibleFromZ(double z) {
-        this.visibleFromZ = z;
     }
 
     @Override
