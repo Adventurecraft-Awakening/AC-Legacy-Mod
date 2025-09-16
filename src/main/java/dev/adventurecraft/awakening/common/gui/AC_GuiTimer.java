@@ -36,7 +36,7 @@ public class AC_GuiTimer extends Screen {
     }
 
     private static String getTypeMsg(AC_TileEntityTimer timer) {
-        return timer.resetOnTrigger ? "Reset Target" : "Trigger Target";
+        return timer.isResetOnTrigger() ? "Reset Target" : "Trigger Target";
     }
 
     private AC_ValueBox<TickTime> tickProperty(IntRect rect, Supplier<Integer> getter, Consumer<Integer> setter) {
@@ -66,9 +66,10 @@ public class AC_GuiTimer extends Screen {
         if (btn.id == 0) {
             timer.setMin(AC_ItemCursor.min());
             timer.setMax(AC_ItemCursor.max());
+            timer.setChanged();
         }
         else if (btn.id == 1) {
-            timer.resetOnTrigger = !timer.resetOnTrigger;
+            timer.setResetOnTrigger(!timer.isResetOnTrigger());
             btn.message = getTypeMsg(timer);
         }
     }

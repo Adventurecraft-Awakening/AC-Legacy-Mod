@@ -320,16 +320,17 @@ public abstract class MixinPlayerEntity extends MixinMob implements ExPlayerEnti
 
     @Overwrite
     public void interact(Entity entity) {
-        if (entity.interact((Player) (Object) this)) {
+        var self = (Player) (Object) this;
+        if (entity.interact(self)) {
             return;
         }
 
         ItemInstance heldItem = this.getSelectedItem();
-        if (heldItem != null && entity instanceof Mob) {
-            heldItem.interactEnemy((Mob) entity);
+        if (heldItem != null && entity instanceof Mob mob) {
+            heldItem.interactEnemy(mob);
 
             if (heldItem.count == 0) {
-                heldItem.snap((Player) (Object) this);
+                heldItem.snap(self);
                 this.removeSelectedItem();
             }
         }
@@ -356,20 +357,22 @@ public abstract class MixinPlayerEntity extends MixinMob implements ExPlayerEnti
             ++attackDamage;
         }
 
-        entity.hurt((Entity) (Object) this, attackDamage);
+        var self = (Player) (Object) this;
+        entity.hurt(self, attackDamage);
+
         ItemInstance heldItem = this.getSelectedItem();
-        if (heldItem != null && entity instanceof Mob) {
-            heldItem.hurtEnemy((Mob) entity, (Player) (Object) this);
+        if (heldItem != null && entity instanceof Mob mob) {
+            heldItem.hurtEnemy(mob, self);
 
             if (heldItem.count == 0) {
-                heldItem.snap((Player) (Object) this);
+                heldItem.snap(self);
                 this.removeSelectedItem();
             }
         }
 
-        if (entity instanceof Mob) {
+        if (entity instanceof Mob mob) {
             if (entity.isAlive()) {
-                this.method_510((Mob) entity, true);
+                this.method_510(mob, true);
             }
 
             this.awardStat(Stats.DAMAGE_DEALT, attackDamage);
