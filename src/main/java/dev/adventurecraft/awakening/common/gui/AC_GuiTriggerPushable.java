@@ -43,8 +43,7 @@ public class AC_GuiTriggerPushable extends Screen {
                 btn.message = "Trigger Target";
             }
         }
-
-        this.trigger.setChanged();
+        trigger.setChanged();
     }
 
     public void render(int mouseX, int mouseY, float tick) {
