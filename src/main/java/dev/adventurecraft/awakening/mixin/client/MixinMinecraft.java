@@ -26,10 +26,7 @@ import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.item.AC_ILeftClickItem;
 import dev.adventurecraft.awakening.item.AC_IUseDelayItem;
-import dev.adventurecraft.awakening.script.ScriptEntity;
-import dev.adventurecraft.awakening.script.ScriptItem;
-import dev.adventurecraft.awakening.script.ScriptModel;
-import dev.adventurecraft.awakening.script.ScriptVec3;
+import dev.adventurecraft.awakening.script.*;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.util.MathF;
 import net.fabricmc.loader.impl.util.Arguments;
@@ -369,21 +366,16 @@ public abstract class MixinMinecraft implements ExMinecraft {
     }
 
     @Inject(
-        method = "run",
+        method = "init",
         remap = false,
-        at = @At(
-            value = "INVOKE",
-            target = "Ljava/lang/System;currentTimeMillis()J",
-            shift = At.Shift.BEFORE,
-            ordinal = 0,
-            remap = false
-        )
+        at = @At("TAIL")
     )
-    private void run_setup(CallbackInfo ci) {
+    private void postInit(CallbackInfo ci) {
         this.textures.loadTexture("/terrain.png");
         this.textures.loadTexture("/terrain2.png");
         this.textures.loadTexture("/terrain3.png");
-        ContextFactory.initGlobal(new ContextFactory());
+
+        ContextFactory.initGlobal(new Script.CustomContextFactory());
     }
 
     @Inject(
@@ -417,15 +409,13 @@ public abstract class MixinMinecraft implements ExMinecraft {
     }
 
     @Inject(
-        method = "run",
+        method = "destroy",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/Minecraft;stop()V",
-            shift = At.Shift.BEFORE
+            target = "Lorg/lwjgl/input/Keyboard;destroy()V"
         )
     )
-    private void run_stop(CallbackInfo ci) {
-        ContextFactory.getGlobal().enterContext();
+    private void postDestroy(CallbackInfo ci) {
         Context.exit();
     }
 
