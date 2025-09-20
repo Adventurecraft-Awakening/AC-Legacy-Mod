@@ -548,14 +548,11 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
             return 255;
         }
 
-        double age = (double) ageMillis / MAX_MESSAGE_AGE;
-        age = 1.0D - age;
-        age *= 10.0D;
-        age = MathF.clamp(age, 0.0, 1.0);
+        double age = 1.0D - (double) ageMillis / MAX_MESSAGE_AGE;
+        age = MathF.saturate(10.0D * age);
         age *= age;
 
-        int alpha = (int) (255.0D * age);
-        return alpha;
+        return (int) (255.0D * age);
     }
 
     @Inject(
