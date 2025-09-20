@@ -735,8 +735,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         int aId = this.getTile(aX, aY, aZ);
         Tile aBlock = Tile.tiles[aId];
         AABB aAabb = null;
-        if (aBlock != null &&
-            (!useCollisionShapes || (aAabb = aBlock.getAABB(self, aX, aY, aZ)) != null) &&
+        if (aBlock != null && (!useCollisionShapes || (aAabb = aBlock.getAABB(self, aX, aY, aZ)) != null) &&
             (aId > 0 && (collideWithClip || !this.isClippingBlock(aId)) &&
                 aBlock.mayPick(this.getData(aX, aY, aZ), blockCollidableFlag)
             )) {
@@ -871,8 +870,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             int id = this.getTile(aX, aY, aZ);
             Tile block = Tile.tiles[id];
             AABB aabb = null;
-            if (block != null &&
-                (!useCollisionShapes || (aabb = block.getAABB(self, aX, aY, aZ)) != null) && id != 0 &&
+            if (block != null && (!useCollisionShapes || (aabb = block.getAABB(self, aX, aY, aZ)) != null) && id != 0 &&
                 block.mayPick(this.getData(aX, aY, aZ), blockCollidableFlag) &&
                 // TODO: is getRenderShape check needed after mayPick?
                 ((ExBlock) block).getRenderShape(this, aX, aY, aZ) != BlockShapes.NONE) {
@@ -1265,7 +1263,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             this.DoSnowModUpdate();
         }
 
-        this.script.processContinuations(var4);
+        this.script.processContinuations();
     }
 
     @Overwrite
