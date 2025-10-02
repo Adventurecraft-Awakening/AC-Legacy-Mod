@@ -244,23 +244,27 @@ public class ServerCommands {
     public static int cmdRemoveMobs(CommandContext<ServerCommandSource> context) {
         var source = context.getSource();
         var world = source.getWorld();
-        if (world != null) {
-            int mobCount = 0;
-            int count = 0;
-            for (Entity entity : (List<Entity>) world.entities) {
-                if (entity instanceof Mob && !(entity instanceof Player)) {
-                    mobCount++;
-                    if (!entity.removed) {
-                        entity.remove();
-                        count++;
-                    }
+        if (world == null) {
+            return 0;
+        }
+
+        int mobCount = 0;
+        int count = 0;
+        var entities = (List<Entity>) world.entities;
+        //noinspection ForLoopReplaceableByForEach - iterator ConcurrentModification
+        for (int i = 0; i < entities.size(); i++) {
+            Entity entity = entities.get(i);
+            if (entity instanceof Mob && !(entity instanceof Player)) {
+                mobCount++;
+                if (!entity.removed) {
+                    entity.remove();
+                    count++;
                 }
             }
-
-            source.getClient().gui.addMessage(String.format("Removed %d out of %d mobs", count, mobCount));
-            return count;
         }
-        return 0;
+
+        source.getClient().gui.addMessage(String.format("Removed %d out of %d mobs", count, mobCount));
+        return count;
     }
 
     public static int cmdCameraClear(CommandContext<ServerCommandSource> context) {
