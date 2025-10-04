@@ -123,6 +123,7 @@ public class Script {
         defineClass("Model", ScriptModel.class);
         defineClass("ModelBlockbench", ScriptModelBlockbench.class);
         defineClass("Vec3", ScriptVec3.class);
+        defineClass("Vec4", ScriptVec4.class);
         defineClass("VecRot", ScriptVecRot.class);
     }
 

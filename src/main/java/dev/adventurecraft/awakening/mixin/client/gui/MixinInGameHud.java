@@ -17,6 +17,7 @@ import dev.adventurecraft.awakening.layout.Border;
 import dev.adventurecraft.awakening.layout.IntRect;
 import dev.adventurecraft.awakening.layout.Rect;
 import dev.adventurecraft.awakening.util.DrawUtil;
+import dev.adventurecraft.awakening.util.FacingUtil;
 import dev.adventurecraft.awakening.util.HexConvert;
 import dev.adventurecraft.awakening.script.ScriptUIContainer;
 import dev.adventurecraft.awakening.util.MathF;
@@ -352,11 +353,16 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
             String gpuBufMsg = "GL Buffers: %d | %dMB".formatted(gpuBufCount, gpuBufMem / 1024L / 1024L);
             textState.drawText(gpuBufMsg, screenWidth - font.width(gpuBufMsg) - 2, y1 += 10);
 
-            textState.drawText("x: " + player.x, x, y += 8);
-            textState.drawText("y: " + player.y, x, y += 8);
-            textState.drawText("z: " + player.z, x, y += 8);
-            int facing = ((int) Math.floor((player.yRot * 4.0F / 360.0F) + 0.5D) & 3);
-            textState.drawText("f: " + facing, x, y += 8);
+            textState.drawText("XYZ: %.3f / %.5f / %.3f".formatted(player.x, player.y, player.z), x, y += 8);
+            int facing = FacingUtil.getFacing(player.yRot);
+            String facingName = FacingUtil.getFacingName(facing).toLowerCase();
+            String facingText = "Facing: %s (%s) (%.1f / %.1f)".formatted(
+                facingName,
+                FacingUtil.getFacingDir(facing),
+                player.yRot,
+                player.xRot
+            );
+            textState.drawText(facingText, x, y += 8);
             y += 10;
 
             boolean useWorldGenImages = ((ExWorldProperties) mc.level.levelData).getWorldGenProps().useImages;

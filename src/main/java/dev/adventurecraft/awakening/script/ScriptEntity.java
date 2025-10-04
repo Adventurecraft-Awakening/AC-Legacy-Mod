@@ -75,7 +75,8 @@ public class ScriptEntity {
         return new ScriptVec3(
             invDelta * this.entity.xo + deltaTime * this.entity.x,
             invDelta * this.entity.yo + deltaTime * this.entity.y,
-            invDelta * this.entity.zo + deltaTime * this.entity.z);
+            invDelta * this.entity.zo + deltaTime * this.entity.z
+        );
     }
 
     public void setPosition(ScriptVec3 vec) {
@@ -94,7 +95,8 @@ public class ScriptEntity {
         float dtSub = 1.0F - deltaTime;
         return new ScriptVecRot(
             dtSub * this.entity.yRotO + deltaTime * this.entity.yRot,
-            dtSub * this.entity.xRotO + deltaTime * this.entity.xRot);
+            dtSub * this.entity.xRotO + deltaTime * this.entity.xRot
+        );
     }
 
     public void setRotation(float yaw, float pitch) {
@@ -145,7 +147,8 @@ public class ScriptEntity {
     public void mountEntity(ScriptEntity entity) {
         if (entity != null) {
             this.entity.ride(entity.entity);
-        } else {
+        }
+        else {
             this.entity.ride(null);
         }
     }
@@ -172,8 +175,13 @@ public class ScriptEntity {
 
     public ScriptEntity[] getEntitiesWithinRange(double range) {
         var aabb = AABB.newTemp(
-            this.entity.x - range, this.entity.y - range, this.entity.z - range,
-            this.entity.x + range, this.entity.y + range, this.entity.z + range);
+            this.entity.x - range,
+            this.entity.y - range,
+            this.entity.z - range,
+            this.entity.x + range,
+            this.entity.y + range,
+            this.entity.z + range
+        );
         var entities = (List<Entity>) this.entity.level.getEntities(this.entity, aabb);
         ArrayList<ScriptEntity> list = new ArrayList<>();
         double rangeSqr = range * range;
@@ -252,7 +260,9 @@ public class ScriptEntity {
     }
 
     public String getClassType() {
-        if (this.entity instanceof Player) return "Player";
+        if (this.entity instanceof Player) {
+            return "Player";
+        }
         return ExEntityRegistry.getEntityStringClimbing(this.entity);
     }
 
@@ -316,12 +326,18 @@ public class ScriptEntity {
 
     public Object[] rayTrace(double aX, double aY, double aZ, double bX, double bY, double bZ) {
         var result = new Object[3];
-        HitResult hit = AC_UtilBullet.rayTrace(this.entity.level, this.entity, Vec3.newTemp(aX, aY, aZ), Vec3.newTemp(bX, bY, bZ));
+        HitResult hit = AC_UtilBullet.rayTrace(
+            this.entity.level,
+            this.entity,
+            Vec3.newTemp(aX, aY, aZ),
+            Vec3.newTemp(bX, bY, bZ)
+        );
         if (hit != null) {
             result[0] = new ScriptVec3(hit.pos.x, hit.pos.y, hit.pos.z);
             if (hit.hitType == HitType.TILE) {
                 result[1] = new ScriptVec3(hit.x, hit.y, hit.z);
-            } else {
+            }
+            else {
                 result[2] = getEntityClass(hit.entity);
             }
         }
@@ -336,23 +352,15 @@ public class ScriptEntity {
         this.entity.heightOffset = value;
     }
 
-    public void setTag(String key, Object value) {
-        ((ExEntity) this.entity).setTag(key, value);
-    }
-
     public boolean hasTag(String key) {
         return ((ExEntity) this.entity).hasTag(key);
     }
 
-    public Object getOrSetTag(String key, Object defaultValue) {
-        return ((ExEntity) this.entity).getOrSetTag(key, defaultValue);
-    }
-
-    public Object computeTag(String key, BiFunction<String, Object, Object> mapper) {
-        return ((ExEntity) this.entity).computeTag(key, mapper);
-    }
-
     public Object getTag(String key) {
         return ((ExEntity) this.entity).getTag(key);
+    }
+
+    public Object setTag(String key, Object value) {
+        return ((ExEntity) this.entity).setTag(key, value);
     }
 }
