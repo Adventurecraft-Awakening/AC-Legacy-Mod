@@ -39,13 +39,9 @@ public interface ExEntity extends AC_IMultiAttackEntity {
 
     boolean isIgnoreCobwebCollision();
 
-    void setTag(String key, Object value);
-
     boolean hasTag(String key);
 
-    Object getOrSetTag(String key, Object defaultValue);
-
-    Object computeTag(String key, BiFunction<String, Object, Object> mapper);
-
     Object getTag(String key);
+
+    Object setTag(String key, Object value);
 }

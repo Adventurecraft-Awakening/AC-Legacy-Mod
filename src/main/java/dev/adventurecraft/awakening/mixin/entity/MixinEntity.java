@@ -421,27 +421,17 @@ public abstract class MixinEntity implements ExEntity {
     }
 
     @Override
-    public void setTag(String key, Object value) {
-        this.customData.put(key, value);
-    }
-
-    @Override
     public boolean hasTag(String key) {
         return this.customData.containsKey(key);
     }
 
     @Override
-    public Object getOrSetTag(String key, Object defaultValue) {
-        return this.customData.computeIfAbsent(key, (_key) -> defaultValue);
-    }
-
-    @Override
-    public Object computeTag(String key, BiFunction<String, Object, Object> mapper) {
-        return this.customData.compute(key, mapper);
-    }
-
-    @Override
     public Object getTag(String key) {
-        return this.customData.getOrDefault(key, null);
+        return this.customData.get(key);
+    }
+
+    @Override
+    public Object setTag(String key, Object value) {
+        return this.customData.put(key, value);
     }
 }
