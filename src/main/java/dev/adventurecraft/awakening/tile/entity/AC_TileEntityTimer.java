@@ -14,7 +14,7 @@ public class AC_TileEntityTimer extends AC_TileEntityMinMax {
     public int ticksDelay;
     public boolean active = false;
     public boolean canActivate = true;
-    public boolean resetOnTrigger;
+    private boolean resetOnTrigger;
 
     public void startActive() {
         this.active = true;
@@ -111,6 +111,17 @@ public class AC_TileEntityTimer extends AC_TileEntityMinMax {
     public void setTimeDelay(int value) {
         if (this.timeDelay != value) {
             this.timeDelay = value;
+            this.setChanged();
+        }
+    }
+
+    public boolean isResetOnTrigger() {
+        return this.resetOnTrigger;
+    }
+
+    public void setResetOnTrigger(boolean value) {
+        if (this.resetOnTrigger != value) {
+            this.resetOnTrigger = value;
             this.setChanged();
         }
     }
