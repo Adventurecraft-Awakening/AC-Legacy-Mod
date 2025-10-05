@@ -9,7 +9,6 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.level.Level;
 import org.mozilla.javascript.*;
 
-import java.io.*;
 import java.util.*;
 
 @SuppressWarnings("unused")
@@ -111,7 +110,7 @@ public class Script {
                     String.format("net = { minecraft: { script: Packages.%s } };", SCRIPT_PACKAGE),
                 }
             );
-            this.cx.evaluateString(this.globalScope, initStr, "<init>", 0, null);
+            this.runString(initStr, "<init>", this.globalScope);
         }
 
         defineClass("Item", ScriptItem.class);
@@ -153,12 +152,17 @@ public class Script {
         ScriptableObject.putProperty(this.globalScope, "player", tmp);
     }
 
-    public String runString(String sourceCode) {
-        org.mozilla.javascript.Script script = this.compileString(sourceCode, "<cmd>");
+    public String runString(String sourceCode, String sourceName) {
+        // TODO: is runScope needed? why not just run in globalScope?
+        return this.runString(sourceCode, sourceName, this.runScope);
+    }
+
+    private String runString(String sourceCode, String sourceName, Scriptable scope) {
+        org.mozilla.javascript.Script script = this.compileString(sourceCode, sourceName);
         if (script == null) {
             return null;
         }
-        Object result = this.runScript(script, this.runScope);
+        Object result = this.runScript(script, scope);
         if (result == null) {
             return null;
         }
@@ -177,14 +181,9 @@ public class Script {
             return this.cx.compileString(sourceCode, sourceName, 1, null);
         }
         catch (Exception e) {
-            Minecraft.instance.gui.addMessage("JS Compile: " + e.getMessage());
+            Minecraft.instance.gui.addMessage("(JS) Compile: " + e.getMessage());
             return null;
         }
-    }
-
-    public org.mozilla.javascript.Script compileReader(Reader sourceReader, String sourceName)
-        throws IOException {
-        return this.cx.compileReader(sourceReader, sourceName, 1, null);
     }
 
     public Scriptable getNewScope() {
@@ -194,6 +193,9 @@ public class Script {
     }
 
     public Object runScript(org.mozilla.javascript.Script script, Scriptable scope) {
+        // TODO: move AC_JScriptInfo into here?
+        //       it makes more sense, and allows us to track <init> and <cmd> scripts
+
         Scriptable prevScope = this.curScope;
         try {
             if (scope != null) {

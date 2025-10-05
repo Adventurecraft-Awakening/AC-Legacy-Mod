@@ -129,9 +129,9 @@ public abstract class MixinAbstractClientPlayerEntity extends Player implements 
                 }
             }
         } else {
-            String result = ((ExWorld) this.level).getScript().runString(message);
+            String result = ((ExWorld) this.level).getScript().runString(message, "<cmd>");
             if (result != null) {
-                this.minecraft.gui.addMessage("JS: " + result);
+                this.minecraft.gui.addMessage("(JS) " + result);
             }
         }
     }
