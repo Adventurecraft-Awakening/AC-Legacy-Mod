@@ -35,109 +35,48 @@ import java.util.Collection;
 @Mixin(Mob.class)
 public abstract class MixinMob extends MixinEntity implements ExMob {
 
-    @Shadow
-    public int invulnerableDuration;
+    @Shadow public int invulnerableDuration;
+    @Shadow protected String textureName;
+    @Shadow public float attackAnim;
+    @Shadow public int health;
+    @Shadow public int lastHealth;
+    @Shadow public int hurtTime;
+    @Shadow public int hurtDuration;
+    @Shadow public float hurtDir;
+    @Shadow public float walkAnimSpeedO;
+    @Shadow public float walkAnimSpeed;
+    @Shadow public float walkAnimPos;
+    @Shadow public int lastHurt;
+    @Shadow protected int noActionTime;
+    @Shadow protected float xxa;
+    @Shadow protected float zza;
+    @Shadow protected float yRotA;
+    @Shadow public boolean jumping;
+    @Shadow protected float defaultLookAngle;
+    @Shadow protected float runSpeed;
+    @Shadow public Entity lookAt;
+    @Shadow protected int lookTime;
 
-    @Shadow
-    protected String textureName;
-
-    @Shadow
-    public float attackAnim;
-
-    @Shadow
-    public int health;
-
-    @Shadow
-    public int lastHealth;
-
-    @Shadow
-    public int hurtTime;
-
-    @Shadow
-    public int hurtDuration;
-
-    @Shadow
-    public float hurtDir;
-
-    @Shadow
-    public float walkAnimSpeedO;
-
-    @Shadow
-    public float walkAnimSpeed;
-
-    @Shadow
-    public float walkAnimPos;
-
-    @Shadow
-    public int lastHurt;
-
-    @Shadow
-    protected int noActionTime;
-
-    @Shadow
-    protected float xxa;
-
-    @Shadow
-    protected float zza;
-
-    @Shadow
-    protected float yRotA;
-
-    @Shadow
-    public boolean jumping;
-
-    @Shadow
-    protected float defaultLookAngle;
-
-    @Shadow
-    protected float runSpeed;
-
-    @Shadow
-    public Entity lookAt;
-
-    @Shadow
-    protected int lookTime;
-
-    @Unique
-    protected int maxHealth = 10;
-    @Unique
-    private ItemInstance ac$heldItem;
-    @Unique
-    private long hurtTick;
-    @Unique
-    public int timesCanJumpInAir = 0;
-    @Unique
-    public int jumpsLeft = 0;
-    @Unique
-    public boolean canWallJump = false;
-    @Unique
-    private long tickBeforeNextJump;
-    @Unique
-    public double jumpVelocity = 0.42D;
-    @Unique
-    public double jumpWallMultiplier = 1.0D;
-    @Unique
-    public double jumpInAirMultiplier = 1.0D;
-    @Unique
-    public float airControl = 0.9259F;
-    @Unique
-    public double gravity = 0.08D;
-    @Unique
-    public float fov = 140.0F;
-    @Unique
-    public float extraFov = 0.0F;
-    @Unique
-    public boolean canLookRandomly = true;
-    @Unique
-    public float randomLookVelocity = 20.0F;
-    @Unique
-    public int randomLookNext = 0;
-    @Unique
-    public int randomLookRate = 100;
-    @Unique
-    public int randomLookRateVariation = 40;
-    @Unique
-    public boolean canGetFallDamage = true;
+    @Unique protected int maxHealth = 10;
+    @Unique private ItemInstance ac$heldItem;
+    @Unique private long hurtTick;
+    @Unique public int timesCanJumpInAir = 0;
+    @Unique public int jumpsLeft = 0;
+    @Unique public boolean canWallJump = false;
+    @Unique private long tickBeforeNextJump;
+    @Unique public double jumpVelocity = 0.42D;
+    @Unique public double jumpWallMultiplier = 1.0D;
+    @Unique public double jumpInAirMultiplier = 1.0D;
+    @Unique public float airControl = 0.9259F;
+    @Unique public double gravity = 0.08D;
+    @Unique public float fov = 140.0F;
+    @Unique public float extraFov = 0.0F;
+    @Unique public boolean canLookRandomly = true;
+    @Unique public float randomLookVelocity = 20.0F;
+    @Unique public int randomLookNext = 0;
+    @Unique public int randomLookRate = 100;
+    @Unique public int randomLookRateVariation = 40;
+    @Unique public boolean canGetFallDamage = true;
 
     @Shadow
     public abstract void setLookAt(Entity arg, float f, float g);
@@ -183,7 +122,8 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
             value = "INVOKE",
             target = "Ljava/lang/Math;random()D",
             remap = false
-        ))
+        )
+    )
     private double useFastRandomInInit() {
         return this.random.nextFloat();
     }
@@ -206,12 +146,17 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
         method = "baseTick",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/entity/Mob;isInWall()Z"))
+            target = "Lnet/minecraft/world/entity/Mob;isInWall()Z"
+        )
+    )
     private boolean damageIfNotCondition(boolean value) {
         return value && !this.noPhysics;
     }
 
-    @Inject(method = "baseTick", at = @At("TAIL"))
+    @Inject(
+        method = "baseTick",
+        at = @At("TAIL")
+    )
     private void reduceExtraFov(CallbackInfo ci) {
         if (this.extraFov > 0.0F) {
             this.extraFov -= 5.0F;
@@ -221,7 +166,10 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
         }
     }
 
-    @ModifyConstant(method = "heal", constant = @Constant(intValue = 20))
+    @ModifyConstant(
+        method = "heal",
+        constant = @Constant(intValue = 20)
+    )
     private int useMaxHealth(int constant) {
         return this.maxHealth;
     }
@@ -231,7 +179,9 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
         at = @At(
             value = "FIELD",
             target = "Lnet/minecraft/world/entity/Mob;hurtTime:I",
-            shift = At.Shift.AFTER))
+            shift = At.Shift.AFTER
+        )
+    )
     private void setHurtTickOnDamage(Entity entity, int damage, CallbackInfoReturnable<Boolean> cir) {
         this.hurtTick = this.level.getTime();
     }
@@ -268,7 +218,8 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
             this.actuallyHurt(damage - this.lastHurt);
             this.lastHurt = damage;
             attacked = false;
-        } else {
+        }
+        else {
             this.lastHurt = damage;
             this.lastHealth = this.health;
             this.invulnerableTime = this.invulnerableDuration;
@@ -293,7 +244,8 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
 
                 this.hurtDir = MathF.toDegrees((float) Math.atan2(dZ, dX)) - this.yRot;
                 this.knockback(entity, damage, dX, dZ);
-            } else {
+            }
+            else {
                 this.hurtDir = this.random.nextFloat() * 360f;
             }
         }
@@ -304,7 +256,8 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
                 this.level.playSound(self, this.getDeathSound(), this.getSoundVolume(), pitch);
             }
             this.die(entity);
-        } else if (attacked) {
+        }
+        else if (attacked) {
             float pitch = (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F;
             this.level.playSound(self, this.getHurtSound(), this.getSoundVolume(), pitch);
         }
@@ -329,10 +282,7 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
         }
         this.hurt(null, ceilAmount);
 
-        int id = this.level.getTile(
-            Mth.floor(this.x),
-            Mth.floor(this.y - 0.2 - this.heightOffset),
-            Mth.floor(this.z));
+        int id = this.level.getTile(Mth.floor(this.x), Mth.floor(this.y - 0.2 - this.heightOffset), Mth.floor(this.z));
 
         if (id > 0) {
             SoundType block = Tile.tiles[id].soundType;
@@ -365,7 +315,8 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
             if (Math.abs(this.zd) < 0.01D) {
                 this.zd = 0.0D;
             }
-        } else if (this.isInWater()) {
+        }
+        else if (this.isInWater()) {
             if (this.yd < -0.4D) {
                 this.yd *= 0.8D;
             }
@@ -380,7 +331,8 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
             if (this.horizontalCollision && this.isFree(this.xd, this.yd + (double) 0.6F - this.y + lastY, this.zd)) {
                 this.yd = 0.3F;
             }
-        } else if (this.isInLava()) {
+        }
+        else if (this.isInLava()) {
             if (this.yd < -0.4D) {
                 this.yd *= 0.5D;
             }
@@ -395,7 +347,8 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
             if (this.horizontalCollision && this.isFree(this.xd, this.yd + (double) 0.6F - this.y + lastY, this.zd)) {
                 this.yd = 0.3F;
             }
-        } else {
+        }
+        else {
             float slipperiness = 0.91F;
             if (this.onGround) {
                 slipperiness = 0.5460001F;
@@ -406,7 +359,11 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
             }
 
             float inputFactor = 0.1627714F / (slipperiness * slipperiness * slipperiness);
-            this.moveRelative(xInput, zInput, this.onGround ? 0.1F * inputFactor : 0.1F * this.airControl * inputFactor);
+            this.moveRelative(
+                xInput,
+                zInput,
+                this.onGround ? 0.1F * inputFactor : 0.1F * this.airControl * inputFactor
+            );
             slipperiness = 0.91F;
             if (this.onGround) {
                 slipperiness = 0.5460001F;
@@ -466,16 +423,17 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
             return true;
         }
 
-        if (id == AC_Blocks.ropes1.id ||
-            id == AC_Blocks.ropes2.id ||
-            id == AC_Blocks.chains.id) {
+        if (id == AC_Blocks.ropes1.id || id == AC_Blocks.ropes2.id || id == AC_Blocks.chains.id) {
 
             return world.getData(x, y, z) % 3 == 0;
         }
         return false;
     }
 
-    @Inject(method = "addAdditionalSaveData", at = @At("TAIL"))
+    @Inject(
+        method = "addAdditionalSaveData",
+        at = @At("TAIL")
+    )
     protected void ac$addAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
         tag.putShort("MaxHealth", (short) this.maxHealth);
         tag.putInt("EntityID", this.id);
@@ -489,15 +447,16 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
         tag.putBoolean("canGetFallDamage", this.canGetFallDamage);
     }
 
-    @Inject(method = "readAdditionalSaveData", at = @At("TAIL"))
+    @Inject(
+        method = "readAdditionalSaveData",
+        at = @At("TAIL")
+    )
     protected void ac$readAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
         var exTag = (ExCompoundTag) tag;
         this.maxHealth = exTag.findShort("MaxHealth").orElse((short) 10);
 
         //noinspection ConstantValue
-        exTag.findInt("EntityID")
-            .filter(id -> !((Object) this instanceof Player))
-            .ifPresent(id -> this.id = id);
+        exTag.findInt("EntityID").filter(id -> !((Object) this instanceof Player)).ifPresent(id -> this.id = id);
 
         this.timesCanJumpInAir = tag.getInt("timesCanJumpInAir");
         this.canWallJump = tag.getBoolean("canWallJump");
@@ -536,7 +495,9 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/entity/Mob;isInLava()Z",
-            shift = At.Shift.AFTER))
+            shift = At.Shift.AFTER
+        )
+    )
     private void fixupYaw(CallbackInfo ci) {
         if (this.onGround) {
             this.jumpsLeft = this.timesCanJumpInAir;
@@ -546,10 +507,12 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
             if (this.moveYawOffset > 40.0F) {
                 this.moveYawOffset -= 40.0F;
                 this.yRot += 40.0F;
-            } else if (this.moveYawOffset < -40.0F) {
+            }
+            else if (this.moveYawOffset < -40.0F) {
                 this.moveYawOffset += 40.0F;
                 this.yRot -= 40.0F;
-            } else {
+            }
+            else {
                 this.yRot += this.moveYawOffset;
                 this.moveYawOffset = 0.0F;
             }
@@ -562,13 +525,19 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/entity/Mob;isInLava()Z",
-            shift = At.Shift.AFTER))
+            shift = At.Shift.AFTER
+        )
+    )
     private void doWallJump(CallbackInfo ci) {
         if (!this.jumping) {
-        } else if (this.onGround) {
-        } else if (this.isInWater()) {
-        } else if (this.isInLava()) {
-        } else if (this.level.getTime() >= this.tickBeforeNextJump) {
+        }
+        else if (this.onGround) {
+        }
+        else if (this.isInWater()) {
+        }
+        else if (this.isInLava()) {
+        }
+        else if (this.level.getTime() >= this.tickBeforeNextJump) {
             if (this.canWallJump && (this.collisionX != 0 || this.collisionZ != 0)) {
                 this.jumpFromGround();
                 this.yd *= this.jumpWallMultiplier;
@@ -579,7 +548,8 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
                 this.moveYawOffset = MathF.normalizeAngle(jumpAngle - this.yRot);
 
                 this.spawnWallJumpParticles();
-            } else if (this.jumpsLeft > 0) {
+            }
+            else if (this.jumpsLeft > 0) {
                 --this.jumpsLeft;
                 this.jumpFromGround();
                 this.yd *= this.jumpInAirMultiplier;
@@ -625,15 +595,18 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
 
         if (this.lookAt != null) {
             this.setLookAt(this.lookAt, 10.0F, (float) this.getMaxHeadXRot());
-            if (this.lookTime-- <= 0 || this.lookAt.removed || this.lookAt.distanceToSqr(self) > (searchDist * searchDist)) {
+            if (this.lookTime-- <= 0 || this.lookAt.removed ||
+                this.lookAt.distanceToSqr(self) > (searchDist * searchDist)) {
                 this.lookAt = null;
             }
-        } else if (this.canLookRandomly) {
+        }
+        else if (this.canLookRandomly) {
             if (this.randomLookNext-- <= 0) {
                 float rngLook = this.random.nextFloat();
                 if (rngLook < 0.5F) {
                     this.yRotA = -this.randomLookVelocity * (rngLook + 0.5F);
-                } else {
+                }
+                else {
                     this.yRotA = this.randomLookVelocity * rngLook;
                 }
 
@@ -661,7 +634,9 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/entity/Mob;dropDeathLoot()V",
-            shift = At.Shift.AFTER))
+            shift = At.Shift.AFTER
+        )
+    )
     private void dropHeartsOnDeath(Entity killer, CallbackInfo ci) {
         if (killer instanceof Mob livingKiller) {
             if (livingKiller.health < ((ExMob) livingKiller).getMaxHealth() && this.random.nextInt(3) != 0) {
