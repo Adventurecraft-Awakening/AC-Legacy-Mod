@@ -467,27 +467,6 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
         exTag.findInt("randomLookRate").ifPresent(this::setRandomLookRate);
         exTag.findInt("randomLookRateVariation").ifPresent(this::setRandomLookRateVariation);
         exTag.findBool("canGetFallDamage").ifPresent(this::setCanGetFallDamage);
-
-        var customTag = exTag.findCompound("custom");
-        if (customTag.isPresent()) {
-            for (Tag tags : (Collection<Tag>) customTag.get().getTags()) {
-                this.customData.put(tags.getType(), TagUtil.unwrap(tags));
-            }
-        }
-    }
-
-    @Inject(
-        method = "addAdditionalSaveData",
-        at = @At("TAIL")
-    )
-    protected void ac$adAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
-        if (!this.customData.isEmpty()) {
-            var customTag = new CompoundTag();
-            this.customData.forEach((key, object) -> {
-                customTag.putTag(key, TagUtil.wrap(object));
-            });
-            tag.putCompoundTag("custom", customTag);
-        }
     }
 
     @Inject(

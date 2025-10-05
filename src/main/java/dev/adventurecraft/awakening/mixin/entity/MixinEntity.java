@@ -3,31 +3,32 @@ package dev.adventurecraft.awakening.mixin.entity;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.extension.nbt.ExListTag;
+import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.util.RandomUtil;
+import dev.adventurecraft.awakening.util.TagUtil;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.objectweb.asm.Opcodes;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Random;
-import java.util.function.BiFunction;
 
 @Mixin(Entity.class)
 public abstract class MixinEntity implements ExEntity {
@@ -49,7 +50,7 @@ public abstract class MixinEntity implements ExEntity {
     @Shadow public float xRot;
     @Shadow public float yRotO;
     @Shadow public float xRotO;
-    @Final @Shadow public AABB bb;
+    @Shadow @Final public AABB bb;
     @Shadow public boolean onGround;
     @Shadow public boolean horizontalCollision;
     @Shadow public boolean stuckInBlock;
@@ -66,18 +67,18 @@ public abstract class MixinEntity implements ExEntity {
     @Shadow public int onFire;
     @Shadow public int invulnerableTime;
 
-    public boolean ignoreCobwebCollision = false;
-    public boolean isFlying;
-    public int stunned;
-    public boolean collidesWithClipBlocks = true;
-    public int collisionX;
-    public int collisionZ;
-    public float moveYawOffset = 0.0F;
+    @Unique public boolean ignoreCobwebCollision = false;
+    @Unique public boolean isFlying;
+    @Unique public int stunned;
+    @Unique public boolean collidesWithClipBlocks = true;
+    @Unique public int collisionX;
+    @Unique public int collisionZ;
+    @Unique public float moveYawOffset = 0.0F;
 
-    private int cachedBrightnessKey = -1;
-    private float cachedBrightness;
+    @Unique private int cachedBrightnessKey = -1;
+    @Unique private float cachedBrightness;
 
-    protected final Map<String, Object> customData = new Object2ObjectOpenHashMap<>();
+    @Unique private Map<String, Object> customData;
 
     @Shadow
     protected abstract void causeFallDamage(float f);
@@ -140,6 +141,36 @@ public abstract class MixinEntity implements ExEntity {
 
     @Shadow
     public abstract float getBrightness(float partialTick);
+
+    @Inject(
+        method = "saveWithoutId",
+        at = @At("TAIL")
+    )
+    protected void ac$saveWithoutId(CompoundTag tag, CallbackInfo ci) {
+        var exTag = (ExCompoundTag) tag;
+        var customTag = exTag.findCompound("custom");
+        if (customTag.isPresent()) {
+            var map = this.customData();
+            for (Tag tags : (Collection<Tag>) customTag.get().getTags()) {
+                map.put(tags.getType(), TagUtil.unwrap(tags));
+            }
+        }
+    }
+
+    @Inject(
+        method = "load",
+        at = @At("TAIL")
+    )
+    protected void ac$load(CompoundTag tag, CallbackInfo ci) {
+        // Do not use customData() to not unnecessarily init map.
+        if (this.customData != null && !this.customData.isEmpty()) {
+            var customTag = new CompoundTag();
+            this.customData.forEach((key, object) -> {
+                customTag.putTag(key, TagUtil.wrap(object));
+            });
+            tag.putCompoundTag("custom", customTag);
+        }
+    }
 
     @Inject(
         method = "move",
@@ -422,16 +453,24 @@ public abstract class MixinEntity implements ExEntity {
 
     @Override
     public boolean hasTag(String key) {
-        return this.customData.containsKey(key);
+        return this.customData().containsKey(key);
     }
 
     @Override
     public Object getTag(String key) {
-        return this.customData.get(key);
+        return this.customData().get(key);
     }
 
     @Override
     public Object setTag(String key, Object value) {
-        return this.customData.put(key, value);
+        return this.customData().put(key, value);
+    }
+
+    @Unique
+    protected Map<String, Object> customData() {
+        if (this.customData == null) {
+            this.customData = new Object2ObjectOpenHashMap<>();
+        }
+        return this.customData;
     }
 }
