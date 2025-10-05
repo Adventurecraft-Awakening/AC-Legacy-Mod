@@ -52,9 +52,7 @@ public class Script {
     final List<ContinuationPending> continuations = new ArrayList<>();
     final List<ContinuationPending> newContinuations = new ArrayList<>();
 
-    public static final ContextFactory contextFactory = new CustomContextFactory();
-
-    static class CustomContextFactory extends ContextFactory {
+    public static class CustomContextFactory extends ContextFactory {
 
         @Override
         protected Context makeContext() {
@@ -70,11 +68,12 @@ public class Script {
     public Script(Level level) {
         var gameOptions = (ExGameOptions) Minecraft.instance.options;
 
-        this.cx = contextFactory.enterContext();
+        this.cx = ContextFactory.getGlobal().enterContext();
 
         this.globalScope = gameOptions.getAllowJavaInScript()
             ? this.cx.initStandardObjects(null, false)
             : this.cx.initSafeStandardObjects(null, false);
+        this.curScope = this.globalScope;
         this.runScope = this.cx.newObject(this.globalScope);
         this.runScope.setParentScope(this.globalScope);
 
@@ -197,16 +196,13 @@ public class Script {
     public Object runScript(org.mozilla.javascript.Script script, Scriptable scope) {
         Scriptable prevScope = this.curScope;
         try {
-            // FIXME: this exec should not be needed but continuations need top-call
-            if (this.curScope != null) {
-                return script.exec(this.cx, this.curScope);
+            if (scope != null) {
+                this.curScope = scope;
             }
-
-            this.curScope = scope;
             return this.cx.executeScriptWithContinuations(script, this.curScope);
         }
         catch (ContinuationPending c) {
-            this.continuations.add(c);
+            this.newContinuations.add(c);
         }
         catch (RhinoException e) {
             this.printRhinoException(e);
@@ -217,7 +213,16 @@ public class Script {
         return null;
     }
 
-    public void runContinuations(long currentTime) {
+    public void processContinuations(long currentTime) {
+        this.continuations.addAll(this.newContinuations);
+        this.newContinuations.clear();
+
+        if (!this.continuations.isEmpty()) {
+            this.executeContinuations(currentTime);
+        }
+    }
+
+    private void executeContinuations(long currentTime) {
         var iterator = this.continuations.iterator();
         while (iterator.hasNext()) {
             var item = iterator.next();
@@ -244,12 +249,14 @@ public class Script {
                 this.curScope = prevScope;
             }
         }
-        this.continuations.addAll(this.newContinuations);
-        this.newContinuations.clear();
     }
 
     public void sleep(float seconds) {
         int ticks = (int) (20.0F * seconds);
+        if (ticks <= 0) {
+            return;
+        }
+
         long wakeUp = this.time.getTickCount() + (long) ticks;
         ContinuationPending continuation = this.cx.captureContinuation();
         continuation.setApplicationState(new ScriptContinuation(wakeUp, this.curScope));

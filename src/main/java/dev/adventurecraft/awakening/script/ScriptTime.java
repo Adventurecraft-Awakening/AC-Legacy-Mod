@@ -41,7 +41,7 @@ public class ScriptTime {
         return this.world.getTime();
     }
 
-    public void sleep(float var1) {
-        ((ExWorld) this.world).getScript().sleep(var1);
+    public void sleep(float seconds) {
+        ((ExWorld) this.world).getScript().sleep(seconds);
     }
 }

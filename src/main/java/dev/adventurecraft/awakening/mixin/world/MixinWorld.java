@@ -219,6 +219,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         Dimension dimension,
         ProgressListener progressListener
     ) {
+        var self = (Level) (Object) this;
         this.addend = 1013904223;
         this.fogColorOverridden = false;
         this.fogDensityOverridden = false;
@@ -226,7 +227,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         this.newSave = false;
         this.musicList = new ArrayList<>();
         this.soundList = new ArrayList<>();
-        this.triggerManager = new AC_TriggerManager((Level) (Object) this);
+        this.triggerManager = new AC_TriggerManager(self);
         this.undoStack = new AC_UndoStack();
         this.collisionDebugLists = new ArrayList<>();
         this.rayCheckedBlocks = new ArrayList<>();
@@ -304,7 +305,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             this.triggerManager.loadFromTagCompound(props.getTriggerData());
         }
 
-        this.dimension.setLevel((Level) (Object) this);
+        this.dimension.setLevel(self);
         this.loadBrightness();
         this.chunkSource = this.createLevelSource();
         if (newProps) {
@@ -327,13 +328,13 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         this.loadMapMusic();
         this.loadMapSounds();
 
-        this.script = new Script((Level) (Object) this);
+        this.script = new Script(self);
 
         if (props.getGlobalScope() != null) {
             ScopeTag.loadScopeFromTag(this.script.globalScope, props.getGlobalScope());
         }
 
-        this.scriptHandler = new AC_JScriptHandler((Level) (Object) this, levelDir);
+        this.scriptHandler = new AC_JScriptHandler(self, levelDir);
         this.scriptHandler.loadScripts(progressListener);
 
         this.musicScripts = new AC_MusicScripts(this.script, levelDir, this.scriptHandler);
@@ -370,17 +371,17 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         }
 
         this.loadTextureAnimations();
-        Level world = (Level) (Object) this;
-        AC_TextureBinder.loadImages(texManager, AC_TextureFanFX.class, world);
-        AC_TextureBinder.loadImages(texManager, FireTexture.class, world);
-        AC_TextureBinder.loadImages(texManager, LavaTexture.class, world);
-        AC_TextureBinder.loadImages(texManager, LavaSideTexture.class, world);
-        AC_TextureBinder.loadImages(texManager, PortalTexture.class, world);
-        AC_TextureBinder.loadImages(texManager, WaterTexture.class, world);
-        AC_TextureBinder.loadImages(texManager, WaterSideTexture.class, world);
-        ExGrassColor.loadGrass("/misc/grasscolor.png", world);
-        ExFoliageColor.loadFoliage("/misc/foliagecolor.png", world);
-        ((ExWorldProperties) this.levelData).loadTextureReplacements(world);
+        Level self = (Level) (Object) this;
+        AC_TextureBinder.loadImages(texManager, AC_TextureFanFX.class, self);
+        AC_TextureBinder.loadImages(texManager, FireTexture.class, self);
+        AC_TextureBinder.loadImages(texManager, LavaTexture.class, self);
+        AC_TextureBinder.loadImages(texManager, LavaSideTexture.class, self);
+        AC_TextureBinder.loadImages(texManager, PortalTexture.class, self);
+        AC_TextureBinder.loadImages(texManager, WaterTexture.class, self);
+        AC_TextureBinder.loadImages(texManager, WaterSideTexture.class, self);
+        ExGrassColor.loadGrass("/misc/grasscolor.png", self);
+        ExFoliageColor.loadFoliage("/misc/foliagecolor.png", self);
+        ((ExWorldProperties) this.levelData).loadTextureReplacements(self);
     }
 
     private void loadTextureAnimations() {
@@ -392,6 +393,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             return;
         }
 
+        Level self = (Level) (Object) this;
         try {
             var reader = new BufferedReader(new FileReader(file, StandardCharsets.ISO_8859_1));
             while (reader.ready()) {
@@ -408,7 +410,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
                         int h = Integer.parseInt(elements[6].trim());
                         var instance = new AC_TextureAnimated(texName, x, y, w, h);
                         //noinspection DataFlowIssue
-                        ((AC_TextureBinder) instance).loadImage(imageName, (Level) (Object) this);
+                        ((AC_TextureBinder) instance).loadImage(imageName, self);
                         texManager.registerTextureAnimation(animName, instance);
                     }
                     catch (Exception var12) {
@@ -454,9 +456,10 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             }
         }
 
+        Level self = (Level) (Object) this;
         try {
             var cache = (ChunkCache) ACMod.UNSAFE.allocateInstance(ChunkCache.class);
-            ((ExChunkCache) cache).init((Level) (Object) this, io, this.dimension.createRandomLevelSource());
+            ((ExChunkCache) cache).init(self, io, this.dimension.createRandomLevelSource());
             return cache;
         }
         catch (InstantiationException e) {
@@ -727,11 +730,13 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         int aX = Mth.floor(pointA.x);
         int aY = Mth.floor(pointA.y);
         int aZ = Mth.floor(pointA.z);
+        Level self = (Level) (Object) this;
+
         int aId = this.getTile(aX, aY, aZ);
         Tile aBlock = Tile.tiles[aId];
         AABB aAabb = null;
         if (aBlock != null &&
-            (!useCollisionShapes || (aAabb = aBlock.getAABB((Level) (Object) this, aX, aY, aZ)) != null) &&
+            (!useCollisionShapes || (aAabb = aBlock.getAABB(self, aX, aY, aZ)) != null) &&
             (aId > 0 && (collideWithClip || !this.isClippingBlock(aId)) &&
                 aBlock.mayPick(this.getData(aX, aY, aZ), blockCollidableFlag)
             )) {
@@ -740,7 +745,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
                 this.rayCheckedBlocks.add(aAabb);
             }
 
-            HitResult hit = aBlock.clip((Level) (Object) this, aX, aY, aZ, pointA, pointB);
+            HitResult hit = aBlock.clip(self, aX, aY, aZ, pointA, pointB);
             if (hit != null) {
                 return hit;
             }
@@ -867,7 +872,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             Tile block = Tile.tiles[id];
             AABB aabb = null;
             if (block != null &&
-                (!useCollisionShapes || (aabb = block.getAABB((Level) (Object) this, aX, aY, aZ)) != null) && id != 0 &&
+                (!useCollisionShapes || (aabb = block.getAABB(self, aX, aY, aZ)) != null) && id != 0 &&
                 block.mayPick(this.getData(aX, aY, aZ), blockCollidableFlag) &&
                 // TODO: is getRenderShape check needed after mayPick?
                 ((ExBlock) block).getRenderShape(this, aX, aY, aZ) != BlockShapes.NONE) {
@@ -876,7 +881,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
                     this.rayCheckedBlocks.add(aabb);
                 }
 
-                HitResult hit = block.clip((Level) (Object) this, aX, aY, aZ, pointA, pointB);
+                HitResult hit = block.clip(self, aX, aY, aZ, pointA, pointB);
                 if (hit != null && (collideWithClip || !this.isClippingBlock(block.id))) {
                     return hit;
                 }
@@ -1260,7 +1265,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             this.DoSnowModUpdate();
         }
 
-        this.script.runContinuations(var4);
+        this.script.processContinuations(var4);
     }
 
     @Overwrite
@@ -1340,6 +1345,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         if (((ExChunk) chunk).getLastUpdated() == this.getTime()) {
             return;
         }
+        Level self = (Level) (Object) this;
 
         int bX = cX * 16;
         int bZ = cZ * 16;
@@ -1352,7 +1358,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             int lZ = bZ + (r >> 8 & 15);
             int lY = this.getTopSolidBlock(lX, lZ);
             if (this.isRainingAt(lX, lY, lZ)) {
-                this.addGlobalEntity(new LightningBolt((Level) (Object) this, lX, lY, lZ));
+                this.addGlobalEntity(new LightningBolt(self, lX, lY, lZ));
                 this.lightingCooldown = 2;
             }
         }
@@ -1365,17 +1371,15 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             int lY = r >> 16 & 127;
             int id = chunk.blocks[lX << 11 | lZ << 7 | lY] & 255;
             if (Tile.shouldTick[id]) {
-                Tile.tiles[id].tick((Level) (Object) this, lX + bX, lY, lZ + bZ, this.random);
+                Tile.tiles[id].tick(self, lX + bX, lY, lZ + bZ, this.random);
             }
         }
     }
 
     @Overwrite
     public boolean tickPendingTicks(boolean force) {
-        int size = this.tickNextTickList.size();
-        if (size > 1000) {
-            size = 1000;
-        }
+        Level self = (Level) (Object) this;
+        int size = Math.min(this.tickNextTickList.size(), 1000);
 
         for (int i = 0; i < size; ++i) {
             TickNextTickData entry = this.tickNextTickList.first();
@@ -1395,7 +1399,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             if (this.hasChunksAt(eX - eD, eY - eD, eZ - eD, eX + eD, eY + eD, eZ + eD)) {
                 int id = this.getTile(entry.x, entry.y, entry.z);
                 if (id == entry.priority && id > 0) {
-                    Tile.tiles[id].tick((Level) (Object) this, eX, eY, eZ, this.random);
+                    Tile.tiles[id].tick(self, eX, eY, eZ, this.random);
                     AABB.resetPool();
                 }
             }
