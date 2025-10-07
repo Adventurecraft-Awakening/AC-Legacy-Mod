@@ -8,6 +8,7 @@ import dev.adventurecraft.awakening.entity.AC_EntityAirFX;
 import dev.adventurecraft.awakening.extension.client.particle.ExParticleManager;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import net.minecraft.client.Minecraft;
+import net.minecraft.util.Facing;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.FallingTile;
 import net.minecraft.world.entity.player.Player;
@@ -17,6 +18,9 @@ import net.minecraft.world.level.tile.Tile;
 import net.minecraft.world.phys.AABB;
 
 public class AC_BlockFan extends Tile {
+
+    private static final int AIR_LENGTH = 4;
+
     private boolean fanOn;
 
     public AC_BlockFan(int var1, int var2, boolean var3) {
@@ -65,48 +69,48 @@ public class AC_BlockFan extends Tile {
         int oX = 0;
         int oY = 0;
         int oZ = 0;
-        if (meta == 0) {
-            for (oY = -1; oY >= -4; --oY) {
+        if (meta == Facing.DOWN) {
+            for (oY = -1; oY >= -AIR_LENGTH; --oY) {
                 int id = world.getTile(x, y + oY, z);
                 if (this.canGoThroughBlock(id)) {
                     ++oY;
                     break;
                 }
             }
-        } else if (meta == 1) {
-            for (oY = 1; oY <= 4; ++oY) {
+        } else if (meta == Facing.UP) {
+            for (oY = 1; oY <= AIR_LENGTH; ++oY) {
                 int id = world.getTile(x, y + oY, z);
                 if (this.canGoThroughBlock(id)) {
                     --oY;
                     break;
                 }
             }
-        } else if (meta == 2) {
-            for (oZ = -1; oZ >= -4; --oZ) {
+        } else if (meta == Facing.NORTH) {
+            for (oZ = -1; oZ >= -AIR_LENGTH; --oZ) {
                 int id = world.getTile(x, y, z + oZ);
                 if (this.canGoThroughBlock(id)) {
                     ++oZ;
                     break;
                 }
             }
-        } else if (meta == 3) {
-            for (oZ = 1; oZ <= 4; ++oZ) {
+        } else if (meta == Facing.SOUTH) {
+            for (oZ = 1; oZ <= AIR_LENGTH; ++oZ) {
                 int id = world.getTile(x, y, z + oZ);
                 if (this.canGoThroughBlock(id)) {
                     --oZ;
                     break;
                 }
             }
-        } else if (meta == 4) {
-            for (oX = -1; oX >= -4; --oX) {
+        } else if (meta == Facing.WEST) {
+            for (oX = -1; oX >= -AIR_LENGTH; --oX) {
                 int id = world.getTile(x + oX, y, z);
                 if (this.canGoThroughBlock(id)) {
                     ++oX;
                     break;
                 }
             }
-        } else if (meta == 5) {
-            for (oX = 1; oX <= 4; ++oX) {
+        } else if (meta == Facing.EAST) {
+            for (oX = 1; oX <= AIR_LENGTH; ++oX) {
                 int id = world.getTile(x + oX, y, z);
                 if (this.canGoThroughBlock(id)) {
                     --oX;
@@ -120,7 +124,7 @@ public class AC_BlockFan extends Tile {
         double doX = (double) x + 0.5D;
         double doY = (double) y + 0.5D;
         double doZ = (double) z + 0.5D;
-        double doF = (double) Math.abs(oX + oY + oZ) / 4.0D;
+        double doF = (double) Math.abs(oX + oY + oZ) / AIR_LENGTH;
 
         for (Entity entity : entities) {
             if (entity instanceof FallingTile) {
@@ -131,16 +135,12 @@ public class AC_BlockFan extends Tile {
                 (entity instanceof ExPlayerEntity exPlayer && exPlayer.isUsingUmbrella() ? 0.14D : 0.07D) / dist;
             entity.push(speed * (double) oX, speed * (double) oY, speed * (double) oZ);
         }
-
         entities.clear();
 
         var particles = Minecraft.instance.particleEngine;
         ((ExParticleManager) particles).getEffectsWithinAABB(aabb, entities);
 
         for (Entity entity : entities) {
-            if (entity instanceof FallingTile) {
-                continue;
-            }
             double dist = entity.distanceTo(doX, doY, doZ) * doF;
             double speed = 0.03D / dist;
             entity.push(speed * (double) oX, speed * (double) oY, speed * (double) oZ);
