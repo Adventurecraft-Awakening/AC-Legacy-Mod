@@ -9,11 +9,23 @@ import net.minecraft.client.renderer.Textures;
 @SuppressWarnings("unused")
 public class UIElement {
 
-    public float curX = 0.0F;
-    public float curY = 0.0F;
-    public float prevX = 0.0F;
-    public float prevY = 0.0F;
+    public double curX;
+    public double curY;
+    public double prevX;
+    public double prevY;
+
     protected ScriptUIContainer parent;
+
+    public UIElement(double x, double y) {
+        this.curX = x;
+        this.curY = y;
+        this.prevX = x;
+        this.prevY = y;
+    }
+
+    public UIElement() {
+        this(0.0, 0.0);
+    }
 
     public void addToScreen() {
         if (Minecraft.instance.gui != null) {
@@ -47,36 +59,36 @@ public class UIElement {
         this.prevY = this.curY;
     }
 
-    public float getX() {
+    public double getX() {
         return this.curX;
     }
 
-    public void setX(float x) {
+    public void setX(double x) {
         this.curX = this.prevX = x;
     }
 
-    public float getY() {
+    public double getY() {
         return this.curY;
     }
 
-    public void setY(float y) {
+    public void setY(double y) {
         this.curY = this.prevY = y;
     }
 
-    protected float getXAtTime(float deltaTime) {
+    protected double getXAtTime(float deltaTime) {
         return MathF.lerp(deltaTime, this.prevX, this.curX);
     }
 
-    protected float getYAtTime(float deltaTime) {
+    protected double getYAtTime(float deltaTime) {
         return MathF.lerp(deltaTime, this.prevY, this.curY);
     }
 
-    public void moveTo(float x, float y) {
+    public void moveTo(double x, double y) {
         this.curX = x;
         this.curY = y;
     }
 
-    public void moveBy(float x, float y) {
+    public void moveBy(double x, double y) {
         this.curX += x;
         this.curY += y;
     }

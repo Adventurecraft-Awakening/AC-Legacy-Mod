@@ -15,7 +15,7 @@ import org.lwjgl.util.vector.Vector3f;
 
 import java.util.ArrayList;
 
-public abstract class ScriptModelBase {
+public abstract class ScriptModelBase implements ScriptColor {
 
     protected final ArrayList<ModelPart> boxes = new ArrayList<>();
 
@@ -30,6 +30,7 @@ public abstract class ScriptModelBase {
     public float prevPitch;
     public float prevRoll;
 
+    // TODO: Vec3 accessors?
     public double x;
     public double y;
     public double z;
@@ -38,10 +39,7 @@ public abstract class ScriptModelBase {
     public float roll;
 
     public int colorMode = 0;
-    public float r = 1.0F;
-    public float g = 1.0F;
-    public float b = 1.0F;
-    public float a = 1.0F;
+    private ScriptVec4 color = new ScriptVec4(1.0);
     private int cachedBrightnessKey = -1;
 
     protected int textureWidth = 64;
@@ -88,9 +86,7 @@ public abstract class ScriptModelBase {
             case 3:
                 // use the lightning value of the attached model
                 if (this.modelAttachment != null) {
-                    this.r = this.modelAttachment.r;
-                    this.g = this.modelAttachment.g;
-                    this.b = this.modelAttachment.b;
+                    this.color.setXyz(this.modelAttachment.color);
                 }
                 break;
             default:
@@ -108,10 +104,15 @@ public abstract class ScriptModelBase {
                 break;
         }
 
-        if (this.a < 1.0) {
+        ScriptVec4 color = this.getColor();
+        float r = (float) color.getR();
+        float g = (float) color.getG();
+        float b = (float) color.getB();
+        float a = (float) color.getA();
+        if (a < 1.0) {
             GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
             GL11.glEnable(GL11.GL_BLEND);
-            GL11.glColor4f(r, g, b, Math.min(this.a, 1.0F));
+            GL11.glColor4f(r, g, b, Math.min(a, 1.0F));
         }
         else {
             GL11.glColor3f(r, g, b);
@@ -137,7 +138,7 @@ public abstract class ScriptModelBase {
             }
         }
 
-        if (this.a < 1.0) {
+        if (a < 1.0) {
             GL11.glDisable(GL11.GL_BLEND);
         }
     }
@@ -168,17 +169,19 @@ public abstract class ScriptModelBase {
         this.setBrightness(Math.max(brightness, 255) / 256.0F);
     }
 
-    public void setRGB(float r, float g, float b) {
-        this.r = r;
-        this.g = g;
-        this.b = b;
+    @Deprecated
+    public void setRGB(double r, double g, double b) {
+        this.color.setR(r);
+        this.color.setG(g);
+        this.color.setB(b);
     }
 
-    public void setRGBA(float r, float g, float b, float a) {
-        this.r = r;
-        this.g = g;
-        this.b = b;
-        this.a = a;
+    @Deprecated
+    public void setRGBA(double r, double g, double b, double a) {
+        this.color.setR(r);
+        this.color.setG(g);
+        this.color.setB(b);
+        this.color.setA(a);
     }
 
     public void setPosition(double x, double y, double z) {
@@ -209,25 +212,25 @@ public abstract class ScriptModelBase {
 
         float sinYaw = MathF.sin(yaw);
         float cosYaw = MathF.cos(yaw);
-        double tempY = x * cosYaw + z * sinYaw;
+        double tmp = x * cosYaw + z * sinYaw;
         z = z * cosYaw - x * sinYaw;
-        x = tempY;
+        x = tmp;
 
         float sinPitch = MathF.sin(pitch);
         float cosPitch = MathF.cos(pitch);
-        tempY = z * cosPitch + y * sinPitch;
+        tmp = z * cosPitch + y * sinPitch;
         y = y * cosPitch - z * sinPitch;
-        z = tempY;
+        z = tmp;
 
         float sinRoll = MathF.sin(roll);
         float cosRoll = MathF.cos(roll);
-        tempY = y * cosRoll + x * sinRoll;
+        tmp = y * cosRoll + x * sinRoll;
         x = x * cosRoll - y * sinRoll;
 
         x += this.x;
-        tempY += this.y;
+        tmp += this.y;
         z += this.z;
-        this.moveTo(x, tempY, z);
+        this.moveTo(x, tmp, z);
     }
 
     public void rotateTo(float yaw, float pitch, float roll) {
@@ -258,12 +261,67 @@ public abstract class ScriptModelBase {
         return new ScriptVec3(this.yaw, this.pitch, this.roll);
     }
 
-    public float getAlpha() {
-        return this.a;
+    @Override
+    public ScriptVec4 getColor() {
+        return this.color;
     }
 
-    public void setAlpha(float alpha) {
-        this.a = alpha;
+    @Override
+    public void setColor(ScriptVec4 value) {
+        if (value == null) {
+            value = new ScriptVec4(1.0F);
+        }
+        this.color = value;
+    }
+
+    @Deprecated
+    public double getColorRed() {
+        return this.color.getR();
+    }
+
+    @Deprecated
+    public void setColorRed(double value) {
+        this.color.setR(value);
+    }
+
+    @Deprecated
+    public double getColorGreen() {
+        return this.color.getG();
+    }
+
+    @Deprecated
+    public void setColorGreen(double value) {
+        this.color.setG(value);
+    }
+
+    @Deprecated
+    public double getColorBlue() {
+        return this.color.getB();
+    }
+
+    @Deprecated
+    public void setColorBlue(double value) {
+        this.color.setB(value);
+    }
+
+    @Deprecated
+    public double getColorAlpha() {
+        return this.color.getA();
+    }
+
+    @Deprecated
+    public void setColorAlpha(double value) {
+        this.color.setA(value);
+    }
+
+    @Deprecated
+    public int getModes() {
+        return this.colorMode;
+    }
+
+    @Deprecated
+    public void setModes(int value) {
+        this.colorMode = value;
     }
 
     protected static final ArrayList<ScriptModelBase> activeModels = new ArrayList<>();

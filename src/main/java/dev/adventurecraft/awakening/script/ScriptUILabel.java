@@ -11,32 +11,26 @@ import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.client.renderer.Textures;
 
 @SuppressWarnings("unused")
-public class ScriptUILabel extends UIElement {
+public class ScriptUILabel extends UIElement implements ScriptColor {
 
     private String text;
     private String[] textLines;
     public boolean shadow;
     public boolean centered;
-    public float red;
-    public float green;
-    public float blue;
-    public float alpha;
 
-    public ScriptUILabel(String text, float x, float y) {
+    private ScriptVec4 color;
+
+    public ScriptUILabel(String text, double x, double y) {
         this(text, x, y, ((ExInGameHud) Minecraft.instance.gui).getScriptUI());
     }
 
-    public ScriptUILabel(String text, float x, float y, ScriptUIContainer container) {
+    public ScriptUILabel(String text, double x, double y, ScriptUIContainer container) {
+        super(x, y);
         this.shadow = true;
         this.centered = false;
-        this.red = 1.0F;
-        this.green = 1.0F;
-        this.blue = 1.0F;
-        this.alpha = 1.0F;
+        this.color = new ScriptVec4(1.0);
         this.text = text;
         this.textLines = text.split("\n");
-        this.prevX = this.curX = x;
-        this.prevY = this.curY = y;
         if (container != null) {
             container.add(this);
         }
@@ -44,35 +38,36 @@ public class ScriptUILabel extends UIElement {
 
     @Override
     public void render(Font font, Textures textures, float deltaTime) {
-        int alpha = MathF.clamp((int) (this.alpha * 255.0F), 0, 255);
+        ScriptVec4 color = this.getColor();
+        int alpha = (int) MathF.clamp((color.getA() * 255.0F), 0, 255);
         if (alpha == 0) {
             return;
         }
 
-        int red = MathF.clamp((int) (this.red * 255.0F), 0, 255);
-        int green = MathF.clamp((int) (this.green * 255.0F), 0, 255);
-        int blue = MathF.clamp((int) (this.blue * 255.0F), 0, 255);
-        int color = Rgba.fromRgba8(red, green, blue, alpha);
+        int red = (int) MathF.clamp((color.getR() * 255.0F), 0, 255);
+        int green = (int) MathF.clamp((color.getG() * 255.0F), 0, 255);
+        int blue = (int) MathF.clamp((color.getB() * 255.0F), 0, 255);
+        int rgba = Rgba.fromRgba8(red, green, blue, alpha);
 
-        float x = this.getXAtTime(deltaTime);
-        float y = this.getYAtTime(deltaTime);
+        double x = this.getXAtTime(deltaTime);
+        double y = this.getYAtTime(deltaTime);
         String[] lines = this.textLines;
-        int shadowColor = this.shadow ? ExTextRenderer.getShadowColor(color) : 0;
+        int shadowColor = this.shadow ? ExTextRenderer.getShadowColor(rgba) : 0;
 
         TextRendererState state = ((ExTextRenderer) font).createState();
         state.setShadowOffset(1, 1);
 
-        state.setColor(color);
+        state.setColor(rgba);
         state.setShadow(shadowColor);
 
         state.begin(Tesselator.instance);
         for (String line : lines) {
-            float lineX = x;
+            double lineX = x;
             if (this.centered) {
-                lineX = x - (float) (state.measureText(line).width() / 2);
+                lineX = x - (state.measureText(line).width() / 2.0);
             }
 
-            state.drawText(line, lineX, y);
+            state.drawText(line, (float) lineX, (float) y);
             state.resetFormat();
 
             y += 9.0F;
@@ -87,5 +82,18 @@ public class ScriptUILabel extends UIElement {
     public void setText(String text) {
         this.text = text;
         this.textLines = text.split("\n");
+    }
+
+    @Override
+    public ScriptVec4 getColor() {
+        return this.color;
+    }
+
+    @Override
+    public void setColor(ScriptVec4 value) {
+        if (value == null) {
+            value = new ScriptVec4(1.0);
+        }
+        this.color = value;
     }
 }

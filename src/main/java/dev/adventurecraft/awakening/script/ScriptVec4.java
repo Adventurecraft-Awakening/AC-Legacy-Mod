@@ -14,11 +14,11 @@ public class ScriptVec4 {
         this.w = w;
     }
 
-    public ScriptVec4(float x, float y, float z, float w) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-        this.w = w;
+    public ScriptVec4(double value) {
+        this.x = value;
+        this.y = value;
+        this.z = value;
+        this.w = value;
     }
 
     public ScriptVec4(ScriptVec3 xyz, double w) {
@@ -64,11 +64,22 @@ public class ScriptVec4 {
         return this;
     }
 
+    @Override
+    public ScriptVec4 clone() {
+        return new ScriptVec4(this.x, this.y, this.z, this.w);
+    }
+
     public ScriptVec3 getXyz() {
         return new ScriptVec3(this.x, this.y, this.z);
     }
 
     public void setXyz(ScriptVec3 values) {
+        this.x = values.x;
+        this.y = values.y;
+        this.z = values.z;
+    }
+
+    public void setXyz(ScriptVec4 values) {
         this.x = values.x;
         this.y = values.y;
         this.z = values.z;

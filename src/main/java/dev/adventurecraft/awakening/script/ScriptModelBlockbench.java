@@ -75,16 +75,10 @@ public class ScriptModelBlockbench extends ScriptModelBase {
     public void addBox(
         int width, int height, int length,
         int textureOffsetX, int textureOffsetY) {
-        this.setSize(width, height, length);
-
-        var cuboid = new ModelPart(textureOffsetX, textureOffsetY);
-        ((ExCuboid) cuboid).setTWidth(this.textureWidth);
-        ((ExCuboid) cuboid).setTHeight(this.textureHeight);
-        ((ExCuboid) cuboid).addBoxInverted(0, 0, 0, width, height, length, 0.0F);
-        this.boxes.add(cuboid);
+        this.addBoxInflated(width, height, length, textureOffsetX, textureOffsetY, 0.0F);
     }
 
-    public void addBoxExpanded(
+    public void addBoxInflated(
         int width, int height, int length,
         int textureOffsetX, int textureOffsetY, float inflate) {
         this.setSize(width, height, length);

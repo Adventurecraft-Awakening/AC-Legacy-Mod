@@ -12,13 +12,13 @@ public class ScriptVec3 {
 		this.z = z;
 	}
 
-	public ScriptVec3(float x, float y, float z) {
-		this.x = x;
-		this.y = y;
-		this.z = z;
-	}
+    public ScriptVec3(double value) {
+        this.x = value;
+        this.y = value;
+        this.z = value;
+    }
 
-	public ScriptVec3 add(ScriptVec3 vec) {
+    public ScriptVec3 add(ScriptVec3 vec) {
 		this.x += vec.x;
 		this.y += vec.y;
 		this.z += vec.z;
