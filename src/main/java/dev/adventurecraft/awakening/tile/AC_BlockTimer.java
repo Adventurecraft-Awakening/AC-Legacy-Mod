@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.tile;
 
-import dev.adventurecraft.awakening.common.*;
+import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.gui.AC_GuiTimer;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTimer;
@@ -34,19 +34,27 @@ public class AC_BlockTimer extends TileEntityTile implements AC_ITriggerDebugBlo
 
     @Override
     public void onTriggerActivated(Level world, int x, int y, int z) {
-        var entity = (AC_TileEntityTimer) world.getTileEntity(x, y, z);
-        if (entity.canActivate && !entity.active) {
-            entity.startActive();
+        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityTimer entityTimer)) {
+            return;
         }
+        if (entityTimer.canActivate && !entityTimer.active) {
+            entityTimer.startActive();
+        }
+
     }
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active) {
-            var entity = (AC_TileEntityTimer) world.getTileEntity(x, y, z);
-            AC_GuiTimer.showUI(entity);
+        if (!AC_DebugMode.active) {
+            return false;
         }
-        return true;
+
+        if (world.getTileEntity(x, y, z) instanceof AC_TileEntityTimer entityTimer) {
+            AC_GuiTimer.showUI(entityTimer);
+            return true;
+        }
+        return false;
+
     }
 
     @Override
@@ -56,10 +64,12 @@ public class AC_BlockTimer extends TileEntityTile implements AC_ITriggerDebugBlo
 
     @Override
     public void reset(Level world, int x, int y, int z, boolean forDeath) {
-        var entity = (AC_TileEntityTimer) world.getTileEntity(x, y, z);
-        entity.active = false;
-        entity.canActivate = true;
-        entity.ticks = 0;
+        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityTimer entityTimer)) {
+            return;
+        }
+        entityTimer.active = false;
+        entityTimer.canActivate = true;
+        entityTimer.ticks = 0;
         ((ExWorld) world).getTriggerManager().removeArea(x, y, z);
     }
 }

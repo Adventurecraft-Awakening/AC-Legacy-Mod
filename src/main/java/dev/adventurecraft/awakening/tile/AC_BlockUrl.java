@@ -1,9 +1,9 @@
 package dev.adventurecraft.awakening.tile;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
-import dev.adventurecraft.awakening.tile.entity.AC_TileEntityUrl;
 import dev.adventurecraft.awakening.common.gui.AC_GuiUrl;
 import dev.adventurecraft.awakening.common.gui.AC_GuiUrlRequest;
+import dev.adventurecraft.awakening.tile.entity.AC_TileEntityUrl;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Material;
@@ -34,21 +34,24 @@ public class AC_BlockUrl extends TileEntityTile implements AC_ITriggerDebugBlock
 
     @Override
     public void onTriggerActivated(Level world, int x, int y, int z) {
-        var entity = (AC_TileEntityUrl) world.getTileEntity(x, y, z);
-        if (entity.url != null && !entity.url.isEmpty()) {
-            AC_GuiUrlRequest.showUI(entity.url);
+        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityUrl entityUrl)) {
+            return;
+        }
+        if (entityUrl.url != null && !entityUrl.url.isEmpty()) {
+            AC_GuiUrlRequest.showUI(entityUrl.url);
         }
     }
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active) {
-            var entity = (AC_TileEntityUrl) world.getTileEntity(x, y, z);
-            AC_GuiUrl.showUI(entity);
-            return true;
-        } else {
+        if (!AC_DebugMode.active) {
             return false;
         }
+        if (world.getTileEntity(x, y, z) instanceof AC_TileEntityUrl entityUrl) {
+            AC_GuiUrl.showUI(entityUrl);
+            return true;
+        }
+        return false;
     }
 
     @Override

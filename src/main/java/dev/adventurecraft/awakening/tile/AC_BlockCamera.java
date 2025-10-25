@@ -1,9 +1,9 @@
 package dev.adventurecraft.awakening.tile;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
-import dev.adventurecraft.awakening.tile.entity.AC_TileEntityCamera;
 import dev.adventurecraft.awakening.common.gui.AC_GuiCameraBlock;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
+import dev.adventurecraft.awakening.tile.entity.AC_TileEntityCamera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -35,12 +35,14 @@ public class AC_BlockCamera extends TileEntityTile implements AC_ITriggerDebugBl
 
     @Override
     public void onTriggerActivated(Level world, int x, int y, int z) {
-        var entity = (AC_TileEntityCamera) world.getTileEntity(x, y, z);
-        entity.loadCamera();
+        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityCamera entityCamera)) {
+            return;
+        }
+        entityCamera.loadCamera();
         ExMinecraft mc = (ExMinecraft) Minecraft.instance;
         mc.getCutsceneCamera().startCamera();
         mc.setCameraActive(true);
-        mc.setCameraPause(entity.pauseGame);
+        mc.setCameraPause(entityCamera.pauseGame);
     }
 
     @Override
@@ -52,12 +54,13 @@ public class AC_BlockCamera extends TileEntityTile implements AC_ITriggerDebugBl
         if (!AC_DebugMode.active) {
             return false;
         }
-
+        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityCamera entityCamera)) {
+            return false;
+        }
         Minecraft.instance.gui.addMessage("Set Active Editing Camera");
-        var entity = (AC_TileEntityCamera) world.getTileEntity(x, y, z);
-        ((ExMinecraft) Minecraft.instance).setActiveCutsceneCamera(entity.getCamera());
-        entity.getCamera().loadCameraEntities();
-        AC_GuiCameraBlock.showUI(entity);
+        ((ExMinecraft) Minecraft.instance).setActiveCutsceneCamera(entityCamera.getCamera());
+        entityCamera.getCamera().loadCameraEntities();
+        AC_GuiCameraBlock.showUI(entityCamera);
         return true;
     }
 

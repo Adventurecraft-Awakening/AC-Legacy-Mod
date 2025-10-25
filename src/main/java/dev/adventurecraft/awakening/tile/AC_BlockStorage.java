@@ -1,8 +1,9 @@
 package dev.adventurecraft.awakening.tile;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
-import dev.adventurecraft.awakening.tile.entity.AC_TileEntityStorage;
 import dev.adventurecraft.awakening.common.gui.AC_GuiStorage;
+import dev.adventurecraft.awakening.item.AC_Items;
+import dev.adventurecraft.awakening.tile.entity.AC_TileEntityStorage;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Material;
@@ -33,17 +34,25 @@ public class AC_BlockStorage extends TileEntityTile implements AC_ITriggerDebugB
 
     @Override
     public void onTriggerActivated(Level world, int x, int y, int z) {
-        var entity = (AC_TileEntityStorage) world.getTileEntity(x, y, z);
-        entity.loadCurrentArea();
+        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityStorage entityStorage)) {
+            return;
+        }
+        entityStorage.loadCurrentArea();
+
     }
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active) {
-            var entity = (AC_TileEntityStorage) world.getTileEntity(x, y, z);
-            AC_GuiStorage.showUI(entity);
+        if (!AC_DebugMode.active) {
+            return false;
         }
-        return true;
+        if ((player.getSelectedItem() == null || player.getSelectedItem().id == AC_Items.cursor.id)) {
+            if (world.getTileEntity(x, y, z) instanceof AC_TileEntityStorage entityStorage) {
+                AC_GuiStorage.showUI(entityStorage);
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
