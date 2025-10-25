@@ -1,10 +1,10 @@
 package dev.adventurecraft.awakening.tile;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
-import dev.adventurecraft.awakening.tile.entity.AC_TileEntityStore;
 import dev.adventurecraft.awakening.common.gui.AC_GuiStoreDebug;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
+import dev.adventurecraft.awakening.tile.entity.AC_TileEntityStore;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;
@@ -36,29 +36,39 @@ public class AC_BlockStore extends TileEntityTile implements AC_ITriggerBlock {
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        var entity = (AC_TileEntityStore) world.getTileEntity(x, y, z);
+        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityStore entityStore)) {
+            return false;
+        }
         if (AC_DebugMode.active) {
-            AC_GuiStoreDebug.showUI(entity);
+            AC_GuiStoreDebug.showUI(entityStore);
             return true;
         }
 
-        if (entity.buySupplyLeft == 0) {
+        if (entityStore.buySupplyLeft == 0) {
             return false;
         }
 
-        if (entity.sellItemID != 0 &&
-            !((ExPlayerInventory) player.inventory).consumeItemAmount(entity.sellItemID, entity.sellItemDamage, entity.sellItemAmount)) {
+        if (entityStore.sellItemID != 0 &&
+            !((ExPlayerInventory) player.inventory).consumeItemAmount(
+                entityStore.sellItemID,
+                entityStore.sellItemDamage,
+                entityStore.sellItemAmount
+            )) {
             Minecraft.instance.gui.addMessage("Don't have enough to trade.");
             return true;
         }
 
-        if (entity.buyItemID != 0) {
-            player.inventory.add(new ItemInstance(entity.buyItemID, entity.buyItemAmount, entity.buyItemDamage));
+        if (entityStore.buyItemID != 0) {
+            player.inventory.add(new ItemInstance(
+                entityStore.buyItemID,
+                entityStore.buyItemAmount,
+                entityStore.buyItemDamage
+            ));
         }
 
-        --entity.buySupplyLeft;
-        if (entity.tradeTrigger != null) {
-            ((ExWorld) world).getTriggerManager().addArea(x, y, z, entity.tradeTrigger);
+        --entityStore.buySupplyLeft;
+        if (entityStore.tradeTrigger != null) {
+            ((ExWorld) world).getTriggerManager().addArea(x, y, z, entityStore.tradeTrigger);
             ((ExWorld) world).getTriggerManager().removeArea(x, y, z);
         }
         return true;
@@ -66,7 +76,8 @@ public class AC_BlockStore extends TileEntityTile implements AC_ITriggerBlock {
 
     @Override
     public void reset(Level world, int x, int y, int z, boolean forDeath) {
-        var entity = (AC_TileEntityStore) world.getTileEntity(x, y, z);
-        entity.buySupplyLeft = entity.buySupply;
+        if (world.getTileEntity(x, y, z) instanceof AC_TileEntityStore entityStore) {
+            entityStore.buySupplyLeft = entityStore.buySupply;
+        }
     }
 }

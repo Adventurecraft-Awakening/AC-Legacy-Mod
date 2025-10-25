@@ -1,9 +1,9 @@
 package dev.adventurecraft.awakening.tile;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
-import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTree;
 import dev.adventurecraft.awakening.common.gui.AC_GuiTree;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
+import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTree;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Material;
@@ -54,11 +54,14 @@ public class AC_BlockTree extends TileEntityTile implements AC_IBlockColor {
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active) {
-            var entity = (AC_TileEntityTree) world.getTileEntity(x, y, z);
-            AC_GuiTree.showUI(entity);
+        if (!AC_DebugMode.active) {
+            return false;
         }
-        return true;
+        if (world.getTileEntity(x, y, z) instanceof AC_TileEntityTree entityTree) {
+            AC_GuiTree.showUI(entityTree);
+            return true;
+        }
+        return false;
     }
 
     @Override

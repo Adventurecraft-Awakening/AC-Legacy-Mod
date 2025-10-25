@@ -1,14 +1,15 @@
 package dev.adventurecraft.awakening.tile;
 
-import java.util.Random;
-
-import dev.adventurecraft.awakening.common.*;
+import dev.adventurecraft.awakening.common.AC_DebugMode;
+import dev.adventurecraft.awakening.common.AC_TriggerArea;
+import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.common.gui.AC_GuiTrigger;
+import dev.adventurecraft.awakening.extension.block.ExBlock;
+import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityMinMax;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTrigger;
-import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -17,8 +18,8 @@ import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.tile.TileEntityTile;
 import net.minecraft.world.level.tile.entity.TileEntity;
 import net.minecraft.world.phys.AABB;
-import dev.adventurecraft.awakening.extension.block.ExBlock;
-import dev.adventurecraft.awakening.extension.world.ExWorld;
+
+import java.util.Random;
 
 public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerDebugBlock {
 
@@ -66,11 +67,15 @@ public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerDebugB
     }
 
     private void setNotVisited(Level world, int x, int y, int z) {
-        var entity = (AC_TileEntityTrigger) world.getTileEntity(x, y, z);
-        if (entity == null || !entity.visited) {
+
+        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityTrigger entityTrigger)) {
+            return;
+
+        }
+        if (!entityTrigger.visited) {
             return;
         }
-        entity.visited = false;
+        entityTrigger.visited = false;
 
         for (int bX = x - 1; bX <= x + 1; ++bX) {
             for (int bZ = z - 1; bZ <= z + 1; ++bZ) {
@@ -90,13 +95,14 @@ public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerDebugB
     }
 
     private boolean _isAlreadyActivated(Level world, int x, int y, int z) {
-        var entity = (AC_TileEntityTrigger) world.getTileEntity(x, y, z);
-        if (entity == null || entity.visited) {
+        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityTrigger entityTrigger)) {
             return false;
         }
-        entity.visited = true;
-
-        if (entity.activated > 0) {
+        if (entityTrigger.visited) {
+            return false;
+        }
+        entityTrigger.visited = true;
+        if (entityTrigger.activated > 0) {
             return true;
         }
 
@@ -109,7 +115,6 @@ public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerDebugB
                 }
             }
         }
-
         return false;
     }
 
@@ -119,11 +124,13 @@ public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerDebugB
     }
 
     private void _removeArea(Level world, int x, int y, int z) {
-        var entity = (AC_TileEntityTrigger) world.getTileEntity(x, y, z);
-        if (entity.visited) {
+        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityTrigger entityTrigger)) {
             return;
         }
-        entity.visited = true;
+        if (entityTrigger.visited) {
+            return;
+        }
+        entityTrigger.visited = true;
         ((ExWorld) world).getTriggerManager().removeArea(x, y, z);
 
         for (int bX = x - 1; bX <= x + 1; ++bX) {
@@ -146,28 +153,31 @@ public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerDebugB
             return;
         }
 
-        var e = (AC_TileEntityTrigger) world.getTileEntity(x, y, z);
+        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityTrigger entityTrigger)) {
+            return;
+        }
+
         // Treat trigger blocks with no set as if they are not trigger blocks
-        if (!e.isSet()) {
+        if (!entityTrigger.isSet()) {
             return;
         }
 
         if (!this.isAlreadyActivated(world, x, y, z)) {
-            if (!e.resetOnTrigger) {
-                var area = new AC_TriggerArea(e.min(), e.max());
+            if (!entityTrigger.resetOnTrigger) {
+                var area = new AC_TriggerArea(entityTrigger.min(), entityTrigger.max());
                 ((ExWorld) world).getTriggerManager().addArea(x, y, z, area);
             }
             else {
-                ExBlock.resetArea(world, e.min(), e.max());
+                ExBlock.resetArea(world, entityTrigger.min(), entityTrigger.max());
             }
         }
 
         // If player is dead, set activated to 1 so that the triggerArea can be removed in AC_TileEntityTrigger!
         if (((Player) entity).health <= 0) {
-            e.activated = 1;
+            entityTrigger.activated = 1;
         }
         else {
-            e.activated = 2;
+            entityTrigger.activated = 2;
         }
     }
 
@@ -176,21 +186,26 @@ public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerDebugB
             return;
         }
 
-        var entity = (AC_TileEntityTrigger) world.getTileEntity(x, y, z);
-        if (!entity.resetOnTrigger) {
+        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityTrigger entityTrigger)) {
+            return;
+        }
+        if (!entityTrigger.resetOnTrigger) {
             this.removeArea(world, x, y, z);
         }
     }
 
     public void setTriggerToSelection(Level world, int x, int y, int z) {
-        var e = (AC_TileEntityMinMax) world.getTileEntity(x, y, z);
-        Coord min = AC_ItemCursor.min();
-        Coord max = AC_ItemCursor.max();
-        if (e.min().equals(min) && e.max().equals(max)) {
+
+        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityMinMax entityMinMax)) {
             return;
         }
-        e.setMin(min);
-        e.setMax(max);
+        Coord min = AC_ItemCursor.min();
+        Coord max = AC_ItemCursor.max();
+        if (entityMinMax.min().equals(min) && entityMinMax.max().equals(max)) {
+            return;
+        }
+        entityMinMax.setMin(min);
+        entityMinMax.setMax(max);
 
         for (int bX = x - 1; bX <= x + 1; ++bX) {
             for (int bZ = z - 1; bZ <= z + 1; ++bZ) {
@@ -204,11 +219,13 @@ public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerDebugB
     }
 
     public void setTriggerReset(Level world, int x, int y, int z, boolean reset) {
-        var entity = (AC_TileEntityTrigger) world.getTileEntity(x, y, z);
-        if (entity.resetOnTrigger == reset) {
+        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityTrigger entityTrigger)) {
             return;
         }
-        entity.resetOnTrigger = reset;
+        if (entityTrigger.resetOnTrigger == reset) {
+            return;
+        }
+        entityTrigger.resetOnTrigger = reset;
 
         for (int bX = x - 1; bX <= x + 1; ++bX) {
             for (int bZ = z - 1; bZ <= z + 1; ++bZ) {
@@ -223,11 +240,12 @@ public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerDebugB
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active) {
-            ItemInstance item = player.getSelectedItem();
-            if (item == null || item.id == AC_Items.cursor.id) {
-                var entity = (AC_TileEntityTrigger) world.getTileEntity(x, y, z);
-                AC_GuiTrigger.showUI(entity);
+        if (!AC_DebugMode.active) {
+            return false;
+        }
+        if ((player.getSelectedItem() == null || player.getSelectedItem().id == AC_Items.cursor.id)) {
+            if (world.getTileEntity(x, y, z) instanceof AC_TileEntityTrigger entityTrigger) {
+                AC_GuiTrigger.showUI(entityTrigger);
                 return true;
             }
         }
@@ -236,7 +254,8 @@ public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerDebugB
 
     @Override
     public void reset(Level world, int x, int y, int z, boolean forDeath) {
-        AC_TileEntityTrigger tileEntity = (AC_TileEntityTrigger) world.getTileEntity(x, y, z);
-        tileEntity.activated = 0;
+        if (world.getTileEntity(x, y, z) instanceof AC_TileEntityTrigger entityTrigger) {
+            entityTrigger.activated = 0;
+        }
     }
 }

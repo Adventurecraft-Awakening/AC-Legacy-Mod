@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.tile;
 
-import dev.adventurecraft.awakening.common.*;
+import dev.adventurecraft.awakening.common.AC_DebugMode;
+import dev.adventurecraft.awakening.common.AC_TriggerArea;
 import dev.adventurecraft.awakening.common.gui.AC_GuiTriggerPushable;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
@@ -8,7 +9,6 @@ import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityMinMax;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTriggerPushable;
-import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Material;
@@ -31,7 +31,10 @@ public class AC_BlockTriggerPushable extends AC_BlockColorWithEntity {
 
     @Override
     public void neighborChanged(Level world, int x, int y, int z, int id) {
-        var entity = (AC_TileEntityTriggerPushable) world.getTileEntity(x, y, z);
+        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityTriggerPushable entityTriggerPushable)) {
+
+            return;
+        }
         int meta = world.getData(x, y, z);
         boolean pushable = this.checkBlock(world, x + 1, y, z, meta);
         pushable |= this.checkBlock(world, x - 1, y, z, meta);
@@ -39,37 +42,40 @@ public class AC_BlockTriggerPushable extends AC_BlockColorWithEntity {
         pushable |= this.checkBlock(world, x, y - 1, z, meta);
         pushable |= this.checkBlock(world, x, y, z + 1, meta);
         pushable |= this.checkBlock(world, x, y, z - 1, meta);
-        if (entity.activated) {
+        if (entityTriggerPushable.activated) {
             if (!pushable) {
-                entity.activated = false;
+                entityTriggerPushable.activated = false;
                 ((ExWorld) world).getTriggerManager().removeArea(x, y, z);
             }
         }
         else if (pushable) {
-            entity.activated = true;
-            if (!entity.resetOnTrigger) {
-                var area = new AC_TriggerArea(entity.min(), entity.max());
+            entityTriggerPushable.activated = true;
+            if (!entityTriggerPushable.resetOnTrigger) {
+                var area = new AC_TriggerArea(entityTriggerPushable.min(), entityTriggerPushable.max());
                 ((ExWorld) world).getTriggerManager().addArea(x, y, z, area);
             }
             else {
-                ExBlock.resetArea(world, entity.min(), entity.max());
+                ExBlock.resetArea(world, entityTriggerPushable.min(), entityTriggerPushable.max());
             }
         }
     }
-
     public void setTriggerToSelection(Level world, int x, int y, int z) {
-        var entity = (AC_TileEntityMinMax) world.getTileEntity(x, y, z);
-        entity.setMin(AC_ItemCursor.min());
-        entity.setMax(AC_ItemCursor.max());
+        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityMinMax entityMinMax)) {
+            return;
+        }
+        entityMinMax.setMin(AC_ItemCursor.min());
+        entityMinMax.setMax(AC_ItemCursor.max());
+
     }
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active) {
-            ItemInstance item = player.getSelectedItem();
-            if (item == null || item.id == AC_Items.cursor.id) {
-                var entity = (AC_TileEntityTriggerPushable) world.getTileEntity(x, y, z);
-                AC_GuiTriggerPushable.showUI(entity);
+        if (!AC_DebugMode.active) {
+            return false;
+        }
+        if ((player.getSelectedItem() == null || player.getSelectedItem().id == AC_Items.cursor.id)) {
+            if (world.getTileEntity(x, y, z) instanceof AC_TileEntityTriggerPushable entityTriggerPushable) {
+                AC_GuiTriggerPushable.showUI(entityTriggerPushable);
                 return true;
             }
         }
