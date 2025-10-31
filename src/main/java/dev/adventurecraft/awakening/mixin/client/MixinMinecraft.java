@@ -409,17 +409,6 @@ public abstract class MixinMinecraft implements ExMinecraft {
     }
 
     @Inject(
-        method = "destroy",
-        at = @At(
-            value = "INVOKE",
-            target = "Lorg/lwjgl/input/Keyboard;destroy()V"
-        )
-    )
-    private void postDestroy(CallbackInfo ci) {
-        Context.exit();
-    }
-
-    @Inject(
         method = "run",
         at = @At(
             value = "INVOKE",
@@ -490,6 +479,30 @@ public abstract class MixinMinecraft implements ExMinecraft {
     )
     private void printStackOnOutOfMem(CallbackInfo ci, @Local OutOfMemoryError error) {
         error.printStackTrace();
+    }
+
+    @Redirect(
+        method = {
+            "setLevel(Lnet/minecraft/world/level/Level;Ljava/lang/String;Lnet/minecraft/world/entity/player/Player;)V",
+            "run"
+        },
+        remap = false,
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/client/Minecraft;level:Lnet/minecraft/world/level/Level;",
+            opcode = Opcodes.PUTFIELD
+        )
+    )
+    private void closeOnSetLevel(Minecraft instance, Level value) {
+        if (this.level instanceof Closeable closeable) {
+            try {
+                closeable.close();
+            }
+            catch (IOException e) {
+                ACMod.LOGGER.error("Failed to close level.", e);
+            }
+        }
+        this.level = value;
     }
 
     @Redirect(

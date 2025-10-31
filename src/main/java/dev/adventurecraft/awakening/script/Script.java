@@ -9,10 +9,11 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.level.Level;
 import org.mozilla.javascript.*;
 
+import java.io.Closeable;
 import java.util.*;
 
 @SuppressWarnings("unused")
-public class Script {
+public class Script implements Closeable {
 
     static final String SCRIPT_PACKAGE = "dev.adventurecraft.awakening.script";
 
@@ -139,13 +140,6 @@ public class Script {
         ScriptableObject.putProperty(this.globalScope, name, tmp);
     }
 
-    /* TODO:
-    protected void finalize() {
-        Context var10000 = this.cx;
-        Context.exit();
-    }
-    */
-
     public void initPlayer(LocalPlayer player) {
         this.player = new ScriptEntityPlayer(player);
         Object tmp = Context.javaToJS(this.player, this.globalScope);
@@ -263,6 +257,11 @@ public class Script {
         ContinuationPending continuation = this.cx.captureContinuation();
         continuation.setApplicationState(new ScriptContinuation(wakeUp, this.curScope));
         throw continuation;
+    }
+
+    @Override
+    public void close() {
+        this.cx.close();
     }
 
     private void printRhinoException(RhinoException ex) {

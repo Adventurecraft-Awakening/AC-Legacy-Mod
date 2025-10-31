@@ -87,7 +87,7 @@ dependencies {
     mappings "me.alphamode:nostalgia:${project.nostalgia_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    // Override ASM to support Java 23
+    // Override ASM to support Java 25
     implementation "org.ow2.asm:asm:${project.asm_version}"
     implementation "org.ow2.asm:asm-analysis:${project.asm_version}"
     implementation "org.ow2.asm:asm-commons:${project.asm_version}"
