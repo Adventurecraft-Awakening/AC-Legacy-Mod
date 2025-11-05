@@ -16,7 +16,6 @@ public class Config {
 
     private static final int GL_DEBUG_SEVERITY_NOTIFICATION = 0x826B;
 
-    private static boolean fontRendererUpdated = false;
     public static final boolean DEF_FOG_FANCY = true;
     public static final float DEF_FOG_START = 0.2F;
     public static final boolean DEF_OPTIMIZE_RENDER_DISTANCE = false;
@@ -74,7 +73,7 @@ public class Config {
         int source, int type, int id, int severity, int length, long message, long userParam) {
 
         int logSeverity = getOpenGlSeverity(ACMainThread.glDebugLogSeverity);
-        if (logSeverity < severity) {
+        if (logSeverity != GL11.GL_DONT_CARE && logSeverity < severity) {
            return;
         }
 
@@ -87,22 +86,22 @@ public class Config {
         String format = "{}, {}, {}, {}: {}";
         switch (severity) {
             case ARBDebugOutput.GL_DEBUG_SEVERITY_HIGH_ARB -> {
-                var ex = traceSeverity >= ACMainThread.GlDebugSeverity.High.ordinal() ? new Exception() : null;
+                var ex = traceSeverity >= ACMainThread.GlDebugSeverity.High.ordinal() ? new Exception("") : null;
                 glLog.error(format, "HIGH", sSrc, sType, id, sMsg, ex);
             }
             case ARBDebugOutput.GL_DEBUG_SEVERITY_MEDIUM_ARB -> {
-                var ex = traceSeverity >= ACMainThread.GlDebugSeverity.Medium.ordinal() ? new Exception() : null;
+                var ex = traceSeverity >= ACMainThread.GlDebugSeverity.Medium.ordinal() ? new Exception("") : null;
                 glLog.warn(format, "MED", sSrc, sType, id, sMsg, ex);
             }
             case ARBDebugOutput.GL_DEBUG_SEVERITY_LOW_ARB -> {
-                var ex = traceSeverity >= ACMainThread.GlDebugSeverity.Low.ordinal() ? new Exception() : null;
+                var ex = traceSeverity >= ACMainThread.GlDebugSeverity.Low.ordinal() ? new Exception("") : null;
                 glLog.warn(format, "LOW", sSrc, sType, id, sMsg, ex);
             }
             case GL_DEBUG_SEVERITY_NOTIFICATION -> {
-                var ex = traceSeverity >= ACMainThread.GlDebugSeverity.Info.ordinal() ? new Exception() : null;
+                var ex = traceSeverity >= ACMainThread.GlDebugSeverity.Info.ordinal() ? new Exception("") : null;
                 glLog.info(format, "INFO", sSrc, sType, id, sMsg, ex);
             }
-            default -> glLog.warn(format, severity, sSrc, sType, id, sMsg, new Exception());
+            default -> glLog.warn(format, severity, sSrc, sType, id, sMsg, new Exception(""));
         }
     }
 
@@ -262,13 +261,5 @@ public class Config {
     public static boolean isAnimatedSmoke() {
         var gameSettings = getOptions();
         return gameSettings == null || ((ExGameOptions) gameSettings).ofAnimatedSmoke();
-    }
-
-    public static boolean isFontRendererUpdated() {
-        return fontRendererUpdated;
-    }
-
-    public static void setFontRendererUpdated(boolean var0) {
-        fontRendererUpdated = var0;
     }
 }
