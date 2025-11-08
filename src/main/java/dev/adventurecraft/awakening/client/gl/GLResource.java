@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.client.gl;
 
-public abstract sealed class GLResource permits GLBuffer {
+public abstract sealed class GLResource permits GLBuffer, GLTexture {
 
     private static final int INVALID_HANDLE = Integer.MIN_VALUE;
 
