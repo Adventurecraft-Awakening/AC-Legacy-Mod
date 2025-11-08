@@ -7,12 +7,13 @@ public enum GLBufferTarget {
 
     ARRAY_BUFFER(GL15.GL_ARRAY_BUFFER),
     ELEMENT_BUFFER(GL15.GL_ELEMENT_ARRAY_BUFFER),
+
     COPY_READ_BUFFER(GL31.GL_COPY_READ_BUFFER),
     COPY_WRITE_BUFFER(GL31.GL_COPY_WRITE_BUFFER);
 
-    public final int id;
+    public final int symbol;
 
-    GLBufferTarget(int id) {
-        this.id = id;
+    GLBufferTarget(int symbol) {
+        this.symbol = symbol;
     }
 }

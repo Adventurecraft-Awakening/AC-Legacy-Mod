@@ -36,23 +36,23 @@ public final class GLDevice {
     }
 
     public void bind(GLBufferTarget target, GLBuffer buffer) {
-        GL15.glBindBuffer(target.id, buffer.handle());
+        GL15.glBindBuffer(target.symbol, buffer.handle());
     }
 
     public void unbind(GLBufferTarget target) {
-        GL15.glBindBuffer(target.id, 0);
+        GL15.glBindBuffer(target.symbol, 0);
     }
 
     public void alloc(GLBufferTarget target, long size, GLBufferUsage usage) {
-        GL15.glBufferData(target.id, size, usage.id);
+        GL15.glBufferData(target.symbol, size, usage.symbol);
     }
 
     public void uploadData(GLBufferTarget target, long offset, ByteBuffer data) {
-        GL15.glBufferSubData(target.id, offset, data);
+        GL15.glBufferSubData(target.symbol, offset, data);
     }
 
     public void copyBuffer(GLBufferTarget src, long srcOffset, GLBufferTarget dst, long dstOffset, long size) {
-        GL31.glCopyBufferSubData(src.id, dst.id, srcOffset, dstOffset, size);
+        GL31.glCopyBufferSubData(src.symbol, dst.symbol, srcOffset, dstOffset, size);
     }
 
     public long bindQuadElements(GLBufferTarget target, GLElementType type, long quadCount) {
@@ -100,7 +100,7 @@ public final class GLDevice {
         alloc(target, buffer.sizeInBytes(), GLBufferUsage.STATIC_COPY);
 
         int access = GL30.GL_MAP_WRITE_BIT | GL30.GL_MAP_INVALIDATE_BUFFER_BIT | GL30.GL_MAP_UNSYNCHRONIZED_BIT;
-        ByteBuffer mapping = GL30.glMapBufferRange(target.id, 0, buffer.sizeInBytes(), access);
+        ByteBuffer mapping = GL30.glMapBufferRange(target.symbol, 0, buffer.sizeInBytes(), access);
         if (mapping == null) {
             throw new IllegalStateException("failed to bind index buffer for writing");
         }
@@ -111,7 +111,7 @@ public final class GLDevice {
             default -> throw new IllegalStateException("unsupported index type");
         }
 
-        GL30.glUnmapBuffer(target.id);
+        GL30.glUnmapBuffer(target.symbol);
         return buffer;
     }
 

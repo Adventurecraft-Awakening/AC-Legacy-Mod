@@ -46,7 +46,7 @@ public final class ChunkMesh {
         GL11.glColorPointer(4, GL11.GL_UNSIGNED_BYTE, stride, 20L);
         GL11.glNormalPointer(GL11.GL_BYTE, stride, 24L);
 
-        GL11.glDrawElements(GL11.GL_TRIANGLES, (int) this.getIndexCount(), this.indexType.id, 0);
+        GL11.glDrawElements(GL11.GL_TRIANGLES, (int) this.getIndexCount(), this.indexType.symbol, 0);
     }
 
     public void delete(GLDevice device) {
@@ -71,6 +71,7 @@ public final class ChunkMesh {
         device.bind(target, buffer);
         device.alloc(target, buffer.sizeInBytes(), GLBufferUsage.STATIC_DRAW);
 
+        // TODO: upload to staging buffer and copy to target to avoid perf warning
         long offset = 0;
         for (ByteBuffer block : mesh.vertexBlocks) {
             device.uploadData(target, offset, block);

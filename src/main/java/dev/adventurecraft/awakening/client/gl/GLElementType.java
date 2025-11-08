@@ -8,11 +8,11 @@ public enum GLElementType {
     SHORT(GL11.GL_UNSIGNED_SHORT, 2),
     INT(GL11.GL_UNSIGNED_INT, 4);
 
-    public final int id;
+    public final int symbol;
     public final int size;
 
-    GLElementType(int id, int size) {
-        this.id = id;
+    GLElementType(int symbol, int size) {
+        this.symbol = symbol;
         this.size = size;
     }
 
