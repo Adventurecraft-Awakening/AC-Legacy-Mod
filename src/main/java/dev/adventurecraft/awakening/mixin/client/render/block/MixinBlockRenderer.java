@@ -100,6 +100,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
     @Shadow private boolean field_78;
     @Shadow private boolean field_79;
     @Shadow private boolean field_80;
+    @Shadow public boolean field_81;
 
     @Shadow
     public abstract void renderWest(Tile block, double x, double y, double z, int texture);
@@ -167,6 +168,9 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
 
     @Shadow
     public abstract void tesselateTorch(Tile block, double x, double y, double z, double x2, double z2);
+
+    @Shadow
+    public abstract void tesselateRowTexture(Tile tile, int data, double x, double y, double z);
 
     @Shadow
     protected abstract float getWaterHeight(int x, int y, int z, Material material);
@@ -1817,27 +1821,154 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         }
     }
 
-    @Redirect(
-        method = "renderTile",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/world/level/tile/Tile;getTexture(I)I"
-        ),
-        slice = @Slice(
-            to = @At(
-                value = "INVOKE",
-                target = "Lnet/minecraft/world/level/tile/Tile;getTexture(I)I",
-                ordinal = 11
-            )
-        )
-    )
-    public int useTextureForSide(
-        Tile instance, int i, @Local(
-            index = 2,
-            argsOnly = true
-        ) int meta
-    ) {
-        return instance.getTexture(i, meta);
+    @Overwrite
+    public void renderTile(Tile tile, int meta, float f) {
+        if (this.field_81) {
+            int c = tile.getColor(meta);
+            float rcp = f / 255.0f;
+            float r = (float) (c >> 16 & 0xFF) * rcp;
+            float g = (float) (c >> 8 & 0xFF) * rcp;
+            float b = (float) (c & 0xFF) * rcp;
+            GL11.glColor4f(r, g, b, 1.0f);
+        }
+
+        Tesselator ts = this.tesselator();
+        double o = -0.5;
+
+        int shape = tile.getRenderShape();
+        if (shape == BlockShapes.BLOCK || shape == BlockShapes.PISTON) {
+            if (shape == BlockShapes.PISTON) {
+                meta = 1;
+            }
+            tile.updateDefaultShape();
+            ts.begin();
+
+            ts.normal(0.0f, -1.0f, 0.0f);
+            this.renderFaceDown(tile, o, o, o, tile.getTexture(Facing.DOWN, meta));
+
+            ts.normal(0.0f, 1.0f, 0.0f);
+            this.renderFaceUp(tile, o, o, o, tile.getTexture(Facing.UP, meta));
+
+            ts.normal(0.0f, 0.0f, -1.0f);
+            this.renderNorth(tile, o, o, o, tile.getTexture(Facing.NORTH, meta));
+
+            ts.normal(0.0f, 0.0f, 1.0f);
+            this.renderSouth(tile, o, o, o, tile.getTexture(Facing.SOUTH, meta));
+
+            ts.normal(-1.0f, 0.0f, 0.0f);
+            this.renderWest(tile, o, o, o, tile.getTexture(Facing.WEST, meta));
+
+            ts.normal(1.0f, 0.0f, 0.0f);
+            this.renderEast(tile, o, o, o, tile.getTexture(Facing.EAST, meta));
+
+            ts.end();
+        }
+        else if (shape == BlockShapes.REEDS) {
+            ts.begin();
+            ts.normal(0.0f, -1.0f, 0.0f);
+            this.tesselateCrossTexture(tile, meta, o, o, o);
+            ts.end();
+        }
+        else if (shape == BlockShapes.CACTUS) {
+            tile.updateDefaultShape();
+            ts.begin();
+
+            ts.normal(0.0f, -1.0f, 0.0f);
+            this.renderFaceDown(tile, o, o, o, tile.getTexture(Facing.DOWN, meta));
+
+            ts.normal(0.0f, 1.0f, 0.0f);
+            this.renderFaceUp(tile, o, o, o, tile.getTexture(Facing.UP, meta));
+
+            float f3 = 0.0625f;
+            ts.normal(0.0f, 0.0f, -1.0f);
+            this.renderNorth(tile, o, o, o + f3, tile.getTexture(Facing.NORTH, meta));
+
+            ts.normal(0.0f, 0.0f, 1.0f);
+            this.renderSouth(tile, o, o, o - f3, tile.getTexture(Facing.SOUTH, meta));
+
+            ts.normal(-1.0f, 0.0f, 0.0f);
+            this.renderWest(tile, o + f3, o, o, tile.getTexture(Facing.WEST, meta));
+
+            ts.normal(1.0f, 0.0f, 0.0f);
+            this.renderEast(tile, o - f3, o, o, tile.getTexture(Facing.EAST, meta));
+
+            ts.end();
+        }
+        else if (shape == BlockShapes.CROP) {
+            ts.begin();
+            ts.normal(0.0f, -1.0f, 0.0f);
+            this.tesselateRowTexture(tile, meta, o, o, o);
+            ts.end();
+        }
+        else if (shape == BlockShapes.TORCH) {
+            ts.begin();
+            ts.normal(0.0f, -1.0f, 0.0f);
+            this.tesselateTorch(tile, o, o, o, 0.0, 0.0);
+            ts.end();
+        }
+        else if (shape == BlockShapes.STAIRS) {
+            for (int i = 0; i < 2; ++i) {
+                switch (i) {
+                    case 0 -> tile.setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.5f);
+                    case 1 -> tile.setShape(0.0f, 0.0f, 0.5f, 1.0f, 0.5f, 1.0f);
+                }
+                ts.begin();
+
+                ts.normal(0.0f, -1.0f, 0.0f);
+                this.renderFaceDown(tile, o, o, o, tile.getTexture(Facing.DOWN, meta));
+
+                ts.normal(0.0f, 1.0f, 0.0f);
+                this.renderFaceUp(tile, o, o, o, tile.getTexture(Facing.UP, meta));
+
+                ts.normal(0.0f, 0.0f, -1.0f);
+                this.renderNorth(tile, o, o, o, tile.getTexture(Facing.NORTH, meta));
+
+                ts.normal(0.0f, 0.0f, 1.0f);
+                this.renderSouth(tile, o, o, o, tile.getTexture(Facing.SOUTH, meta));
+
+                ts.normal(-1.0f, 0.0f, 0.0f);
+                this.renderWest(tile, o, o, o, tile.getTexture(Facing.WEST, meta));
+
+                ts.normal(1.0f, 0.0f, 0.0f);
+                this.renderEast(tile, o, o, o, tile.getTexture(Facing.EAST, meta));
+
+                ts.end();
+            }
+        }
+        else if (shape == BlockShapes.FENCE) {
+            for (int i = 0; i < 4; ++i) {
+                float a = 0.125f;
+                float b = 0.0625f;
+                switch (i) {
+                    case 0 -> tile.setShape(0.5f - a, 0.0f, 0.0f, 0.5f + a, 1.0f, a * 2.0f);
+                    case 1 -> tile.setShape(0.5f - a, 0.0f, 1.0f - a * 2.0f, 0.5f + a, 1.0f, 1.0f);
+                    case 2 -> tile.setShape(0.5f - b, 1.0f - b * 3.0f, -b * 2.0f, 0.5f + b, 1.0f - b, 1.0f + b * 2.0f);
+                    case 3 -> tile.setShape(0.5f - b, 0.5f - b * 3.0f, -b * 2.0f, 0.5f + b, 0.5f - b, 1.0f + b * 2.0f);
+                }
+                ts.begin();
+
+                ts.normal(0.0f, -1.0f, 0.0f);
+                this.renderFaceDown(tile, o, o, o, tile.getTexture(Facing.DOWN));
+
+                ts.normal(0.0f, 1.0f, 0.0f);
+                this.renderFaceUp(tile, o, o, o, tile.getTexture(Facing.UP));
+
+                ts.normal(0.0f, 0.0f, -1.0f);
+                this.renderNorth(tile, o, o, o, tile.getTexture(Facing.NORTH));
+
+                ts.normal(0.0f, 0.0f, 1.0f);
+                this.renderSouth(tile, o, o, o, tile.getTexture(Facing.SOUTH));
+
+                ts.normal(-1.0f, 0.0f, 0.0f);
+                this.renderWest(tile, o, o, o, tile.getTexture(Facing.WEST));
+
+                ts.normal(1.0f, 0.0f, 0.0f);
+                this.renderEast(tile, o, o, o, tile.getTexture(Facing.EAST));
+
+                ts.end();
+            }
+            tile.setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+        }
     }
 
     public @Unique void renderCrossedSquaresUpsideDown(Tile block, int meta, double x, double y, double z) {
