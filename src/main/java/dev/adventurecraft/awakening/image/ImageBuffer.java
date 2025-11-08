@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.image;
 
 import dev.adventurecraft.awakening.layout.IntPoint;
 import dev.adventurecraft.awakening.layout.IntRect;
+import dev.adventurecraft.awakening.layout.Size;
 import org.apache.commons.lang3.NotImplementedException;
 import org.lwjgl.BufferUtils;
 

@@ -10,6 +10,7 @@ import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.image.*;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import dev.adventurecraft.awakening.layout.Size;
 import net.minecraft.client.MemoryTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
@@ -391,16 +392,13 @@ public abstract class MixinTextureManager implements ExTextureManager {
             }
         }
 
-        String tex = ((AC_TextureBinder) binder).getTexture();
-        Vec2 res = this.getTextureResolution(tex);
-        if (res == null) {
-            this.loadTexture(tex);
-            res = this.getTextureResolution(tex);
-        }
+        var acBinder = (AC_TextureBinder) binder;
+        binder.bind((Textures) (Object) this);
+
+        Size size = GLTexture.getSize(GLTextureTarget.TEXTURE_2D, 0);
+        acBinder.onTick(size);
 
         this.dynamicTextures.add(binder);
-        this.checkImageDataSize(res.x, res.y);
-        ((AC_TextureBinder) binder).onTick(res);
         ACMod.LOGGER.info("Texture registered: {}, image: {}, index: {}", binder, binder.textureId, binder.tex);
     }
 
@@ -461,18 +459,14 @@ public abstract class MixinTextureManager implements ExTextureManager {
             binder.anaglyph3d = this.options.anaglyph3d;
 
             var acBinder = (AC_TextureBinder) binder;
-            String texName = acBinder.getTexture();
-            int texId = this.loadTexture(texName);
-            Vec2 texSize = this.getTextureDimensions(texId);
-            if (texSize == null) {
-                throw new IllegalArgumentException("Unknown dimensions for texture id/name: " + texId + "/" + texName);
-            }
+            binder.bind((Textures) (Object) this);
 
             int tileW = texSize.x / 16;
             int tileH = texSize.y / 16;
             this.checkImageDataSize(texSize.x, texSize.y);
             var dstPixels = this.pixels.asIntBuffer();
 
+            Size texSize = GLTexture.getSize(GLTextureTarget.TEXTURE_2D, 0);
             acBinder.onTick(texSize);
 
             IntBuffer srcPixels = acBinder.getBufferAtCurrentFrame();
@@ -668,11 +662,8 @@ public abstract class MixinTextureManager implements ExTextureManager {
 
             String texName = tex.getTexture();
             int texId = this.loadTexture(texName);
-            Vec2 texSize = this.getTextureDimensions(texId);
-            if (texSize == null) {
-                throw new IllegalArgumentException("Unknown dimensions for texture id/name: " + texId + "/" + texName);
-            }
 
+            Size texSize = GLTexture.getSize(GLTextureTarget.TEXTURE_2D, 0);
             tex.onTick(texSize);
 
             IntBuffer imgBuffer = tex.getBufferAtCurrentFrame();

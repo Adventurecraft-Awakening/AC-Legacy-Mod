@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.mixin.client.render;
 
-import dev.adventurecraft.awakening.common.Vec2;
 import dev.adventurecraft.awakening.image.Rgba;
+import dev.adventurecraft.awakening.layout.Size;
 import net.minecraft.client.renderer.ptexture.LavaSideTexture;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
@@ -27,9 +27,9 @@ public class MixinFlowingLavaTextureBinder2 extends MixinTextureBinder {
     int ticks;
 
     @Override
-    public void onTick(Vec2 size) {
-        int var2 = size.x / 16;
-        int var3 = size.y / 16;
+    public void onTick(Size size) {
+        int var2 = size.w / 16;
+        int var3 = size.h / 16;
         int var4;
         int var5;
         int var6;

@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.mixin.client.render;
 
-import dev.adventurecraft.awakening.common.Vec2;
 import dev.adventurecraft.awakening.image.Rgba;
+import dev.adventurecraft.awakening.layout.Size;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
@@ -25,9 +25,9 @@ public class MixinFlowingLavaTextureBinder extends MixinTextureBinder {
     protected float[] heata;
 
     @Override
-    public void onTick(Vec2 size) {
-        int var2 = size.x / 16;
-        int var3 = size.y / 16;
+    public void onTick(Size size) {
+        int var2 = size.w / 16;
+        int var3 = size.h / 16;
         int var4;
         int var5;
         int var6;

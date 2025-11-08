@@ -1,12 +1,13 @@
 package dev.adventurecraft.awakening.mixin.client.render;
 
+import dev.adventurecraft.awakening.client.gl.GLTexture;
+import dev.adventurecraft.awakening.client.gl.GLTextureTarget;
 import dev.adventurecraft.awakening.item.AC_IItemLight;
 import dev.adventurecraft.awakening.item.AC_Items;
-import dev.adventurecraft.awakening.common.Vec2;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
-import dev.adventurecraft.awakening.extension.client.ExTextureManager;
 import dev.adventurecraft.awakening.extension.client.render.ExHeldItemRenderer;
+import dev.adventurecraft.awakening.layout.Size;
 import net.minecraft.client.Lighting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
@@ -30,6 +31,7 @@ import org.lwjgl.opengl.GL12;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -37,18 +39,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ItemInHandRenderer.class)
 public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
 
-    @Shadow
-    private Minecraft mc;
-    @Shadow
-    private TileRenderer tileRenderer;
-    @Shadow
-    private float height;
-    @Shadow
-    private float oHeight;
-    @Shadow
-    private MapRenderer mapRenderer;
-    @Shadow
-    private ItemInstance selectedItem;
+    @Shadow private Minecraft mc;
+    @Shadow private TileRenderer tileRenderer;
+    @Shadow private float height;
+    @Shadow private float oHeight;
+    @Shadow private MapRenderer mapRenderer;
+    @Shadow private ItemInstance selectedItem;
 
     private boolean itemRotate;
     public ModelPart powerGlove;
@@ -61,7 +57,10 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
     @Shadow
     protected abstract void renderTex(float f, int i);
 
-    @Inject(method = "<init>", at = @At("TAIL"))
+    @Inject(
+        method = "<init>",
+        at = @At("TAIL")
+    )
     private void init(Minecraft var1, CallbackInfo ci) {
         this.itemRotate = true;
         this.powerGlove = new ModelPart(0, 0);
@@ -74,132 +73,114 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
     }
 
     @Overwrite
-    public void renderItem(Mob var1, ItemInstance var2) {
+    public void renderItem(Mob mob, ItemInstance item) {
+        if (item.id < 256) {
+            Tile tile = Tile.tiles[item.id];
+            int texNum = ((ExBlock) tile).getTextureNum();
+            String texName = texNum == 0 ? "/terrain.png" : String.format("/terrain%d.png", texNum);
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.textures.loadTexture(texName));
+
+            if (TileRenderer.canRender(tile.getRenderShape())) {
+                this.tileRenderer.renderTile(tile, item.getAuxValue(), mob.getBrightness(1.0F));
+                return;
+            }
+        }
+        else {
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.textures.loadTexture("/gui/items.png"));
+        }
+
+        Size size = GLTexture.getSize(GLTextureTarget.TEXTURE_2D, 0);
+        int w = size.w / 16;
+        int h = size.h / 16;
+        double rcpW = 0.5 / size.w;
+        double rcpH = 0.5 / size.h;
+
+        int texture = mob.getItemTexture(item);
+        int texX = texture % 16 * 16;
+        int texY = texture / 16 * 16;
+        double u0 = (texX + 0.0) / 256.0;
+        double u1 = (texX + 16.0) / 256.0;
+        double v0 = (texY + 0.0) / 256.0;
+        double v1 = (texY + 16.0) / 256.0;
+
+        float x1 = 1.0F;
+        float y1 = 0.3F;
+        double z1 = -1.0 / 16.0;
         GL11.glPushMatrix();
-        if (var2.id < 256 && TileRenderer.canRender(Tile.tiles[var2.id].getRenderShape())) {
-            int var24 = ((ExBlock) Tile.tiles[var2.id]).getTextureNum();
-            if (var24 == 0) {
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.textures.loadTexture("/terrain.png"));
-            } else {
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.textures.loadTexture(String.format("/terrain%d.png", var24)));
-            }
-
-            this.tileRenderer.renderTile(Tile.tiles[var2.id], var2.getAuxValue(), var1.getBrightness(1.0F));
-            GL11.glPopMatrix();
-            return;
-        }
-
-        String var3 = "/gui/items.png";
-        if (var2.id < 256) {
-            int var4 = ((ExBlock) Tile.tiles[var2.id]).getTextureNum();
-            if (var4 == 0) {
-                var3 = "/terrain.png";
-            } else {
-                var3 = String.format("/terrain%d.png", var4);
-            }
-        }
-
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.textures.loadTexture(var3));
-        Vec2 var25 = ((ExTextureManager) this.mc.textures).getTextureResolution(var3);
-        int var5 = var25.x / 16;
-        int var6 = var25.y / 16;
-        float var7 = 0.5F / (float) var25.x;
-        float var8 = 0.5F / (float) var25.x;
-        Tesselator var9 = Tesselator.instance;
-        int var10 = var1.getItemTexture(var2);
-        float var11 = ((float) (var10 % 16 * 16) + 0.0F) / 256.0F;
-        float var12 = ((float) (var10 % 16 * 16) + 15.99F) / 256.0F;
-        float var13 = ((float) (var10 / 16 * 16) + 0.0F) / 256.0F;
-        float var14 = ((float) (var10 / 16 * 16) + 15.99F) / 256.0F;
-        float var15 = 1.0F;
-        float var16 = 0.0F;
-        float var17 = 0.3F;
         GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-        GL11.glTranslatef(-var16, -var17, 0.0F);
-        float var18 = 1.5F;
-        GL11.glScalef(var18, var18, var18);
+        GL11.glTranslatef(0.0F, -y1, 0.0F);
+
+        float scale = 1.5F;
+        GL11.glScalef(scale, scale, scale);
+
         if (this.itemRotate) {
             GL11.glRotatef(50.0F, 0.0F, 1.0F, 0.0F);
             GL11.glRotatef(335.0F, 0.0F, 0.0F, 1.0F);
         }
-
         GL11.glTranslatef(-(15.0F / 16.0F), -(1.0F / 16.0F), 0.0F);
-        float var19 = 1.0F / 16.0F;
-        var9.begin();
-        var9.normal(0.0F, 0.0F, 1.0F);
-        var9.vertexUV(0.0D, 0.0D, 0.0D, var12, var14);
-        var9.vertexUV(var15, 0.0D, 0.0D, var11, var14);
-        var9.vertexUV(var15, 1.0D, 0.0D, var11, var13);
-        var9.vertexUV(0.0D, 1.0D, 0.0D, var12, var13);
-        var9.end();
-        var9.begin();
-        var9.normal(0.0F, 0.0F, -1.0F);
-        var9.vertexUV(0.0D, 1.0D, 0.0F - var19, var12, var13);
-        var9.vertexUV(var15, 1.0D, 0.0F - var19, var11, var13);
-        var9.vertexUV(var15, 0.0D, 0.0F - var19, var11, var14);
-        var9.vertexUV(0.0D, 0.0D, 0.0F - var19, var12, var14);
-        var9.end();
-        var9.begin();
-        var9.normal(-1.0F, 0.0F, 0.0F);
 
-        int var20;
-        float var21;
-        float var22;
-        float var23;
-        for (var20 = 0; var20 < var5; ++var20) {
-            var21 = (float) var20 / (float) var5;
-            var22 = var12 + (var11 - var12) * var21 - var7;
-            var23 = var15 * var21;
-            var9.vertexUV(var23, 0.0D, 0.0F - var19, var22, var14);
-            var9.vertexUV(var23, 0.0D, 0.0D, var22, var14);
-            var9.vertexUV(var23, 1.0D, 0.0D, var22, var13);
-            var9.vertexUV(var23, 1.0D, 0.0F - var19, var22, var13);
+        Tesselator ts = Tesselator.instance;
+        ts.begin();
+
+        ts.normal(0.0F, 0.0F, 1.0F);
+        ts.vertexUV(0.0D, 0.0D, 0.0D, u1, v1);
+        ts.vertexUV(x1, 0.0D, 0.0D, u0, v1);
+        ts.vertexUV(x1, 1.0D, 0.0D, u0, v0);
+        ts.vertexUV(0.0D, 1.0D, 0.0D, u1, v0);
+
+        ts.normal(0.0F, 0.0F, -1.0F);
+        ts.vertexUV(0.0D, 1.0D, z1, u1, v0);
+        ts.vertexUV(x1, 1.0D, z1, u0, v0);
+        ts.vertexUV(x1, 0.0D, z1, u0, v1);
+        ts.vertexUV(0.0D, 0.0D, z1, u1, v1);
+
+        ts.normal(-1.0F, 0.0F, 0.0F);
+        for (int x = 0; x < w; ++x) {
+            double x2 = x / (double) w;
+            double u2 = u1 + (u0 - u1) * x2 - rcpW;
+            double x0 = x1 * x2;
+            ts.vertexUV(x0, 0.0D, z1, u2, v1);
+            ts.vertexUV(x0, 0.0D, 0.0D, u2, v1);
+            ts.vertexUV(x0, 1.0D, 0.0D, u2, v0);
+            ts.vertexUV(x0, 1.0D, z1, u2, v0);
         }
 
-        var9.end();
-        var9.begin();
-        var9.normal(1.0F, 0.0F, 0.0F);
-
-        for (var20 = 0; var20 < var5; ++var20) {
-            var21 = (float) var20 / (float) var5;
-            var22 = var12 + (var11 - var12) * var21 - var7;
-            var23 = var15 * var21 + 1.0F / (float) var5;
-            var9.vertexUV(var23, 1.0D, 0.0F - var19, var22, var13);
-            var9.vertexUV(var23, 1.0D, 0.0D, var22, var13);
-            var9.vertexUV(var23, 0.0D, 0.0D, var22, var14);
-            var9.vertexUV(var23, 0.0D, 0.0F - var19, var22, var14);
+        ts.normal(1.0F, 0.0F, 0.0F);
+        for (int x = 0; x < w; ++x) {
+            double x2 = x / (double) w;
+            double u2 = u1 + (u0 - u1) * x2 - rcpW;
+            double x0 = x1 * x2 + 1.0 / w;
+            ts.vertexUV(x0, 1.0D, z1, u2, v0);
+            ts.vertexUV(x0, 1.0D, 0.0D, u2, v0);
+            ts.vertexUV(x0, 0.0D, 0.0D, u2, v1);
+            ts.vertexUV(x0, 0.0D, z1, u2, v1);
         }
 
-        var9.end();
-        var9.begin();
-        var9.normal(0.0F, 1.0F, 0.0F);
-
-        for (var20 = 0; var20 < var6; ++var20) {
-            var21 = (float) var20 / (float) var6;
-            var22 = var14 + (var13 - var14) * var21 - var8;
-            var23 = var15 * var21 + 1.0F / (float) var6;
-            var9.vertexUV(0.0D, var23, 0.0D, var12, var22);
-            var9.vertexUV(var15, var23, 0.0D, var11, var22);
-            var9.vertexUV(var15, var23, 0.0F - var19, var11, var22);
-            var9.vertexUV(0.0D, var23, 0.0F - var19, var12, var22);
+        ts.normal(0.0F, 1.0F, 0.0F);
+        for (int y = 0; y < h; ++y) {
+            double y2 = y / (double) h;
+            double v2 = v1 + (v0 - v1) * y2 - rcpH;
+            double y0 = x1 * y2 + 1.0 / h;
+            ts.vertexUV(0.0D, y0, 0.0D, u1, v2);
+            ts.vertexUV(x1, y0, 0.0D, u0, v2);
+            ts.vertexUV(x1, y0, z1, u0, v2);
+            ts.vertexUV(0.0D, y0, z1, u1, v2);
         }
 
-        var9.end();
-        var9.begin();
-        var9.normal(0.0F, -1.0F, 0.0F);
-
-        for (var20 = 0; var20 < var6; ++var20) {
-            var21 = (float) var20 / (float) var6;
-            var22 = var14 + (var13 - var14) * var21 - var8;
-            var23 = var15 * var21;
-            var9.vertexUV(var15, var23, 0.0D, var11, var22);
-            var9.vertexUV(0.0D, var23, 0.0D, var12, var22);
-            var9.vertexUV(0.0D, var23, 0.0F - var19, var12, var22);
-            var9.vertexUV(var15, var23, 0.0F - var19, var11, var22);
+        ts.normal(0.0F, -1.0F, 0.0F);
+        for (int y = 0; y < h; ++y) {
+            double y2 = y / (double) h;
+            double v2 = v1 + (v0 - v1) * y2 - rcpH;
+            double y0 = x1 * y2;
+            ts.vertexUV(x1, y0, 0.0D, u0, v2);
+            ts.vertexUV(0.0D, y0, 0.0D, u1, v2);
+            ts.vertexUV(0.0D, y0, z1, u1, v2);
+            ts.vertexUV(x1, y0, z1, u0, v2);
         }
 
-        var9.end();
-        if (Item.items[var2.id] instanceof AC_IItemLight lightItem && lightItem.isMuzzleFlash(var2)) {
+        ts.end();
+
+        if (Item.items[item.id] instanceof AC_IItemLight lightItem && lightItem.isMuzzleFlash(item)) {
             this.renderMuzzleFlash();
         }
 
@@ -207,7 +188,11 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
         GL11.glPopMatrix();
     }
 
-    @Inject(method = "renderTex", at = @At("HEAD"), cancellable = true)
+    @Inject(
+        method = "renderTex",
+        at = @At("HEAD"),
+        cancellable = true
+    )
     private void disableItemRender(float var1, int var2, CallbackInfo ci) {
         if (this.mc.player.noPhysics) {
             ci.cancel();
@@ -233,7 +218,8 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
             int var6 = this.mc.level.getTile(var2, var3, var4);
             if (this.mc.level.isSolidBlockingTile(var2, var3, var4) && this.mc.level.isSolidTile(var2, var3, var4)) {
                 this.renderTex(var1, Tile.tiles[var6].getTexture(2));
-            } else {
+            }
+            else {
                 for (int var7 = 0; var7 < 8; ++var7) {
                     float var8 = ((float) ((var7 >> 0) % 2) - 0.5F) * this.mc.player.bbWidth * 0.9F;
                     float var9 = ((float) ((var7 >> 1) % 2) - 0.5F) * this.mc.player.bbHeight * 0.2F;
@@ -288,6 +274,7 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
         GL11.glDisable(GL11.GL_BLEND);
     }
 
+    @Unique
     private void renderMuzzleFlash() {
         Lighting.turnOff();
         Tesselator var1 = Tesselator.instance;
@@ -332,7 +319,8 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
             float g = (float) (var9 >> 8 & 255) / 255.0F;
             float b = (float) (var9 & 255) / 255.0F;
             GL11.glColor4f(var8 * r, var8 * g, var8 * b, 1.0F);
-        } else {
+        }
+        else {
             GL11.glColor4f(var8, var8, var8, 1.0F);
         }
 
@@ -357,7 +345,10 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
             GL11.glRotatef(90.0F, 0.0F, 1.0F, 0.0F);
             GL11.glRotatef(var10 * -85.0F, 0.0F, 0.0F, 1.0F);
             GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.textures.loadHttpTexture(this.mc.player.customTextureUrl, this.mc.player.getTexture()));
+            GL11.glBindTexture(
+                GL11.GL_TEXTURE_2D,
+                this.mc.textures.loadHttpTexture(this.mc.player.customTextureUrl, this.mc.player.getTexture())
+            );
 
             for (var11 = 0.0F; var11 < 2.0F; ++var11) {
                 var12 = var11 * 2.0F - 1.0F;
@@ -401,7 +392,8 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
             MapItemSavedData var16 = Item.MAP.getMapSaveData(item, this.mc.level);
             this.mapRenderer.render(this.mc.player, this.mc.textures, var16);
             GL11.glPopMatrix();
-        } else {
+        }
+        else {
             if (item != null) {
                 if (item.id != AC_Items.woodenShield.id && item.id != AC_Items.powerGlove.id) {
                     GL11.glPushMatrix();
@@ -424,7 +416,8 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
 
                     this.renderItem(var5, item);
                     GL11.glPopMatrix();
-                } else if (item.id == AC_Items.powerGlove.id) {
+                }
+                else if (item.id == AC_Items.powerGlove.id) {
                     GL11.glPushMatrix();
                     float var17 = 0.8F;
                     float var10 = Mth.sin(prog1 * 3.141593F);
@@ -437,7 +430,10 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
                     var11 = Mth.sin(Mth.sqrt(prog1) * 3.141593F);
                     GL11.glRotatef(var11 * 70.0F, 0.0F, 1.0F, 0.0F);
                     GL11.glRotatef(-var10 * 20.0F, 0.0F, 0.0F, 1.0F);
-                    GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.textures.loadHttpTexture(this.mc.player.customTextureUrl, this.mc.player.getTexture()));
+                    GL11.glBindTexture(
+                        GL11.GL_TEXTURE_2D,
+                        this.mc.textures.loadHttpTexture(this.mc.player.customTextureUrl, this.mc.player.getTexture())
+                    );
                     GL11.glTranslatef(-1.0F, 3.6F, 3.5F);
                     GL11.glRotatef(120.0F, 0.0F, 0.0F, 1.0F);
                     GL11.glRotatef(200.0F, 1.0F, 0.0F, 0.0F);
@@ -465,10 +461,12 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
                     this.powerGloveRuby.zRot = this.refBiped.rightArm.zRot;
                     this.powerGloveRuby.render(1.0F / 16.0F);
                     GL11.glPopMatrix();
-                } else {
+                }
+                else {
                     this.renderShield(item, partialTick, prog1, prog2);
                 }
-            } else {
+            }
+            else {
                 GL11.glPushMatrix();
                 float var17 = 0.8F;
                 float var10 = Mth.sin(prog1 * 3.141593F);
@@ -481,7 +479,10 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
                 var11 = Mth.sin(Mth.sqrt(prog1) * 3.141593F);
                 GL11.glRotatef(var11 * 70.0F, 0.0F, 1.0F, 0.0F);
                 GL11.glRotatef(-var10 * 20.0F, 0.0F, 0.0F, 1.0F);
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.textures.loadHttpTexture(this.mc.player.customTextureUrl, this.mc.player.getTexture()));
+                GL11.glBindTexture(
+                    GL11.GL_TEXTURE_2D,
+                    this.mc.textures.loadHttpTexture(this.mc.player.customTextureUrl, this.mc.player.getTexture())
+                );
                 GL11.glTranslatef(-1.0F, 3.6F, 3.5F);
                 GL11.glRotatef(120.0F, 0.0F, 0.0F, 1.0F);
                 GL11.glRotatef(200.0F, 1.0F, 0.0F, 0.0F);
@@ -512,7 +513,8 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
             float var10 = Mth.sin(Mth.sqrt(prog1) * 3.141593F);
             GL11.glTranslatef(-var10 * 0.4F, Mth.sin(Mth.sqrt(prog1) * 3.141593F * 2.0F) * 0.2F, -var9 * 0.2F);
             GL11.glTranslatef(1.0F, -0.65F * var8 - (1.0F - var4) * 0.6F, -0.9F * var8);
-        } else {
+        }
+        else {
             float var9 = Mth.sin(prog2 * 3.141593F);
             float var10 = Mth.sin(Mth.sqrt(prog2) * 3.141593F);
             GL11.glTranslatef(var10 * 0.4F, Mth.sin(Mth.sqrt(prog2) * 3.141593F * 2.0F) * 0.2F, -var9 * 0.2F);

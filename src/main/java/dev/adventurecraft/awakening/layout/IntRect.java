@@ -54,6 +54,10 @@ public final class IntRect implements RectType {
         return this.h;
     }
 
+    public Size size() {
+        return new Size(this.w, this.h);
+    }
+
     public IntPoint location() {
         return new IntPoint(this.x, this.y);
     }

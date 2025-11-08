@@ -1,10 +1,10 @@
 package dev.adventurecraft.awakening.mixin.client.render;
 
 import dev.adventurecraft.awakening.client.render.AC_TextureBinder;
-import dev.adventurecraft.awakening.common.Vec2;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.image.ImageBuffer;
 import dev.adventurecraft.awakening.image.ImageFormat;
+import dev.adventurecraft.awakening.layout.Size;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
@@ -79,7 +79,7 @@ public abstract class MixinTextureBinder implements AC_TextureBinder {
     }
 
     @Override
-    public void onTick(Vec2 size) {
+    public void onTick(Size size) {
         this.tick();
         this.animate();
     }
@@ -109,7 +109,7 @@ public abstract class MixinTextureBinder implements AC_TextureBinder {
             image = exWorld.loadMapTexture(name);
         }
 
-        loadImage(name, image);
+        this.loadImage(name, image);
     }
 
     @Override

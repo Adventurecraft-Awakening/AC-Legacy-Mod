@@ -1,11 +1,11 @@
 package dev.adventurecraft.awakening.client.render;
 
-import dev.adventurecraft.awakening.common.Vec2;
 import dev.adventurecraft.awakening.extension.client.ExTextureManager;
 
 import java.nio.IntBuffer;
 
 import dev.adventurecraft.awakening.image.ImageBuffer;
+import dev.adventurecraft.awakening.layout.Size;
 import net.minecraft.client.renderer.ptexture.DynamicTexture;
 import net.minecraft.world.level.Level;
 
@@ -13,7 +13,7 @@ public interface AC_TextureBinder {
 
     void animate();
 
-    void onTick(Vec2 size);
+    void onTick(Size size);
 
     void loadImage(String name, Level world);
 

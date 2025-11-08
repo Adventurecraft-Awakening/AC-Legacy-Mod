@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.image.*;
+import dev.adventurecraft.awakening.layout.Size;
 import dev.adventurecraft.awakening.util.MathF;
 
 import java.io.File;
