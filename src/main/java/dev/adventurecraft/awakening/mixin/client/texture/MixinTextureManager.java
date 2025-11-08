@@ -9,7 +9,6 @@ import dev.adventurecraft.awakening.extension.client.ExTextureManager;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.image.*;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import dev.adventurecraft.awakening.layout.Size;
 import net.minecraft.client.MemoryTracker;
 import net.minecraft.client.Minecraft;
