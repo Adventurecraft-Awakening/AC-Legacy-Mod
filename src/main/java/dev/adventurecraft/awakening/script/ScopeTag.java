@@ -69,16 +69,13 @@ public class ScopeTag {
     }
 
     public static void loadScopeFromTag(Scriptable scriptable, CompoundTag tag) {
-        var exTag = (ExCompoundTag) tag;
-        for (String key : exTag.getKeys()) {
-            String[] elements = key.split("_", 2);
-            if (elements.length != 2) {
-                logUnsupportedProp("decode", key, exTag.getTag(key));
-                continue;
+        ((ExCompoundTag) tag).forEach((key, val) -> {
+            int indexOfSplit = key.indexOf('_');
+            if (indexOfSplit == -1) {
+                logUnsupportedProp("decode", key, val);
+                return;
             }
-
-            String type = elements[0];
-            String name = elements[1];
+            String type = key.substring(0, indexOfSplit);
             Object value = switch (type) {
                 case "String" -> tag.getString(key);
                 case "Boolean" -> tag.getBoolean(key);
@@ -88,19 +85,19 @@ public class ScopeTag {
                 case "Integer" -> tag.getInt(key);
                 case "Short" -> tag.getShort(key);
                 default -> {
-                    logUnsupportedProp("read", key, exTag.getTag(key));
+                    logUnsupportedProp("read", key, val);
                     yield null;
                 }
             };
-            if (value == null) {
-                continue;
+            if (value != null) {
+                String name = key.substring((indexOfSplit + 1));
+                scriptable.put(name, scriptable, value);
             }
-            scriptable.put(name, scriptable, value);
-        }
+        });
     }
 
     private static void logUnsupportedProp(String op, String name, Object value) {
         Class<?> type = value != null ? value.getClass() : null;
-        ACMod.LOGGER.warn("Unsupported ({}}) type of property: {} = {} ({})", op, name, value, type);
+        ACMod.LOGGER.warn("Unsupported {} type of property: {} = {} ({})", op, name, value, type);
     }
 }

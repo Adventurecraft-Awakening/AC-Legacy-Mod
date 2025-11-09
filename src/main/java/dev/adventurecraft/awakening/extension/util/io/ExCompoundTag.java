@@ -6,6 +6,7 @@ import net.minecraft.nbt.*;
 import javax.annotation.Nullable;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 public interface ExCompoundTag {
 
@@ -52,6 +53,8 @@ public interface ExCompoundTag {
     default Optional<ListTag> findList(String key) {
         return Optional.ofNullable(this.getTag(key) instanceof ListTag tag ? tag : null);
     }
+
+    void forEach(BiConsumer<String, Tag> consumer);
 
     Set<String> getKeys();
 

@@ -13,6 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 @Mixin(CompoundTag.class)
 public abstract class MixinCompoundTag implements ExCompoundTag {
@@ -110,6 +111,11 @@ public abstract class MixinCompoundTag implements ExCompoundTag {
 
     public @Overwrite ListTag getList(String key) {
         return this.findList(key).orElseGet(ListTag::new);
+    }
+
+    @Override
+    public void forEach(BiConsumer<String, Tag> consumer) {
+        this.entries.forEach(consumer);
     }
 
     @Override
