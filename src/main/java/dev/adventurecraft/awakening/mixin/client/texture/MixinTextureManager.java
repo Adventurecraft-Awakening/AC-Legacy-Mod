@@ -147,7 +147,8 @@ public abstract class MixinTextureManager implements ExTextureManager {
             long end = System.nanoTime();
             String time = String.format("%.3g ms", (end - start) / (double) 1_000_000);
             String name = this.findTextureById(texId).orElse("");
-            ACMod.LOGGER.debug("Texture processed - {}, {}", name, time);
+            var info = new GLTextureInfo(target, name, texId);
+            ACMod.LOGGER.debug("Texture processed - {}, {}", info, time);
         }
     }
 

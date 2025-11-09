@@ -130,7 +130,7 @@ public final class Rect implements RectType {
 
     @Override
     public boolean isEmpty() {
-        return this.w == 0 || this.h == 0;
+        return this.w <= 0 || this.h <= 0;
     }
 
     @Override

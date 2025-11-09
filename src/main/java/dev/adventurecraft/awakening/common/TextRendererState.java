@@ -34,6 +34,7 @@ public final class TextRendererState implements TextMeasurer {
     }
 
     public void bindTexture() {
+        GL11.glEnable(GL11.GL_TEXTURE_2D);
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.font.fontTexture);
     }
 
@@ -177,6 +178,19 @@ public final class TextRendererState implements TextMeasurer {
     public void setShadowOffset(float offsetX, float offsetY) {
         this.setShadowOffsetX(offsetX);
         this.setShadowOffsetY(offsetY);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof TextRendererState other) {
+            return Objects.equals(this.font, other.font);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.font.hashCode();
     }
 
     private static void drawChar(ExTesselator ts, int column, int row, float x, float y) {

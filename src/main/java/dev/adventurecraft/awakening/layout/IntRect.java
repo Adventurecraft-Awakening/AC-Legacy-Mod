@@ -112,6 +112,22 @@ public final class IntRect implements RectType {
         );
     }
 
+    public IntRect union(IntRect other) {
+        int x0 = Math.min(this.x, other.x);
+        int y0 = Math.min(this.y, other.y);
+        int x1 = Math.max(this.right(), other.right());
+        int y1 = Math.max(this.bot(), other.bot());
+        return new IntRect(x0, y0, x1 - x0, y1 - y0);
+    }
+
+    public IntRect intersect(IntRect other) {
+        int x0 = Math.max(this.x, other.x);
+        int y0 = Math.max(this.y, other.y);
+        int x1 = Math.min(this.right(), other.right());
+        int y1 = Math.min(this.bot(), other.bot());
+        return new IntRect(x0, y0, x1 - x0, y1 - y0);
+    }
+
     public boolean contains(IntPoint point) {
         return this.containsX(point.x) && this.containsY(point.y);
     }
@@ -126,7 +142,7 @@ public final class IntRect implements RectType {
 
     @Override
     public boolean isEmpty() {
-        return this.w == 0 || this.h == 0;
+        return this.w <= 0 || this.h <= 0;
     }
 
     @Override
