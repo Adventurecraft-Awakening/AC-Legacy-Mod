@@ -25,7 +25,7 @@ public class MixinCompassTexture extends MixinTextureBinder {
 
     @Overwrite
     public void tick() {
-        var imageData = this.imageData;
+        var imageData = this.imageData.asIntBuffer();
         for (int var1 = 0; var1 < 256; ++var1) {
             int srcColor = this.raw[var1];
             int var2 = srcColor >> 24 & 255;

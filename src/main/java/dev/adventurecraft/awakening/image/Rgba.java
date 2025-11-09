@@ -10,11 +10,11 @@ public final class Rgba {
     }
 
     public static int fromRgb8(byte r, byte g, byte b) {
-        return fromRgba8(r, g, b, -1);
+        return fromRgba8(r, g, b, 0xff);
     }
 
     public static int fromRgb8(int r, int g, int b) {
-        return fromRgba8(r, g, b, -1);
+        return fromRgba8(r, g, b, 0xff);
     }
 
     public static int fromRgba8(byte r, byte g, byte b, byte a) {
@@ -22,10 +22,7 @@ public final class Rgba {
     }
 
     public static int fromRgba8(int r, int g, int b, int a) {
-        return (r & 0xff) |
-            ((g & 0xff) << 8) |
-            ((b & 0xff) << 16) |
-            ((a & 0xff) << 24);
+        return (r & 0xff) | ((g & 0xff) << 8) | ((b & 0xff) << 16) | ((a & 0xff) << 24);
     }
 
     public static int withRgb(int rgba, int rgb) {
@@ -46,5 +43,15 @@ public final class Rgba {
 
     public static int getAlpha(int rgba) {
         return rgba >>> 24;
+    }
+
+    public static int crispBlend(int L, int R) {
+        return RgbaF.crispBlend(RgbaF.fromRgba(L), RgbaF.fromRgba(R)).toRgba();
+    }
+
+    public static int weightedAverageColor(int tL, int tR, int bR, int bL) {
+        RgbaF t = RgbaF.crispBlend(RgbaF.fromRgba(tL), RgbaF.fromRgba(tR));
+        RgbaF b = RgbaF.crispBlend(RgbaF.fromRgba(bR), RgbaF.fromRgba(bL));
+        return RgbaF.crispBlend(t, b).toRgba();
     }
 }

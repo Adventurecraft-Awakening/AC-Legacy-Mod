@@ -91,7 +91,7 @@ public class MixinFlowingWaterTextureBinder2 extends MixinTextureBinder {
             this.next = this.current;
             this.current = var19;
 
-            var imageData = this.imageData;
+            var imageData = this.imageData.asIntBuffer();
             for (var8 = 0; var8 < var4; ++var8) {
                 var9 = this.current[var8];
                 if (var9 > 1.0F) {

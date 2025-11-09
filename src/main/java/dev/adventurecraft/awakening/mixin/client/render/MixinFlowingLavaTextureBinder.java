@@ -87,7 +87,7 @@ public class MixinFlowingLavaTextureBinder extends MixinTextureBinder {
             this.next = this.current;
             this.current = var19;
 
-            var imageData = this.imageData;
+            var imageData = this.imageData.asIntBuffer();
             for (var9 = 0; var9 < var4; ++var9) {
                 float var10 = this.current[var9] * 2.0F;
                 if (var10 > 1.0F) {

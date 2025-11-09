@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.extension.client.options;
 
+import dev.adventurecraft.awakening.client.gl.GLMipMode;
 import dev.adventurecraft.awakening.client.options.ConnectedGrassOption;
 import net.minecraft.client.KeyMapping;
 
@@ -11,9 +12,7 @@ public interface ExGameOptions {
 
     int ofMipmapLevel();
 
-    boolean ofMipmapLinear();
-
-    int getMipmapType();
+    GLMipMode ofMipmapMode();
 
     boolean ofLoadFar();
 
