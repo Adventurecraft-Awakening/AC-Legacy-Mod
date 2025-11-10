@@ -83,7 +83,7 @@ public abstract class MixinBiomeSource {
                 double n2 = 1.0D - n1;
                 temp = (temps[idx] * 0.15D + 0.7D) * n2 + n0 * n1;
                 temp = 1.0D - (1.0D - temp) * (1.0D - temp);
-                temp = MathF.clamp(temp, 0.0D, 1.0D);
+                temp = MathF.saturate(temp);
 
                 temps[idx] = temp;
             }
@@ -157,10 +157,10 @@ public abstract class MixinBiomeSource {
                 n2 = 1.0D - n1;
 
                 humidity = (humids[idx] * 0.15D + 0.5D) * n2 + n0 * n1;
-                humidity = MathF.clamp(humidity, 0.0D, 1.0D);
+                humidity = MathF.saturate(humidity);
 
                 temp = 1.0D - (1.0D - temp) * (1.0D - temp);
-                temp = MathF.clamp(temp, 0.0D, 1.0D);
+                temp = MathF.saturate(temp);
 
                 temps[idx] = temp;
                 humids[idx] = humidity;

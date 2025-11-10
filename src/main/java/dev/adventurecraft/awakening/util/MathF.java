@@ -31,6 +31,14 @@ public final class MathF {
         return Math.min(max, Math.max(value, min));
     }
 
+    public static float saturate(float value) {
+        return clamp(value, 0.0f, 1.0f);
+    }
+
+    public static double saturate(double value) {
+        return clamp(value, 0.0d, 1.0d);
+    }
+
     public static float cubicInterpolation(float mu, float y0, float y1, float y2, float y3) {
         float a0 = -0.5F * y0 + 1.5F * y1 - 1.5F * y2 + 0.5F * y3;
         float a1 = y0 - 2.5F * y1 + 2.0F * y2 - 0.5F * y3;

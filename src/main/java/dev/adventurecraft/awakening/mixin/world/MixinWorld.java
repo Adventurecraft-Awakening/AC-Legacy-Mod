@@ -1263,7 +1263,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
             this.DoSnowModUpdate();
         }
 
-        this.script.processContinuations(var4);
+        this.script.processContinuations();
     }
 
     @Overwrite
@@ -1287,36 +1287,10 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
         }
 
         this.oRainLevel = this.rainLevel;
-        if (this.levelData.isRaining()) {
-            this.rainLevel = (float) ((double) this.rainLevel + 0.01D);
-        }
-        else {
-            this.rainLevel = (float) ((double) this.rainLevel - 0.01D);
-        }
-
-        if (this.rainLevel < 0.0F) {
-            this.rainLevel = 0.0F;
-        }
-
-        if (this.rainLevel > 1.0F) {
-            this.rainLevel = 1.0F;
-        }
+        this.rainLevel = MathF.saturate(this.rainLevel + (this.levelData.isRaining() ? 0.01f : -0.01f));
 
         this.oThunderLevel = this.thunderLevel;
-        if (this.levelData.isThundering()) {
-            this.thunderLevel = (float) ((double) this.thunderLevel + 0.01D);
-        }
-        else {
-            this.thunderLevel = (float) ((double) this.thunderLevel - 0.01D);
-        }
-
-        if (this.thunderLevel < 0.0F) {
-            this.thunderLevel = 0.0F;
-        }
-
-        if (this.thunderLevel > 1.0F) {
-            this.thunderLevel = 1.0F;
-        }
+        this.thunderLevel = MathF.saturate(this.thunderLevel + (this.levelData.isThundering() ? 0.01f : -0.01f));
     }
 
     @Overwrite

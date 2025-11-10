@@ -11,6 +11,7 @@ import java.util.Locale;
 public record TickTime(long ticks) {
 
     public static final int TICKS_PER_SECOND = 20;
+    public static final int MILLIS_PER_TICK = 1000 / TICKS_PER_SECOND;
 
     public static final TickFormat FULL_TIME_FORMAT;
     public static final TickFormat TIME_FORMAT;
@@ -39,6 +40,10 @@ public record TickTime(long ticks) {
 
     public static TickTime fromSeconds(double seconds) {
         return new TickTime(Math.round(seconds * TICKS_PER_SECOND));
+    }
+
+    public static TickTime fromMillis(double millis) {
+        return fromSeconds(millis / 1000.0);
     }
 
     public static abstract class TickFormat extends Format {

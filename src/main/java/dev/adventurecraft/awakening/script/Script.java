@@ -3,6 +3,7 @@ package dev.adventurecraft.awakening.script;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
+import dev.adventurecraft.awakening.primitives.TickTime;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -37,6 +38,9 @@ public class Script implements Closeable {
     Scriptable curScope;
     final Scriptable runScope;
     final Context cx;
+
+    private final Timers timers;
+
     final ScriptTime time;
     final ScriptWorld world;
     ScriptEntityPlayer player;
@@ -76,6 +80,13 @@ public class Script implements Closeable {
         this.curScope = this.globalScope;
         this.runScope = this.cx.newObject(this.globalScope);
         this.runScope.setParentScope(this.globalScope);
+
+        this.timers = new Timers() {
+            protected @Override long getTimeMillis() {
+                return time.getTickCount() * TickTime.MILLIS_PER_TICK;
+            }
+        };
+        this.timers.install(this.globalScope);
 
         this.time = new ScriptTime(level);
         this.world = new ScriptWorld(level);
@@ -209,13 +220,15 @@ public class Script implements Closeable {
         return null;
     }
 
-    public void processContinuations(long currentTime) {
+    public void processContinuations() {
         this.continuations.addAll(this.newContinuations);
         this.newContinuations.clear();
 
         if (!this.continuations.isEmpty()) {
-            this.executeContinuations(currentTime);
+            this.executeContinuations(this.time.getTickCount());
         }
+
+        this.timers.runTimers(this.cx, this.globalScope);
     }
 
     private void executeContinuations(long currentTime) {
