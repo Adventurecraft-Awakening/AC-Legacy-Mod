@@ -82,6 +82,14 @@ public final class MathF {
         return Math.log(a) * LOG2_INVERSE;
     }
 
+    public static int log2(int a) {
+        return 31 ^ Integer.numberOfLeadingZeros(a | 1);
+    }
+
+    public static int log2(long a) {
+        return 63 ^ Long.numberOfLeadingZeros(a | 1);
+    }
+
     /**
      * Returns the logarithm of a number using a specified base.
      *
@@ -170,5 +178,13 @@ public final class MathF {
 
     public static float nextSignedFloat(Random random) {
         return (random.nextInt() >> 7) * 5.9604645E-8F;
+    }
+
+    public static int roundUpToPow2(int value) {
+        return (int)(0x1_0000_0000L >> Integer.numberOfLeadingZeros(value - 1));
+    }
+
+    public static int roundUpToPow2Mask(int value) {
+        return (int)(0x1_FFFF_FFFFL >> Integer.numberOfLeadingZeros((value | 1) - 1));
     }
 }

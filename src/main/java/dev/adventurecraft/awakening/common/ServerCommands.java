@@ -7,6 +7,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.tree.CommandNode;
 import dev.adventurecraft.awakening.common.gui.AC_GuiMapEditHUD;
 import dev.adventurecraft.awakening.common.gui.AC_GuiScriptStats;
+import dev.adventurecraft.awakening.common.gui.AC_GuiTextureAtlas;
 import dev.adventurecraft.awakening.common.gui.AC_GuiWorldConfig;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.render.ExWorldEventRenderer;
@@ -39,6 +40,8 @@ public class ServerCommands {
         dispatcher.register(literal("test").executes(ServerCommands::cmdTest));
 
         dispatcher.register(literal("scriptstats").executes(ServerCommands::cmdScriptStats));
+
+        dispatcher.register(literal("textureatlas").executes(ServerCommands::cmdTextureAtlas));
 
         dispatcher.register(literal("day").executes(descs.attach(ServerCommands::cmdDay, "Changes time to daytime")));
 
@@ -221,6 +224,12 @@ public class ServerCommands {
             return Command.SINGLE_SUCCESS;
         }
         return 0;
+    }
+
+    public static int cmdTextureAtlas(CommandContext<ServerCommandSource> context) {
+        var source = context.getSource();
+            source.getClient().setScreen(new AC_GuiTextureAtlas());
+            return Command.SINGLE_SUCCESS;
     }
 
     public static int cmdDay(CommandContext<ServerCommandSource> context) {

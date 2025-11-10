@@ -139,6 +139,7 @@
     "item.MixinTileItemWithoutTranslation",
     "js.MixinContext",
     "nbt.MixinListTag",
+    "nbt.MixinStringTag",
     "nbt.MixinTag",
     "util.MixinMth",
     "util.io.MixinCompoundTag",

@@ -7,9 +7,9 @@ public enum GLBufferUsage {
     STATIC_DRAW(GL15.GL_STATIC_DRAW),
     STATIC_COPY(GL15.GL_STATIC_COPY);
 
-    public final int id;
+    public final int symbol;
 
-    GLBufferUsage(int id) {
-        this.id = id;
+    GLBufferUsage(int symbol) {
+        this.symbol = symbol;
     }
 }

@@ -121,7 +121,6 @@ public class AC_BlockEffect extends TileEntityTile implements AC_ITriggerDebugBl
         }
 
         boolean replaced = false;
-
         try {
             var reader = new BufferedReader(new FileReader(texFile));
             try {

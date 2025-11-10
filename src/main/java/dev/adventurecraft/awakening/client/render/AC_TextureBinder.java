@@ -1,19 +1,23 @@
 package dev.adventurecraft.awakening.client.render;
 
-import dev.adventurecraft.awakening.common.Vec2;
 import dev.adventurecraft.awakening.extension.client.ExTextureManager;
 
-import java.nio.IntBuffer;
-
 import dev.adventurecraft.awakening.image.ImageBuffer;
+import dev.adventurecraft.awakening.image.ImageFormat;
+import dev.adventurecraft.awakening.layout.IntRect;
+import dev.adventurecraft.awakening.layout.Size;
 import net.minecraft.client.renderer.ptexture.DynamicTexture;
 import net.minecraft.world.level.Level;
 
+import javax.annotation.Nullable;
+
 public interface AC_TextureBinder {
+
+    Frame EMPTY_FRAME = new Frame(IntRect.zero, ImageBuffer.create(0, 0, ImageFormat.RGBA_U8));
 
     void animate();
 
-    void onTick(Vec2 size);
+    void onTick(Size size);
 
     void loadImage(String name, Level world);
 
@@ -21,21 +25,26 @@ public interface AC_TextureBinder {
 
     String getTexture();
 
-    IntBuffer getBufferAtCurrentFrame();
+    IntRect getCurrentFrameRect();
 
-    int getWidth();
+    @Nullable
+    Frame getCurrentFrame();
 
-    void setWidth(int width);
-
-    int getHeight();
-
-    void setHeight(int height);
+    void setTileSize(int width, int height);
 
     static <T extends DynamicTexture> void loadImages(ExTextureManager texManager, Class<T> type, Level world) {
         AC_TextureBinder.loadImages(texManager, type, null, world);
     }
 
-    static <T extends DynamicTexture> void loadImages(ExTextureManager texManager, Class<T> type, String name, Level world) {
+    static <T extends DynamicTexture> void loadImages(
+        ExTextureManager texManager,
+        Class<T> type,
+        String name,
+        Level world
+    ) {
         texManager.getTextureBinders(type).forEach(b -> ((AC_TextureBinder) b).loadImage(name, world));
+    }
+
+    record Frame(IntRect targetRect, ImageBuffer image) {
     }
 }

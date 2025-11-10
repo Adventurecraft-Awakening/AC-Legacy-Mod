@@ -57,7 +57,7 @@ public class MixinClockTexture extends MixinTextureBinder {
         double var5 = Math.sin(this.rot);
         double var7 = Math.cos(this.rot);
 
-        var imageData = this.imageData;
+        var imageData = this.imageData.asIntBuffer();
         for (int var9 = 0; var9 < 256; ++var9) {
             int var10 = this.raw[var9] >> 24 & 255;
             int var11 = this.raw[var9] >> 16 & 255;

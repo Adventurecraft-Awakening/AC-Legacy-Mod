@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.mixin.client.render;
 
-import dev.adventurecraft.awakening.common.Vec2;
 import dev.adventurecraft.awakening.image.Rgba;
+import dev.adventurecraft.awakening.layout.Size;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
@@ -18,9 +18,9 @@ public class MixinFireTextureBinder extends MixinTextureBinder {
     protected float[] next;
 
     @Override
-    public void onTick(Vec2 size) {
-        int var2 = size.x / 16;
-        int var3 = size.y / 16;
+    public void onTick(Size size) {
+        int var2 = size.w / 16;
+        int var3 = size.h / 16;
         int var5;
         int var6;
         int var8;
@@ -35,14 +35,14 @@ public class MixinFireTextureBinder extends MixinTextureBinder {
         if (hasImages) {
             this.animate();
         } else {
-            var3 = size.y / 16 * 20 / 16;
+            var3 = size.h / 16 * 20 / 16;
             if (this.current.length != var2 * var3) {
                 this.current = new float[var2 * var3];
                 this.next = new float[var2 * var3];
             }
 
-            float var4 = 1.0F + 15.36F / (float) size.y;
-            var5 = size.y / 256;
+            float var4 = 1.0F + 15.36F / (float) size.h;
+            var5 = size.h / 256;
             var6 = 14 + (var5 + 1) * (var5 + 1);
             byte var19;
             if (var5 >= 4) {
@@ -85,14 +85,14 @@ public class MixinFireTextureBinder extends MixinTextureBinder {
                 this.current = var21;
             }
 
-            var3 = size.y / 16;
+            var3 = size.h / 16;
             var7 = var2 * var3;
 
             if (this.imageData.capacity() != var2 * var3) {
                 this.imageData = this.allocImageData(var2, var3);
             }
 
-            var imageData = this.imageData;
+            var imageData = this.imageData.asIntBuffer();
             for (var8 = 0; var8 < var7; ++var8) {
                 float var22 = this.current[var8] * 1.8F;
                 if (var22 > 1.0F) {

@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.mixin.world;
 
+import dev.adventurecraft.awakening.extension.nbt.ExTag;
 import dev.adventurecraft.awakening.tile.AC_BlockEffect;
 import dev.adventurecraft.awakening.common.LightHelper;
 import dev.adventurecraft.awakening.common.WorldGenProperties;
@@ -345,23 +346,20 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     @Override
     public CompoundTag getTextureReplacementTags() {
         var tag = new CompoundTag();
-
-        for (Map.Entry<String, String> entry : this.replacementTextures.entrySet()) {
-            tag.putString(entry.getKey(), entry.getValue());
-        }
-
+        this.replacementTextures.forEach(tag::putString);
         return tag;
     }
 
     @Override
     public void loadTextureReplacements(Level world) {
-        if (this.replacementTag != null) {
-            this.replacementTextures.clear();
-
-            for (String replacementKey : ((ExCompoundTag) this.replacementTag).getKeys()) {
-                AC_BlockEffect.replaceTexture(world, replacementKey, this.replacementTag.getString(replacementKey));
-            }
+        if (this.replacementTag == null) {
+            return;
         }
+        this.replacementTextures.clear();
+
+        ((ExCompoundTag) this.replacementTag).forEach((key, tag) -> ((ExTag) tag)
+            .getString()
+            .ifPresent(name -> AC_BlockEffect.replaceTexture(world, key, name)));
     }
 
     @Override

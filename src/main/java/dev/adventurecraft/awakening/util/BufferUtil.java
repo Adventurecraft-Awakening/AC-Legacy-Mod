@@ -5,23 +5,16 @@ import java.nio.*;
 public final class BufferUtil {
 
     public static int bytesPerElement(Buffer buffer) {
-        if (buffer instanceof ByteBuffer) {
-            return Byte.BYTES;
-        } else if (buffer instanceof CharBuffer) {
-            return Character.BYTES;
-        } else if (buffer instanceof ShortBuffer) {
-            return Short.BYTES;
-        } else if (buffer instanceof IntBuffer) {
-            return Integer.BYTES;
-        } else if (buffer instanceof FloatBuffer) {
-            return Float.BYTES;
-        } else if (buffer instanceof LongBuffer) {
-            return Long.BYTES;
-        } else if (buffer instanceof DoubleBuffer) {
-            return Double.BYTES;
-        } else {
-            throw new IllegalArgumentException("Unsupported buffer type");
-        }
+        return switch (buffer) {
+            case ByteBuffer ignored -> Byte.BYTES;
+            case CharBuffer ignored -> Character.BYTES;
+            case ShortBuffer ignored -> Short.BYTES;
+            case IntBuffer ignored -> Integer.BYTES;
+            case FloatBuffer ignored -> Float.BYTES;
+            case LongBuffer ignored -> Long.BYTES;
+            case DoubleBuffer ignored -> Double.BYTES;
+            case null, default -> throw new IllegalArgumentException("Unsupported buffer type");
+        };
     }
 
     public static void checkBuffer(int bufferSize, int minimumSize) {

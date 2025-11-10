@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.mixin.client.options;
 
 import com.llamalad7.mixinextras.sugar.Local;
+import dev.adventurecraft.awakening.client.gl.GLMipMode;
 import dev.adventurecraft.awakening.client.options.Config;
 import dev.adventurecraft.awakening.client.options.ConnectedGrassOption;
 import dev.adventurecraft.awakening.client.options.OptionOF;
@@ -18,7 +19,6 @@ import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.tile.Tile;
 import org.lwjgl.opengl.Display;
-import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GLContext;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Final;
@@ -977,16 +977,8 @@ public abstract class MixinGameOptions implements ExGameOptions {
     }
 
     @Override
-    public boolean ofMipmapLinear() {
-        return ofMipmapLinear;
-    }
-
-    @Override
-    public int getMipmapType() {
-        if (ofMipmapLinear()) {
-            return GL11.GL_NEAREST_MIPMAP_LINEAR;
-        }
-        return GL11.GL_NEAREST_MIPMAP_NEAREST;
+    public GLMipMode ofMipmapMode() {
+        return ofMipmapLinear ? GLMipMode.LINEAR : GLMipMode.NEAREST;
     }
 
     @Override

@@ -1322,6 +1322,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
                 saveName = "Map Editing";
             }
 
+            // TODO: ask user if save should be loaded when map is missing
             Level world = ExWorld.createWorld(mapName, dimData, saveName, seed, this.progressRenderer);
             if (world.isNew) {
                 this.statManager.addStat(Stats.CREATE_WORLD, 1);
@@ -1347,38 +1348,38 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
     @Override
     public String getMapUsed(String worldName) {
-        File worldFolder = getWorldFolder(worldName);
+        File worldFolder = this.getWorldFolder(worldName);
         File mapNameFile = new File(worldFolder, "map.txt");
-        if (mapNameFile.exists()) {
-            try {
-                BufferedReader reader = new BufferedReader(new FileReader(mapNameFile));
-                String mapName = reader.readLine();
-                reader.close();
-                return mapName;
-            }
-            catch (FileNotFoundException var8) {
-            }
-            catch (IOException var9) {
-            }
+        try (var reader = new BufferedReader(new FileReader(mapNameFile))) {
+            return reader.readLine();
+        }
+        catch (FileNotFoundException ex) {
+            ACMod.LOGGER.error("Missing map link.", ex);
+        }
+        catch (IOException ex) {
+            ACMod.LOGGER.error("Failed to read map link.", ex);
         }
         return null;
     }
 
     @Override
     public void saveMapUsed(String worldName, String mapName) {
-        File worldFolder = getWorldFolder(worldName);
-        worldFolder.mkdirs();
-        File mapNameFile = new File(worldFolder, "map.txt");
+        File worldFolder = this.getWorldFolder(worldName);
         try {
+            worldFolder.mkdirs();
+            File mapNameFile = new File(worldFolder, "map.txt");
             mapNameFile.delete();
             mapNameFile.createNewFile();
-            BufferedWriter writer = new BufferedWriter(new FileWriter(mapNameFile));
-            writer.write(mapName);
-            writer.close();
+
+            try (var writer = new BufferedWriter(new FileWriter(mapNameFile))) {
+                writer.write(mapName);
+            }
+            catch (IOException ex) {
+                ACMod.LOGGER.error("Failed to save map link.", ex);
+            }
         }
-        catch (FileNotFoundException var8) {
-        }
-        catch (IOException var9) {
+        catch (IOException ex) {
+            ACMod.LOGGER.error("Failed to create map link.", ex);
         }
     }
 
