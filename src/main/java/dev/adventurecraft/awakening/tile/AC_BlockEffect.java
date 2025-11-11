@@ -9,7 +9,6 @@ import dev.adventurecraft.awakening.extension.client.render.block.ExFoliageColor
 import dev.adventurecraft.awakening.extension.client.render.block.ExGrassColor;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
-import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityEffect;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ptexture.*;
@@ -50,12 +49,101 @@ public class AC_BlockEffect extends TileEntityTile implements AC_ITriggerDebugBl
         return AC_DebugMode.active;
     }
 
+    @Override
+    public void onTriggerActivated(Level world, int x, int y, int z) {
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityEffect.class);
+        var worldProps = (ExWorldProperties) world.levelData;
+        entity.isActivated = true;
+        entity.ticksBeforeParticle = 0;
+        if (entity.changeFogColor == 1) {
+            worldProps.setOverrideFogColor(true);
+            worldProps.setFogR(entity.fogR);
+            worldProps.setFogG(entity.fogG);
+            worldProps.setFogB(entity.fogB);
+        }
+        else if (entity.changeFogColor == 2) {
+            worldProps.setOverrideFogColor(false);
+        }
+
+        if (entity.changeFogDensity == 1) {
+            worldProps.setOverrideFogDensity(true);
+            worldProps.setFogStart(entity.fogStart);
+            worldProps.setFogEnd(entity.fogEnd);
+        }
+        else if (entity.changeFogDensity == 2) {
+            worldProps.setOverrideFogDensity(false);
+        }
+
+        if (entity.setOverlay) {
+            worldProps.setOverlay(entity.overlay);
+        }
+
+        if (entity.replaceTextures) {
+            this.replaceTextures(world, entity.textureReplacement);
+        }
+        else if (entity.revertTextures) {
+            revertTextures(world);
+        }
+    }
+
+    public static void revertTextures(Level world) {
+        ((ExTextureManager) Minecraft.instance.textures).revertTextures();
+        if (needsReloadForRevert) {
+            ExGrassColor.loadGrass("/misc/grasscolor.png", world);
+            ExFoliageColor.loadFoliage("/misc/foliagecolor.png", world);
+            var waterFile = new File(((ExWorld) world).getLevelDir(), "waterMap.png");
+            if (waterFile.exists()) {
+                AC_TerrainImage.loadWaterMap(waterFile);
+            }
+            var biomeFile = new File(((ExWorld) world).getLevelDir(), "biomeMap.png");
+            if (biomeFile.exists()) {
+                AC_TerrainImage.loadBiomeMap(biomeFile);
+            }
+            Minecraft.instance.levelRenderer.skyColorChanged();
+            needsReloadForRevert = false;
+        }
+
+        ((ExWorldProperties) world.levelData).revertTextures();
+    }
+
+    public void replaceTextures(Level keyName, String replacementName) {
+        File texFile = new File(((ExWorld) keyName).getLevelDir(), "textureReplacement/" + replacementName);
+        if (!texFile.exists()) {
+            return;
+        }
+
+        boolean replaced = false;
+        try {
+            var reader = new BufferedReader(new FileReader(texFile));
+            try {
+                while (reader.ready()) {
+                    String line = reader.readLine();
+                    String[] items = line.split(",", 2);
+                    if (items.length == 2) {
+                        replaced |= replaceTexture(keyName, items[0], items[1]);
+                    }
+                }
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        if (replaced) {
+            Minecraft.instance.levelRenderer.skyColorChanged();
+        }
+    }
+
     public static boolean replaceTexture(Level world, String keyName, String replacementName) {
         String key = keyName.toLowerCase();
         var texManager = (ExTextureManager) Minecraft.instance.textures;
         if (!((ExWorldProperties) world.levelData).addReplacementTexture(keyName, replacementName)) {
             return false;
         }
+
         switch (key) {
             case "/watermap.png" -> {
                 AC_TerrainImage.loadWaterMap(new File(((ExWorld) world).getLevelDir(), replacementName));
@@ -108,116 +196,19 @@ public class AC_BlockEffect extends TileEntityTile implements AC_ITriggerDebugBl
         }
     }
 
-    public static void revertTextures(Level world) {
-        ((ExTextureManager) Minecraft.instance.textures).revertTextures();
-        if (needsReloadForRevert) {
-            ExGrassColor.loadGrass("/misc/grasscolor.png", world);
-            ExFoliageColor.loadFoliage("/misc/foliagecolor.png", world);
-            var waterFile = new File(((ExWorld) world).getLevelDir(), "waterMap.png");
-            if (waterFile.exists()) {
-                AC_TerrainImage.loadWaterMap(waterFile);
-            }
-            var biomeFile = new File(((ExWorld) world).getLevelDir(), "biomeMap.png");
-            if (biomeFile.exists()) {
-                AC_TerrainImage.loadBiomeMap(biomeFile);
-            }
-            Minecraft.instance.levelRenderer.skyColorChanged();
-            needsReloadForRevert = false;
-        }
-
-        ((ExWorldProperties) world.levelData).revertTextures();
-    }
-
-    public void replaceTextures(Level keyName, String replacementName) {
-        File texFile = new File(((ExWorld) keyName).getLevelDir(), "textureReplacement/" + replacementName);
-        if (!texFile.exists()) {
-            return;
-        }
-
-        boolean replaced = false;
-
-        try {
-            var reader = new BufferedReader(new FileReader(texFile));
-            try {
-                while (reader.ready()) {
-                    String line = reader.readLine();
-                    String[] items = line.split(",", 2);
-                    if (items.length == 2) {
-                        replaced |= replaceTexture(keyName, items[0], items[1]);
-                    }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        if (replaced) {
-            Minecraft.instance.levelRenderer.skyColorChanged();
-        }
-    }
-
-    @Override
-    public void onTriggerActivated(Level world, int x, int y, int z) {
-
-        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityEffect entityEffect)) {
-
-            return;
-        }
-        ExWorldProperties worldProps = (ExWorldProperties) world.levelData;
-        entityEffect.isActivated = true;
-        entityEffect.ticksBeforeParticle = 0;
-        if (entityEffect.changeFogColor == 1) {
-            worldProps.setOverrideFogColor(true);
-            worldProps.setFogR(entityEffect.fogR);
-            worldProps.setFogG(entityEffect.fogG);
-            worldProps.setFogB(entityEffect.fogB);
-        }
-        else if (entityEffect.changeFogColor == 2) {
-            worldProps.setOverrideFogColor(false);
-        }
-
-        if (entityEffect.changeFogDensity == 1) {
-            worldProps.setOverrideFogDensity(true);
-            worldProps.setFogStart(entityEffect.fogStart);
-            worldProps.setFogEnd(entityEffect.fogEnd);
-        }
-        else if (entityEffect.changeFogDensity == 2) {
-            worldProps.setOverrideFogDensity(false);
-        }
-
-        if (entityEffect.setOverlay) {
-            worldProps.setOverlay(entityEffect.overlay);
-        }
-
-        if (entityEffect.replaceTextures) {
-            this.replaceTextures(world, entityEffect.textureReplacement);
-        }
-        else if (entityEffect.revertTextures) {
-            revertTextures(world);
-        }
-    }
-
     @Override
     public void onTriggerDeactivated(Level world, int x, int y, int z) {
-        if (world.getTileEntity(x, y, z) instanceof AC_TileEntityEffect entityEffect) {
-            entityEffect.isActivated = false;
-        }
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityEffect.class);
+        entity.isActivated = false;
     }
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (!AC_DebugMode.active) {
+        if (!AC_DebugMode.showDebugGuiOnUse(player)) {
             return false;
         }
-        if ((player.getSelectedItem() == null || player.getSelectedItem().id == AC_Items.cursor.id)) {
-            if (world.getTileEntity(x, y, z) instanceof AC_TileEntityEffect entityEffect) {
-                AC_GuiEffect.showUI(entityEffect);
-                return true;
-            }
-        }
-
-        return false;
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityEffect.class);
+        AC_GuiEffect.showUI(entity);
+        return true;
     }
 }

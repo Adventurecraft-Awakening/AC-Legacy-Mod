@@ -8,6 +8,7 @@ import dev.adventurecraft.awakening.extension.entity.ExBlockEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import dev.adventurecraft.awakening.util.BufferUtil;
+import net.minecraft.world.level.tile.TileEntityTile;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -142,7 +143,7 @@ public abstract class MixinChunk implements ExChunk {
     }
 
     @Redirect(
-        method = { "recalcHeightmap", "lightGap", "recalcHeight", "setBrightness" },
+        method = {"recalcHeightmap", "lightGap", "recalcHeight", "setBrightness"},
         at = @At(
             value = "FIELD",
             target = "Lnet/minecraft/world/level/chunk/LevelChunk;unsaved:Z"
@@ -160,12 +161,13 @@ public abstract class MixinChunk implements ExChunk {
         int prevId = this.getTile(x, y, z);
         int prevMeta = this.getData(x, y, z);
         if (prevId == id && prevMeta == meta) {
+            // TODO: expose flag that recreates TileEntity here?
             return false;
         }
 
         AC_UndoStack undoStack = ((ExWorld) this.level).getUndoStack();
         if (undoStack.isRecording()) {
-            TileEntity entity = this.getChunkBlockTileEntityDontCreate(x, y, z);
+            var entity = this.ac$tryGetTileEntity(x, y, z, TileEntity.class);
             CompoundTag prevNbt = null;
             if (entity != null) {
                 prevNbt = new CompoundTag();
@@ -218,7 +220,7 @@ public abstract class MixinChunk implements ExChunk {
         if (undoStack.isRecording()) {
             int id = this.getTile(x, y, z);
             int prevMeta = this.getData(x, y, z);
-            TileEntity entity = this.getChunkBlockTileEntityDontCreate(x, y, z);
+            var entity = this.ac$tryGetTileEntity(x, y, z, TileEntity.class);
             CompoundTag prevNbt = null;
             if (entity != null) {
                 prevNbt = new CompoundTag();
@@ -308,11 +310,36 @@ public abstract class MixinChunk implements ExChunk {
         return true;
     }
 
-    @Override
-    public TileEntity getChunkBlockTileEntityDontCreate(int x, int y, int z) {
-        TilePos var4 = new TilePos(x, y, z);
-        TileEntity var5 = this.tileEntities.get(var4);
-        return var5;
+    public @Override <E extends TileEntity> E ac$tryGetTileEntity(int x, int y, int z, Class<E> type) {
+        var pos = new TilePos(x, y, z);
+        return type.cast(this.tileEntities.get(pos));
+    }
+
+    public @Override <E extends TileEntity> E ac$getTileEntity(int x, int y, int z, Class<E> type) {
+        int n = this.getTile(x, y, z);
+        if (!Tile.isEntityTile[n]) {
+            return null;
+        }
+
+        var pos = new TilePos(x, y, z);
+        TileEntity entity = this.tileEntities.get(pos);
+        if (!type.isInstance(entity)) {
+            var tile = (TileEntityTile) Tile.tiles[n];
+            tile.onPlace(this.level, this.x * 16 + x, y, this.z * 16 + z);
+            entity = this.tileEntities.get(pos);
+            // Skip type check; assume tile always creates correct type.
+        }
+
+        if (entity != null && entity.isRemoved()) {
+            this.tileEntities.remove(pos);
+            return null;
+        }
+        return (E) entity;
+    }
+
+    @Overwrite
+    public TileEntity getTileEntity(int x, int y, int z) {
+        return this.ac$getTileEntity(x, y, z, TileEntity.class);
     }
 
     public @Override void getTileColumn(ByteBuffer buffer, int x, int y0, int z, int y1) {

@@ -10,6 +10,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.Region;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.tile.entity.TileEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -116,6 +117,20 @@ public abstract class MixinWorldPopulationRegion implements ExRegion {
         int cX = (x >> 4) - this.xc1;
         int cZ = (z >> 4) - this.zc1;
         return this.chunks[cX][cZ].getRawBrightness(x & 15, y, z & 15, this.level.skyDarken);
+    }
+
+    @Override
+    public <E extends TileEntity> E ac$getTileEntity(int x, int y, int z, Class<E> type) {
+        int n = (x >> 4) - this.xc1;
+        int n2 = (z >> 4) - this.zc1;
+        return ((ExChunk) this.chunks[n][n2]).ac$getTileEntity(x & 0xF, y, z & 0xF, type);
+    }
+
+    @Override
+    public <E extends TileEntity> E ac$tryGetTileEntity(int x, int y, int z, Class<E> type) {
+        int n = (x >> 4) - this.xc1;
+        int n2 = (z >> 4) - this.zc1;
+        return ((ExChunk) this.chunks[n][n2]).ac$tryGetTileEntity(x & 0xF, y, z & 0xF, type);
     }
 
     public @Override void getTileColumn(ByteBuffer buffer, int x, int y0, int z, int y1) {

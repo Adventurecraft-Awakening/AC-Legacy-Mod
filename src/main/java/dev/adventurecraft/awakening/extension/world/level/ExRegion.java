@@ -1,8 +1,7 @@
 package dev.adventurecraft.awakening.extension.world.level;
 
-import java.nio.ByteBuffer;
+import dev.adventurecraft.awakening.world.AC_LevelSource;
 
-public interface ExRegion {
+public interface ExRegion extends AC_LevelSource {
 
-    void getTileColumn(ByteBuffer buffer, int x, int y0, int z, int y1);
 }

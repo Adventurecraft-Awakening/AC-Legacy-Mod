@@ -34,27 +34,20 @@ public class AC_BlockTimer extends TileEntityTile implements AC_ITriggerDebugBlo
 
     @Override
     public void onTriggerActivated(Level world, int x, int y, int z) {
-        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityTimer entityTimer)) {
-            return;
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityTimer.class);
+        if (entity.canActivate && !entity.active) {
+            entity.startActive();
         }
-        if (entityTimer.canActivate && !entityTimer.active) {
-            entityTimer.startActive();
-        }
-
     }
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (!AC_DebugMode.active) {
+        if (!AC_DebugMode.showDebugGuiOnUse(player)) {
             return false;
         }
-
-        if (world.getTileEntity(x, y, z) instanceof AC_TileEntityTimer entityTimer) {
-            AC_GuiTimer.showUI(entityTimer);
-            return true;
-        }
-        return false;
-
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityTimer.class);
+        AC_GuiTimer.showUI(entity);
+        return true;
     }
 
     @Override
@@ -64,12 +57,10 @@ public class AC_BlockTimer extends TileEntityTile implements AC_ITriggerDebugBlo
 
     @Override
     public void reset(Level world, int x, int y, int z, boolean forDeath) {
-        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityTimer entityTimer)) {
-            return;
-        }
-        entityTimer.active = false;
-        entityTimer.canActivate = true;
-        entityTimer.ticks = 0;
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityTimer.class);
+        entity.active = false;
+        entity.canActivate = true;
+        entity.ticks = 0;
         ((ExWorld) world).getTriggerManager().removeArea(x, y, z);
     }
 }

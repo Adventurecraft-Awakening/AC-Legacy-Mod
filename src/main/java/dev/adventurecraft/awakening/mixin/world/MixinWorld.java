@@ -543,6 +543,22 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         return ((ExChunk) chunk).setBlockIDWithMetadataTemp(x & 15, y, z & 15, id, meta);
     }
 
+    public @Override <E extends TileEntity> E ac$tryGetTileEntity(int x, int y, int z, Class<E> type) {
+        LevelChunk chunk = this.getChunk(x >> 4, z >> 4);
+        if (chunk != null) {
+            return ((ExChunk) chunk).ac$tryGetTileEntity(x & 15, y, z & 15, type);
+        }
+        return null;
+    }
+
+    public @Override <E extends TileEntity> E ac$getTileEntity(int x, int y, int z, Class<E> type) {
+        LevelChunk chunk = this.getChunk(x >> 4, z >> 4);
+        if (chunk != null) {
+            return ((ExChunk) chunk).ac$getTileEntity(x & 15, y, z & 15, type);
+        }
+        return null;
+    }
+
     private @Unique int getNeighborBrightness(int x, int y, int z) {
         int id = this.getTile(x, y, z);
         if (!ExBlock.neighborLit[id]) {
@@ -735,8 +751,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
         int aId = this.getTile(aX, aY, aZ);
         Tile aBlock = Tile.tiles[aId];
         AABB aAabb = null;
-        if (aBlock != null &&
-            (!useCollisionShapes || (aAabb = aBlock.getAABB(self, aX, aY, aZ)) != null) &&
+        if (aBlock != null && (!useCollisionShapes || (aAabb = aBlock.getAABB(self, aX, aY, aZ)) != null) &&
             (aId > 0 && (collideWithClip || !this.isClippingBlock(aId)) &&
                 aBlock.mayPick(this.getData(aX, aY, aZ), blockCollidableFlag)
             )) {
@@ -871,8 +886,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
             int id = this.getTile(aX, aY, aZ);
             Tile block = Tile.tiles[id];
             AABB aabb = null;
-            if (block != null &&
-                (!useCollisionShapes || (aabb = block.getAABB(self, aX, aY, aZ)) != null) && id != 0 &&
+            if (block != null && (!useCollisionShapes || (aabb = block.getAABB(self, aX, aY, aZ)) != null) && id != 0 &&
                 block.mayPick(this.getData(aX, aY, aZ), blockCollidableFlag) &&
                 // TODO: is getRenderShape check needed after mayPick?
                 ((ExBlock) block).getRenderShape(this, aX, aY, aZ) != BlockShapes.NONE) {
@@ -1619,7 +1633,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource {
     public TileEntity getBlockTileEntityDontCreate(int x, int y, int z) {
         LevelChunk chunk = this.getChunk(x >> 4, z >> 4);
         if (chunk != null) {
-            return ((ExChunk) chunk).getChunkBlockTileEntityDontCreate(x & 15, y, z & 15);
+            return ((ExChunk) chunk).ac$tryGetTileEntity(x & 15, y, z & 15, TileEntity.class);
         }
         return null;
     }

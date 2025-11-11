@@ -6,7 +6,6 @@ import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.common.gui.AC_GuiTriggerMemory;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
-import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTriggerMemory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -55,35 +54,26 @@ public class AC_BlockTriggerMemory extends TileEntityTile implements AC_ITrigger
 
     @Override
     public void onTriggerActivated(Level world, int x, int y, int z) {
-        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityTriggerMemory entityTriggerMemory)) {
-            return;
-        }
-        if (!entityTriggerMemory.isActivated && !entityTriggerMemory.activateOnDetrigger) {
-            entityTriggerMemory.isActivated = true;
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityTriggerMemory.class);
+        if (!entity.isActivated && !entity.activateOnDetrigger) {
+            entity.isActivated = true;
             this.triggerActivate(world, x, y, z);
         }
-
     }
 
     @Override
     public void onTriggerDeactivated(Level world, int x, int y, int z) {
-        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityTriggerMemory entityTriggerMemory)) {
-            return;
-        }
-        if (!entityTriggerMemory.isActivated && entityTriggerMemory.activateOnDetrigger) {
-            entityTriggerMemory.isActivated = true;
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityTriggerMemory.class);
+        if (!entity.isActivated && entity.activateOnDetrigger) {
+            entity.isActivated = true;
             this.triggerActivate(world, x, y, z);
         }
     }
 
     public void triggerActivate(Level world, int x, int y, int z) {
-
-        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityTriggerMemory entityTriggerMemory)) {
-            return;
-        }
-        var area = new AC_TriggerArea(entityTriggerMemory.min(), entityTriggerMemory.max());
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityTriggerMemory.class);
+        var area = new AC_TriggerArea(entity.min(), entity.max());
         ((ExWorld) world).getTriggerManager().addArea(x, y, z, area);
-
     }
 
     public void triggerDeactivate(Level world, int x, int y, int z) {
@@ -92,61 +82,50 @@ public class AC_BlockTriggerMemory extends TileEntityTile implements AC_ITrigger
 
     @Override
     public void onRemove(Level world, int x, int y, int z) {
-        if (world.getTileEntity(x, y, z) instanceof AC_TileEntityTriggerMemory entityTriggerMemory) {
-            if (entityTriggerMemory.isSet()) {
-                if (world.getData(x, y, z) > 0) {
-                    this.onTriggerDeactivated(world, x, y, z);
-                }
-                else {
-                    this.onTriggerActivated(world, x, y, z);
-                }
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityTriggerMemory.class);
+        if (entity.isSet()) {
+            if (world.getData(x, y, z) > 0) {
+                this.onTriggerDeactivated(world, x, y, z);
+            }
+            else {
+                this.onTriggerActivated(world, x, y, z);
             }
         }
         super.onRemove(world, x, y, z);
     }
 
     public void setTriggerToSelection(Level world, int x, int y, int z) {
-        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityTriggerMemory entityTriggerMemory)) {
-            return;
-        }
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityTriggerMemory.class);
         Coord min = AC_ItemCursor.min();
         Coord max = AC_ItemCursor.max();
-        if (!entityTriggerMemory.min().equals(min) || !entityTriggerMemory.max().equals(max)) {
-            entityTriggerMemory.set(min, max);
+        if (!entity.min().equals(min) || !entity.max().equals(max)) {
+            entity.set(min, max);
         }
     }
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (!AC_DebugMode.active) {
+        if (!AC_DebugMode.showDebugGuiOnUse(player)) {
             return false;
         }
-        if ((player.getSelectedItem() == null || player.getSelectedItem().id == AC_Items.cursor.id)) {
-            if (world.getTileEntity(x, y, z) instanceof AC_TileEntityTriggerMemory entityTriggerMemory) {
-                AC_GuiTriggerMemory.showUI(entityTriggerMemory);
-                return true;
-            }
-        }
-        return false;
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityTriggerMemory.class);
+        AC_GuiTriggerMemory.showUI(entity);
+        return true;
     }
 
     @Override
     public void tick(Level world, int x, int y, int z, Random rand) {
-        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityTriggerMemory entityTriggerMemory)) {
-            return;
-        }
-        if (entityTriggerMemory.isActivated) {
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityTriggerMemory.class);
+        if (entity.isActivated) {
             this.triggerActivate(world, x, y, z);
         }
     }
 
     @Override
     public void reset(Level world, int x, int y, int z, boolean forDeath) {
-        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityTriggerMemory entityTriggerMemory)) {
-            return;
-        }
-        if ((!forDeath || entityTriggerMemory.resetOnDeath) && entityTriggerMemory.isActivated) {
-            entityTriggerMemory.isActivated = false;
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityTriggerMemory.class);
+        if ((!forDeath || entity.resetOnDeath) && entity.isActivated) {
+            entity.isActivated = false;
             this.triggerDeactivate(world, x, y, z);
         }
     }

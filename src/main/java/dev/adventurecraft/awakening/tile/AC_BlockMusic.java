@@ -3,7 +3,7 @@ package dev.adventurecraft.awakening.tile;
 import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.gui.AC_GuiMusic;
 import dev.adventurecraft.awakening.extension.client.sound.ExSoundHelper;
-import dev.adventurecraft.awakening.item.AC_Items;
+import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityMusic;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
@@ -36,17 +36,14 @@ public class AC_BlockMusic extends TileEntityTile implements AC_ITriggerDebugBlo
 
     @Override
     public void onTriggerActivated(Level world, int x, int y, int z) {
-        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityMusic entityMusic)) {
-            return;
-        }
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityMusic.class);
         var soundHelper = (ExSoundHelper) Minecraft.instance.soundEngine;
-        if (!entityMusic.musicName.isEmpty()) {
-            soundHelper.playMusicFromStreaming(world, entityMusic.musicName, entityMusic.fadeOut, entityMusic.fadeIn);
+        if (!entity.musicName.isEmpty()) {
+            soundHelper.playMusicFromStreaming(world, entity.musicName, entity.fadeOut, entity.fadeIn);
         }
         else {
             soundHelper.stopMusic(world);
         }
-
     }
 
     @Override
@@ -55,16 +52,12 @@ public class AC_BlockMusic extends TileEntityTile implements AC_ITriggerDebugBlo
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (!AC_DebugMode.active) {
+        if (!AC_DebugMode.showDebugGuiOnUse(player)) {
             return false;
         }
-        if ((player.getSelectedItem() == null || player.getSelectedItem().id == AC_Items.cursor.id)) {
-            if (world.getTileEntity(x, y, z) instanceof AC_TileEntityMusic entityMusic) {
-                AC_GuiMusic.showUI(world, entityMusic);
-                return true;
-            }
-        }
-        return false;
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityMusic.class);
+        AC_GuiMusic.showUI(world, entity);
+        return true;
     }
 
     @Override

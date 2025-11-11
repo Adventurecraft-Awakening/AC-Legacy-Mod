@@ -4,7 +4,6 @@ import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.gui.AC_GuiWeather;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
-import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityWeather;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -36,41 +35,36 @@ public class AC_BlockWeather extends TileEntityTile implements AC_ITriggerDebugB
 
     @Override
     public void onTriggerActivated(Level world, int x, int y, int z) {
+        var exWorld = ((ExWorld) world);
+        var entity = exWorld.ac$getTileEntity(x, y, z, AC_TileEntityWeather.class);
 
-        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityWeather entityWeather)) {
-            return;
-        }
-        if (entityWeather.changePrecipitate) {
-            world.levelData.setRaining(entityWeather.precipitate);
-            ((ExWorld) world).resetCoordOrder();
-        }
-
-        if (entityWeather.changeTempOffset) {
-            ((ExWorldProperties) world.levelData).setTempOffset(entityWeather.tempOffset);
-            ((ExWorld) world).resetCoordOrder();
+        if (entity.changePrecipitate) {
+            world.levelData.setRaining(entity.precipitate);
+            exWorld.resetCoordOrder();
         }
 
-        if (entityWeather.changeTimeOfDay) {
-            ((ExWorld) world).setTimeOfDay(entityWeather.timeOfDay);
+        if (entity.changeTempOffset) {
+            ((ExWorldProperties) world.levelData).setTempOffset(entity.tempOffset);
+            exWorld.resetCoordOrder();
         }
 
-        if (entityWeather.changeTimeRate) {
-            ((ExWorldProperties) world.levelData).setTimeRate(entityWeather.timeRate);
+        if (entity.changeTimeOfDay) {
+            exWorld.setTimeOfDay(entity.timeOfDay);
         }
 
+        if (entity.changeTimeRate) {
+            ((ExWorldProperties) world.levelData).setTimeRate(entity.timeRate);
+        }
     }
+
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (!AC_DebugMode.active) {
+        if (!AC_DebugMode.showDebugGuiOnUse(player)) {
             return false;
         }
-        if ((player.getSelectedItem() == null || player.getSelectedItem().id == AC_Items.cursor.id)) {
-            if (world.getTileEntity(x, y, z) instanceof AC_TileEntityWeather entityWeather) {
-                AC_GuiWeather.showUI(entityWeather);
-            }
-            return true;
-        }
-        return false;
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityWeather.class);
+        AC_GuiWeather.showUI(entity);
+        return true;
     }
 
     @Override

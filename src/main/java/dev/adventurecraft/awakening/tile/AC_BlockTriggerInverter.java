@@ -6,7 +6,6 @@ import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.common.gui.AC_GuiTriggerInverter;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
-import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTriggerInverter;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -66,38 +65,28 @@ public class AC_BlockTriggerInverter extends TileEntityTile implements AC_ITrigg
 
     @Override
     public void onTriggerDeactivated(Level world, int x, int y, int z) {
-        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityTriggerInverter entityTriggerInverter)) {
-            return;
-        }
-        var area = new AC_TriggerArea(entityTriggerInverter.min(), entityTriggerInverter.max());
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityTriggerInverter.class);
+        var area = new AC_TriggerArea(entity.min(), entity.max());
         ((ExWorld) world).getTriggerManager().addArea(x, y, z, area);
-
     }
 
     public void setTriggerToSelection(Level world, int x, int y, int z) {
-        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityTriggerInverter entityTriggerInverter)) {
-            return;
-        }
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityTriggerInverter.class);
         Coord min = AC_ItemCursor.min();
         Coord max = AC_ItemCursor.max();
-        if (!entityTriggerInverter.min().equals(min) || !entityTriggerInverter.max().equals(max)) {
-            entityTriggerInverter.set(min, max);
+        if (!entity.min().equals(min) || !entity.max().equals(max)) {
+            entity.set(min, max);
         }
-
     }
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (!AC_DebugMode.active) {
+        if (!AC_DebugMode.showDebugGuiOnUse(player)) {
             return false;
         }
-        if ((player.getSelectedItem() == null || player.getSelectedItem().id == AC_Items.cursor.id)) {
-            if (world.getTileEntity(x, y, z) instanceof AC_TileEntityTriggerInverter entityTriggerInverter) {
-                AC_GuiTriggerInverter.showUI(entityTriggerInverter);
-                return true;
-            }
-        }
-        return false;
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityTriggerInverter.class);
+        AC_GuiTriggerInverter.showUI(entity);
+        return true;
     }
 
     @Override

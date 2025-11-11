@@ -3,6 +3,7 @@ package dev.adventurecraft.awakening.tile;
 import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.gui.AC_GuiUrl;
 import dev.adventurecraft.awakening.common.gui.AC_GuiUrlRequest;
+import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityUrl;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -34,24 +35,20 @@ public class AC_BlockUrl extends TileEntityTile implements AC_ITriggerDebugBlock
 
     @Override
     public void onTriggerActivated(Level world, int x, int y, int z) {
-        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityUrl entityUrl)) {
-            return;
-        }
-        if (entityUrl.url != null && !entityUrl.url.isEmpty()) {
-            AC_GuiUrlRequest.showUI(entityUrl.url);
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityUrl.class);
+        if (entity.url != null && !entity.url.isEmpty()) {
+            AC_GuiUrlRequest.showUI(entity.url);
         }
     }
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (!AC_DebugMode.active) {
+        if (!AC_DebugMode.showDebugGuiOnUse(player)) {
             return false;
         }
-        if (world.getTileEntity(x, y, z) instanceof AC_TileEntityUrl entityUrl) {
-            AC_GuiUrl.showUI(entityUrl);
-            return true;
-        }
-        return false;
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityUrl.class);
+        AC_GuiUrl.showUI(entity);
+        return true;
     }
 
     @Override

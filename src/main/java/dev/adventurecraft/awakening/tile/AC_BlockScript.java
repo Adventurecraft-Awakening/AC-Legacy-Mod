@@ -3,7 +3,6 @@ package dev.adventurecraft.awakening.tile;
 import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.gui.AC_GuiScript;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityScript;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -46,39 +45,29 @@ public class AC_BlockScript extends TileEntityTile implements AC_ITriggerDebugBl
 
     @Override
     public void onTriggerActivated(Level world, int x, int y, int z) {
-        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityScript entityScript)) {
-            return;
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityScript.class);
+        if (!entity.onTriggerScriptFile.isEmpty()) {
+            ((ExWorld) world).getScriptHandler().runScript(entity.onTriggerScriptFile, entity.scope);
         }
-        if (!entityScript.onTriggerScriptFile.isEmpty()) {
-            ((ExWorld) world).getScriptHandler().runScript(entityScript.onTriggerScriptFile, entityScript.scope);
-        }
-
-        entityScript.isActivated = true;
+        entity.isActivated = true;
     }
 
     @Override
     public void onTriggerDeactivated(Level world, int x, int y, int z) {
-        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityScript entityScript)) {
-            return;
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityScript.class);
+        if (!entity.onDetriggerScriptFile.isEmpty()) {
+            ((ExWorld) world).getScriptHandler().runScript(entity.onDetriggerScriptFile, entity.scope);
         }
-        if (!entityScript.onDetriggerScriptFile.isEmpty()) {
-            ((ExWorld) world).getScriptHandler().runScript(entityScript.onDetriggerScriptFile, entityScript.scope);
-        }
-        entityScript.isActivated = false;
-
+        entity.isActivated = false;
     }
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (!AC_DebugMode.active) {
+        if (!AC_DebugMode.showDebugGuiOnUse(player)) {
             return false;
         }
-        if ((player.getSelectedItem() == null || player.getSelectedItem().id == AC_Items.cursor.id)) {
-            if (world.getTileEntity(x, y, z) instanceof AC_TileEntityScript entityScript) {
-                AC_GuiScript.showUI(entityScript);
-            }
-            return true;
-        }
-        return false;
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityScript.class);
+        AC_GuiScript.showUI(entity);
+        return true;
     }
 }

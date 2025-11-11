@@ -3,6 +3,7 @@ package dev.adventurecraft.awakening.tile;
 import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.gui.AC_GuiCameraBlock;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
+import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityCamera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
@@ -35,14 +36,12 @@ public class AC_BlockCamera extends TileEntityTile implements AC_ITriggerDebugBl
 
     @Override
     public void onTriggerActivated(Level world, int x, int y, int z) {
-        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityCamera entityCamera)) {
-            return;
-        }
-        entityCamera.loadCamera();
-        ExMinecraft mc = (ExMinecraft) Minecraft.instance;
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityCamera.class);
+        entity.loadCamera();
+        var mc = (ExMinecraft) Minecraft.instance;
         mc.getCutsceneCamera().startCamera();
         mc.setCameraActive(true);
-        mc.setCameraPause(entityCamera.pauseGame);
+        mc.setCameraPause(entity.pauseGame);
     }
 
     @Override
@@ -51,16 +50,14 @@ public class AC_BlockCamera extends TileEntityTile implements AC_ITriggerDebugBl
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (!AC_DebugMode.active) {
+        if (!AC_DebugMode.showDebugGuiOnUse(player)) {
             return false;
         }
-        if (!(world.getTileEntity(x, y, z) instanceof AC_TileEntityCamera entityCamera)) {
-            return false;
-        }
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityCamera.class);
         Minecraft.instance.gui.addMessage("Set Active Editing Camera");
-        ((ExMinecraft) Minecraft.instance).setActiveCutsceneCamera(entityCamera.getCamera());
-        entityCamera.getCamera().loadCameraEntities();
-        AC_GuiCameraBlock.showUI(entityCamera);
+        ((ExMinecraft) Minecraft.instance).setActiveCutsceneCamera(entity.getCamera());
+        entity.getCamera().loadCameraEntities();
+        AC_GuiCameraBlock.showUI(entity);
         return true;
     }
 
