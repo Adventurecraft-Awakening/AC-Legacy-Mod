@@ -1,9 +1,9 @@
 package dev.adventurecraft.awakening.tile;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
-import dev.adventurecraft.awakening.tile.entity.AC_TileEntityScript;
 import dev.adventurecraft.awakening.common.gui.AC_GuiScript;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
+import dev.adventurecraft.awakening.tile.entity.AC_TileEntityScript;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelSource;
@@ -45,30 +45,29 @@ public class AC_BlockScript extends TileEntityTile implements AC_ITriggerDebugBl
 
     @Override
     public void onTriggerActivated(Level world, int x, int y, int z) {
-        var entity = (AC_TileEntityScript) world.getTileEntity(x, y, z);
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityScript.class);
         if (!entity.onTriggerScriptFile.isEmpty()) {
             ((ExWorld) world).getScriptHandler().runScript(entity.onTriggerScriptFile, entity.scope);
         }
-
         entity.isActivated = true;
     }
 
     @Override
     public void onTriggerDeactivated(Level world, int x, int y, int z) {
-        var entity = (AC_TileEntityScript) world.getTileEntity(x, y, z);
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityScript.class);
         if (!entity.onDetriggerScriptFile.isEmpty()) {
             ((ExWorld) world).getScriptHandler().runScript(entity.onDetriggerScriptFile, entity.scope);
         }
-
         entity.isActivated = false;
     }
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active) {
-            var entity = (AC_TileEntityScript) world.getTileEntity(x, y, z);
-            AC_GuiScript.showUI(entity);
+        if (!AC_DebugMode.showDebugGuiOnUse(player)) {
+            return false;
         }
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityScript.class);
+        AC_GuiScript.showUI(entity);
         return true;
     }
 }

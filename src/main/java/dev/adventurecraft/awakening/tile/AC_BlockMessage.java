@@ -1,8 +1,9 @@
 package dev.adventurecraft.awakening.tile;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
-import dev.adventurecraft.awakening.tile.entity.AC_TileEntityMessage;
 import dev.adventurecraft.awakening.common.gui.AC_GuiMessage;
+import dev.adventurecraft.awakening.extension.world.ExWorld;
+import dev.adventurecraft.awakening.tile.entity.AC_TileEntityMessage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -34,7 +35,7 @@ public class AC_BlockMessage extends TileEntityTile implements AC_ITriggerDebugB
 
     @Override
     public void onTriggerActivated(Level world, int x, int y, int z) {
-        var entity = (AC_TileEntityMessage) world.getTileEntity(x, y, z);
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityMessage.class);
         if (!entity.message.isEmpty()) {
             Minecraft.instance.gui.addMessage(entity.message);
         }
@@ -46,13 +47,12 @@ public class AC_BlockMessage extends TileEntityTile implements AC_ITriggerDebugB
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active) {
-            var entity = (AC_TileEntityMessage) world.getTileEntity(x, y, z);
-            AC_GuiMessage.showUI(entity);
-            return true;
-        } else {
+        if (!AC_DebugMode.showDebugGuiOnUse(player)) {
             return false;
         }
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityMessage.class);
+        AC_GuiMessage.showUI(entity);
+        return true;
     }
 
     @Override

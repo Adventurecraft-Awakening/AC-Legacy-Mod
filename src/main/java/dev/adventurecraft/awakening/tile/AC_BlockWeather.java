@@ -1,11 +1,10 @@
 package dev.adventurecraft.awakening.tile;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
-import dev.adventurecraft.awakening.item.AC_Items;
-import dev.adventurecraft.awakening.tile.entity.AC_TileEntityWeather;
 import dev.adventurecraft.awakening.common.gui.AC_GuiWeather;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
+import dev.adventurecraft.awakening.tile.entity.AC_TileEntityWeather;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Material;
@@ -36,19 +35,21 @@ public class AC_BlockWeather extends TileEntityTile implements AC_ITriggerDebugB
 
     @Override
     public void onTriggerActivated(Level world, int x, int y, int z) {
-        var entity = (AC_TileEntityWeather) world.getTileEntity(x, y, z);
+        var exWorld = ((ExWorld) world);
+        var entity = exWorld.ac$getTileEntity(x, y, z, AC_TileEntityWeather.class);
+
         if (entity.changePrecipitate) {
             world.levelData.setRaining(entity.precipitate);
-            ((ExWorld) world).resetCoordOrder();
+            exWorld.resetCoordOrder();
         }
 
         if (entity.changeTempOffset) {
             ((ExWorldProperties) world.levelData).setTempOffset(entity.tempOffset);
-            ((ExWorld) world).resetCoordOrder();
+            exWorld.resetCoordOrder();
         }
 
         if (entity.changeTimeOfDay) {
-            ((ExWorld) world).setTimeOfDay(entity.timeOfDay);
+            exWorld.setTimeOfDay(entity.timeOfDay);
         }
 
         if (entity.changeTimeRate) {
@@ -58,13 +59,12 @@ public class AC_BlockWeather extends TileEntityTile implements AC_ITriggerDebugB
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active && (player.getSelectedItem() == null || player.getSelectedItem().id == AC_Items.cursor.id)) {
-            var entity = (AC_TileEntityWeather) world.getTileEntity(x, y, z);
-            AC_GuiWeather.showUI(entity);
-            return true;
-        } else {
+        if (!AC_DebugMode.showDebugGuiOnUse(player)) {
             return false;
         }
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityWeather.class);
+        AC_GuiWeather.showUI(entity);
+        return true;
     }
 
     @Override

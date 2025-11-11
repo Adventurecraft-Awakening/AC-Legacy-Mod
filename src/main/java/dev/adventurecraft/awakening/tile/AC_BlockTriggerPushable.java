@@ -1,14 +1,11 @@
 package dev.adventurecraft.awakening.tile;
 
-import dev.adventurecraft.awakening.common.*;
+import dev.adventurecraft.awakening.common.AC_DebugMode;
+import dev.adventurecraft.awakening.common.AC_TriggerArea;
 import dev.adventurecraft.awakening.common.gui.AC_GuiTriggerPushable;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import dev.adventurecraft.awakening.item.AC_ItemCursor;
-import dev.adventurecraft.awakening.item.AC_Items;
-import dev.adventurecraft.awakening.tile.entity.AC_TileEntityMinMax;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTriggerPushable;
-import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Material;
@@ -31,14 +28,14 @@ public class AC_BlockTriggerPushable extends AC_BlockColorWithEntity {
 
     @Override
     public void neighborChanged(Level world, int x, int y, int z, int id) {
-        var entity = (AC_TileEntityTriggerPushable) world.getTileEntity(x, y, z);
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityTriggerPushable.class);
         int meta = world.getData(x, y, z);
         boolean pushable = this.checkBlock(world, x + 1, y, z, meta);
-        pushable |= this.checkBlock(world, x - 1, y, z, meta);
-        pushable |= this.checkBlock(world, x, y + 1, z, meta);
-        pushable |= this.checkBlock(world, x, y - 1, z, meta);
-        pushable |= this.checkBlock(world, x, y, z + 1, meta);
-        pushable |= this.checkBlock(world, x, y, z - 1, meta);
+        pushable = pushable || this.checkBlock(world, x - 1, y, z, meta);
+        pushable = pushable || this.checkBlock(world, x, y + 1, z, meta);
+        pushable = pushable || this.checkBlock(world, x, y - 1, z, meta);
+        pushable = pushable || this.checkBlock(world, x, y, z + 1, meta);
+        pushable = pushable || this.checkBlock(world, x, y, z - 1, meta);
         if (entity.activated) {
             if (!pushable) {
                 entity.activated = false;
@@ -57,23 +54,14 @@ public class AC_BlockTriggerPushable extends AC_BlockColorWithEntity {
         }
     }
 
-    public void setTriggerToSelection(Level world, int x, int y, int z) {
-        var entity = (AC_TileEntityMinMax) world.getTileEntity(x, y, z);
-        entity.setMin(AC_ItemCursor.min());
-        entity.setMax(AC_ItemCursor.max());
-    }
-
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active) {
-            ItemInstance item = player.getSelectedItem();
-            if (item == null || item.id == AC_Items.cursor.id) {
-                var entity = (AC_TileEntityTriggerPushable) world.getTileEntity(x, y, z);
-                AC_GuiTriggerPushable.showUI(entity);
-                return true;
-            }
+        if (!AC_DebugMode.showDebugGuiOnUse(player)) {
+            return false;
         }
-        return false;
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityTriggerPushable.class);
+        AC_GuiTriggerPushable.showUI(entity);
+        return true;
     }
 
     @Override

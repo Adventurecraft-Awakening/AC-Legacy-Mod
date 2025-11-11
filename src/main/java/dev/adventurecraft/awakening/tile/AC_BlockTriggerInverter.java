@@ -1,13 +1,12 @@
 package dev.adventurecraft.awakening.tile;
 
-import java.util.Random;
-
-import dev.adventurecraft.awakening.common.*;
+import dev.adventurecraft.awakening.common.AC_DebugMode;
+import dev.adventurecraft.awakening.common.AC_TriggerArea;
+import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.common.gui.AC_GuiTriggerInverter;
+import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
-import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTriggerInverter;
-import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelSource;
@@ -15,7 +14,8 @@ import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.tile.TileEntityTile;
 import net.minecraft.world.level.tile.entity.TileEntity;
 import net.minecraft.world.phys.AABB;
-import dev.adventurecraft.awakening.extension.world.ExWorld;
+
+import java.util.Random;
 
 public class AC_BlockTriggerInverter extends TileEntityTile implements AC_ITriggerDebugBlock {
 
@@ -65,13 +65,13 @@ public class AC_BlockTriggerInverter extends TileEntityTile implements AC_ITrigg
 
     @Override
     public void onTriggerDeactivated(Level world, int x, int y, int z) {
-        var entity = (AC_TileEntityTriggerInverter) world.getTileEntity(x, y, z);
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityTriggerInverter.class);
         var area = new AC_TriggerArea(entity.min(), entity.max());
         ((ExWorld) world).getTriggerManager().addArea(x, y, z, area);
     }
 
     public void setTriggerToSelection(Level world, int x, int y, int z) {
-        var entity = (AC_TileEntityTriggerInverter) world.getTileEntity(x, y, z);
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityTriggerInverter.class);
         Coord min = AC_ItemCursor.min();
         Coord max = AC_ItemCursor.max();
         if (!entity.min().equals(min) || !entity.max().equals(max)) {
@@ -81,15 +81,12 @@ public class AC_BlockTriggerInverter extends TileEntityTile implements AC_ITrigg
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active) {
-            ItemInstance item = player.getSelectedItem();
-            if (item == null || item.id == AC_Items.cursor.id) {
-                var entity = (AC_TileEntityTriggerInverter) world.getTileEntity(x, y, z);
-                AC_GuiTriggerInverter.showUI(entity);
-                return true;
-            }
+        if (!AC_DebugMode.showDebugGuiOnUse(player)) {
+            return false;
         }
-        return false;
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityTriggerInverter.class);
+        AC_GuiTriggerInverter.showUI(entity);
+        return true;
     }
 
     @Override
