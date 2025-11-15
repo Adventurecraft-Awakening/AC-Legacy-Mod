@@ -62,7 +62,7 @@ public abstract class MixinEntity implements ExEntity {
     @Shadow public boolean noPhysics;
     @Shadow public float fallDistance;
     @Shadow public int nextStep;
-    @Shadow protected Random random = RandomUtil.newXoshiro128PP();
+    @Shadow protected Random random;
     @Shadow public int flameTime;
     @Shadow public int onFire;
     @Shadow public int invulnerableTime;
