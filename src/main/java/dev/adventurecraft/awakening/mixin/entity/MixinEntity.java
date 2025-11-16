@@ -78,6 +78,7 @@ public abstract class MixinEntity implements ExEntity {
     @Unique private int cachedBrightnessKey = -1;
     @Unique private float cachedBrightness;
 
+    // TODO: move into SynchedEntityData? String key makes that difficult...
     @Unique private Map<String, Object> customData;
 
     @Shadow

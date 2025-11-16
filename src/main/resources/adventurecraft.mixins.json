@@ -151,7 +151,6 @@
     "world.chunk.MixinChunk",
     "world.chunk.MixinServerChunkCache",
     "world.entity.MixinSynchedEntityData",
-    "world.entity.MixinSynchedEntityData$DataItem",
     "world.gen.MixinBiomeSource",
     "world.level.chunk.storage.MixinRegionFile",
     "world.level.tile.MixinSignTile",

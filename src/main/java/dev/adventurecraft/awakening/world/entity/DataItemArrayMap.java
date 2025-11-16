@@ -4,20 +4,17 @@ import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
-import net.minecraft.world.entity.SynchedEntityData;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
-import org.spongepowered.asm.mixin.*;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-public record DataItemArrayMap(SynchedEntityData.DataItem... items)
-    implements Int2ObjectMap<SynchedEntityData.DataItem> {
+public record DataItemArrayMap(DataItem... items) implements Int2ObjectMap<DataItem> {
 
-    public DataItemArrayMap(Collection<SynchedEntityData.DataItem> items, SynchedEntityData.DataItem item) {
-        this(items.toArray(new SynchedEntityData.DataItem[items.size() + 1]));
+    public DataItemArrayMap(Collection<DataItem> items, DataItem item) {
+        this(items.toArray(new DataItem[items.size() + 1]));
         this.items[this.items.length - 1] = item;
     }
 
@@ -37,36 +34,32 @@ public record DataItemArrayMap(SynchedEntityData.DataItem... items)
     }
 
     @Override
-    public void putAll(@NotNull Map<? extends Integer, ? extends SynchedEntityData.DataItem> map) {
+    public void putAll(@NotNull Map<? extends Integer, ? extends DataItem> map) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void defaultReturnValue(SynchedEntityData.DataItem rv) {
+    public void defaultReturnValue(DataItem rv) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public SynchedEntityData.DataItem defaultReturnValue() {
+    public DataItem defaultReturnValue() {
         return null;
     }
 
     @Override
-    public ObjectSet<Entry<SynchedEntityData.DataItem>> int2ObjectEntrySet() {
-        // this depends on SynchedEntityData.DataItem implementing Entry
+    public ObjectSet<Entry<DataItem>> int2ObjectEntrySet() {
+        // this depends on DataItem implementing Entry
         return new ObjectArraySet<>(this.items);
     }
 
     @Override
     public @NotNull IntSet keySet() {
         return new AbstractIntSet() {
-            SynchedEntityData.DataItem[] items() {
-                return DataItemArrayMap.this.items;
-            }
-
             @Override
             public int size() {
-                return this.items().length;
+                return DataItemArrayMap.this.items.length;
             }
 
             @Override
@@ -76,7 +69,7 @@ public record DataItemArrayMap(SynchedEntityData.DataItem... items)
 
                     @Override
                     public boolean hasNext() {
-                        return pos < items().length;
+                        return pos < DataItemArrayMap.this.items.length;
                     }
 
                     @Override
@@ -84,7 +77,7 @@ public record DataItemArrayMap(SynchedEntityData.DataItem... items)
                         if (!hasNext()) {
                             throw new NoSuchElementException();
                         }
-                        return items()[pos++].getId();
+                        return DataItemArrayMap.this.items[pos++].getIntKey();
                     }
 
                     @Override
@@ -97,14 +90,14 @@ public record DataItemArrayMap(SynchedEntityData.DataItem... items)
     }
 
     @Override
-    public @NotNull ObjectCollection<SynchedEntityData.DataItem> values() {
+    public @NotNull ObjectCollection<DataItem> values() {
         return new ObjectArraySet<>(this.items);
     }
 
     @Override
-    public SynchedEntityData.DataItem get(int key) {
-        for (SynchedEntityData.DataItem item : this.items) {
-            if (item.getId() == key) {
+    public DataItem get(int key) {
+        for (DataItem item : this.items) {
+            if (key == item.getIntKey()) {
                 return item;
             }
         }
@@ -113,8 +106,8 @@ public record DataItemArrayMap(SynchedEntityData.DataItem... items)
 
     @Override
     public boolean containsKey(int key) {
-        for (SynchedEntityData.DataItem item : this.items) {
-            if (item.getId() == key) {
+        for (DataItem item : this.items) {
+            if (key == item.getIntKey()) {
                 return true;
             }
         }
