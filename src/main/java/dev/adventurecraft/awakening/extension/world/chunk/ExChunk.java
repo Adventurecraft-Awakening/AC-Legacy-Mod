@@ -1,9 +1,6 @@
 package dev.adventurecraft.awakening.extension.world.chunk;
 
 import dev.adventurecraft.awakening.world.AC_LevelSource;
-import net.minecraft.world.level.tile.entity.TileEntity;
-
-import java.nio.ByteBuffer;
 
 public interface ExChunk extends AC_LevelSource {
 
@@ -21,11 +18,11 @@ public interface ExChunk extends AC_LevelSource {
 
     void updateLightHash();
 
-    static int translate128(int id) {
-        return id > 127 ? -129 + (id - 127) : id;
+    static byte narrowByte(int id) {
+        return (byte) (id & 0xff);
     }
 
-    static int translate256(int id) {
-        return id < 0 ? id + 256 : id;
+    static int widenByte(byte id) {
+        return id & 0xff;
     }
 }

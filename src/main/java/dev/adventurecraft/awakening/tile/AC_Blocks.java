@@ -88,12 +88,13 @@ public class AC_Blocks {
         }
 
         for (int i = 0; i < blocks.length; ++i) {
-            int id = ExChunk.translate256(blocks[i]);
+            int id = ExChunk.widenByte(blocks[i]);
             if (id >= 100 && id <= 122) {
-                blocks[i] = (byte) ExChunk.translate128(id + 50);
+                id += 50;
             } else if (id >= 152 && id <= 155) {
-                blocks[i] = (byte) ExChunk.translate128(id + 21);
+                id += 21;
             }
+            blocks[i] = ExChunk.narrowByte(id);
         }
     }
 

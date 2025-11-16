@@ -47,13 +47,16 @@ public abstract class MixinChunk implements ExChunk {
     @Unique private int lightHash;
 
     @Shadow
-    protected abstract void lightGaps(int i, int j);
+    protected abstract void lightGaps(int x, int z);
 
     @Shadow
-    protected abstract void recalcHeight(int i, int j, int k);
+    protected abstract void recalcHeight(int x, int y, int z);
 
     @Shadow
-    public abstract int getData(int i, int j, int k);
+    public abstract int getTile(int x, int y, int z);
+
+    @Shadow
+    public abstract int getData(int x, int y, int z);
 
     @Shadow
     public abstract void markUnsaved();
@@ -64,82 +67,6 @@ public abstract class MixinChunk implements ExChunk {
     )
     private void doInit(Level level, int x, int y, CallbackInfo ci) {
         this.lightHash = level.random.nextInt();
-    }
-
-    @Redirect(
-        method = "recalcHeightmapOnly",
-        at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/world/level/tile/Tile;lightBlock:[I",
-            args = {"array=get", "fuzz=9"}
-        )
-    )
-    private int redirect0_translate256(
-        int[] array,
-        int index,
-        @Local(name = "var4") int var4,
-        @Local(name = "var5") int var5
-    ) {
-        return ExChunk.translate256(this.blocks[var5 + var4 - 1]);
-    }
-
-    @Redirect(
-        method = "recalcHeightmap",
-        at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/world/level/tile/Tile;lightBlock:[I",
-            args = {"array=get", "fuzz=9"},
-            ordinal = 0
-        )
-    )
-    private int redirect1_translate256(
-        int[] array,
-        int index,
-        @Local(name = "var4") int var4,
-        @Local(name = "var5") int var5
-    ) {
-        return ExChunk.translate256(this.blocks[var5 + var4 - 1]);
-    }
-
-    @Redirect(
-        method = "recalcHeightmap",
-        at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/world/level/tile/Tile;lightBlock:[I",
-            args = {"array=get", "fuzz=9"},
-            ordinal = 1
-        )
-    )
-    private int redirect2_translate256(
-        int[] array,
-        int index,
-        @Local(name = "var5") int var5,
-        @Local(name = "var7") int var7
-    ) {
-        return ExChunk.translate256(this.blocks[var5 + var7]);
-    }
-
-    @Redirect(
-        method = "recalcHeight",
-        at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/world/level/tile/Tile;lightBlock:[I",
-            args = {"array=get", "fuzz=9"},
-            ordinal = 0
-        )
-    )
-    private int redirect3_translate256(
-        int[] array,
-        int index,
-        @Local(name = "var5") int var5,
-        @Local(name = "var6") int var6
-    ) {
-        return ExChunk.translate256(this.blocks[var6 + var5 - 1]);
-    }
-
-    @Overwrite
-    public int getTile(int x, int y, int z) {
-        return ExChunk.translate256(this.blocks[x << 11 | z << 7 | y]);
     }
 
     @Redirect(
@@ -165,6 +92,7 @@ public abstract class MixinChunk implements ExChunk {
             return false;
         }
 
+        // TODO: record block regions
         AC_UndoStack undoStack = ((ExWorld) this.level).getUndoStack();
         if (undoStack.isRecording()) {
             var entity = this.ac$tryGetTileEntity(x, y, z, TileEntity.class);
@@ -177,17 +105,17 @@ public abstract class MixinChunk implements ExChunk {
             undoStack.recordChange(x, y, z, this.x, this.z, prevId, prevMeta, prevNbt, id, meta, null);
         }
 
-        int newId = ExChunk.translate256(id);
+        int newId = id & 0xff;
         int bX = this.x * 16 + x;
         int bZ = this.z * 16 + z;
-        this.blocks[x << 11 | z << 7 | y] = (byte) ExChunk.translate128(newId);
+        this.blocks[x << 11 | z << 7 | y] = ExChunk.narrowByte(newId);
         if (prevId != 0 && !this.level.isClientSide) {
             Tile.tiles[prevId].onRemove(this.level, bX, y, bZ);
         }
         this.data.set(x, y, z, meta);
 
-        int height = this.heightMap[z << 4 | x] & 255;
-        if (Tile.lightBlock[newId & 255] != 0) {
+        int height = this.heightMap[z << 4 | x] & 0xff;
+        if (Tile.lightBlock[newId] != 0) {
             if (y >= height) {
                 this.recalcHeight(x, y + 1, z);
             }
@@ -216,6 +144,7 @@ public abstract class MixinChunk implements ExChunk {
 
     @Overwrite
     public void setData(int x, int y, int z, int newMeta) {
+        // TODO: record block regions
         AC_UndoStack undoStack = ((ExWorld) this.level).getUndoStack();
         if (undoStack.isRecording()) {
             int id = this.getTile(x, y, z);
@@ -304,8 +233,7 @@ public abstract class MixinChunk implements ExChunk {
 
     @Override
     public boolean setBlockIDWithMetadataTemp(int x, int y, int z, int id, int meta) {
-        int var6 = ExChunk.translate256(id);
-        this.blocks[x << 11 | z << 7 | y] = (byte) ExChunk.translate128(var6);
+        this.blocks[x << 11 | z << 7 | y] = ExChunk.narrowByte(id);
         this.data.set(x, y, z, meta);
         return true;
     }

@@ -45,6 +45,8 @@ public interface ExWorld {
     void recordRayDebugList(
         double aX, double aY, double aZ, double bX, double bY, double bZ, HitResult hit);
 
+    // TODO: get rid of this method
+    @Deprecated
     boolean setBlockAndMetadataTemp(int x, int y, int z, int id, int meta);
 
     <E extends TileEntity> E ac$tryGetTileEntity(int x, int y, int z, Class<E> type);

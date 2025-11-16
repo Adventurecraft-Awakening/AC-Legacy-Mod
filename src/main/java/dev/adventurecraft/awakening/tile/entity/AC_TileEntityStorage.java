@@ -47,8 +47,9 @@ public class AC_TileEntityStorage extends AC_TileEntityMinMax {
                 for (int y = min.y; y <= max.y; ++y) {
                     int id = this.level.getTile(x, y, z);
                     int meta = this.level.getData(x, y, z);
-                    this.blockIDs[blockIndex] = (byte) ExChunk.translate128(id);
-                    this.metadatas[blockIndex] = (byte) meta;
+                    this.blockIDs[blockIndex] = ExChunk.narrowByte(id);
+                    this.metadatas[blockIndex] = (byte) (meta & 0xf);
+
                     TileEntity tileEntity = this.level.getTileEntity(x, y, z);
                     if (tileEntity != null) {
                         var tag = new CompoundTag();
@@ -75,11 +76,13 @@ public class AC_TileEntityStorage extends AC_TileEntityMinMax {
         for (int x = min.x; x <= max.x; ++x) {
             for (int z = min.z; z <= max.z; ++z) {
                 for (int y = min.y; y <= max.y; ++y) {
-                    int id = this.level.getTile(x, y, z);
-                    ((ExWorld) this.level).cancelBlockUpdate(x, y, z, id);
-                    int id256 = ExChunk.translate256(this.blockIDs[blockIndex]);
-                    byte meta = this.metadatas[blockIndex];
-                    this.level.setTileAndData(x, y, z, id256, meta);
+                    int prevId = this.level.getTile(x, y, z);
+                    // TODO: reuse TickNextTickData key between calls
+                    ((ExWorld) this.level).cancelBlockUpdate(x, y, z, prevId);
+
+                    int id = this.blockIDs[blockIndex] & 0xff;
+                    int meta = this.metadatas[blockIndex] & 0xf;
+                    this.level.setTileAndData(x, y, z, id, meta);
                     this.level.removeTileEntity(x, y, z);
                     ++blockIndex;
                 }
