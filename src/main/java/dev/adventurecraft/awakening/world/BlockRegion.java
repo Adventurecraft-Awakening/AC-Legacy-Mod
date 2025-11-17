@@ -1,19 +1,22 @@
 package dev.adventurecraft.awakening.world;
 
+import dev.adventurecraft.awakening.common.Coord;
+import dev.adventurecraft.awakening.world.region.BlockEntityLayer;
+import dev.adventurecraft.awakening.world.region.BlockLayer;
+import dev.adventurecraft.awakening.world.region.BlockMetaLayer;
+import net.minecraft.world.level.Level;
+
 /**
  * Represents a copied block region containing block IDs, metadata, and dimensional information.
  * <p>
  * This immutable data structure stores a 3D array of blocks in a flattened format
- * using the formula: index = depth * (height * x + y) + z
+ * using the formula: <code>index = depth * (height * x + y) + z</code>
  *
  * @author Adventurecraft Team
  */
-public class BlockRegion {
+public final class BlockRegion implements BlockLayer {
 
-    /** Array of block IDs in the region */
-    public final int[] blockIds;
-    /** Array of block metadata values corresponding to blockIds */
-    public final int[] metadata;
+    private final BlockLayer layer;
 
     /** Width of the region (X dimension) */
     public final int width;
@@ -23,47 +26,33 @@ public class BlockRegion {
     public final int depth;
 
     /**
-     * Creates a new BlockRegion with the specified data and dimensions.
+     * Creates a new BlockRegion with the specified dimensions.
      *
-     * @param blockIds Array of block IDs (must not be null)
-     * @param metadata Array of metadata values (must not be null and same length as blockIds)
      * @param width Width of the region (must be positive)
      * @param height Height of the region (must be positive)
      * @param depth Depth of the region (must be positive)
      * @throws IllegalArgumentException if any parameter is invalid
      */
-    public BlockRegion(int[] blockIds, int[] metadata, int width, int height, int depth) {
-        if (blockIds == null || metadata == null) {
-            throw new IllegalArgumentException("Block arrays cannot be null");
-        }
-        if (blockIds.length != metadata.length) {
-            throw new IllegalArgumentException("Block and metadata arrays must have the same length");
-        }
+    public BlockRegion(int width, int height, int depth, boolean saveEntities) {
         if (width <= 0 || height <= 0 || depth <= 0) {
             throw new IllegalArgumentException("Dimensions must be positive");
         }
-        if (blockIds.length != width * height * depth) {
-            throw new IllegalArgumentException("Array length must match dimensions");
-        }
 
-        this.blockIds = blockIds;
-        this.metadata = metadata;
+        this.layer = saveEntities
+            ? new BlockEntityLayer(width, height, depth)
+            : new BlockMetaLayer(width, height, depth);
         this.width = width;
         this.height = height;
         this.depth = depth;
     }
 
-    public BlockRegion(int width, int height, int depth) {
-        if (width <= 0 || height <= 0 || depth <= 0) {
-            throw new IllegalArgumentException("Dimensions must be positive");
-        }
+    public static BlockRegion fromCoords(Coord min, Coord max, boolean saveEntities) {
+        Coord delta = max.sub(min).add(Coord.one);
+        return new BlockRegion(delta.x, delta.y, delta.z, saveEntities);
+    }
 
-        int volume = calculateVolume(width, height, depth);
-        this.blockIds = new int[volume];
-        this.metadata = new int[volume];
-        this.width = width;
-        this.height = height;
-        this.depth = depth;
+    public Coord getSize() {
+        return new Coord(this.width, this.height, this.depth);
     }
 
     /**
@@ -71,15 +60,83 @@ public class BlockRegion {
      *
      * @return The total number of blocks (width * height * depth)
      */
-    public final int getBlockCount() {
+    public int getBlockCount() {
         return calculateVolume(this.width, this.height, this.depth);
     }
 
     /**
      * Calculates the array index for 3D coordinates in the flattened arrays.
      */
-    public final int makeIndex(int x, int y, int z) {
+    public int makeIndex(int x, int y, int z) {
         return calculateArrayIndex(x, y, z, this.height, this.depth);
+    }
+
+    public long readBlocks(Level level, Coord min, Coord max) {
+        return this.forEachBlock(level, min, max, this::readBlock);
+    }
+
+    public long clearBlocks(Level level, Coord min, Coord max) {
+        return this.forEachBlock(level, min, max, this::clearBlock);
+    }
+
+    /**
+     * Pastes a BlockRegion at the specified base coordinates.
+     * <p>
+     * Places all blocks without triggering updates for performance.
+     *
+     * @param level The world to paste blocks into
+     * @param min Base coordinates for pasting
+     */
+    public long writeBlocks(Level level, Coord min, Coord max) {
+        // First pass: set blocks without updates for performance
+        return this.forEachBlock(level, min, max, this::writeBlock);
+    }
+
+    /**
+     * Updates blocks at the specified base coordinates.
+     * <p>
+     * Trigger tile updates for proper block behavior.
+     *
+     * @param min Base coordinates for pasting
+     */
+    public long updateBlocks(Level level, Coord min, Coord max) {
+        return this.forEachBlock(level, min, max, this::updateBlock);
+    }
+
+    public long forEachBlock(Level level, Coord min, Coord max, BlockIndexConsumer consumer) {
+        long count = 0;
+        for (int x = min.x; x <= max.x; ++x) {
+            for (int y = min.y; y <= max.y; ++y) {
+                for (int z = min.z; z <= max.z; ++z) {
+                    int lX = x - min.x;
+                    int lY = y - min.y;
+                    int lZ = z - min.z;
+                    int index = this.makeIndex(lX, lY, lZ);
+                    count += consumer.apply(level, index, x, y, z) ? 1 : 0;
+                }
+            }
+        }
+        return count;
+    }
+
+    @Override
+    public boolean readBlock(Level level, int index, int x, int y, int z) {
+        return this.layer.readBlock(level, index, x, y, z);
+    }
+
+    @Override
+    public boolean clearBlock(Level level, int index, int x, int y, int z) {
+        return this.layer.clearBlock(level, index, x, y, z);
+    }
+
+    @Override
+    public boolean writeBlock(Level level, int index, int x, int y, int z) {
+        return this.layer.writeBlock(level, index, x, y, z);
+    }
+
+    @Override
+    public boolean updateBlock(Level level, int index, int x, int y, int z) {
+        return this.layer.updateBlock(level, index, x, y, z);
     }
 
     /**
@@ -99,5 +156,10 @@ public class BlockRegion {
 
     public static int calculateVolume(int width, int height, int depth) {
         return width * height * depth;
+    }
+
+    @FunctionalInterface
+    public interface BlockIndexConsumer {
+        boolean apply(Level level, int index, int x, int y, int z);
     }
 }

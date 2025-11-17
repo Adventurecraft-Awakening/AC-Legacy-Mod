@@ -142,6 +142,7 @@ public class AC_MapEditing {
 
         Coord coord = AC_BlockCopyUtils.calculatePastePosition().sub(AC_ItemCursor.min());
 
+        // TODO: generate mesh
         for (int texIndex = 0; texIndex <= 3; ++texIndex) {
             if (texIndex == 0) {
                 this.mc.textures.bind(this.mc.textures.loadTexture("/terrain.png"));

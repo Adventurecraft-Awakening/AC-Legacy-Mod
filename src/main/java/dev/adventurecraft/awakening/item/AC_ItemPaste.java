@@ -3,7 +3,7 @@ package dev.adventurecraft.awakening.item;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.world.AC_BlockCopyUtils;
-import dev.adventurecraft.awakening.world.BlockTileEntityRegion;
+import dev.adventurecraft.awakening.world.BlockRegion;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;
@@ -59,13 +59,16 @@ public class AC_ItemPaste extends Item {
 
         try {
             // Copy blocks from selection (non-destructive)
-            BlockTileEntityRegion region = AC_BlockCopyUtils.copyBlocksAndTilesFromSelection(world, false);
+            Coord min = AC_ItemCursor.min();
+            Coord max = AC_ItemCursor.max();
+            BlockRegion region = AC_BlockCopyUtils.copyBlocks(world, min, max, true, false);
 
             // Calculate where to paste based on player's look direction
             Coord pastePosition = AC_BlockCopyUtils.calculatePastePosition();
 
             // Paste the copied blocks
-            AC_BlockCopyUtils.pasteBlockRegion(world, region, pastePosition.x, pastePosition.y, pastePosition.z);
+            region.writeBlocks(world, pastePosition, region.getSize());
+            region.updateBlocks(world, pastePosition, region.getSize());
         }
         catch (Exception e) {
             // Log error but don't crash the game

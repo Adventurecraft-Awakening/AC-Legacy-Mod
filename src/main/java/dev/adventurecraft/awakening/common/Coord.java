@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 public final class Coord {
 
     public static final Coord zero = new Coord(0, 0, 0);
+    public static final Coord one = new Coord(1, 1, 1);
 
     public final int x;
     public final int y;
