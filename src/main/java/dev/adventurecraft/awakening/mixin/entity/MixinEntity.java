@@ -62,7 +62,7 @@ public abstract class MixinEntity implements ExEntity {
     @Shadow public boolean noPhysics;
     @Shadow public float fallDistance;
     @Shadow public int nextStep;
-    @Shadow protected Random random = RandomUtil.newXoshiro128PP();
+    @Shadow protected Random random;
     @Shadow public int flameTime;
     @Shadow public int onFire;
     @Shadow public int invulnerableTime;
@@ -78,6 +78,7 @@ public abstract class MixinEntity implements ExEntity {
     @Unique private int cachedBrightnessKey = -1;
     @Unique private float cachedBrightness;
 
+    // TODO: move into SynchedEntityData? String key makes that difficult...
     @Unique private Map<String, Object> customData;
 
     @Shadow
