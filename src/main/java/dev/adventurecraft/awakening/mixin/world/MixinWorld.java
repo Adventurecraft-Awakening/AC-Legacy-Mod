@@ -1486,9 +1486,8 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
     }
 
     @Override
-    public void cancelBlockUpdate(int x, int y, int z, int id) {
-        var entry = new TickNextTickData(x, y, z, id);
-        this.tickNextTickSet.remove(entry);
+    public boolean cancelBlockUpdate(TickNextTickData entry) {
+        return this.tickNextTickSet.remove(entry);
     }
 
     @Override

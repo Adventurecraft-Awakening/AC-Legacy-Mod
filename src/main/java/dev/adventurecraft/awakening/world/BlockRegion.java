@@ -51,6 +51,10 @@ public final class BlockRegion implements BlockLayer {
         return new BlockRegion(delta.x, delta.y, delta.z, saveEntities);
     }
 
+    public BlockLayer getLayer() {
+        return this.layer;
+    }
+
     public Coord getSize() {
         return new Coord(this.width, this.height, this.depth);
     }
@@ -68,7 +72,7 @@ public final class BlockRegion implements BlockLayer {
      * Calculates the array index for 3D coordinates in the flattened arrays.
      */
     public int makeIndex(int x, int y, int z) {
-        return calculateArrayIndex(x, y, z, this.height, this.depth);
+        return makeIndex(x, y, z, this.height, this.depth);
     }
 
     public long readBlocks(Level level, Coord min, Coord max) {
@@ -150,7 +154,7 @@ public final class BlockRegion implements BlockLayer {
      * @return The calculated array index
      * @implNote Uses the formula: {@code index = depth * (height * x + y) + z}
      */
-    public static int calculateArrayIndex(int x, int y, int z, int height, int depth) {
+    public static int makeIndex(int x, int y, int z, int height, int depth) {
         return depth * (height * x + y) + z;
     }
 

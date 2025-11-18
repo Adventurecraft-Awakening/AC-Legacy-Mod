@@ -2,6 +2,8 @@ package dev.adventurecraft.awakening.world.region;
 
 import net.minecraft.world.level.Level;
 
+import java.nio.ByteBuffer;
+
 public sealed class BlockMetaLayer extends BlockIdLayer permits BlockEntityLayer {
 
     private final byte[] metadata;
@@ -13,6 +15,10 @@ public sealed class BlockMetaLayer extends BlockIdLayer permits BlockEntityLayer
 
     public final byte getMeta(int index) {
         return this.metadata[index];
+    }
+
+    public final ByteBuffer getMetaBuffer() {
+        return ByteBuffer.wrap(this.metadata);
     }
 
     @Override

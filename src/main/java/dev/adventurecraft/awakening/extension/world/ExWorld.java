@@ -7,6 +7,7 @@ import dev.adventurecraft.awakening.script.Script;
 import net.minecraft.util.ProgressListener;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.TickNextTickData;
 import net.minecraft.world.level.dimension.Dimension;
 import net.minecraft.world.level.storage.LevelIO;
 import net.minecraft.world.level.tile.entity.TileEntity;
@@ -57,7 +58,7 @@ public interface ExWorld {
 
     int getLightUpdateHash(int x, int y, int z);
 
-    void cancelBlockUpdate(int x, int y, int z, int var4);
+    boolean cancelBlockUpdate(TickNextTickData entry);
 
     Entity getEntityByID(int id);
 

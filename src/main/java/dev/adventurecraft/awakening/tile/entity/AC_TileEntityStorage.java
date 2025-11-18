@@ -1,141 +1,99 @@
 package dev.adventurecraft.awakening.tile.entity;
 
-import java.util.ArrayList;
-
 import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
-import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
-import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
-import net.minecraft.client.Minecraft;
+import dev.adventurecraft.awakening.world.BlockRegion;
+import dev.adventurecraft.awakening.world.region.BlockEntityLayer;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.level.tile.entity.TileEntity;
+import net.minecraft.world.level.TickNextTickData;
 
 public class AC_TileEntityStorage extends AC_TileEntityMinMax {
 
-    byte[] blockIDs = null;
-    byte[] metadatas = null;
-    ArrayList<CompoundTag> tileEntities = new ArrayList<>();
+    BlockRegion blockRegion;
 
-    public void setArea() {
-        this.setMin(AC_ItemCursor.min());
-        this.setMax(AC_ItemCursor.max());
-        Coord delta = this.max().sub(this.min());
-        int width = delta.x + 1;
-        int height = delta.y + 1;
-        int depth = delta.z + 1;
-        int volume = width * height * depth;
-        this.blockIDs = new byte[volume];
-        this.metadatas = new byte[volume];
+    public void setArea(Coord min, Coord max) {
+        this.setMin(min);
+        this.setMax(max);
+
+        this.blockRegion = BlockRegion.fromCoords(this.min(), this.max(), true);
         this.saveCurrentArea();
     }
 
     public void saveCurrentArea() {
-        if (this.blockIDs == null) {
+        if (this.blockRegion == null) {
             return;
         }
-
-        int blockIndex = 0;
-        this.tileEntities.clear();
-
-        Coord min = this.min();
-        Coord max = this.max();
-        for (int x = min.x; x <= max.x; ++x) {
-            for (int z = min.z; z <= max.z; ++z) {
-                for (int y = min.y; y <= max.y; ++y) {
-                    int id = this.level.getTile(x, y, z);
-                    int meta = this.level.getData(x, y, z);
-                    this.blockIDs[blockIndex] = ExChunk.narrowByte(id);
-                    this.metadatas[blockIndex] = (byte) (meta & 0xf);
-
-                    TileEntity tileEntity = this.level.getTileEntity(x, y, z);
-                    if (tileEntity != null) {
-                        var tag = new CompoundTag();
-                        tileEntity.save(tag);
-                        this.tileEntities.add(tag);
-                    }
-                    ++blockIndex;
-                }
-            }
-        }
-
+        this.blockRegion.readBlocks(this.level, this.min(), this.max());
         this.setChanged();
     }
 
     public void loadCurrentArea() {
-        if (this.blockIDs == null) {
+        if (this.blockRegion == null) {
             return;
         }
-
-        int blockIndex = 0;
-
-        Coord min = this.min();
-        Coord max = this.max();
-        for (int x = min.x; x <= max.x; ++x) {
-            for (int z = min.z; z <= max.z; ++z) {
-                for (int y = min.y; y <= max.y; ++y) {
-                    int prevId = this.level.getTile(x, y, z);
-                    // TODO: reuse TickNextTickData key between calls
-                    ((ExWorld) this.level).cancelBlockUpdate(x, y, z, prevId);
-
-                    int id = this.blockIDs[blockIndex] & 0xff;
-                    int meta = this.metadatas[blockIndex] & 0xf;
-                    this.level.setTileAndData(x, y, z, id, meta);
-                    this.level.removeTileEntity(x, y, z);
-                    ++blockIndex;
-                }
+        var entry = new TickNextTickData(0, 0, 0, 0);
+        this.blockRegion.forEachBlock(
+            this.level, this.min(), this.max(), (level, index, x, y, z) -> {
+                entry.x = x;
+                entry.y = y;
+                entry.z = z;
+                entry.priority = level.getTile(x, y, z);
+                return ((ExWorld) level).cancelBlockUpdate(entry);
             }
-        }
-
-        for (CompoundTag tag : this.tileEntities) {
-            TileEntity tileEntity = loadStatic(tag);
-            this.level.setTileEntity(tileEntity.x, tileEntity.y, tileEntity.z, tileEntity);
-        }
+        );
+        this.blockRegion.writeBlocks(this.level, this.min(), this.max());
+        this.blockRegion.updateBlocks(this.level, this.min(), this.max());
     }
 
     public void load(CompoundTag tag) {
         super.load(tag);
         var exTag = (ExCompoundTag) tag;
 
-        exTag.findByteArray("blockIDs").ifPresent(a -> this.blockIDs = a);
-        exTag.findByteArray("metadatas").ifPresent(a -> this.metadatas = a);
+        var blockIds = exTag.findByteArray("blockIDs").orElse(null);
+        var metadata = exTag.findByteArray("metadatas").orElse(null);
+        if (blockIds == null || metadata == null) {
+            return;
+        }
+        if (!tag.hasKey("acVersion") && ((ExWorldProperties) this.level.levelData).isOriginallyFromAC()) {
+            AC_Blocks.convertACVersion(blockIds);
+        }
+
+        this.blockRegion = BlockRegion.fromCoords(this.min(), this.max(), true);
+        var layer = (BlockEntityLayer) this.blockRegion.getLayer();
+        layer.getBlockBuffer().put(blockIds);
+        layer.getMetaBuffer().put(metadata);
 
         var numTiles = exTag.findInt("numTiles");
         if (numTiles.isPresent()) {
-            this.tileEntities.clear();
-
             int tileCount = numTiles.get();
             for (int i = 0; i < tileCount; ++i) {
-                this.tileEntities.add(tag.getCompoundTag(String.format("tile%d", i)));
+                layer.putTileEntity(this.min(), this.max(), tag.getCompoundTag(String.format("tile%d", i)));
             }
-        }
-
-        if (!tag.hasKey("acVersion") && ((ExWorldProperties) Minecraft.instance.level.levelData).isOriginallyFromAC()) {
-            AC_Blocks.convertACVersion(this.blockIDs);
         }
     }
 
     public void save(CompoundTag tag) {
         super.save(tag);
 
-        if (this.blockIDs != null) {
-            tag.putByteArray("blockIDs", this.blockIDs);
+        if (this.blockRegion != null) {
+            this.saveLayer(tag, (BlockEntityLayer) this.blockRegion.getLayer());
         }
+    }
 
-        if (this.metadatas != null) {
-            tag.putByteArray("metadatas", this.metadatas);
-        }
+    private void saveLayer(CompoundTag tag, BlockEntityLayer layer) {
+        tag.putByteArray("blockIDs", layer.getBlockBuffer().array());
+        tag.putByteArray("metadatas", layer.getMetaBuffer().array());
 
-        if (!this.tileEntities.isEmpty()) {
+        var tileEntities = layer.getTileEntities();
+        if (!tileEntities.isEmpty()) {
             int tileIndex = 0;
-
-            for (CompoundTag tileTag : this.tileEntities) {
+            for (CompoundTag tileTag : tileEntities.values()) {
                 tag.putCompoundTag(String.format("tile%d", tileIndex), tileTag);
-                ++tileIndex;
+                tileIndex++;
             }
-
             tag.putInt("numTiles", tileIndex);
         }
 

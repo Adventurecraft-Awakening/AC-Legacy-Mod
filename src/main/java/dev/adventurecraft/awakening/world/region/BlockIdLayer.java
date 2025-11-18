@@ -3,6 +3,8 @@ package dev.adventurecraft.awakening.world.region;
 import dev.adventurecraft.awakening.world.BlockRegion;
 import net.minecraft.world.level.Level;
 
+import java.nio.ByteBuffer;
+
 public sealed class BlockIdLayer implements BlockLayer permits BlockMetaLayer {
 
     private final byte[] blockIds;
@@ -13,6 +15,10 @@ public sealed class BlockIdLayer implements BlockLayer permits BlockMetaLayer {
 
     public final byte getBlock(int index) {
         return this.blockIds[index];
+    }
+
+    public final ByteBuffer getBlockBuffer() {
+        return ByteBuffer.wrap(this.blockIds);
     }
 
     @Override
@@ -33,6 +39,7 @@ public sealed class BlockIdLayer implements BlockLayer permits BlockMetaLayer {
 
     @Override
     public boolean updateBlock(Level level, int index, int x, int y, int z) {
+        // TODO: can we update all neighbors once within region in bulk, instead of 6 times per tile?
         level.tileUpdated(x, y, z, this.getBlock(index));
         return true;
     }

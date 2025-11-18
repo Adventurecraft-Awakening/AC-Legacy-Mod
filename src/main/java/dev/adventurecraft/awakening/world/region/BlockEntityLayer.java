@@ -1,7 +1,9 @@
 package dev.adventurecraft.awakening.world.region;
 
 import dev.adventurecraft.awakening.ACMod;
+import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
+import dev.adventurecraft.awakening.world.BlockRegion;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.nbt.CompoundTag;
@@ -17,6 +19,19 @@ public final class BlockEntityLayer extends BlockMetaLayer {
     public BlockEntityLayer(int width, int height, int depth) {
         super(width, height, depth);
         this.tileEntities = new Int2ObjectOpenHashMap<>();
+    }
+
+    public Int2ObjectMap<CompoundTag> getTileEntities() {
+        return this.tileEntities;
+    }
+
+    public CompoundTag putTileEntity(Coord min, Coord max, CompoundTag tag) {
+        int x = tag.getInt("x") - min.x;
+        int y = tag.getInt("y") - min.y;
+        int z = tag.getInt("z") - min.z;
+        int h = max.y - min.y + 1;
+        int d = max.z - min.z + 1;
+        return this.tileEntities.put(BlockRegion.makeIndex(x, y, z, h, d), tag);
     }
 
     @Override

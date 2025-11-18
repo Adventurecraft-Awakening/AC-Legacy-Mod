@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.common.gui;
 
+import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityStorage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
@@ -28,7 +29,7 @@ public class AC_GuiStorage extends Screen {
     @Override
     protected void buttonClicked(Button button) {
         if (button.id == 0) {
-            this.storage.setArea();
+            this.storage.setArea(AC_ItemCursor.min(), AC_ItemCursor.max());
         }
         else if (button.id == 1) {
             this.storage.saveCurrentArea();
