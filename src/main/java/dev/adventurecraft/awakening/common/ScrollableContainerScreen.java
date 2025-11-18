@@ -73,7 +73,7 @@ public abstract class ScrollableContainerScreen extends Screen {
         GL11.glEnable(0x803a); // GL_RESCALE_NORMAL
 
         for (Slot slot : this.container.getStaticSlots()) {
-            renderSlot(slot, IntPoint.zero);
+            this.renderSlot(slot, IntPoint.zero, true);
         }
 
         IntRect contentRect = this.itemList.getBorderRect();
@@ -126,8 +126,8 @@ public abstract class ScrollableContainerScreen extends Screen {
             int iY = mousePoint.y - 16 / 2;
 
             var item = playerInventory.getCarried();
-            itemRenderer.renderAndDecorateItem(this.font, this.minecraft.textures, item, iX, iY);
-            itemRenderer.renderGuiItemDecorations(this.font, this.minecraft.textures, item, iX, iY);
+            this.itemRenderer.renderAndDecorateItem(this.font, this.minecraft.textures, item, iX, iY);
+            this.itemRenderer.renderGuiItemDecorations(this.font, this.minecraft.textures, item, iX, iY);
         }
         GL11.glDisable(0x803a); // GL_RESCALE_NORMAL
         Lighting.turnOff();
@@ -140,7 +140,7 @@ public abstract class ScrollableContainerScreen extends Screen {
             var item = hoveredSlot.slot.getItem();
             if (item != null && hoveredSlot.slot.hasItem()) {
                 String name = (I18n.getInstance().getDescriptionString(item.getTranslationKey())).trim();
-                if (name.length() > 0) {
+                if (!name.isEmpty()) {
                     int textX = mousePoint.x + 12;
                     int textY = mousePoint.y - 12;
                     int textWidth = this.font.width(name);
@@ -169,22 +169,24 @@ public abstract class ScrollableContainerScreen extends Screen {
 
     protected abstract void renderContainerBackground(float var1);
 
-    private void renderSlot(Slot slot, IntPoint offset) {
+    private void renderSlot(Slot slot, IntPoint offset, boolean decorate) {
         int x = slot.x + offset.x;
         int y = slot.z + offset.y;
         ItemInstance itemStack = slot.getItem();
         if (itemStack == null) {
             int n = slot.getNoItemIcon();
             if (n >= 0) {
-                GL11.glDisable(2896);
+                GL11.glDisable(GL11.GL_LIGHTING);
                 this.minecraft.textures.bind(this.minecraft.textures.loadTexture("/gui/items.png"));
                 this.blit(x, y, n % 16 * 16, n / 16 * 16, 16, 16);
-                GL11.glEnable(2896);
+                GL11.glEnable(GL11.GL_LIGHTING);
                 return;
             }
         }
-        itemRenderer.renderAndDecorateItem(this.font, this.minecraft.textures, itemStack, x, y);
-        itemRenderer.renderGuiItemDecorations(this.font, this.minecraft.textures, itemStack, x, y);
+        this.itemRenderer.renderAndDecorateItem(this.font, this.minecraft.textures, itemStack, x, y);
+        if (decorate) {
+            this.itemRenderer.renderGuiItemDecorations(this.font, this.minecraft.textures, itemStack, x, y);
+        }
     }
 
     record FoundSlot(Slot slot, boolean isStatic) {
@@ -230,7 +232,8 @@ public abstract class ScrollableContainerScreen extends Screen {
         FoundSlot slot = this.getSlot(new Point(mouseX, mouseY));
         int x = (this.width - this.containerWidth) / 2;
         int y = (this.height - this.containerHeight) / 2;
-        boolean bl = mouseX < x || mouseY < y || mouseX >= x + this.containerWidth || mouseY >= y + this.containerHeight;
+        boolean bl =
+            mouseX < x || mouseY < y || mouseX >= x + this.containerWidth || mouseY >= y + this.containerHeight;
 
         int slotId = -1;
         if (slot != null) {
@@ -329,7 +332,7 @@ public abstract class ScrollableContainerScreen extends Screen {
             Row row = rows.get(entryIndex);
             int yOffset = (int) (-row.rowY + entryLocation.y);
             for (Slot slot : row.slots) {
-                renderSlot(slot, new IntPoint(0, yOffset));
+                renderSlot(slot, new IntPoint(0, yOffset), false);
             }
         }
 
