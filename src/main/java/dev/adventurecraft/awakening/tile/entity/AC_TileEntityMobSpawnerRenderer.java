@@ -6,9 +6,20 @@ import dev.adventurecraft.awakening.extension.block.ExBlock;
 import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 import net.minecraft.world.level.tile.Tile;
 import net.minecraft.world.level.tile.entity.TileEntity;
+import net.minecraft.world.phys.Vec3;
 import org.lwjgl.opengl.GL11;
 
 public class AC_TileEntityMobSpawnerRenderer extends TileEntityRenderer {
+    Vec3[] lineColors = {
+        Vec3.create(0.00,0.25,0.70),
+        Vec3.create(0.10,0.30,0.77),
+        Vec3.create(0.20,0.35,0.84),
+        Vec3.create(0.30,0.40,0.90),
+        Vec3.create(0.85,0.20,0.60),
+        Vec3.create(0.86,0.30,0.63),
+        Vec3.create(0.87,0.40,0.66),
+        Vec3.create(0.88,0.50,0.70)
+    };
 
     public void render(AC_TileEntityMobSpawner entity, double x, double y, double z, float tickTime) {
         if (!AC_DebugMode.active) {
@@ -41,7 +52,7 @@ public class AC_TileEntityMobSpawnerRenderer extends TileEntityRenderer {
                         if (block != null && ((ExBlock) block).canBeTriggered()) {
                             GL11.glColor3f(0.0F, 0.0F, 0.0F);
                             GL11.glVertex3f(0.0F, 0.0F, 0.0F);
-                            GL11.glColor3f(0.105F * i, 1f / i, 0.486F);
+                            GL11.glColor3d(lineColors[i].x, lineColors[i].y, lineColors[i].z);
                             GL11.glVertex3f((float) (bX - entity.x), (float) (bY - entity.y), (float) (bZ - entity.z));
                         }
                     }
