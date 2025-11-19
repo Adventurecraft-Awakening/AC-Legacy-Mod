@@ -64,11 +64,12 @@ public class AC_ItemPaste extends Item {
             BlockRegion region = AC_BlockCopyUtils.copyBlocks(world, min, max, true, false);
 
             // Calculate where to paste based on player's look direction
-            Coord pastePosition = AC_BlockCopyUtils.calculatePastePosition();
+            Coord start = AC_BlockCopyUtils.calculatePastePosition();
+            Coord end = start.add(region.getSize().sub(Coord.one));
 
             // Paste the copied blocks
-            region.writeBlocks(world, pastePosition, region.getSize());
-            region.updateBlocks(world, pastePosition, region.getSize());
+            region.writeBlocks(world, start, end);
+            region.updateBlocks(world, start, end);
         }
         catch (Exception e) {
             // Log error but don't crash the game
