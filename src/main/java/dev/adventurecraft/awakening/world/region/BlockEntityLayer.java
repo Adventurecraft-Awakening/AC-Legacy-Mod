@@ -67,19 +67,17 @@ public final class BlockEntityLayer extends BlockMetaLayer {
 
     @Override
     public boolean writeBlock(Level level, int index, int x, int y, int z) {
-        if (!super.writeBlock(level, index, x, y, z)) {
-            return false;
-        }
+        boolean changed = super.writeBlock(level, index, x, y, z);
 
         CompoundTag tag = this.tileEntities.get(index);
         if (tag == null) {
-            return false;
+            return changed;
         }
 
         var entity = ((ExWorld) level).ac$tryGetTileEntity(x, y, z, TileEntity.class);
         if (entity == null) {
             logMissingTileEntity(level, index, x, y, z);
-            return false;
+            return changed;
         }
 
         entity.load(tag);
