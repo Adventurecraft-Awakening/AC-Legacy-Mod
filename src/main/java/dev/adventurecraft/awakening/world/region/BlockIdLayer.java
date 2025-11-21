@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.world.region;
 
+import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import dev.adventurecraft.awakening.world.BlockRegion;
 import net.minecraft.world.level.Level;
@@ -35,7 +36,7 @@ public sealed class BlockIdLayer implements BlockLayer permits BlockMetaLayer {
 
     @Override
     public boolean writeBlock(Level level, int index, int x, int y, int z) {
-        return level.setTile(x, y, z, this.getBlock(index));
+        return ((ExWorld) level).ac$setTileAndDataNoUpdate(x, y, z, this.getBlock(index), 0, false);
     }
 
     @Override

@@ -543,6 +543,19 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
         return ((ExChunk) chunk).setBlockIDWithMetadataTemp(x & 15, y, z & 15, id, meta);
     }
 
+    @Override
+    public boolean ac$setTileAndDataNoUpdate(int x, int y, int z, int id, int meta, boolean dropItems) {
+        if (outOfBounds(x, z)) {
+            return false;
+        }
+
+        if (y < 0 || y >= 128) {
+            return false;
+        }
+        LevelChunk chunk = this.getChunk(x >> 4, z >> 4);
+        return ((ExChunk) chunk).ac$setTileAndData(x & 15, y, z & 15, id, meta, dropItems);
+    }
+
     public @Override <E extends TileEntity> E ac$tryGetTileEntity(int x, int y, int z, Class<E> type) {
         LevelChunk chunk = this.getChunk(x >> 4, z >> 4);
         if (chunk != null) {

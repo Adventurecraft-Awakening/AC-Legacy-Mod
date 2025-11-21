@@ -4,6 +4,8 @@ import dev.adventurecraft.awakening.world.AC_LevelSource;
 
 public interface ExChunk extends AC_LevelSource {
 
+    boolean ac$setTileAndData(int x, int y, int z, int id, int meta, boolean dropItems);
+
     boolean setBlockIDWithMetadataTemp(int x, int y, int z, int id, int meta);
 
     double getTemperatureValue(int x, int z);

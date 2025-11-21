@@ -12,6 +12,12 @@ public interface ExBlock extends AC_TexturedBlock, AC_ITriggerBlock {
 
     boolean[] neighborLit = new boolean[256];
 
+    // Care has to be taken when overloading onRemove;
+    //  * tile entity is removed from chunk.
+    //  * inventory is dropped for vanilla blocks.
+    //  * trigger regions are removed for AC blocks.
+    void ac$onRemove(Level level, int x, int y, int z, boolean dropItems);
+
     void setBoundingBox(double minX, double minY, double minZ, double maxX, double maxY, double maxZ);
 
     Tile setSubTypes(int var1);

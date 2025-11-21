@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.injector.WrapWithCondition;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.AC_UndoStack;
+import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.entity.ExBlockEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
@@ -85,6 +86,11 @@ public abstract class MixinChunk implements ExChunk {
 
     @Overwrite
     public boolean setTileAndData(int x, int y, int z, int id, int meta) {
+        return this.ac$setTileAndData(x, y, z, id, meta, true);
+    }
+
+    @Override
+    public boolean ac$setTileAndData(int x, int y, int z, int id, int meta, boolean dropItems) {
         int prevId = this.getTile(x, y, z);
         int prevMeta = this.getData(x, y, z);
         if (prevId == id && prevMeta == meta) {
@@ -105,10 +111,10 @@ public abstract class MixinChunk implements ExChunk {
             undoStack.recordChange(x, y, z, this.x, this.z, prevId, prevMeta, prevNbt, id, meta, null);
         }
 
-        int bX = this.x * 16 + x;
-        int bZ = this.z * 16 + z;
+        int bX = (this.x << 4) + x;
+        int bZ = (this.z << 4) + z;
         if (prevId != 0 && !this.level.isClientSide) {
-            Tile.tiles[prevId].onRemove(this.level, bX, y, bZ);
+            ((ExBlock) Tile.tiles[prevId]).ac$onRemove(this.level, bX, y, bZ, dropItems);
         }
 
         int newId = id & 0xff;

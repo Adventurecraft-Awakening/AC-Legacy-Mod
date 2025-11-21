@@ -50,6 +50,8 @@ public interface ExWorld {
     @Deprecated
     boolean setBlockAndMetadataTemp(int x, int y, int z, int id, int meta);
 
+    boolean ac$setTileAndDataNoUpdate(int x, int y, int z, int id, int meta, boolean dropItems);
+
     <E extends TileEntity> E ac$tryGetTileEntity(int x, int y, int z, Class<E> type);
 
     <E extends TileEntity> E ac$getTileEntity(int x, int y, int z, Class<E> type);

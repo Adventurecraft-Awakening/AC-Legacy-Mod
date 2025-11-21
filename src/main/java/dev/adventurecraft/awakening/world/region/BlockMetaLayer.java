@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.world.region;
 
+import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import net.minecraft.world.level.Level;
 
@@ -33,6 +34,6 @@ public sealed class BlockMetaLayer extends BlockIdLayer permits BlockEntityLayer
     public boolean writeBlock(Level level, int index, int x, int y, int z) {
         int id = this.getBlock(index);
         int meta = this.getMeta(index);
-        return level.setTileAndDataNoUpdate(x, y, z, id, meta);
+        return ((ExWorld) level).ac$setTileAndDataNoUpdate(x, y, z, id, meta, false);
     }
 }
