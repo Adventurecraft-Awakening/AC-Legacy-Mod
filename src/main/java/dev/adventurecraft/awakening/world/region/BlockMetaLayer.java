@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.world.region;
 
+import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import net.minecraft.world.level.Level;
 
 import java.nio.ByteBuffer;
@@ -13,8 +14,8 @@ public sealed class BlockMetaLayer extends BlockIdLayer permits BlockEntityLayer
         this.metadata = new byte[dev.adventurecraft.awakening.world.BlockRegion.calculateVolume(width, height, depth)];
     }
 
-    public final byte getMeta(int index) {
-        return this.metadata[index];
+    public final int getMeta(int index) {
+        return ExChunk.widenByte(this.metadata[index]);
     }
 
     public final ByteBuffer getMetaBuffer() {

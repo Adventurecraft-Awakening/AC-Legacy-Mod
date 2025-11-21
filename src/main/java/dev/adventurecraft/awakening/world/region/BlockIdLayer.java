@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.world.region;
 
+import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import dev.adventurecraft.awakening.world.BlockRegion;
 import net.minecraft.world.level.Level;
 
@@ -13,8 +14,8 @@ public sealed class BlockIdLayer implements BlockLayer permits BlockMetaLayer {
         this.blockIds = new byte[BlockRegion.calculateVolume(width, height, depth)];
     }
 
-    public final byte getBlock(int index) {
-        return this.blockIds[index];
+    public final int getBlock(int index) {
+        return ExChunk.widenByte(this.blockIds[index]);
     }
 
     public final ByteBuffer getBlockBuffer() {
@@ -23,7 +24,7 @@ public sealed class BlockIdLayer implements BlockLayer permits BlockMetaLayer {
 
     @Override
     public boolean readBlock(Level level, int index, int x, int y, int z) {
-        this.blockIds[index] = (byte) (level.getTile(x, y, z) & 0xFF);
+        this.blockIds[index] = ExChunk.narrowByte(level.getTile(x, y, z));
         return true;
     }
 
