@@ -1,137 +1,176 @@
 package dev.adventurecraft.awakening.common;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.Deque;
 
-import net.minecraft.nbt.CompoundTag;
+import dev.adventurecraft.awakening.world.history.AC_EditAction;
+import dev.adventurecraft.awakening.world.history.AC_EditActionList;
+import dev.adventurecraft.awakening.world.history.AC_UndoStackLayer;
 import net.minecraft.world.level.Level;
 
+import javax.annotation.Nullable;
+
+// TODO: screen that shows history... with previews!
 public class AC_UndoStack {
 
     public static final int MAX_UNDO = 128;
 
     private boolean isRecording = false;
-    public AC_UndoSelection selection = null;
-    public ArrayList<AC_EditAction> actionList = null;
-    public LinkedList<ArrayList<AC_EditAction>> undoStack = new LinkedList<>();
-    public LinkedList<ArrayList<AC_EditAction>> redoStack = new LinkedList<>();
-    public LinkedList<AC_UndoSelection> undoSelectionStack = new LinkedList<>();
-    public LinkedList<AC_UndoSelection> redoSelectionStack = new LinkedList<>();
 
-    public boolean startRecording() {
-        if (this.isRecording()) {
+    public final Deque<Entry> undoStack = new ArrayDeque<>();
+    public final Deque<Entry> redoStack = new ArrayDeque<>();
+
+    private final Deque<AC_UndoStackLayer> layers = new ArrayDeque<>();
+
+    private final AC_UndoStackLayer cursorLayer = new CursorLayer();
+
+    public static final AC_UndoStackLayer NULL_LAYER = new AC_UndoStackLayer() {
+        @Override
+        public void add(AC_EditAction action) {
+        }
+
+        @Override
+        public void begin() {
+        }
+
+        @Override
+        public Entry end(boolean save) {
+            return null;
+        }
+
+        @Override
+        public boolean isRecording() {
             return false;
         }
+    };
 
-        this.isRecording = true;
-        this.selection = new AC_UndoSelection();
-        if (this.actionList == null) {
-            this.actionList = new ArrayList<>();
+    private void checkIsRecording() {
+        AC_UndoStackLayer layer = this.layers.peek();
+        if (layer != null) {
+            this.isRecording = layer.isRecording();
         }
-        return true;
+        else {
+            this.isRecording = false;
+        }
     }
 
-    public boolean stopRecording() {
-        if (!this.isRecording()) {
-            return false;
+    public void pushLayer(@Nullable AC_UndoStackLayer layer) {
+        if (layer == null) {
+            layer = NULL_LAYER;
         }
+        this.layers.push(layer);
+        layer.begin();
+        this.checkIsRecording();
+    }
 
-        if (!this.actionList.isEmpty()) {
+    public void pushLayer() {
+        this.pushLayer(this.cursorLayer);
+    }
+
+    public AC_UndoStackLayer popLayer(boolean save) {
+        AC_UndoStackLayer layer = this.layers.pop();
+        this.checkIsRecording();
+
+        Entry entry = layer.end(save);
+        if (entry != null) {
             this.redoStack.clear();
-            this.undoStack.addLast(this.actionList);
-            if (this.undoStack.size() > MAX_UNDO) {
-                this.undoStack.removeFirst();
-            }
 
-            this.selection.after.record();
-            this.undoSelectionStack.addLast(this.selection);
-            if (this.undoSelectionStack.size() > MAX_UNDO) {
-                this.undoSelectionStack.removeFirst();
-            }
-
-            this.selection = null;
-            this.actionList = null;
+            this.push(this.undoStack, entry);
         }
+        return layer;
+    }
 
-        this.isRecording = false;
-        return true;
+    public AC_UndoStackLayer popLayer() {
+        return this.popLayer(true);
     }
 
     public void clear() {
         this.undoStack.clear();
         this.redoStack.clear();
-        this.undoSelectionStack.clear();
-        this.redoSelectionStack.clear();
     }
 
     public boolean isRecording() {
         return this.isRecording;
     }
 
-    public void recordChange(
-        int x,
-        int y,
-        int z,
-        int cX,
-        int cZ,
-        int prevTile,
-        int prevMeta,
-        CompoundTag prevNbt,
-        int newTile,
-        int newMeta,
-        CompoundTag newNbt
-    ) {
-        ArrayList<AC_EditAction> list = this.actionList;
-        int bX = x + (cX << 4);
-        int bZ = z + (cZ << 4);
-
-        var newAction = new AC_EditAction(bX, y, bZ, prevTile, prevMeta, prevNbt, newTile, newMeta, newNbt);
-
-        list.add(newAction);
+    public void recordAction(AC_EditAction action) {
+        var layer = this.layers.peek();
+        if (layer != null) {
+            layer.add(action);
+        }
     }
 
     public void undo(Level world) {
-        if (this.undoStack.isEmpty()) {
+        Entry entry = this.undoStack.pollFirst();
+        if (entry == null) {
             return;
         }
 
-        ArrayList<AC_EditAction> actionList = this.undoStack.removeLast();
-        for (int i = actionList.size() - 1; i >= 0; i--) {
-            AC_EditAction action = actionList.get(i);
-            action.undo(world);
-        }
-        this.redoStack.addLast(actionList);
-        if (this.redoStack.size() > MAX_UNDO) {
-            this.redoStack.removeFirst();
-        }
+        entry.action.undo(world);
+        entry.selectionBefore.load();
 
-        AC_UndoSelection selection = this.undoSelectionStack.removeLast();
-        selection.before.load();
-        this.redoSelectionStack.addLast(selection);
-        if (this.redoSelectionStack.size() > MAX_UNDO) {
-            this.redoSelectionStack.removeFirst();
-        }
+        this.push(this.redoStack, entry);
     }
 
     public void redo(Level world) {
-        if (this.redoStack.isEmpty()) {
+        Entry entry = this.redoStack.pollFirst();
+        if (entry == null) {
             return;
         }
 
-        ArrayList<AC_EditAction> actionList = this.redoStack.removeLast();
-        for (AC_EditAction action : actionList) {
-            action.redo(world);
+        entry.action.redo(world);
+        entry.selectionAfter.load();
+
+        this.push(this.undoStack, entry);
+    }
+
+    private <T> void push(Deque<T> deque, T entry) {
+        if (deque.size() >= MAX_UNDO) {
+            deque.removeLast();
         }
-        this.undoStack.addLast(actionList);
-        if (this.undoStack.size() > MAX_UNDO) {
-            this.undoStack.removeFirst();
+        deque.push(entry);
+    }
+
+    public record Entry(AC_EditAction action, AC_Selection selectionBefore, AC_Selection selectionAfter) {
+    }
+
+    private static class CursorLayer implements AC_UndoStackLayer {
+        private final ArrayList<AC_EditAction> actionList = new ArrayList<>();
+        private AC_Selection selectionBefore;
+
+        @Override
+        public void add(AC_EditAction action) {
+            if (action != null) {
+                this.actionList.add(action);
+            }
         }
 
-        AC_UndoSelection selection = this.redoSelectionStack.removeLast();
-        selection.after.load();
-        this.undoSelectionStack.addLast(selection);
-        if (this.undoSelectionStack.size() > MAX_UNDO) {
-            this.undoSelectionStack.removeFirst();
+        @Override
+        public void begin() {
+            this.selectionBefore = AC_Selection.fromCursor();
+        }
+
+        @Override
+        public Entry end(boolean save) {
+            if (this.actionList.isEmpty()) {
+                return null;
+            }
+            if (!save) {
+                this.actionList.clear();
+                return null;
+            }
+
+            var list = new AC_EditActionList(new ArrayList<>(this.actionList));
+            this.actionList.clear();
+
+            var selectionAfter = AC_Selection.fromCursor();
+            return new Entry(list, this.selectionBefore, selectionAfter);
+        }
+
+        @Override
+        public boolean isRecording() {
+            return true;
         }
     }
 }

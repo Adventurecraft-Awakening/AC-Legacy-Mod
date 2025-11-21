@@ -1,15 +1,22 @@
 package dev.adventurecraft.awakening.world;
 
+import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.Coord;
+import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.item.AC_ItemNudge;
 import dev.adventurecraft.awakening.item.AC_ItemPaste;
+import dev.adventurecraft.awakening.world.history.AC_EditAction;
+import dev.adventurecraft.awakening.world.history.AC_EditActionList;
+import dev.adventurecraft.awakening.world.history.AC_RegionEditAction;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * Utility for block copying, pasting, and manipulation functionality
@@ -21,29 +28,6 @@ import org.jetbrains.annotations.NotNull;
  * @author Adventurecraft Team
  */
 public final class AC_BlockCopyUtils {
-
-    /**
-     * Copies blocks between the given coords into a {@link BlockRegion}.
-     *
-     * @param level The level to copy blocks from.
-     * @param saveEntities If true, persist tile entities.
-     * @param clearSource If true, source blocks are set to air (0) after copying.
-     * @return A new region containing the copied blocks.
-     */
-    public static BlockRegion copyBlocks(
-        @NotNull Level level,
-        @NotNull Coord min,
-        @NotNull Coord max,
-        boolean saveEntities,
-        boolean clearSource
-    ) {
-        var region = BlockRegion.fromCoords(min, max, saveEntities);
-        region.readBlocks(level, min, max);
-        if (clearSource) {
-            region.clearBlocks(level, min, max);
-        }
-        return region;
-    }
 
     /**
      * Calculates the paste position based on the camera entity's position and look direction.
@@ -148,18 +132,48 @@ public final class AC_BlockCopyUtils {
             throw new IllegalArgumentException("Direction cannot be null");
         }
 
-        // Copy blocks from current selection (clearing source)
-        Coord min = AC_ItemCursor.min();
-        Coord max = AC_ItemCursor.max();
-        BlockRegion region = copyBlocks(world, min, max, true, true);
+        AC_EditAction editAction = null;
+        var undoStack = ((ExWorld) world).getUndoStack();
+        boolean saveHistory = undoStack.isRecording();
+        undoStack.pushLayer(null);
+        try {
+            // Copy blocks from current selection
+            Coord min = AC_ItemCursor.min();
+            Coord max = AC_ItemCursor.max();
+            BlockRegion region = BlockRegion.readFromMinMax(world, min, max);
 
-        // Move the cursor selection
-        shiftCursor(direction);
+            // Move the cursor selection
+            shiftCursor(direction);
+            Coord start = AC_ItemCursor.min();
+            Coord end = start.add(region.getSize().sub(Coord.one));
 
-        // Paste blocks at the new location
-        Coord start = AC_ItemCursor.min();
-        Coord end = start.add(region.getSize().sub(Coord.one));
-        region.writeBlocks(world, start, end);
-        region.updateBlocks(world, start, end);
+            BlockRegion emptyRegion = BlockRegion.airFromMinMax(min, max);
+            if (saveHistory) {
+                BlockRegion prevRegion = BlockRegion.readFromMinMax(world, start, end);
+
+                var clearAction = new AC_RegionEditAction(min, region, emptyRegion);
+                var writeAction = new AC_RegionEditAction(start, prevRegion, region);
+                editAction = new AC_EditActionList(List.of(clearAction, writeAction));
+            }
+            emptyRegion.writeBlocks(world, min, max);
+            emptyRegion.updateBlocks(world, min, max);
+
+            // Paste blocks at the new location
+            region.writeBlocks(world, start, end);
+            region.updateBlocks(world, start, end);
+        }
+        catch (Exception e) {
+            saveHistory = false;
+            // Log error but don't crash the game
+            ACMod.LOGGER.error("Failed to nudge blocks: ", e);
+            Minecraft.instance.gui.addMessage("Failed to nudge blocks: " + e.getMessage());
+        }
+        finally {
+            undoStack.popLayer(saveHistory);
+        }
+
+        if (editAction != null) {
+            undoStack.recordAction(editAction);
+        }
     }
 }

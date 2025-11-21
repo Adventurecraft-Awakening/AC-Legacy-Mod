@@ -56,16 +56,6 @@ public final class BlockEntityLayer extends BlockMetaLayer {
     }
 
     @Override
-    public boolean clearBlock(Level level, int index, int x, int y, int z) {
-        int tileId = this.getBlock(index);
-        if (Tile.isEntityTile[tileId]) {
-            // This clears containers without dropping them as items.
-            Tile.tiles[tileId].onPlace(level, x, y, z);
-        }
-        return super.clearBlock(level, index, x, y, z);
-    }
-
-    @Override
     public boolean writeBlock(Level level, int index, int x, int y, int z) {
         boolean changed = super.writeBlock(level, index, x, y, z);
 

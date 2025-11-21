@@ -975,7 +975,10 @@ public abstract class MixinMinecraft implements ExMinecraft {
         }
 
         var exWorld = (ExWorld) this.level;
-        boolean hasRecording = AC_DebugMode.active && exWorld.getUndoStack().startRecording();
+        boolean hasRecording = AC_DebugMode.active;
+        if (hasRecording) {
+            exWorld.getUndoStack().pushLayer();
+        }
 
         boolean swapOffhand = false;
         ItemInstance stack = this.player.inventory.getSelected();
@@ -1181,7 +1184,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         }
 
         if (hasRecording) {
-            exWorld.getUndoStack().stopRecording();
+            exWorld.getUndoStack().popLayer();
         }
     }
 

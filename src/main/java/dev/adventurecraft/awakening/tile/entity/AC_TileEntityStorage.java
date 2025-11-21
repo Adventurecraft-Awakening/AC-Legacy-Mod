@@ -18,7 +18,7 @@ public class AC_TileEntityStorage extends AC_TileEntityMinMax {
         this.setMin(min);
         this.setMax(max);
 
-        this.blockRegion = BlockRegion.fromCoords(this.min(), this.max(), true);
+        this.blockRegion = BlockRegion.fromMinMax(this.min(), this.max());
         this.saveCurrentArea();
     }
 
@@ -61,7 +61,7 @@ public class AC_TileEntityStorage extends AC_TileEntityMinMax {
             AC_Blocks.convertACVersion(blockIds);
         }
 
-        this.blockRegion = BlockRegion.fromCoords(this.min(), this.max(), true);
+        this.blockRegion = BlockRegion.fromMinMax(this.min(), this.max());
         var layer = (BlockEntityLayer) this.blockRegion.getLayer();
         layer.getBlockBuffer().put(blockIds);
         layer.getMetaBuffer().put(metadata);

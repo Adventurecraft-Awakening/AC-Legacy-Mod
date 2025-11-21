@@ -30,11 +30,6 @@ public sealed class BlockIdLayer implements BlockLayer permits BlockMetaLayer {
     }
 
     @Override
-    public boolean clearBlock(Level level, int index, int x, int y, int z) {
-        return level.setTileNoUpdate(x, y, z, 0);
-    }
-
-    @Override
     public boolean writeBlock(Level level, int index, int x, int y, int z) {
         return ((ExWorld) level).ac$setTileAndDataNoUpdate(x, y, z, this.getBlock(index), 0, false);
     }

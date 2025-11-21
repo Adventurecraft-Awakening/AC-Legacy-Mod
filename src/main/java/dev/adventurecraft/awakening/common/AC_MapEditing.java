@@ -130,6 +130,7 @@ public class AC_MapEditing {
         if (!AC_ItemCursor.bothSet) {
             return;
         }
+
         Mob entity = Minecraft.instance.cameraEntity;
         float prX = (float) (entity.xOld + (entity.x - entity.xOld) * (double) deltaTime);
         float prY = (float) (entity.yOld + (entity.y - entity.yOld) * (double) deltaTime);

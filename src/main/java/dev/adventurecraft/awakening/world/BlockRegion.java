@@ -4,6 +4,7 @@ import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.world.region.BlockEntityLayer;
 import dev.adventurecraft.awakening.world.region.BlockLayer;
 import dev.adventurecraft.awakening.world.region.BlockMetaLayer;
+import dev.adventurecraft.awakening.world.region.BlockValueLayer;
 import net.minecraft.world.level.Level;
 
 /**
@@ -31,6 +32,7 @@ public final class BlockRegion implements BlockLayer {
      * @param width Width of the region (must be positive)
      * @param height Height of the region (must be positive)
      * @param depth Depth of the region (must be positive)
+     * @param saveEntities If true, persist tile entities.
      * @throws IllegalArgumentException if any parameter is invalid
      */
     public BlockRegion(int width, int height, int depth, boolean saveEntities) {
@@ -46,9 +48,52 @@ public final class BlockRegion implements BlockLayer {
         this.depth = depth;
     }
 
-    public static BlockRegion fromCoords(Coord min, Coord max, boolean saveEntities) {
+    BlockRegion(int width, int height, int depth, int id, int meta) {
+        this.layer = new BlockValueLayer(id, meta);
+        this.width = width;
+        this.height = height;
+        this.depth = depth;
+    }
+
+    /**
+     * Creates an empty {@link BlockRegion} between the given coords.
+     *
+     * @return A new region containing air.
+     */
+    public static BlockRegion fromMinMax(Coord min, Coord max) {
         Coord delta = max.sub(min).add(Coord.one);
-        return new BlockRegion(delta.x, delta.y, delta.z, saveEntities);
+        return new BlockRegion(delta.x, delta.y, delta.z, true);
+    }
+
+    /**
+     * Creates a single-value {@link BlockRegion} between the given coords.
+     *
+     * @return A new region with no backing storage.
+     */
+    public static BlockRegion valueFromMinMax(Coord min, Coord max, int id, int meta) {
+        Coord delta = max.sub(min).add(Coord.one);
+        return new BlockRegion(delta.x, delta.y, delta.z, id, meta);
+    }
+
+    /**
+     * Creates a air-value {@link BlockRegion} between the given coords.
+     *
+     * @return A new region with no backing storage.
+     */
+    public static BlockRegion airFromMinMax(Coord min, Coord max) {
+        return valueFromMinMax(min, max, 0, 0);
+    }
+
+    /**
+     * Copies blocks between the given coords into a {@link BlockRegion}.
+     *
+     * @param level The level to copy blocks from.
+     * @return A new region containing the copied blocks.
+     */
+    public static BlockRegion readFromMinMax(Level level, Coord min, Coord max) {
+        var region = fromMinMax(min, max);
+        region.readBlocks(level, min, max);
+        return region;
     }
 
     public BlockLayer getLayer() {
@@ -77,10 +122,6 @@ public final class BlockRegion implements BlockLayer {
 
     public long readBlocks(Level level, Coord min, Coord max) {
         return this.forEachBlock(level, min, max, this::readBlock);
-    }
-
-    public long clearBlocks(Level level, Coord min, Coord max) {
-        return this.forEachBlock(level, min, max, this::clearBlock);
     }
 
     /**
@@ -126,11 +167,6 @@ public final class BlockRegion implements BlockLayer {
     @Override
     public boolean readBlock(Level level, int index, int x, int y, int z) {
         return this.layer.readBlock(level, index, x, y, z);
-    }
-
-    @Override
-    public boolean clearBlock(Level level, int index, int x, int y, int z) {
-        return this.layer.clearBlock(level, index, x, y, z);
     }
 
     @Override

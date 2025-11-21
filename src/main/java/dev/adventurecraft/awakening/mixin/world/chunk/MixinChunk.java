@@ -3,6 +3,7 @@ package dev.adventurecraft.awakening.mixin.world.chunk;
 import com.llamalad7.mixinextras.injector.WrapWithCondition;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.ACMod;
+import dev.adventurecraft.awakening.common.AC_BlockEditAction;
 import dev.adventurecraft.awakening.common.AC_UndoStack;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.entity.ExBlockEntity;
@@ -16,7 +17,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
@@ -98,17 +98,9 @@ public abstract class MixinChunk implements ExChunk {
             return false;
         }
 
-        // TODO: record block regions
         AC_UndoStack undoStack = ((ExWorld) this.level).getUndoStack();
         if (undoStack.isRecording()) {
-            var entity = this.ac$tryGetTileEntity(x, y, z, TileEntity.class);
-            CompoundTag prevNbt = null;
-            if (entity != null) {
-                prevNbt = new CompoundTag();
-                entity.save(prevNbt);
-            }
-
-            undoStack.recordChange(x, y, z, this.x, this.z, prevId, prevMeta, prevNbt, id, meta, null);
+            this.recordChange(x, y, z, prevId, prevMeta, id, meta, undoStack);
         }
 
         int bX = (this.x << 4) + x;
@@ -156,19 +148,38 @@ public abstract class MixinChunk implements ExChunk {
         if (undoStack.isRecording()) {
             int id = this.getTile(x, y, z);
             int prevMeta = this.getData(x, y, z);
-            var entity = this.ac$tryGetTileEntity(x, y, z, TileEntity.class);
-            CompoundTag prevNbt = null;
-            if (entity != null) {
-                prevNbt = new CompoundTag();
-                entity.save(prevNbt);
-            }
-            undoStack.recordChange(x, y, z, this.x, this.z, id, prevMeta, prevNbt, id, newMeta, null);
+            this.recordChange(x, y, z, id, prevMeta, id, newMeta, undoStack);
         }
 
         this.data.set(x, y, z, newMeta);
         if (ACMod.chunkIsNotPopulating) {
             this.markUnsaved();
         }
+    }
+
+    @Unique
+    private void recordChange(
+        int x,
+        int y,
+        int z,
+        int prevTile,
+        int prevMeta,
+        int newTile,
+        int newMeta,
+        AC_UndoStack stack
+    ) {
+        var entity = this.ac$tryGetTileEntity(x, y, z, TileEntity.class);
+        CompoundTag prevNbt = null;
+        if (entity != null) {
+            prevNbt = new CompoundTag();
+            entity.save(prevNbt);
+        }
+
+        int bX = x + (this.x << 4);
+        int bZ = z + (this.z << 4);
+
+        var action = new AC_BlockEditAction(bX, y, bZ, prevTile, prevMeta, prevNbt, newTile, newMeta, null);
+        stack.recordAction(action);
     }
 
     @WrapWithCondition(
@@ -182,34 +193,27 @@ public abstract class MixinChunk implements ExChunk {
         return !(var1 instanceof Player);
     }
 
-    @Redirect(
-        method = "setTileEntity",
-        at = @At(
-            value = "INVOKE",
-            target = "Ljava/io/PrintStream;println(Ljava/lang/String;)V",
-            remap = false
-        )
-    )
-    private void printBetterBlockEntityError(
-        PrintStream instance, String s, @Local(
-            ordinal = 0,
-            argsOnly = true
-        ) int x, @Local(
-            ordinal = 1,
-            argsOnly = true
-        ) int y, @Local(
-            ordinal = 2,
-            argsOnly = true
-        ) int z, @Local(argsOnly = true) TileEntity entity
-    ) {
-        ACMod.LOGGER.error(
-            "No block entity container: BlockID: {}, TileEntity: {}, Coord: X:{} Y:{} Z:{}",
-            this.getTile(x, y, z),
-            ((ExBlockEntity) entity).getClassName(),
-            entity.x,
-            entity.y,
-            entity.z
-        );
+    @Overwrite
+    public void setTileEntity(int x, int y, int z, TileEntity tileEntity) {
+        tileEntity.level = this.level;
+        tileEntity.x = this.x * 16 + x;
+        tileEntity.y = y;
+        tileEntity.z = this.z * 16 + z;
+        int tileId = this.getTile(x, y, z);
+        if (!Tile.isEntityTile[tileId]) {
+            ACMod.LOGGER.error(
+                "No block entity container: BlockID: {}, TileEntity: {}, Coord: X:{} Y:{} Z:{}",
+                tileId,
+                ((ExBlockEntity) tileEntity).getClassName(),
+                tileEntity.x,
+                tileEntity.y,
+                tileEntity.z
+            );
+            return;
+        }
+        tileEntity.clearRemoved();
+        var tilePos = new TilePos(x, y, z);
+        this.tileEntities.put(tilePos, tileEntity);
     }
 
     @Inject(
