@@ -32,16 +32,6 @@ public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerDebugB
     }
 
     @Override
-    public int getResource(int meta, Random rand) {
-        return 0;
-    }
-
-    @Override
-    public int getResourceCount(Random rand) {
-        return 0;
-    }
-
-    @Override
     public boolean isSolidRender() {
         return false;
     }

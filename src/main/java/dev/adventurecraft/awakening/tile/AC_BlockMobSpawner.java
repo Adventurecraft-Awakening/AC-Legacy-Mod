@@ -25,16 +25,6 @@ public class AC_BlockMobSpawner extends TileEntityTile implements AC_ITriggerDeb
     }
 
     @Override
-    public int getResource(int var1, Random var2) {
-        return 0;
-    }
-
-    @Override
-    public int getResourceCount(Random var1) {
-        return 0;
-    }
-
-    @Override
     public boolean isSolidRender() {
         return false;
     }
