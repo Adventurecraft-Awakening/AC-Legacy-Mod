@@ -55,7 +55,7 @@ public final class AC_BlockEditAction implements AC_EditAction {
     }
 
     private void set(Level level, int id, int meta, CompoundTag tag) {
-        boolean changed = level.setTileAndDataNoUpdate(this.x, this.y, this.z, id, meta);
+        boolean changed = ((ExWorld) level).ac$setTileAndDataNoUpdate(this.x, this.y, this.z, id, meta, false);
         if (tag != null) {
             this.loadEntity(level, tag);
             changed = true;
