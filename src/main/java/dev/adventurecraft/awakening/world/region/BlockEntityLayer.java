@@ -16,8 +16,8 @@ public final class BlockEntityLayer extends BlockMetaLayer {
     // Use map instead of array assuming that tile entities are very uncommon.
     private final Int2ObjectMap<CompoundTag> tileEntities;
 
-    public BlockEntityLayer(int width, int height, int depth) {
-        super(width, height, depth);
+    public BlockEntityLayer(Coord size) {
+        super(size);
         this.tileEntities = new Int2ObjectOpenHashMap<>();
     }
 

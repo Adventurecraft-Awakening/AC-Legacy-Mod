@@ -22,12 +22,20 @@ public final class Coord {
         this(value, value, value);
     }
 
+    public Coord add(int x, int y, int z) {
+        return new Coord(this.x + x, this.y + y, this.z + z);
+    }
+
     public Coord add(Coord other) {
-        return new Coord(this.x + other.x, this.y + other.y, this.z + other.z);
+        return this.add(other.x, other.y, other.z);
     }
 
     public Coord sub(Coord other) {
         return new Coord(this.x - other.x, this.y - other.y, this.z - other.z);
+    }
+
+    public Coord mul(int factor) {
+        return new Coord(this.x * factor, this.y * factor, this.z * factor);
     }
 
     public Coord min(Coord other) {
@@ -42,6 +50,14 @@ public final class Coord {
         return new Coord(-this.x, -this.y, -this.z);
     }
 
+    public Coord abs() {
+        return new Coord(Math.abs(this.x), Math.abs(this.y), Math.abs(this.z));
+    }
+
+    public int getVolume() {
+        return this.x * this.y * this.z;
+    }
+
     public boolean equalsAny(int x, int y, int z) {
         return this.x == x || this.y == y || this.z == z;
     }
@@ -52,6 +68,30 @@ public final class Coord {
 
     public boolean equalsAny(Coord other) {
         return this.equalsAny(other.x, other.y, other.z);
+    }
+
+    public boolean greaterAny(int x, int y, int z) {
+        return this.x > x || this.y > y || this.z > z;
+    }
+
+    public boolean greaterEqualAny(int x, int y, int z) {
+        return this.x >= x || this.y >= y || this.z >= z;
+    }
+
+    public boolean greaterEqualAny(Coord other) {
+        return this.greaterEqualAny(other.x, other.y, other.z);
+    }
+
+    public boolean lessAny(int x, int y, int z) {
+        return this.x < x || this.y < y || this.z < z;
+    }
+
+    public boolean lessOrEqualAny(int x, int y, int z) {
+        return this.x <= x || this.y <= y || this.z <= z;
+    }
+
+    public boolean lessOrEqualAny(Coord other) {
+        return this.lessOrEqualAny(other.x, other.y, other.z);
     }
 
     public boolean equals(int x, int y, int z) {

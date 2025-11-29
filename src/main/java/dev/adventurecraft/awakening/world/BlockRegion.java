@@ -19,40 +19,30 @@ public final class BlockRegion implements BlockLayer {
 
     private final BlockLayer layer;
 
-    /** Width of the region (X dimension) */
-    public final int width;
-    /** Height of the region (Y dimension) */
-    public final int height;
-    /** Depth of the region (Z dimension) */
-    public final int depth;
+    /** Size of the region (XYZ dimension) */
+    public final Coord size;
 
     /**
      * Creates a new BlockRegion with the specified dimensions.
      *
-     * @param width Width of the region (must be positive)
-     * @param height Height of the region (must be positive)
-     * @param depth Depth of the region (must be positive)
+     * @param size Size of the region (must be positive)
      * @param saveEntities If true, persist tile entities.
      * @throws IllegalArgumentException if any parameter is invalid
      */
-    public BlockRegion(int width, int height, int depth, boolean saveEntities) {
-        if (width <= 0 || height <= 0 || depth <= 0) {
+    public BlockRegion(Coord size, boolean saveEntities) {
+        if (size.lessOrEqualAny(Coord.zero)) {
             throw new IllegalArgumentException("Dimensions must be positive");
         }
 
         this.layer = saveEntities
-            ? new BlockEntityLayer(width, height, depth)
-            : new BlockMetaLayer(width, height, depth);
-        this.width = width;
-        this.height = height;
-        this.depth = depth;
+            ? new BlockEntityLayer(size)
+            : new BlockMetaLayer(size);
+        this.size = size;
     }
 
-    BlockRegion(int width, int height, int depth, int id, int meta) {
+    BlockRegion(Coord size, int id, int meta) {
         this.layer = new BlockValueLayer(id, meta);
-        this.width = width;
-        this.height = height;
-        this.depth = depth;
+        this.size = size;
     }
 
     /**
@@ -62,7 +52,7 @@ public final class BlockRegion implements BlockLayer {
      */
     public static BlockRegion fromMinMax(Coord min, Coord max) {
         Coord delta = max.sub(min).add(Coord.one);
-        return new BlockRegion(delta.x, delta.y, delta.z, true);
+        return new BlockRegion(delta, true);
     }
 
     /**
@@ -72,7 +62,7 @@ public final class BlockRegion implements BlockLayer {
      */
     public static BlockRegion valueFromMinMax(Coord min, Coord max, int id, int meta) {
         Coord delta = max.sub(min).add(Coord.one);
-        return new BlockRegion(delta.x, delta.y, delta.z, id, meta);
+        return new BlockRegion(delta, id, meta);
     }
 
     /**
@@ -101,7 +91,7 @@ public final class BlockRegion implements BlockLayer {
     }
 
     public Coord getSize() {
-        return new Coord(this.width, this.height, this.depth);
+        return this.size;
     }
 
     /**
@@ -110,14 +100,14 @@ public final class BlockRegion implements BlockLayer {
      * @return The total number of blocks (width * height * depth)
      */
     public int getBlockCount() {
-        return calculateVolume(this.width, this.height, this.depth);
+        return this.size.getVolume();
     }
 
     /**
      * Calculates the array index for 3D coordinates in the flattened arrays.
      */
     public int makeIndex(int x, int y, int z) {
-        return makeIndex(x, y, z, this.height, this.depth);
+        return makeIndex(x, y, z, this.size.y, this.size.z);
     }
 
     public long readBlocks(Level level, Coord min, Coord max) {
@@ -192,10 +182,6 @@ public final class BlockRegion implements BlockLayer {
      */
     public static int makeIndex(int x, int y, int z, int height, int depth) {
         return depth * (height * x + y) + z;
-    }
-
-    public static int calculateVolume(int width, int height, int depth) {
-        return width * height * depth;
     }
 
     @FunctionalInterface

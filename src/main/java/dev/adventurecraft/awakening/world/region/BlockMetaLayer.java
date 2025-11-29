@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.world.region;
 
+import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import net.minecraft.world.level.Level;
@@ -10,9 +11,9 @@ public sealed class BlockMetaLayer extends BlockIdLayer permits BlockEntityLayer
 
     private final byte[] metadata;
 
-    public BlockMetaLayer(int width, int height, int depth) {
-        super(width, height, depth);
-        this.metadata = new byte[dev.adventurecraft.awakening.world.BlockRegion.calculateVolume(width, height, depth)];
+    public BlockMetaLayer(Coord size) {
+        super(size);
+        this.metadata = new byte[size.getVolume()];
     }
 
     public final int getMeta(int index) {

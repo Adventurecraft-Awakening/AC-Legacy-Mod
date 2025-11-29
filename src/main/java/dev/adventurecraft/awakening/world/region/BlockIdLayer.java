@@ -1,8 +1,8 @@
 package dev.adventurecraft.awakening.world.region;
 
+import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
-import dev.adventurecraft.awakening.world.BlockRegion;
 import net.minecraft.world.level.Level;
 
 import java.nio.ByteBuffer;
@@ -11,8 +11,8 @@ public sealed class BlockIdLayer implements BlockLayer permits BlockMetaLayer {
 
     private final byte[] blockIds;
 
-    public BlockIdLayer(int width, int height, int depth) {
-        this.blockIds = new byte[BlockRegion.calculateVolume(width, height, depth)];
+    public BlockIdLayer(Coord size) {
+        this.blockIds = new byte[size.getVolume()];
     }
 
     public final int getBlock(int index) {
