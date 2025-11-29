@@ -55,6 +55,8 @@ public abstract class MixinDispenserBlock extends MixinBlock {
     public void ac$onRemove(Level level, int x, int y, int z, boolean dropItems) {
         if (dropItems) {
             super.onRemove(level, x, y, z);
+        } else {
+            level.removeTileEntity(x, y, z);
         }
     }
 }
