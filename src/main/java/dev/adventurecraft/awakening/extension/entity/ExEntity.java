@@ -11,6 +11,8 @@ public interface ExEntity extends AC_IMultiAttackEntity {
 
     boolean getCanGetFallDamage();
 
+    Vec3 getPosition();
+
     Vec3 getRotation(float deltaTime);
 
     void setRotation(double x, double y, double z);

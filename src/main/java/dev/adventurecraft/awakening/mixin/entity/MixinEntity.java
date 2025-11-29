@@ -366,6 +366,11 @@ public abstract class MixinEntity implements ExEntity {
     }
 
     @Override
+    public Vec3 getPosition() {
+        return Vec3.create(this.x, this.y, this.z);
+    }
+
+    @Override
     public Vec3 getRotation(float deltaTime) {
         double pitch = -Math.toRadians(this.xRotO + (this.xRot - this.xRotO) * deltaTime);
         double yaw = -Math.toRadians(this.yRotO + (this.yRot - this.yRotO) * deltaTime);

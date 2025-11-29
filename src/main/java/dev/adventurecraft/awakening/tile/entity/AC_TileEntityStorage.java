@@ -48,6 +48,7 @@ public class AC_TileEntityStorage extends AC_TileEntityMinMax {
         this.blockRegion.updateBlocks(this.level, this.min(), this.max());
     }
 
+    @Override
     public void load(CompoundTag tag) {
         super.load(tag);
         var exTag = (ExCompoundTag) tag;
@@ -75,6 +76,7 @@ public class AC_TileEntityStorage extends AC_TileEntityMinMax {
         }
     }
 
+    @Override
     public void save(CompoundTag tag) {
         super.save(tag);
 
