@@ -107,15 +107,15 @@ public abstract class MixinChunk implements ExChunk {
             this.recordChange(x, y, z, prevId, prevMeta, id, meta, undoStack);
         }
 
+        int newId = id & 0xff;
+        this.blocks[x << 11 | z << 7 | y] = ExChunk.narrowByte(newId);
+        this.data.set(x, y, z, meta);
+
         int bX = (this.x << 4) + x;
         int bZ = (this.z << 4) + z;
         if (prevId != 0 && !this.level.isClientSide) {
             ((ExBlock) Tile.tiles[prevId]).ac$onRemove(this.level, bX, y, bZ, dropItems);
         }
-
-        int newId = id & 0xff;
-        this.blocks[x << 11 | z << 7 | y] = ExChunk.narrowByte(newId);
-        this.data.set(x, y, z, meta);
 
         int height = this.heightMap[z << 4 | x] & 0xff;
         if (Tile.lightBlock[newId] != 0) {
