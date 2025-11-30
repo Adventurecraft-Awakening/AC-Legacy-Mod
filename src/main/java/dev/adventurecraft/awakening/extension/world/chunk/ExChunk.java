@@ -1,8 +1,12 @@
 package dev.adventurecraft.awakening.extension.world.chunk;
 
 import dev.adventurecraft.awakening.world.AC_LevelSource;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import net.minecraft.world.level.tile.entity.TileEntity;
 
 public interface ExChunk extends AC_LevelSource {
+
+    Int2ObjectMap<TileEntity> ac$tileEntities();
 
     boolean ac$setTileAndData(int x, int y, int z, int id, int meta, boolean dropItems);
 

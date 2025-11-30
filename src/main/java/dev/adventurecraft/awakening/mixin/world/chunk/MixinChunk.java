@@ -11,6 +11,8 @@ import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import dev.adventurecraft.awakening.util.BufferUtil;
 import net.minecraft.world.level.tile.TileEntityTile;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -25,15 +27,17 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
-import net.minecraft.world.level.TilePos;
 import net.minecraft.world.level.chunk.DataLayer;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.tile.Tile;
 import net.minecraft.world.level.tile.entity.TileEntity;
 
+import javax.annotation.Nullable;
+
 @Mixin(LevelChunk.class)
 public abstract class MixinChunk implements ExChunk {
 
+    @Shadow public boolean loaded;
     @Shadow public byte[] heightMap;
     @Shadow public byte[] blocks;
     @Shadow public DataLayer data;
@@ -41,7 +45,7 @@ public abstract class MixinChunk implements ExChunk {
 
     @Shadow @Final public int x;
     @Shadow @Final public int z;
-    @Shadow public Map<TilePos, TileEntity> tileEntities;
+    @Shadow public Map<Integer, TileEntity> tileEntities = new Int2ObjectOpenHashMap<>();
 
     @Unique public double[] temperatures;
     @Unique public long lastUpdated;
@@ -168,7 +172,7 @@ public abstract class MixinChunk implements ExChunk {
         int newMeta,
         AC_UndoStack stack
     ) {
-        var entity = this.ac$tryGetTileEntity(x, y, z, TileEntity.class);
+        TileEntity entity = this.ac$tryGetTileEntity(x, y, z, null);
         CompoundTag prevNbt = null;
         if (entity != null) {
             prevNbt = new CompoundTag();
@@ -194,26 +198,30 @@ public abstract class MixinChunk implements ExChunk {
     }
 
     @Overwrite
-    public void setTileEntity(int x, int y, int z, TileEntity tileEntity) {
-        tileEntity.level = this.level;
-        tileEntity.x = this.x * 16 + x;
-        tileEntity.y = y;
-        tileEntity.z = this.z * 16 + z;
-        int tileId = this.getTile(x, y, z);
-        if (!Tile.isEntityTile[tileId]) {
-            ACMod.LOGGER.error(
-                "No block entity container: BlockID: {}, TileEntity: {}, Coord: X:{} Y:{} Z:{}",
-                tileId,
-                ((ExBlockEntity) tileEntity).getClassName(),
-                tileEntity.x,
-                tileEntity.y,
-                tileEntity.z
-            );
+    public void setTileEntity(int x, int y, int z, TileEntity entity) {
+        int eX = (this.x << 4) + x;
+        int eZ = (this.z << 4) + z;
+
+        entity.level = this.level;
+        entity.x = eX;
+        entity.y = y;
+        entity.z = eZ;
+
+        int id = this.getTile(x, y, z);
+        if (!Tile.isEntityTile[id]) {
+            logUnexpectedTileEntityError(eX, y, eZ, id, entity);
             return;
         }
-        tileEntity.clearRemoved();
-        var tilePos = new TilePos(x, y, z);
-        this.tileEntities.put(tilePos, tileEntity);
+        entity.clearRemoved();
+        this.ac$tileEntities().put(this.ac$tileEntityKey(eX, y, eZ), entity);
+    }
+
+    @Unique
+    private static void logUnexpectedTileEntityError(int x, int y, int z, int id, @Nullable TileEntity entity) {
+        Tile tile = Tile.tiles[id];
+        String tName = tile != null ? tile.getName() : "<null>";
+        String eName = entity != null ? ((ExBlockEntity) entity).getClassName() : "<null>";
+        ACMod.LOGGER.error("Unexpected {} (#{}) for entity {} at XYZ {} {} {}", tName, id, eName, x, y, z);
     }
 
     @Inject(
@@ -249,36 +257,69 @@ public abstract class MixinChunk implements ExChunk {
         return true;
     }
 
-    public @Override <E extends TileEntity> E ac$tryGetTileEntity(int x, int y, int z, Class<E> type) {
-        var pos = new TilePos(x, y, z);
-        return type.cast(this.tileEntities.get(pos));
+    @Unique
+    public @Override Int2ObjectMap<TileEntity> ac$tileEntities() {
+        return (Int2ObjectMap<TileEntity>) this.tileEntities;
     }
 
-    public @Override <E extends TileEntity> E ac$getTileEntity(int x, int y, int z, Class<E> type) {
-        int n = this.getTile(x, y, z);
-        if (!Tile.isEntityTile[n]) {
-            return null;
-        }
+    @Unique
+    public int ac$tileEntityKey(int x, int y, int z) {
+        int bX = (x - (this.x << 4)) & 0xF;
+        int bZ = (z - (this.z << 4)) & 0xF;
+        int bY = y & 0xFF;
+        return (bY << 8) | (bZ << 4) | bX;
+    }
 
-        var pos = new TilePos(x, y, z);
-        TileEntity entity = this.tileEntities.get(pos);
-        if (!type.isInstance(entity)) {
-            var tile = (TileEntityTile) Tile.tiles[n];
-            tile.onPlace(this.level, this.x * 16 + x, y, this.z * 16 + z);
-            entity = this.tileEntities.get(pos);
+    public @Override <E extends TileEntity> E ac$tryGetTileEntity(int x, int y, int z, @Nullable Class<E> type) {
+        var entity = this.ac$tileEntities().get(this.ac$tileEntityKey(x, y, z));
+        if (type == null) {
+            //noinspection unchecked
+            return (E) entity;
+        }
+        return type.cast(entity);
+    }
+
+    public @Override <E extends TileEntity> E ac$getTileEntity(int x, int y, int z, @Nullable Class<E> type) {
+        int eX = x + (this.x << 4);
+        int eZ = z + (this.z << 4);
+        int key = this.ac$tileEntityKey(eX, y, eZ);
+        Int2ObjectMap<TileEntity> map = this.ac$tileEntities();
+
+        TileEntity entity = map.get(key);
+        if (entity == null || (type != null && !type.isInstance(entity))) {
+            int id = this.getTile(x, y, z);
+            if (!Tile.isEntityTile[id]) {
+                logUnexpectedTileEntityError(eX, y, eZ, id, entity);
+                return null;
+            }
+
+            Tile.tiles[id].onPlace(this.level, eX, y, eZ);
+            entity = map.get(key);
             // Skip type check; assume tile always creates correct type.
         }
 
         if (entity != null && entity.isRemoved()) {
-            this.tileEntities.remove(pos);
+            map.remove(key);
             return null;
         }
+        //noinspection unchecked
         return (E) entity;
     }
 
     @Overwrite
     public TileEntity getTileEntity(int x, int y, int z) {
-        return this.ac$getTileEntity(x, y, z, TileEntity.class);
+        return this.ac$getTileEntity(x, y, z, null);
+    }
+
+    @Overwrite
+    public void removeTileEntity(int x, int y, int z) {
+        if (!this.loaded) {
+            return;
+        }
+        TileEntity entity = this.ac$tileEntities().remove(this.ac$tileEntityKey(x, y, z));
+        if (entity != null) {
+            entity.setRemoved();
+        }
     }
 
     public @Override void getTileColumn(ByteBuffer buffer, int x, int y0, int z, int y1) {

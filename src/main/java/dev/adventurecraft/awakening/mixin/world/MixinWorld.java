@@ -1624,7 +1624,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
     public TileEntity getBlockTileEntityDontCreate(int x, int y, int z) {
         LevelChunk chunk = this.getChunk(x >> 4, z >> 4);
         if (chunk != null) {
-            return ((ExChunk) chunk).ac$tryGetTileEntity(x & 15, y, z & 15, TileEntity.class);
+            return ((ExChunk) chunk).ac$tryGetTileEntity(x & 15, y, z & 15, null);
         }
         return null;
     }

@@ -44,7 +44,7 @@ public final class BlockEntityLayer extends BlockMetaLayer {
     }
 
     private void saveTileEntity(Level level, int index, int x, int y, int z) {
-        TileEntity entity = ((ExWorld) level).ac$tryGetTileEntity(x, y, z, TileEntity.class);
+        TileEntity entity = ((ExWorld) level).ac$tryGetTileEntity(x, y, z, null);
         if (entity == null) {
             logMissingTileEntity(level, index, x, y, z);
             return;
@@ -64,7 +64,7 @@ public final class BlockEntityLayer extends BlockMetaLayer {
             return changed;
         }
 
-        var entity = ((ExWorld) level).ac$tryGetTileEntity(x, y, z, TileEntity.class);
+        var entity = ((ExWorld) level).ac$tryGetTileEntity(x, y, z, null);
         if (entity == null) {
             logMissingTileEntity(level, index, x, y, z);
             return changed;
