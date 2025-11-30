@@ -4,6 +4,12 @@ import dev.adventurecraft.awakening.extension.nbt.ExListTag;
 import dev.adventurecraft.awakening.extension.nbt.ExTag;
 import dev.adventurecraft.awakening.util.IoConsumer;
 import dev.adventurecraft.awakening.util.TagUtil;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleList;
+import it.unimi.dsi.fastutil.floats.FloatArrayList;
+import it.unimi.dsi.fastutil.floats.FloatList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.nbt.*;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -15,7 +21,10 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Mixin(ListTag.class)
 public abstract class MixinListTag extends MixinTag implements ExListTag {
@@ -82,7 +91,7 @@ public abstract class MixinListTag extends MixinTag implements ExListTag {
     public Tag get(int index) {
         Object item = this.list.get(index);
         if (item instanceof Tag tag) {
-           return tag;
+            return tag;
         }
         return this.convertAndGet(index);
     }
@@ -101,5 +110,83 @@ public abstract class MixinListTag extends MixinTag implements ExListTag {
     public @Override void setInnerList(List<?> list) {
         this.list = list;
         this.type = list.isEmpty() ? Tags.TAG_END : TagUtil.getTypeId(list.getFirst());
+    }
+
+    public @Override <T> void forEach(Class<T> type, Consumer<T> consumer) {
+        // TODO: support primitives?
+        this.list.forEach(tag -> consumer.accept(type.cast(tag)));
+    }
+
+    public @Override Stream<CompoundTag> compoundStream() {
+        var list = this.list;
+        if (list.isEmpty() || !(list.getFirst() instanceof Tag)) {
+            return Stream.empty();
+        }
+        return list.stream().mapMulti((tag, consumer) -> {
+            if (tag instanceof CompoundTag compoundTag) {
+                consumer.accept(compoundTag);
+            }
+        });
+    }
+
+    @Override
+    public ListTag copy() {
+        var tag = new ListTag();
+        var exTag = (ExListTag) tag;
+        var list = this.list;
+        switch (list) {
+            case IntList intList -> exTag.setInnerList(new IntArrayList(intList));
+            case DoubleList doubleList -> exTag.setInnerList(new DoubleArrayList(doubleList));
+            case FloatList floatList -> exTag.setInnerList(new FloatArrayList(floatList));
+            default -> list.forEach(t -> tag.add(((ExTag) t).copy()));
+        }
+        return tag;
+    }
+
+    @Override
+    public Optional<CompoundTag> getCompound(int index) {
+        var list = this.list;
+        if (index >= 0 && index < list.size()) {
+            if (list.get(index) instanceof CompoundTag tag) {
+                return Optional.of(tag);
+            }
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<Integer> getInt(int index) {
+        if (!TagUtil.isIntegerType(this.type)) {
+            return Optional.empty();
+        }
+        var list = this.list;
+        if (index >= 0 && index < list.size()) {
+            if (list instanceof IntList intList) {
+                return Optional.of(intList.getInt(index));
+            }
+            if (list.get(index) instanceof ExTag tag) {
+                return tag.getInt();
+            }
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<Double> getDouble(int index) {
+        if (TagUtil.isFloatType(this.type)) {
+            var list = this.list;
+            if (index >= 0 && index < list.size()) {
+                if (list instanceof FloatList floatList) {
+                    return Optional.of((double) floatList.getFloat(index));
+                }
+                if (list instanceof DoubleList doubleList) {
+                    return Optional.of(doubleList.getDouble(index));
+                }
+                if (list.get(index) instanceof ExTag tag) {
+                    return tag.getDouble();
+                }
+            }
+        }
+        return Optional.empty();
     }
 }

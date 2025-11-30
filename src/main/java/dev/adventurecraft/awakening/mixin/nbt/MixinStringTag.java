@@ -15,4 +15,9 @@ public abstract class MixinStringTag extends MixinTag {
     public Optional<String> getString() {
         return Optional.of(this.contents);
     }
+
+    @Override
+    public StringTag copy() {
+        return new StringTag(this.contents);
+    }
 }
