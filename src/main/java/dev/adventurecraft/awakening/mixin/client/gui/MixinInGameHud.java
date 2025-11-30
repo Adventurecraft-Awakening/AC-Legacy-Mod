@@ -33,6 +33,7 @@ import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.tile.Tile;
+import net.minecraft.world.phys.HitType;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 import org.spongepowered.asm.mixin.Mixin;
@@ -378,8 +379,31 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
             }
 
             var exPlayer = (ExEntity) player;
-            var collideMsg = String.format("Collide X: %d Z: %d", exPlayer.getCollisionX(), exPlayer.getCollisionZ());
+            var collideMsg = String.format("Collide XZ: %d / %d", exPlayer.getCollisionX(), exPlayer.getCollisionZ());
             textState.drawText(collideMsg, x, y += 10);
+            y += 10;
+
+            var hit = mc.hitResult;
+            if (hit != null) {
+                String type = "";
+                String hitMsg = "";
+                if (hit.hitType == HitType.TILE) {
+                    type = "Block";
+                    int id = mc.level.getTile(hit.x, hit.y, hit.z);
+                    int meta = mc.level.getData(hit.x, hit.y, hit.z);
+                    // TODO: better tile names (BlockState)
+                    Tile tile = Tile.tiles[id];
+                    String name = tile != null ? tile.getName() : "<noname>";
+                    hitMsg = String.format("%d:%d (%s)", id, meta, name);
+                }
+                else if (hit.hitType == HitType.ENTITY) {
+                    type = "Entity";
+                    hitMsg = hit.entity.toString();
+                }
+                var targetMsg = String.format("Target %s: %d %d %d", type, hit.x, hit.y, hit.z);
+                textState.drawText(targetMsg, x, y += 10);
+                textState.drawText(hitMsg, x, y += 10);
+            }
 
             textState.end();
         }
