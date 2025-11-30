@@ -110,8 +110,15 @@ public abstract class MixinBlock implements ExBlock {
     }
 
     @Overwrite
-    public void onRemove(Level var1, int var2, int var3, int var4) {
-        ((ExWorld) var1).getTriggerManager().removeArea(var2, var3, var4);
+    public void onRemove(Level var1, int x, int y, int z) {
+        // TODO: should this really be called for every tile in the game?
+        //       that has massive perf implications...
+        ((ExWorld) var1).getTriggerManager().removeArea(x, y, z);
+    }
+
+    @Override
+    public void ac$onRemove(Level level, int x, int y, int z, boolean dropItems) {
+        this.onRemove(level, x, y, z);
     }
 
     @Overwrite

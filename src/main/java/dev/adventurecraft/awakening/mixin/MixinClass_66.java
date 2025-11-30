@@ -193,7 +193,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
 
                 ByteBuffer column = blockBuffer.slice(start, endY - startY);
                 for (int y = startY; y < endY; ++y) {
-                    int blockId = ExChunk.translate256(column.get());
+                    int blockId = ExChunk.widenByte(column.get());
                     if (!Tile.isEntityTile[blockId]) {
                         continue;
                     }
@@ -223,7 +223,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
         for (int x = startX; x < endX; ++x) {
             for (int z = startZ; z < endZ; ++z) {
                 for (int y = startY; y < endY; ++y) {
-                    int blockId = ExChunk.translate256(blockBuffer.get());
+                    int blockId = ExChunk.widenByte(blockBuffer.get());
                     if (blockId <= 0) {
                         continue;
                     }

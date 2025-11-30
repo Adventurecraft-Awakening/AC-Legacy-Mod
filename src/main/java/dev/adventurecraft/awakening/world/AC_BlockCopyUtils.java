@@ -1,17 +1,22 @@
 package dev.adventurecraft.awakening.world;
 
+import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.Coord;
+import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.item.AC_ItemNudge;
 import dev.adventurecraft.awakening.item.AC_ItemPaste;
+import dev.adventurecraft.awakening.world.history.AC_EditAction;
+import dev.adventurecraft.awakening.world.history.AC_EditActionList;
+import dev.adventurecraft.awakening.world.history.AC_RegionEditAction;
 import net.minecraft.client.Minecraft;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.tile.entity.TileEntity;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * Utility for block copying, pasting, and manipulation functionality
@@ -23,169 +28,6 @@ import org.jetbrains.annotations.NotNull;
  * @author Adventurecraft Team
  */
 public final class AC_BlockCopyUtils {
-
-    /**
-     * Copies blocks from the current cursor selection into a BlockRegion.
-     * <p>
-     * This method reads all blocks within the cursor selection bounds and stores
-     * them in a BlockRegion for later pasting or manipulation. Optionally, the source
-     * blocks can be cleared (set to air) after copying.
-     *
-     * @param world The world to copy blocks from (must not be null)
-     * @param clearSource If true, source blocks are set to air (0) after copying
-     * @return A new BlockRegion containing the copied blocks
-     * @throws IllegalArgumentException if world is null
-     * @throws IllegalStateException if cursor selection is not set
-     */
-    public static BlockRegion copyBlocksFromSelection(@NotNull Level world, boolean clearSource) {
-        if (!AC_ItemCursor.bothSet) {
-            throw new IllegalStateException("Cursor selection must be set before copying");
-        }
-
-        Coord min = AC_ItemCursor.min();
-        Coord max = AC_ItemCursor.max();
-        Coord delta = max.sub(min);
-        int width = delta.x + 1;
-        int height = delta.y + 1;
-        int depth = delta.z + 1;
-        var region = new BlockRegion(width, height, depth);
-
-        // Copy blocks from the selection
-        for (int x = 0; x < width; ++x) {
-            for (int y = 0; y < height; ++y) {
-                for (int z = 0; z < depth; ++z) {
-                    int worldX = x + min.x;
-                    int worldY = y + min.y;
-                    int worldZ = z + min.z;
-
-                    int id = world.getTile(worldX, worldY, worldZ);
-                    int meta = world.getData(worldX, worldY, worldZ);
-                    int index = region.makeIndex(x, y, z);
-                    region.blockIds[index] = id;
-                    region.metadata[index] = meta;
-
-                    if (clearSource) {
-                        world.setTileNoUpdate(worldX, worldY, worldZ, 0);
-                    }
-                }
-            }
-        }
-        return region;
-    }
-
-    /**
-     * Copies blocks and TileEntity data from the current cursor selection into a BlockTileEntityRegion.
-     * <p>
-     * This method reads all blocks and TileEntities within the cursor selection bounds and stores
-     * them in a BlockTileEntityRegion for later pasting or manipulation. Optionally, the source
-     * blocks can be cleared (set to air) after copying.
-     *
-     * @param world The world to copy blocks from (must not be null)
-     * @param clearSource If true, source blocks are set to air (0) after copying
-     * @return A new BlockRegion containing the copied blocks
-     * @throws IllegalArgumentException if world is null
-     * @throws IllegalStateException if cursor selection is not set
-     */
-    public static BlockTileEntityRegion copyBlocksAndTilesFromSelection(@NotNull Level world, boolean clearSource) {
-        if (!AC_ItemCursor.bothSet) {
-            throw new IllegalStateException("Cursor selection must be set before copying");
-        }
-
-        Coord min = AC_ItemCursor.min();
-        Coord max = AC_ItemCursor.max();
-        Coord delta = max.sub(min);
-        int width = delta.x + 1;
-        int height = delta.y + 1;
-        int depth = delta.z + 1;
-        var region = new BlockTileEntityRegion(width, height, depth);
-
-        // Copy blocks from the selection
-        for (int x = 0; x < width; ++x) {
-            for (int y = 0; y < height; ++y) {
-                for (int z = 0; z < depth; ++z) {
-                    int worldX = x + min.x;
-                    int worldY = y + min.y;
-                    int worldZ = z + min.z;
-
-                    int index = region.makeIndex(x, y, z);
-                    region.blockIds[index] = world.getTile(worldX, worldY, worldZ);
-                    region.metadata[index] = world.getData(worldX, worldY, worldZ);
-                    TileEntity tileEntity = world.getTileEntity(worldX, worldY, worldZ);
-                    if (tileEntity != null) {
-                        CompoundTag tag = new CompoundTag();
-                        tileEntity.save(tag);
-                        region.compoundTags[index] = tag;
-                    }
-                    if (clearSource) {
-                        world.setTileNoUpdate(worldX, worldY, worldZ, 0);
-                    }
-                }
-            }
-        }
-        return region;
-    }
-
-    /**
-     * Pastes a BlockRegion at the specified base coordinates.
-     * <p>
-     * This method performs a two-pass operation:
-     * 1. First pass: Places all blocks without triggering updates for performance
-     * 2. Second pass: Triggers tile updates to ensure proper block behavior
-     *
-     * @param world The world to paste blocks into (must not be null)
-     * @param region The block region to paste (must not be null)
-     * @param posX Base X coordinate for pasting
-     * @param posY Base Y coordinate for pasting
-     * @param posZ Base Z coordinate for pasting
-     * @throws IllegalArgumentException if world or region is null
-     */
-    public static void pasteBlockRegion(
-        @NotNull Level world,
-        @NotNull BlockRegion region,
-        int posX,
-        int posY,
-        int posZ
-    ) {
-        // First pass: set blocks without updates for performance
-        for (int rX = 0; rX < region.width; ++rX) {
-            for (int rY = 0; rY < region.height; ++rY) {
-                for (int rZ = 0; rZ < region.depth; ++rZ) {
-                    int index = region.makeIndex(rX, rY, rZ);
-                    int id = region.blockIds[index];
-                    int meta = region.metadata[index];
-                    int x = posX + rX;
-                    int y = posY + rY;
-                    int z = posZ + rZ;
-                    if (world.setTileAndDataNoUpdate(x, y, z, id, meta)) {
-                        if (region instanceof BlockTileEntityRegion entityRegion) {
-                            CompoundTag compoundTag = entityRegion.compoundTags[index];
-                            if (compoundTag == null) {
-                                continue;
-                            }
-                            TileEntity entity = TileEntity.loadStatic(compoundTag);
-                            entity.z = z;
-                            entity.y = y;
-                            entity.x = x;
-                            world.setTileEntity(entity.x, entity.y, entity.z, entity);
-                        }
-                    }
-                }
-            }
-        }
-        // Second pass: trigger tile updates for proper block behavior
-        for (int rX = 0; rX < region.width; ++rX) {
-            for (int rY = 0; rY < region.height; ++rY) {
-                for (int rZ = 0; rZ < region.depth; ++rZ) {
-                    int index = region.makeIndex(rX, rY, rZ);
-                    int id = region.blockIds[index];
-                    int x = posX + rX;
-                    int y = posY + rY;
-                    int z = posZ + rZ;
-                    world.tileUpdated(x, y, z, id);
-                }
-            }
-        }
-    }
 
     /**
      * Calculates the paste position based on the camera entity's position and look direction.
@@ -221,11 +63,7 @@ public final class AC_BlockCopyUtils {
      * @return Unit direction as {@link Coord} with values of -1, 0, or 1 on each axis
      * @throws IllegalArgumentException if vec is null
      */
-    public static Coord getUnitDirection(Vec3 vec) {
-        if (vec == null) {
-            throw new IllegalArgumentException("Vector cannot be null");
-        }
-
+    public static Coord getUnitDirection(@NotNull Vec3 vec) {
         double absX = Math.abs(vec.x);
         double absY = Math.abs(vec.y);
         double absZ = Math.abs(vec.z);
@@ -247,7 +85,7 @@ public final class AC_BlockCopyUtils {
             // Z-axis is dominant
             z = vec.z > 0.0D ? 1 : -1;
         }
-        return new Coord(x, y ,z);
+        return new Coord(x, y, z);
     }
 
     /**
@@ -294,14 +132,48 @@ public final class AC_BlockCopyUtils {
             throw new IllegalArgumentException("Direction cannot be null");
         }
 
-        // Copy blocks from current selection (clearing source)
-        BlockTileEntityRegion region = copyBlocksAndTilesFromSelection(world, true);
+        AC_EditAction editAction = null;
+        var undoStack = ((ExWorld) world).getUndoStack();
+        boolean saveHistory = undoStack.isRecording();
+        undoStack.pushLayer(null);
+        try {
+            // Copy blocks from current selection
+            Coord min = AC_ItemCursor.min();
+            Coord max = AC_ItemCursor.max();
+            BlockRegion region = BlockRegion.readFromMinMax(world, min, max);
 
-        // Move the cursor selection
-        shiftCursor(direction);
+            // Move the cursor selection
+            shiftCursor(direction);
+            Coord start = AC_ItemCursor.min();
+            Coord end = start.add(region.getSize().sub(Coord.one));
 
-        // Paste blocks at the new location
-        Coord newMin = AC_ItemCursor.min();
-        pasteBlockRegion(world, region, newMin.x, newMin.y, newMin.z);
+            BlockRegion emptyRegion = BlockRegion.airFromMinMax(min, max);
+            if (saveHistory) {
+                BlockRegion prevRegion = BlockRegion.readFromMinMax(world, start, end);
+
+                var clearAction = new AC_RegionEditAction(min, region, emptyRegion);
+                var writeAction = new AC_RegionEditAction(start, prevRegion, region);
+                editAction = new AC_EditActionList(List.of(clearAction, writeAction));
+            }
+            emptyRegion.writeBlocks(world, min, max);
+            emptyRegion.updateBlocks(world, min, max);
+
+            // Paste blocks at the new location
+            region.writeBlocks(world, start, end);
+            region.updateBlocks(world, start, end);
+        }
+        catch (Exception e) {
+            saveHistory = false;
+            // Log error but don't crash the game
+            ACMod.LOGGER.error("Failed to nudge blocks: ", e);
+            Minecraft.instance.gui.addMessage("Failed to nudge blocks: " + e.getMessage());
+        }
+        finally {
+            undoStack.popLayer(saveHistory);
+        }
+
+        if (editAction != null) {
+            undoStack.recordAction(editAction);
+        }
     }
 }

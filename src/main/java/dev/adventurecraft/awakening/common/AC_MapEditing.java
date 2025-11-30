@@ -130,6 +130,7 @@ public class AC_MapEditing {
         if (!AC_ItemCursor.bothSet) {
             return;
         }
+
         Mob entity = Minecraft.instance.cameraEntity;
         float prX = (float) (entity.xOld + (entity.x - entity.xOld) * (double) deltaTime);
         float prY = (float) (entity.yOld + (entity.y - entity.yOld) * (double) deltaTime);
@@ -142,6 +143,7 @@ public class AC_MapEditing {
 
         Coord coord = AC_BlockCopyUtils.calculatePastePosition().sub(AC_ItemCursor.min());
 
+        // TODO: generate mesh
         for (int texIndex = 0; texIndex <= 3; ++texIndex) {
             if (texIndex == 0) {
                 this.mc.textures.bind(this.mc.textures.loadTexture("/terrain.png"));

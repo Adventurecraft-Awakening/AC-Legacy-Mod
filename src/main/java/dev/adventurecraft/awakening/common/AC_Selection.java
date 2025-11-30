@@ -1,16 +1,13 @@
 package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
-import org.jetbrains.annotations.NotNull;
 
-public final class AC_Selection {
+public record AC_Selection(Coord one, Coord two) {
 
-    private Coord one;
-    private Coord two;
+    public static final AC_Selection ZERO = new AC_Selection(Coord.zero, Coord.zero);
 
-    public void record() {
-        this.setOne(AC_ItemCursor.one());
-        this.setTwo(AC_ItemCursor.two());
+    public static AC_Selection fromCursor() {
+        return new AC_Selection(AC_ItemCursor.one(), AC_ItemCursor.two());
     }
 
     public void load() {
@@ -19,21 +16,5 @@ public final class AC_Selection {
 
         AC_ItemCursor.setMin(this.one().min(this.two()));
         AC_ItemCursor.setMax(this.one().max(this.two()));
-    }
-
-    public Coord one() {
-        return one;
-    }
-
-    public void setOne(@NotNull Coord one) {
-        this.one = one;
-    }
-
-    public Coord two() {
-        return two;
-    }
-
-    public void setTwo(@NotNull Coord two) {
-        this.two = two;
     }
 }

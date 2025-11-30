@@ -2,8 +2,11 @@ package dev.adventurecraft.awakening.item;
 
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.Coord;
+import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.world.AC_BlockCopyUtils;
-import dev.adventurecraft.awakening.world.BlockTileEntityRegion;
+import dev.adventurecraft.awakening.world.BlockRegion;
+import dev.adventurecraft.awakening.world.history.AC_EditAction;
+import dev.adventurecraft.awakening.world.history.AC_RegionEditAction;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;
@@ -57,22 +60,42 @@ public class AC_ItemPaste extends Item {
             return item;
         }
 
+        AC_EditAction editAction = null;
+        var undoStack = ((ExWorld) world).getUndoStack();
+        boolean saveHistory = undoStack.isRecording();
+        undoStack.pushLayer(null);
         try {
             // Copy blocks from selection (non-destructive)
-            BlockTileEntityRegion region = AC_BlockCopyUtils.copyBlocksAndTilesFromSelection(world, false);
+            Coord min = AC_ItemCursor.min();
+            Coord max = AC_ItemCursor.max();
+            BlockRegion region = BlockRegion.readFromMinMax(world, min, max);
 
             // Calculate where to paste based on player's look direction
-            Coord pastePosition = AC_BlockCopyUtils.calculatePastePosition();
+            Coord start = AC_BlockCopyUtils.calculatePastePosition();
+            Coord end = start.add(region.getSize().sub(Coord.one));
+
+            if (saveHistory) {
+                BlockRegion prevRegion = BlockRegion.readFromMinMax(world, start, end);
+                editAction = new AC_RegionEditAction(start, prevRegion, region);
+            }
 
             // Paste the copied blocks
-            AC_BlockCopyUtils.pasteBlockRegion(world, region, pastePosition.x, pastePosition.y, pastePosition.z);
+            region.writeBlocks(world, start, end);
+            region.updateBlocks(world, start, end);
         }
         catch (Exception e) {
+            saveHistory = false;
             // Log error but don't crash the game
             ACMod.LOGGER.error("Failed to paste blocks: ", e);
             Minecraft.instance.gui.addMessage("Failed to paste blocks: " + e.getMessage());
         }
+        finally {
+            undoStack.popLayer(saveHistory);
+        }
 
+        if (editAction != null) {
+            undoStack.recordAction(editAction);
+        }
         return item;
     }
 }

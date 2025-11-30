@@ -17,7 +17,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.tile.DispenserTile;
 
 @Mixin(DispenserTile.class)
-public abstract class MixinDispenserBlock {
+public abstract class MixinDispenserBlock extends MixinBlock {
 
     @Inject(method = "use", at = @At("HEAD"), cancellable = true)
     private void disableUsageInPlayMode(Level i, int j, int k, int arg2, Player par5, CallbackInfoReturnable<Boolean> cir) {
@@ -35,7 +35,7 @@ public abstract class MixinDispenserBlock {
             ordinal = 0),
         cancellable = true)
     private void dispenseAcItem(
-        Level var1, int var2, int var3, int var4, Random var5, CallbackInfo ci,
+        Level level, int x, int y, int z, Random var5, CallbackInfo ci,
         @Local ItemInstance var10,
         @Local(ordinal = 4) int var7,
         @Local(ordinal = 5) int var8,
@@ -43,11 +43,20 @@ public abstract class MixinDispenserBlock {
         @Local(ordinal = 1) double var13,
         @Local(ordinal = 2) double var15) {
         if (var10.id == AC_Items.bombArow.id) {
-            AC_EntityArrowBomb var22 = new AC_EntityArrowBomb(var1, var11, var13, var15);
+            var var22 = new AC_EntityArrowBomb(level, var11, var13, var15);
             var22.shoot(var7, 0.1F, var8, 1.1F, 6.0F);
-            var1.addEntity(var22);
-            var1.levelEvent(1002, var2, var3, var4, 0);
+            level.addEntity(var22);
+            level.levelEvent(1002, x, y, z, 0);
             ci.cancel();
+        }
+    }
+
+    @Override
+    public void ac$onRemove(Level level, int x, int y, int z, boolean dropItems) {
+        if (dropItems) {
+            super.onRemove(level, x, y, z);
+        } else {
+            level.removeTileEntity(x, y, z);
         }
     }
 }

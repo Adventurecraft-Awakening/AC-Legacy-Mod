@@ -543,6 +543,19 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
         return ((ExChunk) chunk).setBlockIDWithMetadataTemp(x & 15, y, z & 15, id, meta);
     }
 
+    @Override
+    public boolean ac$setTileAndDataNoUpdate(int x, int y, int z, int id, int meta, boolean dropItems) {
+        if (outOfBounds(x, z)) {
+            return false;
+        }
+
+        if (y < 0 || y >= 128) {
+            return false;
+        }
+        LevelChunk chunk = this.getChunk(x >> 4, z >> 4);
+        return ((ExChunk) chunk).ac$setTileAndData(x & 15, y, z & 15, id, meta, dropItems);
+    }
+
     public @Override <E extends TileEntity> E ac$tryGetTileEntity(int x, int y, int z, Class<E> type) {
         LevelChunk chunk = this.getChunk(x >> 4, z >> 4);
         if (chunk != null) {
@@ -1486,9 +1499,8 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
     }
 
     @Override
-    public void cancelBlockUpdate(int x, int y, int z, int id) {
-        var entry = new TickNextTickData(x, y, z, id);
-        this.tickNextTickSet.remove(entry);
+    public boolean cancelBlockUpdate(TickNextTickData entry) {
+        return this.tickNextTickSet.remove(entry);
     }
 
     @Override
@@ -1612,7 +1624,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
     public TileEntity getBlockTileEntityDontCreate(int x, int y, int z) {
         LevelChunk chunk = this.getChunk(x >> 4, z >> 4);
         if (chunk != null) {
-            return ((ExChunk) chunk).ac$tryGetTileEntity(x & 15, y, z & 15, TileEntity.class);
+            return ((ExChunk) chunk).ac$tryGetTileEntity(x & 15, y, z & 15, null);
         }
         return null;
     }
