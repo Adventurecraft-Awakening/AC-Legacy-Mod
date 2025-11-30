@@ -10,6 +10,7 @@ import dev.adventurecraft.awakening.extension.entity.ExBlockEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import dev.adventurecraft.awakening.util.BufferUtil;
+import dev.adventurecraft.awakening.util.NibbleBuffer;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.spongepowered.asm.mixin.*;
@@ -40,6 +41,8 @@ public abstract class MixinChunk implements ExChunk {
     @Shadow public byte[] heightMap;
     @Shadow public byte[] blocks;
     @Shadow public DataLayer data;
+    @Shadow public DataLayer skyLight;
+    @Shadow public DataLayer blockLight;
     @Shadow public Level level;
 
     @Shadow @Final public int x;
@@ -330,6 +333,23 @@ public abstract class MixinChunk implements ExChunk {
         buffer.put(this.blocks, (x << 11 | z << 7) + y0, Math.min(y1, 128) - y0);
         if (y1 > 128) {
             BufferUtil.repeatZero(buffer, y1 - 128);
+        }
+    }
+
+    public @Override void getDataColumn(DataType type, NibbleBuffer buffer, int x, int y0, int z, int y1) {
+        // Fill the entire requested range with values; out of bounds is zero.
+        if (y0 < 0) {
+            buffer.repeat(0, -y0);
+            y0 = 0;
+        }
+        DataLayer layer = switch (type) {
+            case BLOCK_META -> this.data;
+            case BLOCK_LIGHT -> this.blockLight;
+            case SKY_LIGHT -> this.skyLight;
+        };
+        buffer.put(layer.data, (x << 11 | z << 7) + y0, Math.min(y1, 128) - y0);
+        if (y1 > 128) {
+            buffer.repeat(0, y1 - 128);
         }
     }
 
