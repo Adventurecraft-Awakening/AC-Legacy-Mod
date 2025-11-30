@@ -6,6 +6,8 @@ import dev.adventurecraft.awakening.ACMainThread;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.client.gl.GLDevice;
 import dev.adventurecraft.awakening.client.options.Config;
+import dev.adventurecraft.awakening.client.renderer.PoolingBlockAllocator;
+import dev.adventurecraft.awakening.client.renderer.BlockAllocator;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.client.gui.AC_ChatScreen;
 import dev.adventurecraft.awakening.common.gui.AC_GuiMapSelect;
@@ -195,6 +197,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
     @Unique Entity lastEntityHit;
     @Unique ScriptVec3 lastBlockHit;
     @Unique private GLDevice glDevice;
+    @Unique private BlockAllocator chunkBlockAllocator;
 
     @Overwrite(remap = false)
     public static void main(String[] args) {
@@ -311,6 +314,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         Config.logOpenGlCaps(caps);
 
         this.glDevice = new GLDevice(caps);
+        this.chunkBlockAllocator = new PoolingBlockAllocator(1024 * 64 * 4, 4);
     }
 
     private void createDisplay(PixelFormat pixelFormat, boolean rethrowLast)
@@ -1475,5 +1479,9 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
     public @Override GLDevice getGlDevice() {
         return this.glDevice;
+    }
+
+    public @Override BlockAllocator getChunkBlockAllocator() {
+        return this.chunkBlockAllocator;
     }
 }

@@ -6,11 +6,13 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class MemoryMesh {
+public final class MemoryMesh implements AutoCloseable {
 
+    public final BlockAllocator allocator;
     public final List<ByteBuffer> vertexBlocks = new ArrayList<>();
 
-    public MemoryMesh() {
+    public MemoryMesh(BlockAllocator allocator) {
+        this.allocator = allocator;
     }
 
     public int vertexStride() {
@@ -27,5 +29,10 @@ public final class MemoryMesh {
 
     public long getVertexCount() {
         return this.getSizeInBytes() / this.vertexStride();
+    }
+
+    public @Override void close() {
+        this.vertexBlocks.forEach(this.allocator::returnBlock);
+        this.vertexBlocks.clear();
     }
 }

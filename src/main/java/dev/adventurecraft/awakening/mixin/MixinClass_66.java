@@ -2,9 +2,12 @@ package dev.adventurecraft.awakening.mixin;
 
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.client.gl.GLDevice;
+import dev.adventurecraft.awakening.client.renderer.BlockAllocator;
 import dev.adventurecraft.awakening.client.renderer.ChunkMesh;
+import dev.adventurecraft.awakening.client.renderer.MemoryMesh;
 import dev.adventurecraft.awakening.client.rendering.MemoryTesselator;
 import dev.adventurecraft.awakening.collections.IdentityHashSet;
+import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.extension.ExClass_66;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
@@ -73,6 +76,8 @@ public abstract class MixinClass_66 implements ExClass_66 {
     @Unique public boolean isInFrustrumFully = false;
 
     @Unique private GLDevice glDevice;
+    @Unique private BlockAllocator blockAllocator;
+    @Unique private StringBuilder traceBuilder;
     @Unique private final Set<TileEntity> tileEntities = new IdentityHashSet<>();
     @Unique private final List<ChunkMesh>[] meshLayers = new List[ChunkMesh.MAX_RENDER_LAYERS];
 
@@ -85,6 +90,8 @@ public abstract class MixinClass_66 implements ExClass_66 {
     )
     private void doInit(Level level, List<?> tileEntities, int x, int y, int z, int size, int lists, CallbackInfo ci) {
         this.glDevice = ((ExMinecraft) Minecraft.instance).getGlDevice(); // TODO: get elsewhere
+        this.blockAllocator = ((ExMinecraft) Minecraft.instance).getChunkBlockAllocator();
+
         for (int i = 0; i < this.meshLayers.length; i++) {
             this.meshLayers[i] = new ArrayList<>();
         }
@@ -113,7 +120,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
         }
 
         double millis = (System.nanoTime() - startTime) / 1000000.0;
-        builder.append(prefix).append(String.format(": %.3f ms\n", millis));
+        builder.append(prefix).append(": ").append(millis).append(" ms\n");
     }
 
     @Unique
@@ -139,13 +146,24 @@ public abstract class MixinClass_66 implements ExClass_66 {
         this.deleteBuffers();
     }
 
+    @Unique
+    private @Nullable StringBuilder getTraceBuilder() {
+        if (!ACMod.LOGGER.isTraceEnabled()) {
+            return null;
+        }
+        if (this.traceBuilder == null) {
+            this.traceBuilder = new StringBuilder();
+        }
+        return this.traceBuilder;
+    }
+
     @Overwrite
     public void rebuild() {
         if (!this.dirty) {
             return;
         }
         long timeStart = System.nanoTime();
-        var timeBuilder = ACMod.LOGGER.isTraceEnabled() ? new StringBuilder() : null;
+        StringBuilder timeBuilder = this.getTraceBuilder();
 
         ++Chunk.updates;
 
@@ -236,7 +254,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
                     var renderer = renderers[meshIndex];
                     if (renderer == null) {
                         renderer = new TileRenderer(region);
-                        var tesselator = MemoryTesselator.create();
+                        var tesselator = MemoryTesselator.create(this.blockAllocator);
                         tesselator.begin();
 
                         ((ExBlockRenderer) renderer).ac$setTesselator(tesselator);
@@ -267,9 +285,10 @@ public abstract class MixinClass_66 implements ExClass_66 {
                     continue;
                 }
 
-                var data = tesselator.takeMesh();
-                var mesh = ChunkMesh.fromMemory(this.glDevice, data, texId);
-                this.meshLayers[layer].add(mesh);
+                try (MemoryMesh meshData = tesselator.takeMesh()) {
+                    var mesh = ChunkMesh.fromMemory(this.glDevice, meshData, texId);
+                    this.meshLayers[layer].add(mesh);
+                }
 
                 printTime(timeBuilder, "  Render with Texture " + texId, timeStart);
             }

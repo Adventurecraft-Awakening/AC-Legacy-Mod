@@ -10,7 +10,6 @@ import dev.adventurecraft.awakening.extension.entity.ExBlockEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import dev.adventurecraft.awakening.util.BufferUtil;
-import net.minecraft.world.level.tile.TileEntityTile;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.spongepowered.asm.mixin.*;
@@ -330,7 +329,6 @@ public abstract class MixinChunk implements ExChunk {
         }
         buffer.put(this.blocks, (x << 11 | z << 7) + y0, Math.min(y1, 128) - y0);
         if (y1 > 128) {
-            BufferUtil.repeat(buffer, (byte) 0, y1 - 128);
             BufferUtil.repeatZero(buffer, y1 - 128);
         }
     }

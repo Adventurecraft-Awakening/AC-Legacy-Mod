@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.client.rendering;
 
 import dev.adventurecraft.awakening.ACMod;
+import dev.adventurecraft.awakening.client.renderer.BlockAllocator;
 import dev.adventurecraft.awakening.client.renderer.MemoryMesh;
 import dev.adventurecraft.awakening.extension.client.render.ExTesselator;
 import dev.adventurecraft.awakening.util.GLUtil;
@@ -12,12 +13,11 @@ import java.util.ArrayList;
 
 public final class MemoryTesselator extends Tesselator implements ExTesselator {
 
-    public static final int BLOCK_SIZE = 1024 * 64 * 4;
-
     public static final int BYTE_STRIDE = 7 * 4;
 
     private static final ByteBuffer EMPTY_BLOCK = ByteBuffer.allocateDirect(0).order(ByteOrder.nativeOrder());
 
+    private BlockAllocator allocator;
     private ByteBuffer block;
     private ArrayList<ByteBuffer> blocks;
 
@@ -34,16 +34,17 @@ public final class MemoryTesselator extends Tesselator implements ExTesselator {
         super(0);
     }
 
-    private void init() {
+    private void init(BlockAllocator allocator) {
+        this.allocator = allocator;
         this.block = EMPTY_BLOCK;
         this.blocks = new ArrayList<>();
     }
 
-    public static MemoryTesselator create() {
+    public static MemoryTesselator create(BlockAllocator allocator) {
         try {
             // Easy way of skipping allocations of super constructor.
             var obj = (MemoryTesselator) ACMod.UNSAFE.allocateInstance(MemoryTesselator.class);
-            obj.init();
+            obj.init(allocator);
             return obj;
         }
         catch (InstantiationException e) {
@@ -139,7 +140,7 @@ public final class MemoryTesselator extends Tesselator implements ExTesselator {
     }
 
     private ByteBuffer pushAndReserve(int count) {
-        if (count > BLOCK_SIZE) {
+        if (count > this.allocator.blockSize()) {
             throw new IllegalArgumentException();
         }
 
@@ -147,20 +148,20 @@ public final class MemoryTesselator extends Tesselator implements ExTesselator {
             var fullBlock = this.block;
             this.block = EMPTY_BLOCK;
 
-            if (fullBlock.limit() != BLOCK_SIZE) {
+            if (fullBlock.limit() != this.allocator.blockSize()) {
                 throw new AssertionError("incorrect block size");
             }
             this.blocks.add(fullBlock);
         }
 
-        // TODO: allocate (smaller) blocks from Arena?
-        ByteBuffer b = ByteBuffer.allocateDirect(BLOCK_SIZE).order(ByteOrder.nativeOrder());
+        // TODO: allocate (smaller) blocks from mapped-buffer Arena?
+        ByteBuffer b = this.allocator.newBlock();
         this.block = b;
         return b;
     }
 
     public MemoryMesh takeMesh() {
-        var mesh = new MemoryMesh();
+        var mesh = new MemoryMesh(this.allocator);
         for (ByteBuffer block : this.blocks) {
             mesh.vertexBlocks.add(block.flip());
         }
