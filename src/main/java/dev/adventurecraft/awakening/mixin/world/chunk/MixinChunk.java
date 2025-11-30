@@ -325,12 +325,13 @@ public abstract class MixinChunk implements ExChunk {
     public @Override void getTileColumn(ByteBuffer buffer, int x, int y0, int z, int y1) {
         // Fill the entire requested range with values; out of bounds is zero.
         if (y0 < 0) {
-            BufferUtil.repeat(buffer, (byte) 0, -y0);
+            BufferUtil.repeatZero(buffer, -y0);
             y0 = 0;
         }
         buffer.put(this.blocks, (x << 11 | z << 7) + y0, Math.min(y1, 128) - y0);
         if (y1 > 128) {
             BufferUtil.repeat(buffer, (byte) 0, y1 - 128);
+            BufferUtil.repeatZero(buffer, y1 - 128);
         }
     }
 

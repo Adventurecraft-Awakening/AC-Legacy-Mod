@@ -4,6 +4,11 @@ import java.nio.*;
 
 public final class BufferUtil {
 
+    private static final ByteBuffer ZERO_BUFFER = ByteBuffer
+        .allocateDirect(256)
+        .order(ByteOrder.nativeOrder())
+        .asReadOnlyBuffer();
+
     public static int bytesPerElement(Buffer buffer) {
         return switch (buffer) {
             case ByteBuffer ignored -> Byte.BYTES;
@@ -23,17 +28,40 @@ public final class BufferUtil {
         }
     }
 
-    public static void repeat(ByteBuffer buffer, byte value, int length) {
-        int start = buffer.position();
-        int end = start + length;
-        if (start < 0 | (end > buffer.limit() | end < 0)) {
-            throw new BufferOverflowException();
-        } else {
-            for (int i = start; i < end; i++) {
-                buffer.put(i, value);
-            }
-            buffer.position(end);
+    public static void repeatZero(ByteBuffer buffer, int amount) {
+        int pos = buffer.position();
+        do {
+            int n = Math.min(amount, ZERO_BUFFER.limit());
+            buffer.put(pos, buffer, 0, n);
+            pos += n;
+            amount -= n;
         }
+        while (amount > 0);
+        buffer.position(pos);
+    }
+
+    public static void repeat(ByteBuffer buffer, byte value, int amount) {
+        int pos = buffer.position();
+        if (amount > buffer.limit() - pos) {
+            throw new BufferOverflowException();
+        }
+
+        if (amount >= 4) {
+            int pair = (value << 8) | value;
+            int quad = (pair << 16) | pair;
+            do {
+                buffer.putInt(pos, quad);
+                pos += 4;
+                amount -= 4;
+            }
+            while (amount >= 4);
+        }
+        while (amount > 0) {
+            buffer.put(pos, value);
+            pos += 1;
+            amount -= 1;
+        }
+        buffer.position(pos);
     }
 
     private static void throwIAE(int bufferSize, int minimumSize) {
