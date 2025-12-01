@@ -160,6 +160,7 @@
     "world.chunk.MixinServerChunkCache",
     "world.entity.MixinSynchedEntityData",
     "world.gen.MixinBiomeSource",
+    "world.level.biome.MixinFixedBiomeSource",
     "world.level.chunk.storage.MixinRegionFile",
     "world.level.tile.MixinChestTile",
     "world.level.tile.MixinRedstoneTorchTile",

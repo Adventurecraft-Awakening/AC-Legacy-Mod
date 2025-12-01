@@ -12,9 +12,9 @@ public interface ExChunk extends AC_LevelSource {
 
     boolean setBlockIDWithMetadataTemp(int x, int y, int z, int id, int meta);
 
-    double getTemperatureValue(int x, int z);
+    float getTemperatureValue(int x, int z);
 
-    void setTemperatureValue(int x, int z, double value);
+    void setTemperatureValue(int x, int z, float value);
 
     long getLastUpdated();
 

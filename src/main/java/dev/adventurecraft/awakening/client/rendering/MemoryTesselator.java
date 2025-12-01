@@ -5,6 +5,7 @@ import dev.adventurecraft.awakening.client.renderer.BlockAllocator;
 import dev.adventurecraft.awakening.client.renderer.MemoryMesh;
 import dev.adventurecraft.awakening.extension.client.render.ExTesselator;
 import dev.adventurecraft.awakening.util.GLUtil;
+import dev.adventurecraft.awakening.util.UnsafeUtil;
 import net.minecraft.client.renderer.Tesselator;
 
 import java.nio.ByteBuffer;
@@ -41,15 +42,10 @@ public final class MemoryTesselator extends Tesselator implements ExTesselator {
     }
 
     public static MemoryTesselator create(BlockAllocator allocator) {
-        try {
-            // Easy way of skipping allocations of super constructor.
-            var obj = (MemoryTesselator) ACMod.UNSAFE.allocateInstance(MemoryTesselator.class);
-            obj.init(allocator);
-            return obj;
-        }
-        catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        }
+        // Easy way of skipping allocations of super constructor.
+        var obj = UnsafeUtil.allocateInstance(MemoryTesselator.class);
+        obj.init(allocator);
+        return obj;
     }
 
     public boolean isEmpty() {

@@ -18,8 +18,6 @@ public class ACMod implements ModInitializer {
 
     public static final String MOD_ID = "adventurecraft";
 
-    public static final Unsafe UNSAFE;
-
     public static boolean chunkIsNotPopulating = true;
 
     // This logger is used to write text to the console and the log file.
@@ -66,17 +64,6 @@ public class ACMod implements ModInitializer {
 
     public static String getResourceName(String name) {
         return "/assets/adventurecraft/" + name;
-    }
-
-    static {
-        try {
-            Field field = Unsafe.class.getDeclaredField("theUnsafe");
-            field.setAccessible(true);
-            UNSAFE = (Unsafe) field.get(null);
-        }
-        catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new RuntimeException("Couldn't obtain reference to sun.misc.Unsafe", e);
-        }
     }
 }
 

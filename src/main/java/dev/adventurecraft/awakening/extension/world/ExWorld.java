@@ -1,9 +1,9 @@
 package dev.adventurecraft.awakening.extension.world;
 
-import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.image.ImageBuffer;
 import dev.adventurecraft.awakening.script.Script;
+import dev.adventurecraft.awakening.util.UnsafeUtil;
 import net.minecraft.util.ProgressListener;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
@@ -70,9 +70,9 @@ public interface ExWorld {
 
     TileEntity getBlockTileEntityDontCreate(int x, int y, int z);
 
-    double getTemperatureValue(int x, int z);
+    float getTemperatureValue(int x, int z);
 
-    void setTemperatureValue(int x, int z, double value);
+    void setTemperatureValue(int x, int z, float value);
 
     void resetCoordOrder();
 
@@ -110,13 +110,9 @@ public interface ExWorld {
 
     static Level createWorld(
         String mapName, LevelIO dimData, String saveName, long seed, Dimension dimension, ProgressListener progressListener) {
-        try {
-            var world = (Level) ACMod.UNSAFE.allocateInstance(Level.class);
-            ((ExWorld) world).initWorld(mapName, dimData, saveName, seed, dimension, progressListener);
-            return world;
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        }
+        var world = UnsafeUtil.allocateInstance(Level.class);
+        ((ExWorld) world).initWorld(mapName, dimData, saveName, seed, dimension, progressListener);
+        return world;
     }
 
     static Level createWorld(String mapName, LevelIO dimData, String saveName, long seed, ProgressListener progressListener) {

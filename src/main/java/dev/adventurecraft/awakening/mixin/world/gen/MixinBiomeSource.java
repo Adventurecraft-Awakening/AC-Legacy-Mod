@@ -2,7 +2,9 @@ package dev.adventurecraft.awakening.mixin.world.gen;
 
 import dev.adventurecraft.awakening.common.AC_TerrainImage;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
+import dev.adventurecraft.awakening.extension.world.level.biome.ExBiomeSource;
 import dev.adventurecraft.awakening.util.MathF;
+import dev.adventurecraft.awakening.util.UnsafeUtil;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.world.level.Level;
@@ -17,8 +19,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+// TODO: pull out image-based biomes into a BiomeSource inheritor?
+
 @Mixin(BiomeSource.class)
-public abstract class MixinBiomeSource {
+public abstract class MixinBiomeSource implements ExBiomeSource {
 
     @Shadow private PerlinSimplexNoise temperatureMap;
     @Shadow private PerlinSimplexNoise downfallMap;
@@ -29,7 +33,7 @@ public abstract class MixinBiomeSource {
     @Shadow public double[] noises;
     @Shadow public Biome[] biomes;
 
-    @Unique private Level world;
+    @Unique private Level level;
     @Unique private int prevX;
     @Unique private int prevZ;
     @Unique private int prevW;
@@ -40,7 +44,7 @@ public abstract class MixinBiomeSource {
         at = @At("TAIL")
     )
     private void init(Level world, CallbackInfo ci) {
-        this.world = world;
+        this.level = world;
     }
 
     @Environment(value = EnvType.CLIENT)
@@ -55,7 +59,7 @@ public abstract class MixinBiomeSource {
 
     @Overwrite
     public double[] getTemperatureBlock(double[] temps, int x, int z, int w, int d) {
-        boolean useImages = ((ExWorldProperties) this.world.levelData).getWorldGenProps().useImages;
+        boolean useImages = ((ExWorldProperties) this.level.levelData).getWorldGenProps().useImages;
         if (useImages) {
             return this.getTemperatureBlockFromImage(temps, x, z, w, d);
         }
@@ -76,19 +80,21 @@ public abstract class MixinBiomeSource {
         for (int iX = 0; iX < w; ++iX) {
             for (int iZ = 0; iZ < d; ++iZ) {
                 final int idx = iZ * w + iX;
-                double temp;
-
-                double n0 = noise[idx] * 1.1D + 0.5D;
-                double n1 = 0.01D;
-                double n2 = 1.0D - n1;
-                temp = (temps[idx] * 0.15D + 0.7D) * n2 + n0 * n1;
-                temp = 1.0D - (1.0D - temp) * (1.0D - temp);
-                temp = MathF.saturate(temp);
-
-                temps[idx] = temp;
+                temps[idx] = getTemp(temps[idx], noise[idx]);
             }
         }
         return temps;
+    }
+
+    @Unique
+    private static double getTemp(double temp, double noise) {
+        double n0 = noise * 1.1D + 0.5D;
+        double n1 = 0.01D;
+        double n2 = 1.0D - n1;
+        temp = (temp * 0.15D + 0.7D) * n2 + n0 * n1;
+        temp = 1.0D - (1.0D - temp) * (1.0D - temp);
+        temp = MathF.saturate(temp);
+        return temp;
     }
 
     @Unique
@@ -109,6 +115,55 @@ public abstract class MixinBiomeSource {
         return temps;
     }
 
+    @Override
+    public short[] getTemperatureBlockF16(short[] temps, int x, int z, int w, int d) {
+        boolean useImages = ((ExWorldProperties) this.level.levelData).getWorldGenProps().useImages;
+        if (useImages) {
+            return this.getTemperatureBlockFromImageF16(temps, x, z, w, d);
+        }
+        return this.getTemperatureBlockFromRegionF16(temps, x, z, w, d);
+    }
+
+    @Unique
+    private short[] getTemperatureBlockFromRegionF16(short[] temps, int x, int z, int w, int d) {
+        if (temps == null || temps.length < w * d) {
+            temps = new short[w * d];
+        }
+
+        double[] temps64 = this.temperatures;
+        double[] noise = this.noises;
+        temps64 = this.temperatureMap.getRegion(temps64, x, z, w, d, 0.025F, 0.025F, 0.25D);
+        noise = this.noiseMap.getRegion(noise, x, z, w, d, 0.25D, 0.25D, 0.5882352941176471D);
+        this.temperatures = temps64;
+        this.noises = noise;
+
+        for (int iX = 0; iX < w; ++iX) {
+            for (int iZ = 0; iZ < d; ++iZ) {
+                final int idx = iZ * w + iX;
+                temps[idx] = Float.floatToFloat16((float) getTemp(temps64[idx], noise[idx]));
+            }
+        }
+        return temps;
+    }
+
+    @Unique
+    private short[] getTemperatureBlockFromImageF16(short[] temps, int x, int z, int w, int d) {
+        if (temps == null || temps.length < w * d) {
+            temps = new short[w * d];
+        }
+
+        for (int iX = 0; iX < w; ++iX) {
+            for (int iZ = 0; iZ < d; ++iZ) {
+                final int idx = iZ * w + iX;
+
+                int infoX = x + iX;
+                int infoZ = z + iZ;
+                temps[idx] = Float.floatToFloat16(AC_TerrainImage.getTerrainTemperature(infoX, infoZ));
+            }
+        }
+        return temps;
+    }
+
     @Overwrite
     public Biome[] getBiomeBlock(int x, int z, int w, int d) {
         if (this.needsBiomeCacheUpgrade(x, z, w, d)) {
@@ -120,7 +175,7 @@ public abstract class MixinBiomeSource {
 
     @Overwrite
     public Biome[] getBiomeBlock(Biome[] biomes, int x, int z, int w, int d) {
-        boolean useImages = ((ExWorldProperties) this.world.levelData).getWorldGenProps().useImages;
+        boolean useImages = ((ExWorldProperties) this.level.levelData).getWorldGenProps().useImages;
         if (useImages) {
             return this.getBiomeBlockFromImage(biomes, x, z, w, d);
         }
@@ -222,6 +277,26 @@ public abstract class MixinBiomeSource {
     private void invalidateBiomeCache() {
         this.prevW = 0;
         this.prevD = 0;
+    }
+
+    @Override
+    public void doInit(
+        Level level,
+        PerlinSimplexNoise temperatureMap,
+        PerlinSimplexNoise downfallMap,
+        PerlinSimplexNoise noiseMap
+    ) {
+        this.level = level;
+        this.temperatureMap = temperatureMap;
+        this.downfallMap = downfallMap;
+        this.noiseMap = noiseMap;
+    }
+
+    @Override
+    public BiomeSource copy() {
+        var source = UnsafeUtil.allocateInstance(BiomeSource.class);
+        ((ExBiomeSource) source).doInit(this.level, this.temperatureMap, this.downfallMap, this.noiseMap);
+        return source;
     }
 }
 

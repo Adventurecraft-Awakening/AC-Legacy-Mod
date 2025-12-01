@@ -26,9 +26,9 @@ public interface ExWorldProperties {
 
     float[] getBrightness();
 
-    double getTempOffset();
+    float getTempOffset();
 
-    void setTempOffset(double value);
+    void setTempOffset(float value);
 
     long getTimeOfDay();
 

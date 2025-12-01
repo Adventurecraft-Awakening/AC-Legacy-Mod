@@ -9,6 +9,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.level.Level;
 
 public class AC_GuiWeather extends Screen {
+
     private AC_TileEntityWeather weather;
     private GuiSlider2 tempOffset;
     private GuiSlider2 timeOfDay;
@@ -142,7 +143,7 @@ public class AC_GuiWeather extends Screen {
         this.fill(0, 0, this.width, this.height, Integer.MIN_VALUE);
 
         AC_TileEntityWeather weather = this.weather;
-        weather.tempOffset = (double) this.tempOffset.sliderValue * 2.0D - 1.0D;
+        weather.tempOffset = this.tempOffset.sliderValue * 2.0f - 1.0f;
         this.tempOffset.message = String.format("Temp Offset: %.2f", weather.tempOffset);
         weather.timeOfDay = (int) (this.timeOfDay.sliderValue * 24000.0F);
         this.timeOfDay.message = String.format("Time: %d", weather.timeOfDay);

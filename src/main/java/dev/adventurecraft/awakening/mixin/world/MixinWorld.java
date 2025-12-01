@@ -35,6 +35,7 @@ import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityNpcPath;
 import dev.adventurecraft.awakening.util.MathF;
 import dev.adventurecraft.awakening.util.RandomUtil;
+import dev.adventurecraft.awakening.util.UnsafeUtil;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -457,14 +458,9 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
         }
 
         Level self = (Level) (Object) this;
-        try {
-            var cache = (ChunkCache) ACMod.UNSAFE.allocateInstance(ChunkCache.class);
-            ((ExChunkCache) cache).init(self, io, this.dimension.createRandomLevelSource());
-            return cache;
-        }
-        catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        }
+        var cache = UnsafeUtil.allocateInstance(ChunkCache.class);
+        ((ExChunkCache) cache).init(self, io, this.dimension.createRandomLevelSource());
+        return cache;
     }
 
     @Redirect(
@@ -1460,7 +1456,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
         int y = Math.max(0, this.getTopSolidBlock(x, z));
 
         int idDown = this.getTile(x, y - 1, z);
-        if (this.getTemperatureValue(x, z) < 0.5D) {
+        if (this.getTemperatureValue(x, z) < 0.5f) {
             if (!this.isEmptyTile(x, y, z)) {
                 return false;
             }
@@ -1630,24 +1626,23 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
     }
 
     @Override
-    public double getTemperatureValue(int x, int z) {
-        if (x >= -32000000 && z >= -32000000 && x < 32000000 && z <= 32000000) {
-            var chunk = (ExChunk) this.getChunk(x >> 4, z >> 4);
-            double tempValue = chunk.getTemperatureValue(x & 15, z & 15);
-            double tempOffset = ((ExWorldProperties) this.levelData).getTempOffset();
-            return tempValue + tempOffset;
+    public float getTemperatureValue(int x, int z) {
+        if (outOfBounds(x, z)) {
+            return 0.0f;
         }
-        return 0.0D;
+        var chunk = (ExChunk) this.getChunk(x >> 4, z >> 4);
+        float tempValue = chunk.getTemperatureValue(x & 15, z & 15);
+        float tempOffset = ((ExWorldProperties) this.levelData).getTempOffset();
+        return tempValue + tempOffset;
     }
 
     @Override
-    public void setTemperatureValue(int x, int z, double value) {
-        if (x >= -32000000 && z >= -32000000 && x < 32000000 && z <= 32000000) {
-            var chunk = (ExChunk) this.getChunk(x >> 4, z >> 4);
-            if (chunk.getTemperatureValue(x & 15, z & 15) != value) {
-                chunk.setTemperatureValue(x & 15, z & 15, value);
-            }
+    public void setTemperatureValue(int x, int z, float value) {
+        if (outOfBounds(x, z)) {
+            return;
         }
+        var chunk = (ExChunk) this.getChunk(x >> 4, z >> 4);
+        chunk.setTemperatureValue(x & 15, z & 15, value);
     }
 
     @Override

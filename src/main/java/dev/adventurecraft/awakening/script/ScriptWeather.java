@@ -20,11 +20,11 @@ public class ScriptWeather {
         return this.world.levelData.isRaining();
     }
 
-    public void setTemperatureOffset(double var1) {
+    public void setTemperatureOffset(float var1) {
         ((ExWorldProperties) this.world.levelData).setTempOffset(var1);
     }
 
-    public double getTemperatureOffset() {
+    public float getTemperatureOffset() {
         return ((ExWorldProperties) this.world.levelData).getTempOffset();
     }
 

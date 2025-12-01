@@ -638,7 +638,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
 
             if (blockingY > viewY + checkRange ||
                 blockingY < viewY - checkRange ||
-                !(((ExWorld) world).getTemperatureValue(x, z) >= 0.5D)) {
+                !(((ExWorld) world).getTemperatureValue(x, z) >= 0.5f)) {
                 continue;
             }
 
@@ -699,37 +699,21 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         double vrY = viewEntity.yOld + (viewEntity.y - viewEntity.yOld) * (double) deltaTime;
         double vrZ = viewEntity.zOld + (viewEntity.z - viewEntity.zOld) * (double) deltaTime;
         int vrbY = Mth.floor(vrY);
-        int rainRange = 5;
-        if (options.isRainFancy()) {
-            rainRange = 10;
-        }
+        int rainRange = options.isRainFancy() ? 10 : 5;
 
         for (int x = viewX - rainRange; x <= viewX + rainRange; ++x) {
             for (int z = viewZ - rainRange; z <= viewZ + rainRange; ++z) {
-                if (!(((ExWorld) world).getTemperatureValue(x, z) < 0.5D)) {
+                if (!(((ExWorld) world).getTemperatureValue(x, z) < 0.5f)) {
                     continue;
                 }
-                int blockingY = world.getTopSolidBlock(x, z);
-                if (blockingY < 0) {
-                    blockingY = 0;
-                }
-
-                int y = Math.max(blockingY, vrbY);
-
-                int minY = viewY - rainRange;
-                int maxY = viewY + rainRange;
-                if (minY < blockingY) {
-                    minY = blockingY;
-                }
-
-                if (maxY < blockingY) {
-                    maxY = blockingY;
-                }
-
-                float texScale = 1.0F;
+                int blockingY = Math.max(0, world.getTopSolidBlock(x, z));
+                int minY = Math.max(viewY - rainRange, blockingY);
+                int maxY = Math.max(viewY + rainRange, blockingY);
                 if (minY == maxY) {
                     continue;
                 }
+                int y = Math.max(blockingY, vrbY);
+
                 this.random.setSeed(x * x * 3121L + x * 45238971L + z * z * 418711L + z * 13761L);
                 float texOff = (float) this.tick + deltaTime;
                 float texScaleY = ((float) (this.tick & 511) + deltaTime) / 512.0F;
@@ -743,6 +727,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
                 GL11.glColor4f(light, light, light, ((1.0F - dist * dist) * 0.3F + 0.5F) * rainGradient);
                 ts.offset(-vrX, -vrY, -vrZ);
 
+                float texScale = 1.0F;
                 float tX1 = 0.0F * texScale + texOffX;
                 float tX2 = 1.0F * texScale + texOffX;
                 float tY1 = (float) minY * texScale / 4.0F + texScaleY * texScale + texOffY;
@@ -764,24 +749,16 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
 
         for (int x = viewX - rainRange; x <= viewX + rainRange; ++x) {
             for (int z = viewZ - rainRange; z <= viewZ + rainRange; ++z) {
-                if (!(((ExWorld) world).getTemperatureValue(x, z) >= 0.5D)) {
+                if (!(((ExWorld) world).getTemperatureValue(x, z) >= 0.5f)) {
                     continue;
                 }
                 int blockingY = world.getTopSolidBlock(x, z);
-                int minY = viewY - rainRange;
-                int maxY = viewY + rainRange;
-                if (minY < blockingY) {
-                    minY = blockingY;
-                }
-
-                if (maxY < blockingY) {
-                    maxY = blockingY;
-                }
-
-                float texScale = 1.0F;
+                int minY = Math.max(viewY - rainRange, blockingY);
+                int maxY = Math.max(viewY + rainRange, blockingY);
                 if (minY == maxY) {
                     continue;
                 }
+
                 int seed = x * x * 3121 + x * 45238971 + z * z * 418711 + z * 13761;
                 this.random.setSeed(seed);
                 float texOffY = ((float) (this.tick + seed & 31) + deltaTime) / 32.0F * (3.0F + this.random.nextFloat());
@@ -793,6 +770,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
                 GL11.glColor4f(light, light, light, ((1.0F - dist * dist) * 0.5F + 0.5F) * rainGradient);
                 ts.offset(-vrX, -vrY, -vrZ);
 
+                float texScale = 1.0F;
                 float tX1 = 0.0F * texScale;
                 float tX2 = 1.0F * texScale;
                 float tY1 = (float) minY * texScale / 4.0F + texOffY * texScale;

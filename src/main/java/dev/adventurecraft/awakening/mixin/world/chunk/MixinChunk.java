@@ -9,6 +9,7 @@ import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.entity.ExBlockEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
+import dev.adventurecraft.awakening.extension.world.level.biome.ExBiomeSource;
 import dev.adventurecraft.awakening.util.BufferUtil;
 import dev.adventurecraft.awakening.util.NibbleBuffer;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -49,7 +50,7 @@ public abstract class MixinChunk implements ExChunk {
     @Shadow @Final public int z;
     @Shadow public Map<Integer, TileEntity> tileEntities = new Int2ObjectOpenHashMap<>();
 
-    @Unique public double[] temperatures;
+    @Unique public short[] temperatures;
     @Unique public long lastUpdated;
     @Unique private int lightHash;
 
@@ -226,18 +227,10 @@ public abstract class MixinChunk implements ExChunk {
         ACMod.LOGGER.error("Unexpected {} (#{}) for entity {} at XYZ {} {} {}", tName, id, eName, x, y, z);
     }
 
-    @Inject(
-        method = "load",
-        at = @At("TAIL")
-    )
-    private void initTempMap(CallbackInfo ci) {
-        this.initTempMap();
-    }
-
-    private void initTempMap() {
-        this.temperatures = this.level
-            .getBiomeSource()
-            .getTemperatureBlock(this.temperatures, this.x * 16, this.z * 16, 16, 16);
+    @Unique
+    private void initTemperatureMap() {
+        var source = (ExBiomeSource) this.level.getBiomeSource();
+        this.temperatures = source.getTemperatureBlockF16(this.temperatures, this.x * 16, this.z * 16, 16, 16);
     }
 
     @Redirect(
@@ -354,17 +347,16 @@ public abstract class MixinChunk implements ExChunk {
     }
 
     @Override
-    public double getTemperatureValue(int x, int z) {
+    public float getTemperatureValue(int x, int z) {
         if (this.temperatures == null) {
-            this.initTempMap();
+            this.initTemperatureMap();
         }
-
-        return this.temperatures[z << 4 | x];
+        return Float.float16ToFloat(this.temperatures[z << 4 | x]);
     }
 
     @Override
-    public void setTemperatureValue(int x, int z, double value) {
-        this.temperatures[z << 4 | x] = value;
+    public void setTemperatureValue(int x, int z, float value) {
+        this.temperatures[z << 4 | x] = Float.floatToFloat16(value);
     }
 
     @Override
