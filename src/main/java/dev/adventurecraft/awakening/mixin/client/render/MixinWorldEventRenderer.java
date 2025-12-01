@@ -18,6 +18,7 @@ import dev.adventurecraft.awakening.extension.world.chunk.ExChunkCache;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.script.ScriptModelBase;
+import dev.adventurecraft.awakening.tile.AC_ITriggerBlock;
 import dev.adventurecraft.awakening.util.GLUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
@@ -39,6 +40,7 @@ import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.dimension.Dimension;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
@@ -49,7 +51,6 @@ import org.lwjgl.opengl.ARBOcclusionQuery;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GLContext;
-import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.vector.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -990,7 +991,8 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         var mc = (ExMinecraft) this.mc;
         // TODO: move cameraPaused out of render loop?
         boolean cameraPaused = (mc.isCameraActive() && mc.isCameraPause());
-        if (cameraPaused || (AC_DebugMode.active && !(entity instanceof Player)) || ((ExEntity) entity).getStunned() > 0) {
+        if (cameraPaused || (AC_DebugMode.active && !(entity instanceof Player)) ||
+            ((ExEntity) entity).getStunned() > 0) {
             tickTime = 1.0F;
         }
         instance.render(entity, tickTime);
@@ -1315,18 +1317,26 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     private void doReset(boolean var1) {
         AC_DebugMode.triggerResetActive = true;
 
+        // TODO: iterate actual loaded chunks from level, not visuals from renderer
         for (Chunk item : this.chunks) {
             int x = item.x;
             int y = item.y;
             int z = item.z;
-            if (this.level.hasChunksAt(x, y, z, x + 15, y + 15, z + 15)) {
-                for (int bX = 0; bX < 16; ++bX) {
+            if (!this.level.hasChunkAt(x, y, z)) {
+                continue;
+            }
+
+            LevelChunk chunk = this.level.getChunkAt(x, z);
+            for (int bX = 0; bX < 16; ++bX) {
+                for (int bZ = 0; bZ < 16; ++bZ) {
                     for (int bY = 0; bY < 16; ++bY) {
-                        for (int bZ = 0; bZ < 16; ++bZ) {
-                            int bId = this.level.getTile(x + bX, y + bY, z + bZ);
-                            if (bId > 0) {
-                                ((ExBlock) Tile.tiles[bId]).reset(this.level, x + bX, y + bY, z + bZ, var1);
-                            }
+                        int bId = chunk.getTile(bX, y + bY, bZ);
+                        if (bId <= 0) {
+                            continue;
+                        }
+
+                        if (Tile.tiles[bId] instanceof AC_ITriggerBlock block) {
+                            block.reset(this.level, x + bX, y + bY, z + bZ, var1);
                         }
                     }
                 }
