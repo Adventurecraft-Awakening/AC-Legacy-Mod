@@ -162,6 +162,7 @@
     "world.gen.MixinBiomeSource",
     "world.level.biome.MixinFixedBiomeSource",
     "world.level.chunk.storage.MixinRegionFile",
+    "world.level.storage.MixinMcRegionLevelStorageSource",
     "world.level.tile.MixinChestTile",
     "world.level.tile.MixinRedstoneTorchTile",
     "world.level.tile.MixinSignTile",

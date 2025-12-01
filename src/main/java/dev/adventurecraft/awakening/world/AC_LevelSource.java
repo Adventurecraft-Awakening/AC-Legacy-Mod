@@ -1,15 +1,17 @@
 package dev.adventurecraft.awakening.world;
 
 import dev.adventurecraft.awakening.util.NibbleBuffer;
+import net.minecraft.world.level.LevelSource;
 import net.minecraft.world.level.tile.entity.TileEntity;
 
+import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 
-public interface AC_LevelSource {
+public interface AC_LevelSource extends LevelSource {
 
-    <E extends TileEntity> E ac$tryGetTileEntity(int x, int y, int z, Class<E> type);
+    <E extends TileEntity> E ac$tryGetTileEntity(int x, int y, int z, @Nullable Class<E> type);
 
-    <E extends TileEntity> E ac$getTileEntity(int x, int y, int z, Class<E> type);
+    <E extends TileEntity> E ac$getTileEntity(int x, int y, int z, @Nullable Class<E> type);
 
     void getTileColumn(ByteBuffer buffer, int x, int y0, int z, int y1);
 
