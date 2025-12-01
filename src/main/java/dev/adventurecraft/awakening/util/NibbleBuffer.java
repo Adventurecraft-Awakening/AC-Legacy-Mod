@@ -37,11 +37,11 @@ public abstract sealed class NibbleBuffer permits HeapNibbleBuffer {
     }
 
     public static NibbleBuffer wrap(byte[] array, int offset, int length) {
-        return new HeapNibbleBuffer(-1, offset, offset + length, array.length * 2, array, 0);
+        return new HeapNibbleBuffer(-1, offset, offset + length, array.length << 1, array, 0);
     }
 
     public static NibbleBuffer wrap(byte[] array) {
-        return wrap(array, 0, array.length * 2);
+        return wrap(array, 0, array.length << 1);
     }
 
     public final int capacity() {
@@ -165,6 +165,10 @@ public abstract sealed class NibbleBuffer permits HeapNibbleBuffer {
         return new IndexOutOfBoundsException(String.format("Index %s out of bounds for length %s", index, length));
     }
 
+    public byte[] array() {
+        return null;
+    }
+
     public abstract NibbleBuffer slice(int index, int length);
 
     public abstract int get();
@@ -175,7 +179,7 @@ public abstract sealed class NibbleBuffer permits HeapNibbleBuffer {
 
     public abstract NibbleBuffer put(int index, int value);
 
-    public abstract NibbleBuffer put(byte[] values, int offset, int length);
+    public abstract NibbleBuffer put(byte[] nibbles, int offset, int length);
 
     public abstract NibbleBuffer repeat(int value, int amount);
 }

@@ -87,6 +87,8 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
     private static final int MAX_LIGHT = 15;
 
     @Shadow static int maxLoop;
+
+    @Shadow public boolean instaTick;
     @Shadow public LevelData levelData;
     @Shadow public DimensionDataStorage dataStorage;
     @Shadow public boolean isFindingSpawn;
@@ -1337,6 +1339,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
         }
     }
 
+    @Unique
     protected void updateChunk(int cX, int cZ) {
         LevelChunk chunk = this.getChunk(cX, cZ);
         if (((ExChunk) chunk).getLastUpdated() == this.getTime()) {
@@ -1384,7 +1387,9 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
                 break;
             }
 
-            this.tickNextTickList.remove(entry);
+            if (entry != this.tickNextTickList.removeFirst()) {
+                throw new AssertionError();
+            }
             if (!this.tickNextTickSet.remove(entry)) {
                 continue;
             }
@@ -1403,6 +1408,34 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
         }
 
         return !this.tickNextTickList.isEmpty();
+    }
+
+    @Override
+    public void ac$addToTickNextTick(int x, int y, int z, int tileId, int delay, int radius) {
+        int n = radius;
+        if (!this.hasChunksAt(x - n, y - n, z - n, x + n, y + n, z + n)) {
+            return;
+        }
+        if (this.instaTick) {
+            int id = this.getTile(x, y, z);
+            if (id > 0) {
+                Tile.tiles[id].tick((Level) (Object) this, x, y, z, this.random);
+            }
+            return;
+        }
+
+        var entry = new TickNextTickData(x, y, z, tileId);
+        if (tileId > 0) {
+            entry.delay((long) delay + this.levelData.getTime());
+        }
+        if (this.tickNextTickSet.add(entry)) {
+            this.tickNextTickList.add(entry);
+        }
+    }
+
+    @Overwrite
+    public void addToTickNextTick(int x, int y, int z, int tileId, int delay) {
+        this.ac$addToTickNextTick(x, y, z, tileId, delay, 8);
     }
 
     @Overwrite

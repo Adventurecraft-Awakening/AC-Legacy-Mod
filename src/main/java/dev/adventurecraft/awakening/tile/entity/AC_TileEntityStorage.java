@@ -5,6 +5,7 @@ import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
+import dev.adventurecraft.awakening.util.NibbleBuffer;
 import dev.adventurecraft.awakening.world.BlockRegion;
 import dev.adventurecraft.awakening.world.region.BlockEntityLayer;
 import net.minecraft.nbt.CompoundTag;
@@ -36,7 +37,7 @@ public class AC_TileEntityStorage extends AC_TileEntityMinMax {
         }
         var entry = new TickNextTickData(0, 0, 0, 0);
         this.blockRegion.forEachBlock(
-            this.level, this.min(), this.max(), (level, index, x, y, z) -> {
+            this.level, this.min(), this.max(), (region, level, index, x, y, z) -> {
                 entry.x = x;
                 entry.y = y;
                 entry.z = z;
@@ -58,14 +59,32 @@ public class AC_TileEntityStorage extends AC_TileEntityMinMax {
         if (blockIds == null || metadata == null) {
             return;
         }
-        if (!tag.hasKey("acVersion") && ((ExWorldProperties) this.level.levelData).isOriginallyFromAC()) {
+
+        var versionTag = ((ExCompoundTag) tag).findInt(ExWorldProperties.AC_VERSION_TAG);
+        if (versionTag.isEmpty() && ((ExWorldProperties) this.level.levelData).isOriginallyFromAC()) {
             AC_Blocks.convertACVersion(blockIds);
         }
 
         this.blockRegion = BlockRegion.fromMinMax(this.min(), this.max());
         var layer = (BlockEntityLayer) this.blockRegion.getLayer();
         layer.getBlockBuffer().put(blockIds);
-        layer.getMetaBuffer().put(metadata);
+
+        if (versionTag.isPresent()) {
+            // Block update will fix door metadata later; no need to register ticks.
+
+            int metaLength = blockIds.length;
+            NibbleBuffer metaBuffer = layer.getMetaBuffer();
+
+            if (versionTag.get() == ExWorldProperties.AC_VERSION_0) {
+                // Convert 8bit to 4bit.
+                for (int i = 0; i < metaLength; i++) {
+                    metaBuffer.put(metadata[i]);
+                }
+            }
+            else if (versionTag.get() == ExWorldProperties.AC_VERSION_CURRENT) {
+                metaBuffer.put(metadata, 0, metaLength);
+            }
+        }
 
         var numTiles = exTag.findInt("numTiles");
         if (numTiles.isPresent()) {
@@ -99,6 +118,6 @@ public class AC_TileEntityStorage extends AC_TileEntityMinMax {
             tag.putInt("numTiles", tileIndex);
         }
 
-        tag.putInt("acVersion", 0);
+        tag.putInt(ExWorldProperties.AC_VERSION_TAG, ExWorldProperties.AC_VERSION_CURRENT);
     }
 }

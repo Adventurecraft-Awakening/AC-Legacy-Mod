@@ -20,7 +20,7 @@ public final class BlockRegion implements BlockLayer {
     private final BlockLayer layer;
 
     /** Size of the region (XYZ dimension) */
-    public final Coord size;
+    private final Coord size;
 
     /**
      * Creates a new BlockRegion with the specified dimensions.
@@ -34,9 +34,7 @@ public final class BlockRegion implements BlockLayer {
             throw new IllegalArgumentException("Dimensions must be positive");
         }
 
-        this.layer = saveEntities
-            ? new BlockEntityLayer(size)
-            : new BlockMetaLayer(size);
+        this.layer = saveEntities ? new BlockEntityLayer(size) : new BlockMetaLayer(size);
         this.size = size;
     }
 
@@ -90,6 +88,7 @@ public final class BlockRegion implements BlockLayer {
         return this.layer;
     }
 
+    /** Size of the region (XYZ dimension) */
     public Coord getSize() {
         return this.size;
     }
@@ -107,11 +106,12 @@ public final class BlockRegion implements BlockLayer {
      * Calculates the array index for 3D coordinates in the flattened arrays.
      */
     public int makeIndex(int x, int y, int z) {
-        return makeIndex(x, y, z, this.size.y, this.size.z);
+        Coord dim = this.size;
+        return makeIndex(x, y, z, dim.x, dim.y, dim.z);
     }
 
     public long readBlocks(Level level, Coord min, Coord max) {
-        return this.forEachBlock(level, min, max, this::readBlock);
+        return this.forEachBlock(level, min, max, BlockRegion::readBlock);
     }
 
     /**
@@ -124,7 +124,8 @@ public final class BlockRegion implements BlockLayer {
      */
     public long writeBlocks(Level level, Coord min, Coord max) {
         // First pass: set blocks without updates for performance
-        return this.forEachBlock(level, min, max, this::writeBlock);
+        return this.forEachBlock(level, min, max, BlockRegion::writeBlock
+        );
     }
 
     /**
@@ -135,20 +136,25 @@ public final class BlockRegion implements BlockLayer {
      * @param min Base coordinates for pasting
      */
     public long updateBlocks(Level level, Coord min, Coord max) {
-        return this.forEachBlock(level, min, max, this::updateBlock);
+        return this.forEachBlock(level, min, max, BlockRegion::updateBlock);
     }
 
     public long forEachBlock(Level level, Coord min, Coord max, BlockIndexConsumer consumer) {
         long count = 0;
         for (int x = min.x; x <= max.x; ++x) {
-            for (int y = min.y; y <= max.y; ++y) {
-                for (int z = min.z; z <= max.z; ++z) {
-                    int lX = x - min.x;
+            for (int z = min.z; z <= max.z; ++z) {
+                int lX = x - min.x;
+                int lZ = z - min.z;
+                int indexBase = this.makeIndex(lX, 0, lZ);
+
+                int count32 = 0;
+                for (int y = min.y; y <= max.y; ++y) {
                     int lY = y - min.y;
-                    int lZ = z - min.z;
-                    int index = this.makeIndex(lX, lY, lZ);
-                    count += consumer.apply(level, index, x, y, z) ? 1 : 0;
+                    int index = indexBase + lY;
+
+                    count32 += consumer.apply(this, level, index, x, y, z) ? 1 : 0;
                 }
+                count += count32;
             }
         }
         return count;
@@ -175,17 +181,18 @@ public final class BlockRegion implements BlockLayer {
      * @param x X coordinate within the region
      * @param y Y coordinate within the region
      * @param z Z coordinate within the region
+     * @param width Width dimension of the region
      * @param height Height dimension of the region
      * @param depth Depth dimension of the region
      * @return The calculated array index
      * @implNote Uses the formula: {@code index = depth * (height * x + y) + z}
      */
-    public static int makeIndex(int x, int y, int z, int height, int depth) {
-        return depth * (height * x + y) + z;
+    public static int makeIndex(int x, int y, int z, int width, int height, int depth) {
+        return width * (depth * x + z) + y;
     }
 
     @FunctionalInterface
     public interface BlockIndexConsumer {
-        boolean apply(Level level, int index, int x, int y, int z);
+        boolean apply(BlockRegion region, Level level, int index, int x, int y, int z);
     }
 }

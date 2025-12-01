@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.tile;
 
+import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.AC_DebugMode;
 import net.minecraft.client.renderer.BlockShapes;
 import net.minecraft.world.entity.player.Player;
@@ -10,6 +11,8 @@ import net.minecraft.world.level.tile.Tile;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+
+import java.util.Random;
 
 public class AC_BlockLockedDoor extends Tile implements AC_ITriggerDebugBlock {
 
@@ -57,6 +60,11 @@ public class AC_BlockLockedDoor extends Tile implements AC_ITriggerDebugBlock {
     }
 
     public @Override void neighborChanged(Level level, int x, int y, int z, int tile) {
+        this.updateSegmentData(level, x, y, z);
+    }
+
+    public @Override void tick(Level level, int x, int y, int z, Random random) {
+        // This is only needed for upgrading from older AC versions.
         this.updateSegmentData(level, x, y, z);
     }
 

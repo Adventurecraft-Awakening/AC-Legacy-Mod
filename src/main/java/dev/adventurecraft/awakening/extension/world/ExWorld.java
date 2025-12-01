@@ -21,7 +21,13 @@ import java.util.ArrayList;
 public interface ExWorld {
 
     void initWorld(
-        String mapName, LevelIO dimData, String saveName, long seed, Dimension dimension, ProgressListener progressListener);
+        String mapName,
+        LevelIO dimData,
+        String saveName,
+        long seed,
+        Dimension dimension,
+        ProgressListener progressListener
+    );
 
     ImageBuffer loadMapTexture(String name);
 
@@ -36,15 +42,22 @@ public interface ExWorld {
     void ac$preTick();
 
     HitResult rayTraceBlocks2(
-        Vec3 pointA, Vec3 pointB,
-        boolean blockCollidableFlag, boolean useCollisionShapes, boolean collideWithClip);
+        Vec3 pointA,
+        Vec3 pointB,
+        boolean blockCollidableFlag,
+        boolean useCollisionShapes,
+        boolean collideWithClip
+    );
 
     HitResult rayTraceBlocksCore(
-        Vec3 pointA, Vec3 pointB,
-        boolean blockCollidableFlag, boolean useCollisionShapes, boolean collideWithClip);
+        Vec3 pointA,
+        Vec3 pointB,
+        boolean blockCollidableFlag,
+        boolean useCollisionShapes,
+        boolean collideWithClip
+    );
 
-    void recordRayDebugList(
-        double aX, double aY, double aZ, double bX, double bY, double bZ, HitResult hit);
+    void recordRayDebugList(double aX, double aY, double aZ, double bX, double bY, double bZ, HitResult hit);
 
     // TODO: get rid of this method
     @Deprecated
@@ -60,6 +73,8 @@ public interface ExWorld {
 
     int getLightUpdateHash(int x, int y, int z);
 
+    void ac$addToTickNextTick(int x, int y, int z, int tileId, int delay, int radius);
+ 
     boolean cancelBlockUpdate(TickNextTickData entry);
 
     Entity getEntityByID(int id);
@@ -109,13 +124,25 @@ public interface ExWorld {
     ArrayList<RayDebugList> getRayDebugLists();
 
     static Level createWorld(
-        String mapName, LevelIO dimData, String saveName, long seed, Dimension dimension, ProgressListener progressListener) {
+        String mapName,
+        LevelIO dimData,
+        String saveName,
+        long seed,
+        Dimension dimension,
+        ProgressListener progressListener
+    ) {
         var world = UnsafeUtil.allocateInstance(Level.class);
         ((ExWorld) world).initWorld(mapName, dimData, saveName, seed, dimension, progressListener);
         return world;
     }
 
-    static Level createWorld(String mapName, LevelIO dimData, String saveName, long seed, ProgressListener progressListener) {
+    static Level createWorld(
+        String mapName,
+        LevelIO dimData,
+        String saveName,
+        long seed,
+        ProgressListener progressListener
+    ) {
         return createWorld(mapName, dimData, saveName, seed, null, progressListener);
     }
 

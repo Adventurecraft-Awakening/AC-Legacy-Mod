@@ -19,6 +19,10 @@ public non-sealed class HeapNibbleBuffer extends NibbleBuffer {
         return i + this.offset;
     }
 
+    public @Override byte[] array() {
+        return this.buffer;
+    }
+
     public @Override NibbleBuffer slice(int index, int length) {
         Objects.checkFromIndexSize(index, length, this.limit());
         return new HeapNibbleBuffer(-1, 0, length, length, this.buffer, index + this.offset);

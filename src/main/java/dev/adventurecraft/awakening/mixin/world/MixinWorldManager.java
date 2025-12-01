@@ -1,6 +1,8 @@
 package dev.adventurecraft.awakening.mixin.world;
 
 import com.llamalad7.mixinextras.sugar.Local;
+import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
+import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import net.minecraft.nbt.CompoundTag;
@@ -16,9 +18,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(OldChunkStorage.class)
 public abstract class MixinWorldManager {
 
-    @Inject(method = "save(Lnet/minecraft/world/level/chunk/LevelChunk;Lnet/minecraft/world/level/Level;Lnet/minecraft/nbt/CompoundTag;)V", at = @At("TAIL"))
+    @Inject(
+        method = "save(Lnet/minecraft/world/level/chunk/LevelChunk;Lnet/minecraft/world/level/Level;Lnet/minecraft/nbt/CompoundTag;)V",
+        at = @At("TAIL")
+    )
     private static void markAsAC(LevelChunk chunk, Level world, CompoundTag tag, CallbackInfo ci) {
-        tag.putInt("acVersion", 0);
+        tag.putInt(ExWorldProperties.AC_VERSION_TAG, ExWorldProperties.AC_VERSION_CURRENT);
     }
 
     @Inject(
@@ -27,14 +32,21 @@ public abstract class MixinWorldManager {
             value = "FIELD",
             target = "Lnet/minecraft/world/level/chunk/LevelChunk;blocks:[B",
             shift = At.Shift.AFTER,
-            ordinal = 0))
+            ordinal = 0
+        )
+    )
     private static void importBlocksFromAC(
-        Level world,
+        Level level,
         CompoundTag tag,
         CallbackInfoReturnable<LevelChunk> cir,
-        @Local LevelChunk chunk) {
-        if (!tag.hasKey("acVersion") && ((ExWorldProperties) world.levelData).isOriginallyFromAC()) {
+        @Local LevelChunk chunk
+    ) {
+        var versionTag = ((ExCompoundTag) tag).findInt(ExWorldProperties.AC_VERSION_TAG);
+        if (versionTag.isEmpty() && ((ExWorldProperties) level.levelData).isOriginallyFromAC()) {
             AC_Blocks.convertACVersion(chunk.blocks);
         }
+
+        var exChunk = (ExChunk) chunk;
+        versionTag.ifPresent(exChunk::setAcVersion);
     }
 }

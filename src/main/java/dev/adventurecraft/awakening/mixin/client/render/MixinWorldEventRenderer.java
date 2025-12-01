@@ -1334,10 +1334,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
                         if (bId <= 0) {
                             continue;
                         }
-
-                        if (Tile.tiles[bId] instanceof AC_ITriggerBlock block) {
-                            block.reset(this.level, x + bX, y + bY, z + bZ, var1);
-                        }
+                        ((ExBlock) Tile.tiles[bId]).reset(this.level, x + bX, y + bY, z + bZ, var1);
                     }
                 }
             }

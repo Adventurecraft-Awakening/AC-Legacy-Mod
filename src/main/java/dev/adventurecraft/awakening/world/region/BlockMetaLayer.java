@@ -2,32 +2,29 @@ package dev.adventurecraft.awakening.world.region;
 
 import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
+import dev.adventurecraft.awakening.util.NibbleBuffer;
 import net.minecraft.world.level.Level;
-
-import java.nio.ByteBuffer;
 
 public sealed class BlockMetaLayer extends BlockIdLayer permits BlockEntityLayer {
 
-    private final byte[] metadata;
+    private final NibbleBuffer metadata;
 
     public BlockMetaLayer(Coord size) {
         super(size);
-        this.metadata = new byte[size.getVolume()];
+        this.metadata = NibbleBuffer.allocate(size.getVolume());
     }
 
     public final int getMeta(int index) {
-        return ExChunk.widenByte(this.metadata[index]);
+        return this.metadata.get(index);
     }
 
-    public final ByteBuffer getMetaBuffer() {
-        return ByteBuffer.wrap(this.metadata);
+    public final NibbleBuffer getMetaBuffer() {
+        return this.metadata;
     }
 
     @Override
     public boolean readBlock(Level level, int index, int x, int y, int z) {
-        // TODO: 4-bit nibbles
-        this.metadata[index] = (byte) (level.getData(x, y, z) & 0xf);
+        this.metadata.put(index, level.getData(x, y, z));
         return super.readBlock(level, index, x, y, z);
     }
 

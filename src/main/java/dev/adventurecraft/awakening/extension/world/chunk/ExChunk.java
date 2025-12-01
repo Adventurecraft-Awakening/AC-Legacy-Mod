@@ -24,6 +24,10 @@ public interface ExChunk extends AC_LevelSource {
 
     void updateLightHash();
 
+    int getAcVersion();
+
+    void setAcVersion(int version);
+
     static byte narrowByte(int id) {
         return (byte) (id & 0xff);
     }

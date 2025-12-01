@@ -5,11 +5,14 @@ import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.AC_BlockEditAction;
 import dev.adventurecraft.awakening.common.AC_UndoStack;
+import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.entity.ExBlockEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
+import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import dev.adventurecraft.awakening.extension.world.level.biome.ExBiomeSource;
+import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.util.BufferUtil;
 import dev.adventurecraft.awakening.util.NibbleBuffer;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -53,6 +56,7 @@ public abstract class MixinChunk implements ExChunk {
     @Unique public short[] temperatures;
     @Unique public long lastUpdated;
     @Unique private int lightHash;
+    @Unique private int acVersion;
 
     @Shadow
     protected abstract void lightGaps(int x, int z);
@@ -75,6 +79,18 @@ public abstract class MixinChunk implements ExChunk {
     )
     private void doInit(Level level, int x, int y, CallbackInfo ci) {
         this.lightHash = level.random.nextInt();
+    }
+
+    @Inject(
+        method = "load",
+        at = @At("TAIL")
+    )
+    private void doPostLoad(CallbackInfo ci) {
+        if (this.getAcVersion() == ExWorldProperties.AC_VERSION_0) {
+            Coord min = new Coord(this.x << 4, 0, this.z << 4);
+            Coord max = min.add(16, 128, 16);
+            AC_Blocks.upgradeDoorMetadata(this.level, min, max);
+        }
     }
 
     @Redirect(
@@ -356,6 +372,9 @@ public abstract class MixinChunk implements ExChunk {
 
     @Override
     public void setTemperatureValue(int x, int z, float value) {
+        if (this.temperatures == null) {
+            this.initTemperatureMap();
+        }
         this.temperatures[z << 4 | x] = Float.floatToFloat16(value);
     }
 
@@ -385,5 +404,15 @@ public abstract class MixinChunk implements ExChunk {
     @Override
     public void updateLightHash() {
         this.lightHash += 1;
+    }
+
+    @Override
+    public int getAcVersion() {
+        return acVersion;
+    }
+
+    @Override
+    public void setAcVersion(int acVersion) {
+        this.acVersion = acVersion;
     }
 }
