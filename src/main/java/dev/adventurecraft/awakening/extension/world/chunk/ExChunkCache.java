@@ -8,5 +8,7 @@ public interface ExChunkCache {
 
     void init(Level var1, ChunkStorage var2, ChunkSource var3);
 
+    int getCapacity();
+
     void updateVeryFar();
 }

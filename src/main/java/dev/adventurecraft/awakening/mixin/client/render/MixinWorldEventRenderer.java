@@ -17,9 +17,10 @@ import dev.adventurecraft.awakening.extension.entity.ExMob;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunkCache;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.item.AC_Items;
+import dev.adventurecraft.awakening.layout.IntRect;
 import dev.adventurecraft.awakening.script.ScriptModelBase;
-import dev.adventurecraft.awakening.tile.AC_ITriggerBlock;
 import dev.adventurecraft.awakening.util.GLUtil;
+import dev.adventurecraft.awakening.world.level.storage.AsyncChunkSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.particle.*;
@@ -107,7 +108,8 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     @Shadow double zOld;
 
     @Unique private long lastMovedTime = System.currentTimeMillis();
-    @Unique private List<ChunkMesh>[] renderBuffers = new List[ChunkMesh.MAX_TEXTURES];
+    @Unique private final List<ChunkMesh>[] renderBuffers = new List[ChunkMesh.MAX_TEXTURES];
+    @Unique private final List<Chunk> rebuildList = new ArrayList<>();
 
     @Unique double prevReposX;
     @Unique double prevReposY;
@@ -852,28 +854,44 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         }
 
         if (prevViz != null) {
-            prevViz.rebuild();
-            prevViz.dirty = false;
+            this.rebuildList.clear();
+
+            IntRect buildBounds = getChunkBounds(prevViz);
+            this.rebuildList.add(prevViz);
             vizList.set(prevIndex, null);
             ++frameUpdates;
             float normDist = prevDist / 5.0F;
 
             for (int i = 0; i < vizList.size() && frameUpdates < targetFrameUpdates; ++i) {
                 Chunk viz = vizList.get(i);
-                if (viz != null) {
-                    float dist = viz.distanceToSqr(var1);
-                    if (!viz.visible) {
-                        dist *= distFactor;
-                    }
-
-                    float absDist = Math.abs(dist - prevDist);
-                    if (absDist < normDist) {
-                        viz.rebuild();
-                        viz.dirty = false;
-                        vizList.set(i, null);
-                        ++frameUpdates;
-                    }
+                if (viz == null) {
+                    continue;
                 }
+                float dist = viz.distanceToSqr(var1);
+                if (!viz.visible) {
+                    dist *= distFactor;
+                }
+
+                float absDist = Math.abs(dist - prevDist);
+                if (absDist < normDist) {
+                    buildBounds = buildBounds.union(getChunkBounds(viz));
+                    this.rebuildList.add(viz);
+                    vizList.set(i, null);
+                    ++frameUpdates;
+                }
+            }
+
+            if (this.level.chunkSource instanceof AsyncChunkSource asyncSource) {
+                int x0 = buildBounds.x >> 4;
+                int z0 = buildBounds.y >> 4;
+                int x1 = (buildBounds.right() >> 4);
+                int z1 = (buildBounds.bot() >> 4);
+                asyncSource.ac$requestChunks(x0, z0, x1, z1, false);
+            }
+
+            for (Chunk viz : this.rebuildList) {
+                viz.rebuild();
+                viz.dirty = false;
             }
         }
 
@@ -898,6 +916,15 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         }
 
         return true;
+    }
+
+    private static IntRect getChunkBounds(Chunk chunk) {
+        var pos = new Coord(chunk.x, chunk.y, chunk.z);
+        var size = new Coord(chunk.xs, chunk.ys, chunk.zs);
+        var pad = new Coord(2);
+        var origin = pos.sub(pad);
+        var end = size.add(pad);
+        return new IntRect(origin.x, origin.z, end.x, end.z);
     }
 
     private boolean isMoving(Mob entity) {

@@ -2,6 +2,8 @@ package dev.adventurecraft.awakening.mixin.world.chunk;
 
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunkCache;
+import dev.adventurecraft.awakening.world.level.storage.AsyncChunkSource;
+import dev.adventurecraft.awakening.world.level.storage.AsyncChunkStorage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ProgressListener;
 import net.minecraft.world.level.Level;
@@ -12,44 +14,38 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.storage.ChunkStorage;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(ChunkCache.class)
-public abstract class MixinChunkCache implements ExChunkCache {
+public abstract class MixinChunkCache implements ExChunkCache, AsyncChunkSource {
 
-    @Shadow
-    int xLast;
+    @Shadow int xLast;
+    @Shadow int zLast;
 
-    @Shadow
-    int zLast;
+    @Shadow private LevelChunk emptyChunk;
+    @Shadow private Level level;
 
-    @Shadow
-    private LevelChunk emptyChunk;
+    @Shadow private ChunkStorage storage;
+    @Shadow private ChunkSource source;
 
-    @Shadow
-    private Level level;
+    @Shadow private LevelChunk[] chunks;
 
-    @Shadow
-    private ChunkStorage storage;
-
-    @Shadow
-    private ChunkSource source;
-
-    @Shadow
-    private LevelChunk[] chunks;
-
-    boolean isVeryFar;
-    int mask;
-    int chunksWide;
+    @Unique boolean isVeryFar;
+    @Unique int mask;
+    @Unique int chunksWide;
 
     @Shadow
     public abstract boolean save(boolean bl, ProgressListener arg);
 
     @Shadow
     public abstract boolean fits(int i, int j);
+
+    @Shadow
+    public abstract LevelChunk getChunk(int x, int z);
 
     @Override
     public void init(Level var1, ChunkStorage var2, ChunkSource var3) {
@@ -82,7 +78,8 @@ public abstract class MixinChunkCache implements ExChunkCache {
             this.chunks = new LevelChunk[4096];
             this.mask = 63;
             this.chunksWide = 64;
-        } else {
+        }
+        else {
             this.chunks = new LevelChunk[1024];
             this.mask = 31;
             this.chunksWide = 32;
@@ -100,17 +97,31 @@ public abstract class MixinChunkCache implements ExChunkCache {
         }
     }
 
-    @ModifyConstant(method = "fits", constant = @Constant(intValue = 15))
+    @Override
+    public int getCapacity() {
+        return this.chunks.length;
+    }
+
+    @ModifyConstant(
+        method = "fits",
+        constant = @Constant(intValue = 15)
+    )
     private int useMask0(int value) {
         return this.mask;
     }
 
-    @ModifyConstant(method = {"hasChunk", "getChunk"}, constant = @Constant(intValue = 31))
+    @ModifyConstant(
+        method = {"hasChunk", "getChunk"},
+        constant = @Constant(intValue = 31)
+    )
     private int useMask1(int value) {
         return this.mask;
     }
 
-    @ModifyConstant(method = {"hasChunk", "getChunk"}, constant = @Constant(intValue = 32))
+    @ModifyConstant(
+        method = {"hasChunk", "getChunk"},
+        constant = @Constant(intValue = 32)
+    )
     private int useChunksWide0(int value) {
         return this.chunksWide;
     }
@@ -119,10 +130,38 @@ public abstract class MixinChunkCache implements ExChunkCache {
         method = "postProcess",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/level/chunk/ChunkSource;postProcess(Lnet/minecraft/world/level/chunk/ChunkSource;II)V"))
+            target = "Lnet/minecraft/world/level/chunk/ChunkSource;postProcess(Lnet/minecraft/world/level/chunk/ChunkSource;II)V"
+        )
+    )
     private void setChunkPopulatingOnDecorate(ChunkSource instance, ChunkSource worldSource, int x, int z) {
         ACMod.chunkIsNotPopulating = false;
         instance.postProcess(worldSource, x, z);
         ACMod.chunkIsNotPopulating = true;
+    }
+
+    public void ac$requestChunks(int x0, int z0, int x1, int z1, boolean wait) {
+        if (!(this.storage instanceof AsyncChunkStorage asyncStorage)) {
+            return;
+        }
+
+        for (int x = x0; x <= x1; x++) {
+            for (int z = z0; z <= z1; z++) {
+                if (!this.level.isFindingSpawn && !this.fits(x, z)) {
+                    continue;
+                }
+                if (this.hasChunk(x, z)) {
+                    continue;
+                }
+                asyncStorage.requestAsync(this.level, x, z);
+            }
+        }
+
+        if (wait) {
+            for (int x = x0; x <= x1; x++) {
+                for (int z = z0; z <= z1; z++) {
+                    this.getChunk(x, z);
+                }
+            }
+        }
     }
 }

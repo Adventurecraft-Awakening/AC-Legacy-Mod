@@ -8,11 +8,11 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongepowered.include.com.google.gson.*;
-import sun.misc.Unsafe;
 
 import java.io.StringReader;
-import java.lang.reflect.Field;
 import java.util.HashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ACMod implements ModInitializer {
 
@@ -30,6 +30,8 @@ public class ACMod implements ModInitializer {
 
     public static @Nullable ModContainer MOD_CONTAINER;
     public static @Nullable GitMetadata GIT_META;
+
+    public static ExecutorService WORLD_IO_EXECUTOR = Executors.newWorkStealingPool();
 
     @Override
     public void onInitialize() {
