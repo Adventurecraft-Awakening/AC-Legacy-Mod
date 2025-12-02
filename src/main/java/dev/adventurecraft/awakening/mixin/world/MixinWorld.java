@@ -34,8 +34,10 @@ import dev.adventurecraft.awakening.script.ScriptModel;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityNpcPath;
 import dev.adventurecraft.awakening.util.MathF;
+import dev.adventurecraft.awakening.util.NibbleBuffer;
 import dev.adventurecraft.awakening.util.RandomUtil;
 import dev.adventurecraft.awakening.util.UnsafeUtil;
+import dev.adventurecraft.awakening.world.AC_LevelSource;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -68,6 +70,7 @@ import net.minecraft.world.level.tile.entity.TileEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import org.apache.commons.lang3.NotImplementedException;
 import org.mozilla.javascript.Scriptable;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
@@ -78,13 +81,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Mixin(Level.class)
-public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
+public abstract class MixinWorld implements ExWorld, LevelSource, AC_LevelSource, Closeable {
 
-    private static final int MAX_LIGHT = 15;
+    @Unique private static final int MAX_LIGHT = 15;
 
     @Shadow static int maxLoop;
 
@@ -568,6 +572,14 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
             return ((ExChunk) chunk).ac$getTileEntity(x & 15, y, z & 15, type);
         }
         return null;
+    }
+
+    public @Override void getTileColumn(ByteBuffer buffer, int x, int y0, int z, int y1) {
+        throw new NotImplementedException();
+    }
+
+    public @Override void getDataColumn(DataType type, NibbleBuffer buffer, int x, int y0, int z, int y1) {
+        throw new NotImplementedException();
     }
 
     private @Unique int getNeighborBrightness(int x, int y, int z) {
@@ -1189,7 +1201,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
         )
     )
     private TileEntity removeBlockEntityDontCreate(Level instance, int x, int y, int z) {
-        return this.getBlockTileEntityDontCreate(x, y, z);
+        return this.ac$tryGetTileEntity(x, y, z, null);
     }
 
     @Overwrite
@@ -1647,15 +1659,6 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
             return deltaTime * props.getFogEnd() + (1.0F - deltaTime) * end;
         }
         return end;
-    }
-
-    @Override
-    public TileEntity getBlockTileEntityDontCreate(int x, int y, int z) {
-        LevelChunk chunk = this.getChunk(x >> 4, z >> 4);
-        if (chunk != null) {
-            return ((ExChunk) chunk).ac$tryGetTileEntity(x & 15, y, z & 15, null);
-        }
-        return null;
     }
 
     @Override

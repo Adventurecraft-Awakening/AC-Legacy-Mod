@@ -4,13 +4,13 @@ import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.image.ImageBuffer;
 import dev.adventurecraft.awakening.script.Script;
 import dev.adventurecraft.awakening.util.UnsafeUtil;
+import dev.adventurecraft.awakening.world.AC_LevelSource;
 import net.minecraft.util.ProgressListener;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.TickNextTickData;
 import net.minecraft.world.level.dimension.Dimension;
 import net.minecraft.world.level.storage.LevelIO;
-import net.minecraft.world.level.tile.entity.TileEntity;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.mozilla.javascript.Scriptable;
@@ -18,7 +18,7 @@ import org.mozilla.javascript.Scriptable;
 import java.io.File;
 import java.util.ArrayList;
 
-public interface ExWorld {
+public interface ExWorld extends AC_LevelSource {
 
     void initWorld(
         String mapName,
@@ -65,16 +65,12 @@ public interface ExWorld {
 
     boolean ac$setTileAndDataNoUpdate(int x, int y, int z, int id, int meta, boolean dropItems);
 
-    <E extends TileEntity> E ac$tryGetTileEntity(int x, int y, int z, Class<E> type);
-
-    <E extends TileEntity> E ac$getTileEntity(int x, int y, int z, Class<E> type);
-
     float getLightValue(int x, int y, int z);
 
     int getLightUpdateHash(int x, int y, int z);
 
     void ac$addToTickNextTick(int x, int y, int z, int tileId, int delay, int radius);
- 
+
     boolean cancelBlockUpdate(TickNextTickData entry);
 
     Entity getEntityByID(int id);
@@ -82,8 +78,6 @@ public interface ExWorld {
     float getFogStart(float var1, float var2);
 
     float getFogEnd(float var1, float var2);
-
-    TileEntity getBlockTileEntityDontCreate(int x, int y, int z);
 
     float getTemperatureValue(int x, int z);
 
