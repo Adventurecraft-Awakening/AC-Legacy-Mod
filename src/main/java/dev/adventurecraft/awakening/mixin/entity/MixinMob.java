@@ -133,8 +133,8 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
             return false;
         }
 
-        Vec3 start = Vec3.newTemp(this.x, this.y + this.getHeadHeight(), this.z);
-        Vec3 end = Vec3.newTemp(entity.x, entity.y + entity.getHeadHeight(), entity.z);
+        Vec3 start = Vec3.create(this.x, this.y + this.getHeadHeight(), this.z);
+        Vec3 end = Vec3.create(entity.x, entity.y + entity.getHeadHeight(), entity.z);
         return this.level.clip(start, end) == null;
     }
 

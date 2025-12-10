@@ -92,7 +92,7 @@ public class ScriptWorld {
 
     public Object[] rayTraceBlocks(double aX, double aY, double aZ, double bX, double bY, double bZ) {
         var result = new Object[2];
-        HitResult hit = AC_UtilBullet.rayTraceBlocks(this.world, Vec3.newTemp(aX, aY, aZ), Vec3.newTemp(bX, bY, bZ));
+        HitResult hit = AC_UtilBullet.rayTraceBlocks(this.world, Vec3.create(aX, aY, aZ), Vec3.create(bX, bY, bZ));
         if (hit != null) {
             result[0] = new ScriptVec3(hit.pos.x, hit.pos.y, hit.pos.z);
             result[1] = new ScriptVec3(hit.x, hit.y, hit.z);

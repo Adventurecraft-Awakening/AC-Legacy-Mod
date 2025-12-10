@@ -378,7 +378,7 @@ public abstract class MixinEntity implements ExEntity {
         double ySin = Math.sin(yaw - Math.PI);
         double pCos = -Math.cos(pitch);
         double pSin = Math.sin(pitch);
-        return Vec3.newTemp(ySin * pCos, pSin, yCos * pCos);
+        return Vec3.create(ySin * pCos, pSin, yCos * pCos);
     }
 
     @Override
