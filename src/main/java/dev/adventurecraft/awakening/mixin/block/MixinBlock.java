@@ -135,16 +135,6 @@ public abstract class MixinBlock implements ExBlock {
     }
 
     @Override
-    public void setBoundingBox(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
-        this.xx0 = minX;
-        this.yy0 = minY;
-        this.zz0 = minZ;
-        this.xx1 = maxX;
-        this.yy1 = maxY;
-        this.zz1 = maxZ;
-    }
-
-    @Override
     public int getTextureNum() {
         return this.textureNum;
     }
