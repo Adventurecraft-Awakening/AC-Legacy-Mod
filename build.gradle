@@ -1,7 +1,7 @@
 plugins {
     id "maven-publish"
-    id "fabric-loom" version "1.10.1"
-    id "babric-loom-extension" version "1.10.1"
+    id "fabric-loom" version "1.14.4"
+    id "babric-loom-extension" version "1.10.2"
     id 'com.palantir.git-version' version "4.0.0"
 }
 
