@@ -18,6 +18,8 @@ public interface ExBlock extends AC_TexturedBlock, AC_ITriggerBlock {
     //  * trigger regions are removed for AC blocks.
     void ac$onRemove(Level level, int x, int y, int z, boolean dropItems);
 
+    Tile ac$clone();
+
     Tile setSubTypes(int var1);
 
     int getTextureNum();

@@ -23,7 +23,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Tile.class)
-public abstract class MixinBlock implements ExBlock {
+public abstract class MixinBlock implements ExBlock, Cloneable {
 
     private @Unique int textureNum;
 
@@ -119,6 +119,16 @@ public abstract class MixinBlock implements ExBlock {
     @Override
     public void ac$onRemove(Level level, int x, int y, int z, boolean dropItems) {
         this.onRemove(level, x, y, z);
+    }
+
+    @Override
+    public Tile ac$clone() {
+        try {
+            return (Tile) this.clone();
+        }
+        catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Overwrite

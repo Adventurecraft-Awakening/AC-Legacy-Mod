@@ -1020,7 +1020,17 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             return false;
         }
 
-        block.updateShape(this.level, x, y, z);
+        // Use renderShape checks first; they are faster than method calls.
+        if (renderShape == BlockShapes.BLOCK || renderShape == BlockShapes.LIQUID || block.isCubeShaped()) {
+            // Anything that is cube-shaped should not change shape.
+            // Liquids don't change shape; their height is calculated in tessellation.
+        }
+        else {
+            // Clone tiles that change shape to avoid concurrency issues in Tile singletons.
+            block = ((ExBlock) block).ac$clone();
+
+            block.updateShape(this.level, x, y, z);
+        }
 
         return switch (renderShape) {
             case BlockShapes.BLOCK -> this.tesselateBlockInWorld(block, x, y, z);
@@ -1385,8 +1395,6 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             ts.vertexUV(x0, y, z0, u0, v2);
         }
 
-        block.yy0 = 0.0D;
-        block.yy1 = 1.0D;
         return hasFaceUp;
     }
 
