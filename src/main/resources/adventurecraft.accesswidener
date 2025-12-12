@@ -25,6 +25,8 @@ accessible method net/minecraft/world/level/tile/Tile containsZ (Lnet/minecraft/
 accessible method net/minecraft/world/item/Item <init> (I)V
 accessible method net/minecraft/world/item/Item setMaxDamage (I)Lnet/minecraft/world/item/Item;
 
+accessible field net/minecraft/world/item/TileItem tileId I
+
 extendable class net/minecraft/world/ItemInstance
 
 accessible field net/minecraft/world/level/Level saveInterval I

@@ -301,7 +301,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             renderAny |= this.renderBottomSide(block, x, y, z, r, g, b, aoLevel, useColor);
         }
         if (renderTop) {
-            renderAny |= this.renderTopSide(block, x, y, z, r, g, b, aoLevel);
+            renderAny |= this.renderTopSide(block, x, y, z, r, g, b, aoLevel, useColor);
         }
         if (renderEast) {
             renderAny |= this.renderEastSide(block, x, y, z, r, g, b, aoLevel, useColor, doGrassEdges);
@@ -434,7 +434,17 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         this.ll0yZ = AoHelper.fixAoLight(min, max, this.ll0yZ, aoB, aoF);
     }
 
-    private @Unique boolean renderTopSide(Tile block, int x, int y, int z, float r, float g, float b, float aoLevel) {
+    private @Unique boolean renderTopSide(
+        Tile block,
+        int x,
+        int y,
+        int z,
+        float r,
+        float g,
+        float b,
+        float aoLevel,
+        boolean useColor
+    ) {
         this.ll0Y0 = block.getBrightness(this.level, x, y + 1, z);
 
         float l1;
@@ -472,10 +482,16 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             l3 = (this.llxY0 + this.llxYz + this.ll0Y0 + this.ll0Yz) * (1 / 4F);
         }
 
-        this.resetColor(true, r, g, b, 1.0F);
+        this.resetColor(useColor, r, g, b, 1.0F);
         this.applyColorBrightness(l1, l2, l3, l4);
 
-        this.renderFaceUp(block, x, y, z, block.getTexture(this.level, x, y, z, Facing.UP));
+        long textureKey = ((AC_TexturedBlock) block).getTextureForSideEx(this.level, x, y, z, Facing.UP);
+        if (AC_TexturedBlock.hasBiomeBit(textureKey)) {
+            this.multiplyColor(r, g, b);
+        }
+
+        int texture = AC_TexturedBlock.toTexture(textureKey);
+        this.renderFaceUp(block, x, y, z, texture);
         return true;
     }
 
@@ -1033,7 +1049,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         }
 
         return switch (renderShape) {
-            case BlockShapes.BLOCK -> this.tesselateBlockInWorld(block, x, y, z);
+            case BlockShapes.BLOCK, AC_BlockShapes.SNOW_LAYER -> this.tesselateBlockInWorld(block, x, y, z);
             case BlockShapes.LIQUID -> this.tesselateWaterInWorld(block, x, y, z);
             case BlockShapes.CACTUS -> this.tesselateCactusInWorld(block, x, y, z);
             case BlockShapes.REEDS -> this.tesselateCrossInWorld(block, x, y, z);

@@ -166,6 +166,7 @@
     "world.level.tile.MixinChestTile",
     "world.level.tile.MixinRedstoneTorchTile",
     "world.level.tile.MixinSignTile",
+    "world.level.tile.MixinTopSnowTile",
     "world.phys.MixinVec3",
     "world.source.MixinOverworldWorldSource",
     "world.world.biome.MixinBiome",

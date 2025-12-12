@@ -17,6 +17,7 @@ import net.minecraft.world.level.GrassColor;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelSource;
 import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MaterialColor;
 import net.minecraft.world.level.tile.GrassTile;
 import net.minecraft.world.level.tile.Tile;
 import org.spongepowered.asm.mixin.Mixin;
@@ -33,10 +34,11 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
     }
 
     public @Override long getTextureForSideEx(LevelSource view, int x, int y, int z, int side) {
+        Material topMaterial = view.getMaterial(x, y + 1, z);
         return switch (side) {
-            case Facing.UP -> this.getTopTexture(view, x, y, z);
+            case Facing.UP -> this.getTopTexture(view, x, y, z, topMaterial);
             case Facing.DOWN -> AC_TexturedBlock.fromTexture(Tile.DIRT.tex);
-            default -> this.getSideTexture(view, x, y, z, side);
+            default -> this.getSideTexture(view, x, y, z, side, topMaterial);
         };
     }
 
@@ -44,17 +46,19 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
         return ExGrassColor.getBaseColor(meta);
     }
 
-    private @Unique long getTopTexture(LevelSource view, int x, int y, int z) {
+    private @Unique long getTopTexture(LevelSource view, int x, int y, int z, Material topMaterial) {
+        if (topMaterial.color == MaterialColor.SNOW) {
+            return AC_TexturedBlock.fromTexture(Tile.SNOW.tex);
+        }
         int meta = view.getData(x, y, z);
         int tex = this.getTexture(Facing.UP, meta);
         return AC_TexturedBlock.fromTexture(tex) | AC_TexturedBlock.BIOME_BIT;
     }
 
-    private @Unique long getSideTexture(LevelSource view, int x, int y, int z, int side) {
+    private @Unique long getSideTexture(LevelSource view, int x, int y, int z, int side, Material topMaterial) {
         ConnectedGrassOption option = ((ExGameOptions) Minecraft.instance.options).ofConnectedGrass();
 
-        Material material = view.getMaterial(x, y + 1, z);
-        if (material == Material.TOP_SNOW || material == Material.SNOW) {
+        if (topMaterial.color == MaterialColor.SNOW) {
             if (option == ConnectedGrassOption.OFF) {
                 return 68;
             }
@@ -64,19 +68,19 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
                     return 68;
                 }
             }
-            return 66;
+            return Tile.SNOW.tex;
         }
 
         if (option == ConnectedGrassOption.OFF) {
-            return 3;
+            return this.tex;
         }
         else if (option == ConnectedGrassOption.FANCY) {
             int id = this.getSideTile(view, x, y - 1, z, side);
-            if (id != GRASS.id) {
-                return 3;
+            if (id != Tile.GRASS.id) {
+                return this.tex;
             }
         }
-        return this.getTopTexture(view, x, y, z);
+        return this.getTopTexture(view, x, y, z, topMaterial);
     }
 
     private @Unique int getSideTile(LevelSource view, int x, int y, int z, int side) {

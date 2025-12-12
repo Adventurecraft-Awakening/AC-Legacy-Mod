@@ -5,18 +5,18 @@ import dev.adventurecraft.awakening.tile.AC_BlockColor;
 import dev.adventurecraft.awakening.item.AC_ItemSubtypes;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
+import dev.adventurecraft.awakening.world.item.TopSnowTileItem;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelSource;
 import net.minecraft.world.level.material.Material;
-import net.minecraft.world.level.tile.GrassTile;
-import net.minecraft.world.level.tile.SoundType;
 import net.minecraft.world.level.tile.StoneTile;
-import net.minecraft.world.level.tile.TallGrassTile;
 import net.minecraft.world.level.tile.Tile;
+import net.minecraft.world.phys.AABB;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -27,19 +27,10 @@ public abstract class MixinBlock implements ExBlock, Cloneable {
 
     private @Unique int textureNum;
 
-    @Shadow @Final public static SoundType SOUND_STONE;
-    @Shadow @Final public static Tile[] tiles;
-    @Shadow @Final public static int[] lightEmission;
     @Shadow @Final @Mutable public static Tile STONE;
-    @Shadow @Final public static GrassTile GRASS;
     @Shadow @Final @Mutable public static Tile COBBLESTONE;
-    @Shadow @Final public static Tile FLOWING_WATER;
-    @Shadow @Final public static Tile WATER;
-    @Shadow @Final public static Tile FLOWING_LAVA;
-    @Shadow @Final public static Tile LAVA;
-    @Shadow @Final public static Tile SAND;
-    @Shadow @Final public static TallGrassTile TALL_GRASS;
 
+    @Shadow public int tex;
     @Shadow @Final public int id;
     @Shadow public double xx0;
     @Shadow public double yy0;
@@ -59,10 +50,33 @@ public abstract class MixinBlock implements ExBlock, Cloneable {
         throw new AssertionError();
     }
 
+    @Environment(value=EnvType.CLIENT)
     @Shadow
     public int getRenderShape() {
         throw new AssertionError();
     }
+
+    // TODO: ((1 << face) & mask) instead of double comparisons
+    @Shadow
+    public abstract boolean shouldRenderFace(LevelSource level, int x, int y, int z, int face);
+
+    @Shadow
+    public abstract boolean mayPlace(Level level, int x, int y, int z);
+
+    @Shadow
+    public abstract void onPlace(Level level, int x, int y, int z);
+
+    @Shadow
+    public abstract AABB getAABB(Level level, int x, int y, int z) ;
+
+    @Shadow
+    public abstract void playerDestroy(Level level, Player player, int x, int y, int z, int meta);
+
+    @Shadow
+    public abstract void setShape(float minX, float minY, float minZ, float maxX, float maxY, float maxZ);
+
+    @Shadow
+    public abstract void updateShape(LevelSource source, int x, int y, int z);
 
     @Inject(
         method = "<clinit>",
@@ -74,33 +88,34 @@ public abstract class MixinBlock implements ExBlock, Cloneable {
         )
     )
     private static void changeBlocksAndItems(CallbackInfo ci) {
-        tiles[1] = null;
-        tiles[4] = null;
+        Tile.tiles[1] = null;
+        Tile.tiles[4] = null;
 
         STONE = (new StoneTile(1, 215))
             .setDestroyTime(1.5F)
             .setExplodeable(10.0F)
-            .setSoundType(SOUND_STONE)
+            .setSoundType(Tile.SOUND_STONE)
             .setDescriptionId("stone");
 
-        ((ExBlock) GRASS).setSubTypes(5);
+        ((ExBlock) Tile.GRASS).setSubTypes(5);
 
         COBBLESTONE = (new AC_BlockColor(4, 214, Material.STONE))
             .setDestroyTime(2.0F)
             .setExplodeable(10.0F)
-            .setSoundType(SOUND_STONE)
+            .setSoundType(Tile.SOUND_STONE)
             .setDescriptionId("stonebrick");
 
-        FLOWING_WATER.setDestroyTime(0.5F);
-        WATER.setDestroyTime(0.5F);
-        FLOWING_LAVA.setDestroyTime(0.5F);
-        LAVA.setDestroyTime(0.5F);
+        Tile.FLOWING_WATER.setDestroyTime(0.5F);
+        Tile.WATER.setDestroyTime(0.5F);
+        Tile.FLOWING_LAVA.setDestroyTime(0.5F);
+        Tile.LAVA.setDestroyTime(0.5F);
 
-        ((ExBlock) SAND).setSubTypes(4);
+        ((ExBlock) Tile.SAND).setSubTypes(4);
 
-        Item.items[GRASS.id] = (new AC_ItemSubtypes(GRASS.id - 256)).setDescriptionId("grass");
-        Item.items[SAND.id] = (new AC_ItemSubtypes(SAND.id - 256)).setDescriptionId("sand");
-        Item.items[TALL_GRASS.id] = (new AC_ItemSubtypes(TALL_GRASS.id - 256)).setDescriptionId("tallgrass");
+        Item.items[Tile.GRASS.id] = (new AC_ItemSubtypes(Tile.GRASS.id - 256)).setDescriptionId("grass");
+        Item.items[Tile.SAND.id] = (new AC_ItemSubtypes(Tile.SAND.id - 256)).setDescriptionId("sand");
+        Item.items[Tile.TALL_GRASS.id] = (new AC_ItemSubtypes(Tile.TALL_GRASS.id - 256)).setDescriptionId("tallgrass");
+        Item.items[Tile.SNOW_LAYER.id] = new TopSnowTileItem(Tile.SNOW_LAYER.id - 256);
     }
 
     @Environment(value = EnvType.CLIENT)
@@ -141,7 +156,7 @@ public abstract class MixinBlock implements ExBlock, Cloneable {
 
     @Override
     public int getBlockLightValue(LevelSource view, int x, int y, int z) {
-        return lightEmission[this.id];
+        return Tile.lightEmission[this.id];
     }
 
     @Override
