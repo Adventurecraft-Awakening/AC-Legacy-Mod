@@ -1015,6 +1015,16 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     }
 
     @Overwrite
+    public void cull(Culler culler, float a) {
+        for (Chunk chunk : this.chunks) {
+            if (chunk.isEmpty()) {
+                continue;
+            }
+            chunk.cull(culler);
+        }
+    }
+
+    @Overwrite
     public void renderEntities(Vec3 cameraPos, Culler culler, float partialTick) {
         if (this.noEntityRenderFrames > 0) {
             --this.noEntityRenderFrames;
