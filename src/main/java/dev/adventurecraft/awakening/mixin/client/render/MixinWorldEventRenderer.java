@@ -20,6 +20,7 @@ import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.layout.IntRect;
 import dev.adventurecraft.awakening.script.ScriptModelBase;
 import dev.adventurecraft.awakening.util.GLUtil;
+import dev.adventurecraft.awakening.util.MathF;
 import dev.adventurecraft.awakening.world.level.storage.AsyncChunkSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
@@ -33,6 +34,7 @@ import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.client.renderer.Textures;
 import net.minecraft.client.renderer.culling.Culler;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.tileentity.TileEntityRenderDispatcher;
 import net.minecraft.util.Mth;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.Entity;
@@ -46,6 +48,7 @@ import net.minecraft.world.level.dimension.Dimension;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.level.tile.Tile;
+import net.minecraft.world.level.tile.entity.TileEntity;
 import net.minecraft.world.phys.Vec3;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.ARBOcclusionQuery;
@@ -70,7 +73,7 @@ import java.util.List;
 @Mixin(LevelRenderer.class)
 public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
 
-    private static final int GL_QUERY_RESULT_NO_WAIT = 0x9194;
+    @Unique private static final int GL_QUERY_RESULT_NO_WAIT = 0x9194;
 
     @Shadow public List renderableTileEntities;
     @Shadow private Level level;
@@ -94,6 +97,9 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     @Shadow private int zMaxChunk;
     @Shadow private int lastViewDistance;
     @Shadow private int noEntityRenderFrames;
+    @Shadow private int totalEntities;
+    @Shadow private int renderedEntities;
+    @Shadow private int culledEntities;
     @Shadow int[] toRender;
     @Shadow IntBuffer resultBuffer;
     @Shadow private int totalChunks;
@@ -918,6 +924,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         return true;
     }
 
+    @Unique
     private static IntRect getChunkBounds(Chunk chunk) {
         var pos = new Coord(chunk.x, chunk.y, chunk.z);
         var size = new Coord(chunk.xs, chunk.ys, chunk.zs);
@@ -927,17 +934,17 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         return new IntRect(origin.x, origin.z, end.x, end.z);
     }
 
+    @Unique
     private boolean isMoving(Mob entity) {
         boolean moving = this.isMovingNow(entity);
         if (moving) {
             this.lastMovedTime = System.currentTimeMillis();
             return true;
         }
-        else {
-            return System.currentTimeMillis() - this.lastMovedTime < 2000L;
-        }
+        return System.currentTimeMillis() - this.lastMovedTime < 2000L;
     }
 
+    @Unique
     private boolean isMovingNow(Mob entity) {
         double threshold = 0.001D;
         if (entity.jumping) {
@@ -964,6 +971,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         return Math.abs(entity.z - entity.zo) > threshold;
     }
 
+    @Unique
     private boolean isActingNow() {
         if (Mouse.isButtonDown(0)) {
             return true;
@@ -1006,36 +1014,77 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         }
     }
 
-    @Redirect(
-        method = "renderEntities",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;render(Lnet/minecraft/world/entity/Entity;F)V",
-            ordinal = 1
-        )
-    )
-    private void renderEntityBasedOnCamera(EntityRenderDispatcher instance, Entity entity, float tickTime) {
-        var mc = (ExMinecraft) this.mc;
-        // TODO: move cameraPaused out of render loop?
-        boolean cameraPaused = (mc.isCameraActive() && mc.isCameraPause());
-        if (cameraPaused || (AC_DebugMode.active && !(entity instanceof Player)) ||
-            ((ExEntity) entity).getStunned() > 0) {
-            tickTime = 1.0F;
+    @Overwrite
+    public void renderEntities(Vec3 cameraPos, Culler culler, float partialTick) {
+        if (this.noEntityRenderFrames > 0) {
+            --this.noEntityRenderFrames;
+            return;
         }
-        instance.render(entity, tickTime);
+        Minecraft mc = this.mc;
+        Mob camera = mc.cameraEntity;
+        Level level = this.level;
+
+        TileEntityRenderDispatcher.instance.prepare(level, this.textures, mc.font, camera, partialTick);
+        EntityRenderDispatcher.INSTANCE.prepare(level, this.textures, mc.font, camera, mc.options, partialTick);
+        this.totalEntities = 0;
+        this.renderedEntities = 0;
+        this.culledEntities = 0;
+
+        EntityRenderDispatcher.xOff = camera.xOld + (camera.x - camera.xOld) * partialTick;
+        EntityRenderDispatcher.yOff = camera.yOld + (camera.y - camera.yOld) * partialTick;
+        EntityRenderDispatcher.zOff = camera.zOld + (camera.z - camera.zOld) * partialTick;
+        TileEntityRenderDispatcher.xOff = camera.xOld + (camera.x - camera.xOld) * partialTick;
+        TileEntityRenderDispatcher.yOff = camera.yOld + (camera.y - camera.yOld) * partialTick;
+        TileEntityRenderDispatcher.zOff = camera.zOld + (camera.z - camera.zOld) * partialTick;
+
+        this.renderScriptModels(partialTick);
+
+        var allEntities = (List<Entity>) level.getAllEntities();
+        this.totalEntities = allEntities.size();
+
+        for (Entity entity : (List<Entity>) level.globalEntities) {
+            ++this.renderedEntities;
+            if (entity.shouldRender(cameraPos)) {
+                EntityRenderDispatcher.INSTANCE.render(entity, partialTick);
+            }
+        }
+
+        var exMc = (ExMinecraft) mc;
+        boolean cameraPaused = (exMc.isCameraActive() && exMc.isCameraPause());
+
+        for (Entity entity : allEntities) {
+            if (!entity.shouldRender(cameraPos)) {
+                continue;
+            }
+            if (!entity.noCulling && !culler.isVisible(entity.bb)) {
+                continue;
+            }
+            if (entity == camera && !this.mc.options.thirdPersonView && !camera.isSleeping()) {
+                continue;
+            }
+            int eX = (int) Math.floor(entity.x);
+            int eY = MathF.clamp((int) Math.floor(entity.y), 0, 127);
+            int eZ = (int) Math.floor(entity.z);
+            if (!level.hasChunkAt(eX, eY, eZ)) {
+                continue;
+            }
+
+            float tickTime = partialTick;
+            if (cameraPaused || (AC_DebugMode.active && !(entity instanceof Player)) ||
+                ((ExEntity) entity).getStunned() > 0) {
+                tickTime = 1.0F;
+            }
+            EntityRenderDispatcher.INSTANCE.render(entity, tickTime);
+            ++this.renderedEntities;
+        }
+
+        for (TileEntity entity : (List<TileEntity>) this.renderableTileEntities) {
+            TileEntityRenderDispatcher.instance.render(entity, partialTick);
+        }
     }
 
-    @Inject(
-        method = "renderEntities",
-        at = @At(
-            value = "INVOKE",
-            target = "Ljava/util/List;size()I",
-            shift = At.Shift.AFTER,
-            ordinal = 0,
-            remap = false
-        )
-    )
-    private void renderScriptModels(Vec3 var1, Culler var2, float partialTick, CallbackInfo ci) {
+    @Unique
+    private void renderScriptModels(float partialTick) {
         var transform = GLUtil.getModelViewMatrix(new Matrix4f());
         transform.translate(
             (float) -EntityRenderDispatcher.xOff,
