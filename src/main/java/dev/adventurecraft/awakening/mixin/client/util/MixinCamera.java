@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.mixin.client.util;
 
 import dev.adventurecraft.awakening.extension.client.util.ExCameraView;
-import dev.adventurecraft.awakening.extension.client.util.ExFrustum;
+import dev.adventurecraft.awakening.extension.client.util.ExFrustumData;
 import net.minecraft.client.renderer.culling.FrustumCuller;
 import net.minecraft.client.renderer.culling.FrustumData;
 import net.minecraft.world.phys.AABB;
@@ -21,7 +21,7 @@ public abstract class MixinCamera implements ExCameraView {
     private double zOff;
 
     public boolean isBoxInFrustumFully(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
-        return ((ExFrustum) this.frustum).isBoxInFrustumFully(minX - this.xOff, minY - this.yOff, minZ - this.zOff, maxX - this.xOff, maxY - this.yOff, maxZ - this.zOff);
+        return ((ExFrustumData) this.frustum).isBoxInFrustumFully(minX - this.xOff, minY - this.yOff, minZ - this.zOff, maxX - this.xOff, maxY - this.yOff, maxZ - this.zOff);
     }
 
     @Override

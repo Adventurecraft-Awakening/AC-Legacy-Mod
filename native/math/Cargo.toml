@@ -1,0 +1,10 @@
+[package]
+name = "math"
+version = "0.1.0"
+edition.workspace = true
+
+[lib]
+name = "ac_natives_math"
+crate-type = ["cdylib"]
+
+[dependencies]
