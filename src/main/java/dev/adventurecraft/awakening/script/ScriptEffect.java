@@ -1,7 +1,6 @@
 package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.client.render.AC_TextureBinder;
-import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.AC_TextureAnimated;
 import dev.adventurecraft.awakening.common.LightHelper;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
@@ -113,6 +112,7 @@ public class ScriptEffect {
         int height
     ) {
         var animation = new AC_TextureAnimated(texName, x, y, width, height);
+        //noinspection DataFlowIssue
         ((AC_TextureBinder) animation).loadImage(imageName, world);
         ((ExTextureManager) Minecraft.instance.textures).registerTextureAnimation(animationName, animation);
     }
