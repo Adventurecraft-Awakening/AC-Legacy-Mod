@@ -1,7 +1,9 @@
 package dev.adventurecraft.awakening.mixin.world.chunk;
 
 import dev.adventurecraft.awakening.ACMod;
+import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunkCache;
+import dev.adventurecraft.awakening.util.MathF;
 import dev.adventurecraft.awakening.world.level.storage.AsyncChunkSource;
 import dev.adventurecraft.awakening.world.level.storage.AsyncChunkStorage;
 import net.minecraft.client.Minecraft;
@@ -34,7 +36,6 @@ public abstract class MixinChunkCache implements ExChunkCache, AsyncChunkSource 
 
     @Shadow private LevelChunk[] chunks;
 
-    @Unique boolean isVeryFar;
     @Unique int mask;
     @Unique int chunksWide;
 
@@ -48,50 +49,43 @@ public abstract class MixinChunkCache implements ExChunkCache, AsyncChunkSource 
     public abstract LevelChunk getChunk(int x, int z);
 
     @Override
-    public void init(Level var1, ChunkStorage var2, ChunkSource var3) {
-        this.isVeryFar = Minecraft.instance.options.viewDistance != 0;
-        this.updateVeryFar();
-        this.xLast = -999999999;
-        this.zLast = -999999999;
-        this.emptyChunk = new EmptyLevelChunk(var1, new byte[-Short.MIN_VALUE], 0, 0);
-        this.level = var1;
-        this.storage = var2;
-        this.source = var3;
+    public void init(Level level, ChunkStorage storage, ChunkSource source) {
+        this.resize();
+        this.emptyChunk = new EmptyLevelChunk(level, new byte[32768], 0, 0);
+        this.level = level;
+        this.storage = storage;
+        this.source = source;
     }
 
     @Override
-    public void updateVeryFar() {
-        boolean var1 = Minecraft.instance.options.viewDistance == 0;
-        if (this.isVeryFar == var1) {
+    public void resize() {
+        var options = (ExGameOptions) Minecraft.instance.options;
+        int dist = options.ofChunkLoadDistance() * 2;
+        int newMask = MathF.roundUpToPow2Mask(dist);
+        if (this.mask == newMask) {
             return;
         }
+        ACMod.LOGGER.info("Resizing chunk cache from {} to {}", this.mask + 1, newMask + 1);
 
-        this.isVeryFar = var1;
         this.xLast = -999999999;
         this.zLast = -999999999;
-        if (this.chunks != null) {
+
+        LevelChunk[] chunks = this.chunks;
+        if (chunks != null) {
             this.save(true, null);
         }
 
-        LevelChunk[] var2 = this.chunks;
-        if (this.isVeryFar) {
-            this.chunks = new LevelChunk[4096];
-            this.mask = 63;
-            this.chunksWide = 64;
-        }
-        else {
-            this.chunks = new LevelChunk[1024];
-            this.mask = 31;
-            this.chunksWide = 32;
-        }
+        this.mask = newMask;
+        this.chunksWide = newMask + 1;
+        this.chunks = new LevelChunk[this.chunksWide * this.chunksWide];
 
-        if (var2 != null) {
-            for (LevelChunk var4 : var2) {
-                if (var4 != null && this.fits(var4.x, var4.z)) {
-                    int var5 = var4.x & this.mask;
-                    int var6 = var4.z & this.mask;
-                    int var7 = var5 + var6 * this.chunksWide;
-                    this.chunks[var7] = var4;
+        if (chunks != null) {
+            for (LevelChunk chunk : chunks) {
+                if (chunk != null && this.fits(chunk.x, chunk.z)) {
+                    int cx = chunk.x & this.mask;
+                    int cz = chunk.z & this.mask;
+                    int ci = cx + cz * this.chunksWide;
+                    this.chunks[ci] = chunk;
                 }
             }
         }
@@ -99,6 +93,9 @@ public abstract class MixinChunkCache implements ExChunkCache, AsyncChunkSource 
 
     @Override
     public int getCapacity() {
+        if (this.chunks == null) {
+            return 0;
+        }
         return this.chunks.length;
     }
 

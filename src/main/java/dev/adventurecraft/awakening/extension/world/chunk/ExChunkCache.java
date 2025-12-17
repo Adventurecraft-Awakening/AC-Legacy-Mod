@@ -10,5 +10,5 @@ public interface ExChunkCache {
 
     int getCapacity();
 
-    void updateVeryFar();
+    void resize();
 }

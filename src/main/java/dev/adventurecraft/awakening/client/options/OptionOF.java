@@ -34,7 +34,6 @@ public final class OptionOF {
     public static final Option WEATHER = ClassTinkerers.getEnum(Option.class, "WEATHER");
     public static final Option SKY = ClassTinkerers.getEnum(Option.class, "SKY");
     public static final Option STARS = ClassTinkerers.getEnum(Option.class, "STARS");
-    public static final Option FAR_VIEW = ClassTinkerers.getEnum(Option.class, "FAR_VIEW");
     public static final Option CHUNK_UPDATES = ClassTinkerers.getEnum(Option.class, "CHUNK_UPDATES");
     public static final Option CHUNK_UPDATES_DYNAMIC = ClassTinkerers.getEnum(Option.class, "CHUNK_UPDATES_DYNAMIC");
     public static final Option TIME = ClassTinkerers.getEnum(Option.class, "TIME");

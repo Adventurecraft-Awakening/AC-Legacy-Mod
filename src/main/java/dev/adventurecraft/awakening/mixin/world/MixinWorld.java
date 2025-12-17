@@ -1334,13 +1334,13 @@ public abstract class MixinWorld implements ExWorld, LevelSource, AC_LevelSource
 
     @Overwrite
     public void tickTiles() {
+        int dist = ((ExGameOptions) Minecraft.instance.options).ofChunkSimulationDistance();
         for (Player player : this.players) {
             int cX = (int) Math.floor(player.x / 16.0D);
             int cZ = (int) Math.floor(player.z / 16.0D);
-            int cD = 9;
 
-            for (int x = -cD; x <= cD; ++x) {
-                for (int z = -cD; z <= cD; ++z) {
+            for (int x = -dist; x < dist; ++x) {
+                for (int z = -dist; z < dist; ++z) {
                     this.updateChunk(x + cX, z + cZ);
                 }
             }

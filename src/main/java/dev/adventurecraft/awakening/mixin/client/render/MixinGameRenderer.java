@@ -17,6 +17,7 @@ import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityStore;
+import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.particle.Particle;
@@ -65,8 +66,6 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
     public ItemInHandRenderer itemInHandRenderer;
     @Shadow
     private boolean thickFog;
-    @Shadow
-    private double zoom;
     @Shadow
     float fogRed;
     @Shadow
@@ -911,20 +910,15 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
 
     @ModifyConstant(method = "setupClearColor", constant = @Constant(intValue = 4))
     private int changeFogDividend(int constant) {
-        // Was 5 to account for Very Far, but Optifine gives us Farview instead.
+        // TODO: Was 5 to account for Very Far, but Optifine gives us Farview instead.
         return constant;
-    }
-
-    @Unique
-    public void resetZoom() {
-        this.zoom = 1.0D;
     }
 
     @Unique
     public float getFarPlane() {
         var options = (ExGameOptions) this.mc.options;
-        int range = options.ofFarView() ? 1024 : 256;
-        float dist = 0.75f * (range >> this.mc.options.viewDistance);
+        int range = options.ofChunkRenderDistance() * 16 / 2;
+        float dist = 0.95f * range;
         if (!options.isAutoFarClip()) {
             return dist;
         }
@@ -936,7 +930,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
             this.farClipAdjustment *= 1.01F;
         }
 
-        this.farClipAdjustment = Math.max(Math.min(this.farClipAdjustment, 1.0F), 0.25F);
+        this.farClipAdjustment = MathF.clamp(farClipAdjustment, 0.25F, 1.0F);
         return dist * this.farClipAdjustment;
     }
 

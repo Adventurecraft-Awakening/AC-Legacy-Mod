@@ -84,7 +84,6 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     @Shadow private int xChunks;
     @Shadow private int yChunks;
     @Shadow private int zChunks;
-    @Shadow private int chunkLists;
     @Shadow private Minecraft mc;
     @Shadow private IntBuffer occlusionCheckIds;
     @Shadow private boolean occlusionCheck;
@@ -143,6 +142,8 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         var options = (ExGameOptions) this.mc.options;
         Tile.LEAVES.setFancy(options.isLeavesFancy());
 
+        ((ExChunkCache) this.level.chunkSource).resize();
+
         this.lastViewDistance = this.mc.options.viewDistance;
         if (this.chunks != null) {
             for (Chunk viz : this.chunks) {
@@ -150,35 +151,17 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             }
         }
 
-        int renderDist = 64 << 3 - this.lastViewDistance;
-        if (options.ofLoadFar()) {
-            renderDist = 512;
-        }
-
-        if (options.ofFarView()) {
-            if (renderDist < 512) {
-                renderDist *= 3;
-            }
-            else {
-                renderDist *= 2;
-            }
-        }
-
-        renderDist += options.ofPreloadedChunks() * 2 * 16;
-        if (!options.ofFarView() && renderDist > 400) {
-            renderDist = 400;
-        }
+        int renderDist = options.ofChunkRenderDistance();
 
         this.prevReposX = -9999.0D;
         this.prevReposY = -9999.0D;
         this.prevReposZ = -9999.0D;
-        this.xChunks = renderDist / 16 + 1;
+        this.xChunks = renderDist;
         this.yChunks = 8;
-        this.zChunks = renderDist / 16 + 1;
+        this.zChunks = renderDist;
         this.chunks = new Chunk[this.xChunks * this.yChunks * this.zChunks];
         this.sortedChunks = new Chunk[this.xChunks * this.yChunks * this.zChunks];
-        int var2 = 0;
-        int var3 = 0;
+
         this.xMinChunk = 0;
         this.yMinChunk = 0;
         this.zMinChunk = 0;
@@ -195,33 +178,25 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         this.dirtyChunks.clear();
         this.renderableTileEntities.clear();
 
+        int vizId = 0;
         for (int cX = 0; cX < this.xChunks; ++cX) {
             for (int cY = 0; cY < this.yChunks; ++cY) {
                 for (int cZ = 0; cZ < this.zChunks; ++cZ) {
                     int vizIndex = (cZ * this.yChunks + cY) * this.xChunks + cX;
-                    Chunk viz = new Chunk(
-                        this.level,
-                        this.renderableTileEntities,
-                        cX * 16,
-                        cY * 16,
-                        cZ * 16,
-                        16,
-                        this.chunkLists + var2
-                    );
+                    var viz = new Chunk(this.level, this.renderableTileEntities, cX * 16, cY * 16, cZ * 16, 16, -1);
                     this.sortedChunks[vizIndex] = viz;
 
                     if (this.occlusionCheck) {
-                        viz.occlusion_id = this.occlusionCheckIds.get(var3);
+                        viz.occlusion_id = this.occlusionCheckIds.get(vizId);
                     }
 
                     viz.occlusion_querying = false;
                     viz.occlusion_visible = true;
                     viz.visible = false;
-                    viz.id = var3++;
+                    viz.id = vizId++;
                     viz.setDirty();
                     this.chunks[vizIndex] = viz;
                     this.dirtyChunks.add(viz);
-                    var2 += 3;
                 }
             }
         }
@@ -256,7 +231,6 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
 
         var options = (ExGameOptions) this.mc.options;
         if (this.mc.options.viewDistance != this.lastViewDistance && !options.ofLoadFar()) {
-            ((ExChunkCache) this.level.chunkSource).updateVeryFar();
             this.allChanged();
         }
 
@@ -284,7 +258,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             double eprY = entity.y - this.prevReposY;
             double eprZ = entity.z - this.prevReposZ;
             double eprSqr = eprX * eprX + eprY * eprY + eprZ * eprZ;
-            if (eprSqr > (double) (preloadCount * preloadCount) + 64.0D) {
+            if ((int) eprSqr > (preloadCount * preloadCount) + 64) {
                 this.prevReposX = entity.x;
                 this.prevReposY = entity.y;
                 this.prevReposZ = entity.z;

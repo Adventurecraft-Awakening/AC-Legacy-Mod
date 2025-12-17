@@ -473,7 +473,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
 
     @Unique
     private ByteBuffer getPixelBuffer(int width, int height) {
-        int level = MathF.roundUpToPow2Mask(Math.max(width, height));
+        int level = MathF.roundUpToPow2Mask(Math.max(width, height) * 2);
         int size = level * level * 4;
         if (this.pixels == null || this.pixels.capacity() < size) {
             this.pixels = MemoryTracker.createByteBuffer(size);

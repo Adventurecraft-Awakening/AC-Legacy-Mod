@@ -185,6 +185,6 @@ public final class MathF {
     }
 
     public static int roundUpToPow2Mask(int value) {
-        return (int)(0x1_FFFF_FFFFL >> Integer.numberOfLeadingZeros((value | 1) - 1));
+        return (int)(0x0_FFFF_FFFFL >> Integer.numberOfLeadingZeros((value | 1) - 1));
     }
 }

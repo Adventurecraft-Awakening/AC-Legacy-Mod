@@ -1245,8 +1245,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         int n = 2;
         if (chunkSource instanceof ChunkCache chunkCache) {
             chunkCache.centerOn(cx, cz);
-            double dist = Math.sqrt(((ExChunkCache) chunkSource).getCapacity());
-            n = Math.max(n, (int) (dist / 2));
+            n = ((ExGameOptions) this.options).ofChunkLoadDistance();
         }
 
         int count = 0;

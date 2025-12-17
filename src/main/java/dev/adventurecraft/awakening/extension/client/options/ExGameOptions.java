@@ -6,6 +6,11 @@ import net.minecraft.client.KeyMapping;
 
 public interface ExGameOptions {
 
+    /**
+     * Account for chunks trying to access neighbors, be it during simulation or rendering.
+     */
+    int CHUNK_DISTANCE_BORDER = 2;
+
     boolean ofFogFancy();
 
     float ofFogStart();
@@ -17,6 +22,12 @@ public interface ExGameOptions {
     boolean ofLoadFar();
 
     int ofPreloadedChunks();
+
+    int ofChunkRenderDistance();
+
+    int ofChunkSimulationDistance();
+
+    int ofChunkLoadDistance();
 
     boolean ofOcclusionFancy();
 
@@ -77,8 +88,6 @@ public interface ExGameOptions {
     int ofChunkUpdates();
 
     boolean ofChunkUpdatesDynamic();
-
-    boolean ofFarView();
 
     int ofTime();
 

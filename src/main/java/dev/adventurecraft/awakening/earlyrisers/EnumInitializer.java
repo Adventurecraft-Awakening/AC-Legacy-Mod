@@ -54,7 +54,6 @@ public class EnumInitializer implements Runnable {
         addOptionEnum(type, "WEATHER", "options.of.world.weather");
         addOptionEnum(type, "SKY", "options.of.detail.sky");
         addOptionEnum(type, "STARS", "options.of.detail.stars");
-        addOptionEnum(type, "FAR_VIEW", "options.of.world.farView");
         addOptionEnum(type, "CHUNK_UPDATES", "options.of.world.chunkUpdates");
         addOptionEnum(type, "CHUNK_UPDATES_DYNAMIC", "options.of.world.dynamicUpdates");
         addOptionEnum(type, "TIME", "options.of.world.time");
