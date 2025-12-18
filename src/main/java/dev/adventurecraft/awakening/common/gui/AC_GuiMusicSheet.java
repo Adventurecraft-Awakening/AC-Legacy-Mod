@@ -118,7 +118,7 @@ public class AC_GuiMusicSheet extends Screen {
                 alpha = fade;
                 backColor = (int) (128.0F * fade) << 24;
                 foreColor = (int) (255.0F * fade) << 24;
-                if ((double) fade < 0.004D) {
+                if (fade < 0.004f) {
                     this.minecraft.setScreen(null);
                     return;
                 }

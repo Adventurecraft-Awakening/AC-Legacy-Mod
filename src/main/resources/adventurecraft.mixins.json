@@ -7,6 +7,7 @@
     "MixinClass_66",
     "client.MixinClientInteractionManager",
     "client.MixinMinecraft",
+    "client.MixinMouseHandler",
     "client.MixinSingleplayerInteractionManager",
     "client.gui.MixinAchievementWidget",
     "client.gui.MixinInGameHud",
