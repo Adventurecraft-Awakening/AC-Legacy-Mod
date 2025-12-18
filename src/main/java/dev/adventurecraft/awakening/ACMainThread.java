@@ -18,6 +18,9 @@ import java.io.File;
 @Environment(value = EnvType.CLIENT)
 public final class ACMainThread extends Minecraft {
 
+    public static final int MAIN_PRIORITY = 8;
+    public static final int WORKER_PRIORITY = 4;
+
     /**
      * Directory where custom maps are stored.
      * Initialized lazily via {@link #getMapsDirectory()}.
@@ -50,6 +53,7 @@ public final class ACMainThread extends Minecraft {
      */
     public ACMainThread(int width, int height, boolean fullScreen) {
         super(null, null, null, width, height, fullScreen);
+        Thread.currentThread().setPriority(MAIN_PRIORITY);
     }
 
     /**

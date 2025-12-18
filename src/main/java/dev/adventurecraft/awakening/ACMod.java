@@ -35,17 +35,17 @@ public class ACMod implements ModInitializer {
     public static ExecutorService CHUNK_MESH_EXECUTOR;
 
     static {
-        int processors = Runtime.getRuntime().availableProcessors();
+        int processors = Math.max(1, Runtime.getRuntime().availableProcessors());
         {
             // IO is expected to do many blocking operations - virtual threads should be optimal for this.
             ThreadFactory factory = Thread.ofVirtual().name("World-IO-Worker", 0).factory();
-            WORLD_IO_EXECUTOR = Executors.newThreadPerTaskExecutor(factory);
+            WORLD_IO_EXECUTOR = Executors.newFixedThreadPool(processors, factory);
         }
         {
-            // Meshing chunks is CPU-bound - hyper-threading is unlikely to help.
-            int parallelism = Math.max(1, processors / 2);
-            var factory = new CustomForkJoinWorkerThreadFactory().name("Chunk-Mesh-Worker", 0);
-            CHUNK_MESH_EXECUTOR = new ForkJoinPool(parallelism, factory, null, true);
+            var factory = new CustomForkJoinWorkerThreadFactory()
+                .name("Chunk-Mesh-Worker", 0)
+                .priority(ACMainThread.WORKER_PRIORITY);
+            CHUNK_MESH_EXECUTOR = new ForkJoinPool(processors, factory, null, true);
         }
     }
 

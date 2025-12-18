@@ -6,6 +6,7 @@ import java.util.concurrent.ForkJoinWorkerThread;
 public class CustomForkJoinWorkerThreadFactory implements ForkJoinPool.ForkJoinWorkerThreadFactory {
     private String prefix;
     private long counter;
+    private int priority;
 
     public CustomForkJoinWorkerThreadFactory() {
         super();
@@ -14,6 +15,11 @@ public class CustomForkJoinWorkerThreadFactory implements ForkJoinPool.ForkJoinW
     public CustomForkJoinWorkerThreadFactory name(String prefix, long counter) {
         this.prefix = prefix;
         this.counter = counter;
+        return this;
+    }
+
+    public CustomForkJoinWorkerThreadFactory priority(int priority) {
+        this.priority = priority;
         return this;
     }
 
@@ -33,6 +39,9 @@ public class CustomForkJoinWorkerThreadFactory implements ForkJoinPool.ForkJoinW
     public ForkJoinWorkerThread newThread(ForkJoinPool pool) {
         var thread = new Thread(pool);
         thread.setName(this.nextName());
+        if (this.priority > 0) {
+            thread.setPriority(this.priority);
+        }
         return thread;
     }
 
