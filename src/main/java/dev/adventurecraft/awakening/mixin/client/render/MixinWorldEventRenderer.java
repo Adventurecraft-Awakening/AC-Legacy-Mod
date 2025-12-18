@@ -75,6 +75,8 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
 
     @Unique private static final int GL_QUERY_RESULT_NO_WAIT = 0x9194;
 
+    @Unique private static final double CHUNK_SORT_THRESHOLD = 32.0;
+
     @Shadow public List renderableTileEntities;
     @Shadow private Level level;
     @Shadow private Textures textures;
@@ -249,16 +251,18 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         double eVizY = entity.y - this.yOld;
         double eVizZ = entity.z - this.zOld;
         double eVizSqr = eVizX * eVizX + eVizY * eVizY + eVizZ * eVizZ;
-        if (eVizSqr > 64.0D) {
+        if (eVizSqr > CHUNK_SORT_THRESHOLD) {
             this.xOld = entity.x;
             this.yOld = entity.y;
             this.zOld = entity.z;
-            int preloadCount = options.ofPreloadedChunks() * 64;
+
+            final int chunkLoadThreshold = 64;
+            int preloadCount = options.ofPreloadedChunks() * chunkLoadThreshold;
             double eprX = entity.x - this.prevReposX;
             double eprY = entity.y - this.prevReposY;
             double eprZ = entity.z - this.prevReposZ;
             double eprSqr = eprX * eprX + eprY * eprY + eprZ * eprZ;
-            if ((int) eprSqr > (preloadCount * preloadCount) + 64) {
+            if (eprSqr > (preloadCount * preloadCount) + chunkLoadThreshold) {
                 this.prevReposX = entity.x;
                 this.prevReposY = entity.y;
                 this.prevReposZ = entity.z;
@@ -524,6 +528,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         // Do not draw RenderLists
     }
 
+
     @Redirect(
         method = "renderSky",
         at = @At(
@@ -574,7 +579,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         at = @At("HEAD"),
         cancellable = true
     )
-    private void configurableClouds(float var1, CallbackInfo ci) {
+    private void configurableClouds(float alpha, CallbackInfo ci) {
         if (((ExGameOptions) this.mc.options).isCloudsOff()) {
             ci.cancel();
         }

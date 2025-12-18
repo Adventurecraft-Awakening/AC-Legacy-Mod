@@ -160,7 +160,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
             target = "Lorg/lwjgl/opengl/GL11;glScaled(DDD)V",
             remap = false)))
     private float reducePerspectiveFarPlane(float value) {
-        return 1.1F; // Was 1.0 originally
+        return 1.8F;
     }
 
     @Inject(method = "render(F)V", at = @At("HEAD"))
@@ -918,7 +918,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
     public float getFarPlane() {
         var options = (ExGameOptions) this.mc.options;
         int range = options.ofChunkRenderDistance() * 16 / 2;
-        float dist = 0.95f * range;
+        float dist = 0.9f * range;
         if (!options.isAutoFarClip()) {
             return dist;
         }
