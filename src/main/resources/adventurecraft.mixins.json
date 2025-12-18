@@ -162,6 +162,7 @@
     "world.entity.MixinSynchedEntityData",
     "world.gen.MixinBiomeSource",
     "world.level.biome.MixinFixedBiomeSource",
+    "world.level.chunk.storage.AccessRegionFileCache",
     "world.level.chunk.storage.MixinRegionFile",
     "world.level.storage.MixinMcRegionLevelStorageSource",
     "world.level.tile.MixinChestTile",

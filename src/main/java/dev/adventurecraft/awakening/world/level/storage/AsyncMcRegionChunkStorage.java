@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.world.level.storage;
 
+import dev.adventurecraft.awakening.extension.world.level.chunk.storage.ExRegionFileCache;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.nbt.CompoundTag;
@@ -59,7 +60,7 @@ public class AsyncMcRegionChunkStorage implements AsyncChunkStorage {
                 return CompletableFuture.supplyAsync(loader, this.executor);
             });
         }
-        if (!loader.hasChunk()) {
+        if (loader.hasRegionButNotChunk()) {
             return NULL_CHUNK_FUTURE;
         }
         return CompletableFuture.supplyAsync(loader, this.executor);
@@ -131,9 +132,20 @@ public class AsyncMcRegionChunkStorage implements AsyncChunkStorage {
             this.level = level;
         }
 
+        /**
+         * Opens the region and checks if it has the chunk.
+         */
         public boolean hasChunk() {
             RegionFile regionFile = RegionFileCache.getRegionFile(basePath, x, z);
             return regionFile.hasChunk(x & 0x1F, z & 0x1F);
+        }
+
+        /**
+         * Checks if the chunk exists only if the region is already open.
+         */
+        public boolean hasRegionButNotChunk() {
+            RegionFile regionFile = ExRegionFileCache.tryGetRegionFile(basePath, x, z);
+            return regionFile != null && !regionFile.hasChunk(x & 0x1F, z & 0x1F);
         }
 
         @Override
