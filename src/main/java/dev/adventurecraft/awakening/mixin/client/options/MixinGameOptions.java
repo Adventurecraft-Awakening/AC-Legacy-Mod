@@ -90,7 +90,6 @@ public abstract class MixinGameOptions implements ExGameOptions {
     @Unique public boolean ofWeather = true;
     @Unique public boolean ofSky = true;
     @Unique public boolean ofStars = true;
-    @Unique public int ofChunkUpdates = 1;
     @Unique public boolean ofChunkUpdatesDynamic = true;
     @Unique public int ofTime = 0;
     @Unique public boolean ofClearWater = false;
@@ -440,13 +439,6 @@ public abstract class MixinGameOptions implements ExGameOptions {
             this.ofStars = !this.ofStars;
         }
 
-        if (option == OptionOF.CHUNK_UPDATES) {
-            ++this.ofChunkUpdates;
-            if (this.ofChunkUpdates > 5) {
-                this.ofChunkUpdates = 1;
-            }
-        }
-
         if (option == OptionOF.CHUNK_UPDATES_DYNAMIC) {
             this.ofChunkUpdatesDynamic = !this.ofChunkUpdatesDynamic;
         }
@@ -715,9 +707,6 @@ public abstract class MixinGameOptions implements ExGameOptions {
             if (option == OptionOF.STARS) {
                 return this.ofStars ? prefix + "ON" : prefix + "OFF";
             }
-            if (option == OptionOF.CHUNK_UPDATES) {
-                return prefix + this.ofChunkUpdates;
-            }
             if (option == OptionOF.CHUNK_UPDATES_DYNAMIC) {
                 return this.ofChunkUpdatesDynamic ? prefix + "ON" : prefix + "OFF";
             }
@@ -897,10 +886,6 @@ public abstract class MixinGameOptions implements ExGameOptions {
             case "ofWeather" -> this.ofWeather = Boolean.parseBoolean(value);
             case "ofSky" -> this.ofSky = Boolean.parseBoolean(value);
             case "ofStars" -> this.ofStars = Boolean.parseBoolean(value);
-            case "ofChunkUpdates" -> {
-                this.ofChunkUpdates = Integer.parseInt(value);
-                this.ofChunkUpdates = Config.limit(this.ofChunkUpdates, 1, 5);
-            }
             case "ofChunkUpdatesDynamic" -> this.ofChunkUpdatesDynamic = Boolean.parseBoolean(value);
             case "ofTime" -> {
                 this.ofTime = Integer.parseInt(value);
@@ -970,7 +955,6 @@ public abstract class MixinGameOptions implements ExGameOptions {
         writer.println("ofWeather:" + this.ofWeather);
         writer.println("ofSky:" + this.ofSky);
         writer.println("ofStars:" + this.ofStars);
-        writer.println("ofChunkUpdates:" + this.ofChunkUpdates);
         writer.println("ofChunkUpdatesDynamic:" + this.ofChunkUpdatesDynamic);
         writer.println("ofTime:" + this.ofTime);
         writer.println("ofClearWater:" + this.ofClearWater);
@@ -1180,11 +1164,6 @@ public abstract class MixinGameOptions implements ExGameOptions {
     @Override
     public boolean ofStars() {
         return ofStars;
-    }
-
-    @Override
-    public int ofChunkUpdates() {
-        return ofChunkUpdates;
     }
 
     @Override

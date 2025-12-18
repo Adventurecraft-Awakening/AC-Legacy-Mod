@@ -10,7 +10,6 @@ options.of.msaa=Anti-aliasing
 ## World Settings names
 options.of.world.loadFar=Load Far
 options.of.world.preloadedChunks=Preloaded Chunks
-options.of.world.chunkUpdates=Chunk Updates
 options.of.world.dynamicUpdates=Dynamic Updates 
 options.of.world.autosaveInterval=Autosave Interval
 options.of.world.time=Time
@@ -77,7 +76,6 @@ options.of.msaa.tooltip="Multisample anti-aliasing", " OFF - (default) no anti-a
 ## World settings tooltips
 options.of.world.loadFar.tooltip="Loads the world chunks at distance Far.", "Switching the render distance does not cause all chunks ", "to be loaded again.", "  OFF - world chunks loaded up to render distance", "  ON - world chunks loaded at distance Far, allows", "       fast render distance switching"
 options.of.world.preloadedChunks.tooltip="Defines an area in which no chunks will be loaded", "  OFF - after 5m new chunks will be loaded", "  2 - after 32m  new chunks will be loaded", "  8 - after 128m new chunks will be loaded", "Higher values need more time to load all the chunks"
-options.of.world.chunkUpdates.tooltip="Chunk updates per frame", " 1 - (default) slower world loading, higher FPS", " 3 - faster world loading, lower FPS", " 5 - fastest world loading, lowest FPS"
 options.of.world.dynamicUpdates.tooltip="Chunk updates per frame", " OFF - (default) standard chunk updates per frame", " ON - more updates while the player is standing still", "Dynamic updates force more chunk updates while", "the player is standing still to load the world faster."
 options.of.world.autosaveInterval.tooltip="Autosave interval", "Default autosave interval (2s) is NOT RECOMMENDED.", "Autosave causes the famous Lag Spike of Death."
 options.of.world.time.tooltip="Time", " Default - normal day/night cycles", " Day Only - day only", " Night Only - night only"

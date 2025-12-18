@@ -81,8 +81,6 @@ public interface ExGameOptions {
 
     boolean ofStars();
 
-    int ofChunkUpdates();
-
     boolean ofChunkUpdatesDynamic();
 
     int ofTime();

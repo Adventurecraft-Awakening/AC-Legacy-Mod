@@ -117,6 +117,10 @@ public final class MathF {
         return (float) Math.cos(a);
     }
 
+    public static float sqrt(float a) {
+        return (float) Math.sqrt(a);
+    }
+
     public static float toRadians(float degrees) {
         return degrees * (float) DEGREES_TO_RADIANS;
     }

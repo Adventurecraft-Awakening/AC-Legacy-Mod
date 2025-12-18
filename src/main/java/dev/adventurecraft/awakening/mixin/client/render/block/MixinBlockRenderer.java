@@ -1043,6 +1043,7 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
         }
         else {
             // Clone tiles that change shape to avoid concurrency issues in Tile singletons.
+            // TODO: thread-local cache?
             block = ((ExBlock) block).ac$clone();
 
             block.updateShape(this.level, x, y, z);

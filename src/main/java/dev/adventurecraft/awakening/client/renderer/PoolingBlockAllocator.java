@@ -2,8 +2,8 @@ package dev.adventurecraft.awakening.client.renderer;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class PoolingBlockAllocator implements BlockAllocator {
 
@@ -14,7 +14,7 @@ public class PoolingBlockAllocator implements BlockAllocator {
     public PoolingBlockAllocator(int blockSize, int capacity) {
         this.blockSize = blockSize;
         this.capacity = capacity;
-        this.deque = new ArrayDeque<>(capacity);
+        this.deque = new ConcurrentLinkedDeque<>();
     }
 
     @Override

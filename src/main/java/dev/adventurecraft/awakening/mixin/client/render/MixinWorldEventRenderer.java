@@ -2,8 +2,11 @@ package dev.adventurecraft.awakening.mixin.client.render;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
+import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.client.gl.GLBufferTarget;
 import dev.adventurecraft.awakening.client.gl.GLDevice;
+import dev.adventurecraft.awakening.client.renderer.ChunkBuilder;
+import dev.adventurecraft.awakening.client.renderer.ChunkBuilderEntry;
 import dev.adventurecraft.awakening.client.renderer.ChunkMesh;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.entity.AC_Particle;
@@ -22,6 +25,7 @@ import dev.adventurecraft.awakening.script.ScriptModelBase;
 import dev.adventurecraft.awakening.util.GLUtil;
 import dev.adventurecraft.awakening.util.MathF;
 import dev.adventurecraft.awakening.world.level.storage.AsyncChunkSource;
+import it.unimi.dsi.fastutil.ints.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.particle.*;
@@ -51,10 +55,7 @@ import net.minecraft.world.level.tile.Tile;
 import net.minecraft.world.level.tile.entity.TileEntity;
 import net.minecraft.world.phys.Vec3;
 import org.lwjgl.input.Mouse;
-import org.lwjgl.opengl.ARBOcclusionQuery;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL15;
-import org.lwjgl.opengl.GLContext;
+import org.lwjgl.opengl.*;
 import org.lwjgl.util.vector.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -66,9 +67,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.nio.IntBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Mixin(LevelRenderer.class)
 public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
@@ -108,15 +108,19 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     @Shadow private int occludedChunks;
     @Shadow private int renderedChunks;
     @Shadow private int emptyChunks;
-    @Shadow private int chunkFixOffs;
     @Shadow private OffsettedRenderList[] renderLists;
     @Shadow double xOld;
     @Shadow double yOld;
     @Shadow double zOld;
 
     @Unique private long lastMovedTime = System.currentTimeMillis();
+
     @Unique private final List<ChunkMesh>[] renderBuffers = new List[ChunkMesh.MAX_TEXTURES];
-    @Unique private final List<Chunk> rebuildList = new ArrayList<>();
+    @Unique private final Int2ObjectSortedMap<Deque<Chunk>> dirtyBuckets = new Int2ObjectRBTreeMap<>();
+    @Unique private final Deque<Chunk> rebuildBuffer = new ArrayDeque<>();
+    @Unique private final Queue<ChunkBuilderEntry> completionList = new ConcurrentLinkedQueue<>();
+
+    @Unique private final Queue<ChunkBuilder> builderPool = new ConcurrentLinkedQueue<>();
 
     @Unique double prevReposX;
     @Unique double prevReposY;
@@ -176,8 +180,15 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
                 viz.dirty = false;
             }
         }
-
         this.dirtyChunks.clear();
+
+        for (var bucketEntry : this.dirtyBuckets.int2ObjectEntrySet()) {
+            for (Chunk viz : bucketEntry.getValue()) {
+                viz.dirty = false;
+            }
+        }
+        this.dirtyBuckets.clear();
+
         this.renderableTileEntities.clear();
 
         int vizId = 0;
@@ -220,17 +231,6 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
 
     @Overwrite
     public int render(Mob entity, int renderPass, double deltaTime) {
-        if (this.dirtyChunks.size() < 10) {
-            int vizEnd = 10;
-            for (int vizStart = 0; vizStart < vizEnd; ++vizStart) {
-                this.chunkFixOffs = (this.chunkFixOffs + 1) % this.chunks.length;
-                Chunk viz = this.chunks[this.chunkFixOffs];
-                if (viz.dirty && !this.dirtyChunks.contains(viz)) {
-                    this.dirtyChunks.add(viz);
-                }
-            }
-        }
-
         var options = (ExGameOptions) this.mc.options;
         if (this.mc.options.viewDistance != this.lastViewDistance && !options.ofLoadFar()) {
             this.allChanged();
@@ -763,16 +763,13 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     }
 
     @Overwrite
-    public boolean updateDirtyChunks(Mob var1, boolean var2) {
-        List<Chunk> vizList = this.dirtyChunks;
-        if (vizList.size() <= 0) {
-            return false;
-        }
-
+    public boolean updateDirtyChunks(Mob camera, boolean force) {
         var options = (ExGameOptions) this.mc.options;
-        int frameUpdates = 0;
-        int targetFrameUpdates = options.ofChunkUpdates();
-        if (options.ofChunkUpdatesDynamic() && !this.isMoving(var1)) {
+
+        // TODO: throttle by time taken to copy world data, not amount
+        //       e.g. alloc 12ms of every frame to copying+uploads
+        int targetFrameUpdates = 1;
+        if (options.ofChunkUpdatesDynamic() && !this.isMoving(camera)) {
             if (((ExMinecraft) this.mc).isCameraActive()) {
                 targetFrameUpdates *= 2;
             }
@@ -781,111 +778,111 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             }
         }
 
-        int distFactor = 4;
-        int vizCount = 0;
-        Chunk prevViz = null;
-        float prevDist = Float.MAX_VALUE;
-        int prevIndex = -1;
+        // TODO: build+upload nearby chunks here (yes, on main thread)
 
-        for (int i = 0; i < vizList.size(); ++i) {
-            Chunk viz = vizList.get(i);
-            if (viz == null) {
-                continue;
+        for (Chunk viz : this.dirtyChunks) {
+            int x = ((int) camera.x - viz.xm);
+            int y = ((int) camera.y - viz.ym);
+            int z = ((int) camera.z - viz.zm);
+            int dist = (int) MathF.sqrt(x * x + y * y + z * z);
+            this.dirtyBuckets.computeIfAbsent(dist, ArrayDeque::new).add(viz);
+        }
+        this.dirtyChunks.clear();
+
+        int x0 = Integer.MAX_VALUE;
+        int z0 = Integer.MAX_VALUE;
+        int x1 = Integer.MIN_VALUE;
+        int z1 = Integer.MIN_VALUE;
+
+        int bucketMinKey = this.dirtyBuckets.isEmpty() ? 0 : this.dirtyBuckets.firstIntKey();
+        var bucketIter = this.dirtyBuckets.int2ObjectEntrySet().iterator();
+        outer:
+        while (bucketIter.hasNext()) {
+            var bucketEntry = bucketIter.next();
+            int bucketKey = bucketEntry.getIntKey();
+            Deque<Chunk> bucket = bucketEntry.getValue();
+
+            while (true) {
+                Chunk viz = bucket.poll();
+                if (viz == null) {
+                    break;
+                }
+
+                // TODO: De-prioritize invisible entries? e.g. by moving them to distant bucket
+                //if (!viz.visible && bucketKey > bucketMinKey + 4) {
+                //    //this.dirtyBuckets.computeIfAbsent(bucketEntry.getIntKey() + 1, ArrayDeque::new).add(viz);
+                //    continue;
+                //}
+
+                IntRect bounds = getChunkBounds(viz);
+                x0 = Math.min(x0, bounds.x);
+                z0 = Math.min(z0, bounds.y);
+                x1 = Math.max(x1, bounds.right());
+                z1 = Math.max(z1, bounds.bot());
+
+                this.rebuildBuffer.add(viz);
+                if (this.rebuildBuffer.size() >= 500) {
+                    break outer;
+                }
             }
 
-            ++vizCount;
-            if (!viz.dirty) {
-                vizList.set(i, null);
+            if (bucket.isEmpty()) {
+                bucketIter.remove();
+            }
+        }
+
+        if (this.level.chunkSource instanceof AsyncChunkSource asyncSource) {
+            int cx0 = x0 >> 4;
+            int cz0 = z0 >> 4;
+            int cx1 = x1 >> 4;
+            int cz1 = z1 >> 4;
+            // TODO: request chunks individually?
+            //       this is currently high overhead when chunks are far apart since bounds cover massive area.
+            //       could use quadtree to collect adjacent chunks.
+            asyncSource.ac$requestChunks(cx0, cz0, cx1, cz1, false);
+        }
+
+        // TODO: abort previous completion if it exists (add version field?)
+        for (Chunk viz : this.rebuildBuffer) {
+            if (!viz.dirty || viz.level == null) {
                 continue;
             }
+            // TODO: only read when all chunks are loaded (re-add viz to dirtyChunks if not ready)
+            ChunkBuilder threadBuilder = this.rentChunkBuilder();
+            ((ExClass_66) viz).ac$readWorldData(threadBuilder);
+            viz.dirty = false;
 
-            float dist = viz.distanceToSqr(var1);
-            if (dist <= 256.0F && this.isActingNow()) {
-                viz.rebuild();
-                viz.dirty = false;
-                vizList.set(i, null);
-                ++frameUpdates;
-                continue;
-            }
+            ACMod.CHUNK_MESH_EXECUTOR.submit(() -> {
+                ((ExClass_66) viz).ac$generateMesh(threadBuilder);
+                this.completionList.add(new ChunkBuilderEntry(threadBuilder, viz));
+            });
+        }
+        this.rebuildBuffer.clear();
 
-            if (dist > 256.0F && frameUpdates >= targetFrameUpdates) {
+        this.uploadPendingChunks(camera, force);
+        return true;
+    }
+
+    @Unique
+    private ChunkBuilder rentChunkBuilder() {
+        ChunkBuilder b = this.builderPool.poll();
+        if (b == null) {
+            b = new ChunkBuilder();
+        }
+        return b;
+    }
+
+    @Unique
+    private void uploadPendingChunks(Mob camera, boolean force) {
+        // TODO: (time)limit uploads per frame
+        while (true) {
+            ChunkBuilderEntry entry = this.completionList.poll();
+            if (entry == null) {
                 break;
             }
-
-            if (!viz.visible) {
-                dist *= distFactor;
-            }
-
-            if (prevViz == null || dist < prevDist) {
-                prevViz = viz;
-                prevDist = dist;
-                prevIndex = i;
-            }
+            ((ExClass_66) entry.chunk()).ac$submitMesh(entry.builder());
+            this.builderPool.add(entry.builder());
         }
-
-        if (prevViz != null) {
-            this.rebuildList.clear();
-
-            IntRect buildBounds = getChunkBounds(prevViz);
-            this.rebuildList.add(prevViz);
-            vizList.set(prevIndex, null);
-            ++frameUpdates;
-            float normDist = prevDist / 5.0F;
-
-            for (int i = 0; i < vizList.size() && frameUpdates < targetFrameUpdates; ++i) {
-                Chunk viz = vizList.get(i);
-                if (viz == null) {
-                    continue;
-                }
-                float dist = viz.distanceToSqr(var1);
-                if (!viz.visible) {
-                    dist *= distFactor;
-                }
-
-                float absDist = Math.abs(dist - prevDist);
-                if (absDist < normDist) {
-                    buildBounds = buildBounds.union(getChunkBounds(viz));
-                    this.rebuildList.add(viz);
-                    vizList.set(i, null);
-                    ++frameUpdates;
-                }
-            }
-
-            if (this.level.chunkSource instanceof AsyncChunkSource asyncSource) {
-                int x0 = buildBounds.x >> 4;
-                int z0 = buildBounds.y >> 4;
-                int x1 = (buildBounds.right() >> 4);
-                int z1 = (buildBounds.bot() >> 4);
-                asyncSource.ac$requestChunks(x0, z0, x1, z1, false);
-            }
-
-            for (Chunk viz : this.rebuildList) {
-                viz.rebuild();
-                viz.dirty = false;
-            }
-        }
-
-        if (vizCount == 0) {
-            vizList.clear();
-        }
-
-        if (vizList.size() > 100 && vizCount < vizList.size() * 4 / 5) {
-            int offset = 0;
-
-            for (int i = 0; i < vizList.size(); ++i) {
-                Chunk viz = vizList.get(i);
-                if (viz != null && i != offset) {
-                    vizList.set(offset, viz);
-                    ++offset;
-                }
-            }
-
-            if (vizList.size() > offset) {
-                vizList.subList(offset, vizList.size()).clear();
-            }
-        }
-
-        return true;
     }
 
     @Unique

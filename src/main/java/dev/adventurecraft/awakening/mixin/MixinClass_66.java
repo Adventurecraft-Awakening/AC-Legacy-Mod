@@ -2,9 +2,7 @@ package dev.adventurecraft.awakening.mixin;
 
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.client.gl.GLDevice;
-import dev.adventurecraft.awakening.client.renderer.BlockAllocator;
-import dev.adventurecraft.awakening.client.renderer.ChunkMesh;
-import dev.adventurecraft.awakening.client.renderer.MemoryMesh;
+import dev.adventurecraft.awakening.client.renderer.*;
 import dev.adventurecraft.awakening.client.rendering.MemoryTesselator;
 import dev.adventurecraft.awakening.collections.IdentityHashSet;
 import dev.adventurecraft.awakening.common.Coord;
@@ -15,7 +13,6 @@ import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.render.block.ExBlockRenderer;
 import dev.adventurecraft.awakening.extension.client.util.ExCameraView;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
-import dev.adventurecraft.awakening.extension.world.level.ExRegion;
 import dev.adventurecraft.awakening.util.DrawUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Chunk;
@@ -24,8 +21,6 @@ import net.minecraft.client.renderer.TileRenderer;
 import net.minecraft.client.renderer.culling.Culler;
 import net.minecraft.client.renderer.tileentity.TileEntityRenderDispatcher;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.Region;
-import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.tile.Tile;
 import net.minecraft.world.level.tile.entity.TileEntity;
 import net.minecraft.world.phys.AABB;
@@ -38,7 +33,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import javax.annotation.Nullable;
-import java.nio.ByteBuffer;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -77,9 +72,9 @@ public abstract class MixinClass_66 implements ExClass_66 {
 
     @Unique private GLDevice glDevice;
     @Unique private BlockAllocator blockAllocator;
-    @Unique private StringBuilder traceBuilder;
-    @Unique private final Set<TileEntity> tileEntities = new IdentityHashSet<>();
+
     @Unique private final List<ChunkMesh>[] meshLayers = new List[ChunkMesh.MAX_RENDER_LAYERS];
+    @Unique private final Set<TileEntity> tileEntitySet = new IdentityHashSet<>();
 
     @Shadow
     public abstract void setDirty();
@@ -114,13 +109,14 @@ public abstract class MixinClass_66 implements ExClass_66 {
     }
 
     @Unique
-    private static void printTime(@Nullable StringBuilder builder, String prefix, long startTime) {
-        if (builder == null) {
+    private static void printTime(ChunkBuilder builder, String prefix) {
+        StringBuilder text = builder.getTraceBuilder();
+        if (text == null) {
             return;
         }
 
-        double millis = (System.nanoTime() - startTime) / 1000000.0;
-        builder.append(prefix).append(": ").append(millis).append(" ms\n");
+        double millis = (System.nanoTime() - builder.startTime) / 1000000.0;
+        text.append(prefix).append(": ").append(millis).append(" ms\n");
     }
 
     @Unique
@@ -144,141 +140,115 @@ public abstract class MixinClass_66 implements ExClass_66 {
     )
     private void onReset(CallbackInfo ci) {
         this.deleteBuffers();
-    }
 
-    @Unique
-    private @Nullable StringBuilder getTraceBuilder() {
-        if (!ACMod.LOGGER.isTraceEnabled()) {
-            return null;
+        if (!this.tileEntitySet.isEmpty()) {
+            this.globalRenderableTileEntities.removeAll(this.tileEntitySet);
+            this.tileEntitySet.clear();
         }
-        if (this.traceBuilder == null) {
-            this.traceBuilder = new StringBuilder();
-        }
-        return this.traceBuilder;
     }
 
     @Overwrite
     public void rebuild() {
-        if (!this.dirty) {
+        throw new IllegalStateException();
+    }
+
+    @Override
+    public void ac$rebuild(ChunkBuilder builder) {
+        if (!this.dirty || this.level == null) {
             return;
         }
-        long timeStart = System.nanoTime();
-        StringBuilder timeBuilder = this.getTraceBuilder();
+        this.ac$readWorldData(builder);
+        this.ac$generateMesh(builder);
+        this.ac$submitMesh(builder);
+    }
 
+    @Override
+    public void ac$readWorldData(ChunkBuilder builder) {
+        builder.start(this.blockAllocator);
         ++Chunk.updates;
 
+        ((ExChunk) this.level.getChunkAt(this.x, this.z)).updateLightHash();
+
+        LevelRegion region = builder.region;
+        region.clear();
+
+        final Coord readOrigin = new Coord(this.x, this.y, this.z).sub(ChunkBuilder.PADDING);
+        region.read(this.level, readOrigin);
+        printTime(builder, "Tile Copy");
+
+        this.ac$copyEntities(builder);
+    }
+
+    @Unique
+    private void ac$copyEntities(ChunkBuilder builder) {
+        Set<TileEntity> newEntitySet = builder.newEntitySet;
+        Set<TileEntity> oldEntitySet = builder.oldEntitySet;
+
+        oldEntitySet.addAll(this.tileEntitySet);
+
+        builder.region.getTileEntities().forEach(entity -> {
+            // TODO: optimize dispatcher check
+            if (TileEntityRenderDispatcher.instance.hasTileEntityRenderer(entity)) {
+                if (this.tileEntitySet.add(entity)) {
+                    newEntitySet.add(entity);
+                }
+                else {
+                    oldEntitySet.remove(entity);
+                }
+            }
+        });
+
+        if (!oldEntitySet.isEmpty()) {
+            this.tileEntitySet.removeAll(oldEntitySet);
+            // TODO: turn global List into Set
+            this.globalRenderableTileEntities.removeAll(oldEntitySet);
+        }
+        this.globalRenderableTileEntities.addAll(newEntitySet);
+
+        newEntitySet.clear();
+        oldEntitySet.clear();
+        printTime(builder, "Entity Copy");
+    }
+
+    @Unique
+    public void ac$generateMesh(ChunkBuilder builder) {
+        builder.region.setupCaches();
+        printTime(builder, "Setup Caches");
+
+        TileRenderer[] renderers = builder.renderers;
+
+        final var regionSize = new Coord(this.xs, this.ys, this.zs);
+        builder.region.forEach(
+            ChunkBuilder.PADDING, regionSize, (region, index, x, y, z) -> {
+                int blockId = region.getTileAt(index);
+                if (blockId <= 0) {
+                    return;
+                }
+
+                Tile block = Tile.tiles[blockId];
+                int texId = ((ExBlock) block).getTextureNum();
+                int layer = block.getRenderLayer();
+
+                int meshIndex = (layer * ChunkMesh.MAX_TEXTURES) + texId;
+                renderers[meshIndex].tesselateInWorld(block, x, y, z);
+            }
+        );
+        printTime(builder, "Tessellate");
+    }
+
+    @Unique
+    public void ac$submitMesh(ChunkBuilder builder) {
         this.occlusion_visible = true;
         this.isVisibleFromPosition = false;
-        final int startX = this.x;
-        final int startY = this.y;
-        final int startZ = this.z;
-        final int endX = startX + this.xs;
-        final int endY = startY + this.ys;
-        final int endZ = startZ + this.zs;
-
         Arrays.fill(this.empty, true);
 
         this.deleteBuffers();
 
-        LevelChunk.touchedSky = false;
-
-        ((ExChunk) this.level.getChunkAt(this.x, this.z)).updateLightHash();
-
-        int regionPadding = 1;
-        var region = new Region(
-            this.level,
-            startX - regionPadding,
-            startY - regionPadding,
-            startZ - regionPadding,
-            endX + regionPadding,
-            endY + regionPadding,
-            endZ + regionPadding
-        );
-        printTime(timeBuilder, "Region Setup", timeStart);
-
-        var renderers = new TileRenderer[ChunkMesh.MAX_RENDER_LAYERS * ChunkMesh.MAX_TEXTURES];
-        var renderTracker = new boolean[ChunkMesh.MAX_RENDER_LAYERS];
-
-        var newSet = new IdentityHashSet<TileEntity>();
-        var oldSet = new IdentityHashSet<>(this.tileEntities);
-
-        var blockBuffer = ByteBuffer.allocate((endX - startX) * (endZ - startZ) * (endY - startY));
-
-        for (int x = startX; x < endX; ++x) {
-            for (int z = startZ; z < endZ; ++z) {
-                int start = blockBuffer.position();
-                ((ExRegion) region).getTileColumn(blockBuffer, x, startY, z, endY);
-
-                ByteBuffer column = blockBuffer.slice(start, endY - startY);
-                for (int y = startY; y < endY; ++y) {
-                    int blockId = ExChunk.widenByte(column.get());
-                    if (!Tile.isEntityTile[blockId]) {
-                        continue;
-                    }
-
-                    TileEntity entity = region.getTileEntity(x, y, z);
-                    if (TileEntityRenderDispatcher.instance.hasTileEntityRenderer(entity)) {
-                        if (this.tileEntities.add(entity)) {
-                            newSet.add(entity);
-                        }
-                        else {
-                            oldSet.remove(entity);
-                        }
-                    }
-                }
-            }
-        }
-        blockBuffer.flip();
-        printTime(timeBuilder, "Tile Copy", timeStart);
-
-        if (!oldSet.isEmpty()) {
-            this.tileEntities.removeAll(oldSet);
-            // TODO: turn global List into Set
-            this.globalRenderableTileEntities.removeAll(oldSet);
-        }
-        this.globalRenderableTileEntities.addAll(newSet);
-
-        for (int x = startX; x < endX; ++x) {
-            for (int z = startZ; z < endZ; ++z) {
-                for (int y = startY; y < endY; ++y) {
-                    int blockId = ExChunk.widenByte(blockBuffer.get());
-                    if (blockId <= 0) {
-                        continue;
-                    }
-
-                    Tile block = Tile.tiles[blockId];
-                    int texId = ((ExBlock) block).getTextureNum();
-                    int layer = block.getRenderLayer();
-
-                    int meshIndex = (layer * ChunkMesh.MAX_TEXTURES) + texId;
-                    var renderer = renderers[meshIndex];
-                    if (renderer == null) {
-                        renderer = new TileRenderer(region);
-                        var tesselator = MemoryTesselator.create(this.blockAllocator);
-                        tesselator.begin();
-
-                        ((ExBlockRenderer) renderer).ac$setTesselator(tesselator);
-                        renderers[meshIndex] = renderer;
-                    }
-
-                    renderTracker[layer] |= renderer.tesselateInWorld(block, x, y, z);
-                }
-            }
-        }
-        printTime(timeBuilder, "Tessellate", timeStart);
-
         for (int layer = 0; layer < this.meshLayers.length; ++layer) {
-            if (!renderTracker[layer]) {
-                continue;
-            }
-
             for (int texId = 0; texId < ChunkMesh.MAX_TEXTURES; ++texId) {
                 int meshIndex = (layer * ChunkMesh.MAX_TEXTURES) + texId;
-                var renderer = renderers[meshIndex];
-                if (renderer == null) {
-                    continue;
-                }
 
+                var renderer = builder.renderers[meshIndex];
                 var tesselator = (MemoryTesselator) ((ExBlockRenderer) renderer).ac$getTesselator();
                 tesselator.end();
                 if (tesselator.isEmpty()) {
@@ -290,17 +260,18 @@ public abstract class MixinClass_66 implements ExClass_66 {
                     this.meshLayers[layer].add(mesh);
                 }
 
-                printTime(timeBuilder, "  Render with Texture " + texId, timeStart);
+                printTime(builder, "  Mesh with Texture " + texId);
             }
 
             this.empty[layer] = this.meshLayers[layer].isEmpty();
         }
 
-        this.skyLit = LevelChunk.touchedSky; // TODO: move global into Region/TileRenderer
+        this.skyLit = builder.region.touchedSky;
         this.compiled = true;
 
-        if (timeBuilder != null) {
-            ACMod.LOGGER.trace("Chunk at X:{} Y:{} Z:{} - build time: \n{}", this.x, this.y, this.z, timeBuilder);
+        StringBuilder traceBuilder = builder.getTraceBuilder();
+        if (traceBuilder != null) {
+            ACMod.LOGGER.trace("Chunk at X:{} Y:{} Z:{} - build time: \n{}", this.x, this.y, this.z, traceBuilder);
         }
     }
 
