@@ -65,12 +65,7 @@ public class AC_JScriptHandler {
             return;
         }
 
-        try (var executor = new ForkJoinPool(
-            Runtime.getRuntime().availableProcessors(),
-            ForkJoinPool.defaultForkJoinWorkerThreadFactory,
-            null,
-            true)) {
-
+        try (var executor = ACMod.WORLD_IO_EXECUTOR) {
             var cxFactory = ((ExWorld) this.world).getScript().getContext().getFactory();
             var queue = new LinkedBlockingQueue<ScriptLoadTask>();
 
@@ -159,7 +154,7 @@ public class AC_JScriptHandler {
         return this.scriptList;
     }
 
-    private static class ScriptLoadTask extends ForkJoinTask<Void> {
+    private static class ScriptLoadTask implements Runnable {
         public final Path path;
         public final String scriptName;
         public final ContextFactory cxFactory;
@@ -177,16 +172,7 @@ public class AC_JScriptHandler {
         }
 
         @Override
-        public Void getRawResult() {
-            return null;
-        }
-
-        @Override
-        protected void setRawResult(Void value) {
-        }
-
-        @Override
-        protected boolean exec() {
+        public void run() {
             Context cx = Context.getCurrentContext();
             if (cx == null) {
                 //noinspection resource
@@ -204,7 +190,6 @@ public class AC_JScriptHandler {
                 this.queue.put(this);
             } catch (InterruptedException ignored) {
             }
-            return true;
         }
     }
 }

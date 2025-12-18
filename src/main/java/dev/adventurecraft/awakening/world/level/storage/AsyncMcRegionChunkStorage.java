@@ -39,9 +39,20 @@ public class AsyncMcRegionChunkStorage implements AsyncChunkStorage {
         return (Integer.toUnsignedLong(z) << 32) | Integer.toUnsignedLong(x);
     }
 
+    private static int chunkKeyX(long key) {
+        return (int) key;
+    }
+
+    private static int chunkKeyZ(long key) {
+        return (int) (key >>> 32);
+    }
+
     @Override
     public boolean requestAsync(Level level, int x, int z) {
-        var ticket = this.loadQueue.computeIfAbsent(chunkKey(x, z), key -> this.createTicket(level, x, z));
+        var ticket = this.loadQueue.computeIfAbsent(
+            chunkKey(x, z),
+            key -> this.createTicket(level, chunkKeyX(key), chunkKeyZ(key))
+        );
         if (ticket.isDone()) {
             return ticket.resultNow() != null;
         }
@@ -150,7 +161,6 @@ public class AsyncMcRegionChunkStorage implements AsyncChunkStorage {
 
         @Override
         public LevelChunk get() {
-            // TODO: async IO?
             var storage = AsyncMcRegionChunkStorage.this;
             DataInputStream dataInputStream = RegionFileCache.getChunkDataInputStream(storage.basePath, x, z);
             if (dataInputStream == null) {

@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening;
 
+import dev.adventurecraft.awakening.util.CustomForkJoinWorkerThreadFactory;
 import dev.adventurecraft.awakening.util.FabricUtil;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
@@ -11,8 +12,7 @@ import org.spongepowered.include.com.google.gson.*;
 
 import java.io.StringReader;
 import java.util.HashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 public class ACMod implements ModInitializer {
 
@@ -31,7 +31,23 @@ public class ACMod implements ModInitializer {
     public static @Nullable ModContainer MOD_CONTAINER;
     public static @Nullable GitMetadata GIT_META;
 
-    public static ExecutorService WORLD_IO_EXECUTOR = Executors.newWorkStealingPool();
+    public static ExecutorService WORLD_IO_EXECUTOR;
+    public static ExecutorService CHUNK_MESH_EXECUTOR;
+
+    static {
+        int processors = Runtime.getRuntime().availableProcessors();
+        {
+            // IO is expected to do many blocking operations - virtual threads should be optimal for this.
+            ThreadFactory factory = Thread.ofVirtual().name("World-IO-Worker", 0).factory();
+            WORLD_IO_EXECUTOR = Executors.newThreadPerTaskExecutor(factory);
+        }
+        {
+            // Meshing chunks is CPU-bound - hyper-threading is unlikely to help.
+            int parallelism = Math.max(1, processors / 2);
+            var factory = new CustomForkJoinWorkerThreadFactory().name("Chunk-Mesh-Worker", 0);
+            CHUNK_MESH_EXECUTOR = new ForkJoinPool(parallelism, factory, null, true);
+        }
+    }
 
     @Override
     public void onInitialize() {
