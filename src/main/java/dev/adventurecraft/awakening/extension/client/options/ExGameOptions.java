@@ -35,10 +35,6 @@ public interface ExGameOptions {
 
     boolean isOcclusionFancy();
 
-    boolean ofSmoothFps();
-
-    boolean ofSmoothInput();
-
     float ofBrightness();
 
     float ofAoLevel();
@@ -116,8 +112,6 @@ public interface ExGameOptions {
     KeyMapping ofKeyBindZoom();
 
     boolean isGrass3d();
-
-    boolean isAutoFarClip();
 
     int getChatMessageBufferLimit();
 

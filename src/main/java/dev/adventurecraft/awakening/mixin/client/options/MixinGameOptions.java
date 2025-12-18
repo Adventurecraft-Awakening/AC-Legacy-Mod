@@ -74,8 +74,6 @@ public abstract class MixinGameOptions implements ExGameOptions {
     @Unique public boolean ofLoadFar = false;
     @Unique public int ofPreloadedChunks = 0;
     @Unique public boolean ofOcclusionFancy = false;
-    @Unique public boolean ofSmoothFps = false;
-    @Unique public boolean ofSmoothInput = false;
     @Unique public float ofBrightness = 0.0F;
     @Unique public float ofAoLevel = 0.0F;
     @Unique public int ofAaLevel = 0;
@@ -106,7 +104,6 @@ public abstract class MixinGameOptions implements ExGameOptions {
     @Unique public boolean ofAnimatedSmoke = true;
     @Unique public KeyMapping ofKeyBindZoom;
     @Unique public List<KeyMapping> keyBindings;
-    @Unique public boolean autoFarClip = false;
     @Unique public boolean grass3d = true;
     @Unique public int chatMessageBufferLimit = 100;
     @Unique public int particleLimit = 1024 * 4;
@@ -328,14 +325,6 @@ public abstract class MixinGameOptions implements ExGameOptions {
             this.minecraft.levelRenderer.allChanged();
         }
 
-        if (option == OptionOF.SMOOTH_FPS) {
-            this.ofSmoothFps = !this.ofSmoothFps;
-        }
-
-        if (option == OptionOF.SMOOTH_INPUT) {
-            this.ofSmoothInput = !this.ofSmoothInput;
-        }
-
         if (option == OptionOF.CLOUDS) {
             ++this.ofClouds;
             if (this.ofClouds > 3) {
@@ -501,10 +490,6 @@ public abstract class MixinGameOptions implements ExGameOptions {
             this.minecraft.textures.reloadAll();
         }
 
-        if (option == OptionOF.AUTO_FAR_CLIP) {
-            this.autoFarClip = !this.autoFarClip;
-        }
-
         if (option == OptionOF.GRASS_3D) {
             this.grass3d = !this.grass3d;
             this.minecraft.levelRenderer.allChanged();
@@ -543,10 +528,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
         cancellable = true
     )
     private void getBooleanValueOF(Option option, CallbackInfoReturnable<Boolean> cir) {
-        if (option == OptionOF.AUTO_FAR_CLIP) {
-            cir.setReturnValue(this.autoFarClip);
-        }
-        else if (option == OptionOF.GRASS_3D) {
+        if (option == OptionOF.GRASS_3D) {
             cir.setReturnValue(this.grass3d);
         }
         else if (option == OptionOF.ALLOW_JAVA_IN_SCRIPT) {
@@ -630,12 +612,6 @@ public abstract class MixinGameOptions implements ExGameOptions {
                 return prefix + "OFF";
             }
             return prefix + this.ofPreloadedChunks;
-        }
-        else if (option == OptionOF.SMOOTH_FPS) {
-            return this.ofSmoothFps ? prefix + "ON" : prefix + "OFF";
-        }
-        else if (option == OptionOF.SMOOTH_INPUT) {
-            return this.ofSmoothInput ? prefix + "ON" : prefix + "OFF";
         }
         else if (option == OptionOF.CLOUDS) {
             return switch (this.ofClouds) {
@@ -857,8 +833,6 @@ public abstract class MixinGameOptions implements ExGameOptions {
                 }
             }
             case "ofOcclusionFancy" -> this.ofOcclusionFancy = Boolean.parseBoolean(value);
-            case "ofSmoothFps" -> this.ofSmoothFps = Boolean.parseBoolean(value);
-            case "ofSmoothInput" -> this.ofSmoothInput = Boolean.parseBoolean(value);
             case "ofBrightness" -> {
                 this.ofBrightness = Float.parseFloat(value);
                 this.ofBrightness = Config.limit(this.ofBrightness, 0.0F, 1.0F);
@@ -944,7 +918,6 @@ public abstract class MixinGameOptions implements ExGameOptions {
                 this.ofAfLevel = Integer.parseInt(value);
                 this.ofAfLevel = Config.limit(this.ofAfLevel, 1, 16);
             }
-            case "autoFarClip" -> this.autoFarClip = Boolean.parseBoolean(value);
             case "grass3d" -> this.grass3d = Boolean.parseBoolean(value);
             case "chatMessageBufferLimit" -> {
                 this.chatMessageBufferLimit = Integer.parseInt(value);
@@ -975,8 +948,6 @@ public abstract class MixinGameOptions implements ExGameOptions {
         writer.println("ofLoadFar:" + this.ofLoadFar);
         writer.println("ofPreloadedChunks:" + this.ofPreloadedChunks);
         writer.println("ofOcclusionFancy:" + this.ofOcclusionFancy);
-        writer.println("ofSmoothFps:" + this.ofSmoothFps);
-        writer.println("ofSmoothInput:" + this.ofSmoothInput);
         writer.println("ofBrightness:" + this.ofBrightness);
         writer.println("ofAoLevel:" + this.ofAoLevel);
         writer.println("ofClouds:" + this.ofClouds);
@@ -1005,7 +976,6 @@ public abstract class MixinGameOptions implements ExGameOptions {
         writer.println("ofClearWater:" + this.ofClearWater);
         writer.println("ofAaLevel:" + this.ofAaLevel);
         writer.println("ofAfLevel:" + this.ofAfLevel);
-        writer.println("autoFarClip:" + this.autoFarClip);
         writer.println("grass3d:" + this.grass3d);
         writer.println("chatMessageBufferLimit:" + this.chatMessageBufferLimit);
         writer.println("particleLimit:" + this.particleLimit);
@@ -1080,16 +1050,6 @@ public abstract class MixinGameOptions implements ExGameOptions {
             return false;
         }
         return ofOcclusionFancy();
-    }
-
-    @Override
-    public boolean ofSmoothFps() {
-        return ofSmoothFps;
-    }
-
-    @Override
-    public boolean ofSmoothInput() {
-        return ofSmoothInput;
     }
 
     @Override
@@ -1300,11 +1260,6 @@ public abstract class MixinGameOptions implements ExGameOptions {
     @Override
     public boolean isGrass3d() {
         return this.grass3d;
-    }
-
-    @Override
-    public boolean isAutoFarClip() {
-        return this.autoFarClip;
     }
 
     @Override

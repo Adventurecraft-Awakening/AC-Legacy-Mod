@@ -918,20 +918,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
     public float getFarPlane() {
         var options = (ExGameOptions) this.mc.options;
         int range = options.ofChunkRenderDistance() * 16 / 2;
-        float dist = 0.9f * range;
-        if (!options.isAutoFarClip()) {
-            return dist;
-        }
-
-        double avgTime = ((ExMinecraft) this.mc).getFrameTime();
-        if (avgTime > 0.033) {
-            this.farClipAdjustment *= 0.99F;
-        } else if (avgTime < 0.02) {
-            this.farClipAdjustment *= 1.01F;
-        }
-
-        this.farClipAdjustment = MathF.clamp(farClipAdjustment, 0.25F, 1.0F);
-        return dist * this.farClipAdjustment;
+        return 0.9f * range;
     }
 
     @Override

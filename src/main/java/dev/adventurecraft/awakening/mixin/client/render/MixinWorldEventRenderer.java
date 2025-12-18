@@ -272,21 +272,6 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             Arrays.sort(this.sortedChunks, new DistanceChunkSorter(entity));
         }
 
-        if (renderPass == 0) {
-            if (options.ofSmoothFps()) {
-                GL11.glFinish();
-            }
-
-            if (options.ofSmoothInput()) {
-                try {
-                    Thread.sleep(1L);
-                }
-                catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
         if (renderPass != 0 || !this.occlusionCheck || !this.mc.options.advancedOpengl || this.mc.options.anaglyph3d) {
             int chunkCount = this.renderChunks(0, this.sortedChunks.length, renderPass, deltaTime);
             return chunkCount;

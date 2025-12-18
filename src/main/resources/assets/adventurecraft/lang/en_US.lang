@@ -50,10 +50,7 @@ options.of.texture.anisoFilter=Anisotropic Filtering
 options.of.texture.leaves=Leaves
 
 ## Other Settings names
-options.of.other.smoothFPS=Smooth FPS
-options.of.other.smoothInput=Smooth Input
 options.of.other.fastDebugInfo=Fast Debug Info
-options.of.other.adjustFarClip=Auto Far Clip
 
 ## Extra menus
 options.of.textures=Textures...
@@ -109,8 +106,6 @@ options.of.texture.anisoFilter.tooltip="Anisotropic filtering", " OFF - (default
 options.of.texture.leaves.tooltip="Leaves", "  Default - as set by setting Graphics", "  Fast - lower quality, faster", "  Fancy - higher quality, slower", "Fast leaves are opaque.", "Fancy leaves are transparent."
 
 ## Other Settings tooltips
-options.of.other.smoothFPS.tooltip="Stabilizes FPS by flushing the graphic driver buffers", "  OFF - no stabilization, FPS may fluctuate", "  ON - FPS stabilization", "This option is graphic driver dependant and its effect", "is not always visible"
-options.of.other.smoothInput.tooltip="Fixes stuck keys, slow input response and sound lag", "  OFF - no fix for stuck keys", "  ON - fixes stuck keys", "This option adds a small delay (1ms) to the game loop", "which fixes the stuck keys, slow input and sound lag."
 options.of.other.fastDebugInfo.tooltip="Fast Debug Info", " OFF - default debug info screen, slower", " ON - debug info screen without lagometer, faster", "Removes the lagometer from the debug screen (F3)."
 
 command.gamerule.desc=Set global rules for the map
