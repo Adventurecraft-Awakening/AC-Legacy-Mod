@@ -18,7 +18,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 public class AC_JScriptHandler {
@@ -39,17 +38,16 @@ public class AC_JScriptHandler {
         if (this.scriptDir.exists()) {
             try (Stream<Path> stream = Files.walk(this.scriptDir.toPath(), 1)) {
                 return stream.filter(Files::isRegularFile).toArray(Path[]::new);
-            } catch (IOException ex) {
+            }
+            catch (IOException ex) {
                 ACMod.LOGGER.warn("Failed to load scripts.", ex);
             }
         }
-        return new Path[]{};
+        return new Path[] {};
     }
 
     public String[] getFileNames() {
-        return Arrays.stream(this.getFiles())
-            .map(path -> path.getFileName().toString())
-            .toArray(String[]::new);
+        return Arrays.stream(this.getFiles()).map(path -> path.getFileName().toString()).toArray(String[]::new);
     }
 
     public void loadScripts(ProgressListener progressListener) {
@@ -57,34 +55,40 @@ public class AC_JScriptHandler {
         this.scripts.clear();
         this.scriptList.clear();
 
-        if (progressListener != null)
+        if (progressListener != null) {
             progressListener.progressStart("Loading scripts");
+        }
 
         Path[] filePaths = this.getFiles();
         if (filePaths.length == 0) {
             return;
         }
 
-        try (var executor = ACMod.WORLD_IO_EXECUTOR) {
+        try {
             var cxFactory = ((ExWorld) this.world).getScript().getContext().getFactory();
-            var queue = new LinkedBlockingQueue<ScriptLoadTask>();
+            var queue = new ExecutorCompletionService<ScriptLoadTask>(ACMod.WORLD_IO_EXECUTOR);
 
-            var taskCounter = new AtomicInteger();
+            int taskCount = 0;
             for (Path path : filePaths) {
                 String fileName = path.getFileName().toString();
                 String name = fileName.toLowerCase(); // TODO: don't lower-case? (depends on FS)
                 if (!name.endsWith(".js")) {
                     continue;
                 }
-
-                executor.execute(new ScriptLoadTask(path, fileName, cxFactory, queue));
-                taskCounter.incrementAndGet();
+                var task = new ScriptLoadTask(path, fileName, cxFactory);
+                queue.submit(task, task);
+                taskCount++;
             }
 
-            final int taskCount = taskCounter.get();
             int takeCount = 0;
             while (takeCount < taskCount) {
-                ScriptLoadTask task = queue.take();
+                ScriptLoadTask task;
+                try {
+                    task = queue.take().get();
+                }
+                catch (ExecutionException e) {
+                    throw new RuntimeException(e);
+                }
                 takeCount += 1;
 
                 String fileName = task.path.getFileName().toString();
@@ -94,13 +98,15 @@ public class AC_JScriptHandler {
                     var info = new AC_JScriptInfo(fileName, task.result);
                     this.scripts.put(name, info);
                     this.scriptList.add(info);
-                } else if (task.ex != null) {
+                }
+                else if (task.ex != null) {
                     Exception e = task.ex;
 
                     Minecraft.instance.gui.addMessage("JS: " + e.getMessage());
                     if (e instanceof IOException) {
                         ACMod.LOGGER.error("Failed to read script file \"{}\".", fileName, e);
-                    } else if (e instanceof RhinoException) {
+                    }
+                    else if (e instanceof RhinoException) {
                         ACMod.LOGGER.error("Failed to parse script file \"{}\".", fileName, e);
                     }
                 }
@@ -115,9 +121,11 @@ public class AC_JScriptHandler {
                 String stage = String.format("%4d / %4d", taskCount, taskCount);
                 exProgressListener.notifyProgress(stage, 1, true);
             }
-        } catch (InterruptedException e) {
+        }
+        catch (InterruptedException e) {
             throw new RuntimeException(e);
-        } finally {
+        }
+        finally {
             this.scriptList.sort(Comparator.comparing(o -> o.name));
 
             stopwatch.stop();
@@ -145,7 +153,8 @@ public class AC_JScriptHandler {
         long time = System.nanoTime();
         try {
             return ((ExWorld) this.world).getScript().runScript(scriptInfo.compiledScript, scope);
-        } finally {
+        }
+        finally {
             scriptInfo.addTime(System.nanoTime() - time);
         }
     }
@@ -154,21 +163,18 @@ public class AC_JScriptHandler {
         return this.scriptList;
     }
 
-    private static class ScriptLoadTask implements Runnable {
+    private static final class ScriptLoadTask implements Runnable {
         public final Path path;
         public final String scriptName;
         public final ContextFactory cxFactory;
-        public final BlockingQueue<ScriptLoadTask> queue;
 
         public Script result;
         public Exception ex;
 
-        private ScriptLoadTask(
-            Path path, String scriptName, ContextFactory cxFactory, BlockingQueue<ScriptLoadTask> queue) {
+        private ScriptLoadTask(Path path, String scriptName, ContextFactory cxFactory) {
             this.path = path;
             this.scriptName = scriptName;
             this.cxFactory = cxFactory;
-            this.queue = queue;
         }
 
         @Override
@@ -182,13 +188,9 @@ public class AC_JScriptHandler {
             // TODO: update charset to UTF-8 in new maps?
             try (var reader = new FileReader(this.path.toFile(), StandardCharsets.ISO_8859_1)) {
                 this.result = cx.compileReader(reader, this.scriptName, 1, null);
-            } catch (Exception ex) {
-                this.ex = ex;
             }
-
-            try {
-                this.queue.put(this);
-            } catch (InterruptedException ignored) {
+            catch (Exception ex) {
+                this.ex = ex;
             }
         }
     }
