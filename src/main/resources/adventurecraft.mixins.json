@@ -164,6 +164,7 @@
     "world.level.biome.MixinFixedBiomeSource",
     "world.level.chunk.storage.AccessRegionFileCache",
     "world.level.chunk.storage.MixinRegionFile",
+    "world.level.chunk.storage.MixinRegionFileCache",
     "world.level.storage.MixinMcRegionLevelStorageSource",
     "world.level.tile.MixinChestTile",
     "world.level.tile.MixinRedstoneTorchTile",
