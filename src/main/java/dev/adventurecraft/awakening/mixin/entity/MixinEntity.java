@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.mixin.entity;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
+import dev.adventurecraft.awakening.extension.entity.ExEntityRegistry;
 import dev.adventurecraft.awakening.extension.nbt.ExListTag;
 import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
@@ -363,6 +364,11 @@ public abstract class MixinEntity implements ExEntity {
     @Overwrite
     public Vec3 getLookAngle() {
         return this.getRotation(1.0f);
+    }
+
+    @Override
+    public String getClassType() {
+        return ExEntityRegistry.getEntityClassType((Entity) (Object) this);
     }
 
     @Override

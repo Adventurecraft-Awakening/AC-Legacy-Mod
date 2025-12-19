@@ -12,6 +12,7 @@ import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.extension.entity.ExMob;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
+import dev.adventurecraft.awakening.extension.world.entity.EntityClass;
 import dev.adventurecraft.awakening.image.Rgba;
 import dev.adventurecraft.awakening.layout.Border;
 import dev.adventurecraft.awakening.layout.IntRect;
@@ -30,6 +31,7 @@ import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.tile.Tile;
@@ -385,22 +387,23 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
 
             var hit = mc.hitResult;
             if (hit != null) {
-                String type = "";
+                String targetMsg = "";
                 String hitMsg = "";
                 if (hit.hitType == HitType.TILE) {
-                    type = "Block";
                     int id = mc.level.getTile(hit.x, hit.y, hit.z);
                     int meta = mc.level.getData(hit.x, hit.y, hit.z);
                     // TODO: better tile names (BlockState)
                     Tile tile = Tile.tiles[id];
                     String name = tile != null ? tile.getName() : "<noname>";
+
+                    targetMsg = String.format("Target Block: %d %d %d", hit.x, hit.y, hit.z);
                     hitMsg = String.format("%d:%d (%s)", id, meta, name);
                 }
                 else if (hit.hitType == HitType.ENTITY) {
-                    type = "Entity";
-                    hitMsg = hit.entity.toString();
+                    Entity e = hit.entity;
+                    targetMsg = String.format("Target Entity: %.1f %.1f %.1f", e.x, e.y, e.z);
+                    hitMsg = ((EntityClass) e).getClassType() + "#" + Integer.toHexString(e.id);
                 }
-                var targetMsg = String.format("Target %s: %d %d %d", type, hit.x, hit.y, hit.z);
                 textState.drawText(targetMsg, x, y += 10);
                 textState.drawText(hitMsg, x, y += 10);
             }

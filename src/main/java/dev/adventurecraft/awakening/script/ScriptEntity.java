@@ -6,6 +6,7 @@ import dev.adventurecraft.awakening.entity.AC_EntityNPC;
 import dev.adventurecraft.awakening.entity.AC_Particle;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.extension.entity.ExEntityRegistry;
+import dev.adventurecraft.awakening.extension.world.entity.EntityClass;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.FlyingMob;
 import net.minecraft.world.entity.Mob;
@@ -26,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings("unused")
-public class ScriptEntity {
+public class ScriptEntity implements EntityClass {
 
     Entity entity;
 
@@ -258,11 +259,9 @@ public class ScriptEntity {
         return this.entity.hurt(entity.entity, damage);
     }
 
+    @Override
     public String getClassType() {
-        if (this.entity instanceof Player) {
-            return "Player";
-        }
-        return ExEntityRegistry.getEntityStringClimbing(this.entity);
+        return ((EntityClass) this.entity).getClassType();
     }
 
     public boolean getCollidesWithClipBlocks() {
