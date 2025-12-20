@@ -165,6 +165,8 @@
     "world.level.chunk.storage.AccessRegionFileCache",
     "world.level.chunk.storage.MixinRegionFile",
     "world.level.chunk.storage.MixinRegionFileCache",
+    "world.level.levelgen.MixinLargeFeature",
+    "world.level.levelgen.MixinRandomLevelSource$clone",
     "world.level.storage.MixinMcRegionLevelStorageSource",
     "world.level.tile.MixinChestTile",
     "world.level.tile.MixinRedstoneTorchTile",
