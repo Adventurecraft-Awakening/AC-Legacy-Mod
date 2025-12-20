@@ -26,7 +26,7 @@ import java.util.concurrent.Executors;
 public class AC_GuiMapSelect extends Screen {
 
     // TODO: make executor static for loading textures in any Screen?
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private static final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
     protected Screen parent;
     private String saveName;
@@ -60,8 +60,6 @@ public class AC_GuiMapSelect extends Screen {
     @Override
     public void removed() {
         super.removed();
-
-        this.executor.shutdownNow();
 
         for (AC_MapInfo info : this.listWidget.maps) {
             info.releaseTexture(this.minecraft.textures);
