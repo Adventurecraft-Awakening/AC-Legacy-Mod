@@ -1240,7 +1240,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource, AC_LevelSource
 
             final int maxUpdates = 1000000;
             if (this.lightUpdates.size() > maxUpdates) {
-                System.out.println("More than " + maxUpdates + " updates, aborting lighting updates");
+                ACMod.LOGGER.warn("More than " + maxUpdates + " updates, aborting lighting updates");
                 this.lightUpdates.clear();
             }
         }

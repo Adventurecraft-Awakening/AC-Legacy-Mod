@@ -24,7 +24,6 @@ import dev.adventurecraft.awakening.layout.IntRect;
 import dev.adventurecraft.awakening.script.ScriptModelBase;
 import dev.adventurecraft.awakening.util.GLUtil;
 import dev.adventurecraft.awakening.util.MathF;
-import dev.adventurecraft.awakening.world.level.storage.AsyncChunkSource;
 import it.unimi.dsi.fastutil.ints.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
@@ -148,14 +147,17 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         var options = (ExGameOptions) this.mc.options;
         Tile.LEAVES.setFancy(options.isLeavesFancy());
 
-        ((ExChunkCache) this.level.chunkSource).resize();
-
         this.lastViewDistance = this.mc.options.viewDistance;
         if (this.chunks != null) {
             for (Chunk viz : this.chunks) {
                 viz.delete();
             }
         }
+
+        if (this.level == null) {
+            return;
+        }
+        ((ExChunkCache) this.level.chunkSource).resize();
 
         int renderDist = options.ofChunkRenderDistance();
 
@@ -233,6 +235,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     public int render(Mob entity, int renderPass, double deltaTime) {
         var options = (ExGameOptions) this.mc.options;
         if (this.mc.options.viewDistance != this.lastViewDistance && !options.ofLoadFar()) {
+            // TODO: don't delete all meshes when only viewdist changes
             this.allChanged();
         }
 
@@ -831,7 +834,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             }
         }
 
-        if (this.level.chunkSource instanceof AsyncChunkSource asyncSource) {
+        if (this.level.chunkSource instanceof ExChunkCache cache) {
             int cx0 = x0 >> 4;
             int cz0 = z0 >> 4;
             int cx1 = x1 >> 4;
@@ -839,7 +842,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             // TODO: request chunks individually?
             //       this is currently high overhead when chunks are far apart since bounds cover massive area.
             //       could use quadtree to collect adjacent chunks.
-            asyncSource.ac$requestChunks(cx0, cz0, cx1, cz1, false);
+            cache.ac$requestChunks(cx0, cz0, cx1, cz1, false);
         }
 
         // TODO: abort previous completion if it exists (add version field?)

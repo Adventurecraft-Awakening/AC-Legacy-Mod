@@ -32,9 +32,12 @@ public class ACMod implements ModInitializer {
     public static @Nullable GitMetadata GIT_META;
 
     public static ExecutorService WORLD_IO_EXECUTOR;
+    public static ExecutorService WORLD_GEN_EXECUTOR;
     public static ExecutorService CHUNK_MESH_EXECUTOR;
 
     static {
+        // Over-allocating threads should be fine since single-player has to wait
+        // for tasks to finish no matter what, so going at max speed should be optimal.
         int processors = Math.max(1, Runtime.getRuntime().availableProcessors());
         {
             // IO is expected to do many blocking operations - virtual threads should be optimal for this.
@@ -43,8 +46,14 @@ public class ACMod implements ModInitializer {
         }
         {
             var factory = new CustomForkJoinWorkerThreadFactory()
+                .name("World-Gen-Worker", 0)
+                .priority(ACMainThread.WORKER_PRIORITY - 1);
+            WORLD_GEN_EXECUTOR = new ForkJoinPool(processors, factory, null, true);
+        }
+        {
+            var factory = new CustomForkJoinWorkerThreadFactory()
                 .name("Chunk-Mesh-Worker", 0)
-                .priority(ACMainThread.WORKER_PRIORITY);
+                .priority(ACMainThread.WORKER_PRIORITY + 1);
             CHUNK_MESH_EXECUTOR = new ForkJoinPool(processors, factory, null, true);
         }
     }

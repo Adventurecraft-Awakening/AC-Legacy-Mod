@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.world.level.storage;
 
 import dev.adventurecraft.awakening.extension.world.level.chunk.storage.ExRegionFileCache;
+import dev.adventurecraft.awakening.primitives.ChunkCoord;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.nbt.CompoundTag;
@@ -28,46 +29,22 @@ public class AsyncMcRegionChunkStorage implements AsyncChunkStorage {
 
     private final ReadWriteLock saveQueueLock = new ReentrantReadWriteLock();
     private final Long2ObjectMap<CompletableFuture<Void>> saveQueue = new Long2ObjectOpenHashMap<>();
-    private final Long2ObjectMap<CompletableFuture<LevelChunk>> loadQueue = new Long2ObjectOpenHashMap<>();
 
     public AsyncMcRegionChunkStorage(ExecutorService executor, File path) {
         this.executor = executor;
         this.basePath = path;
     }
 
-    private static long chunkKey(int x, int z) {
-        return (Integer.toUnsignedLong(z) << 32) | Integer.toUnsignedLong(x);
-    }
-
-    private static int chunkKeyX(long key) {
-        return (int) key;
-    }
-
-    private static int chunkKeyZ(long key) {
-        return (int) (key >>> 32);
-    }
-
     @Override
-    public boolean requestAsync(Level level, int x, int z) {
-        var ticket = this.loadQueue.computeIfAbsent(
-            chunkKey(x, z),
-            key -> this.createTicket(level, chunkKeyX(key), chunkKeyZ(key))
-        );
-        if (ticket.isDone()) {
-            return ticket.resultNow() != null;
-        }
-        return false;
-    }
-
-    private CompletableFuture<LevelChunk> createTicket(Level level, int x, int z) {
+    public CompletionStage<LevelChunk> loadAsync(Level level, int x, int z) {
         var loader = new LevelChunkLoader(level, x, z);
         var saveFuture = this.getSaveFuture(x, z);
         if (saveFuture != null) {
-            return saveFuture.thenCompose(v -> {
+            return saveFuture.thenCompose(_ -> {
                 if (!loader.hasChunk()) {
                     return NULL_CHUNK_FUTURE;
                 }
-                // TODO: rehydrate saved chunk instead of loading from disk
+                // TODO: rehydrate saved chunk instead of loading from disk?
                 return CompletableFuture.supplyAsync(loader, this.executor);
             });
         }
@@ -79,26 +56,16 @@ public class AsyncMcRegionChunkStorage implements AsyncChunkStorage {
 
     @Override
     public LevelChunk load(Level level, int x, int z) {
-        var ticket = this.loadQueue.remove(chunkKey(x, z));
-        try {
-            if (ticket != null) {
-                return ticket.toCompletableFuture().get();
-            }
-
-            var saveFuture = this.getSaveFuture(x, z);
-            if (saveFuture != null) {
-                saveFuture.get();
-            }
-        }
-        catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
+        var saveFuture = this.getSaveFuture(x, z);
+        if (saveFuture != null) {
+            saveFuture.join();
         }
         return new LevelChunkLoader(level, x, z).get();
     }
 
     private @Nullable CompletableFuture<Void> getSaveFuture(int x, int z) {
         this.saveQueueLock.readLock().lock();
-        CompletableFuture<Void> saveFuture = this.saveQueue.get(chunkKey(x, z));
+        CompletableFuture<Void> saveFuture = this.saveQueue.get(ChunkCoord.pack(x, z));
         this.saveQueueLock.readLock().unlock();
         return saveFuture;
     }
@@ -107,7 +74,7 @@ public class AsyncMcRegionChunkStorage implements AsyncChunkStorage {
         var saver = new LevelChunkSaver(level, chunk);
         this.saveQueueLock.writeLock().lock();
         this.saveQueue.compute(
-            chunkKey(chunk.x, chunk.z), (key, entry) -> {
+            ChunkCoord.pack(chunk.x, chunk.z), (key, entry) -> {
                 if (entry != null) {
                     return entry.thenRunAsync(saver, this.executor);
                 }
@@ -124,12 +91,13 @@ public class AsyncMcRegionChunkStorage implements AsyncChunkStorage {
     }
 
     public void flush() {
-        try {
-            this.executor.wait();
-        }
-        catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        // TODO: flush saveQueue here?
+        //       could be problematic to write-lock here in case chunks are requested to save
+
+        this.saveQueueLock.writeLock().lock();
+        this.saveQueue.values().forEach(CompletableFuture::join);
+        this.saveQueue.clear();
+        this.saveQueueLock.writeLock().unlock();
     }
 
     private class LevelChunkLoader implements Supplier<LevelChunk> {
@@ -224,7 +192,7 @@ public class AsyncMcRegionChunkStorage implements AsyncChunkStorage {
             }
             finally {
                 storage.saveQueueLock.writeLock().lock();
-                storage.saveQueue.remove(chunkKey(chunk.x, chunk.z));
+                storage.saveQueue.remove(ChunkCoord.pack(chunk.x, chunk.z));
                 storage.saveQueueLock.writeLock().unlock();
             }
         }

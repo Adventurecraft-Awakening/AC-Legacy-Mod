@@ -26,12 +26,12 @@ import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import dev.adventurecraft.awakening.extension.util.ExProgressListener;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
+import dev.adventurecraft.awakening.extension.world.chunk.ExChunkCache;
 import dev.adventurecraft.awakening.item.AC_ILeftClickItem;
 import dev.adventurecraft.awakening.item.AC_IUseDelayItem;
 import dev.adventurecraft.awakening.script.*;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.util.MathF;
-import dev.adventurecraft.awakening.world.level.storage.AsyncChunkSource;
 import net.fabricmc.loader.impl.util.Arguments;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Option;
@@ -90,6 +90,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.io.*;
 import java.net.URL;
 import java.util.Arrays;
+
+// TODO: clear RegionFileCache on world exit to not keep file handles alive
 
 @Mixin(Minecraft.class)
 public abstract class MixinMinecraft implements ExMinecraft {
@@ -1253,9 +1255,9 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
         for (int x = -n; x < n; x++) {
             // Update in parts, even with async, to not accumulate too many light updates.
-            if (this.level.chunkSource instanceof AsyncChunkSource asyncSource) {
+            if (this.level.chunkSource instanceof ExChunkCache cache) {
                 this.ac$reportPrepareProgress(count, max);
-                asyncSource.ac$requestChunks(cx + x, cz - n, cx + x, cz + n - 1, true);
+                cache.ac$requestChunks(cx + x, cz - n, cx + x, cz + n - 1, true);
 
                 //noinspection StatementWithEmptyBody
                 while (this.level.updateLights()) {

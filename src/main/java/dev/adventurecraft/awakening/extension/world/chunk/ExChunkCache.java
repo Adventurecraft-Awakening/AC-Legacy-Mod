@@ -6,9 +6,11 @@ import net.minecraft.world.level.chunk.storage.ChunkStorage;
 
 public interface ExChunkCache {
 
-    void init(Level var1, ChunkStorage var2, ChunkSource var3);
+    void init(Level level, ChunkStorage storage, ChunkSource source);
 
     int getCapacity();
 
     void resize();
+
+    void ac$requestChunks(int x0, int z0, int x1, int z1, boolean wait);
 }

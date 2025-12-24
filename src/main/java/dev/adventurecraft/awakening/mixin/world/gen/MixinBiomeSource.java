@@ -294,6 +294,8 @@ public abstract class MixinBiomeSource implements ExBiomeSource {
 
     @Override
     public BiomeSource copy() {
+        // Alloc empty instance to avoid expensive constructor,
+        // and since the empty but protected constructor is annoying to access.
         var source = UnsafeUtil.allocateInstance(BiomeSource.class);
         ((ExBiomeSource) source).doInit(this.level, this.temperatureMap, this.downfallMap, this.noiseMap);
         return source;

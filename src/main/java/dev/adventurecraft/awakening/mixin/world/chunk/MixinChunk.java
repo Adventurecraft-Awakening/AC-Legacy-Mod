@@ -2,10 +2,10 @@ package dev.adventurecraft.awakening.mixin.world.chunk;
 
 import com.llamalad7.mixinextras.injector.WrapWithCondition;
 import com.llamalad7.mixinextras.sugar.Local;
+import dev.adventurecraft.awakening.ACMainThread;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.AC_BlockEditAction;
 import dev.adventurecraft.awakening.common.AC_UndoStack;
-import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.entity.ExBlockEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
@@ -17,6 +17,7 @@ import dev.adventurecraft.awakening.util.BufferUtil;
 import dev.adventurecraft.awakening.util.NibbleBuffer;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import net.minecraft.world.level.LightUpdate;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -24,6 +25,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import net.minecraft.nbt.CompoundTag;
@@ -55,8 +58,11 @@ public abstract class MixinChunk implements ExChunk {
 
     @Unique public short[] temperatures;
     @Unique public long lastUpdated;
+
     @Unique private int lightHash;
     @Unique private int acVersion;
+
+    @Unique private List<LightUpdate> worldGenLight = new ArrayList<>();
 
     @Shadow
     protected abstract void lightGaps(int x, int z);
@@ -87,9 +93,22 @@ public abstract class MixinChunk implements ExChunk {
     )
     private void doPostLoad(CallbackInfo ci) {
         if (this.getAcVersion() == ExWorldProperties.AC_VERSION_0) {
-            Coord min = new Coord(this.x << 4, 0, this.z << 4);
-            Coord max = min.add(16, 128, 16);
-            AC_Blocks.upgradeDoorMetadata(this.level, min, max);
+            this.upgradeFromVersion0();
+        }
+
+        this.worldGenLight.forEach(u -> this.level.updateLight(u.type, u.x0, u.y0, u.z0, u.x1, u.y1, u.z1));
+        this.worldGenLight = null;
+    }
+
+    @Unique
+    private void upgradeFromVersion0() {
+        for (int x = 0; x < 16; x++) {
+            for (int z = 0; z < 16; z++) {
+                for (int y = 0; y < 16; y++) {
+                    int id = this.getTile(x, y, z);
+                    AC_Blocks.upgradeDoorMetadataTile(this.level, x, y, z, id);
+                }
+            }
         }
     }
 
@@ -105,6 +124,36 @@ public abstract class MixinChunk implements ExChunk {
         // TODO: Maybe mark unsaved, at least in some situations?
         //       Would be needed if we want to avoid light updates on load.
         //       Could be good for [player] saves that are not in Editing mode...
+    }
+
+    @Redirect(
+        method = {"lightGap", "recalcHeight"},
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/level/Level;updateLight(Lnet/minecraft/world/level/LightLayer;IIIIII)V"
+        )
+    )
+    private void loadAwareUpdateLight(Level instance, LightLayer type, int x0, int y0, int z0, int x1, int y1, int z1) {
+        if (this.loaded) {
+            if (Thread.currentThread() != ACMainThread.MAIN_THREAD) {
+                throw new AssertionError();
+            }
+            instance.updateLight(type, x0, y0, z0, x1, y1, z1);
+        }
+        else {
+            this.recordLightUpdate(type, x0, y0, z0, x1, y1, z1);
+        }
+    }
+
+    @Unique
+    private void recordLightUpdate(LightLayer type, int x0, int y0, int z0, int x1, int y1, int z1) {
+        if (!this.worldGenLight.isEmpty()) {
+            LightUpdate update = this.worldGenLight.getLast();
+            if (update.type == type && update.expandToContain(x0, y0, z0, x1, y1, z1)) {
+                return;
+            }
+        }
+        this.worldGenLight.add(new LightUpdate(type, x0, y0, z0, x1, y1, z1));
     }
 
     @Overwrite
@@ -145,8 +194,8 @@ public abstract class MixinChunk implements ExChunk {
         else if (y == height - 1) {
             this.recalcHeight(x, y, z);
         }
-        this.level.updateLight(LightLayer.SKY, bX, y, bZ, bX, y, bZ);
-        this.level.updateLight(LightLayer.BLOCK, bX, y, bZ, bX, y, bZ);
+        this.loadAwareUpdateLight(this.level, LightLayer.SKY, bX, y, bZ, bX, y, bZ);
+        this.loadAwareUpdateLight(this.level, LightLayer.BLOCK, bX, y, bZ, bX, y, bZ);
         this.lightGaps(x, z);
 
         if (id != 0 && !this.level.isClientSide) {

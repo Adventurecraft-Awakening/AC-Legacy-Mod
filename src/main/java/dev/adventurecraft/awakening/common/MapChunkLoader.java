@@ -5,6 +5,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.storage.ChunkStorage;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+
 public class MapChunkLoader implements AsyncChunkStorage {
 
     private final ChunkStorage mapRegion;
@@ -33,15 +36,20 @@ public class MapChunkLoader implements AsyncChunkStorage {
     }
 
     @Override
-    public boolean requestAsync(Level level, int x, int z) {
-        return this.requestAsync(this.saveRegion, level, x, z) || this.requestAsync(this.mapRegion, level, x, z);
+    public CompletionStage<LevelChunk> loadAsync(Level level, int x, int z) {
+        return this.loadStage(this.saveRegion, level, x, z).thenCompose(chunk -> {
+            if (chunk != null) {
+                return CompletableFuture.completedFuture(chunk);
+            }
+            return this.loadStage(this.mapRegion, level, x, z);
+        });
     }
 
-    private boolean requestAsync(ChunkStorage storage, Level level, int x, int z) {
+    private CompletionStage<LevelChunk> loadStage(ChunkStorage storage, Level level, int x, int z) {
         if (storage instanceof AsyncChunkStorage asyncStorage) {
-            return asyncStorage.requestAsync(level, x, z);
+            return asyncStorage.loadAsync(level, x, z);
         }
-        return false;
+        return CompletableFuture.completedFuture(storage.load(level, x, z));
     }
 
     public void saveEntities(Level var1, LevelChunk var2) {

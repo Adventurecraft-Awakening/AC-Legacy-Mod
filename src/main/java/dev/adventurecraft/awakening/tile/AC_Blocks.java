@@ -1,6 +1,5 @@
 package dev.adventurecraft.awakening.tile;
 
-import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.item.AC_ItemSubtypes;
 import dev.adventurecraft.awakening.item.AC_Items;
@@ -102,16 +101,9 @@ public class AC_Blocks {
         }
     }
 
-    public static void upgradeDoorMetadata(Level level, Coord min, Coord max) {
-        for (int x = min.x; x < max.x; x++) {
-            for (int z = min.z; z < max.z; z++) {
-                for (int y = min.y; y < max.y; y++) {
-                    int id = level.getTile(x, y, z);
-                    if (id == AC_Blocks.lockedDoor.id || id == AC_Blocks.lockedBossDoor.id) {
-                        ((ExWorld) level).ac$addToTickNextTick(x, y, z, id, 0, 0);
-                    }
-                }
-            }
+    public static void upgradeDoorMetadataTile(Level level, int x, int y, int z, int id) {
+        if (id == AC_Blocks.lockedDoor.id || id == AC_Blocks.lockedBossDoor.id) {
+            ((ExWorld) level).ac$addToTickNextTick(x, y, z, id, 0, 0);
         }
     }
 
