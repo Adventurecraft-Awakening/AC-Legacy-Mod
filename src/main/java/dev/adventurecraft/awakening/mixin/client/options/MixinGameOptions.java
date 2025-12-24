@@ -8,6 +8,7 @@ import dev.adventurecraft.awakening.client.options.OptionOF;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.render.ExWorldEventRenderer;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
+import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Option;
@@ -38,12 +39,13 @@ import java.util.List;
 @Mixin(Options.class)
 public abstract class MixinGameOptions implements ExGameOptions {
 
+    @Unique private static final int MIN_CHUNK_RENDER_DISTANCE = 2;
+    @Unique private static final int MAX_CHUNK_RENDER_DISTANCE = 124;
     @Unique private static final int MAX_CHUNK_SIMULATION_DISTANCE = 9;
 
     @Unique private static final int MAX_CHAT_BUFFER_LIMIT = 10000;
     @Unique private static final int MAX_PARTICLE_LIMIT = 1024 * 32;
 
-    @Final @Shadow private static String[] RENDER_DISTANCES;
     @Final @Shadow private static String[] DIFFICULTIES;
     @Final @Shadow private static String[] GUI_SCALES;
     @Final @Shadow private static String[] PERFORMANCE_OPTIONS;
@@ -166,13 +168,16 @@ public abstract class MixinGameOptions implements ExGameOptions {
             this.minecraft.levelRenderer.allChanged();
         }
         else if (option == OptionOF.CHAT_MESSAGE_BUFFER_LIMIT) {
-            this.chatMessageBufferLimit = (int) (value * (MAX_CHAT_BUFFER_LIMIT - 1)) + 1;
+            this.chatMessageBufferLimit = (int) MathF.lerp(value, 1, MAX_CHAT_BUFFER_LIMIT);
         }
         else if (option == OptionOF.PARTICLE_LIMIT) {
             this.particleLimit = (int) (value * MAX_PARTICLE_LIMIT);
         }
         else if (option == OptionOF.CHAT_WIDTH) {
             this.chatWidth = value;
+        }
+        else if (option == OptionOF.CHUNK_RENDER_DISTANCE) {
+            this.viewDistance = (int) MathF.lerp(value, MIN_CHUNK_RENDER_DISTANCE, MAX_CHUNK_RENDER_DISTANCE);
         }
     }
 
@@ -504,13 +509,20 @@ public abstract class MixinGameOptions implements ExGameOptions {
             cir.setReturnValue(this.ofAoLevel);
         }
         else if (option == OptionOF.CHAT_MESSAGE_BUFFER_LIMIT) {
-            cir.setReturnValue((float) ((double) this.chatMessageBufferLimit / (MAX_CHAT_BUFFER_LIMIT - 1)));
+            cir.setReturnValue((float) MathF.inverseLerp(this.chatMessageBufferLimit, 1, MAX_CHAT_BUFFER_LIMIT));
         }
         else if (option == OptionOF.PARTICLE_LIMIT) {
             cir.setReturnValue((float) ((double) this.particleLimit / MAX_PARTICLE_LIMIT));
         }
         else if (option == OptionOF.CHAT_WIDTH) {
             cir.setReturnValue(this.chatWidth);
+        }
+        else if (option == OptionOF.CHUNK_RENDER_DISTANCE) {
+            cir.setReturnValue((float) MathF.inverseLerp(
+                this.viewDistance,
+                MIN_CHUNK_RENDER_DISTANCE,
+                MAX_CHUNK_RENDER_DISTANCE
+            ));
         }
     }
 
@@ -540,7 +552,10 @@ public abstract class MixinGameOptions implements ExGameOptions {
         if (option.isProgress()) {
             float value = this.getProgressValue(option);
             if (option == OptionOF.CHAT_MESSAGE_BUFFER_LIMIT) {
-                return prefix + (int) (value * (double) (MAX_CHAT_BUFFER_LIMIT - 1));
+                return prefix + (int) MathF.lerp(value, 1, MAX_CHAT_BUFFER_LIMIT);
+            }
+            else if (option == OptionOF.CHUNK_RENDER_DISTANCE) {
+                return prefix + this.viewDistance;
             }
             if (option == Option.SENSITIVITY) {
                 if (value == 0.0F) {
@@ -568,9 +583,6 @@ public abstract class MixinGameOptions implements ExGameOptions {
                 return prefix + ts.get("options.on");
             }
             return prefix + ts.get("options.off");
-        }
-        else if (option == Option.RENDER_DISTANCE) {
-            return prefix + ts.get(RENDER_DISTANCES[this.viewDistance]);
         }
         else if (option == Option.DIFFICULTY) {
             return prefix + ts.get(DIFFICULTIES[this.difficulty]);
@@ -999,8 +1011,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
 
     @Override
     public int ofChunkRenderDistance() {
-        int renderDist = 64 << (3 - this.viewDistance);
-        return (renderDist / 16) + this.ofPreloadedChunks();
+        return Math.max(1, this.viewDistance) + this.ofPreloadedChunks();
     }
 
     @Override

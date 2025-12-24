@@ -345,6 +345,9 @@ public abstract class MixinTextureManager implements ExTextureManager {
         final int format = GL11.GL_RGBA;
         final int type = GL11.GL_UNSIGNED_BYTE;
 
+        // TODO: holy moly the atlas is the wrong size
+        var info = new GLTextureInfo(target, "tmp", GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D));
+
         int levelOffset = ImageMipmapper.getPixelOffset(rect.w, rect.h, minLevel);
 
         for (int level = minLevel; level <= maxLevel; ++level) {

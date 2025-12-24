@@ -39,6 +39,8 @@ public final class OptionOF {
     public static final Option AA_LEVEL = ClassTinkerers.getEnum(Option.class, "AA_LEVEL");
     public static final Option AF_LEVEL = ClassTinkerers.getEnum(Option.class, "AF_LEVEL");
 
+    public static final Option CHUNK_RENDER_DISTANCE = ClassTinkerers.getEnum(Option.class, "CHUNK_RENDER_DISTANCE");
+
     public static final Option GRASS_3D = ClassTinkerers.getEnum(Option.class, "GRASS_3D");
     public static final Option PARTICLE_LIMIT = ClassTinkerers.getEnum(Option.class, "PARTICLE_LIMIT");
     public static final Option CHAT_MESSAGE_BUFFER_LIMIT = ClassTinkerers.getEnum(Option.class, "CHAT_MESSAGE_BUFFER_LIMIT");

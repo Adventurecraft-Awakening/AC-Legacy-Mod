@@ -3,7 +3,7 @@ mapList.title=Select a Map to Play
 mapList.newMap=New Map
 
 ## Video Settings names
-options.renderDistance.veryFar=Very Far
+options.renderDistance=Chunk Render Distance
 options.of.brightness=Brightness
 options.of.msaa=Anti-aliasing
 
@@ -63,7 +63,7 @@ options.of.otherTitle=Other Settings
 
 ## Video Settings tooltips
 options.graphics.tooltip="Visual quality", "  Fast  - lower quality, faster", "  Fancy - higher quality, slower", "Changes the appearance of clouds, leaves, water,", "shadows and grass sides."
-options.renderDistance.tooltip="Visible distance", "  Far - 256m (slower)", "  Normal - 128m", "  Short - 64m (faster)", "  Tiny - 32m (fastest)"
+options.renderDistance.tooltip="Visible distance in chunks", "  Min (32 blocks) - fastest", "  Max (1984 blocks) - very memory intensive!"
 options.ao.tooltip="Smooth lighting", "  OFF - no smooth lighting (faster)", "  1% - light smooth lighting (slower)", "  100% - dark smooth lighting (slower)"
 options.framerateLimit.tooltip="FPS Limit", "  Max FPS - no limit (fastest)", "  Balanced - limit 120 FPS (slower)", "  Power saver - limit 40 FPS (slowest)", "  VSync - limit to monitor framerate (60, 30, 20)", "Balanced and Power saver decrease the FPS even if", "the limit value is not reached."
 options.anaglyph.tooltip="3D mode used with red-cyan 3D glasses."

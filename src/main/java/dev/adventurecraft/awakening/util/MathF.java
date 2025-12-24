@@ -63,6 +63,10 @@ public final class MathF {
         return (1.0 - amount) * start + amount * end;
     }
 
+    public static double inverseLerp(double amount, double start, double end) {
+        return (amount - start) / (end - start);
+    }
+
     public static double round(double value, int decimals) {
         return Math.round(value * decimals) / (double) decimals;
     }

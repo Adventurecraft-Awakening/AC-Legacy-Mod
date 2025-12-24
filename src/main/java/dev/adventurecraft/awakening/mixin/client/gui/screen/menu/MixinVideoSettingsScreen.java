@@ -18,37 +18,34 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(value = VideoSettingsScreen.class, priority = 999)
+@Mixin(
+    value = VideoSettingsScreen.class,
+    priority = 999
+)
 public abstract class MixinVideoSettingsScreen extends Screen implements OptionTooltipProvider {
 
-    @Shadow
-    private Screen lastScreen;
-    @Shadow
-    protected String title;
-    @Shadow
-    private Options config;
-    @Shadow
-    private static Option[] OPTIONS;
+    @Shadow private Screen lastScreen;
+    @Shadow protected String title;
+    @Shadow private Options config;
+    @Shadow private static Option[] OPTIONS;
 
-    @Unique
-    private static final String[] extraOptions = {
-        "options.of.textures",
-        "options.of.details",
-        "options.of.other"
+    @Unique private static final String[] extraOptions = {
+        "options.of.textures", "options.of.details", "options.of.other"
     };
 
-    private int lastMouseX = 0;
-    private int lastMouseY = 0;
-    private long mouseStillTime = 0L;
+    @Unique private int lastMouseX = 0;
+    @Unique private int lastMouseY = 0;
+    @Unique private long mouseStillTime = 0L;
 
-    @Inject(method = "<clinit>", at = @At(value = "TAIL"))
+    @Inject(
+        method = "<clinit>",
+        at = @At(value = "TAIL")
+    )
     private static void init_rewriteOptions(CallbackInfo ci) {
-        OPTIONS = new Option[]{
-            Option.GRAPHICS, Option.RENDER_DISTANCE,
-            OptionOF.AO_LEVEL, Option.FRAMERATE_LIMIT,
-            Option.ANAGLYPH, Option.VIEW_BOBBING,
-            Option.GUI_SCALE, Option.ADVANCED_OPENGL,
-            OptionOF.AA_LEVEL, OptionOF.BRIGHTNESS};
+        OPTIONS = new Option[] {
+            Option.GRAPHICS, OptionOF.CHUNK_RENDER_DISTANCE, OptionOF.AO_LEVEL, Option.FRAMERATE_LIMIT, Option.ANAGLYPH,
+            Option.VIEW_BOBBING, Option.GUI_SCALE, Option.ADVANCED_OPENGL, OptionOF.AA_LEVEL, OptionOF.BRIGHTNESS
+        };
     }
 
     @Override
@@ -68,7 +65,8 @@ public abstract class MixinVideoSettingsScreen extends Screen implements OptionT
 
             if (!option.isProgress()) {
                 this.buttons.add(new OptionButton(id, x, y, option, text));
-            } else {
+            }
+            else {
                 this.buttons.add(new SliderButton(id, x, y, option, text, this.config.getProgressValue(option)));
             }
 
@@ -120,7 +118,9 @@ public abstract class MixinVideoSettingsScreen extends Screen implements OptionT
             this.minecraft.setScreen(var7);
         }
 
-        if (button.id != OptionOF.BRIGHTNESS.ordinal() && button.id != OptionOF.AO_LEVEL.ordinal()) {
+        // TODO: rewrite this to not need manually adding checks - maybe check Option.isProgress?
+        if (button.id != OptionOF.BRIGHTNESS.ordinal() && button.id != OptionOF.CHUNK_RENDER_DISTANCE.ordinal() &&
+            button.id != OptionOF.AO_LEVEL.ordinal()) {
             var var8 = new ScreenSizeCalculator(this.minecraft.options, this.minecraft.width, this.minecraft.height);
             int var3 = var8.getWidth();
             int var4 = var8.getHeight();
@@ -135,8 +135,7 @@ public abstract class MixinVideoSettingsScreen extends Screen implements OptionT
 
         super.render(mouseX, mouseY, var3);
 
-        if (Math.abs(mouseX - this.lastMouseX) > 5 ||
-            Math.abs(mouseY - this.lastMouseY) > 5) {
+        if (Math.abs(mouseX - this.lastMouseX) > 5 || Math.abs(mouseY - this.lastMouseY) > 5) {
             this.lastMouseX = mouseX;
             this.lastMouseY = mouseY;
             this.mouseStillTime = System.currentTimeMillis();

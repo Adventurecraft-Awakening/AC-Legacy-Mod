@@ -57,6 +57,8 @@ public class EnumInitializer implements Runnable {
         addOptionEnum(type, "CLEAR_WATER", "options.of.detail.clearWater");
         addOptionEnum(type, "AA_LEVEL", "options.of.msaa");
         addOptionEnum(type, "AF_LEVEL", "options.of.texture.anisoFilter");
+
+        addOptionEnum(type, "CHUNK_RENDER_DISTANCE", "options.renderDistance", true, false);
     }
 
     private static void addOptionEnum(String type, String name, String translationKey, boolean slider, boolean toggle) {
