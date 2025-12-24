@@ -15,7 +15,7 @@ public class GuiWorldSettingsOF extends GuiBaseSettingsOF {
     public Option[] getOptions() {
         return new Option[]{
             OptionOF.LOAD_FAR, OptionOF.PRELOADED_CHUNKS,
-            OptionOF.CHUNK_UPDATES, OptionOF.CHUNK_UPDATES_DYNAMIC,
+            OptionOF.CHUNK_UPDATES_DYNAMIC,
             OptionOF.AUTOSAVE_TICKS, OptionOF.TIME,
             OptionOF.WEATHER,
             OptionOF.CHAT_MESSAGE_BUFFER_LIMIT,
