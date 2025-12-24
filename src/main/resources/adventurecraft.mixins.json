@@ -161,6 +161,7 @@
     "world.chunk.MixinServerChunkCache",
     "world.entity.MixinSynchedEntityData",
     "world.gen.MixinBiomeSource",
+    "world.level.MixinLightUpdate",
     "world.level.biome.MixinFixedBiomeSource",
     "world.level.chunk.storage.AccessRegionFileCache",
     "world.level.chunk.storage.MixinRegionFile",
