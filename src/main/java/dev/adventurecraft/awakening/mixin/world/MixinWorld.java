@@ -33,10 +33,7 @@ import dev.adventurecraft.awakening.script.Script;
 import dev.adventurecraft.awakening.script.ScriptModel;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityNpcPath;
-import dev.adventurecraft.awakening.util.MathF;
-import dev.adventurecraft.awakening.util.NibbleBuffer;
-import dev.adventurecraft.awakening.util.RandomUtil;
-import dev.adventurecraft.awakening.util.UnsafeUtil;
+import dev.adventurecraft.awakening.util.*;
 import dev.adventurecraft.awakening.world.AC_LevelSource;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -663,33 +660,22 @@ public abstract class MixinWorld implements ExWorld, LevelSource, AC_LevelSource
 
     @Override
     public float getLightValue(int x, int y, int z) {
-        float level = this.getLightLevel(x, y, z);
-        float torch = AC_PlayerTorch.getTorchLight((Level) (Object) this, x, y, z);
-        return Math.max(level, Math.min(torch, 15.0F));
-    }
-
-    private float getBrightnessLevel(float value) {
-        float[] ramp = this.dimension.brightnessRamp;
-        int low = (int) Math.floor(value);
-        if (low == value) {
-            return ramp[low];
-        }
-        int high = (int) Math.ceil(value);
-        float delta = value - low;
-        return MathF.lerp(delta, ramp[low], ramp[high]);
+        int raw = this.getLightLevel(x, y, z);
+        float torch = AC_PlayerTorch.getTorchLight(x, y, z);
+        return Math.max(raw, Math.min(torch, 15.0F));
     }
 
     @Environment(EnvType.CLIENT)
     @Overwrite
     public float getBrightness(int x, int y, int z, int max) {
         float value = Math.max(this.getLightValue(x, y, z), max);
-        return this.getBrightnessLevel(value);
+        return LightUtil.remapValue(this.dimension.brightnessRamp, value);
     }
 
     @Overwrite
     public float getBrightness(int x, int y, int z) {
         float value = this.getLightValue(x, y, z);
-        return this.getBrightnessLevel(value);
+        return LightUtil.remapValue(this.dimension.brightnessRamp, value);
     }
 
     @Override

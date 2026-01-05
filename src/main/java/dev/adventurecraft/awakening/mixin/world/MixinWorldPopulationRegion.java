@@ -4,7 +4,7 @@ import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.common.AC_PlayerTorch;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import dev.adventurecraft.awakening.extension.world.level.ExRegion;
-import dev.adventurecraft.awakening.util.MathF;
+import dev.adventurecraft.awakening.util.LightUtil;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.world.level.Level;
@@ -35,30 +35,16 @@ public abstract class MixinWorldPopulationRegion implements ExRegion {
     @Environment(EnvType.CLIENT)
     @Overwrite
     public float getBrightness(int x, int y, int z, int max) {
-        int rawValue = Math.max(this.getRawBrightness(x, y, z), max);
-
-        float[] ramp = this.level.dimension.brightnessRamp;
-        float torchValue = AC_PlayerTorch.getTorchLight(this.level, x, y, z);
-        if (rawValue >= torchValue) {
-            return ramp[rawValue];
-        }
-        return remapTorchValue(ramp, torchValue);
+        int raw = Math.max(this.getRawBrightness(x, y, z), max);
+        float torch = AC_PlayerTorch.getTorchLight(x, y, z);
+        float value = Math.max(raw, Math.min(torch, 15.0F));
+        return LightUtil.remapValue(this.level.dimension.brightnessRamp, value);
     }
 
     @Environment(EnvType.CLIENT)
     @Overwrite
     public float getBrightness(int x, int y, int z) {
         return getBrightness(x, y, z, 0);
-    }
-
-    private static @Unique float remapTorchValue(float[] ramp, float torchValue) {
-        int low = (int) Math.floor(torchValue);
-        if (low == 15) {
-            return ramp[15];
-        }
-        int high = (int) Math.ceil(torchValue);
-        float delta = torchValue - low;
-        return MathF.lerp(delta, ramp[low], ramp[high]);
     }
 
     private static @Unique boolean outOfBounds(int x, int z) {

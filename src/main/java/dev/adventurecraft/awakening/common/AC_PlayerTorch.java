@@ -5,6 +5,8 @@ import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.level.Level;
 
+// TODO: define "global" constant for max light level
+
 public class AC_PlayerTorch {
 
     static boolean torchActive;
@@ -56,7 +58,7 @@ public class AC_PlayerTorch {
         }
     }
 
-    private static float getCachedTorchLight(Level world, int x, int y, int z) {
+    private static float getCachedTorchLight(int x, int y, int z) {
         int bX = x - iX + torchBrightness;
         int bY = y - iY + torchBrightness;
         int bZ = z - iZ + torchBrightness;
@@ -66,9 +68,9 @@ public class AC_PlayerTorch {
         return 0.0F;
     }
 
-    public static float getTorchLight(Level world, int x, int y, int z) {
+    public static float getTorchLight(int x, int y, int z) {
         if (torchActive) {
-            return getCachedTorchLight(world, x, y, z);
+            return getCachedTorchLight(x, y, z);
         }
         return 0.0F;
     }

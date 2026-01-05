@@ -1,10 +1,12 @@
 package dev.adventurecraft.awakening.client.renderer;
 
 import dev.adventurecraft.awakening.collections.BitArray;
+import dev.adventurecraft.awakening.common.AC_PlayerTorch;
 import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import dev.adventurecraft.awakening.extension.world.level.biome.ExBiomeSource;
+import dev.adventurecraft.awakening.util.LightUtil;
 import dev.adventurecraft.awakening.util.NibbleBuffer;
 import dev.adventurecraft.awakening.world.AC_LevelSource;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -231,14 +233,22 @@ public final class LevelRegion implements AC_LevelSource, LevelSource {
         return this.ac$tryGetTileEntity(x, y, z, type);
     }
 
-    public @Override float getBrightness(int x, int y, int z, int max) {
-        int n = Math.max(this.getRawBrightness(x, y, z, true), max);
-        return this.brightnessRamp[n];
+    private float getLightValue(int x, int y, int z) {
+        int raw = this.getRawBrightness(x, y, z, true);
+        float torch = AC_PlayerTorch.getTorchLight(x, y, z);
+        return Math.max(raw, Math.min(torch, 15.0F));
     }
 
-    public @Override float getBrightness(int x, int y, int z) {
-        int n = this.getRawBrightness(x, y, z, true);
-        return this.brightnessRamp[n];
+    @Override
+    public float getBrightness(int x, int y, int z, int max) {
+        float value = Math.max(this.getLightValue(x, y, z), max);
+        return LightUtil.remapValue(this.brightnessRamp, value);
+    }
+
+    @Override
+    public float getBrightness(int x, int y, int z) {
+        float value = this.getLightValue(x, y, z);
+        return LightUtil.remapValue(this.brightnessRamp, value);
     }
 
     public int getRawBrightness(int x, int y, int z, boolean checkNeighbors) {
