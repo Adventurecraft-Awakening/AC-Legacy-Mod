@@ -43,6 +43,7 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GLContext;
 import org.lwjgl.opengl.NVFogDistance;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -849,7 +850,8 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
 
                 int seed = x * x * 3121 + x * 45238971 + z * z * 418711 + z * 13761;
                 this.random.setSeed(seed);
-                float texOffY = ((float) (this.tick + seed & 31) + deltaTime) / 32.0F * (3.0F + this.random.nextFloat());
+                float texOffY =
+                    ((float) (this.tick + seed & 31) + deltaTime) / 32.0F * (3.0F + this.random.nextFloat());
                 double dX = (double) ((float) x + 0.5F) - viewEntity.x;
                 double dZ = (double) ((float) z + 0.5F) - viewEntity.z;
                 float dist = Mth.sqrt(dX * dX + dZ * dZ) / (float) rainRange;
@@ -1032,6 +1034,21 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
     private float changeFogDividend(float value) {
         return 1.0f - (float) Math.pow(0.5f, 0.25);
         //return (float) (4 - this.mc.options.viewDistance) / 4.0F;
+    }
+
+    @Redirect(
+        method = "render(FJ)V",
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/client/Options;viewDistance:I",
+            opcode = Opcodes.GETFIELD
+        )
+    )
+    private int disableSkyOnLowDistance(Options instance) {
+        if (((ExGameOptions) instance).ofChunkRenderDistance() >= 4) {
+            return 0;
+        }
+        return 1000;
     }
 
     //@ModifyConstant(method = "setupClearColor", constant = @Constant(intValue = 4))
