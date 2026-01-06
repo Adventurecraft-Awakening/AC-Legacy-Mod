@@ -233,6 +233,10 @@ public final class LevelRegion implements AC_LevelSource, LevelSource {
         return this.ac$tryGetTileEntity(x, y, z, type);
     }
 
+    // TODO: store a "torch light offset" in LevelRegion so light is baked at fetch time
+    //       but without storing a ton of light values...
+    //       or finally decouple light updates from chunk updates :)
+
     private float getLightValue(int x, int y, int z) {
         int raw = this.getRawBrightness(x, y, z, true);
         float torch = AC_PlayerTorch.getTorchLight(x, y, z);
@@ -241,12 +245,22 @@ public final class LevelRegion implements AC_LevelSource, LevelSource {
 
     @Override
     public float getBrightness(int x, int y, int z, int max) {
+        if (!AC_PlayerTorch.isTorchActive()) {
+            int raw = Math.max(this.getRawBrightness(x, y, z, true), max);
+            return this.brightnessRamp[raw];
+        }
+
         float value = Math.max(this.getLightValue(x, y, z), max);
         return LightUtil.remapValue(this.brightnessRamp, value);
     }
 
     @Override
     public float getBrightness(int x, int y, int z) {
+        if (!AC_PlayerTorch.isTorchActive()) {
+            int raw = this.getRawBrightness(x, y, z, true);
+            return this.brightnessRamp[raw];
+        }
+
         float value = this.getLightValue(x, y, z);
         return LightUtil.remapValue(this.brightnessRamp, value);
     }
