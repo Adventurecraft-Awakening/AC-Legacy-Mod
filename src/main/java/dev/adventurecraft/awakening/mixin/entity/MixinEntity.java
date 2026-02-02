@@ -145,10 +145,10 @@ public abstract class MixinEntity implements ExEntity {
     public abstract float getBrightness(float partialTick);
 
     @Inject(
-        method = "saveWithoutId",
+        method = "load",
         at = @At("TAIL")
     )
-    protected void ac$saveWithoutId(CompoundTag tag, CallbackInfo ci) {
+    protected void ac$load(CompoundTag tag, CallbackInfo ci) {
         var exTag = (ExCompoundTag) tag;
         var customTag = exTag.findCompound("custom");
         if (customTag.isPresent()) {
@@ -160,11 +160,11 @@ public abstract class MixinEntity implements ExEntity {
     }
 
     @Inject(
-        method = "load",
+        method = "saveWithoutId",
         at = @At("TAIL")
     )
-    protected void ac$load(CompoundTag tag, CallbackInfo ci) {
-        // Do not use customData() to not unnecessarily init map.
+    protected void ac$saveWithoutId(CompoundTag tag, CallbackInfo ci) {
+        // Do not use customData() to avoid unnecessarily creating map.
         if (this.customData != null && !this.customData.isEmpty()) {
             var customTag = new CompoundTag();
             this.customData.forEach((key, object) -> {
@@ -465,12 +465,18 @@ public abstract class MixinEntity implements ExEntity {
 
     @Override
     public boolean hasTag(String key) {
-        return this.customData().containsKey(key);
+        if (this.customData == null) {
+            return false;
+        }
+        return this.customData.containsKey(key);
     }
 
     @Override
     public Object getTag(String key) {
-        return this.customData().get(key);
+        if (this.customData == null) {
+            return null;
+        }
+        return this.customData.get(key);
     }
 
     @Override
