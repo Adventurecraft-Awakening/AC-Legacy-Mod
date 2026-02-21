@@ -323,11 +323,8 @@ public abstract class MixinChunk implements ExChunk {
     }
 
     @Unique
-    public int ac$tileEntityKey(int x, int y, int z) {
-        int bX = (x - (this.x << 4)) & 0xF;
-        int bZ = (z - (this.z << 4)) & 0xF;
-        int bY = y & 0xFF;
-        return (bY << 8) | (bZ << 4) | bX;
+    public @Override int ac$tileEntityKey(int x, int y, int z) {
+        return ExChunk.ac$tileEntityKey(x, y, z, this.x, this.z);
     }
 
     public @Override <E extends TileEntity> E ac$tryGetTileEntity(int x, int y, int z, @Nullable Class<E> type) {

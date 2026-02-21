@@ -6,6 +6,7 @@ import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import dev.adventurecraft.awakening.extension.world.level.biome.ExBiomeSource;
+import dev.adventurecraft.awakening.layout.IntBox;
 import dev.adventurecraft.awakening.util.LightUtil;
 import dev.adventurecraft.awakening.util.NibbleBuffer;
 import dev.adventurecraft.awakening.world.AC_LevelSource;
@@ -15,7 +16,6 @@ import it.unimi.dsi.fastutil.objects.ObjectCollection;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelSource;
 import net.minecraft.world.level.biome.BiomeSource;
-import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.tile.Tile;
 import net.minecraft.world.level.tile.entity.TileEntity;
@@ -75,90 +75,94 @@ public final class LevelRegion implements AC_LevelSource, LevelSource {
         this.touchedSky = false;
     }
 
+    public static void forEachSectionSlice(IntBox box, SectionSliceConsumer consumer) {
+        IntBox sectionBox = box.shiftRight(4);
+
+        int bX = 0;
+
+        for (int cX = sectionBox.x0; cX <= sectionBox.x1; ++cX) {
+            int chunkBoundsX = cX << 4;
+            int sectionX0 = Math.max(chunkBoundsX, box.x0);
+            int sectionX1 = Math.min(chunkBoundsX + 16, box.x1);
+            int sectionWidth = sectionX1 - sectionX0;
+            int x0 = sectionX0 - chunkBoundsX;
+
+            int bZ = 0;
+
+            for (int cZ = sectionBox.z0; cZ <= sectionBox.z1; ++cZ) {
+                int chunkBoundsZ = cZ << 4;
+                int sectionZ0 = Math.max(chunkBoundsZ, box.z0);
+                int sectionZ1 = Math.min(chunkBoundsZ + 16, box.z1);
+                int sectionDepth = sectionZ1 - sectionZ0;
+                int z0 = sectionZ0 - chunkBoundsZ;
+
+                int x1 = x0 + sectionWidth;
+                int z1 = z0 + sectionDepth;
+
+                consumer.consume(bX, 0, bZ, cX, 0, cZ, x0, box.y0, z0, x1, box.y1, z1);
+
+                bZ += sectionDepth;
+            }
+
+            bX += sectionWidth;
+        }
+    }
+
     public void read(Level level, Coord origin) {
         this.origin = origin;
+        var readBox = IntBox.fromBox(origin, this.size);
 
-        Coord end = origin.add(this.size);
-        int y0 = origin.y;
-        int y1 = end.y;
+        forEachSectionSlice(
+            readBox,
+            (int bX, int bY, int bZ, int cX, int cY, int cZ, int x0, int y0, int z0, int x1, int y1, int z1) -> {
+                var chunk = (ExChunk) level.getChunk(cX, cZ);
 
-        int xc1 = origin.x >> 4;
-        int zc1 = origin.z >> 4;
-        int xc2 = end.x >> 4;
-        int zc2 = end.z >> 4;
-        int xc3 = xc2 + 1;
-        int zc3 = zc2 + 1;
-
-        var blockBuffer = this.getBlockBuffer();
-        var dataBuffer = this.dataBuffer;
-        var lightBuffer = this.lightBuffer;
-        var skyLightBuffer = this.skyLightBuffer;
-
-        int regionRight = origin.x + this.size.x;
-        int regionFront = origin.z + this.size.z;
-        int dx = 0;
-
-        for (int xc = xc1; xc < xc3; ++xc) {
-            var chunkBoundsX = xc << 4;
-            int sectionX0 = Math.max(chunkBoundsX, origin.x);
-            int sectionX1 = Math.min(chunkBoundsX + 16, regionRight);
-            int sectionWidth = sectionX1 - sectionX0;
-            int x0 = sectionX0 - (xc << 4);
-            int dz = 0;
-
-            for (int zc = zc1; zc < zc3; ++zc) {
-                var chunkBoundsZ = zc << 4;
-                int sectionZ0 = Math.max(chunkBoundsZ, origin.z);
-                int sectionZ1 = Math.min(chunkBoundsZ + 16, regionFront);
-                int sectionDepth = sectionZ1 - sectionZ0;
-                int z0 = sectionZ0 - (zc << 4);
-
-                LevelChunk chunk = level.getChunk(xc, zc);
-                var exChunk = (ExChunk) chunk;
-
-                for (int ix = 0; ix < sectionWidth; ++ix) {
-                    for (int iz = 0; iz < sectionDepth; ++iz) {
-                        final int index = this.makeLocalIndex(ix + dx, 0, iz + dz);
+                for (int ix = 0; ix < x1 - x0; ++ix) {
+                    for (int iz = 0; iz < z1 - z0; ++iz) {
+                        final int index = this.makeLocalIndex(ix + bX, bY, iz + bZ);
                         final int x = ix + x0;
                         final int z = iz + z0;
 
                         lightBuffer.position(index);
-                        exChunk.getDataColumn(AC_LevelSource.DataType.BLOCK_LIGHT, lightBuffer, x, y0, z, y1);
+                        chunk.getDataColumn(AC_LevelSource.DataType.BLOCK_LIGHT, lightBuffer, x, y0, z, y1);
 
                         skyLightBuffer.position(index);
-                        exChunk.getDataColumn(AC_LevelSource.DataType.SKY_LIGHT, skyLightBuffer, x, y0, z, y1);
+                        chunk.getDataColumn(AC_LevelSource.DataType.SKY_LIGHT, skyLightBuffer, x, y0, z, y1);
 
                         dataBuffer.position(index);
-                        exChunk.getDataColumn(AC_LevelSource.DataType.BLOCK_META, dataBuffer, x, y0, z, y1);
+                        chunk.getDataColumn(AC_LevelSource.DataType.BLOCK_META, dataBuffer, x, y0, z, y1);
 
                         blockBuffer.position(index);
-                        exChunk.getTileColumn(blockBuffer, x, y0, z, y1);
-
-                        for (int iy = 0; iy < this.size.y; ++iy) {
-                            int blockId = ExChunk.widenByte(blockBuffer.get(index + iy));
-                            if (!Tile.isEntityTile[blockId]) {
-                                continue;
-                            }
-
-                            int eY = iy + y0;
-                            if (eY >= 0 && eY < 128) {
-                                TileEntity entity = exChunk.ac$getTileEntity(x, eY, z, null);
-                                this.tileEntities.put(index + iy, entity);
-                            }
-                        }
+                        chunk.getTileColumn(blockBuffer, x, y0, z, y1);
                     }
                 }
 
-                dz += sectionDepth;
+                this.readTileEntities(readBox, chunk);
             }
-
-            dx += sectionWidth;
-        }
+        );
 
         System.arraycopy(level.dimension.brightnessRamp, 0, this.brightnessRamp, 0, this.brightnessRamp.length);
         this.skyDarken = level.skyDarken;
 
         this.biomeSource = ((ExBiomeSource) level.getBiomeSource()).copy();
+    }
+
+    private void readTileEntities(IntBox readBox, ExChunk exChunk) {
+        var entities = exChunk.ac$tileEntities();
+        if (entities.isEmpty()) {
+            return;
+        }
+
+        // This implementation assumes that tile entities are rare,
+        // which yields a significant speedup in common cases since
+        // we avoid testing all blocks whether they are entity tiles.
+        for (TileEntity entity : entities.values()) {
+            if (!readBox.contains(entity.x, entity.y, entity.z)) {
+                continue;
+            }
+            int indexInBox = this.makeIndex(entity.x, entity.y, entity.z);
+            this.tileEntities.put(indexInBox, entity);
+        }
     }
 
     public void setupCaches() {
@@ -362,5 +366,24 @@ public final class LevelRegion implements AC_LevelSource, LevelSource {
     @FunctionalInterface
     public interface IndexConsumer {
         void apply(LevelRegion region, int index, int x, int y, int z);
+    }
+
+    @FunctionalInterface
+    public interface SectionSliceConsumer {
+        /**
+         * @param bX X in box.
+         * @param bY Y in box (reserved; always 0).
+         * @param bZ Z in box.
+         * @param cX Chunk X.
+         * @param cY Chunk Y (reserved; always 0).
+         * @param cZ Chunk Z.
+         * @param x0 Start X in section.
+         * @param y0 Start Y in section.
+         * @param z0 Start Z in section.
+         * @param x1 End X in section.
+         * @param y1 End Y in section.
+         * @param z1 End Z in section.
+         */
+        void consume(int bX, int bY, int bZ, int cX, int cY, int cZ, int x0, int y0, int z0, int x1, int y1, int z1);
     }
 }
