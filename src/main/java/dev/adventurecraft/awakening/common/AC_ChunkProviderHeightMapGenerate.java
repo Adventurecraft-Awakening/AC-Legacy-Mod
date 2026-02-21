@@ -1,8 +1,13 @@
 package dev.adventurecraft.awakening.common;
 
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
+import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
+import dev.adventurecraft.awakening.util.RandomUtil;
+import dev.adventurecraft.awakening.world.level.storage.AsyncChunkSource;
 import net.minecraft.util.ProgressListener;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
@@ -16,7 +21,7 @@ import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.tile.SandTile;
 import net.minecraft.world.level.tile.Tile;
 
-public class AC_ChunkProviderHeightMapGenerate implements ChunkSource {
+public class AC_ChunkProviderHeightMapGenerate implements ChunkSource, AsyncChunkSource, Cloneable {
 
     private Random rand;
     private PerlinNoise field_908_o;
@@ -44,6 +49,28 @@ public class AC_ChunkProviderHeightMapGenerate implements ChunkSource {
         this.field_922_a = new PerlinNoise(this.rand, 10);
         this.field_921_b = new PerlinNoise(this.rand, 16);
         this.mobSpawnerNoise = new PerlinNoise(this.rand, 8);
+    }
+
+    public AC_ChunkProviderHeightMapGenerate ac$clone() {
+        AC_ChunkProviderHeightMapGenerate source;
+        try {
+            source = (AC_ChunkProviderHeightMapGenerate) super.clone();
+        }
+        catch (CloneNotSupportedException e) {
+            throw new AssertionError(null, e);
+        }
+
+        this.rand = RandomUtil.clone(this.rand);
+        this.stoneNoise = new double[256];
+        this.biomesForGeneration = null;
+        this.generatedTemperatures = null;
+        return source;
+    }
+
+    @Override
+    public CompletionStage<LevelChunk> loadAsync(Level level, int x, int z) {
+        AC_ChunkProviderHeightMapGenerate self = this.ac$clone();
+        return CompletableFuture.supplyAsync(() -> self.getChunk(x, z), ACMod.WORLD_GEN_EXECUTOR);
     }
 
     public void generateTerrain(int var1, int var2, byte[] var3, Biome[] var4, double[] var5) {
