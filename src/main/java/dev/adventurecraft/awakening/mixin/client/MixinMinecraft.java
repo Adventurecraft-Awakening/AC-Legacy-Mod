@@ -186,7 +186,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
     @Unique private long previousNanoTime;
     @Unique private double deltaTime;
-    @Unique private final int[] lastClickTicks = new int[3];
+    @Unique private final int[] lastClickTicks = new int[8];
     @Unique public AC_CutsceneCamera cutsceneCamera;
     @Unique public AC_CutsceneCamera activeCutsceneCamera;
     @Unique public boolean cameraActive;
@@ -969,6 +969,10 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
     @Overwrite
     private void handleMouseClick(int mouseButton) {
+        if (mouseButton >= this.lastClickTicks.length) {
+            return;
+        }
+
         if (mouseButton == 0 && this.missTime > 0) {
             return;
         }
