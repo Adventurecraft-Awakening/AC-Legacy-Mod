@@ -824,7 +824,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
                 z1 = Math.max(z1, bounds.bot());
 
                 this.rebuildBuffer.add(viz);
-                if (this.rebuildBuffer.size() >= 500) {
+                if (this.rebuildBuffer.size() >= 256) {
                     break outer;
                 }
             }

@@ -5,6 +5,8 @@ import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunkCache;
 import dev.adventurecraft.awakening.primitives.ChunkCoord;
 import dev.adventurecraft.awakening.util.MathF;
+import dev.adventurecraft.awakening.world.level.chunk.ChunkTicket;
+import dev.adventurecraft.awakening.world.level.chunk.CompletionChunkTicket;
 import dev.adventurecraft.awakening.world.level.storage.AsyncChunkSource;
 import dev.adventurecraft.awakening.world.level.storage.AsyncChunkStorage;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
@@ -27,7 +29,6 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 
 @Mixin(ChunkCache.class)
 public abstract class MixinChunkCache implements ExChunkCache, AsyncChunkSource {
@@ -50,7 +51,7 @@ public abstract class MixinChunkCache implements ExChunkCache, AsyncChunkSource 
     @Unique private AsyncChunkStorage asyncStorage;
     @Unique private AsyncChunkSource asyncSource;
 
-    @Unique private Long2ObjectMap<CompletionStage<LevelChunk>> loadQueue;
+    @Unique private Long2ObjectMap<ChunkTicket> loadQueue;
 
     @Shadow
     public abstract boolean save(boolean bl, ProgressListener arg);
@@ -198,7 +199,7 @@ public abstract class MixinChunkCache implements ExChunkCache, AsyncChunkSource 
         if (chunkTask == null) {
             chunkTask = this.createTicket(chunkKey);
         }
-        LevelChunk newChunk = chunkTask.toCompletableFuture().join();
+        LevelChunk newChunk = chunkTask.get();
         this.chunks[ci] = newChunk;
         newChunk.lightLava();
         newChunk.load();
@@ -257,13 +258,13 @@ public abstract class MixinChunkCache implements ExChunkCache, AsyncChunkSource 
     }
 
     @Unique
-    private CompletionStage<LevelChunk> createTicket(long key) {
+    private ChunkTicket createTicket(long key) {
         int x = ChunkCoord.unpackX(key);
         int z = ChunkCoord.unpackZ(key);
         var loadStage = this.asyncStorage.loadAsync(this.level, x, z);
 
         if (this.asyncSource == null) {
-            return loadStage.thenApply(c -> {
+            return new CompletionChunkTicket(loadStage).thenApply(c -> {
                 if (c != null) {
                     return c;
                 }
@@ -274,12 +275,12 @@ public abstract class MixinChunkCache implements ExChunkCache, AsyncChunkSource 
             });
         }
 
-        return loadStage.thenCompose(c -> {
+        return new CompletionChunkTicket(loadStage.thenCompose(c -> {
             if (c != null) {
                 return CompletableFuture.completedStage(c);
             }
             return this.asyncSource.loadAsync(this.level, x, z).thenApply(MixinChunkCache::onSourceLoad);
-        });
+        }));
     }
 
     @Unique
