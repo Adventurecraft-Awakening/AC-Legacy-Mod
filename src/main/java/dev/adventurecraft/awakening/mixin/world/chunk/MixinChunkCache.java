@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.mixin.world.chunk;
 
+import dev.adventurecraft.awakening.ACMainThread;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunkCache;
@@ -77,7 +78,12 @@ public abstract class MixinChunkCache implements ExChunkCache, AsyncChunkSource 
         this.source = source;
 
         this.asyncStorage = storage instanceof AsyncChunkStorage acs ? acs : null;
-        this.asyncSource = source instanceof AsyncChunkSource acs ? acs : null;
+
+        // TODO: async chunk sources are currently broken;
+        //       they may cascade and request missing chunks,
+        //       but we disallow loading chunks outside the main-thread at the moment
+        // this.asyncSource = source instanceof AsyncChunkSource acs ? acs : null;
+        this.asyncSource = null; // do not use async sources
 
         this.loadQueue = new Long2ObjectOpenHashMap<>();
     }
@@ -183,6 +189,10 @@ public abstract class MixinChunkCache implements ExChunkCache, AsyncChunkSource 
 
     @Unique
     private void putChunk(int x, int z) {
+        if (Thread.currentThread() != ACMainThread.MAIN_THREAD) {
+            throw new AssertionError("Requesting chunks outside the main-thread is currently not implemented.");
+        }
+
         int cx = x & this.mask;
         int cz = z & this.mask;
         int ci = cx + cz * this.chunksWide;

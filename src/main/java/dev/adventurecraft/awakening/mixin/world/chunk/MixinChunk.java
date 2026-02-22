@@ -135,9 +135,10 @@ public abstract class MixinChunk implements ExChunk {
     )
     private void loadAwareUpdateLight(Level instance, LightLayer type, int x0, int y0, int z0, int x1, int y1, int z1) {
         if (this.loaded) {
-            if (Thread.currentThread() != ACMainThread.MAIN_THREAD) {
-                throw new AssertionError();
-            }
+            // TODO: move behind configurable flag
+            //if (Thread.currentThread() != ACMainThread.MAIN_THREAD) {
+            //    throw new AssertionError();
+            //}
             instance.updateLight(type, x0, y0, z0, x1, y1, z1);
         }
         else {
