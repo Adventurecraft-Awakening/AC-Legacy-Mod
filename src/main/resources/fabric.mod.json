@@ -41,13 +41,15 @@
   },
   "custom": {
     "git": {
-      "branch": "${gitDetails.branchName}",
-      "hashFull": "${gitDetails.gitHashFull}",
-      "hash": "${gitDetails.gitHash}",
-      "lastTag": "${gitDetails.lastTag}",
-      "commitDistance": "${gitDetails.commitDistance}",
-      "isCleanTag": "${gitDetails.isCleanTag}",
-      "version": "${gitDetails.version}"
+      "describe": "${git.describe}",
+      "branch": "${git.branch}",
+      "hash": "${git.hash}",
+      "shortHash": "${git.shortHash}",
+      "lastTag": "${git.lastTag}",
+      "commitDistance": "${git.commitDistance}",
+      "isCleanTag": "${git.isCleanTag}",
+      "version": "${git.version}",
+      "originUrl": "${git.originUrl}"
     }
   }
 }

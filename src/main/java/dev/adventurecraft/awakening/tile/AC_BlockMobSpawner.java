@@ -11,8 +11,6 @@ import net.minecraft.world.level.tile.TileEntityTile;
 import net.minecraft.world.level.tile.entity.TileEntity;
 import net.minecraft.world.phys.AABB;
 
-import java.util.Random;
-
 public class AC_BlockMobSpawner extends TileEntityTile implements AC_ITriggerDebugBlock {
 
     protected AC_BlockMobSpawner(int var1, int var2) {

@@ -2,13 +2,13 @@ plugins {
     id "maven-publish"
     id "fabric-loom" version "1.14.6"
     id "babric-loom-extension" version "1.13.3"
-    id 'com.palantir.git-version' version "4.0.0"
 }
+
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
 
 version = project.mod_version
 group = project.maven_group
-
-project.ext.gitDetails = versionDetails()
 
 base {
     archivesName = project.archives_base_name
@@ -122,9 +122,15 @@ configurations.configureEach {
     exclude group: "org.lwjgl.lwjgl"
 }
 
+def gitStateFile = layout.buildDirectory.file("git-state.json")
+
 processResources {
+    inputs.file(gitStateFile)
+    dependsOn("readGitState")
+
     filesMatching("fabric.mod.json") {
-        expand project.properties
+        def gitMap = [git: new JsonSlurper().parseText(file(gitStateFile).text)]
+        expand(project.properties + gitMap)
     }
 }
 
@@ -135,6 +141,26 @@ tasks.register("fixRunResources") {
             from("build/resources/main")
             into("out/production/resources")
         }
+    }
+}
+
+tasks.register("readGitState") {
+    outputs.file(gitStateFile)
+    doNotTrackState("GIT")
+    doLast {
+        def git = new GitState(project.rootDir)
+        def json = JsonOutput.toJson([
+            describe      : git.describe,
+            branch        : git.branch,
+            hash          : git.hash,
+            shortHash     : git.shortHash,
+            lastTag       : git.lastTag,
+            commitDistance: git.commitDistance,
+            isCleanTag    : git.isCleanTag,
+            version       : git.version,
+            originUrl     : git.originUrl,
+        ])
+        file(gitStateFile).write(json)
     }
 }
 
