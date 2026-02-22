@@ -14,6 +14,7 @@ import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.client.MemoryTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
+import net.minecraft.client.renderer.HttpTexture;
 import net.minecraft.client.renderer.Textures;
 import net.minecraft.client.renderer.ptexture.DynamicTexture;
 import net.minecraft.client.skins.TexturePack;
@@ -39,6 +40,7 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 // TODO: improve texture management and lookups.
@@ -62,6 +64,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
     @Shadow private boolean clamp;
     @Shadow private boolean blur;
     @Shadow private BufferedImage missingTex;
+    @Shadow private Map<String, HttpTexture> htt;
 
     @Unique private boolean strip;
     @Unique private HashMap<String, String> replacedTextures = new HashMap<>();
@@ -467,9 +470,15 @@ public abstract class MixinTextureManager implements ExTextureManager {
         )
     )
     private void useCustomTextureReload(CallbackInfo ci) {
+        var httpIds = this.htt.values().stream().map(t -> t.id).collect(Collectors.toSet());
+
         // TODO: why? add docs!
         for (String key : this.idMap.keySet()) {
             int id = this.idMap.get(key);
+            if (httpIds.contains(id)) {
+                // Skip reloading HTTP textures.
+                continue;
+            }
             this.loadTexture(id, key);
         }
     }
