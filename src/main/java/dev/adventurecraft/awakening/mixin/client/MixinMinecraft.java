@@ -147,11 +147,9 @@ public abstract class MixinMinecraft implements ExMinecraft {
     @Shadow private int recheckPlayerIn;
     @Shadow public ParticleEngine particleEngine;
 
-    @Shadow(
-        remap = false,
-        aliases = "method_2104"
-    )
-    protected abstract void startLoginThread();
+    // startLoginThread
+    @Shadow
+    protected abstract void method_2104();
 
     @Shadow
     public abstract void toggleDimension();
@@ -590,7 +588,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
     @Overwrite
     public void tick() {
         if (this.ticks == 6000) {
-            this.startLoginThread();
+            this.method_2104();
         }
 
         this.gui.tick();
