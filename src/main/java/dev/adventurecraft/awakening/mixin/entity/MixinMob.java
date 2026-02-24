@@ -279,11 +279,40 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
         this.hurt(null, ceilAmount);
 
         int id = this.level.getTile(Mth.floor(this.x), Mth.floor(this.y - 0.2 - this.heightOffset), Mth.floor(this.z));
-
         if (id > 0) {
             SoundType block = Tile.tiles[id].soundType;
             float pitch = block.getPitch() * (12.0F / 16.0F);
             this.level.playSound((Entity) (Object) this, block.getStepSound(), block.getVolume() * 0.5F, pitch);
+        }
+    }
+
+    @Unique
+    private float getSlipperiness() {
+        if (!this.onGround) {
+            return 0.91F;
+        }
+        int id = this.level.getTile(Mth.floor(this.x), Mth.floor(this.bb.y0) - 1, Mth.floor(this.z));
+        if (id > 0) {
+            return Tile.tiles[id].friction * 0.91F;
+        }
+        return 0.5460001F;
+    }
+
+    @Unique
+    private void travelInLiquid(float xInput, float zInput, double fallSpeed) {
+        if (this.yd < -0.4D) {
+            this.yd *= fallSpeed;
+        }
+
+        double lastY = this.y;
+        this.moveRelative(xInput, zInput, 0.02F);
+        this.move(this.xd, this.yd, this.zd);
+        this.xd *= fallSpeed;
+        this.yd *= fallSpeed;
+        this.zd *= fallSpeed;
+        this.yd -= 0.25D * this.getGravity();
+        if (this.horizontalCollision && this.isFree(this.xd, this.yd + (double) 0.6F - this.y + lastY, this.zd)) {
+            this.yd = 0.3F;
         }
     }
 
@@ -295,7 +324,8 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
             double yVel = (double) (-0.1F * zInput) * Math.sin(xRot) * Math.min(speed, 1.0D);
 
             this.yd += yVel;
-            float inputSpeed = (float) (0.1 * (Math.abs(zInput * Math.cos(xRot)) + Math.abs(xInput)));
+            double flySpeed = this.getFlightSpeed() * 0.1;
+            float inputSpeed = (float) (flySpeed * (Math.abs(zInput * Math.cos(xRot)) + Math.abs(xInput)));
             this.moveRelative(xInput, zInput, inputSpeed);
             this.move(this.xd, this.yd, this.zd);
             this.fallDistance = 0.0F;
@@ -313,61 +343,16 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
             }
         }
         else if (this.isInWater()) {
-            if (this.yd < -0.4D) {
-                this.yd *= 0.8D;
-            }
-
-            double lastY = this.y;
-            this.moveRelative(xInput, zInput, 0.02F);
-            this.move(this.xd, this.yd, this.zd);
-            this.xd *= 0.8F;
-            this.yd *= 0.8F;
-            this.zd *= 0.8F;
-            this.yd -= 0.25D * this.getGravity();
-            if (this.horizontalCollision && this.isFree(this.xd, this.yd + (double) 0.6F - this.y + lastY, this.zd)) {
-                this.yd = 0.3F;
-            }
+            this.travelInLiquid(xInput, zInput, 0.8);
         }
         else if (this.isInLava()) {
-            if (this.yd < -0.4D) {
-                this.yd *= 0.5D;
-            }
-
-            double lastY = this.y;
-            this.moveRelative(xInput, zInput, 0.02F);
-            this.move(this.xd, this.yd, this.zd);
-            this.xd *= 0.5D;
-            this.yd *= 0.5D;
-            this.zd *= 0.5D;
-            this.yd -= 0.25D * this.getGravity();
-            if (this.horizontalCollision && this.isFree(this.xd, this.yd + (double) 0.6F - this.y + lastY, this.zd)) {
-                this.yd = 0.3F;
-            }
+            this.travelInLiquid(xInput, zInput, 0.5);
         }
         else {
-            float slipperiness = 0.91F;
-            if (this.onGround) {
-                slipperiness = 0.5460001F;
-                int id = this.level.getTile(Mth.floor(this.x), Mth.floor(this.bb.y0) - 1, Mth.floor(this.z));
-                if (id > 0) {
-                    slipperiness = Tile.tiles[id].friction * 0.91F;
-                }
-            }
-
+            float slipperiness = this.getSlipperiness();
             float inputFactor = 0.1627714F / (slipperiness * slipperiness * slipperiness);
-            this.moveRelative(
-                xInput,
-                zInput,
-                this.onGround ? 0.1F * inputFactor : 0.1F * this.airControl * inputFactor
-            );
-            slipperiness = 0.91F;
-            if (this.onGround) {
-                slipperiness = 0.5460001F;
-                int id = this.level.getTile(Mth.floor(this.x), Mth.floor(this.bb.y0) - 1, Mth.floor(this.z));
-                if (id > 0) {
-                    slipperiness = Tile.tiles[id].friction * 0.91F;
-                }
-            }
+            this.moveRelative(xInput, zInput, 0.1F * inputFactor * (this.onGround ? 1f : this.airControl));
+            slipperiness = this.getSlipperiness();
 
             if (this.onLadder()) {
                 double deceleration = 0.15F;
@@ -420,7 +405,6 @@ public abstract class MixinMob extends MixinEntity implements ExMob {
         }
 
         if (id == AC_Blocks.ropes1.id || id == AC_Blocks.ropes2.id || id == AC_Blocks.chains.id) {
-
             return world.getData(x, y, z) % 3 == 0;
         }
         return false;

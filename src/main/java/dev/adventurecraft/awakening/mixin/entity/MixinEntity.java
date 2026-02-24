@@ -7,7 +7,6 @@ import dev.adventurecraft.awakening.extension.nbt.ExListTag;
 import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
-import dev.adventurecraft.awakening.util.RandomUtil;
 import dev.adventurecraft.awakening.util.TagUtil;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
@@ -69,7 +68,7 @@ public abstract class MixinEntity implements ExEntity {
     @Shadow public int invulnerableTime;
 
     @Unique public boolean ignoreCobwebCollision = false;
-    @Unique public boolean isFlying;
+    @Unique public float flightSpeed = -1;
     @Unique public int stunned;
     @Unique public boolean collidesWithClipBlocks = true;
     @Unique public int collisionX;
@@ -405,12 +404,22 @@ public abstract class MixinEntity implements ExEntity {
 
     @Override
     public boolean getIsFlying() {
-        return this.isFlying;
+        return this.flightSpeed > 0.0;
     }
 
     @Override
     public void setIsFlying(boolean value) {
-        this.isFlying = value;
+        this.flightSpeed = Math.copySign(this.flightSpeed, value ? 1f : -1f);
+    }
+
+    @Override
+    public float getFlightSpeed() {
+        return this.flightSpeed;
+    }
+
+    @Override
+    public void setFlightSpeed(float value) {
+        this.flightSpeed = value;
     }
 
     @Override

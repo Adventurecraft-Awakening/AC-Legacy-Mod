@@ -5,7 +5,6 @@ import dev.adventurecraft.awakening.entity.AC_EntityLivingScript;
 import dev.adventurecraft.awakening.entity.AC_EntityNPC;
 import dev.adventurecraft.awakening.entity.AC_Particle;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
-import dev.adventurecraft.awakening.extension.entity.ExEntityRegistry;
 import dev.adventurecraft.awakening.extension.world.entity.EntityClass;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.FlyingMob;
