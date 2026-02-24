@@ -417,8 +417,8 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
                 y += 10;
 
                 var gitMeta = ACMod.GIT_META;
-                if (gitMeta != null && !Boolean.parseBoolean(gitMeta.isCleanTag)) {
-                    String branchHash = "Branch \"" + gitMeta.branch + "\" - " + gitMeta.hash;
+                if (gitMeta != null && !gitMeta.isCleanTag) {
+                    String branchHash = "Branch \"" + gitMeta.branch + "\" - " + gitMeta.shortHash;
                     font.drawShadow(branchHash, x, y, color0);
                     y += 10;
                 }
