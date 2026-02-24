@@ -29,9 +29,10 @@ public final class BlockEntityLayer extends BlockMetaLayer {
         int x = tag.getInt("x") - min.x;
         int y = tag.getInt("y") - min.y;
         int z = tag.getInt("z") - min.z;
+        int w = max.x - min.x + 1;
         int h = max.y - min.y + 1;
         int d = max.z - min.z + 1;
-        return this.tileEntities.put(BlockRegion.makeIndex(x, y, z, h, d), tag);
+        return this.tileEntities.put(BlockRegion.makeIndex(x, y, z, w, h, d), tag);
     }
 
     @Override

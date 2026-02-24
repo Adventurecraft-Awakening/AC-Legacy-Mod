@@ -19,11 +19,19 @@ public class AC_GuiTree extends Screen {
     public void tick() {
     }
 
+    private static float normalize(float value) {
+        return (value - 0.5F) / 3.5F;
+    }
+
     public void init() {
         this.treeSize = new GuiSlider2(
-            4, 4, 4, 10,
+            4,
+            4,
+            4,
+            10,
             String.format("Tree Size: %.2f", this.tree.size),
-            (this.tree.size - 0.5F) / 3.5F);
+            normalize(this.tree.size)
+        );
         this.buttons.add(this.treeSize);
 
         this.prevValue = this.treeSize.sliderValue;
@@ -38,9 +46,12 @@ public class AC_GuiTree extends Screen {
         if (this.prevValue != this.treeSize.sliderValue) {
             AC_TileEntityTree tree = this.tree;
             tree.size = this.treeSize.sliderValue * 3.5F + 0.5F;
-            this.treeSize.message = String.format("Tree Size: %.2f", this.tree.size);
+            this.treeSize.message = String.format("Tree Size: %.2f", tree.size);
             tree.level.setTileDirty(tree.x, tree.y, tree.z);
             tree.setChanged();
+
+            this.treeSize.sliderValue = normalize(tree.size);
+            this.prevValue = this.treeSize.sliderValue;
         }
 
         super.render(mouseX, mouseY, tick);

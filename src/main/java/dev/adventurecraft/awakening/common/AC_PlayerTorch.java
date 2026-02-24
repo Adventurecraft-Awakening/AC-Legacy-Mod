@@ -1,9 +1,11 @@
 package dev.adventurecraft.awakening.common;
 
-import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.tile.Tile;
+
+// TODO: define "global" constant for max light level
 
 public class AC_PlayerTorch {
 
@@ -56,7 +58,7 @@ public class AC_PlayerTorch {
         }
     }
 
-    private static float getCachedTorchLight(Level world, int x, int y, int z) {
+    private static float getCachedTorchLight(int x, int y, int z) {
         int bX = x - iX + torchBrightness;
         int bY = y - iY + torchBrightness;
         int bZ = z - iZ + torchBrightness;
@@ -66,9 +68,9 @@ public class AC_PlayerTorch {
         return 0.0F;
     }
 
-    public static float getTorchLight(Level world, int x, int y, int z) {
+    public static float getTorchLight(int x, int y, int z) {
         if (torchActive) {
-            return getCachedTorchLight(world, x, y, z);
+            return getCachedTorchLight(x, y, z);
         }
         return 0.0F;
     }
@@ -95,11 +97,16 @@ public class AC_PlayerTorch {
                     int id = world.getTile(x, y, z);
                     float result = 0.0F;
 
-                    if (id == 0 || ExBlock.neighborLit[id]) {
+                    // TODO: light blocking is not correct when not done as a flood-fill;
+                    //       this results in way too much light, so compensate with some faked falloff
+                    float fakeFalloffFactor = 1.5f;
+
+                    float lightBlock = Tile.lightBlock[id];
+                    if (lightBlock < emission) {
                         float xLight = Math.abs(rX - baseX);
                         float yLight = Math.abs(rY - baseY);
                         float zLight = Math.abs(rZ - baseZ);
-                        float light = xLight + yLight + zLight;
+                        float light = (xLight + yLight + zLight) + lightBlock * fakeFalloffFactor;
 
                         if (light <= emission) {
                             if (emission - light > world.getLightLevel(x, y, z)) {

@@ -1,11 +1,10 @@
 package dev.adventurecraft.awakening.extension.entity;
 
 import dev.adventurecraft.awakening.entity.AC_IMultiAttackEntity;
+import dev.adventurecraft.awakening.extension.world.entity.EntityClass;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.function.BiFunction;
-
-public interface ExEntity extends AC_IMultiAttackEntity {
+public interface ExEntity extends AC_IMultiAttackEntity, EntityClass {
 
     void setCanGetFallDamage(boolean arg);
 
@@ -20,6 +19,10 @@ public interface ExEntity extends AC_IMultiAttackEntity {
     boolean getIsFlying();
 
     void setIsFlying(boolean value);
+
+    float getFlightSpeed();
+
+    void setFlightSpeed(float value);
 
     boolean getNoPhysics();
 

@@ -12,4 +12,7 @@ public final class AC_BlockShapes {
     public static final int BLOCK_OVERLAY = 37;
     public static final int BLOCK_SLOPE = 38;
     public static final int BLOCK_SIGN = 39;
+
+    // Custom layer to inform block renderer to update shape.
+    public static final int SNOW_LAYER = 40;
 }

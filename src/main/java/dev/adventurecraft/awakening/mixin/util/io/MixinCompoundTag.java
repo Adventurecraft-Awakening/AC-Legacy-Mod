@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.mixin.util.io;
 
+import dev.adventurecraft.awakening.extension.nbt.ExTag;
 import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
 import it.unimi.dsi.fastutil.bytes.ByteArrays;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -11,7 +12,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
@@ -29,8 +32,13 @@ public abstract class MixinCompoundTag implements ExCompoundTag {
     @Shadow
     public abstract void putInt(String key, int val);
 
+    @Override
     @Shadow
     public abstract void putString(String key, String val);
+
+    @Override
+    @Shadow
+    public abstract void putTag(String key, Tag val);
 
     @Inject(
         method = "putShort(Ljava/lang/String;S)V",
@@ -114,6 +122,13 @@ public abstract class MixinCompoundTag implements ExCompoundTag {
     }
 
     @Override
+    public CompoundTag copy() {
+        var compound = new CompoundTag();
+        this.forEach((key, tag) -> compound.putTag(key, ((ExTag) tag).copy()));
+        return compound;
+    }
+
+    @Override
     public void forEach(BiConsumer<String, Tag> consumer) {
         this.entries.forEach(consumer);
     }
@@ -126,5 +141,10 @@ public abstract class MixinCompoundTag implements ExCompoundTag {
     @Override
     public Tag getTag(String key) {
         return this.entries.get(key);
+    }
+
+    @Override
+    public Optional<Tag> removeTag(String key) {
+        return Optional.of(this.entries.remove(key));
     }
 }

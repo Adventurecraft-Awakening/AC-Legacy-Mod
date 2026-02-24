@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening;
 
+import dev.adventurecraft.awakening.util.CustomForkJoinWorkerThreadFactory;
 import dev.adventurecraft.awakening.util.FabricUtil;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
@@ -8,17 +9,14 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongepowered.include.com.google.gson.*;
-import sun.misc.Unsafe;
 
 import java.io.StringReader;
-import java.lang.reflect.Field;
 import java.util.HashMap;
+import java.util.concurrent.*;
 
 public class ACMod implements ModInitializer {
 
     public static final String MOD_ID = "adventurecraft";
-
-    public static final Unsafe UNSAFE;
 
     public static boolean chunkIsNotPopulating = true;
 
@@ -32,6 +30,33 @@ public class ACMod implements ModInitializer {
 
     public static @Nullable ModContainer MOD_CONTAINER;
     public static @Nullable GitMetadata GIT_META;
+
+    public static ExecutorService WORLD_IO_EXECUTOR;
+    public static ExecutorService WORLD_GEN_EXECUTOR;
+    public static ExecutorService CHUNK_MESH_EXECUTOR;
+
+    static {
+        // Over-allocating threads should be fine since single-player has to wait
+        // for tasks to finish no matter what, so going at max speed should be optimal.
+        int processors = Math.max(1, Runtime.getRuntime().availableProcessors());
+        {
+            // IO is expected to do many blocking operations - virtual threads should be optimal for this.
+            ThreadFactory factory = Thread.ofVirtual().name("World-IO-Worker", 0).factory();
+            WORLD_IO_EXECUTOR = Executors.newFixedThreadPool(processors, factory);
+        }
+        {
+            var factory = new CustomForkJoinWorkerThreadFactory()
+                .name("World-Gen-Worker", 0)
+                .priority(ACMainThread.WORKER_PRIORITY - 1);
+            WORLD_GEN_EXECUTOR = new ForkJoinPool(processors, factory, null, true);
+        }
+        {
+            var factory = new CustomForkJoinWorkerThreadFactory()
+                .name("Chunk-Mesh-Worker", 0)
+                .priority(ACMainThread.WORKER_PRIORITY + 1);
+            CHUNK_MESH_EXECUTOR = new ForkJoinPool(processors, factory, null, true);
+        }
+    }
 
     @Override
     public void onInitialize() {
@@ -66,17 +91,6 @@ public class ACMod implements ModInitializer {
 
     public static String getResourceName(String name) {
         return "/assets/adventurecraft/" + name;
-    }
-
-    static {
-        try {
-            Field field = Unsafe.class.getDeclaredField("theUnsafe");
-            field.setAccessible(true);
-            UNSAFE = (Unsafe) field.get(null);
-        }
-        catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new RuntimeException("Couldn't obtain reference to sun.misc.Unsafe", e);
-        }
     }
 }
 

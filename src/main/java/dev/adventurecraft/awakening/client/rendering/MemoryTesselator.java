@@ -1,9 +1,10 @@
 package dev.adventurecraft.awakening.client.rendering;
 
-import dev.adventurecraft.awakening.ACMod;
+import dev.adventurecraft.awakening.client.renderer.BlockAllocator;
 import dev.adventurecraft.awakening.client.renderer.MemoryMesh;
 import dev.adventurecraft.awakening.extension.client.render.ExTesselator;
 import dev.adventurecraft.awakening.util.GLUtil;
+import dev.adventurecraft.awakening.util.UnsafeUtil;
 import net.minecraft.client.renderer.Tesselator;
 
 import java.nio.ByteBuffer;
@@ -12,12 +13,11 @@ import java.util.ArrayList;
 
 public final class MemoryTesselator extends Tesselator implements ExTesselator {
 
-    public static final int BLOCK_SIZE = 1024 * 64 * 4;
-
     public static final int BYTE_STRIDE = 7 * 4;
 
     private static final ByteBuffer EMPTY_BLOCK = ByteBuffer.allocateDirect(0).order(ByteOrder.nativeOrder());
 
+    private BlockAllocator allocator;
     private ByteBuffer block;
     private ArrayList<ByteBuffer> blocks;
 
@@ -34,25 +34,21 @@ public final class MemoryTesselator extends Tesselator implements ExTesselator {
         super(0);
     }
 
-    private void init() {
-        this.block = EMPTY_BLOCK;
-        this.blocks = new ArrayList<>();
+    public static MemoryTesselator create() {
+        // Easy way of skipping allocations of super constructor.
+        var obj = UnsafeUtil.allocateInstance(MemoryTesselator.class);
+        obj.block = EMPTY_BLOCK;
+        obj.blocks = new ArrayList<>();
+        return obj;
     }
 
-    public static MemoryTesselator create() {
-        try {
-            // Easy way of skipping allocations of super constructor.
-            var obj = (MemoryTesselator) ACMod.UNSAFE.allocateInstance(MemoryTesselator.class);
-            obj.init();
-            return obj;
-        }
-        catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        }
+    public void setAllocator(BlockAllocator allocator) {
+        this.clear();
+        this.allocator = allocator;
     }
 
     public boolean isEmpty() {
-        return this.block.position() == 0 && this.blocks.isEmpty();
+        return this.block == EMPTY_BLOCK && this.blocks.isEmpty();
     }
 
     public @Override void end() {
@@ -63,8 +59,18 @@ public final class MemoryTesselator extends Tesselator implements ExTesselator {
     }
 
     public @Override void clear() {
-        this.block = EMPTY_BLOCK;
+        if (this.allocator == null) {
+            return;
+        }
+
+        this.blocks.forEach(this.allocator::returnBlock);
         this.blocks.clear();
+
+        ByteBuffer lastBlock = this.block;
+        this.block = EMPTY_BLOCK;
+        if (lastBlock != EMPTY_BLOCK) {
+            this.allocator.returnBlock(this.block);
+        }
     }
 
     public @Override void vertex(double x, double y, double z) {
@@ -94,14 +100,17 @@ public final class MemoryTesselator extends Tesselator implements ExTesselator {
     }
 
     public @Override void ac$vertexUV(float x, float y, float z, float u, float v) {
-        var a = this.reserve(BYTE_STRIDE);
-        a.putInt(Float.floatToRawIntBits(x + this.xo));
-        a.putInt(Float.floatToRawIntBits(y + this.yo));
-        a.putInt(Float.floatToRawIntBits(z + this.zo));
-        a.putInt(Float.floatToRawIntBits(u));
-        a.putInt(Float.floatToRawIntBits(v));
-        a.putInt(this.rgba);
-        a.putInt(this.normal);
+        ByteBuffer a = this.reserve(BYTE_STRIDE);
+        int p = a.position();
+        a.position(p + BYTE_STRIDE);
+
+        a.putInt(p + 0, Float.floatToRawIntBits(x + this.xo));
+        a.putInt(p + 4, Float.floatToRawIntBits(y + this.yo));
+        a.putInt(p + 8, Float.floatToRawIntBits(z + this.zo));
+        a.putInt(p + 12, Float.floatToRawIntBits(u));
+        a.putInt(p + 16, Float.floatToRawIntBits(v));
+        a.putInt(p + 20, this.rgba);
+        a.putInt(p + 24, this.normal);
     }
 
     public @Override void normal(float x, float y, float z) {
@@ -132,44 +141,41 @@ public final class MemoryTesselator extends Tesselator implements ExTesselator {
         ByteBuffer b = this.block;
         int start = b.position();
         int end = start + count;
-        if (end <= b.limit()) {
+        if (end < b.limit()) {
             return b;
         }
         return this.pushAndReserve(count);
     }
 
     private ByteBuffer pushAndReserve(int count) {
-        if (count > BLOCK_SIZE) {
+        if (count > this.allocator.blockSize()) {
             throw new IllegalArgumentException();
         }
 
-        if (this.block != EMPTY_BLOCK) {
-            var fullBlock = this.block;
-            this.block = EMPTY_BLOCK;
-
-            if (fullBlock.limit() != BLOCK_SIZE) {
-                throw new AssertionError("incorrect block size");
-            }
+        ByteBuffer fullBlock = this.block;
+        this.block = EMPTY_BLOCK;
+        if (fullBlock != EMPTY_BLOCK) {
             this.blocks.add(fullBlock);
         }
 
-        // TODO: allocate (smaller) blocks from Arena?
-        ByteBuffer b = ByteBuffer.allocateDirect(BLOCK_SIZE).order(ByteOrder.nativeOrder());
+        // TODO: allocate (smaller) blocks from mapped-buffer Arena?
+        ByteBuffer b = this.allocator.newBlock();
         this.block = b;
         return b;
     }
 
     public MemoryMesh takeMesh() {
-        var mesh = new MemoryMesh();
+        var mesh = new MemoryMesh(this.allocator);
         for (ByteBuffer block : this.blocks) {
             mesh.vertexBlocks.add(block.flip());
         }
         this.blocks.clear();
 
-        var lastBlock = this.block;
+        ByteBuffer lastBlock = this.block;
         this.block = EMPTY_BLOCK;
-        mesh.vertexBlocks.add(lastBlock.flip());
-
+        if (lastBlock != EMPTY_BLOCK) {
+            mesh.vertexBlocks.add(lastBlock.flip());
+        }
         return mesh;
     }
 

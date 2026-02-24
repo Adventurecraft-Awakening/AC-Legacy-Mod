@@ -2,17 +2,22 @@ package dev.adventurecraft.awakening.mixin.world.chunk;
 
 import com.llamalad7.mixinextras.injector.WrapWithCondition;
 import com.llamalad7.mixinextras.sugar.Local;
+import dev.adventurecraft.awakening.ACMainThread;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.AC_BlockEditAction;
 import dev.adventurecraft.awakening.common.AC_UndoStack;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.entity.ExBlockEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
+import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
+import dev.adventurecraft.awakening.extension.world.level.biome.ExBiomeSource;
+import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.util.BufferUtil;
-import net.minecraft.world.level.tile.TileEntityTile;
+import dev.adventurecraft.awakening.util.NibbleBuffer;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import net.minecraft.world.level.LightUpdate;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -20,6 +25,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import net.minecraft.nbt.CompoundTag;
@@ -41,15 +48,21 @@ public abstract class MixinChunk implements ExChunk {
     @Shadow public byte[] heightMap;
     @Shadow public byte[] blocks;
     @Shadow public DataLayer data;
+    @Shadow public DataLayer skyLight;
+    @Shadow public DataLayer blockLight;
     @Shadow public Level level;
 
     @Shadow @Final public int x;
     @Shadow @Final public int z;
     @Shadow public Map<Integer, TileEntity> tileEntities = new Int2ObjectOpenHashMap<>();
 
-    @Unique public double[] temperatures;
+    @Unique public short[] temperatures;
     @Unique public long lastUpdated;
+
     @Unique private int lightHash;
+    @Unique private int acVersion;
+
+    @Unique private List<LightUpdate> worldGenLight = new ArrayList<>();
 
     @Shadow
     protected abstract void lightGaps(int x, int z);
@@ -74,6 +87,31 @@ public abstract class MixinChunk implements ExChunk {
         this.lightHash = level.random.nextInt();
     }
 
+    @Inject(
+        method = "load",
+        at = @At("TAIL")
+    )
+    private void doPostLoad(CallbackInfo ci) {
+        if (this.getAcVersion() == ExWorldProperties.AC_VERSION_0) {
+            this.upgradeFromVersion0();
+        }
+
+        this.worldGenLight.forEach(u -> this.level.updateLight(u.type, u.x0, u.y0, u.z0, u.x1, u.y1, u.z1));
+        this.worldGenLight = null;
+    }
+
+    @Unique
+    private void upgradeFromVersion0() {
+        for (int x = 0; x < 16; x++) {
+            for (int z = 0; z < 16; z++) {
+                for (int y = 0; y < 16; y++) {
+                    int id = this.getTile(x, y, z);
+                    AC_Blocks.upgradeDoorMetadataTile(this.level, x, y, z, id);
+                }
+            }
+        }
+    }
+
     @Redirect(
         method = {"recalcHeightmap", "lightGap", "recalcHeight", "setBrightness"},
         at = @At(
@@ -86,6 +124,37 @@ public abstract class MixinChunk implements ExChunk {
         // TODO: Maybe mark unsaved, at least in some situations?
         //       Would be needed if we want to avoid light updates on load.
         //       Could be good for [player] saves that are not in Editing mode...
+    }
+
+    @Redirect(
+        method = {"lightGap", "recalcHeight"},
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/level/Level;updateLight(Lnet/minecraft/world/level/LightLayer;IIIIII)V"
+        )
+    )
+    private void loadAwareUpdateLight(Level instance, LightLayer type, int x0, int y0, int z0, int x1, int y1, int z1) {
+        if (this.loaded) {
+            // TODO: move behind configurable flag
+            //if (Thread.currentThread() != ACMainThread.MAIN_THREAD) {
+            //    throw new AssertionError();
+            //}
+            instance.updateLight(type, x0, y0, z0, x1, y1, z1);
+        }
+        else {
+            this.recordLightUpdate(type, x0, y0, z0, x1, y1, z1);
+        }
+    }
+
+    @Unique
+    private void recordLightUpdate(LightLayer type, int x0, int y0, int z0, int x1, int y1, int z1) {
+        if (!this.worldGenLight.isEmpty()) {
+            LightUpdate update = this.worldGenLight.getLast();
+            if (update.type == type && update.expandToContain(x0, y0, z0, x1, y1, z1)) {
+                return;
+            }
+        }
+        this.worldGenLight.add(new LightUpdate(type, x0, y0, z0, x1, y1, z1));
     }
 
     @Overwrite
@@ -126,8 +195,8 @@ public abstract class MixinChunk implements ExChunk {
         else if (y == height - 1) {
             this.recalcHeight(x, y, z);
         }
-        this.level.updateLight(LightLayer.SKY, bX, y, bZ, bX, y, bZ);
-        this.level.updateLight(LightLayer.BLOCK, bX, y, bZ, bX, y, bZ);
+        this.loadAwareUpdateLight(this.level, LightLayer.SKY, bX, y, bZ, bX, y, bZ);
+        this.loadAwareUpdateLight(this.level, LightLayer.BLOCK, bX, y, bZ, bX, y, bZ);
         this.lightGaps(x, z);
 
         if (id != 0 && !this.level.isClientSide) {
@@ -224,18 +293,10 @@ public abstract class MixinChunk implements ExChunk {
         ACMod.LOGGER.error("Unexpected {} (#{}) for entity {} at XYZ {} {} {}", tName, id, eName, x, y, z);
     }
 
-    @Inject(
-        method = "load",
-        at = @At("TAIL")
-    )
-    private void initTempMap(CallbackInfo ci) {
-        this.initTempMap();
-    }
-
-    private void initTempMap() {
-        this.temperatures = this.level
-            .getBiomeSource()
-            .getTemperatureBlock(this.temperatures, this.x * 16, this.z * 16, 16, 16);
+    @Unique
+    private void initTemperatureMap() {
+        var source = (ExBiomeSource) this.level.getBiomeSource();
+        this.temperatures = source.getTemperatureBlockF16(this.temperatures, this.x * 16, this.z * 16, 16, 16);
     }
 
     @Redirect(
@@ -263,11 +324,8 @@ public abstract class MixinChunk implements ExChunk {
     }
 
     @Unique
-    public int ac$tileEntityKey(int x, int y, int z) {
-        int bX = (x - (this.x << 4)) & 0xF;
-        int bZ = (z - (this.z << 4)) & 0xF;
-        int bY = y & 0xFF;
-        return (bY << 8) | (bZ << 4) | bX;
+    public @Override int ac$tileEntityKey(int x, int y, int z) {
+        return ExChunk.ac$tileEntityKey(x, y, z, this.x, this.z);
     }
 
     public @Override <E extends TileEntity> E ac$tryGetTileEntity(int x, int y, int z, @Nullable Class<E> type) {
@@ -325,27 +383,46 @@ public abstract class MixinChunk implements ExChunk {
     public @Override void getTileColumn(ByteBuffer buffer, int x, int y0, int z, int y1) {
         // Fill the entire requested range with values; out of bounds is zero.
         if (y0 < 0) {
-            BufferUtil.repeat(buffer, (byte) 0, -y0);
+            BufferUtil.repeatZero(buffer, -y0);
             y0 = 0;
         }
         buffer.put(this.blocks, (x << 11 | z << 7) + y0, Math.min(y1, 128) - y0);
         if (y1 > 128) {
-            BufferUtil.repeat(buffer, (byte) 0, y1 - 128);
+            BufferUtil.repeatZero(buffer, y1 - 128);
+        }
+    }
+
+    public @Override void getDataColumn(DataType type, NibbleBuffer buffer, int x, int y0, int z, int y1) {
+        // Fill the entire requested range with values; out of bounds is zero.
+        if (y0 < 0) {
+            buffer.repeat(0, -y0);
+            y0 = 0;
+        }
+        DataLayer layer = switch (type) {
+            case BLOCK_META -> this.data;
+            case BLOCK_LIGHT -> this.blockLight;
+            case SKY_LIGHT -> this.skyLight;
+        };
+        buffer.put(layer.data, (x << 11 | z << 7) + y0, Math.min(y1, 128) - y0);
+        if (y1 > 128) {
+            buffer.repeat(0, y1 - 128);
         }
     }
 
     @Override
-    public double getTemperatureValue(int x, int z) {
+    public float getTemperatureValue(int x, int z) {
         if (this.temperatures == null) {
-            this.initTempMap();
+            this.initTemperatureMap();
         }
-
-        return this.temperatures[z << 4 | x];
+        return Float.float16ToFloat(this.temperatures[z << 4 | x]);
     }
 
     @Override
-    public void setTemperatureValue(int x, int z, double value) {
-        this.temperatures[z << 4 | x] = value;
+    public void setTemperatureValue(int x, int z, float value) {
+        if (this.temperatures == null) {
+            this.initTemperatureMap();
+        }
+        this.temperatures[z << 4 | x] = Float.floatToFloat16(value);
     }
 
     @Override
@@ -374,5 +451,15 @@ public abstract class MixinChunk implements ExChunk {
     @Override
     public void updateLightHash() {
         this.lightHash += 1;
+    }
+
+    @Override
+    public int getAcVersion() {
+        return acVersion;
+    }
+
+    @Override
+    public void setAcVersion(int acVersion) {
+        this.acVersion = acVersion;
     }
 }

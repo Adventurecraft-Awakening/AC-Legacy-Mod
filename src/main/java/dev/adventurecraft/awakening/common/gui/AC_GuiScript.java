@@ -77,6 +77,7 @@ public class AC_GuiScript extends Screen {
         } else if (this.selectedID == 2) {
             this.script.onUpdateScriptFile = var1;
         }
+        this.script.setChanged();
     }
 
     @Override

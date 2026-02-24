@@ -56,6 +56,14 @@ public final class TagUtil {
         };
     }
 
+    public static boolean isIntegerType(byte typeId) {
+        return typeId == Tags.TAG_BYTE || typeId == Tags.TAG_SHORT || typeId == Tags.TAG_INT || typeId == Tags.TAG_LONG;
+    }
+
+    public static boolean isFloatType(byte typeId) {
+        return typeId == Tags.TAG_FLOAT || typeId == Tags.TAG_DOUBLE;
+    }
+
     public static Tag wrap(Object primitive) {
         return switch (primitive) {
             case Byte b -> new ByteTag(b);

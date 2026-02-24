@@ -13,6 +13,10 @@ public final class MathF {
 
     private static final double LOG2_INVERSE = 1.44269504088896340735992468100189213743;
 
+    public static final float PI = (float) Math.PI;
+    public static final float PI_2 = (float) (Math.PI * 2.0);
+    public static final float PI_OVER_2 = (float) (Math.PI * 0.5);
+
     // The `Math.clamp` built-ins perform expensive checks, we skip them here.
 
     public static int clamp(int value, int min, int max) {
@@ -57,6 +61,10 @@ public final class MathF {
 
     public static double lerp(double amount, double start, double end) {
         return (1.0 - amount) * start + amount * end;
+    }
+
+    public static double inverseLerp(double amount, double start, double end) {
+        return (amount - start) / (end - start);
     }
 
     public static double round(double value, int decimals) {
@@ -109,12 +117,30 @@ public final class MathF {
         return log(a.doubleValue(), base);
     }
 
+    public static float floor(float a) {
+        return (float) Math.floor(a);
+    }
+
     public static float sin(float a) {
         return (float) Math.sin(a);
     }
 
     public static float cos(float a) {
         return (float) Math.cos(a);
+    }
+
+    public static float cosFromSin(float sin, float angle) {
+        // sin(x)^2 + cos(x)^2 = 1
+        float cos = sqrt(1.0f - sin * sin);
+        float a = angle + PI_OVER_2;
+        float b = floor(a / PI_2) * PI_2;
+        if (b < 0.0)
+            b = PI_2 + b;
+        return b >= PI ? -cos : cos;
+    }
+
+    public static float sqrt(float a) {
+        return (float) Math.sqrt(a);
     }
 
     public static float toRadians(float degrees) {
@@ -185,6 +211,6 @@ public final class MathF {
     }
 
     public static int roundUpToPow2Mask(int value) {
-        return (int)(0x1_FFFF_FFFFL >> Integer.numberOfLeadingZeros((value | 1) - 1));
+        return (int)(0x0_FFFF_FFFFL >> Integer.numberOfLeadingZeros((value | 1) - 1));
     }
 }

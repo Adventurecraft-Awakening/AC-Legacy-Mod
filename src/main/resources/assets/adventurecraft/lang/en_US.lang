@@ -3,19 +3,17 @@ mapList.title=Select a Map to Play
 mapList.newMap=New Map
 
 ## Video Settings names
-options.renderDistance.veryFar=Very Far
+options.renderDistance=Chunk Render Distance
 options.of.brightness=Brightness
 options.of.msaa=Anti-aliasing
 
 ## World Settings names
 options.of.world.loadFar=Load Far
 options.of.world.preloadedChunks=Preloaded Chunks
-options.of.world.chunkUpdates=Chunk Updates
 options.of.world.dynamicUpdates=Dynamic Updates 
 options.of.world.autosaveInterval=Autosave Interval
 options.of.world.time=Time
 options.of.world.weather=Weather
-options.of.world.farView=Far View
 options.ac.world.allowJavaInScript=Allow Java In Script
 
 ## Detail Settings names
@@ -51,10 +49,7 @@ options.of.texture.anisoFilter=Anisotropic Filtering
 options.of.texture.leaves=Leaves
 
 ## Other Settings names
-options.of.other.smoothFPS=Smooth FPS
-options.of.other.smoothInput=Smooth Input
 options.of.other.fastDebugInfo=Fast Debug Info
-options.of.other.adjustFarClip=Auto Far Clip
 
 ## Extra menus
 options.of.textures=Textures...
@@ -68,7 +63,7 @@ options.of.otherTitle=Other Settings
 
 ## Video Settings tooltips
 options.graphics.tooltip="Visual quality", "  Fast  - lower quality, faster", "  Fancy - higher quality, slower", "Changes the appearance of clouds, leaves, water,", "shadows and grass sides."
-options.renderDistance.tooltip="Visible distance", "  Far - 256m (slower)", "  Normal - 128m", "  Short - 64m (faster)", "  Tiny - 32m (fastest)"
+options.renderDistance.tooltip="Visible distance in chunks", "  Min (32 blocks) - fastest", "  Max (1984 blocks) - very memory intensive!"
 options.ao.tooltip="Smooth lighting", "  OFF - no smooth lighting (faster)", "  1% - light smooth lighting (slower)", "  100% - dark smooth lighting (slower)"
 options.framerateLimit.tooltip="FPS Limit", "  Max FPS - no limit (fastest)", "  Balanced - limit 120 FPS (slower)", "  Power saver - limit 40 FPS (slowest)", "  VSync - limit to monitor framerate (60, 30, 20)", "Balanced and Power saver decrease the FPS even if", "the limit value is not reached."
 options.anaglyph.tooltip="3D mode used with red-cyan 3D glasses."
@@ -81,12 +76,10 @@ options.of.msaa.tooltip="Multisample anti-aliasing", " OFF - (default) no anti-a
 ## World settings tooltips
 options.of.world.loadFar.tooltip="Loads the world chunks at distance Far.", "Switching the render distance does not cause all chunks ", "to be loaded again.", "  OFF - world chunks loaded up to render distance", "  ON - world chunks loaded at distance Far, allows", "       fast render distance switching"
 options.of.world.preloadedChunks.tooltip="Defines an area in which no chunks will be loaded", "  OFF - after 5m new chunks will be loaded", "  2 - after 32m  new chunks will be loaded", "  8 - after 128m new chunks will be loaded", "Higher values need more time to load all the chunks"
-options.of.world.chunkUpdates.tooltip="Chunk updates per frame", " 1 - (default) slower world loading, higher FPS", " 3 - faster world loading, lower FPS", " 5 - fastest world loading, lowest FPS"
 options.of.world.dynamicUpdates.tooltip="Chunk updates per frame", " OFF - (default) standard chunk updates per frame", " ON - more updates while the player is standing still", "Dynamic updates force more chunk updates while", "the player is standing still to load the world faster."
 options.of.world.autosaveInterval.tooltip="Autosave interval", "Default autosave interval (2s) is NOT RECOMMENDED.", "Autosave causes the famous Lag Spike of Death."
 options.of.world.time.tooltip="Time", " Default - normal day/night cycles", " Day Only - day only", " Night Only - night only"
 options.of.world.weather.tooltip="Weather", "  ON - weather is active, slower", "  OFF  - weather is not active, faster", "The weather controls rain, snow and thunderstorms."
-options.of.world.farView.tooltip="Far View", " OFF - (default) standard view distance", " ON - 3x view distance", "Far View is very resource demanding!", "3x view distance => 9x chunks to be loaded => FPS / 9", "Standard view distances: 32, 64, 128, 256", "Far view distances: 96, 192, 384, 512"
 options.ac.world.allowJavaInScript.tooltip="Allow Java In Script", "  OFF - (default) Do not allow loading of Java classes.", "  ON - §4DANGER!§f Allow scripts to load any Java class.", "", "This allows scripts to §eexecute arbitrary code§f", "and makes your system vulnerable.", "", "(This cannot be changed at runtime.)"
 
 options.ac.chatMessageBufferLimit.tooltip="The maximum amount of messages to store in the", "chat history."
@@ -111,8 +104,6 @@ options.of.texture.anisoFilter.tooltip="Anisotropic filtering", " OFF - (default
 options.of.texture.leaves.tooltip="Leaves", "  Default - as set by setting Graphics", "  Fast - lower quality, faster", "  Fancy - higher quality, slower", "Fast leaves are opaque.", "Fancy leaves are transparent."
 
 ## Other Settings tooltips
-options.of.other.smoothFPS.tooltip="Stabilizes FPS by flushing the graphic driver buffers", "  OFF - no stabilization, FPS may fluctuate", "  ON - FPS stabilization", "This option is graphic driver dependant and its effect", "is not always visible"
-options.of.other.smoothInput.tooltip="Fixes stuck keys, slow input response and sound lag", "  OFF - no fix for stuck keys", "  ON - fixes stuck keys", "This option adds a small delay (1ms) to the game loop", "which fixes the stuck keys, slow input and sound lag."
 options.of.other.fastDebugInfo.tooltip="Fast Debug Info", " OFF - default debug info screen, slower", " ON - debug info screen without lagometer, faster", "Removes the lagometer from the debug screen (F3)."
 
 command.gamerule.desc=Set global rules for the map

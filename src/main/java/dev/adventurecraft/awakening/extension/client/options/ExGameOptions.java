@@ -6,6 +6,11 @@ import net.minecraft.client.KeyMapping;
 
 public interface ExGameOptions {
 
+    /**
+     * Account for chunks trying to access neighbors, be it during simulation or rendering.
+     */
+    int CHUNK_DISTANCE_BORDER = 2;
+
     boolean ofFogFancy();
 
     float ofFogStart();
@@ -18,15 +23,17 @@ public interface ExGameOptions {
 
     int ofPreloadedChunks();
 
+    int ofChunkRenderDistance();
+
+    int ofChunkSimulationDistance();
+
+    int ofChunkLoadDistance();
+
     boolean ofOcclusionFancy();
 
     boolean isOcclusionEnabled();
 
     boolean isOcclusionFancy();
-
-    boolean ofSmoothFps();
-
-    boolean ofSmoothInput();
 
     float ofBrightness();
 
@@ -74,11 +81,7 @@ public interface ExGameOptions {
 
     boolean ofStars();
 
-    int ofChunkUpdates();
-
     boolean ofChunkUpdatesDynamic();
-
-    boolean ofFarView();
 
     int ofTime();
 
@@ -107,8 +110,6 @@ public interface ExGameOptions {
     KeyMapping ofKeyBindZoom();
 
     boolean isGrass3d();
-
-    boolean isAutoFarClip();
 
     int getChatMessageBufferLimit();
 

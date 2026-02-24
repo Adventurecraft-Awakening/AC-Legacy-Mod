@@ -18,7 +18,7 @@ public interface ExBlock extends AC_TexturedBlock, AC_ITriggerBlock {
     //  * trigger regions are removed for AC blocks.
     void ac$onRemove(Level level, int x, int y, int z, boolean dropItems);
 
-    void setBoundingBox(double minX, double minY, double minZ, double maxX, double maxY, double maxZ);
+    Tile ac$clone();
 
     Tile setSubTypes(int var1);
 
@@ -30,13 +30,16 @@ public interface ExBlock extends AC_TexturedBlock, AC_ITriggerBlock {
         boolean previousState = AC_DebugMode.triggerResetActive;
         AC_DebugMode.triggerResetActive = true;
 
+        // TODO: iterate over chunk slices
         for (int bX = min.x; bX <= max.x; ++bX) {
-            for (int bY = min.y; bY <= max.y; ++bY) {
-                for (int bZ = min.z; bZ <= max.z; ++bZ) {
+            for (int bZ = min.z; bZ <= max.z; ++bZ) {
+                for (int bY = min.y; bY <= max.y; ++bY) {
                     int id = world.getTile(bX, bY, bZ);
-                    if (id != 0) {
-                        ((ExBlock) Tile.tiles[id]).reset(world, bX, bY, bZ, false);
+                    if (id == 0) {
+                        continue;
                     }
+
+                    ((ExBlock) Tile.tiles[id]).reset(world, bX, bY, bZ, false);
                 }
             }
         }

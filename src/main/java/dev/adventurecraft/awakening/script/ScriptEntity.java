@@ -5,7 +5,7 @@ import dev.adventurecraft.awakening.entity.AC_EntityLivingScript;
 import dev.adventurecraft.awakening.entity.AC_EntityNPC;
 import dev.adventurecraft.awakening.entity.AC_Particle;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
-import dev.adventurecraft.awakening.extension.entity.ExEntityRegistry;
+import dev.adventurecraft.awakening.extension.world.entity.EntityClass;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.FlyingMob;
 import net.minecraft.world.entity.Mob;
@@ -24,10 +24,9 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiFunction;
 
 @SuppressWarnings("unused")
-public class ScriptEntity {
+public class ScriptEntity implements EntityClass {
 
     Entity entity;
 
@@ -259,11 +258,9 @@ public class ScriptEntity {
         return this.entity.hurt(entity.entity, damage);
     }
 
+    @Override
     public String getClassType() {
-        if (this.entity instanceof Player) {
-            return "Player";
-        }
-        return ExEntityRegistry.getEntityStringClimbing(this.entity);
+        return ((EntityClass) this.entity).getClassType();
     }
 
     public boolean getCollidesWithClipBlocks() {
@@ -329,8 +326,8 @@ public class ScriptEntity {
         HitResult hit = AC_UtilBullet.rayTrace(
             this.entity.level,
             this.entity,
-            Vec3.newTemp(aX, aY, aZ),
-            Vec3.newTemp(bX, bY, bZ)
+            Vec3.create(aX, aY, aZ),
+            Vec3.create(bX, bY, bZ)
         );
         if (hit != null) {
             result[0] = new ScriptVec3(hit.pos.x, hit.pos.y, hit.pos.z);

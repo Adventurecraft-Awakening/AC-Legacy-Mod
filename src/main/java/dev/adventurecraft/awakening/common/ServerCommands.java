@@ -137,6 +137,13 @@ public class ServerCommands {
             descs.attach(ServerCommands::cmdFly, "Toggles flying")
         ));
 
+        dispatcher.register(requiredArg(
+            literal("fly"),
+            "speed",
+            FloatArgumentType.floatArg(0, 1000),
+            descs.attach(ServerCommands::cmdFlightSpeed, "Sets flight speed")
+        ));
+
         dispatcher.register(optionalArg(
             literal("noclip"),
             "value",
@@ -228,8 +235,8 @@ public class ServerCommands {
 
     public static int cmdTextureAtlas(CommandContext<ServerCommandSource> context) {
         var source = context.getSource();
-            source.getClient().setScreen(new AC_GuiTextureAtlas());
-            return Command.SINGLE_SUCCESS;
+        source.getClient().setScreen(new AC_GuiTextureAtlas());
+        return Command.SINGLE_SUCCESS;
     }
 
     public static int cmdDay(CommandContext<ServerCommandSource> context) {
@@ -441,7 +448,24 @@ public class ServerCommands {
         if (entity instanceof ExEntity exEntity) {
             exEntity.setIsFlying(value != null ? value : !exEntity.getIsFlying());
 
-            source.getClient().gui.addMessage(String.format("Flying: %b", exEntity.getIsFlying()));
+            source.getClient().gui.addMessage(String.format(
+                "Flying: %b (speed: %s)",
+                exEntity.getIsFlying(),
+                exEntity.getFlightSpeed()
+            ));
+            return Command.SINGLE_SUCCESS;
+        }
+        return 0;
+    }
+
+    public static int cmdFlightSpeed(CommandContext<ServerCommandSource> context, Float value) {
+        var source = context.getSource();
+        var entity = source.getEntity();
+        if (entity instanceof ExEntity exEntity) {
+            if (value != null) {
+                exEntity.setFlightSpeed(value);
+            }
+            source.getClient().gui.addMessage(String.format("Flight speed: %s", exEntity.getFlightSpeed()));
             return Command.SINGLE_SUCCESS;
         }
         return 0;

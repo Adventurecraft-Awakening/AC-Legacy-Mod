@@ -19,4 +19,7 @@ public abstract class MixinTag implements ExTag {
     @Invoker
     public abstract void invokeRead(DataInput input)
         throws IOException;
+
+    @Override
+    public abstract Tag copy();
 }

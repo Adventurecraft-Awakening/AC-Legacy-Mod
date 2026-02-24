@@ -1,11 +1,13 @@
 package dev.adventurecraft.awakening.tile;
 
+import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.item.AC_ItemSubtypes;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.TileItem;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.tile.Tile;
 
@@ -91,10 +93,17 @@ public class AC_Blocks {
             int id = ExChunk.widenByte(blocks[i]);
             if (id >= 100 && id <= 122) {
                 id += 50;
-            } else if (id >= 152 && id <= 155) {
+            }
+            else if (id >= 152 && id <= 155) {
                 id += 21;
             }
             blocks[i] = ExChunk.narrowByte(id);
+        }
+    }
+
+    public static void upgradeDoorMetadataTile(Level level, int x, int y, int z, int id) {
+        if (id == AC_Blocks.lockedDoor.id || id == AC_Blocks.lockedBossDoor.id) {
+            ((ExWorld) level).ac$addToTickNextTick(x, y, z, id, 0, 0);
         }
     }
 

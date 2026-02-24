@@ -71,7 +71,7 @@ public class AC_UtilBullet {
 
     private static HitResult rayTraceCore(Level world, Entity ignore, Vec3 pointA, Vec3 pointB) {
         Vec3 end = pointB;
-        Vec3 pointACopy = Vec3.newTemp(pointA.x, pointA.y, pointA.z);
+        Vec3 pointACopy = Vec3.create(pointA.x, pointA.y, pointA.z);
         HitResult blockHit = rayTraceBlocks(world, pointACopy, pointB);
         if (blockHit != null) {
             end = blockHit.pos;

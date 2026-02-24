@@ -31,7 +31,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     @Shadow private long time;
 
     private boolean hudEnabled = true;
-    public double tempOffset;
+    public float tempOffset;
     private WorldGenProperties worldGenProps = new WorldGenProperties();
     public CompoundTag triggerData = null;
     float timeOfDay;
@@ -66,7 +66,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     private void init(CompoundTag tag, CallbackInfo ci) {
         var exTag = (ExCompoundTag) tag;
 
-        this.tempOffset = exTag.findDouble("TemperatureOffset").orElse(0.0);
+        this.tempOffset = (float) (double) exTag.findDouble("TemperatureOffset").orElse(0.0);
         exTag.findBool("IsPrecipitating").ifPresent(b -> this.raining = b);
 
         Entity.ENTITY_COUNTER = tag.getInt("nextEntityID");
@@ -278,12 +278,12 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     }
 
     @Override
-    public double getTempOffset() {
+    public float getTempOffset() {
         return this.tempOffset;
     }
 
     @Override
-    public void setTempOffset(double value) {
+    public void setTempOffset(float value) {
         this.tempOffset = value;
     }
 

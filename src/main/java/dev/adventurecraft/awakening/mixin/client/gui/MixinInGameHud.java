@@ -12,6 +12,7 @@ import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.extension.entity.ExMob;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
+import dev.adventurecraft.awakening.extension.world.entity.EntityClass;
 import dev.adventurecraft.awakening.image.Rgba;
 import dev.adventurecraft.awakening.layout.Border;
 import dev.adventurecraft.awakening.layout.IntRect;
@@ -30,9 +31,11 @@ import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.world.ItemInstance;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.tile.Tile;
+import net.minecraft.world.phys.HitType;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 import org.spongepowered.asm.mixin.Mixin;
@@ -378,8 +381,32 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
             }
 
             var exPlayer = (ExEntity) player;
-            var collideMsg = String.format("Collide X: %d Z: %d", exPlayer.getCollisionX(), exPlayer.getCollisionZ());
+            var collideMsg = String.format("Collide XZ: %d / %d", exPlayer.getCollisionX(), exPlayer.getCollisionZ());
             textState.drawText(collideMsg, x, y += 10);
+            y += 10;
+
+            var hit = mc.hitResult;
+            if (hit != null) {
+                String targetMsg = "";
+                String hitMsg = "";
+                if (hit.hitType == HitType.TILE) {
+                    int id = mc.level.getTile(hit.x, hit.y, hit.z);
+                    int meta = mc.level.getData(hit.x, hit.y, hit.z);
+                    // TODO: better tile names (BlockState)
+                    Tile tile = Tile.tiles[id];
+                    String name = tile != null ? tile.getName() : "<noname>";
+
+                    targetMsg = String.format("Target Block: %d %d %d", hit.x, hit.y, hit.z);
+                    hitMsg = String.format("%d:%d (%s)", id, meta, name);
+                }
+                else if (hit.hitType == HitType.ENTITY) {
+                    Entity e = hit.entity;
+                    targetMsg = String.format("Target Entity: %.1f %.1f %.1f", e.x, e.y, e.z);
+                    hitMsg = ((EntityClass) e).getClassType() + "#" + Integer.toHexString(e.id);
+                }
+                textState.drawText(targetMsg, x, y += 10);
+                textState.drawText(hitMsg, x, y += 10);
+            }
 
             textState.end();
         }
@@ -390,8 +417,8 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
                 y += 10;
 
                 var gitMeta = ACMod.GIT_META;
-                if (gitMeta != null && !Boolean.parseBoolean(gitMeta.isCleanTag)) {
-                    String branchHash = "Branch \"" + gitMeta.branch + "\" - " + gitMeta.hash;
+                if (gitMeta != null && !gitMeta.isCleanTag) {
+                    String branchHash = "Branch \"" + gitMeta.branch + "\" - " + gitMeta.shortHash;
                     font.drawShadow(branchHash, x, y, color0);
                     y += 10;
                 }

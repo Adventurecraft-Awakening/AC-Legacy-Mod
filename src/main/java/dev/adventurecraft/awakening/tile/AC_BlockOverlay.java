@@ -33,29 +33,29 @@ public class AC_BlockOverlay extends Tile implements AC_IBlockColor, AC_ITrigger
     }
 
     public void updateBounds(LevelSource view, int x, int y, int z) {
-        double offset = 1.0 / 64.0;
-        double minX = 0.0;
-        double minY = 0.0;
-        double minZ = 0.0;
-        double maxX = 1.0;
-        double maxY = 1.0;
-        double maxZ = 1.0;
+        float offset = 1.0f / 64.0f;
+        float minX = 0.0f;
+        float minY = 0.0f;
+        float minZ = 0.0f;
+        float maxX = 1.0f;
+        float maxY = 1.0f;
+        float maxZ = 1.0f;
         if (view.isSolidTile(x, y - 1, z)) {
             maxY = offset;
         } else if (view.isSolidTile(x, y + 1, z)) {
-            minY = 1.0 - offset;
+            minY = 1.0f - offset;
         } else if (view.isSolidTile(x - 1, y, z)) {
             maxX = offset;
         } else if (view.isSolidTile(x + 1, y, z)) {
-            minX = 1.0 - offset;
+            minX = 1.0f - offset;
         } else if (view.isSolidTile(x, y, z - 1)) {
             maxZ = offset;
         } else if (view.isSolidTile(x, y, z + 1)) {
-            minZ = 1.0 - offset;
+            minZ = 1.0f - offset;
         } else {
             maxY = offset;
         }
-        ((ExBlock) this).setBoundingBox(minX, minY, minZ, maxX, maxY, maxZ);
+        this.setShape(minX, minY, minZ, maxX, maxY, maxZ);
     }
 
     @Override

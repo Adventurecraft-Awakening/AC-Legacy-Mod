@@ -14,6 +14,7 @@ import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.client.MemoryTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
+import net.minecraft.client.renderer.HttpTexture;
 import net.minecraft.client.renderer.Textures;
 import net.minecraft.client.renderer.ptexture.DynamicTexture;
 import net.minecraft.client.skins.TexturePack;
@@ -39,6 +40,7 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 // TODO: improve texture management and lookups.
@@ -62,6 +64,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
     @Shadow private boolean clamp;
     @Shadow private boolean blur;
     @Shadow private BufferedImage missingTex;
+    @Shadow private Map<String, HttpTexture> htt;
 
     @Unique private boolean strip;
     @Unique private HashMap<String, String> replacedTextures = new HashMap<>();
@@ -345,6 +348,9 @@ public abstract class MixinTextureManager implements ExTextureManager {
         final int format = GL11.GL_RGBA;
         final int type = GL11.GL_UNSIGNED_BYTE;
 
+        // TODO: holy moly the atlas is the wrong size
+        var info = new GLTextureInfo(target, "tmp", GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D));
+
         int levelOffset = ImageMipmapper.getPixelOffset(rect.w, rect.h, minLevel);
 
         for (int level = minLevel; level <= maxLevel; ++level) {
@@ -464,16 +470,22 @@ public abstract class MixinTextureManager implements ExTextureManager {
         )
     )
     private void useCustomTextureReload(CallbackInfo ci) {
+        var httpIds = this.htt.values().stream().map(t -> t.id).collect(Collectors.toSet());
+
         // TODO: why? add docs!
         for (String key : this.idMap.keySet()) {
             int id = this.idMap.get(key);
+            if (httpIds.contains(id)) {
+                // Skip reloading HTTP textures.
+                continue;
+            }
             this.loadTexture(id, key);
         }
     }
 
     @Unique
     private ByteBuffer getPixelBuffer(int width, int height) {
-        int level = MathF.roundUpToPow2Mask(Math.max(width, height));
+        int level = MathF.roundUpToPow2Mask(Math.max(width, height) * 2);
         int size = level * level * 4;
         if (this.pixels == null || this.pixels.capacity() < size) {
             this.pixels = MemoryTracker.createByteBuffer(size);

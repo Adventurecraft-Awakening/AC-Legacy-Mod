@@ -2,11 +2,11 @@ package dev.adventurecraft.awakening.mixin.entity;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
+import dev.adventurecraft.awakening.extension.entity.ExEntityRegistry;
 import dev.adventurecraft.awakening.extension.nbt.ExListTag;
 import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
-import dev.adventurecraft.awakening.util.RandomUtil;
 import dev.adventurecraft.awakening.util.TagUtil;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
@@ -68,7 +68,7 @@ public abstract class MixinEntity implements ExEntity {
     @Shadow public int invulnerableTime;
 
     @Unique public boolean ignoreCobwebCollision = false;
-    @Unique public boolean isFlying;
+    @Unique public float flightSpeed = -1;
     @Unique public int stunned;
     @Unique public boolean collidesWithClipBlocks = true;
     @Unique public int collisionX;
@@ -144,10 +144,10 @@ public abstract class MixinEntity implements ExEntity {
     public abstract float getBrightness(float partialTick);
 
     @Inject(
-        method = "saveWithoutId",
+        method = "load",
         at = @At("TAIL")
     )
-    protected void ac$saveWithoutId(CompoundTag tag, CallbackInfo ci) {
+    protected void ac$load(CompoundTag tag, CallbackInfo ci) {
         var exTag = (ExCompoundTag) tag;
         var customTag = exTag.findCompound("custom");
         if (customTag.isPresent()) {
@@ -159,11 +159,11 @@ public abstract class MixinEntity implements ExEntity {
     }
 
     @Inject(
-        method = "load",
+        method = "saveWithoutId",
         at = @At("TAIL")
     )
-    protected void ac$load(CompoundTag tag, CallbackInfo ci) {
-        // Do not use customData() to not unnecessarily init map.
+    protected void ac$saveWithoutId(CompoundTag tag, CallbackInfo ci) {
+        // Do not use customData() to avoid unnecessarily creating map.
         if (this.customData != null && !this.customData.isEmpty()) {
             var customTag = new CompoundTag();
             this.customData.forEach((key, object) -> {
@@ -366,6 +366,11 @@ public abstract class MixinEntity implements ExEntity {
     }
 
     @Override
+    public String getClassType() {
+        return ExEntityRegistry.getEntityClassType((Entity) (Object) this);
+    }
+
+    @Override
     public Vec3 getPosition() {
         return Vec3.create(this.x, this.y, this.z);
     }
@@ -378,7 +383,7 @@ public abstract class MixinEntity implements ExEntity {
         double ySin = Math.sin(yaw - Math.PI);
         double pCos = -Math.cos(pitch);
         double pSin = Math.sin(pitch);
-        return Vec3.newTemp(ySin * pCos, pSin, yCos * pCos);
+        return Vec3.create(ySin * pCos, pSin, yCos * pCos);
     }
 
     @Override
@@ -399,12 +404,22 @@ public abstract class MixinEntity implements ExEntity {
 
     @Override
     public boolean getIsFlying() {
-        return this.isFlying;
+        return this.flightSpeed > 0.0;
     }
 
     @Override
     public void setIsFlying(boolean value) {
-        this.isFlying = value;
+        this.flightSpeed = Math.copySign(this.flightSpeed, value ? 1f : -1f);
+    }
+
+    @Override
+    public float getFlightSpeed() {
+        return this.flightSpeed;
+    }
+
+    @Override
+    public void setFlightSpeed(float value) {
+        this.flightSpeed = value;
     }
 
     @Override
@@ -459,12 +474,18 @@ public abstract class MixinEntity implements ExEntity {
 
     @Override
     public boolean hasTag(String key) {
-        return this.customData().containsKey(key);
+        if (this.customData == null) {
+            return false;
+        }
+        return this.customData.containsKey(key);
     }
 
     @Override
     public Object getTag(String key) {
-        return this.customData().get(key);
+        if (this.customData == null) {
+            return null;
+        }
+        return this.customData.get(key);
     }
 
     @Override

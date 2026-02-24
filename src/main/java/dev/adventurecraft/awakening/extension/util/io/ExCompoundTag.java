@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.extension.util.io;
 
+import dev.adventurecraft.awakening.extension.nbt.ExTag;
 import dev.adventurecraft.awakening.util.TagUtil;
 import net.minecraft.nbt.*;
 
@@ -8,7 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
-public interface ExCompoundTag {
+public interface ExCompoundTag extends ExTag {
 
     default Optional<Boolean> findBool(String key) {
         return TagUtil.toBool(this.getTag(key));
@@ -54,11 +55,22 @@ public interface ExCompoundTag {
         return Optional.ofNullable(this.getTag(key) instanceof ListTag tag ? tag : null);
     }
 
+    default ListTag findListOrEmpty(String key) {
+        return this.findList(key).orElseGet(ListTag::new);
+    }
+
+    @Override
+    CompoundTag copy();
+
     void forEach(BiConsumer<String, Tag> consumer);
 
     Set<String> getKeys();
 
+    void putTag(String key, Tag tag);
+
     Tag getTag(String key);
+
+    Optional<Tag> removeTag(String key);
 
     default Optional<Tag> findTag(String key) {
         return Optional.ofNullable(this.getTag(key));

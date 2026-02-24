@@ -33,8 +33,8 @@ import dev.adventurecraft.awakening.script.Script;
 import dev.adventurecraft.awakening.script.ScriptModel;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityNpcPath;
-import dev.adventurecraft.awakening.util.MathF;
-import dev.adventurecraft.awakening.util.RandomUtil;
+import dev.adventurecraft.awakening.util.*;
+import dev.adventurecraft.awakening.world.AC_LevelSource;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -67,6 +67,7 @@ import net.minecraft.world.level.tile.entity.TileEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import org.apache.commons.lang3.NotImplementedException;
 import org.mozilla.javascript.Scriptable;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
@@ -77,15 +78,18 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Mixin(Level.class)
-public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
+public abstract class MixinWorld implements ExWorld, LevelSource, AC_LevelSource, Closeable {
 
-    private static final int MAX_LIGHT = 15;
+    @Unique private static final int MAX_LIGHT = 15;
 
     @Shadow static int maxLoop;
+
+    @Shadow public boolean instaTick;
     @Shadow public LevelData levelData;
     @Shadow public DimensionDataStorage dataStorage;
     @Shadow public boolean isFindingSpawn;
@@ -457,14 +461,9 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
         }
 
         Level self = (Level) (Object) this;
-        try {
-            var cache = (ChunkCache) ACMod.UNSAFE.allocateInstance(ChunkCache.class);
-            ((ExChunkCache) cache).init(self, io, this.dimension.createRandomLevelSource());
-            return cache;
-        }
-        catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        }
+        var cache = UnsafeUtil.allocateInstance(ChunkCache.class);
+        ((ExChunkCache) cache).init(self, io, this.dimension.createRandomLevelSource());
+        return cache;
     }
 
     @Redirect(
@@ -572,6 +571,14 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
         return null;
     }
 
+    public @Override void getTileColumn(ByteBuffer buffer, int x, int y0, int z, int y1) {
+        throw new NotImplementedException();
+    }
+
+    public @Override void getDataColumn(DataType type, NibbleBuffer buffer, int x, int y0, int z, int y1) {
+        throw new NotImplementedException();
+    }
+
     private @Unique int getNeighborBrightness(int x, int y, int z) {
         int id = this.getTile(x, y, z);
         if (!ExBlock.neighborLit[id]) {
@@ -653,33 +660,22 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
 
     @Override
     public float getLightValue(int x, int y, int z) {
-        float level = this.getLightLevel(x, y, z);
-        float torch = AC_PlayerTorch.getTorchLight((Level) (Object) this, x, y, z);
-        return Math.max(level, Math.min(torch, 15.0F));
-    }
-
-    private float getBrightnessLevel(float value) {
-        float[] ramp = this.dimension.brightnessRamp;
-        int low = (int) Math.floor(value);
-        if (low == value) {
-            return ramp[low];
-        }
-        int high = (int) Math.ceil(value);
-        float delta = value - low;
-        return MathF.lerp(delta, ramp[low], ramp[high]);
+        int raw = this.getLightLevel(x, y, z);
+        float torch = AC_PlayerTorch.getTorchLight(x, y, z);
+        return Math.max(raw, Math.min(torch, 15.0F));
     }
 
     @Environment(EnvType.CLIENT)
     @Overwrite
     public float getBrightness(int x, int y, int z, int max) {
         float value = Math.max(this.getLightValue(x, y, z), max);
-        return this.getBrightnessLevel(value);
+        return LightUtil.remapValue(this.dimension.brightnessRamp, value);
     }
 
     @Overwrite
     public float getBrightness(int x, int y, int z) {
         float value = this.getLightValue(x, y, z);
-        return this.getBrightnessLevel(value);
+        return LightUtil.remapValue(this.dimension.brightnessRamp, value);
     }
 
     @Override
@@ -1191,7 +1187,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
         )
     )
     private TileEntity removeBlockEntityDontCreate(Level instance, int x, int y, int z) {
-        return this.getBlockTileEntityDontCreate(x, y, z);
+        return this.ac$tryGetTileEntity(x, y, z, null);
     }
 
     @Overwrite
@@ -1230,7 +1226,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
 
             final int maxUpdates = 1000000;
             if (this.lightUpdates.size() > maxUpdates) {
-                System.out.println("More than " + maxUpdates + " updates, aborting lighting updates");
+                ACMod.LOGGER.warn("More than " + maxUpdates + " updates, aborting lighting updates");
                 this.lightUpdates.clear();
             }
         }
@@ -1324,13 +1320,13 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
 
     @Overwrite
     public void tickTiles() {
+        int dist = ((ExGameOptions) Minecraft.instance.options).ofChunkSimulationDistance();
         for (Player player : this.players) {
             int cX = (int) Math.floor(player.x / 16.0D);
             int cZ = (int) Math.floor(player.z / 16.0D);
-            int cD = 9;
 
-            for (int x = -cD; x <= cD; ++x) {
-                for (int z = -cD; z <= cD; ++z) {
+            for (int x = -dist; x < dist; ++x) {
+                for (int z = -dist; z < dist; ++z) {
                     this.updateChunk(x + cX, z + cZ);
                 }
             }
@@ -1341,6 +1337,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
         }
     }
 
+    @Unique
     protected void updateChunk(int cX, int cZ) {
         LevelChunk chunk = this.getChunk(cX, cZ);
         if (((ExChunk) chunk).getLastUpdated() == this.getTime()) {
@@ -1388,7 +1385,9 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
                 break;
             }
 
-            this.tickNextTickList.remove(entry);
+            if (entry != this.tickNextTickList.removeFirst()) {
+                throw new AssertionError();
+            }
             if (!this.tickNextTickSet.remove(entry)) {
                 continue;
             }
@@ -1407,6 +1406,34 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
         }
 
         return !this.tickNextTickList.isEmpty();
+    }
+
+    @Override
+    public void ac$addToTickNextTick(int x, int y, int z, int tileId, int delay, int radius) {
+        int n = radius;
+        if (!this.hasChunksAt(x - n, y - n, z - n, x + n, y + n, z + n)) {
+            return;
+        }
+        if (this.instaTick) {
+            int id = this.getTile(x, y, z);
+            if (id > 0) {
+                Tile.tiles[id].tick((Level) (Object) this, x, y, z, this.random);
+            }
+            return;
+        }
+
+        var entry = new TickNextTickData(x, y, z, tileId);
+        if (tileId > 0) {
+            entry.delay((long) delay + this.levelData.getTime());
+        }
+        if (this.tickNextTickSet.add(entry)) {
+            this.tickNextTickList.add(entry);
+        }
+    }
+
+    @Overwrite
+    public void addToTickNextTick(int x, int y, int z, int tileId, int delay) {
+        this.ac$addToTickNextTick(x, y, z, tileId, delay, 8);
     }
 
     @Overwrite
@@ -1460,7 +1487,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
         int y = Math.max(0, this.getTopSolidBlock(x, z));
 
         int idDown = this.getTile(x, y - 1, z);
-        if (this.getTemperatureValue(x, z) < 0.5D) {
+        if (this.getTemperatureValue(x, z) < 0.5f) {
             if (!this.isEmptyTile(x, y, z)) {
                 return false;
             }
@@ -1621,33 +1648,23 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
     }
 
     @Override
-    public TileEntity getBlockTileEntityDontCreate(int x, int y, int z) {
-        LevelChunk chunk = this.getChunk(x >> 4, z >> 4);
-        if (chunk != null) {
-            return ((ExChunk) chunk).ac$tryGetTileEntity(x & 15, y, z & 15, null);
+    public float getTemperatureValue(int x, int z) {
+        if (outOfBounds(x, z)) {
+            return 0.0f;
         }
-        return null;
+        var chunk = (ExChunk) this.getChunk(x >> 4, z >> 4);
+        float tempValue = chunk.getTemperatureValue(x & 15, z & 15);
+        float tempOffset = ((ExWorldProperties) this.levelData).getTempOffset();
+        return tempValue + tempOffset;
     }
 
     @Override
-    public double getTemperatureValue(int x, int z) {
-        if (x >= -32000000 && z >= -32000000 && x < 32000000 && z <= 32000000) {
-            var chunk = (ExChunk) this.getChunk(x >> 4, z >> 4);
-            double tempValue = chunk.getTemperatureValue(x & 15, z & 15);
-            double tempOffset = ((ExWorldProperties) this.levelData).getTempOffset();
-            return tempValue + tempOffset;
+    public void setTemperatureValue(int x, int z, float value) {
+        if (outOfBounds(x, z)) {
+            return;
         }
-        return 0.0D;
-    }
-
-    @Override
-    public void setTemperatureValue(int x, int z, double value) {
-        if (x >= -32000000 && z >= -32000000 && x < 32000000 && z <= 32000000) {
-            var chunk = (ExChunk) this.getChunk(x >> 4, z >> 4);
-            if (chunk.getTemperatureValue(x & 15, z & 15) != value) {
-                chunk.setTemperatureValue(x & 15, z & 15, value);
-            }
-        }
+        var chunk = (ExChunk) this.getChunk(x >> 4, z >> 4);
+        chunk.setTemperatureValue(x & 15, z & 15, value);
     }
 
     @Override

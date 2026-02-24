@@ -6,6 +6,8 @@ import dev.adventurecraft.awakening.ACMainThread;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.client.gl.GLDevice;
 import dev.adventurecraft.awakening.client.options.Config;
+import dev.adventurecraft.awakening.client.renderer.PoolingBlockAllocator;
+import dev.adventurecraft.awakening.client.renderer.BlockAllocator;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.client.gui.AC_ChatScreen;
 import dev.adventurecraft.awakening.common.gui.AC_GuiMapSelect;
@@ -24,6 +26,7 @@ import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import dev.adventurecraft.awakening.extension.util.ExProgressListener;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
+import dev.adventurecraft.awakening.extension.world.chunk.ExChunkCache;
 import dev.adventurecraft.awakening.item.AC_ILeftClickItem;
 import dev.adventurecraft.awakening.item.AC_IUseDelayItem;
 import dev.adventurecraft.awakening.script.*;
@@ -88,6 +91,8 @@ import java.io.*;
 import java.net.URL;
 import java.util.Arrays;
 
+// TODO: clear RegionFileCache on world exit to not keep file handles alive
+
 @Mixin(Minecraft.class)
 public abstract class MixinMinecraft implements ExMinecraft {
 
@@ -142,19 +147,14 @@ public abstract class MixinMinecraft implements ExMinecraft {
     @Shadow private int recheckPlayerIn;
     @Shadow public ParticleEngine particleEngine;
 
-    @Shadow(
-        remap = false,
-        aliases = "method_2104"
-    )
-    protected abstract void startLoginThread();
+    // startLoginThread
+    @Shadow
+    protected abstract void method_2104();
 
     @Shadow
     public abstract void toggleDimension();
 
     @Shadow public Mob cameraEntity;
-
-    @Shadow
-    protected abstract void prepareLevel(String string);
 
     @Shadow
     public abstract LevelFormat getLevelSource();
@@ -184,7 +184,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
     @Unique private long previousNanoTime;
     @Unique private double deltaTime;
-    @Unique private final int[] lastClickTicks = new int[3];
+    @Unique private final int[] lastClickTicks = new int[8];
     @Unique public AC_CutsceneCamera cutsceneCamera;
     @Unique public AC_CutsceneCamera activeCutsceneCamera;
     @Unique public boolean cameraActive;
@@ -195,6 +195,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
     @Unique Entity lastEntityHit;
     @Unique ScriptVec3 lastBlockHit;
     @Unique private GLDevice glDevice;
+    @Unique private BlockAllocator chunkBlockAllocator;
 
     @Overwrite(remap = false)
     public static void main(String[] args) {
@@ -311,6 +312,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         Config.logOpenGlCaps(caps);
 
         this.glDevice = new GLDevice(caps);
+        this.chunkBlockAllocator = new PoolingBlockAllocator(1024 * 64 * 4, 4);
     }
 
     private void createDisplay(PixelFormat pixelFormat, boolean rethrowLast)
@@ -586,7 +588,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
     @Overwrite
     public void tick() {
         if (this.ticks == 6000) {
-            this.startLoginThread();
+            this.method_2104();
         }
 
         this.gui.tick();
@@ -965,6 +967,10 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
     @Overwrite
     private void handleMouseClick(int mouseButton) {
+        if (mouseButton >= this.lastClickTicks.length) {
+            return;
+        }
+
         if (mouseButton == 0 && this.missTime > 0) {
             return;
         }
@@ -1226,20 +1232,60 @@ public abstract class MixinMinecraft implements ExMinecraft {
         ((ExWorld) level).getScript().initPlayer(this.player);
     }
 
-    @Redirect(
-        method = "prepareLevel",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/ProgressRenderer;progressStagePercentage(I)V"
-        )
-    )
-    private void reportPreciseTerrainProgress(
-        ProgressRenderer instance,
-        int i,
-        @Local(ordinal = 1) int count,
-        @Local(ordinal = 2) int max
-    ) {
+    @Overwrite
+    private void prepareLevel(String string) {
+        this.progressRenderer.setHeader(string);
+        this.progressRenderer.progressStage("Building terrain");
 
+        ChunkSource chunkSource = this.level.getChunkSource();
+        Vec3i pos = this.level.getSpawnPos();
+        if (this.player != null) {
+            pos.x = (int) this.player.x;
+            pos.z = (int) this.player.z;
+        }
+        int cx = pos.x >> 4;
+        int cz = pos.z >> 4;
+        int n = 2;
+        if (chunkSource instanceof ChunkCache chunkCache) {
+            chunkCache.centerOn(cx, cz);
+            n = ((ExGameOptions) this.options).ofChunkLoadDistance();
+        }
+
+        int count = 0;
+        int max = n * 2;
+        max *= max;
+
+        for (int x = -n; x < n; x++) {
+            // Update in parts, even with async, to not accumulate too many light updates.
+            if (this.level.chunkSource instanceof ExChunkCache cache) {
+                this.ac$reportPrepareProgress(count, max);
+                cache.ac$requestChunks(cx + x, cz - n, cx + x, cz + n - 1, true);
+
+                //noinspection StatementWithEmptyBody
+                while (this.level.updateLights()) {
+                }
+                count += n * 2;
+                this.ac$reportPrepareProgress(count, max);
+            }
+            else {
+                for (int z = -n; z < n; z++) {
+                    this.ac$reportPrepareProgress(count, max);
+                    this.level.getChunk(cx + x, cz + z);
+
+                    //noinspection StatementWithEmptyBody
+                    while (this.level.updateLights()) {
+                    }
+                    count++;
+                    this.ac$reportPrepareProgress(count, max);
+                }
+            }
+        }
+        this.progressRenderer.progressStage("Simulating world for a bit");
+        this.level.prepare();
+    }
+
+    @Unique
+    private void ac$reportPrepareProgress(int count, int max) {
         String stage = String.format("%4d / %4d", count, max);
         ((ExProgressListener) this.progressRenderer).notifyProgress(stage, count / (double) max, false);
     }
@@ -1475,5 +1521,9 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
     public @Override GLDevice getGlDevice() {
         return this.glDevice;
+    }
+
+    public @Override BlockAllocator getChunkBlockAllocator() {
+        return this.chunkBlockAllocator;
     }
 }

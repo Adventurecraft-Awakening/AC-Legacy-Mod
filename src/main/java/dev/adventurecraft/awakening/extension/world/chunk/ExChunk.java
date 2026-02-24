@@ -12,9 +12,9 @@ public interface ExChunk extends AC_LevelSource {
 
     boolean setBlockIDWithMetadataTemp(int x, int y, int z, int id, int meta);
 
-    double getTemperatureValue(int x, int z);
+    float getTemperatureValue(int x, int z);
 
-    void setTemperatureValue(int x, int z, double value);
+    void setTemperatureValue(int x, int z, float value);
 
     long getLastUpdated();
 
@@ -24,11 +24,24 @@ public interface ExChunk extends AC_LevelSource {
 
     void updateLightHash();
 
+    int getAcVersion();
+
+    void setAcVersion(int version);
+
+    int ac$tileEntityKey(int x, int y, int z);
+
     static byte narrowByte(int id) {
         return (byte) (id & 0xff);
     }
 
     static int widenByte(byte id) {
         return id & 0xff;
+    }
+
+    static int ac$tileEntityKey(int x, int y, int z, int cX, int cZ) {
+        int bX = (x - (cX << 4)) & 0xF;
+        int bZ = (z - (cZ << 4)) & 0xF;
+        int bY = y & 0xFF;
+        return (bY << 8) | (bZ << 4) | bX;
     }
 }

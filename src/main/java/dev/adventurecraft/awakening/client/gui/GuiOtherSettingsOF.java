@@ -13,8 +13,6 @@ public class GuiOtherSettingsOF extends GuiBaseSettingsOF {
 
     @Override
     public Option[] getOptions() {
-        return new Option[]{
-            OptionOF.SMOOTH_FPS, OptionOF.SMOOTH_INPUT,
-            OptionOF.FAST_DEBUG_INFO, OptionOF.AUTO_FAR_CLIP};
+        return new Option[]{ OptionOF.FAST_DEBUG_INFO };
     }
 }

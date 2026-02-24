@@ -66,7 +66,7 @@ public final class AC_BlockEditAction implements AC_EditAction {
     }
 
     private void loadEntity(Level level, CompoundTag tag) {
-        var entity = ((ExWorld) level).ac$getTileEntity(this.x, this.y, this.z, TileEntity.class);
+        var entity = ((ExWorld) level).ac$getTileEntity(this.x, this.y, this.z, null);
         entity.load(tag);
         entity.level = level;
         entity.x = this.x;

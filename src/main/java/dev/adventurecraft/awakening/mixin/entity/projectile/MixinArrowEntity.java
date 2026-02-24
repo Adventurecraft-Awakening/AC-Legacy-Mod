@@ -64,7 +64,7 @@ public abstract class MixinArrowEntity extends MixinEntity implements ExArrowEnt
             var tile = Tile.tiles[tileId];
             tile.updateShape(this.level, this.xTile, this.yTile, this.zTile);
             AABB aabb = tile.getAABB(this.level, this.xTile, this.yTile, this.zTile);
-            if (aabb != null && aabb.intersects(Vec3.newTemp(this.x, this.y, this.z))) {
+            if (aabb != null && aabb.intersects(Vec3.create(this.x, this.y, this.z))) {
                 this.inGround = true;
             }
         }
@@ -94,8 +94,8 @@ public abstract class MixinArrowEntity extends MixinEntity implements ExArrowEnt
         }
         else {
             ++this.flightTime;
-            Vec3 start = Vec3.newTemp(this.x, this.y, this.z);
-            Vec3 end = Vec3.newTemp(this.x + this.xd, this.y + this.yd, this.z + this.zd);
+            Vec3 start = Vec3.create(this.x, this.y, this.z);
+            Vec3 end = Vec3.create(this.x + this.xd, this.y + this.yd, this.z + this.zd);
             HitResult hit = ((ExWorld) this.level).rayTraceBlocks2(start, end, false, true, false);
 
             start.set(this.x, this.y, this.z);

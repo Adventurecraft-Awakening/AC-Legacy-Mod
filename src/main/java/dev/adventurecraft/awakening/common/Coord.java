@@ -86,6 +86,10 @@ public final class Coord {
         return this.x < x || this.y < y || this.z < z;
     }
 
+    public boolean lessAny(Coord other) {
+        return this.lessAny(other.x, other.y, other.z);
+    }
+
     public boolean lessOrEqualAny(int x, int y, int z) {
         return this.x <= x || this.y <= y || this.z <= z;
     }
@@ -102,11 +106,12 @@ public final class Coord {
         return this.equals(value, value, value);
     }
 
+    public boolean equals(Coord other) {
+        return this.equals(other.x, other.y, other.z);
+    }
+
     public @Override boolean equals(@Nullable Object obj) {
-        if (obj instanceof Coord c) {
-            return this.equals(c.x, c.y, c.z);
-        }
-        return false;
+        return obj instanceof Coord c && this.equals(c);
     }
 
     public @Override int hashCode() {

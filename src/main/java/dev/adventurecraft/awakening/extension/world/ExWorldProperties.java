@@ -12,6 +12,12 @@ import net.minecraft.world.level.Level;
 
 public interface ExWorldProperties {
 
+    String AC_VERSION_TAG = "acVersion";
+
+    int AC_VERSION_0 = 0;
+
+    int AC_VERSION_CURRENT = 1;
+
     WorldGenProperties getWorldGenProps();
 
     CompoundTag getTriggerData();
@@ -26,9 +32,9 @@ public interface ExWorldProperties {
 
     float[] getBrightness();
 
-    double getTempOffset();
+    float getTempOffset();
 
-    void setTempOffset(double value);
+    void setTempOffset(float value);
 
     long getTimeOfDay();
 
