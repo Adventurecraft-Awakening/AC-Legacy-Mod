@@ -1,15 +1,16 @@
 package dev.adventurecraft.awakening.extension.world;
 
-import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.image.ImageBuffer;
 import dev.adventurecraft.awakening.script.Script;
+import dev.adventurecraft.awakening.util.UnsafeUtil;
+import dev.adventurecraft.awakening.world.AC_LevelSource;
 import net.minecraft.util.ProgressListener;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.TickNextTickData;
 import net.minecraft.world.level.dimension.Dimension;
 import net.minecraft.world.level.storage.LevelIO;
-import net.minecraft.world.level.tile.entity.TileEntity;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.mozilla.javascript.Scriptable;
@@ -17,10 +18,16 @@ import org.mozilla.javascript.Scriptable;
 import java.io.File;
 import java.util.ArrayList;
 
-public interface ExWorld {
+public interface ExWorld extends AC_LevelSource {
 
     void initWorld(
-        String mapName, LevelIO dimData, String saveName, long seed, Dimension dimension, ProgressListener progressListener);
+        String mapName,
+        LevelIO dimData,
+        String saveName,
+        long seed,
+        Dimension dimension,
+        ProgressListener progressListener
+    );
 
     ImageBuffer loadMapTexture(String name);
 
@@ -35,21 +42,36 @@ public interface ExWorld {
     void ac$preTick();
 
     HitResult rayTraceBlocks2(
-        Vec3 pointA, Vec3 pointB,
-        boolean blockCollidableFlag, boolean useCollisionShapes, boolean collideWithClip);
+        Vec3 pointA,
+        Vec3 pointB,
+        boolean blockCollidableFlag,
+        boolean useCollisionShapes,
+        boolean collideWithClip
+    );
 
     HitResult rayTraceBlocksCore(
-        Vec3 pointA, Vec3 pointB,
-        boolean blockCollidableFlag, boolean useCollisionShapes, boolean collideWithClip);
+        Vec3 pointA,
+        Vec3 pointB,
+        boolean blockCollidableFlag,
+        boolean useCollisionShapes,
+        boolean collideWithClip
+    );
 
-    void recordRayDebugList(
-        double aX, double aY, double aZ, double bX, double bY, double bZ, HitResult hit);
+    void recordRayDebugList(double aX, double aY, double aZ, double bX, double bY, double bZ, HitResult hit);
 
+    // TODO: get rid of this method
+    @Deprecated
     boolean setBlockAndMetadataTemp(int x, int y, int z, int id, int meta);
+
+    boolean ac$setTileAndDataNoUpdate(int x, int y, int z, int id, int meta, boolean dropItems);
 
     float getLightValue(int x, int y, int z);
 
-    void cancelBlockUpdate(int x, int y, int z, int var4);
+    int getLightUpdateHash(int x, int y, int z);
+
+    void ac$addToTickNextTick(int x, int y, int z, int tileId, int delay, int radius);
+
+    boolean cancelBlockUpdate(TickNextTickData entry);
 
     Entity getEntityByID(int id);
 
@@ -57,11 +79,9 @@ public interface ExWorld {
 
     float getFogEnd(float var1, float var2);
 
-    TileEntity getBlockTileEntityDontCreate(int x, int y, int z);
+    float getTemperatureValue(int x, int z);
 
-    double getTemperatureValue(int x, int z);
-
-    void setTemperatureValue(int x, int z, double value);
+    void setTemperatureValue(int x, int z, float value);
 
     void resetCoordOrder();
 
@@ -98,17 +118,25 @@ public interface ExWorld {
     ArrayList<RayDebugList> getRayDebugLists();
 
     static Level createWorld(
-        String mapName, LevelIO dimData, String saveName, long seed, Dimension dimension, ProgressListener progressListener) {
-        try {
-            var world = (Level) ACMod.UNSAFE.allocateInstance(Level.class);
-            ((ExWorld) world).initWorld(mapName, dimData, saveName, seed, dimension, progressListener);
-            return world;
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        }
+        String mapName,
+        LevelIO dimData,
+        String saveName,
+        long seed,
+        Dimension dimension,
+        ProgressListener progressListener
+    ) {
+        var world = UnsafeUtil.allocateInstance(Level.class);
+        ((ExWorld) world).initWorld(mapName, dimData, saveName, seed, dimension, progressListener);
+        return world;
     }
 
-    static Level createWorld(String mapName, LevelIO dimData, String saveName, long seed, ProgressListener progressListener) {
+    static Level createWorld(
+        String mapName,
+        LevelIO dimData,
+        String saveName,
+        long seed,
+        ProgressListener progressListener
+    ) {
         return createWorld(mapName, dimData, saveName, seed, null, progressListener);
     }
 

@@ -25,11 +25,7 @@ public class AC_Profiler {
 
         ProfileContext context = profileStack.pop();
         long time = context.getTime();
-        if (times.containsKey(context.contextName)) {
-            times.put(context.contextName, times.getLong(context.contextName) + time);
-        } else {
-            times.put(context.contextName, time);
-        }
+        times.compute(context.contextName, (_key, val) -> (val != null ? val : 0) + time);
     }
 
     public static void startFrame() {

@@ -16,14 +16,13 @@ public class ScriptUIContainer extends UIElement {
 
     private final LinkedList<UIElement> uiElements;
 
-    public ScriptUIContainer(float x, float y) {
+    public ScriptUIContainer(double x, double y) {
         this(x, y, ((ExInGameHud) Minecraft.instance.gui).getScriptUI());
     }
 
-    public ScriptUIContainer(float x, float y, ScriptUIContainer parent) {
+    public ScriptUIContainer(double x, double y, ScriptUIContainer parent) {
+        super(x, y);
         this.text = "";
-        this.prevX = this.curX = x;
-        this.prevY = this.curY = y;
         this.uiElements = new LinkedList<>();
         if (parent != null) {
             parent.add(this);
@@ -31,19 +30,21 @@ public class ScriptUIContainer extends UIElement {
     }
 
     @Override
-    public void render(Font textRenderer, Textures texManager, float deltaTime) {
-        float x = this.getXAtTime(deltaTime);
-        float y = this.getYAtTime(deltaTime);
+    public void render(Font font, Textures textures, float deltaTime) {
+        double x = this.getXAtTime(deltaTime);
+        double y = this.getYAtTime(deltaTime);
+        boolean hasMatrix = false;
         if (x != 0.0F || y != 0.0F) {
+            hasMatrix = true;
             GL11.glPushMatrix();
             GL11.glTranslated(x, y, 0.0D);
         }
 
         for (UIElement element : this.uiElements) {
-            element.render(textRenderer, texManager, deltaTime);
+            element.render(font, textures, deltaTime);
         }
 
-        if (x != 0.0F || y != 0.0F) {
+        if (hasMatrix) {
             GL11.glPopMatrix();
         }
     }
@@ -62,7 +63,7 @@ public class ScriptUIContainer extends UIElement {
             element.parent.remove(element);
         }
 
-        this.uiElements.add(0, element);
+        this.uiElements.addFirst(element);
         element.parent = this;
     }
 

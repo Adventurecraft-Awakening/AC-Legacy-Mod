@@ -4,11 +4,23 @@ import net.minecraft.world.ItemInstance;
 
 public interface ExPlayerInventory {
 
-    boolean consumeItemAmount(int var1, int var2, int var3);
+    boolean consumeItemAmount(int id, int meta, int count);
 
-    int getOffhandItem();
+    int getSlot(int itemId, int itemDamage);
 
-    void setOffhandItem(int value);
+    int getArmorSlot(int itemId);
+
+    int getArmorSlot(int itemId, int itemDamage);
+
+    void selectSlot(int index);
+
+    int getOffhandSlot();
+
+    void setOffhandSlot(int value);
+
+    int getMainhandSlot();
+
+    void setMainhandSlot(int value);
 
     ItemInstance getOffhandItemStack();
 

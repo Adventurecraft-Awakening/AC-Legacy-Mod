@@ -30,7 +30,7 @@ import net.minecraft.client.renderer.TileRenderer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -43,9 +43,11 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GLContext;
 import org.lwjgl.opengl.NVFogDistance;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -58,27 +60,21 @@ import java.util.Random;
 @Mixin(GameRenderer.class)
 public abstract class MixinGameRenderer implements ExGameRenderer {
 
-    @Shadow
-    private Minecraft mc;
-    @Shadow
-    public ItemInHandRenderer itemInHandRenderer;
-    @Shadow
-    private boolean thickFog;
-    @Shadow
-    private double zoom;
-    @Shadow
-    float fogRed;
-    @Shadow
-    float fogGreen;
-    @Shadow
-    float fogBlue;
-    @Shadow
-    private float renderDistance;
+    @Shadow private Minecraft mc;
+    @Shadow private float renderDistance;
+    @Shadow public ItemInHandRenderer itemInHandRenderer;
+    @Shadow private int tick;
+    @Shadow private Random random;
+    @Shadow private int rainSoundTime;
 
-    private boolean zoomMode = false;
+    @Shadow private boolean thickFog;
+    @Shadow float fogRed;
+    @Shadow float fogGreen;
+    @Shadow float fogBlue;
 
-    private ItemInHandRenderer offHandItemRenderer;
-    private float farClipAdjustment;
+    @Unique private boolean zoomMode = false;
+
+    @Unique private ItemInHandRenderer offHandItemRenderer;
 
     @Shadow
     protected abstract FloatBuffer getBuffer(float f, float g, float h, float i);
@@ -86,30 +82,36 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
     @Shadow
     protected abstract float getFov(float f);
 
-    @Shadow
-    private Random random;
 
-    @Shadow
-    private int rainSoundTime;
-
-    @Shadow
-    private int tick;
-
-    @Inject(method = "<init>", at = @At("TAIL"))
+    @Inject(
+        method = "<init>",
+        at = @At("TAIL")
+    )
     private void init(Minecraft var1, CallbackInfo ci) {
         this.offHandItemRenderer = new ItemInHandRenderer(var1);
-        this.farClipAdjustment = 1.0F;
     }
 
-    @ModifyVariable(method = "tick", at = @At(value = "STORE"), ordinal = 1)
+    @ModifyVariable(
+        method = "tick",
+        at = @At(
+            value = "STORE",
+            ordinal = 0
+        ),
+        ordinal = 1
+    )
     private float changeHandItemPosition(float value) {
-        return (float) (4 - this.mc.options.viewDistance) / 4.0F;
+        return 0.5f;
+        //return (float) (4 - this.mc.options.viewDistance) / 4.0F;
     }
 
-    @Inject(method = "tick", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/client/renderer/ItemInHandRenderer;tick()V",
-        shift = At.Shift.AFTER))
+    @Inject(
+        method = "tick",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/ItemInHandRenderer;tick()V",
+            shift = At.Shift.AFTER
+        )
+    )
     private void renderOffhandItem(CallbackInfo ci) {
         ExPlayerInventory inv = (ExPlayerInventory) this.mc.player.inventory;
         inv.swapOffhandWithMain();
@@ -117,26 +119,36 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         inv.swapOffhandWithMain();
     }
 
-    @Inject(method = "getFov", at = @At(
-        value = "FIELD",
-        target = "Lnet/minecraft/world/entity/LivingEntity;health:I",
-        shift = At.Shift.BEFORE))
+    @Inject(
+        method = "getFov",
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/world/entity/Mob;health:I",
+            shift = At.Shift.BEFORE
+        )
+    )
     private void handleZoom(float var1, CallbackInfoReturnable<Float> cir) {
         if (Keyboard.isKeyDown(((ExGameOptions) this.mc.options).ofKeyBindZoom().key) && this.mc.screen == null) {
             if (!this.zoomMode) {
                 this.zoomMode = true;
                 this.mc.options.smoothCamera = true;
             }
-        } else if (this.zoomMode) {
+        }
+        else if (this.zoomMode) {
             this.zoomMode = false;
             this.mc.options.smoothCamera = false;
         }
     }
 
-    @ModifyVariable(method = "getFov", index = 3, at = @At(
-        value = "FIELD",
-        target = "Lnet/minecraft/world/entity/LivingEntity;health:I",
-        shift = At.Shift.BEFORE))
+    @ModifyVariable(
+        method = "getFov",
+        index = 3,
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/world/entity/Mob;health:I",
+            shift = At.Shift.BEFORE
+        )
+    )
     private float modifyZoomFov(float value) {
         if (Keyboard.isKeyDown(((ExGameOptions) this.mc.options).ofKeyBindZoom().key)) {
             if (this.zoomMode) {
@@ -146,40 +158,37 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         return value;
     }
 
-    @Redirect(method = "setupCamera", at = @At(
-        value = "FIELD",
-        target = "Lnet/minecraft/client/renderer/GameRenderer;renderDistance:F",
-        ordinal = 0))
+    @Redirect(
+        method = "setupCamera",
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/client/renderer/GameRenderer;renderDistance:F",
+            ordinal = 0
+        )
+    )
     private void redirectFarPlane(GameRenderer instance, float v) {
-        float value = this.getFarPlane();
-        var options = (ExGameOptions) this.mc.options;
-
-        if (options.ofFarView()) {
-            if (value < 512) {
-                value *= 3.0F;
-            } else {
-                value *= 2.0F;
-            }
-        }
-
-        if (GLContext.getCapabilities().GL_NV_fog_distance && options.ofFogFancy()) {
-            value *= 0.95F;
-        } else {
-            value *= 0.83F;
-        }
-        renderDistance = value;
+        this.renderDistance = this.getFarPlane();
     }
 
-    @ModifyConstant(method = "setupCamera", constant = @Constant(floatValue = 2.0F),
-        slice = @Slice(from = @At(
-            value = "INVOKE",
-            target = "Lorg/lwjgl/opengl/GL11;glScaled(DDD)V",
-            remap = false)))
+    @ModifyConstant(
+        method = "setupCamera",
+        constant = @Constant(floatValue = 2.0F),
+        slice = @Slice(
+            from = @At(
+                value = "INVOKE",
+                target = "Lorg/lwjgl/opengl/GL11;glScaled(DDD)V",
+                remap = false
+            )
+        )
+    )
     private float reducePerspectiveFarPlane(float value) {
-        return 1.1F; // Was 1.0 originally
+        return 1.8F;
     }
 
-    @Inject(method = "render(F)V", at = @At("HEAD"))
+    @Inject(
+        method = "render(F)V",
+        at = @At("HEAD")
+    )
     private void injectTick(float var1, CallbackInfo ci) {
         Level world = this.mc.level;
         var options = (ExGameOptions) this.mc.options;
@@ -227,7 +236,9 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         at = @At(
             value = "FIELD",
             target = "Lnet/minecraft/client/Options;fpsLimit:I",
-            ordinal = 4))
+            ordinal = 4
+        )
+    )
     private int applyFpsLimitOutsideWorld(int value) {
         if (this.mc.options.fpsLimit == 0 || this.mc.options.fpsLimit == 3) {
             return 0;
@@ -241,19 +252,23 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
             value = "FIELD",
             target = "Lnet/minecraft/client/Minecraft;screen:Lnet/minecraft/client/gui/screens/Screen;",
             ordinal = 2,
-            shift = At.Shift.BEFORE))
+            shift = At.Shift.BEFORE
+        )
+    )
     private void injectStoreRender(
         float var1,
         CallbackInfo ci,
         @Local(name = "var5") int var16,
-        @Local(name = "var6") int var17) {
+        @Local(name = "var6") int var17
+    ) {
 
         if (this.mc.screen != null) {
             return;
         }
 
         HitResult hit = this.mc.hitResult;
-        if (hit == null || hit.hitType != HitType.TILE || this.mc.level.getTile(hit.x, hit.y, hit.z) != AC_Blocks.store.id) {
+        if (hit == null || hit.hitType != HitType.TILE ||
+            this.mc.level.getTile(hit.x, hit.y, hit.z) != AC_Blocks.store.id) {
             return;
         }
 
@@ -268,44 +283,64 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         }
     }
 
-    @Inject(method = "render(FJ)V", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/client/Lighting;turnOff()V",
-        ordinal = 0,
-        shift = At.Shift.AFTER))
+    @Inject(
+        method = "render(FJ)V",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/Lighting;turnOff()V",
+            ordinal = 0,
+            shift = At.Shift.AFTER
+        )
+    )
     private void injectAlphaFunc(float var1, long var2, CallbackInfo ci) {
         if (Config.isUseAlphaFunc()) {
             GL11.glAlphaFunc(GL11.GL_GREATER, Config.getAlphaFuncLevel());
         }
     }
 
-    @Redirect(method = "render(FJ)V", at = @At(
-        value = "FIELD",
-        target = "Lnet/minecraft/client/Options;fancyGraphics:Z"))
+    @Redirect(
+        method = "render(FJ)V",
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/client/Options;fancyGraphics:Z"
+        )
+    )
     private boolean redirectFancyWaterToConfig(Options instance) {
         return ((ExGameOptions) instance).isWaterFancy();
     }
 
-    @Redirect(method = "render(FJ)V", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/client/renderer/LevelRenderer;render(Lnet/minecraft/world/entity/LivingEntity;ID)I",
-        ordinal = 1))
-    private int renderSortedRenderers1(LevelRenderer instance, LivingEntity var1, int var2, double var3) {
+    @Redirect(
+        method = "render(FJ)V",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/LevelRenderer;render(Lnet/minecraft/world/entity/Mob;ID)I",
+            ordinal = 1
+        )
+    )
+    private int renderSortedRenderers1(LevelRenderer instance, Mob var1, int var2, double var3) {
         int result = ((ExWorldEventRenderer) instance).renderAllSortedRenderers(1, var3);
         return result;
     }
 
-    @Redirect(method = "render(FJ)V", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/client/renderer/LevelRenderer;renderSameAsLast(ID)V"))
+    @Redirect(
+        method = "render(FJ)V",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/LevelRenderer;renderSameAsLast(ID)V"
+        )
+    )
     private void renderSortedRenderers2(LevelRenderer instance, int var1, double var2) {
         ((ExWorldEventRenderer) instance).renderAllSortedRenderers(1, var2);
     }
 
-    @Inject(method = "render(FJ)V", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/client/renderer/GameRenderer;pick(F)V",
-        shift = At.Shift.BEFORE))
+    @Inject(
+        method = "render(FJ)V",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/GameRenderer;pick(F)V",
+            shift = At.Shift.BEFORE
+        )
+    )
     private void useCameraAsViewEntity(float var1, long var2, CallbackInfo ci) {
         var mc = (ExMinecraft) this.mc;
         if (mc.isCameraActive() && mc.getCutsceneCamera().isEmpty()) {
@@ -320,7 +355,8 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
             this.mc.cameraEntity.z = this.mc.cameraEntity.zOld = this.mc.cameraEntity.zo = point.posZ;
             this.mc.cameraEntity.yRot = this.mc.cameraEntity.yRotO = point.rotYaw;
             this.mc.cameraEntity.xRot = this.mc.cameraEntity.xRotO = point.rotPitch;
-        } else {
+        }
+        else {
             this.mc.cameraEntity = this.mc.player;
             if (((ExEntity) this.mc.player).getStunned() != 0) {
                 this.mc.player.xOld = this.mc.player.xo = this.mc.player.x;
@@ -337,28 +373,39 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         slice = @Slice(
             from = @At(
                 value = "INVOKE",
-                target = "Lnet/minecraft/client/renderer/culling/Frustum;getFrustum()Lnet/minecraft/client/renderer/culling/FrustumData;")))
+                target = "Lnet/minecraft/client/renderer/culling/Frustum;getFrustum()Lnet/minecraft/client/renderer/culling/FrustumData;"
+            )
+        )
+    )
     private int increaseSkyRenderDistance(int constant) {
         return 3;
     }
 
-    @Inject(method = "render(FJ)V", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/client/renderer/GameRenderer;setupFog(IF)V",
-        shift = At.Shift.BEFORE,
-        ordinal = 2))
-    private void updateCursor(float var1, long var2, CallbackInfo ci, @Local LivingEntity var22) {
+    @Inject(
+        method = "render(FJ)V",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/GameRenderer;setupFog(IF)V",
+            shift = At.Shift.BEFORE,
+            ordinal = 2
+        )
+    )
+    private void updateCursor(float var1, long var2, CallbackInfo ci, @Local Mob var22) {
         GL11.glPushMatrix();
         if (AC_DebugMode.editMode && AC_DebugMode.mapEditing != null) {
             AC_DebugMode.mapEditing.updateCursor(var22, this.getFov(var1), var1);
         }
     }
 
-    @Inject(method = "render(FJ)V", at = @At(
-        value = "INVOKE",
-        target = "Lorg/lwjgl/opengl/GL11;glDepthMask(Z)V",
-        shift = At.Shift.BEFORE,
-        remap = false))
+    @Inject(
+        method = "render(FJ)V",
+        at = @At(
+            value = "INVOKE",
+            target = "Lorg/lwjgl/opengl/GL11;glDepthMask(Z)V",
+            shift = At.Shift.BEFORE,
+            remap = false
+        )
+    )
     private void renderWorldEditing(float deltaTime, long var2, CallbackInfo ci) {
         if (AC_DebugMode.editMode && AC_DebugMode.mapEditing != null) {
             AC_DebugMode.mapEditing.render(deltaTime);
@@ -368,7 +415,8 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         if (heldItem != null && heldItem.id == AC_Items.paste.id) {
             if (AC_DebugMode.mapEditing == null) {
                 AC_DebugMode.mapEditing = new AC_MapEditing(this.mc, this.mc.level);
-            } else {
+            }
+            else {
                 AC_DebugMode.mapEditing.updateWorld(this.mc.level);
             }
 
@@ -376,23 +424,32 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         }
     }
 
-    @ModifyExpressionValue(method = "render(FJ)V", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/world/entity/LivingEntity;isUnderLiquid(Lnet/minecraft/world/level/material/Material;)Z",
-        ordinal = 0))
+    @ModifyExpressionValue(
+        method = "render(FJ)V",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/entity/Mob;isUnderLiquid(Lnet/minecraft/world/level/material/Material;)Z",
+            ordinal = 0
+        )
+    )
     private boolean noHeldItemInEditMode(boolean value) {
         return !AC_DebugMode.editMode && value;
     }
 
-    @Redirect(method = "render(FJ)V", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/client/renderer/GameRenderer;renderSnowAndRain(F)V",
-        ordinal = 0))
+    @Redirect(
+        method = "render(FJ)V",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/GameRenderer;renderSnowAndRain(F)V",
+            ordinal = 0
+        )
+    )
     private void renderDebugModeDecorations(
         GameRenderer instance,
         float deltaTime,
         @Local LevelRenderer worldRenderer,
-        @Local LivingEntity viewEntity) {
+        @Local Mob viewEntity
+    ) {
 
         var wer = (ExWorldEventRenderer) worldRenderer;
 
@@ -413,8 +470,8 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
 
             if (AC_DebugMode.renderFov) {
                 for (Entity entity : (List<Entity>) this.mc.level.entities) {
-                    if (entity instanceof LivingEntity) {
-                        wer.drawEntityFOV((LivingEntity) entity, viewEntity, deltaTime);
+                    if (entity instanceof Mob) {
+                        wer.drawEntityFOV((Mob) entity, viewEntity, deltaTime);
                     }
                 }
             }
@@ -459,17 +516,16 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
             float alpha;
             if (list.entity instanceof Particle) {
                 alpha = 0.05f;
-            } else if (list.entity instanceof ItemEntity) {
+            }
+            else if (list.entity instanceof ItemEntity) {
                 alpha = 0.2f;
-            } else {
+            }
+            else {
                 alpha = 0.5f;
             }
 
             ts.color(0.7f, 0.5f, 0.7f, alpha);
-            drawBox(
-                ts,
-                list.minX - x1, list.minY - y1, list.minZ - z1,
-                list.maxX - x2, list.maxY - y2, list.maxZ - z2);
+            drawBox(ts, list.minX - x1, list.minY - y1, list.minZ - z1, list.maxX - x2, list.maxY - y2, list.maxZ - z2);
 
             if (list.collisions != null) {
                 ts.color(0.5f, 0.7f, 0.5f, alpha);
@@ -513,15 +569,14 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
                     if (block != null) {
                         aabb = block.getAABB(this.mc.level, hit.x, hit.y, hit.z);
                     }
-                } else if (hit.hitType == HitType.ENTITY) {
+                }
+                else if (hit.hitType == HitType.ENTITY) {
                     aabb = hit.entity.bb;
                 }
 
                 if (aabb != null) {
                     ts.color(0.0f, 0.9f, 0.2f, 0.5f);
-                    drawBox(ts,
-                        aabb.x0 - x1, aabb.y0 - y1, aabb.z0 - z1,
-                        aabb.x1 - x2, aabb.y1 - y2, aabb.z1 - z2);
+                    drawBox(ts, aabb.x0 - x1, aabb.y0 - y1, aabb.z0 - z1, aabb.x1 - x2, aabb.y1 - y2, aabb.z1 - z2);
                 }
             }
 
@@ -537,7 +592,8 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         for (RayDebugList list : lists) {
             if (list.hit != null) {
                 ts.color(0.0f, 0.9f, 0.2f, 0.5f);
-            } else {
+            }
+            else {
                 ts.color(0.9f, 0.2f, 0.2f, 0.5f);
             }
             ts.vertex(list.aX - dX, list.aY - dY, list.aZ - dZ);
@@ -551,7 +607,15 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
     }
 
     private static void drawBoxes(
-        Tesselator ts, float[] collisions, double x1, double y1, double z1, double x2, double y2, double z2) {
+        Tesselator ts,
+        float[] collisions,
+        double x1,
+        double y1,
+        double z1,
+        double x2,
+        double y2,
+        double z2
+    ) {
 
         for (int i = 0; i < collisions.length; i += 6) {
             double minX = collisions[i + 0] - x1;
@@ -566,7 +630,14 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
     }
 
     private static void drawBox(
-        Tesselator ts, double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+        Tesselator ts,
+        double minX,
+        double minY,
+        double minZ,
+        double maxX,
+        double maxY,
+        double maxZ
+    ) {
 
         ts.vertex(minX, minY, minZ);
         ts.vertex(maxX, minY, minZ);
@@ -611,7 +682,9 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/GameRenderer;setupFog(IF)V",
             shift = At.Shift.BEFORE,
-            ordinal = 6))
+            ordinal = 6
+        )
+    )
     private void finishDebugModeDecorations(float var1, long var2, CallbackInfo ci) {
         GL11.glPopMatrix();
         this.renderSnowAndRain(var1);
@@ -630,7 +703,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         }
 
         this.random.setSeed((long) this.tick * 312987231L);
-        LivingEntity viewEntity = this.mc.cameraEntity;
+        Mob viewEntity = this.mc.cameraEntity;
         Level world = this.mc.level;
         int viewX = Mth.floor(viewEntity.x);
         int viewY = Mth.floor(viewEntity.y);
@@ -651,9 +724,8 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
                 continue;
             }
 
-            if (blockingY > viewY + checkRange ||
-                blockingY < viewY - checkRange ||
-                !(((ExWorld) world).getTemperatureValue(x, z) >= 0.5D)) {
+            if (blockingY > viewY + checkRange || blockingY < viewY - checkRange ||
+                !(((ExWorld) world).getTemperatureValue(x, z) >= 0.5f)) {
                 continue;
             }
 
@@ -663,7 +735,8 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
             double pY = (blockingY + 0.1D) - block.yy0;
             if (block.material == Material.LAVA) {
                 this.mc.particleEngine.add(new SmokeParticle(world, pX, pY, pZ, 0.0D, 0.0D, 0.0D));
-            } else {
+            }
+            else {
                 ++spawnedRainParticles;
                 if (this.random.nextInt(spawnedRainParticles) == 0) {
                     lastPX = pX;
@@ -680,7 +753,8 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
             if (lastPY > viewEntity.y + 1.0D &&
                 world.getTopSolidBlock(Mth.floor(viewEntity.x), Mth.floor(viewEntity.z)) > Mth.floor(viewEntity.y)) {
                 this.mc.level.playSound(lastPX, lastPY, lastPZ, "ambient.weather.rain", 0.1F, 0.5F);
-            } else {
+            }
+            else {
                 this.mc.level.playSound(lastPX, lastPY, lastPZ, "ambient.weather.rain", 0.2F, 1.0F);
             }
         }
@@ -698,7 +772,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
             return;
         }
 
-        LivingEntity viewEntity = this.mc.cameraEntity;
+        Mob viewEntity = this.mc.cameraEntity;
         Level world = this.mc.level;
         int viewX = Mth.floor(viewEntity.x);
         int viewY = Mth.floor(viewEntity.y);
@@ -714,37 +788,21 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         double vrY = viewEntity.yOld + (viewEntity.y - viewEntity.yOld) * (double) deltaTime;
         double vrZ = viewEntity.zOld + (viewEntity.z - viewEntity.zOld) * (double) deltaTime;
         int vrbY = Mth.floor(vrY);
-        int rainRange = 5;
-        if (options.isRainFancy()) {
-            rainRange = 10;
-        }
+        int rainRange = options.isRainFancy() ? 10 : 5;
 
         for (int x = viewX - rainRange; x <= viewX + rainRange; ++x) {
             for (int z = viewZ - rainRange; z <= viewZ + rainRange; ++z) {
-                if (!(((ExWorld) world).getTemperatureValue(x, z) < 0.5D)) {
+                if (!(((ExWorld) world).getTemperatureValue(x, z) < 0.5f)) {
                     continue;
                 }
-                int blockingY = world.getTopSolidBlock(x, z);
-                if (blockingY < 0) {
-                    blockingY = 0;
-                }
-
-                int y = Math.max(blockingY, vrbY);
-
-                int minY = viewY - rainRange;
-                int maxY = viewY + rainRange;
-                if (minY < blockingY) {
-                    minY = blockingY;
-                }
-
-                if (maxY < blockingY) {
-                    maxY = blockingY;
-                }
-
-                float texScale = 1.0F;
+                int blockingY = Math.max(0, world.getTopSolidBlock(x, z));
+                int minY = Math.max(viewY - rainRange, blockingY);
+                int maxY = Math.max(viewY + rainRange, blockingY);
                 if (minY == maxY) {
                     continue;
                 }
+                int y = Math.max(blockingY, vrbY);
+
                 this.random.setSeed(x * x * 3121L + x * 45238971L + z * z * 418711L + z * 13761L);
                 float texOff = (float) this.tick + deltaTime;
                 float texScaleY = ((float) (this.tick & 511) + deltaTime) / 512.0F;
@@ -758,6 +816,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
                 GL11.glColor4f(light, light, light, ((1.0F - dist * dist) * 0.3F + 0.5F) * rainGradient);
                 ts.offset(-vrX, -vrY, -vrZ);
 
+                float texScale = 1.0F;
                 float tX1 = 0.0F * texScale + texOffX;
                 float tX2 = 1.0F * texScale + texOffX;
                 float tY1 = (float) minY * texScale / 4.0F + texScaleY * texScale + texOffY;
@@ -779,27 +838,20 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
 
         for (int x = viewX - rainRange; x <= viewX + rainRange; ++x) {
             for (int z = viewZ - rainRange; z <= viewZ + rainRange; ++z) {
-                if (!(((ExWorld) world).getTemperatureValue(x, z) >= 0.5D)) {
+                if (!(((ExWorld) world).getTemperatureValue(x, z) >= 0.5f)) {
                     continue;
                 }
                 int blockingY = world.getTopSolidBlock(x, z);
-                int minY = viewY - rainRange;
-                int maxY = viewY + rainRange;
-                if (minY < blockingY) {
-                    minY = blockingY;
-                }
-
-                if (maxY < blockingY) {
-                    maxY = blockingY;
-                }
-
-                float texScale = 1.0F;
+                int minY = Math.max(viewY - rainRange, blockingY);
+                int maxY = Math.max(viewY + rainRange, blockingY);
                 if (minY == maxY) {
                     continue;
                 }
+
                 int seed = x * x * 3121 + x * 45238971 + z * z * 418711 + z * 13761;
                 this.random.setSeed(seed);
-                float texOffY = ((float) (this.tick + seed & 31) + deltaTime) / 32.0F * (3.0F + this.random.nextFloat());
+                float texOffY =
+                    ((float) (this.tick + seed & 31) + deltaTime) / 32.0F * (3.0F + this.random.nextFloat());
                 double dX = (double) ((float) x + 0.5F) - viewEntity.x;
                 double dZ = (double) ((float) z + 0.5F) - viewEntity.z;
                 float dist = Mth.sqrt(dX * dX + dZ * dZ) / (float) rainRange;
@@ -808,6 +860,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
                 GL11.glColor4f(light, light, light, ((1.0F - dist * dist) * 0.5F + 0.5F) * rainGradient);
                 ts.offset(-vrX, -vrY, -vrZ);
 
+                float texScale = 1.0F;
                 float tX1 = 0.0F * texScale;
                 float tX2 = 1.0F * texScale;
                 float tY1 = (float) minY * texScale / 4.0F + texOffY * texScale;
@@ -832,7 +885,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
 
     @Overwrite
     private void setupFog(int var1, float var2) {
-        LivingEntity viewEntity = this.mc.cameraEntity;
+        Mob viewEntity = this.mc.cameraEntity;
         GL11.glFog(GL11.GL_FOG_COLOR, this.getBuffer(this.fogRed, this.fogGreen, this.fogBlue, 1.0F));
         GL11.glNormal3f(0.0F, -1.0F, 0.0F);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
@@ -845,7 +898,8 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
             GL11.glFogf(GL11.GL_FOG_DENSITY, 0.1F);
             fogStart = 1.0F;
             fogEnd = 1.0F;
-        } else if (viewEntity.isUnderLiquid(Material.WATER)) {
+        }
+        else if (viewEntity.isUnderLiquid(Material.WATER)) {
             GL11.glFogi(GL11.GL_FOG_MODE, GL11.GL_EXP);
             fogStart = 0.1F;
             if (options.ofClearWater()) {
@@ -854,17 +908,20 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
 
             GL11.glFogf(GL11.GL_FOG_DENSITY, fogStart);
             fogEnd = 0.4F;
-        } else if (viewEntity.isUnderLiquid(Material.LAVA)) {
+        }
+        else if (viewEntity.isUnderLiquid(Material.LAVA)) {
             GL11.glFogi(GL11.GL_FOG_MODE, GL11.GL_EXP);
             GL11.glFogf(GL11.GL_FOG_DENSITY, 2.0F);
             fogStart = 0.4F;
             fogEnd = 0.3F;
-        } else {
+        }
+        else {
             GL11.glFogi(GL11.GL_FOG_MODE, GL11.GL_LINEAR);
             if (GLContext.getCapabilities().GL_NV_fog_distance) {
                 if (options.ofFogFancy()) {
                     GL11.glFogi(NVFogDistance.GL_FOG_DISTANCE_MODE_NV, NVFogDistance.GL_EYE_RADIAL_NV);
-                } else {
+                }
+                else {
                     GL11.glFogi(NVFogDistance.GL_FOG_DISTANCE_MODE_NV, NVFogDistance.GL_EYE_PLANE_ABSOLUTE_NV);
                 }
             }
@@ -890,20 +947,28 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         GL11.glColorMaterial(GL11.GL_FRONT, GL11.GL_AMBIENT);
     }
 
-    @Inject(method = "bobView", at = @At("HEAD"), cancellable = true)
+    @Inject(
+        method = "bobView",
+        at = @At("HEAD"),
+        cancellable = true
+    )
     private void renderPlayerWhenCameraInactive(float var1, CallbackInfo ci) {
         if (!(!((ExMinecraft) this.mc).isCameraActive() && ((ExEntity) this.mc.cameraEntity).getStunned() == 0)) {
             ci.cancel();
         }
     }
 
-    @Inject(method = "moveCameraToPlayer", at = @At(
-        value = "INVOKE",
-        target = "Lorg/lwjgl/opengl/GL11;glTranslatef(FFF)V",
-        shift = At.Shift.BEFORE,
-        ordinal = 3,
-        remap = false),
-        cancellable = true)
+    @Inject(
+        method = "moveCameraToPlayer",
+        at = @At(
+            value = "INVOKE",
+            target = "Lorg/lwjgl/opengl/GL11;glTranslatef(FFF)V",
+            shift = At.Shift.BEFORE,
+            ordinal = 3,
+            remap = false
+        ),
+        cancellable = true
+    )
     private void rotateCameraInsteadOfMoving(float var1, CallbackInfo ci) {
         if (((ExMinecraft) this.mc).isCameraActive()) {
             AC_CutsceneCameraPoint point = ((ExMinecraft) this.mc).getCutsceneCamera().getCurrentPoint(var1);
@@ -913,25 +978,37 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         }
     }
 
-    @ModifyExpressionValue(method = "renderItemInHand", at = @At(
-        value = "FIELD",
-        target = "Lnet/minecraft/client/Options;bobView:Z",
-        ordinal = 0))
+    @ModifyExpressionValue(
+        method = "renderItemInHand",
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/client/Options;bobView:Z",
+            ordinal = 0
+        )
+    )
     private boolean noBobWhenCameraActive(boolean value) {
         return value && !((ExMinecraft) this.mc).isCameraActive();
     }
 
-    @ModifyExpressionValue(method = "renderItemInHand", at = @At(
-        value = "FIELD",
-        target = "Lnet/minecraft/client/Options;thirdPersonView:Z",
-        ordinal = 0))
+    @ModifyExpressionValue(
+        method = "renderItemInHand",
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/client/Options;thirdPersonView:Z",
+            ordinal = 0
+        )
+    )
     private boolean noHandWhenCameraActive(boolean value) {
         return value || ((ExMinecraft) this.mc).isCameraActive();
     }
 
-    @Redirect(method = "renderItemInHand", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/client/renderer/ItemInHandRenderer;render(F)V"))
+    @Redirect(
+        method = "renderItemInHand",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/ItemInHandRenderer;render(F)V"
+        )
+    )
     private void renderBothHands(ItemInHandRenderer instance, float partialTick) {
         float prog1 = this.mc.player.getAttackAnim(partialTick);
         float prog2 = ((ExPlayerEntity) this.mc.player).getSwingOffhandProgress(partialTick);
@@ -946,30 +1023,45 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         }
     }
 
-    @ModifyConstant(method = "setupClearColor", constant = @Constant(intValue = 4))
-    private int changeFogDividend(int constant) {
-        // Was 5 to account for Very Far, but Optifine gives us Farview instead.
-        return constant;
+    @ModifyVariable(
+        method = "setupClearColor",
+        at = @At(
+            value = "STORE",
+            ordinal = 0
+        ),
+        ordinal = 1
+    )
+    private float changeFogDividend(float value) {
+        return 1.0f - (float) Math.pow(0.5f, 0.25);
+        //return (float) (4 - this.mc.options.viewDistance) / 4.0F;
     }
 
-    public void resetZoom() {
-        this.zoom = 1.0D;
-    }
-
-    public float getFarPlane() {
-        float dist = (float) (256 >> this.mc.options.viewDistance);
-        if (((ExGameOptions) this.mc.options).isAutoFarClip()) {
-            double avgTime = ((ExMinecraft) this.mc).getFrameTime();
-            if (avgTime > 0.033) {
-                this.farClipAdjustment *= 0.99F;
-            } else if (avgTime < 0.02) {
-                this.farClipAdjustment *= 1.01F;
-            }
-
-            this.farClipAdjustment = Math.max(Math.min(this.farClipAdjustment, 1.0F), 0.25F);
-            dist *= this.farClipAdjustment;
+    @Redirect(
+        method = "render(FJ)V",
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/client/Options;viewDistance:I",
+            opcode = Opcodes.GETFIELD
+        )
+    )
+    private int disableSkyOnLowDistance(Options instance) {
+        if (((ExGameOptions) instance).ofChunkRenderDistance() >= 4) {
+            return 0;
         }
-        return dist;
+        return 1000;
+    }
+
+    //@ModifyConstant(method = "setupClearColor", constant = @Constant(intValue = 4))
+    //private int changeFogDividend(int constant) {
+    //    // TODO: Was 5 to account for Very Far, but Optifine gives us Farview instead.
+    //    return constant;
+    //}
+
+    @Unique
+    public float getFarPlane() {
+        var options = (ExGameOptions) this.mc.options;
+        int range = options.ofChunkRenderDistance() * 16 / 2;
+        return 0.9f * range;
     }
 
     @Override

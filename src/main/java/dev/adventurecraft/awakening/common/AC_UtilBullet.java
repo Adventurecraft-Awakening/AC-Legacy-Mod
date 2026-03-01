@@ -1,13 +1,13 @@
 package dev.adventurecraft.awakening.common;
 
 import java.util.List;
-import java.util.Random;
 
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
+import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
@@ -16,7 +16,7 @@ import net.minecraft.world.phys.Vec3;
 
 public class AC_UtilBullet {
 
-    public static void fireBullet(Level world, LivingEntity caster, float spread, int damage) {
+    public static void fireBullet(Level world, Mob caster, float spread, int damage) {
         HitResult hit = findHit(world, caster, spread);
         if (hit == null) {
             return;
@@ -33,13 +33,13 @@ public class AC_UtilBullet {
         return ((ExWorld) world).rayTraceBlocks2(pointA, pointB, false, false, false);
     }
 
-    static HitResult findHit(Level world, LivingEntity caster, float spread) {
+    static HitResult findHit(Level world, Mob caster, float spread) {
         double dist = 256.0D;
         Vec3 pointA = caster.getPos(1.0F);
         Vec3 dir = caster.getViewVector(1.0F);
-        dir.x += (double) spread * (2.0D * world.random.nextDouble() - 1.0D);
-        dir.y += (double) spread * (2.0D * world.random.nextDouble() - 1.0D);
-        dir.z += (double) spread * (2.0D * world.random.nextDouble() - 1.0D);
+        dir.x += spread * MathF.nextSignedFloat(world.random);
+        dir.y += spread * MathF.nextSignedFloat(world.random);
+        dir.z += spread * MathF.nextSignedFloat(world.random);
         Vec3 pointB = pointA.add(dir.x * dist, dir.y * dist, dir.z * dist);
         if (caster.heightOffset == 0.0F) {
             pointA.y += caster.bbHeight / 2.0F;
@@ -71,7 +71,7 @@ public class AC_UtilBullet {
 
     private static HitResult rayTraceCore(Level world, Entity ignore, Vec3 pointA, Vec3 pointB) {
         Vec3 end = pointB;
-        Vec3 pointACopy = Vec3.newTemp(pointA.x, pointA.y, pointA.z);
+        Vec3 pointACopy = Vec3.create(pointA.x, pointA.y, pointA.z);
         HitResult blockHit = rayTraceBlocks(world, pointACopy, pointB);
         if (blockHit != null) {
             end = blockHit.pos;

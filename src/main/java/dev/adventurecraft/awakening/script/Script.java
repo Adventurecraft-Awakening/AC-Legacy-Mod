@@ -3,17 +3,18 @@ package dev.adventurecraft.awakening.script;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
+import dev.adventurecraft.awakening.primitives.TickTime;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.level.Level;
 import org.mozilla.javascript.*;
 
-import java.io.*;
+import java.io.Closeable;
 import java.util.*;
 
 @SuppressWarnings("unused")
-public class Script {
+public class Script implements Closeable {
 
     static final String SCRIPT_PACKAGE = "dev.adventurecraft.awakening.script";
 
@@ -37,6 +38,9 @@ public class Script {
     Scriptable curScope;
     final Scriptable runScope;
     final Context cx;
+
+    private final Timers timers;
+
     final ScriptTime time;
     final ScriptWorld world;
     ScriptEntityPlayer player;
@@ -49,20 +53,18 @@ public class Script {
     final ScriptRenderer renderer;
     final ScriptScript script;
     public final ScriptKeyboard keyboard;
-    final List<ScriptContinuation> sleepingScripts = new ArrayList<>();
-    final List<ScriptContinuation> removeMe = new ArrayList<>();
+    final List<ContinuationPending> continuations = new ArrayList<>();
+    final List<ContinuationPending> newContinuations = new ArrayList<>();
 
-    public static final ContextFactory contextFactory = new CustomContextFactory();
-
-    static class CustomContextFactory extends ContextFactory {
+    public static class CustomContextFactory extends ContextFactory {
 
         @Override
         protected Context makeContext() {
             Context cx = super.makeContext();
             cx.setLanguageVersion(Context.VERSION_ECMASCRIPT);
             cx.setInterpretedMode(true);
-            cx.setClassShutter(fullClassName ->
-                fullClassName.startsWith(SCRIPT_PACKAGE) || allowedClassNames.contains(fullClassName));
+            cx.setClassShutter(fullClassName -> fullClassName.startsWith(SCRIPT_PACKAGE) ||
+                allowedClassNames.contains(fullClassName));
             return cx;
         }
     }
@@ -70,13 +72,21 @@ public class Script {
     public Script(Level level) {
         var gameOptions = (ExGameOptions) Minecraft.instance.options;
 
-        this.cx = contextFactory.enterContext();
+        this.cx = ContextFactory.getGlobal().enterContext();
 
         this.globalScope = gameOptions.getAllowJavaInScript()
             ? this.cx.initStandardObjects(null, false)
             : this.cx.initSafeStandardObjects(null, false);
+        this.curScope = this.globalScope;
         this.runScope = this.cx.newObject(this.globalScope);
         this.runScope.setParentScope(this.globalScope);
+
+        this.timers = new Timers() {
+            protected @Override long getTimeMillis() {
+                return time.getTickCount() * TickTime.MILLIS_PER_TICK;
+            }
+        };
+        this.timers.install(this.globalScope);
 
         this.time = new ScriptTime(level);
         this.world = new ScriptWorld(level);
@@ -84,7 +94,7 @@ public class Script {
         this.weather = new ScriptWeather(level);
         this.effect = new ScriptEffect(level, Minecraft.instance.levelRenderer);
         this.particle = new ScriptParticle(Minecraft.instance.levelRenderer);
-        this.sound = new ScriptSound(Minecraft.instance.soundEngine);
+        this.sound = new ScriptSound(level, Minecraft.instance.soundEngine);
         this.ui = new ScriptUI();
         this.script = new ScriptScript(level);
         this.keyboard = new ScriptKeyboard(level, Minecraft.instance.options, this.getNewScope());
@@ -107,10 +117,12 @@ public class Script {
 
         if (gameOptions.getAllowJavaInScript()) {
             // Alias our package as `net.minecraft.script` for back-compat.
-            String initStr = String.join("\n", new String[]{
-                String.format("net = { minecraft: { script: Packages.%s } };", SCRIPT_PACKAGE),
-            });
-            this.cx.evaluateString(this.globalScope, initStr, "<init>", 0, null);
+            String initStr = String.join(
+                "\n", new String[] {
+                    String.format("net = { minecraft: { script: Packages.%s } };", SCRIPT_PACKAGE),
+                }
+            );
+            this.runString(initStr, "<init>", this.globalScope);
         }
 
         defineClass("Item", ScriptItem.class);
@@ -121,6 +133,7 @@ public class Script {
         defineClass("Model", ScriptModel.class);
         defineClass("ModelBlockbench", ScriptModelBlockbench.class);
         defineClass("Vec3", ScriptVec3.class);
+        defineClass("Vec4", ScriptVec4.class);
         defineClass("VecRot", ScriptVecRot.class);
     }
 
@@ -138,109 +151,130 @@ public class Script {
         ScriptableObject.putProperty(this.globalScope, name, tmp);
     }
 
-    /* TODO:
-    protected void finalize() {
-        Context var10000 = this.cx;
-        Context.exit();
-    }
-    */
-
     public void initPlayer(LocalPlayer player) {
         this.player = new ScriptEntityPlayer(player);
         Object tmp = Context.javaToJS(this.player, this.globalScope);
         ScriptableObject.putProperty(this.globalScope, "player", tmp);
     }
 
-    public String runString(String sourceCode) {
-        org.mozilla.javascript.Script script = this.compileString(sourceCode, "<cmd>");
-        if (script != null) {
-            Object result = this.runScript(script, this.runScope);
-            if (result != null) {
-                return Context.toString(result);
-            }
+    public String runString(String sourceCode, String sourceName) {
+        // TODO: is runScope needed? why not just run in globalScope?
+        return this.runString(sourceCode, sourceName, this.runScope);
+    }
+
+    private String runString(String sourceCode, String sourceName, Scriptable scope) {
+        org.mozilla.javascript.Script script = this.compileString(sourceCode, sourceName);
+        if (script == null) {
+            return null;
         }
-        return null;
+        Object result = this.runScript(script, scope);
+        if (result == null) {
+            return null;
+        }
+
+        try {
+            return Context.toString(result);
+        }
+        catch (RhinoException e) {
+            this.printRhinoException(e);
+            return null;
+        }
     }
 
     public org.mozilla.javascript.Script compileString(String sourceCode, String sourceName) {
         try {
             return this.cx.compileString(sourceCode, sourceName, 1, null);
-        } catch (Exception e) {
-            Minecraft.instance.gui.addMessage("JS Compile: " + e.getMessage());
+        }
+        catch (Exception e) {
+            Minecraft.instance.gui.addMessage("(JS) Compile: " + e.getMessage());
             return null;
         }
     }
 
-    public org.mozilla.javascript.Script compileReader(Reader sourceReader, String sourceName)
-        throws IOException {
-        return this.cx.compileReader(sourceReader, sourceName, 1, null);
-    }
-
     public Scriptable getNewScope() {
-        Scriptable var1 = this.cx.newObject(this.globalScope);
-        var1.setParentScope(this.globalScope);
-        return var1;
-    }
-
-    public void setNewCurScope(Scriptable pScope) {
-        this.curScope = pScope;
-    }
-
-    public Scriptable getCurScope() {
-        return this.curScope;
+        Scriptable scope = this.cx.newObject(this.globalScope);
+        scope.setParentScope(this.globalScope);
+        return scope;
     }
 
     public Object runScript(org.mozilla.javascript.Script script, Scriptable scope) {
-        if (this.curScope != null) {
-            return script.exec(this.cx, this.curScope);
-        }
+        // TODO: move AC_JScriptInfo into here?
+        //       it makes more sense, and allows us to track <init> and <cmd> scripts
 
+        Scriptable prevScope = this.curScope;
         try {
-            this.curScope = scope;
-            Object result = this.cx.executeScriptWithContinuations(script, scope);
-            return result;
-        } catch (ContinuationPending e) {
-        } catch (RhinoException e) {
+            if (scope != null) {
+                this.curScope = scope;
+            }
+            return this.cx.executeScriptWithContinuations(script, this.curScope);
+        }
+        catch (ContinuationPending c) {
+            this.newContinuations.add(c);
+        }
+        catch (RhinoException e) {
             this.printRhinoException(e);
-        } finally {
-            this.curScope = null;
+        }
+        finally {
+            this.curScope = prevScope;
         }
         return null;
     }
 
-    public void wakeupScripts(long currentTime) {
+    public void processContinuations() {
+        this.continuations.addAll(this.newContinuations);
+        this.newContinuations.clear();
 
-        for (ScriptContinuation continuation : this.sleepingScripts) {
-            if (continuation.wakeUp <= currentTime) {
-                this.removeMe.add(continuation);
-            }
+        if (!this.continuations.isEmpty()) {
+            this.executeContinuations(this.time.getTickCount());
         }
 
-        for (ScriptContinuation continuation : this.removeMe) {
-            this.sleepingScripts.remove(continuation);
+        this.timers.runTimers(this.cx, this.globalScope);
+    }
 
+    private void executeContinuations(long currentTime) {
+        var iterator = this.continuations.iterator();
+        while (iterator.hasNext()) {
+            var item = iterator.next();
+            if (!(item.getApplicationState() instanceof ScriptContinuation(long wakeUp, Scriptable scope))) {
+                continue;
+            }
+            if (wakeUp > currentTime) {
+                continue;
+            }
+
+            iterator.remove();
+            Scriptable prevScope = this.curScope;
             try {
-                this.curScope = continuation.scope;
-                this.cx.resumeContinuation(continuation.contituation, continuation.scope, null);
-            } catch (ContinuationPending e) {
-            } catch (RhinoException e) {
+                this.curScope = scope;
+                this.cx.resumeContinuation(item.getContinuation(), this.curScope, null);
+            }
+            catch (ContinuationPending c) {
+                this.newContinuations.add(c);
+            }
+            catch (RhinoException e) {
                 this.printRhinoException(e);
-            } finally {
-                this.curScope = null;
+            }
+            finally {
+                this.curScope = prevScope;
             }
         }
-
-        this.removeMe.clear();
     }
 
     public void sleep(float seconds) {
         int ticks = (int) (20.0F * seconds);
+        if (ticks <= 0) {
+            return;
+        }
+
+        long wakeUp = this.time.getTickCount() + (long) ticks;
         ContinuationPending continuation = this.cx.captureContinuation();
-        this.sleepingScripts.add(new ScriptContinuation(
-            continuation.getContinuation(),
-            this.time.getTickCount() + (long) ticks,
-            this.curScope));
+        continuation.setApplicationState(new ScriptContinuation(wakeUp, this.curScope));
         throw continuation;
+    }
+
+    @Override
+    public void close() {
+        this.cx.close();
     }
 
     private void printRhinoException(RhinoException ex) {

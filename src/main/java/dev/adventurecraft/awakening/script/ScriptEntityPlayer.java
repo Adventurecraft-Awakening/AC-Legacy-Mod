@@ -36,4 +36,8 @@ public class ScriptEntityPlayer extends ScriptEntityLiving {
     public void swingOffHand() {
         ((ExPlayerEntity) this.entityPlayer).swingOffhandItem();
     }
+
+    public ScriptGameMode getGameMode() {
+        return new ScriptGameMode(((ExPlayerEntity) entityPlayer).getGameMode());
+    }
 }

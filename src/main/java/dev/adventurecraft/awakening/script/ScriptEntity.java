@@ -1,15 +1,15 @@
 package dev.adventurecraft.awakening.script;
 
+import dev.adventurecraft.awakening.common.AC_UtilBullet;
 import dev.adventurecraft.awakening.entity.AC_EntityLivingScript;
 import dev.adventurecraft.awakening.entity.AC_EntityNPC;
 import dev.adventurecraft.awakening.entity.AC_Particle;
-import dev.adventurecraft.awakening.common.AC_UtilBullet;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
-import dev.adventurecraft.awakening.extension.entity.ExEntityRegistry;
+import dev.adventurecraft.awakening.extension.world.entity.EntityClass;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.FlyingMob;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.animal.Wolf;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Monster;
@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings("unused")
-public class ScriptEntity {
+public class ScriptEntity implements EntityClass {
 
     Entity entity;
 
@@ -35,20 +35,22 @@ public class ScriptEntity {
     }
 
     public static ScriptEntity getEntityClass(Entity entity) {
-        if (entity == null) return null;
-        if (entity instanceof Player e) return new ScriptEntityPlayer(e);
-        if (entity instanceof Monster e) return new ScriptEntityMob(e);
-        if (entity instanceof Wolf e) return new ScriptEntityWolf(e);
-        if (entity instanceof Mob e) return new ScriptEntityCreature(e);
-        if (entity instanceof FlyingMob e) return new ScriptEntityFlying(e);
-        if (entity instanceof AC_EntityNPC e) return new ScriptEntityNPC(e);
-        if (entity instanceof AC_EntityLivingScript e) return new ScriptEntityLivingScript(e);
-        if (entity instanceof Slime e) return new ScriptEntitySlime(e);
-        if (entity instanceof LivingEntity e) return new ScriptEntityLiving(e);
-        if (entity instanceof Arrow e) return new ScriptEntityArrow(e);
-        if (entity instanceof ItemEntity e) return new ScriptEntityItem(e);
-        if (entity instanceof AC_Particle e) return new ScriptParticleEntity(e);
-        return new ScriptEntity(entity);
+        return switch (entity) {
+            case null -> null;
+            case Player e -> new ScriptEntityPlayer(e);
+            case Monster e -> new ScriptEntityMob(e);
+            case Wolf e -> new ScriptEntityWolf(e);
+            case PathfinderMob e -> new ScriptEntityCreature(e);
+            case FlyingMob e -> new ScriptEntityFlying(e);
+            case AC_EntityNPC e -> new ScriptEntityNPC(e);
+            case AC_EntityLivingScript e -> new ScriptEntityLivingScript(e);
+            case Slime e -> new ScriptEntitySlime(e);
+            case Mob e -> new ScriptEntityLiving(e);
+            case Arrow e -> new ScriptEntityArrow(e);
+            case ItemEntity e -> new ScriptEntityItem(e);
+            case AC_Particle e -> new ScriptParticleEntity(e);
+            default -> new ScriptEntity(entity);
+        };
     }
 
     public void setCanGetFallDamage(boolean arg) {
@@ -72,7 +74,8 @@ public class ScriptEntity {
         return new ScriptVec3(
             invDelta * this.entity.xo + deltaTime * this.entity.x,
             invDelta * this.entity.yo + deltaTime * this.entity.y,
-            invDelta * this.entity.zo + deltaTime * this.entity.z);
+            invDelta * this.entity.zo + deltaTime * this.entity.z
+        );
     }
 
     public void setPosition(ScriptVec3 vec) {
@@ -91,7 +94,8 @@ public class ScriptEntity {
         float dtSub = 1.0F - deltaTime;
         return new ScriptVecRot(
             dtSub * this.entity.yRotO + deltaTime * this.entity.yRot,
-            dtSub * this.entity.xRotO + deltaTime * this.entity.xRot);
+            dtSub * this.entity.xRotO + deltaTime * this.entity.xRot
+        );
     }
 
     public void setRotation(float yaw, float pitch) {
@@ -142,7 +146,8 @@ public class ScriptEntity {
     public void mountEntity(ScriptEntity entity) {
         if (entity != null) {
             this.entity.ride(entity.entity);
-        } else {
+        }
+        else {
             this.entity.ride(null);
         }
     }
@@ -169,8 +174,13 @@ public class ScriptEntity {
 
     public ScriptEntity[] getEntitiesWithinRange(double range) {
         var aabb = AABB.newTemp(
-            this.entity.x - range, this.entity.y - range, this.entity.z - range,
-            this.entity.x + range, this.entity.y + range, this.entity.z + range);
+            this.entity.x - range,
+            this.entity.y - range,
+            this.entity.z - range,
+            this.entity.x + range,
+            this.entity.y + range,
+            this.entity.z + range
+        );
         var entities = (List<Entity>) this.entity.level.getEntities(this.entity, aabb);
         ArrayList<ScriptEntity> list = new ArrayList<>();
         double rangeSqr = range * range;
@@ -248,9 +258,9 @@ public class ScriptEntity {
         return this.entity.hurt(entity.entity, damage);
     }
 
+    @Override
     public String getClassType() {
-        if (this.entity instanceof Player) return "Player";
-        return ExEntityRegistry.getEntityStringClimbing(this.entity);
+        return ((EntityClass) this.entity).getClassType();
     }
 
     public boolean getCollidesWithClipBlocks() {
@@ -292,7 +302,15 @@ public class ScriptEntity {
     }
 
     public boolean getIsFlying() {
-        return ((ExEntity) this.entity).handleFlying();
+        return ((ExEntity) this.entity).getIsFlying();
+    }
+
+    public void setNoPhysics(boolean value) {
+        ((ExEntity) this.entity).setNoPhysics(value);
+    }
+
+    public boolean getNoPhysics() {
+        return ((ExEntity) this.entity).getNoPhysics();
     }
 
     public boolean getOnGround() {
@@ -305,12 +323,18 @@ public class ScriptEntity {
 
     public Object[] rayTrace(double aX, double aY, double aZ, double bX, double bY, double bZ) {
         var result = new Object[3];
-        HitResult hit = AC_UtilBullet.rayTrace(this.entity.level, this.entity, Vec3.newTemp(aX, aY, aZ), Vec3.newTemp(bX, bY, bZ));
+        HitResult hit = AC_UtilBullet.rayTrace(
+            this.entity.level,
+            this.entity,
+            Vec3.create(aX, aY, aZ),
+            Vec3.create(bX, bY, bZ)
+        );
         if (hit != null) {
             result[0] = new ScriptVec3(hit.pos.x, hit.pos.y, hit.pos.z);
             if (hit.hitType == HitType.TILE) {
                 result[1] = new ScriptVec3(hit.x, hit.y, hit.z);
-            } else {
+            }
+            else {
                 result[2] = getEntityClass(hit.entity);
             }
         }
@@ -325,22 +349,15 @@ public class ScriptEntity {
         this.entity.heightOffset = value;
     }
 
-
-    public void setCustomTagString(String key, String value) {
-        ((ExEntity) this.entity).setCustomTagString(key, value);
+    public boolean hasTag(String key) {
+        return ((ExEntity) this.entity).hasTag(key);
     }
 
-    public boolean hasCustomTagString(String key) {
-        return ((ExEntity) this.entity).hasCustomTagString(key);
-
+    public Object getTag(String key) {
+        return ((ExEntity) this.entity).getTag(key);
     }
 
-    public String getOrCreateCustomTagString(String key, String defaultValue) {
-        return ((ExEntity) this.entity).getOrCreateCustomTagString(key, defaultValue);
+    public Object setTag(String key, Object value) {
+        return ((ExEntity) this.entity).setTag(key, value);
     }
-
-    public String getCustomTagString(String key) {
-        return ((ExEntity) this.entity).getCustomTagString(key);
-    }
-
 }

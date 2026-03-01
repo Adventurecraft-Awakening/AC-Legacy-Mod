@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.entity;
 
-import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
+import dev.adventurecraft.awakening.extension.entity.ExMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
@@ -15,7 +15,7 @@ public class AC_EntityRat extends Monster {
         this.damage = 1;
         this.setSize(0.6F, 0.6F);
         this.health = 6;
-        ((ExLivingEntity) this).setMaxHealth(6);
+        ((ExMob) this).setMaxHealth(6);
     }
 
     @Override

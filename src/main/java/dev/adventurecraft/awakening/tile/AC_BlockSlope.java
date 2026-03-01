@@ -10,6 +10,6 @@ public class AC_BlockSlope extends AC_BlockStairMulti {
 
     @Override
     public int getRenderShape() {
-        return 38;
+        return AC_BlockShapes.BLOCK_SLOPE;
     }
 }

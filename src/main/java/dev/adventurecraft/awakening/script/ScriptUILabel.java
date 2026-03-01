@@ -4,87 +4,111 @@ import dev.adventurecraft.awakening.common.TextRendererState;
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import dev.adventurecraft.awakening.image.Rgba;
+import dev.adventurecraft.awakening.primitives.IntRange;
+import dev.adventurecraft.awakening.text.LinesSpliterator;
+import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.client.renderer.Textures;
 
+import java.util.ArrayList;
+
 @SuppressWarnings("unused")
-public class ScriptUILabel extends UIElement {
+public class ScriptUILabel extends UIElement implements ScriptColor {
 
     private String text;
-    private String[] textLines;
+    private ArrayList<IntRange> lines;
     public boolean shadow;
     public boolean centered;
-    public float red;
-    public float green;
-    public float blue;
-    public float alpha;
 
-    public ScriptUILabel(String text, float x, float y) {
+    private ScriptVec4 color;
+    private boolean dirty;
+
+    public ScriptUILabel(String text, double x, double y) {
         this(text, x, y, ((ExInGameHud) Minecraft.instance.gui).getScriptUI());
     }
 
-    public ScriptUILabel(String text, float x, float y, ScriptUIContainer container) {
+    public ScriptUILabel(String text, double x, double y, ScriptUIContainer container) {
+        super(x, y);
         this.shadow = true;
         this.centered = false;
-        this.red = 1.0F;
-        this.green = 1.0F;
-        this.blue = 1.0F;
-        this.alpha = 1.0F;
-        this.text = text;
-        this.textLines = text.split("\n");
-        this.prevX = this.curX = x;
-        this.prevY = this.curY = y;
+        this.color = new ScriptVec4(1.0);
+        this.lines = new ArrayList<>();
+        this.setText(text);
         if (container != null) {
             container.add(this);
         }
     }
 
     @Override
-    public void render(Font textRenderer, Textures textureManager, float deltaTime) {
-        int alpha = Math.max(Math.min((int) (this.alpha * 255.0F), 255), 0);
+    public void render(Font font, Textures textures, float deltaTime) {
+        ScriptVec4 color = this.getColor();
+        int alpha = (int) MathF.clamp((color.getA() * 255.0F), 0, 255);
         if (alpha == 0) {
             return;
         }
 
-        int red = Math.max(Math.min((int) (this.red * 255.0F), 255), 0);
-        int green = Math.max(Math.min((int) (this.green * 255.0F), 255), 0);
-        int blue = Math.max(Math.min((int) (this.blue * 255.0F), 255), 0);
-        int color = Rgba.fromRgba8(red, green, blue, alpha);
+        if (this.dirty) {
+            this.rebuild();
+            this.dirty = false;
+        }
 
-        float x = this.getXAtTime(deltaTime);
-        float y = this.getYAtTime(deltaTime);
-        String[] lines = this.textLines;
-        int shadowColor = this.shadow ? ExTextRenderer.getShadowColor(color) : 0;
+        int red = (int) MathF.clamp((color.getR() * 255.0F), 0, 255);
+        int green = (int) MathF.clamp((color.getG() * 255.0F), 0, 255);
+        int blue = (int) MathF.clamp((color.getB() * 255.0F), 0, 255);
+        int rgba = Rgba.fromRgba8(red, green, blue, alpha);
 
-        TextRendererState state = ((ExTextRenderer) textRenderer).createState();
+        double x = this.getXAtTime(deltaTime);
+        double y = this.getYAtTime(deltaTime);
+        int shadowColor = this.shadow ? ExTextRenderer.getShadowColor(rgba) : 0;
+
+        TextRendererState state = ((ExTextRenderer) font).createState();
         state.setShadowOffset(1, 1);
 
-        var ts = Tesselator.instance;
-        state.bindTexture();
-        state.begin(ts);
-        for (String line : lines) {
-            float lineX = x;
+        state.setColor(rgba);
+        state.setShadow(shadowColor);
+
+        state.begin(Tesselator.instance);
+        for (IntRange line : this.lines) {
+            double lineX = x;
             if (this.centered) {
-                lineX = x - (float) (textRenderer.width(line) / 2);
+                lineX = x - (state.measureText(this.text, line.start(), line.end()).width() / 2.0);
             }
 
-            state.setColor(color);
-            state.setShadow(shadowColor);
-            state.drawText(ts, line, 0, line.length(), lineX, y);
+            state.drawText(this.text, line.start(), line.end(), (float) lineX, (float) y);
+            state.resetFormat();
 
             y += 9.0F;
         }
-        state.end(ts);
+        state.end();
     }
 
     public String getText() {
+        // TODO: rebuild here if it ever becomes needed
         return this.text;
     }
 
     public void setText(String text) {
         this.text = text;
-        this.textLines = text.split("\n");
+        this.dirty = true;
+    }
+
+    private void rebuild() {
+        this.lines.clear();
+        new LinesSpliterator(text).forEachRemaining(this.lines::add);
+    }
+
+    @Override
+    public ScriptVec4 getColor() {
+        return this.color;
+    }
+
+    @Override
+    public void setColor(ScriptVec4 value) {
+        if (value == null) {
+            value = new ScriptVec4(1.0);
+        }
+        this.color = value;
     }
 }

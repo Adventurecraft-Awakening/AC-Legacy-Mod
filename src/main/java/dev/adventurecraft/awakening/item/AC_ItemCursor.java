@@ -1,27 +1,22 @@
 package dev.adventurecraft.awakening.item;
 
+import dev.adventurecraft.awakening.common.Coord;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.NotNull;
 
 public class AC_ItemCursor extends Item implements AC_ILeftClickItem {
 
     public static boolean bothSet = false;
     public static boolean firstPosition = true;
-    public static int oneX;
-    public static int oneY;
-    public static int oneZ;
-    public static int twoX;
-    public static int twoY;
-    public static int twoZ;
-    public static int minX;
-    public static int minY;
-    public static int minZ;
-    public static int maxX;
-    public static int maxY;
-    public static int maxZ;
+
+    private static Coord one = Coord.zero;
+    private static Coord two = Coord.zero;
+    private static Coord min = Coord.zero;
+    private static Coord max = Coord.zero;
 
     protected AC_ItemCursor(int id) {
         super(id);
@@ -36,31 +31,25 @@ public class AC_ItemCursor extends Item implements AC_ILeftClickItem {
     public boolean useOn(ItemInstance stack, Player player, Level world, int x, int y, int z, int side) {
         int positionIndex;
         if (firstPosition) {
-            oneX = x;
-            oneY = y;
-            oneZ = z;
+            setOne(new Coord(x, y, z));
             positionIndex = 0;
-        } else {
-            twoX = x;
-            twoY = y;
-            twoZ = z;
+        }
+        else {
+            setTwo(new Coord(x, y, z));
             bothSet = true;
             positionIndex = 1;
         }
         String message = String.format("Setting Cursor Position %d (%d, %d, %d)", positionIndex + 1, x, y, z);
 
-        minX = Math.min(oneX, twoX);
-        minY = Math.min(oneY, twoY);
-        minZ = Math.min(oneZ, twoZ);
-        maxX = Math.max(oneX, twoX);
-        maxY = Math.max(oneY, twoY);
-        maxZ = Math.max(oneZ, twoZ);
+        setMin(one().min(two()));
+        setMax(one().max(two()));
         firstPosition = !firstPosition;
 
         if (bothSet) {
-            int width = maxX - minX + 1;
-            int height = maxY - minY + 1;
-            int depth = maxZ - minZ + 1;
+            Coord delta = max().sub(min());
+            int width = delta.x + 1;
+            int height = delta.y + 1;
+            int depth = delta.z + 1;
             int blockCount = width * height * depth;
 
             message += String.format("\nCursor Volume [%d, %d, %d]: %d blocks", width, height, depth, blockCount);
@@ -68,5 +57,42 @@ public class AC_ItemCursor extends Item implements AC_ILeftClickItem {
 
         Minecraft.instance.gui.addMessage(message);
         return false;
+    }
+
+
+    public static Coord one() {
+        return one;
+    }
+
+    public static Coord setOne(@NotNull Coord one) {
+        AC_ItemCursor.one = one;
+        return one;
+    }
+
+    public static Coord two() {
+        return two;
+    }
+
+    public static Coord setTwo(@NotNull Coord two) {
+        AC_ItemCursor.two = two;
+        return two;
+    }
+
+    public static Coord min() {
+        return min;
+    }
+
+    public static Coord setMin(@NotNull Coord min) {
+        AC_ItemCursor.min = min;
+        return min;
+    }
+
+    public static Coord max() {
+        return max;
+    }
+
+    public static Coord setMax(@NotNull Coord max) {
+        AC_ItemCursor.max = max;
+        return max;
     }
 }

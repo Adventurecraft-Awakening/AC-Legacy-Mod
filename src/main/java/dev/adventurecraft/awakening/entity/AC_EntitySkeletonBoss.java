@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.entity;
 
 import dev.adventurecraft.awakening.extension.entity.projectile.ExArrowEntity;
-import net.minecraft.util.Mth;
+import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.monster.Skeleton;
 import net.minecraft.world.entity.projectile.Arrow;
@@ -25,31 +25,40 @@ public class AC_EntitySkeletonBoss extends Skeleton {
     }
 
     @Override
-    protected void checkHurtTarget(Entity var1, float var2) {
-        if (var2 < 20.0F) {
-            double var3 = var1.x - this.x;
-            double var5 = var1.z - this.z;
-            if (this.attackTime == 0) {
-                for (int var7 = 0; var7 < 5; ++var7) {
-                    Arrow var8 = new Arrow(this.level, this);
-                    ((ExArrowEntity) var8).setAttackStrength(this.damage);
-                    var8.y += 1.4F;
-                    double var9 = var1.y - (double) 0.2F - var8.y;
-                    float var11 = Mth.sqrt(var3 * var3 + var5 * var5) * 0.2F;
-                    this.level.playSound(this, "random.bow", 1.0F, 1.0F / (this.random.nextFloat() * 0.4F + 0.8F));
-                    this.level.addEntity(var8);
-                    var8.shoot(var3, var9 + (double) var11, var5, 0.9F, 36.0F);
-                }
-
-                this.attackTime = 30;
-            }
-
-            this.yRot = (float) (Math.atan2(var5, var3) * 180.0D / (double) ((float) Math.PI)) - 90.0F;
-            if (var2 < 7.5F) {
-                this.holdGround = true;
-            }
+    protected void checkHurtTarget(Entity target, float distance) {
+        if (distance >= 20.0F) {
+            return;
         }
 
+        double dX = target.x - this.x;
+        double dZ = target.z - this.z;
+        if (this.attackTime == 0) {
+            this.playAttackSound();
+            this.spawnArrows(target, dX, dZ, 5);
+            this.attackTime = 30;
+        }
+
+        this.yRot = MathF.toDegrees((float) Math.atan2(dZ, dX)) - 90.0F;
+        if (distance < 7.5F) {
+            this.holdGround = true;
+        }
+    }
+
+    private void playAttackSound() {
+        float pitch = 1.0F / (this.random.nextFloat() * 0.4F + 0.8F);
+        this.level.playSound(this, "random.bow", 1.0F, pitch);
+    }
+
+    private void spawnArrows(Entity target, double dX, double dZ, int count) {
+        double y1 = Math.sqrt(dX * dX + dZ * dZ) * 0.2;
+        for (int i = 0; i < count; ++i) {
+            var arrow = new Arrow(this.level, this);
+            ((ExArrowEntity) arrow).setAttackStrength(this.damage);
+            arrow.y += 1.4F;
+            double y0 = target.y - 0.2 - arrow.y;
+            this.level.addEntity(arrow);
+            arrow.shoot(dX, y0 + y1, dZ, 0.9F, 36.0F);
+        }
     }
 
     @Override

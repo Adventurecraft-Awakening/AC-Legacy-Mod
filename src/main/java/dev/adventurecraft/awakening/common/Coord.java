@@ -1,40 +1,124 @@
 package dev.adventurecraft.awakening.common;
 
-public class Coord {
-	public int x;
-	public int y;
-	public int z;
+import dev.adventurecraft.awakening.util.HashCode;
+import org.jetbrains.annotations.Nullable;
 
-	public Coord() {
-		this.set(0, 0, 0);
-	}
+public final class Coord {
 
-	public Coord(int x, int y, int z) {
-		this.set(x, y, z);
-	}
+    public static final Coord zero = new Coord(0, 0, 0);
+    public static final Coord one = new Coord(1, 1, 1);
 
-	public void set(int x, int y, int z) {
-		this.x = x;
-		this.y = y;
-		this.z = z;
-	}
+    public final int x;
+    public final int y;
+    public final int z;
 
-	public boolean equals(Object obj) {
-        if (obj instanceof Coord c) {
-            return this.x == c.x && this.y == c.y && this.z == c.z;
-        }
-        return false;
+    public Coord(int x, int y, int z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
     }
 
-	public void min(int x, int y, int z) {
-		this.x = Math.min(this.x, x);
-		this.y = Math.min(this.y, y);
-		this.z = Math.min(this.z, z);
-	}
+    public Coord(int value) {
+        this(value, value, value);
+    }
 
-	public void max(int x, int y, int z) {
-		this.x = Math.max(this.x, x);
-		this.y = Math.max(this.y, y);
-		this.z = Math.max(this.z, z);
-	}
+    public Coord add(int x, int y, int z) {
+        return new Coord(this.x + x, this.y + y, this.z + z);
+    }
+
+    public Coord add(Coord other) {
+        return this.add(other.x, other.y, other.z);
+    }
+
+    public Coord sub(Coord other) {
+        return new Coord(this.x - other.x, this.y - other.y, this.z - other.z);
+    }
+
+    public Coord mul(int factor) {
+        return new Coord(this.x * factor, this.y * factor, this.z * factor);
+    }
+
+    public Coord min(Coord other) {
+        return new Coord(Math.min(this.x, other.x), Math.min(this.y, other.y), Math.min(this.z, other.z));
+    }
+
+    public Coord max(Coord other) {
+        return new Coord(Math.max(this.x, other.x), Math.max(this.y, other.y), Math.max(this.z, other.z));
+    }
+
+    public Coord negate() {
+        return new Coord(-this.x, -this.y, -this.z);
+    }
+
+    public Coord abs() {
+        return new Coord(Math.abs(this.x), Math.abs(this.y), Math.abs(this.z));
+    }
+
+    public int getVolume() {
+        return this.x * this.y * this.z;
+    }
+
+    public boolean equalsAny(int x, int y, int z) {
+        return this.x == x || this.y == y || this.z == z;
+    }
+
+    public boolean equalsAny(int value) {
+        return this.equalsAny(value, value, value);
+    }
+
+    public boolean equalsAny(Coord other) {
+        return this.equalsAny(other.x, other.y, other.z);
+    }
+
+    public boolean greaterAny(int x, int y, int z) {
+        return this.x > x || this.y > y || this.z > z;
+    }
+
+    public boolean greaterEqualAny(int x, int y, int z) {
+        return this.x >= x || this.y >= y || this.z >= z;
+    }
+
+    public boolean greaterEqualAny(Coord other) {
+        return this.greaterEqualAny(other.x, other.y, other.z);
+    }
+
+    public boolean lessAny(int x, int y, int z) {
+        return this.x < x || this.y < y || this.z < z;
+    }
+
+    public boolean lessAny(Coord other) {
+        return this.lessAny(other.x, other.y, other.z);
+    }
+
+    public boolean lessOrEqualAny(int x, int y, int z) {
+        return this.x <= x || this.y <= y || this.z <= z;
+    }
+
+    public boolean lessOrEqualAny(Coord other) {
+        return this.lessOrEqualAny(other.x, other.y, other.z);
+    }
+
+    public boolean equals(int x, int y, int z) {
+        return this.x == x && this.y == y && this.z == z;
+    }
+
+    public boolean equals(int value) {
+        return this.equals(value, value, value);
+    }
+
+    public boolean equals(Coord other) {
+        return this.equals(other.x, other.y, other.z);
+    }
+
+    public @Override boolean equals(@Nullable Object obj) {
+        return obj instanceof Coord c && this.equals(c);
+    }
+
+    public @Override int hashCode() {
+        return HashCode.combine(this.x, this.y, this.z);
+    }
+
+    public @Override String toString() {
+        return "{" + "x=" + x + ", y=" + y + ", z=" + z + '}';
+    }
 }

@@ -1,7 +1,6 @@
 package dev.adventurecraft.awakening.extension.client;
 
 import dev.adventurecraft.awakening.common.AC_TextureAnimated;
-import dev.adventurecraft.awakening.common.Vec2;
 
 import java.io.IOException;
 import java.util.stream.Stream;
@@ -19,9 +18,9 @@ public interface ExTextureManager {
 
     void loadTexture(int id, String name);
 
-    int getTexture(ImageBuffer image);
+    int loadTexture(ImageBuffer image);
 
-    Vec2 getTextureResolution(String name);
+    void releaseTexture(int id);
 
     void clearTextureAnimations();
 

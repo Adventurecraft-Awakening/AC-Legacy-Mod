@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.mixin.entity.monster;
 
 import dev.adventurecraft.awakening.extension.entity.monster.ExSlimeEntity;
-import dev.adventurecraft.awakening.mixin.entity.MixinLivingEntity;
+import dev.adventurecraft.awakening.mixin.entity.MixinMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.entity.player.Player;
@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Slime.class)
-public abstract class MixinSlimeEntity extends MixinLivingEntity implements ExSlimeEntity {
+public abstract class MixinSlimeEntity extends MixinMob implements ExSlimeEntity {
 
     @Shadow
     public abstract int getSize();

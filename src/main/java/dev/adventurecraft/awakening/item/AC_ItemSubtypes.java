@@ -4,8 +4,9 @@ import net.minecraft.world.item.TileItem;
 import net.minecraft.world.level.tile.Tile;
 
 public class AC_ItemSubtypes extends TileItem {
-	public AC_ItemSubtypes(int var1) {
-		super(var1);
+    
+	public AC_ItemSubtypes(int id) {
+		super(id);
 		this.setMaxDamage(0);
 		this.setStackedByData(true);
 	}

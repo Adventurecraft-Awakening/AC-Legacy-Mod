@@ -3,7 +3,7 @@ package dev.adventurecraft.awakening.item;
 import dev.adventurecraft.awakening.entity.AC_EntityNPC;
 import dev.adventurecraft.awakening.common.gui.AC_GuiNPC;
 import net.minecraft.world.ItemInstance;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
@@ -23,7 +23,7 @@ class AC_ItemNPCStick extends Item {
 		return true;
 	}
 
-	public boolean hurtEnemy(ItemInstance var1, LivingEntity var2, LivingEntity var3) {
+	public boolean hurtEnemy(ItemInstance var1, Mob var2, Mob var3) {
 		if(var2 instanceof AC_EntityNPC) {
 			AC_GuiNPC.showUI((AC_EntityNPC)var2);
 			return true;

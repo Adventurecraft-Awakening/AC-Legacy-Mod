@@ -38,5 +38,18 @@
     "fabricloader": ">=${loader_version}",
     "minecraft": "1.0.0-beta.7.3",
     "mm": ">=0.2"
+  },
+  "custom": {
+    "git": {
+      "describe": "${git.describe}",
+      "branch": "${git.branch}",
+      "hash": "${git.hash}",
+      "shortHash": "${git.shortHash}",
+      "lastTag": "${git.lastTag}",
+      "commitDistance": "${git.commitDistance}",
+      "isCleanTag": "${git.isCleanTag}",
+      "version": "${git.version}",
+      "originUrl": "${git.originUrl}"
+    }
   }
 }

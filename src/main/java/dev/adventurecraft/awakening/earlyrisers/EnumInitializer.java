@@ -16,11 +16,11 @@ public class EnumInitializer implements Runnable {
     }
 
     private void addAdventurecraftOptions(String type) {
-        addOptionEnum(type, "AUTO_FAR_CLIP", "options.of.other.adjustFarClip", false, true);
         addOptionEnum(type, "GRASS_3D", "options.of.detail.grass3d", false, true);
         addOptionEnum(type, "CHAT_MESSAGE_BUFFER_LIMIT", "options.ac.chatMessageBufferLimit", true, false);
         addOptionEnum(type, "PARTICLE_LIMIT", "options.ac.detail.particleLimit", true, false);
         addOptionEnum(type, "ALLOW_JAVA_IN_SCRIPT", "options.ac.world.allowJavaInScript", false, true);
+        addOptionEnum(type, "CHAT_WIDTH", "options.ac.chatWidth", true, false);
     }
 
     private void addOptifineOptions(String type) {
@@ -30,7 +30,6 @@ public class EnumInitializer implements Runnable {
         addOptionEnum(type, "MIPMAP_TYPE", "options.of.texture.mipType");
         addOptionEnum(type, "LOAD_FAR", "options.of.world.loadFar");
         addOptionEnum(type, "PRELOADED_CHUNKS", "options.of.world.preloadedChunks");
-        addOptionEnum(type, "SMOOTH_FPS", "options.of.other.smoothFPS");
         addOptionEnum(type, "BRIGHTNESS", "options.of.brightness", true, false);
         addOptionEnum(type, "CLOUDS", "options.of.detail.clouds");
         addOptionEnum(type, "CLOUD_HEIGHT", "options.of.detail.cloudHeight", true, false);
@@ -53,18 +52,18 @@ public class EnumInitializer implements Runnable {
         addOptionEnum(type, "WEATHER", "options.of.world.weather");
         addOptionEnum(type, "SKY", "options.of.detail.sky");
         addOptionEnum(type, "STARS", "options.of.detail.stars");
-        addOptionEnum(type, "FAR_VIEW", "options.of.world.farView");
-        addOptionEnum(type, "CHUNK_UPDATES", "options.of.world.chunkUpdates");
         addOptionEnum(type, "CHUNK_UPDATES_DYNAMIC", "options.of.world.dynamicUpdates");
         addOptionEnum(type, "TIME", "options.of.world.time");
         addOptionEnum(type, "CLEAR_WATER", "options.of.detail.clearWater");
-        addOptionEnum(type, "SMOOTH_INPUT", "options.of.other.smoothInput");
         addOptionEnum(type, "AA_LEVEL", "options.of.msaa");
         addOptionEnum(type, "AF_LEVEL", "options.of.texture.anisoFilter");
+
+        addOptionEnum(type, "CHUNK_RENDER_DISTANCE", "options.renderDistance", true, false);
     }
 
     private static void addOptionEnum(String type, String name, String translationKey, boolean slider, boolean toggle) {
-        ClassTinkerers.enumBuilder(type, String.class, boolean.class, boolean.class)
+        ClassTinkerers
+            .enumBuilder(type, String.class, boolean.class, boolean.class)
             .addEnum(name, translationKey, slider, toggle)
             .build();
     }

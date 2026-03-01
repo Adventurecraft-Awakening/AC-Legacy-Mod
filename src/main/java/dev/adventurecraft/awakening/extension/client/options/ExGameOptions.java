@@ -1,9 +1,15 @@
 package dev.adventurecraft.awakening.extension.client.options;
 
+import dev.adventurecraft.awakening.client.gl.GLMipMode;
 import dev.adventurecraft.awakening.client.options.ConnectedGrassOption;
 import net.minecraft.client.KeyMapping;
 
 public interface ExGameOptions {
+
+    /**
+     * Account for chunks trying to access neighbors, be it during simulation or rendering.
+     */
+    int CHUNK_DISTANCE_BORDER = 2;
 
     boolean ofFogFancy();
 
@@ -11,23 +17,23 @@ public interface ExGameOptions {
 
     int ofMipmapLevel();
 
-    boolean ofMipmapLinear();
-
-    int getMipmapType();
+    GLMipMode ofMipmapMode();
 
     boolean ofLoadFar();
 
     int ofPreloadedChunks();
+
+    int ofChunkRenderDistance();
+
+    int ofChunkSimulationDistance();
+
+    int ofChunkLoadDistance();
 
     boolean ofOcclusionFancy();
 
     boolean isOcclusionEnabled();
 
     boolean isOcclusionFancy();
-
-    boolean ofSmoothFps();
-
-    boolean ofSmoothInput();
 
     float ofBrightness();
 
@@ -75,11 +81,7 @@ public interface ExGameOptions {
 
     boolean ofStars();
 
-    int ofChunkUpdates();
-
     boolean ofChunkUpdatesDynamic();
-
-    boolean ofFarView();
 
     int ofTime();
 
@@ -109,11 +111,11 @@ public interface ExGameOptions {
 
     boolean isGrass3d();
 
-    boolean isAutoFarClip();
-
     int getChatMessageBufferLimit();
 
     int getParticleLimit();
 
     boolean getAllowJavaInScript();
+
+    float getChatWidth();
 }

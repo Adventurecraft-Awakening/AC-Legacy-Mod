@@ -6,9 +6,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.OptionButton;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.world.level.Level;
 
 public class AC_GuiTrigger extends Screen {
+
     private AC_TileEntityTrigger trigger;
 
     public AC_GuiTrigger(AC_TileEntityTrigger entity) {
@@ -52,12 +52,7 @@ public class AC_GuiTrigger extends Screen {
 
     public void render(int mouseX, int mouseY, float tick) {
         this.fill(0, 0, this.width, this.height, Integer.MIN_VALUE);
-
-        AC_TileEntityTrigger t = this.trigger;
-        int color = 14737632;
-        this.drawString(this.font, String.format("Min: (%d, %d, %d)", t.minX, t.minY, t.minZ), 4, 4, color);
-        this.drawString(this.font, String.format("Max: (%d, %d, %d)", t.maxX, t.maxY, t.maxZ), 4, 24, color);
-
+        AC_GuiStrings.drawMinMax(this, this.trigger, 4, 4, 0xe0e0e0);
         super.render(mouseX, mouseY, tick);
     }
 

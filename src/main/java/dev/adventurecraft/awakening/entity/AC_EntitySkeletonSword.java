@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.entity;
 
-import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
+import dev.adventurecraft.awakening.extension.entity.ExMob;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.monster.Skeleton;
@@ -12,7 +12,7 @@ public class AC_EntitySkeletonSword extends Skeleton {
     public AC_EntitySkeletonSword(Level var1) {
         super(var1);
         this.damage = 1;
-        ((ExLivingEntity) this).setHeldItem(new ItemInstance(Item.WOOD_SWORD, 1));
+        ((ExMob) this).setHeldItem(new ItemInstance(Item.WOOD_SWORD, 1));
     }
 
     @Override

@@ -14,7 +14,6 @@ public class AC_TextureAnimated extends DynamicTexture {
         this.texName = texName;
         this.x = x;
         this.y = y;
-        ((AC_TextureBinder) this).setWidth(width);
-        ((AC_TextureBinder) this).setHeight(height);
+        ((AC_TextureBinder) this).setTileSize(width, height);
     }
 }

@@ -26,19 +26,18 @@ public class AC_MusicScripts {
     public void loadMusic(File var1) {
         this.musicEntries.clear();
         File musicEntryFile = new File(var1, "musicScripts.txt");
-        if (musicEntryFile.exists()) {
-            try {
-                BufferedReader reader = new BufferedReader(new FileReader(musicEntryFile));
-                try {
-                    while (reader.ready()) {
-                        this.processLine(reader.readLine());
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
+        if (!musicEntryFile.exists()) {
+            return;
+        }
+
+        try {
+            var reader = new BufferedReader(new FileReader(musicEntryFile));
+            while (reader.ready()) {
+                this.processLine(reader.readLine());
             }
+        }
+        catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -49,7 +48,7 @@ public class AC_MusicScripts {
         }
     }
 
-    public AC_MusicScriptEntry executeMusic(String musicKey) {
+    public AC_MusicScriptEntry executeMusic(CharSequence musicKey) {
         Iterator<AC_MusicScriptEntry> iterator = this.musicEntries.iterator();
 
         AC_MusicScriptEntry entry;
@@ -57,9 +56,9 @@ public class AC_MusicScripts {
             if (!iterator.hasNext()) {
                 return null;
             }
-
             entry = iterator.next();
-        } while (!entry.musicKey.equals(musicKey));
+        }
+        while (!entry.musicKey.contentEquals(musicKey));
 
         this.handler.runScript(entry.scriptFile, this.scope);
         return entry;

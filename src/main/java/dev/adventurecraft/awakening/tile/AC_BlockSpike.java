@@ -30,7 +30,7 @@ public class AC_BlockSpike extends Tile {
 
     @Override
     public int getRenderShape() {
-        return 32;
+        return AC_BlockShapes.SPIKES;
     }
 
     @Override

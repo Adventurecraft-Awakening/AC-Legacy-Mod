@@ -7,7 +7,7 @@ public class AC_TileEntityWeather extends TileEntity {
 	public boolean changePrecipitate;
 	public boolean precipitate;
 	public boolean changeTempOffset;
-	public double tempOffset;
+	public float tempOffset;
 	public boolean changeTimeOfDay;
 	public int timeOfDay;
 	public boolean changeTimeRate;
@@ -20,7 +20,7 @@ public class AC_TileEntityWeather extends TileEntity {
 		this.changePrecipitate = var1.getBoolean("changePrecipitate");
 		this.precipitate = var1.getBoolean("precipitate");
 		this.changeTempOffset = var1.getBoolean("changeTempOffset");
-		this.tempOffset = var1.getDouble("tempOffset");
+		this.tempOffset = (float) var1.getDouble("tempOffset");
 		this.changeTimeOfDay = var1.getBoolean("changeTimeOfDay");
 		this.timeOfDay = var1.getInt("timeOfDay");
 		this.changeTimeRate = var1.getBoolean("changeTimeRate");

@@ -1,8 +1,11 @@
 plugins {
     id "maven-publish"
-    id "fabric-loom" version "1.10.1"
-    id "babric-loom-extension" version "1.10.1"
+    id "fabric-loom" version "1.14.6"
+    id "babric-loom-extension" version "1.13.3"
 }
+
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
 
 version = project.mod_version
 group = project.maven_group
@@ -55,9 +58,8 @@ switch (OperatingSystem.current()) {
         break
     case OperatingSystem.WINDOWS:
         def osArch = System.getProperty("os.arch")
-        project.ext.lwjglNatives = osArch.contains("64")
-            ? "natives-windows${osArch.startsWith("aarch64") ? "-arm64" : ""}"
-            : "natives-windows-x86"
+        def winArm64 = "natives-windows${osArch.startsWith("aarch64") ? "-arm64" : ""}"
+        project.ext.lwjglNatives = osArch.contains("64") ? winArm64 : "natives-windows-x86"
         break
 }
 
@@ -69,6 +71,7 @@ dependencies {
 
     implementation "org.lwjgl:lwjgl-glfw:${project.lwjgl_version}"
     implementation "org.lwjgl:lwjgl-stb:${project.lwjgl_version}"
+    implementation "org.lwjgl:lwjgl-opengl:${project.lwjgl_version}"
 
     runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
     runtimeOnly "org.lwjgl:lwjgl-glfw::$lwjglNatives"
@@ -84,7 +87,7 @@ dependencies {
     mappings "me.alphamode:nostalgia:${project.nostalgia_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    // Override ASM to support Java 23
+    // Override ASM to support Java 25
     implementation "org.ow2.asm:asm:${project.asm_version}"
     implementation "org.ow2.asm:asm-analysis:${project.asm_version}"
     implementation "org.ow2.asm:asm-commons:${project.asm_version}"
@@ -93,6 +96,7 @@ dependencies {
 
     // Fabric-ASM allows us to extend enums.
     modImplementation "com.github.Chocohead:Fabric-ASM:v2.3"
+    include "com.github.Chocohead:Fabric-ASM:v2.3"
 
     // FastUtil provides specialized collection types.
     implementation "it.unimi.dsi:fastutil-core:8.5.15"
@@ -104,7 +108,13 @@ dependencies {
     implementation "org.apache.logging.log4j:log4j-slf4j18-impl:2.18.0"
 
     implementation "com.google.guava:guava:33.4.0-jre"
-    implementation "org.apache.commons:commons-lang3:3.17.0"
+    implementation "org.apache.commons:commons-lang3:3.19.0"
+
+    // Optional dependencies for filesystem icon rendering.
+    implementation "net.java.dev.jna:jna:5.17.0"
+    implementation "net.java.dev.jna:jna-platform:5.17.0"
+
+    implementation "com.github.bailuk:java-gtk:0.6.0"
 }
 
 configurations.configureEach {
@@ -112,9 +122,45 @@ configurations.configureEach {
     exclude group: "org.lwjgl.lwjgl"
 }
 
+def gitStateFile = layout.buildDirectory.file("git-state.json")
+
 processResources {
+    inputs.file(gitStateFile)
+    dependsOn("readGitState")
+
     filesMatching("fabric.mod.json") {
-        expand project.properties
+        def gitMap = [git: new JsonSlurper().parseText(file(gitStateFile).text)]
+        expand(project.properties + gitMap)
+    }
+}
+
+tasks.register("fixRunResources") {
+    dependsOn("processResources")
+    doLast {
+        copy {
+            from("build/resources/main")
+            into("out/production/resources")
+        }
+    }
+}
+
+tasks.register("readGitState") {
+    outputs.file(gitStateFile)
+    doNotTrackState("GIT")
+    doLast {
+        def git = new GitState(project.rootDir)
+        def json = JsonOutput.toJson([
+            describe      : git.describe,
+            branch        : git.branch,
+            hash          : git.hash,
+            shortHash     : git.shortHash,
+            lastTag       : git.lastTag,
+            commitDistance: git.commitDistance,
+            isCleanTag    : git.isCleanTag,
+            version       : git.version,
+            originUrl     : git.originUrl,
+        ])
+        file(gitStateFile).write(json)
     }
 }
 
@@ -124,7 +170,7 @@ java {
     // If you remove this line, sources will not be generated.
     withSourcesJar()
 
-    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_25
 }
 
 jar {

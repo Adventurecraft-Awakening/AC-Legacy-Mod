@@ -1,14 +1,16 @@
 package dev.adventurecraft.awakening.extension.client.sound;
 
+import net.minecraft.world.level.Level;
+
 import java.net.URL;
 
 public interface ExSoundHelper {
 
-    void playMusicFromStreaming(String id, int var2, int var3);
+    void playMusicFromStreaming(Level level, String id, int var2, int var3);
 
-    String getMusicFromStreaming();
+    String getMusicFromStreaming(Level level);
 
-    void stopMusic();
+    void stopMusic(Level level);
 
     void addSound(String id, URL url);
 

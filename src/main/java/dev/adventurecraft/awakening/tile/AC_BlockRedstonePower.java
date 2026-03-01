@@ -9,7 +9,7 @@ import net.minecraft.world.level.LevelSource;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.tile.Tile;
 
-public class AC_BlockRedstonePower extends Tile implements AC_ITriggerBlock {
+public class AC_BlockRedstonePower extends Tile implements AC_ITriggerDebugBlock {
 
     protected AC_BlockRedstonePower(int var1, int var2) {
         super(var1, var2, Material.STONE);
@@ -29,7 +29,8 @@ public class AC_BlockRedstonePower extends Tile implements AC_ITriggerBlock {
                 return 185;
             }
             return 186;
-        } else {
+        }
+        else {
             return 5;
         }
     }
@@ -39,14 +40,12 @@ public class AC_BlockRedstonePower extends Tile implements AC_ITriggerBlock {
         return false;
     }
 
-    @Override
-    public int getRenderShape() {
-        return 31;
+    public @Override int getRenderShape() {
+        return AC_BlockShapes.REDSTONE_POWER;
     }
 
-    @Override
-    public boolean canBeTriggered() {
-        return true;
+    public @Override int getRenderShape(LevelSource view, int x, int y, int z) {
+        return this.getRenderShape();
     }
 
     @Override
@@ -105,6 +104,7 @@ public class AC_BlockRedstonePower extends Tile implements AC_ITriggerBlock {
 
     @Override
     public int getBlockLightValue(LevelSource view, int x, int y, int z) {
+        // TODO: isActivated is slow; find alternative
         return ((ExWorld) Minecraft.instance.level).getTriggerManager().isActivated(x, y, z) ? 14 : 0;
     }
 }

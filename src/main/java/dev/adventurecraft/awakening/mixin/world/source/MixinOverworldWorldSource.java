@@ -15,6 +15,8 @@ import net.minecraft.world.level.levelgen.RandomLevelSource;
 import net.minecraft.world.level.levelgen.synth.PerlinNoise;
 import net.minecraft.world.level.tile.Tile;
 
+// TODO: overwrite everything instead of fragile mixins
+
 @Mixin(RandomLevelSource.class)
 public abstract class MixinOverworldWorldSource implements ExOverworldWorldSource {
 

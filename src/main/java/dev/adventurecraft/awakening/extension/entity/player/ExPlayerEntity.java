@@ -1,8 +1,9 @@
 package dev.adventurecraft.awakening.extension.entity.player;
 
-import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
+import dev.adventurecraft.awakening.entity.player.GameMode;
+import dev.adventurecraft.awakening.extension.entity.ExMob;
 
-public interface ExPlayerEntity extends ExLivingEntity {
+public interface ExPlayerEntity extends ExMob {
 
     boolean isUsingUmbrella();
 
@@ -21,4 +22,6 @@ public interface ExPlayerEntity extends ExLivingEntity {
     String getCloakTexture();
 
     void setCloakTexture(String value);
+
+    GameMode getGameMode();
 }

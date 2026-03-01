@@ -4,9 +4,11 @@ import dev.adventurecraft.awakening.common.LightHelper;
 import dev.adventurecraft.awakening.extension.client.render.ExWorldEventRenderer;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
+
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Arrays;
+
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -80,27 +82,23 @@ public class AC_GuiWorldConfig extends Screen {
             this.buttons.add(this.setOnNewSave);
             this.buttons.add(this.setOnLoad);
             this.buttons.add(this.setOnUpdate);
-            Button var9 = new Button(3, 4, 90, 200, 20, "Reload Scripts");
-            this.buttons.add(var9);
-            var9 = new Button(4, 4, 112, 160, 18, "None");
-            this.buttons.add(var9);
-            String[] var10 = ((ExWorld) this.world).getScriptFiles();
-            if (var10 != null) {
-                int var4 = 1;
-                String[] var5 = var10;
-                int var6 = var10.length;
 
-                for (int var7 = 0; var7 < var6; ++var7) {
-                    String var8 = var5[var7];
-                    var9 = new Button(4 + var4, 4 + var4 % 3 * this.width / 3, 112 + var4 / 3 * 20, 160, 18, var8);
-                    this.buttons.add(var9);
-                    ++var4;
-                }
+            this.buttons.add(new Button(3, 4, 90, 200, 20, "Reload Scripts"));
+            this.buttons.add(new Button(4, 4, 112, 160, 18, "None"));
+
+            String[] files = ((ExWorld) this.world).getScriptFiles();
+            int id = 1;
+            for (String file : files) {
+                int x = 4 + id % 3 * this.width / 3;
+                int y = 112 + id / 3 * 20;
+                var btn = new Button(4 + id, x, y, 160, 18, file);
+                this.buttons.add(btn);
+                ++id;
             }
         } else if (this.page == 2) {
             for (int i = 0; i < 16; ++i) {
-                this.lightLevelInputs[i] = new EditBox(
-                    this, this.font, 80, 22 + 14 * i, 80, 11, this.numFormat.format(this.lightLevels[i]));
+                String value = this.numFormat.format(this.lightLevels[i]);
+                this.lightLevelInputs[i] = new EditBox(this, this.font, 80, 22 + 14 * i, 80, 11, value);
             }
 
             this.applyLightButton = new Button(0, 180, 24, 100, 20, "Apply values");

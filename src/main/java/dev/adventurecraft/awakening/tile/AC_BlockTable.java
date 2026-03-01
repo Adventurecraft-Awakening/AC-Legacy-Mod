@@ -19,6 +19,6 @@ public class AC_BlockTable extends AC_BlockSolid {
 
     @Override
 	public int getRenderShape() {
-		return 33;
+		return AC_BlockShapes.TABLE;
 	}
 }

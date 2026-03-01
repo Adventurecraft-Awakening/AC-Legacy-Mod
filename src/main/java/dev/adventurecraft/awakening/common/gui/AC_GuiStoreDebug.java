@@ -13,6 +13,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.ItemInstance;
 
 public class AC_GuiStoreDebug extends Screen {
+
     private AC_TileEntityStore store;
     private GuiSlider2 supply;
 
@@ -23,7 +24,8 @@ public class AC_GuiStoreDebug extends Screen {
     public void init() {
         this.buttons.add(new OptionButton(0, 4, 0, "Set Items"));
 
-        this.supply = new GuiSlider2(6, 4, 26, 10, String.format("Supply: %d", this.store.buySupply), (float) this.store.buySupply / 9.0F);
+        String supplyMsg = String.format("Supply: %d", this.store.buySupply);
+        this.supply = new GuiSlider2(6, 4, 26, 10, supplyMsg, (float) this.store.buySupply / 9.0F);
         if (this.store.buySupply == -1) {
             this.supply.message = "Supply: Infinite";
             this.supply.sliderValue = 0.0F;
@@ -44,7 +46,8 @@ public class AC_GuiStoreDebug extends Screen {
                 this.store.buyItemID = item.id;
                 this.store.buyItemDamage = item.getAuxValue();
                 this.store.buyItemAmount = item.count;
-            } else {
+            }
+            else {
                 this.store.buyItemID = 0;
             }
 
@@ -53,17 +56,18 @@ public class AC_GuiStoreDebug extends Screen {
                 this.store.sellItemID = item.id;
                 this.store.sellItemDamage = item.getAuxValue();
                 this.store.sellItemAmount = item.count;
-            } else {
+            }
+            else {
                 this.store.sellItemID = 0;
             }
-        } else if (button.id == 1) {
+        }
+        else if (button.id == 1) {
             if (this.store.tradeTrigger != null) {
                 this.store.tradeTrigger = null;
                 button.message = "Set Trade Trigger";
-            } else {
-                this.store.tradeTrigger = new AC_TriggerArea(
-                    AC_ItemCursor.minX, AC_ItemCursor.minY, AC_ItemCursor.minZ,
-                    AC_ItemCursor.maxX, AC_ItemCursor.maxY, AC_ItemCursor.maxZ);
+            }
+            else {
+                this.store.tradeTrigger = new AC_TriggerArea(AC_ItemCursor.min(), AC_ItemCursor.max());
                 button.message = "Clear Trade Trigger";
             }
         }
@@ -74,7 +78,8 @@ public class AC_GuiStoreDebug extends Screen {
         this.store.buySupply = (int) (this.supply.sliderValue * 9.0F);
         if (this.store.buySupply != 0) {
             this.supply.message = String.format("Supply: %d", this.store.buySupply);
-        } else {
+        }
+        else {
             this.supply.message = "Supply: Infinite";
             this.store.buySupply = -1;
         }

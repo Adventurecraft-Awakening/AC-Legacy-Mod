@@ -1,20 +1,19 @@
 package dev.adventurecraft.awakening.tile;
 
-import java.util.List;
-
 import dev.adventurecraft.awakening.common.AC_DebugMode;
-import dev.adventurecraft.awakening.item.AC_Items;
-import dev.adventurecraft.awakening.tile.entity.AC_TileEntityHealDamage;
 import dev.adventurecraft.awakening.common.gui.AC_GuiHealDamage;
+import dev.adventurecraft.awakening.extension.world.ExWorld;
+import dev.adventurecraft.awakening.tile.entity.AC_TileEntityHealDamage;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelSource;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.tile.TileEntityTile;
 import net.minecraft.world.level.tile.entity.TileEntity;
 import net.minecraft.world.phys.AABB;
 
-public class AC_BlockHealDamage extends TileEntityTile implements AC_ITriggerBlock {
+import java.util.List;
+
+public class AC_BlockHealDamage extends TileEntityTile implements AC_ITriggerDebugBlock {
 
     protected AC_BlockHealDamage(int var1, int var2) {
         super(var1, var2, Material.AIR);
@@ -35,27 +34,16 @@ public class AC_BlockHealDamage extends TileEntityTile implements AC_ITriggerBlo
     }
 
     @Override
-    public boolean shouldRender(LevelSource view, int x, int y, int z) {
-        return AC_DebugMode.active;
-    }
-
-    @Override
-    public boolean canBeTriggered() {
-        return true;
-    }
-
-    @Override
     public void onTriggerActivated(Level world, int x, int y, int z) {
-        var entity = (AC_TileEntityHealDamage) world.getTileEntity(x, y, z);
-
-        for (Player var8 : (List<Player>) world.players) {
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityHealDamage.class);
+        for (Player player : (List<Player>) world.players) {
             if (entity.healDamage > 0) {
-                var8.heal(entity.healDamage);
-            } else {
-                var8.actuallyHurt(-entity.healDamage);
+                player.heal(entity.healDamage);
+            }
+            else {
+                player.actuallyHurt(-entity.healDamage);
             }
         }
-
     }
 
     @Override
@@ -69,12 +57,11 @@ public class AC_BlockHealDamage extends TileEntityTile implements AC_ITriggerBlo
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active && (player.getSelectedItem() == null || player.getSelectedItem().id == AC_Items.cursor.id)) {
-            var entity = (AC_TileEntityHealDamage) world.getTileEntity(x, y, z);
-            AC_GuiHealDamage.showUI(entity);
-            return true;
-        } else {
+        if (!AC_DebugMode.showDebugGuiOnUse(player)) {
             return false;
         }
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityHealDamage.class);
+        AC_GuiHealDamage.showUI(entity);
+        return true;
     }
 }

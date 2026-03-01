@@ -12,13 +12,13 @@ public class ScriptVec3 {
 		this.z = z;
 	}
 
-	public ScriptVec3(float x, float y, float z) {
-		this.x = x;
-		this.y = y;
-		this.z = z;
-	}
+    public ScriptVec3(double value) {
+        this.x = value;
+        this.y = value;
+        this.z = value;
+    }
 
-	public ScriptVec3 add(ScriptVec3 vec) {
+    public ScriptVec3 add(ScriptVec3 vec) {
 		this.x += vec.x;
 		this.y += vec.y;
 		this.z += vec.z;
@@ -32,6 +32,13 @@ public class ScriptVec3 {
 		return this;
 	}
 
+    public ScriptVec3 scale(double value) {
+        this.x *= value;
+        this.y *= value;
+        this.z *= value;
+        return this;
+    }
+
 	public double length() {
 		return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
 	}
@@ -43,10 +50,27 @@ public class ScriptVec3 {
 		return Math.sqrt(dX * dX + dY * dY + dZ * dZ);
 	}
 
-	public ScriptVec3 scale(double value) {
-		this.x *= value;
-		this.y *= value;
-		this.z *= value;
-		return this;
-	}
+    public double getR() {
+        return this.x;
+    }
+
+    public void setR(double value) {
+        this.x = value;
+    }
+
+    public double getG() {
+        return this.y;
+    }
+
+    public void setG(double value) {
+        this.y = value;
+    }
+
+    public double getB() {
+        return this.z;
+    }
+
+    public void setB(double value) {
+        this.z = value;
+    }
 }

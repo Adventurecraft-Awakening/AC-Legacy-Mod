@@ -45,6 +45,8 @@ public abstract class MixinAbstractClientPlayerEntity extends Player implements 
         this.commandDescriptions = new CommandDescriptions();
         ServerCommands.registerCommands(this.commandDispatcher, this.commandDescriptions);
         ServerCommands.registerCommandsWithArgs(this.commandDispatcher, this.commandDescriptions);
+
+        // TODO: register custom per-world gamerules for "gamerule" command
     }
 
     @Redirect(method = "serverAiStep", at = @At(
@@ -83,8 +85,8 @@ public abstract class MixinAbstractClientPlayerEntity extends Player implements 
     }
 
     @Inject(method = "setKey", at = @At(value = "HEAD"), cancellable = true)
-    private void redirectMethod136ToScript(int var1, boolean var2, CallbackInfo ci) {
-        boolean press = ((ExWorld) this.level).getScript().keyboard.processPlayerKeyPress(var1, var2);
+    private void redirectMethod136ToScript(int key, boolean isDown, CallbackInfo ci) {
+        boolean press = ((ExWorld) this.level).getScript().keyboard.processPlayerKeyPress(key, isDown);
         if (!press) {
             ci.cancel();
         }
@@ -127,9 +129,9 @@ public abstract class MixinAbstractClientPlayerEntity extends Player implements 
                 }
             }
         } else {
-            String result = ((ExWorld) this.level).getScript().runString(message);
+            String result = ((ExWorld) this.level).getScript().runString(message, "<cmd>");
             if (result != null) {
-                this.minecraft.gui.addMessage("JS: " + result);
+                this.minecraft.gui.addMessage("(JS) " + result);
             }
         }
     }

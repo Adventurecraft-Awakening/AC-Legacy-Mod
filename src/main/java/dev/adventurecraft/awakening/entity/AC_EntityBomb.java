@@ -191,14 +191,14 @@ public class AC_EntityBomb extends ItemEntity {
         return false;
     }
 
-    public void readAdditionalSaveData(CompoundTag var1) {
-        super.readAdditionalSaveData(var1);
-        var1.putByte("Fuse", (byte) this.fuse);
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putByte("Fuse", (byte) this.fuse);
     }
 
-    public void addAdditionalSaveData(CompoundTag var1) {
-        super.addAdditionalSaveData(var1);
-        this.fuse = var1.getByte("Fuse");
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        this.fuse = tag.getByte("Fuse");
     }
 
     public void playerTouch(Player var1) {

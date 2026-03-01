@@ -2,332 +2,310 @@ package dev.adventurecraft.awakening.mixin.world.chunk;
 
 import com.llamalad7.mixinextras.injector.WrapWithCondition;
 import com.llamalad7.mixinextras.sugar.Local;
+import dev.adventurecraft.awakening.ACMainThread;
 import dev.adventurecraft.awakening.ACMod;
+import dev.adventurecraft.awakening.common.AC_BlockEditAction;
 import dev.adventurecraft.awakening.common.AC_UndoStack;
+import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.entity.ExBlockEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
+import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import dev.adventurecraft.awakening.extension.world.level.biome.ExBiomeSource;
+import dev.adventurecraft.awakening.tile.AC_Blocks;
+import dev.adventurecraft.awakening.util.BufferUtil;
+import dev.adventurecraft.awakening.util.NibbleBuffer;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import net.minecraft.world.level.LightUpdate;
+import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.io.PrintStream;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
-import net.minecraft.world.level.TilePos;
 import net.minecraft.world.level.chunk.DataLayer;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.tile.Tile;
 import net.minecraft.world.level.tile.entity.TileEntity;
 
+import javax.annotation.Nullable;
+
 @Mixin(LevelChunk.class)
 public abstract class MixinChunk implements ExChunk {
 
-    @Shadow
-    public byte[] heightMap;
+    @Shadow public boolean loaded;
+    @Shadow public byte[] heightMap;
+    @Shadow public byte[] blocks;
+    @Shadow public DataLayer data;
+    @Shadow public DataLayer skyLight;
+    @Shadow public DataLayer blockLight;
+    @Shadow public Level level;
+
+    @Shadow @Final public int x;
+    @Shadow @Final public int z;
+    @Shadow public Map<Integer, TileEntity> tileEntities = new Int2ObjectOpenHashMap<>();
+
+    @Unique public short[] temperatures;
+    @Unique public long lastUpdated;
+
+    @Unique private int lightHash;
+    @Unique private int acVersion;
+
+    @Unique private List<LightUpdate> worldGenLight = new ArrayList<>();
 
     @Shadow
-    public byte[] blocks;
+    protected abstract void lightGaps(int x, int z);
 
     @Shadow
-    public DataLayer data;
+    protected abstract void recalcHeight(int x, int y, int z);
 
     @Shadow
-    public boolean unsaved;
+    public abstract int getTile(int x, int y, int z);
 
     @Shadow
-    public Level level;
+    public abstract int getData(int x, int y, int z);
 
     @Shadow
-    @Final
-    public int x;
+    public abstract void markUnsaved();
 
-    @Shadow
-    @Final
-    public int z;
-
-    public double[] temperatures;
-    public long lastUpdated;
-
-    @Shadow
-    protected abstract void lightGaps(int i, int j);
-
-    @Shadow
-    protected abstract void recalcHeight(int i, int j, int k);
-
-    @Shadow
-    public abstract int getData(int i, int j, int k);
-
-    @Shadow
-    public Map<TilePos, TileEntity> tileEntities;
-
-    @Inject(method = "<init>(Lnet/minecraft/world/level/Level;II)V", at = @At("TAIL"))
-    private void initHeightMapAtInit(Level var1, int var2, int var3, CallbackInfo ci) {
-        this.initHeightMap();
+    @Inject(
+        method = "<init>(Lnet/minecraft/world/level/Level;II)V",
+        at = @At("TAIL")
+    )
+    private void doInit(Level level, int x, int y, CallbackInfo ci) {
+        this.lightHash = level.random.nextInt();
     }
 
-    public void initHeightMap() {
-        this.heightMap = new byte[256];
+    @Inject(
+        method = "load",
+        at = @At("TAIL")
+    )
+    private void doPostLoad(CallbackInfo ci) {
+        if (this.getAcVersion() == ExWorldProperties.AC_VERSION_0) {
+            this.upgradeFromVersion0();
+        }
+
+        this.worldGenLight.forEach(u -> this.level.updateLight(u.type, u.x0, u.y0, u.z0, u.x1, u.y1, u.z1));
+        this.worldGenLight = null;
     }
 
-    @Redirect(method = "recalcHeightmapOnly", at = @At(
-        value = "FIELD",
-        target = "Lnet/minecraft/world/level/tile/Tile;lightBlock:[I",
-        args = {"array=get", "fuzz=9"}))
-    private int redirect0_translate256(
-        int[] array,
-        int index,
-        @Local(name = "var4") int var4,
-        @Local(name = "var5") int var5) {
-        return ExChunk.translate256(this.blocks[var5 + var4 - 1]);
+    @Unique
+    private void upgradeFromVersion0() {
+        for (int x = 0; x < 16; x++) {
+            for (int z = 0; z < 16; z++) {
+                for (int y = 0; y < 16; y++) {
+                    int id = this.getTile(x, y, z);
+                    AC_Blocks.upgradeDoorMetadataTile(this.level, x, y, z, id);
+                }
+            }
+        }
     }
 
-    @Redirect(method = "recalcHeightmap", at = @At(
-        value = "FIELD",
-        target = "Lnet/minecraft/world/level/tile/Tile;lightBlock:[I",
-        args = {"array=get", "fuzz=9"},
-        ordinal = 0))
-    private int redirect1_translate256(
-        int[] array,
-        int index,
-        @Local(name = "var4") int var4,
-        @Local(name = "var5") int var5) {
-        return ExChunk.translate256(this.blocks[var5 + var4 - 1]);
+    @Redirect(
+        method = {"recalcHeightmap", "lightGap", "recalcHeight", "setBrightness"},
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/world/level/chunk/LevelChunk;unsaved:Z"
+        )
+    )
+    private void markLightButUnsaved(LevelChunk instance, boolean value) {
+        this.updateLightHash();
+        // TODO: Maybe mark unsaved, at least in some situations?
+        //       Would be needed if we want to avoid light updates on load.
+        //       Could be good for [player] saves that are not in Editing mode...
     }
 
-    @Redirect(method = "recalcHeightmap", at = @At(
-        value = "FIELD",
-        target = "Lnet/minecraft/world/level/tile/Tile;lightBlock:[I",
-        args = {"array=get", "fuzz=9"},
-        ordinal = 1))
-    private int redirect2_translate256(
-        int[] array,
-        int index,
-        @Local(name = "var5") int var5,
-        @Local(name = "var7") int var7) {
-        return ExChunk.translate256(this.blocks[var5 + var7]);
+    @Redirect(
+        method = {"lightGap", "recalcHeight"},
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/level/Level;updateLight(Lnet/minecraft/world/level/LightLayer;IIIIII)V"
+        )
+    )
+    private void loadAwareUpdateLight(Level instance, LightLayer type, int x0, int y0, int z0, int x1, int y1, int z1) {
+        if (this.loaded) {
+            // TODO: move behind configurable flag
+            //if (Thread.currentThread() != ACMainThread.MAIN_THREAD) {
+            //    throw new AssertionError();
+            //}
+            instance.updateLight(type, x0, y0, z0, x1, y1, z1);
+        }
+        else {
+            this.recordLightUpdate(type, x0, y0, z0, x1, y1, z1);
+        }
     }
 
-    @Redirect(method = "recalcHeight", at = @At(
-        value = "FIELD",
-        target = "Lnet/minecraft/world/level/tile/Tile;lightBlock:[I",
-        args = {"array=get", "fuzz=9"},
-        ordinal = 0))
-    private int redirect3_translate256(
-        int[] array,
-        int index,
-        @Local(name = "var5") int var5,
-        @Local(name = "var6") int var6) {
-        return ExChunk.translate256(this.blocks[var6 + var5 - 1]);
-    }
-
-    @Overwrite
-    public int getTile(int var1, int var2, int var3) {
-        return ExChunk.translate256(this.blocks[var1 << 11 | var3 << 7 | var2]);
-    }
-
-    @Redirect(method = "recalcHeightmap", at = @At(
-        value = "FIELD",
-        target = "Lnet/minecraft/world/level/chunk/LevelChunk;unsaved:Z"))
-    private void removeWrite0_field967(LevelChunk instance, boolean value) {
-    }
-
-    @Redirect(method = "lightGap", at = @At(
-        value = "FIELD",
-        target = "Lnet/minecraft/world/level/chunk/LevelChunk;unsaved:Z"))
-    private void removeWrite1_field967(LevelChunk instance, boolean value) {
-    }
-
-    @Redirect(method = "recalcHeight", at = @At(
-        value = "FIELD",
-        target = "Lnet/minecraft/world/level/chunk/LevelChunk;unsaved:Z"))
-    private void removeWrite2_field967(LevelChunk instance, boolean value) {
-    }
-
-    @Redirect(method = "setBrightness", at = @At(
-        value = "FIELD",
-        target = "Lnet/minecraft/world/level/chunk/LevelChunk;unsaved:Z"))
-    private void removeWrite3_field967(LevelChunk instance, boolean value) {
+    @Unique
+    private void recordLightUpdate(LightLayer type, int x0, int y0, int z0, int x1, int y1, int z1) {
+        if (!this.worldGenLight.isEmpty()) {
+            LightUpdate update = this.worldGenLight.getLast();
+            if (update.type == type && update.expandToContain(x0, y0, z0, x1, y1, z1)) {
+                return;
+            }
+        }
+        this.worldGenLight.add(new LightUpdate(type, x0, y0, z0, x1, y1, z1));
     }
 
     @Overwrite
     public boolean setTileAndData(int x, int y, int z, int id, int meta) {
-        AC_UndoStack undoStack = ((ExWorld) this.level).getUndoStack();
-        if (undoStack.isRecording()) {
-            int prevId = this.getTile(x, y, z);
-            int prevMeta = this.getData(x, y, z);
-            TileEntity entity = this.getChunkBlockTileEntityDontCreate(x, y, z);
-            CompoundTag prevNbt = null;
-            if (entity != null) {
-                prevNbt = new CompoundTag();
-                entity.save(prevNbt);
-            }
-
-            undoStack.recordChange(x, y, z, this.x, this.z, prevId, prevMeta, prevNbt, id, meta, null);
-        }
-
-        int id256 = ExChunk.translate256(id);
-        int height = this.heightMap[z << 4 | x] & 255;
-        int bId256 = ExChunk.translate256(this.blocks[x << 11 | z << 7 | y]) & 255;
-        if (bId256 == id && this.data.get(x, y, z) == meta) {
-            return false;
-        }
-
-        int bX = this.x * 16 + x;
-        int bZ = this.z * 16 + z;
-        this.blocks[x << 11 | z << 7 | y] = (byte) ExChunk.translate128(id256);
-        if (bId256 != 0 && !this.level.isClientSide) {
-            Tile.tiles[bId256].onRemove(this.level, bX, y, bZ);
-        }
-
-        this.data.set(x, y, z, meta);
-        if (!this.level.dimension.hasCeiling) {
-            if (Tile.lightBlock[id256 & 255] != 0) {
-                if (y >= height) {
-                    this.recalcHeight(x, y + 1, z);
-                }
-            } else if (y == height - 1) {
-                this.recalcHeight(x, y, z);
-            }
-
-            this.level.updateLight(LightLayer.SKY, bX, y, bZ, bX, y, bZ);
-        }
-
-        this.level.updateLight(LightLayer.BLOCK, bX, y, bZ, bX, y, bZ);
-        this.lightGaps(x, z);
-        this.data.set(x, y, z, meta);
-        if (id != 0) {
-            Tile.tiles[id].onPlace(this.level, bX, y, bZ);
-        }
-
-        if (ACMod.chunkIsNotPopulating) {
-            this.unsaved = true;
-        }
-
-        return true;
+        return this.ac$setTileAndData(x, y, z, id, meta, true);
     }
 
-    @Overwrite
-    public boolean setTile(int x, int y, int z, int id) {
-        AC_UndoStack undoStack = ((ExWorld) this.level).getUndoStack();
-        if (undoStack.isRecording()) {
-            int prevId = this.getTile(x, y, z);
-            int prevMeta = this.getData(x, y, z);
-            TileEntity entity = this.getChunkBlockTileEntityDontCreate(x, y, z);
-            CompoundTag prevNbt = null;
-            if (entity != null) {
-                prevNbt = new CompoundTag();
-                entity.save(prevNbt);
-            }
-
-            undoStack.recordChange(x, y, z, this.x, this.z, prevId, prevMeta, prevNbt, id, 0, null);
-        }
-
-        int id256 = ExChunk.translate256(id);
-        int height = this.heightMap[z << 4 | x] & 255;
-        int bId256 = ExChunk.translate256(this.blocks[x << 11 | z << 7 | y]) & 255;
-        if (bId256 == id) {
+    @Override
+    public boolean ac$setTileAndData(int x, int y, int z, int id, int meta, boolean dropItems) {
+        int prevId = this.getTile(x, y, z);
+        int prevMeta = this.getData(x, y, z);
+        if (prevId == id && prevMeta == meta) {
+            // TODO: expose flag that recreates TileEntity here?
             return false;
         }
 
-        int bX = this.x * 16 + x;
-        int bZ = this.z * 16 + z;
-        this.blocks[x << 11 | z << 7 | y] = (byte) ExChunk.translate128(id256);
-        if (bId256 != 0) {
-            Tile.tiles[bId256].onRemove(this.level, bX, y, bZ);
+        AC_UndoStack undoStack = ((ExWorld) this.level).getUndoStack();
+        if (undoStack.isRecording()) {
+            this.recordChange(x, y, z, prevId, prevMeta, id, meta, undoStack);
         }
 
-        this.data.set(x, y, z, 0);
-        if (Tile.lightBlock[id256 & 255] != 0) {
+        int newId = id & 0xff;
+        this.blocks[x << 11 | z << 7 | y] = ExChunk.narrowByte(newId);
+        this.data.set(x, y, z, meta);
+
+        int bX = (this.x << 4) + x;
+        int bZ = (this.z << 4) + z;
+        if (prevId != 0 && !this.level.isClientSide) {
+            ((ExBlock) Tile.tiles[prevId]).ac$onRemove(this.level, bX, y, bZ, dropItems);
+        }
+
+        int height = this.heightMap[z << 4 | x] & 0xff;
+        if (Tile.lightBlock[newId] != 0) {
             if (y >= height) {
                 this.recalcHeight(x, y + 1, z);
             }
-        } else if (y == height - 1) {
+        }
+        else if (y == height - 1) {
             this.recalcHeight(x, y, z);
         }
-
-        this.level.updateLight(LightLayer.SKY, bX, y, bZ, bX, y, bZ);
-        this.level.updateLight(LightLayer.BLOCK, bX, y, bZ, bX, y, bZ);
+        this.loadAwareUpdateLight(this.level, LightLayer.SKY, bX, y, bZ, bX, y, bZ);
+        this.loadAwareUpdateLight(this.level, LightLayer.BLOCK, bX, y, bZ, bX, y, bZ);
         this.lightGaps(x, z);
+
         if (id != 0 && !this.level.isClientSide) {
             Tile.tiles[id].onPlace(this.level, bX, y, bZ);
         }
 
         if (ACMod.chunkIsNotPopulating) {
-            this.unsaved = true;
+            this.markUnsaved();
         }
-
         return true;
     }
 
     @Overwrite
+    public boolean setTile(int x, int y, int z, int id) {
+        return this.setTileAndData(x, y, z, id, 0);
+    }
+
+    @Overwrite
     public void setData(int x, int y, int z, int newMeta) {
+        // TODO: record block regions
         AC_UndoStack undoStack = ((ExWorld) this.level).getUndoStack();
         if (undoStack.isRecording()) {
             int id = this.getTile(x, y, z);
             int prevMeta = this.getData(x, y, z);
-            TileEntity entity = this.getChunkBlockTileEntityDontCreate(x, y, z);
-            CompoundTag prevNbt = null;
-            if (entity != null) {
-                prevNbt = new CompoundTag();
-                entity.save(prevNbt);
-            }
-            undoStack.recordChange(x, y, z, this.x, this.z, id, prevMeta, prevNbt, id, newMeta, null);
-        }
-
-        if (ACMod.chunkIsNotPopulating) {
-            this.unsaved = true;
+            this.recordChange(x, y, z, id, prevMeta, id, newMeta, undoStack);
         }
 
         this.data.set(x, y, z, newMeta);
+        if (ACMod.chunkIsNotPopulating) {
+            this.markUnsaved();
+        }
+    }
+
+    @Unique
+    private void recordChange(
+        int x,
+        int y,
+        int z,
+        int prevTile,
+        int prevMeta,
+        int newTile,
+        int newMeta,
+        AC_UndoStack stack
+    ) {
+        TileEntity entity = this.ac$tryGetTileEntity(x, y, z, null);
+        CompoundTag prevNbt = null;
+        if (entity != null) {
+            prevNbt = new CompoundTag();
+            entity.save(prevNbt);
+        }
+
+        int bX = x + (this.x << 4);
+        int bZ = z + (this.z << 4);
+
+        var action = new AC_BlockEditAction(bX, y, bZ, prevTile, prevMeta, prevNbt, newTile, newMeta, null);
+        stack.recordAction(action);
     }
 
     @WrapWithCondition(
         method = "addEntity",
         at = @At(
             value = "FIELD",
-            target = "Lnet/minecraft/world/level/chunk/LevelChunk;lastSaveHadEntities:Z"))
+            target = "Lnet/minecraft/world/level/chunk/LevelChunk;lastSaveHadEntities:Z"
+        )
+    )
     private boolean guardWrite_field969(LevelChunk instance, boolean value, @Local(argsOnly = true) Entity var1) {
         return !(var1 instanceof Player);
     }
 
+    @Overwrite
+    public void setTileEntity(int x, int y, int z, TileEntity entity) {
+        int eX = (this.x << 4) + x;
+        int eZ = (this.z << 4) + z;
+
+        entity.level = this.level;
+        entity.x = eX;
+        entity.y = y;
+        entity.z = eZ;
+
+        int id = this.getTile(x, y, z);
+        if (!Tile.isEntityTile[id]) {
+            logUnexpectedTileEntityError(eX, y, eZ, id, entity);
+            return;
+        }
+        entity.clearRemoved();
+        this.ac$tileEntities().put(this.ac$tileEntityKey(eX, y, eZ), entity);
+    }
+
+    @Unique
+    private static void logUnexpectedTileEntityError(int x, int y, int z, int id, @Nullable TileEntity entity) {
+        Tile tile = Tile.tiles[id];
+        String tName = tile != null ? tile.getName() : "<null>";
+        String eName = entity != null ? ((ExBlockEntity) entity).getClassName() : "<null>";
+        ACMod.LOGGER.error("Unexpected {} (#{}) for entity {} at XYZ {} {} {}", tName, id, eName, x, y, z);
+    }
+
+    @Unique
+    private void initTemperatureMap() {
+        var source = (ExBiomeSource) this.level.getBiomeSource();
+        this.temperatures = source.getTemperatureBlockF16(this.temperatures, this.x * 16, this.z * 16, 16, 16);
+    }
+
     @Redirect(
-        method = "setTileEntity",
+        method = "unload",
         at = @At(
             value = "INVOKE",
-            target = "Ljava/io/PrintStream;println(Ljava/lang/String;)V",
-            remap = false))
-    private void printBetterBlockEntityError(
-        PrintStream instance,
-        String s,
-        @Local(ordinal = 0, argsOnly = true) int x,
-        @Local(ordinal = 1, argsOnly = true) int y,
-        @Local(ordinal = 2, argsOnly = true) int z,
-        @Local(argsOnly = true) TileEntity entity) {
-        ACMod.LOGGER.error("No block entity container: BlockID: {}, TileEntity: {}, Coord: X:{} Y:{} Z:{}", this.getTile(x, y, z), ((ExBlockEntity) entity).getClassName(), entity.x, entity.y, entity.z);
-    }
-
-    @Inject(method = "load", at = @At("TAIL"))
-    private void initTempMap(CallbackInfo ci) {
-        this.initTempMap();
-    }
-
-    private void initTempMap() {
-        this.temperatures = this.level.getBiomeSource().getTemperatureBlock(this.temperatures, this.x * 16, this.z * 16, 16, 16);
-    }
-
-    @Redirect(method = "unload", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/world/level/tile/entity/TileEntity;setRemoved()V"))
+            target = "Lnet/minecraft/world/level/tile/entity/TileEntity;setRemoved()V"
+        )
+    )
     private void killOnSave(TileEntity instance) {
         ((ExBlockEntity) instance).setKilledFromSaving(true);
         instance.setRemoved();
@@ -335,31 +313,116 @@ public abstract class MixinChunk implements ExChunk {
 
     @Override
     public boolean setBlockIDWithMetadataTemp(int x, int y, int z, int id, int meta) {
-        int var6 = ExChunk.translate256(id);
-        this.blocks[x << 11 | z << 7 | y] = (byte) ExChunk.translate128(var6);
+        this.blocks[x << 11 | z << 7 | y] = ExChunk.narrowByte(id);
         this.data.set(x, y, z, meta);
         return true;
     }
 
-    @Override
-    public TileEntity getChunkBlockTileEntityDontCreate(int x, int y, int z) {
-        TilePos var4 = new TilePos(x, y, z);
-        TileEntity var5 = this.tileEntities.get(var4);
-        return var5;
+    @Unique
+    public @Override Int2ObjectMap<TileEntity> ac$tileEntities() {
+        return (Int2ObjectMap<TileEntity>) this.tileEntities;
     }
 
-    @Override
-    public double getTemperatureValue(int x, int z) {
-        if (this.temperatures == null) {
-            this.initTempMap();
+    @Unique
+    public @Override int ac$tileEntityKey(int x, int y, int z) {
+        return ExChunk.ac$tileEntityKey(x, y, z, this.x, this.z);
+    }
+
+    public @Override <E extends TileEntity> E ac$tryGetTileEntity(int x, int y, int z, @Nullable Class<E> type) {
+        var entity = this.ac$tileEntities().get(this.ac$tileEntityKey(x, y, z));
+        if (type == null) {
+            //noinspection unchecked
+            return (E) entity;
+        }
+        return type.cast(entity);
+    }
+
+    public @Override <E extends TileEntity> E ac$getTileEntity(int x, int y, int z, @Nullable Class<E> type) {
+        int eX = x + (this.x << 4);
+        int eZ = z + (this.z << 4);
+        int key = this.ac$tileEntityKey(eX, y, eZ);
+        Int2ObjectMap<TileEntity> map = this.ac$tileEntities();
+
+        TileEntity entity = map.get(key);
+        if (entity == null || (type != null && !type.isInstance(entity))) {
+            int id = this.getTile(x, y, z);
+            if (!Tile.isEntityTile[id]) {
+                logUnexpectedTileEntityError(eX, y, eZ, id, entity);
+                return null;
+            }
+
+            Tile.tiles[id].onPlace(this.level, eX, y, eZ);
+            entity = map.get(key);
+            // Skip type check; assume tile always creates correct type.
         }
 
-        return this.temperatures[z << 4 | x];
+        if (entity != null && entity.isRemoved()) {
+            map.remove(key);
+            return null;
+        }
+        //noinspection unchecked
+        return (E) entity;
+    }
+
+    @Overwrite
+    public TileEntity getTileEntity(int x, int y, int z) {
+        return this.ac$getTileEntity(x, y, z, null);
+    }
+
+    @Overwrite
+    public void removeTileEntity(int x, int y, int z) {
+        if (!this.loaded) {
+            return;
+        }
+        TileEntity entity = this.ac$tileEntities().remove(this.ac$tileEntityKey(x, y, z));
+        if (entity != null) {
+            entity.setRemoved();
+        }
+    }
+
+    public @Override void getTileColumn(ByteBuffer buffer, int x, int y0, int z, int y1) {
+        // Fill the entire requested range with values; out of bounds is zero.
+        if (y0 < 0) {
+            BufferUtil.repeatZero(buffer, -y0);
+            y0 = 0;
+        }
+        buffer.put(this.blocks, (x << 11 | z << 7) + y0, Math.min(y1, 128) - y0);
+        if (y1 > 128) {
+            BufferUtil.repeatZero(buffer, y1 - 128);
+        }
+    }
+
+    public @Override void getDataColumn(DataType type, NibbleBuffer buffer, int x, int y0, int z, int y1) {
+        // Fill the entire requested range with values; out of bounds is zero.
+        if (y0 < 0) {
+            buffer.repeat(0, -y0);
+            y0 = 0;
+        }
+        DataLayer layer = switch (type) {
+            case BLOCK_META -> this.data;
+            case BLOCK_LIGHT -> this.blockLight;
+            case SKY_LIGHT -> this.skyLight;
+        };
+        buffer.put(layer.data, (x << 11 | z << 7) + y0, Math.min(y1, 128) - y0);
+        if (y1 > 128) {
+            buffer.repeat(0, y1 - 128);
+        }
     }
 
     @Override
-    public void setTemperatureValue(int x, int z, double value) {
-        this.temperatures[z << 4 | x] = value;
+    public float getTemperatureValue(int x, int z) {
+        if (this.temperatures == null) {
+            this.initTemperatureMap();
+        }
+        return Float.float16ToFloat(this.temperatures[z << 4 | x]);
+    }
+
+    @Override
+    public void setTemperatureValue(int x, int z, float value) {
+        if (this.temperatures == null) {
+            this.initTemperatureMap();
+        }
+        this.temperatures[z << 4 | x] = Float.floatToFloat16(value);
     }
 
     @Override
@@ -370,5 +433,33 @@ public abstract class MixinChunk implements ExChunk {
     @Override
     public void setLastUpdated(long value) {
         this.lastUpdated = value;
+    }
+
+    @Override
+    public int getLightUpdateHash(int x, int y, int z) {
+        int hash = this.lightHash;
+        hash = (7302013 * hash) + x;
+        hash = (7302013 * hash) + y;
+        hash = (7302013 * hash) + z;
+
+        // Not needed (until lightmaps); chunk updates affect this.lightHash
+        //hash = (7302013 * hash) + this.level.skyDarken * 1430287;
+
+        return hash;
+    }
+
+    @Override
+    public void updateLightHash() {
+        this.lightHash += 1;
+    }
+
+    @Override
+    public int getAcVersion() {
+        return acVersion;
+    }
+
+    @Override
+    public void setAcVersion(int acVersion) {
+        this.acVersion = acVersion;
     }
 }

@@ -29,51 +29,50 @@ public class ScriptEntityLivingScript extends ScriptEntityLiving {
     }
 
     public String getOnCreated() {
-        return this.entityLivingScript.onCreated;
+        return this.entityLivingScript.getOnCreated();
     }
 
     public void setOnCreated(String var1) {
-        this.entityLivingScript.onCreated = var1;
-        this.entityLivingScript.runCreatedScript();
+        this.entityLivingScript.setOnCreated(var1);
     }
 
     public String getOnUpdated() {
-        return this.entityLivingScript.onUpdate;
+        return this.entityLivingScript.getOnUpdate();
     }
 
     public void setOnUpdated(String var1) {
-        this.entityLivingScript.onUpdate = var1;
+        this.entityLivingScript.setOnUpdate(var1);
     }
 
     public String getOnPathReached() {
-        return this.entityLivingScript.onPathReached;
+        return this.entityLivingScript.getOnPathReached();
     }
 
     public void setOnPathReached(String var1) {
-        this.entityLivingScript.onPathReached = var1;
+        this.entityLivingScript.setOnPathReached(var1);
     }
 
     public String getOnAttacked() {
-        return this.entityLivingScript.onAttacked;
+        return this.entityLivingScript.getOnAttacked();
     }
 
     public void setOnAttacked(String var1) {
-        this.entityLivingScript.onAttacked = var1;
+        this.entityLivingScript.setOnAttacked(var1);
     }
 
     public String getOnDeath() {
-        return this.entityLivingScript.onDeath;
+        return this.entityLivingScript.getOnDeath();
     }
 
     public void setOnDeath(String var1) {
-        this.entityLivingScript.onDeath = var1;
+        this.entityLivingScript.setOnDeath(var1);
     }
 
     public String getOnInteraction() {
-        return this.entityLivingScript.onInteraction;
+        return this.entityLivingScript.getOnInteraction();
     }
 
     public void setOnInteraction(String var1) {
-        this.entityLivingScript.onInteraction = var1;
+        this.entityLivingScript.setOnInteraction(var1);
     }
 }

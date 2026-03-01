@@ -8,7 +8,7 @@ import java.util.List;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -22,6 +22,7 @@ public class AC_EntityBoomerang extends Entity {
     private static final float STANDING_EYE_HEIGHT = 0.03125F;
     private static final double DISTANCE_MAX = 35.0D;
     private static final double DISTANCE_MIN = 1.5D;
+
     private final ArrayList<ItemEntity> itemsPickedUp = new ArrayList<>();
     private boolean turningAround = true;
     private Entity returnsTo = null;
@@ -37,8 +38,8 @@ public class AC_EntityBoomerang extends Entity {
         this.setSize(0.5F, 1.0F / 16.0F);
         this.heightOffset = STANDING_EYE_HEIGHT;
 
-        ExEntity entity = (ExEntity)this;
-        entity.setCollidesWithClipBlocks(true);
+        var entity = (ExEntity)this;
+        entity.setCollidesWithClipBlocks(false);
         entity.setIgnoreCobwebCollision(true);
     }
 
@@ -140,7 +141,7 @@ public class AC_EntityBoomerang extends Entity {
                 }
                 continue;
             }
-            if (entity instanceof LivingEntity && entity != this.returnsTo) {
+            if (entity instanceof Mob && entity != this.returnsTo) {
                 ((ExEntity) entity).setStunned(20);
                 entity.xo = entity.x;
                 entity.yo = entity.y;
@@ -230,11 +231,11 @@ public class AC_EntityBoomerang extends Entity {
         this.xRot = (float) (-57.29578D * Math.atan2(this.yd, speed));
     }
 
-    protected void readAdditionalSaveData(CompoundTag tag) {
+    protected void addAdditionalSaveData(CompoundTag tag) {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag tag) {
+    public void readAdditionalSaveData(CompoundTag tag) {
         this.remove();
     }
 

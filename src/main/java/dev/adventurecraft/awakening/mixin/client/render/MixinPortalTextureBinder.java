@@ -1,11 +1,11 @@
 package dev.adventurecraft.awakening.mixin.client.render;
 
-import dev.adventurecraft.awakening.common.Vec2;
 import dev.adventurecraft.awakening.image.Rgba;
+import dev.adventurecraft.awakening.layout.Size;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-import java.nio.IntBuffer;
+import java.nio.ByteBuffer;
 import java.util.Random;
 
 import net.minecraft.client.renderer.ptexture.PortalTexture;
@@ -19,9 +19,6 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 public class MixinPortalTextureBinder extends MixinTextureBinder {
 
     @Shadow
-    private int time;
-
-    @Shadow
     private byte[][] frames = new byte[0][];
 
     @ModifyConstant(method = "<init>", constant = @Constant(intValue = 32))
@@ -30,9 +27,9 @@ public class MixinPortalTextureBinder extends MixinTextureBinder {
     }
 
     @Unique
-    private IntBuffer generatePortalData(int width, int height, int frameCount) {
+    private ByteBuffer generatePortalData(int width, int height, int frameCount) {
         var rawImageData = this.allocImageData(width, height, frameCount);
-        var imageData = rawImageData;
+        var imageData = rawImageData.asIntBuffer();
         Random var3 = new Random(100L);
 
         for (int frameIdx = 0; frameIdx < frameCount; ++frameIdx) {
@@ -86,9 +83,9 @@ public class MixinPortalTextureBinder extends MixinTextureBinder {
     }
 
     @Override
-    public void onTick(Vec2 size) {
-        int var2 = size.x / 16;
-        int var3 = size.y / 16;
+    public void onTick(Size size) {
+        int var2 = size.w / 16;
+        int var3 = size.h / 16;
 
         if (hasImages) {
         } else {

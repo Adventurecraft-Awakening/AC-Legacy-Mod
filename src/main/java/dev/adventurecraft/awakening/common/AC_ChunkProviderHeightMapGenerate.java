@@ -1,11 +1,18 @@
 package dev.adventurecraft.awakening.common;
 
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
+import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
+import dev.adventurecraft.awakening.extension.world.level.biome.ExBiomeSource;
+import dev.adventurecraft.awakening.util.RandomUtil;
+import dev.adventurecraft.awakening.world.level.storage.AsyncChunkSource;
 import net.minecraft.util.ProgressListener;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.feature.CactusFeature;
@@ -16,7 +23,7 @@ import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.tile.SandTile;
 import net.minecraft.world.level.tile.Tile;
 
-public class AC_ChunkProviderHeightMapGenerate implements ChunkSource {
+public class AC_ChunkProviderHeightMapGenerate implements ChunkSource, AsyncChunkSource, Cloneable {
 
     private Random rand;
     private PerlinNoise field_908_o;
@@ -25,22 +32,51 @@ public class AC_ChunkProviderHeightMapGenerate implements ChunkSource {
     public PerlinNoise mobSpawnerNoise;
     private Level world;
     private double[] stoneNoise = new double[256];
-    private Biome[] biomesForGeneration;
-    private double[] generatedTemperatures;
+    private Biome[] biomes;
+    private double[] temperatures;
+    private BiomeSource biomeSource;
 
-    public AC_ChunkProviderHeightMapGenerate(Level var1, long var2) {
-        this.world = var1;
+    public AC_ChunkProviderHeightMapGenerate(Level level, long var2) {
+        this.world = level;
         this.rand = new Random(var2);
 
         // Create instances, even if unused, to consume values from the Random
-        /*this.field_912_k =*/ new PerlinNoise(this.rand, 16);
-        /*this.field_911_l =*/ new PerlinNoise(this.rand, 16);
-        /*this.field_910_m =*/ new PerlinNoise(this.rand, 8);
+        /*this.field_912_k =*/
+        new PerlinNoise(this.rand, 16);
+        /*this.field_911_l =*/
+        new PerlinNoise(this.rand, 16);
+        /*this.field_910_m =*/
+        new PerlinNoise(this.rand, 8);
 
         this.field_908_o = new PerlinNoise(this.rand, 4);
         this.field_922_a = new PerlinNoise(this.rand, 10);
         this.field_921_b = new PerlinNoise(this.rand, 16);
         this.mobSpawnerNoise = new PerlinNoise(this.rand, 8);
+        this.biomeSource = level.getBiomeSource();
+    }
+
+    public AC_ChunkProviderHeightMapGenerate ac$clone() {
+        AC_ChunkProviderHeightMapGenerate source;
+        try {
+            source = (AC_ChunkProviderHeightMapGenerate) super.clone();
+        }
+        catch (CloneNotSupportedException e) {
+            throw new AssertionError(null, e);
+        }
+
+        this.rand = RandomUtil.clone(this.rand);
+        this.stoneNoise = new double[256];
+        this.biomes = null;
+        this.temperatures = null;
+
+        this.biomeSource = ((ExBiomeSource) this.world.getBiomeSource()).copy();
+        return source;
+    }
+
+    @Override
+    public CompletionStage<LevelChunk> loadAsync(Level level, int x, int z) {
+        AC_ChunkProviderHeightMapGenerate self = this.ac$clone();
+        return CompletableFuture.supplyAsync(() -> self.getChunk(x, z), ACMod.WORLD_GEN_EXECUTOR);
     }
 
     public void generateTerrain(int var1, int var2, byte[] var3, Biome[] var4, double[] var5) {
@@ -63,7 +99,8 @@ public class AC_ChunkProviderHeightMapGenerate implements ChunkSource {
                                 if (var9 * 8 + var10 < var20) {
                                     if (var17 < 0.5D && var9 * 8 + var10 >= var20 - 1) {
                                         var19 = Tile.ICE.id;
-                                    } else {
+                                    }
+                                    else {
                                         var19 = Tile.FLOWING_WATER.id;
                                     }
                                 }
@@ -87,7 +124,17 @@ public class AC_ChunkProviderHeightMapGenerate implements ChunkSource {
     public void replaceBlocksForBiome(int var1, int var2, byte[] var3, Biome[] var4) {
         double var5 = 1.0D / 32.0D;
         this.stoneNoise = this.field_908_o.getRegion(
-            this.stoneNoise, var1 * 16, var2 * 16, 0.0D, 16, 16, 1, var5 * 2.0D, var5 * 2.0D, var5 * 2.0D);
+            this.stoneNoise,
+            var1 * 16,
+            var2 * 16,
+            0.0D,
+            16,
+            16,
+            1,
+            var5 * 2.0D,
+            var5 * 2.0D,
+            var5 * 2.0D
+        );
 
         for (int var7 = 0; var7 < 16; ++var7) {
             for (int var8 = 0; var8 < 16; ++var8) {
@@ -105,7 +152,8 @@ public class AC_ChunkProviderHeightMapGenerate implements ChunkSource {
                     byte var19 = var3[var18];
                     if (var19 == 0) {
                         var11 = -1;
-                    } else if (var19 == Tile.STONE.id) {
+                    }
+                    else if (var19 == Tile.STONE.id) {
                         if (var11 == -1) {
                             if (var14 >= var17 - 4 && var14 <= var17 + 1) {
                                 var12 = var9.topMaterial;
@@ -123,10 +171,12 @@ public class AC_ChunkProviderHeightMapGenerate implements ChunkSource {
                             var11 = var10;
                             if (var14 >= var17 - 1) {
                                 var3[var18] = var12;
-                            } else {
+                            }
+                            else {
                                 var3[var18] = var13;
                             }
-                        } else if (var11 > 0) {
+                        }
+                        else if (var11 > 0) {
                             --var11;
                             var3[var18] = var13;
                         }
@@ -138,20 +188,19 @@ public class AC_ChunkProviderHeightMapGenerate implements ChunkSource {
     }
 
     @Override
-    public LevelChunk loadChunk(int var1, int var2) {
-        return this.getChunk(var1, var2);
+    public LevelChunk loadChunk(int x, int z) {
+        return this.getChunk(x, z);
     }
 
     @Override
-    public LevelChunk getChunk(int var1, int var2) {
-        this.rand.setSeed((long) var1 * 341873128712L + (long) var2 * 132897987541L);
+    public LevelChunk getChunk(int x, int z) {
+        this.rand.setSeed((long) x * 341873128712L + (long) z * 132897987541L);
         byte[] var3 = new byte[-Short.MIN_VALUE];
-        LevelChunk var4 = new LevelChunk(this.world, var3, var1, var2);
-        this.biomesForGeneration = this.world.getBiomeSource().getBiomeBlock(
-            this.biomesForGeneration, var1 * 16, var2 * 16, 16, 16);
-        double[] var5 = this.world.getBiomeSource().temperatures;
-        this.generateTerrain(var1, var2, var3, this.biomesForGeneration, var5);
-        this.replaceBlocksForBiome(var1, var2, var3, this.biomesForGeneration);
+        LevelChunk var4 = new LevelChunk(this.world, var3, x, z);
+        this.biomes = this.biomeSource.getBiomeBlock(this.biomes, x * 16, z * 16, 16, 16);
+        double[] var5 = this.biomeSource.temperatures;
+        this.generateTerrain(x, z, var3, this.biomes, var5);
+        this.replaceBlocksForBiome(x, z, var3, this.biomes);
         var4.recalcHeightmap();
         var4.unsaved = false;
         return var4;
@@ -163,19 +212,21 @@ public class AC_ChunkProviderHeightMapGenerate implements ChunkSource {
     }
 
     @Override
-    public void postProcess(ChunkSource var1, int var2, int var3) {
+    public void postProcess(ChunkSource var1, int cX, int cZ) {
         SandTile.instaFall = true;
-        int var4 = var2 * 16;
-        int var5 = var3 * 16;
-        Biome var6 = this.world.getBiomeSource().getBiome(var4 + 16, var5 + 16);
+        int wX = cX * 16;
+        int wZ = cZ * 16;
+        Biome var6 = this.biomeSource.getBiome(wX + 16, wZ + 16);
         this.rand.setSeed(this.world.getSeed());
         long var7 = this.rand.nextLong() / 2L * 2L + 1L;
         long var9 = this.rand.nextLong() / 2L * 2L + 1L;
-        this.rand.setSeed((long) var2 * var7 + (long) var3 * var9 ^ this.world.getSeed());
+        this.rand.setSeed((long) cX * var7 + (long) cZ * var9 ^ this.world.getSeed());
         double var11 = 0.25D;
         var11 = 0.5D;
-        int var13 = (int) ((this.mobSpawnerNoise.getValue(
-            (double) var4 * var11, (double) var5 * var11) / 8.0D + this.rand.nextDouble() * 4.0D + 4.0D) / 3.0D);
+        int var13 = (int) ((this.mobSpawnerNoise.getValue((double) wX * var11, (double) wZ * var11) / 8.0D +
+            this.rand.nextDouble() * 4.0D + 4.0D
+        ) / 3.0D
+        );
         int var14 = 0;
         if (this.rand.nextInt(10) == 0) {
             ++var14;
@@ -183,58 +234,64 @@ public class AC_ChunkProviderHeightMapGenerate implements ChunkSource {
 
         if (var6 == Biome.FOREST) {
             var14 += var13 + 5;
-        } else if (var6 == Biome.RAINFOREST) {
+        }
+        else if (var6 == Biome.RAINFOREST) {
             var14 += var13 + 5;
-        } else if (var6 == Biome.SEASONAL_FOREST) {
+        }
+        else if (var6 == Biome.SEASONAL_FOREST) {
             var14 += var13 + 2;
-        } else if (var6 == Biome.TAIGA) {
+        }
+        else if (var6 == Biome.TAIGA) {
             var14 += var13 + 5;
-        } else if (var6 == Biome.DESERT) {
+        }
+        else if (var6 == Biome.DESERT) {
             var14 -= 20;
-        } else if (var6 == Biome.TUNDRA) {
+        }
+        else if (var6 == Biome.TUNDRA) {
             var14 -= 20;
-        } else if (var6 == Biome.PLAINS) {
+        }
+        else if (var6 == Biome.PLAINS) {
             var14 -= 20;
         }
 
         int var15;
-        int var16;
-        int var17;
+        int x;
+        int z;
         for (var15 = 0; var15 < var14; ++var15) {
-            var16 = var4 + this.rand.nextInt(16) + 8;
-            var17 = var5 + this.rand.nextInt(16) + 8;
+            x = wX + this.rand.nextInt(16) + 8;
+            z = wZ + this.rand.nextInt(16) + 8;
             Feature var18 = var6.getTreeFeature(this.rand);
             var18.init(1.0D, 1.0D, 1.0D);
-            var18.place(this.world, this.rand, var16, this.world.getHeightmap(var16, var17), var17);
+            var18.place(this.world, this.rand, x, this.world.getHeightmap(x, z), z);
         }
 
         int var23;
         for (var15 = 0; var15 < 2; ++var15) {
-            var16 = var4 + this.rand.nextInt(16) + 8;
-            var17 = this.rand.nextInt(128);
-            var23 = var5 + this.rand.nextInt(16) + 8;
-            (new FlowerFeature(Tile.FLOWER.id)).place(this.world, this.rand, var16, var17, var23);
+            x = wX + this.rand.nextInt(16) + 8;
+            z = this.rand.nextInt(128);
+            var23 = wZ + this.rand.nextInt(16) + 8;
+            (new FlowerFeature(Tile.FLOWER.id)).place(this.world, this.rand, x, z, var23);
         }
 
         if (this.rand.nextInt(2) == 0) {
-            var15 = var4 + this.rand.nextInt(16) + 8;
-            var16 = this.rand.nextInt(128);
-            var17 = var5 + this.rand.nextInt(16) + 8;
-            (new FlowerFeature(Tile.ROSE.id)).place(this.world, this.rand, var15, var16, var17);
+            var15 = wX + this.rand.nextInt(16) + 8;
+            x = this.rand.nextInt(128);
+            z = wZ + this.rand.nextInt(16) + 8;
+            (new FlowerFeature(Tile.ROSE.id)).place(this.world, this.rand, var15, x, z);
         }
 
         if (this.rand.nextInt(4) == 0) {
-            var15 = var4 + this.rand.nextInt(16) + 8;
-            var16 = this.rand.nextInt(128);
-            var17 = var5 + this.rand.nextInt(16) + 8;
-            (new FlowerFeature(Tile.BROWN_MUSHROOM.id)).place(this.world, this.rand, var15, var16, var17);
+            var15 = wX + this.rand.nextInt(16) + 8;
+            x = this.rand.nextInt(128);
+            z = wZ + this.rand.nextInt(16) + 8;
+            (new FlowerFeature(Tile.BROWN_MUSHROOM.id)).place(this.world, this.rand, var15, x, z);
         }
 
         if (this.rand.nextInt(8) == 0) {
-            var15 = var4 + this.rand.nextInt(16) + 8;
-            var16 = this.rand.nextInt(128);
-            var17 = var5 + this.rand.nextInt(16) + 8;
-            (new FlowerFeature(Tile.RED_MUSHROOM.id)).place(this.world, this.rand, var15, var16, var17);
+            var15 = wX + this.rand.nextInt(16) + 8;
+            x = this.rand.nextInt(128);
+            z = wZ + this.rand.nextInt(16) + 8;
+            (new FlowerFeature(Tile.RED_MUSHROOM.id)).place(this.world, this.rand, var15, x, z);
         }
 
         var15 = 0;
@@ -243,30 +300,29 @@ public class AC_ChunkProviderHeightMapGenerate implements ChunkSource {
         }
 
         int var19;
-        for (var16 = 0; var16 < var15; ++var16) {
-            var17 = var4 + this.rand.nextInt(16) + 8;
+        for (x = 0; x < var15; ++x) {
+            z = wX + this.rand.nextInt(16) + 8;
             var23 = this.rand.nextInt(128);
-            var19 = var5 + this.rand.nextInt(16) + 8;
-            (new CactusFeature()).place(this.world, this.rand, var17, var23, var19);
+            var19 = wZ + this.rand.nextInt(16) + 8;
+            (new CactusFeature()).place(this.world, this.rand, z, var23, var19);
         }
 
-        this.generatedTemperatures = this.world.getBiomeSource().getTemperatureBlock(
-            this.generatedTemperatures, var4 + 8, var5 + 8, 16, 16);
+        this.temperatures = this.biomeSource.getTemperatureBlock(this.temperatures, wX + 8, wZ + 8, 16, 16);
 
-        for (var16 = var4 + 8; var16 < var4 + 8 + 16; ++var16) {
-            for (var17 = var5 + 8; var17 < var5 + 8 + 16; ++var17) {
-                var23 = var16 - (var4 + 8);
-                var19 = var17 - (var5 + 8);
-                int var20 = this.world.getTopSolidBlock(var16, var17);
-                double var21 = this.generatedTemperatures[var23 * 16 + var19];
-                ((ExWorld) this.world).setTemperatureValue(var16, var17, var21);
-                if (var21 < 0.5D &&
-                    var20 > 0 &&
-                    var20 < 128 &&
-                    this.world.isEmptyTile(var16, var20, var17) &&
-                    this.world.getMaterial(var16, var20 - 1, var17).blocksMotion() &&
-                    this.world.getMaterial(var16, var20 - 1, var17) != Material.ICE) {
-                    this.world.setTile(var16, var20, var17, Tile.SNOW_LAYER.id);
+        for (x = wX + 8; x < wX + 8 + 16; ++x) {
+            for (z = wZ + 8; z < wZ + 8 + 16; ++z) {
+                var23 = x - (wX + 8);
+                var19 = z - (wZ + 8);
+                int y = this.world.getTopSolidBlock(x, z);
+                float temp = (float) this.temperatures[var23 * 16 + var19];
+                ((ExWorld) this.world).setTemperatureValue(x, z, temp);
+                if (y > 0 && y < 128 && temp < 0.5) {
+                    if (this.world.isEmptyTile(x, y, z)) {
+                        Material material = this.world.getMaterial(x, y - 1, z);
+                        if (material.blocksMotion() && material != Material.ICE) {
+                            this.world.setTile(x, y, z, Tile.SNOW_LAYER.id);
+                        }
+                    }
                 }
             }
         }

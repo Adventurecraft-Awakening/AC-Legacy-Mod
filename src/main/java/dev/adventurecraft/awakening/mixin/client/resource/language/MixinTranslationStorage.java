@@ -44,7 +44,7 @@ public abstract class MixinTranslationStorage implements ExTranslationStorage {
         @Local(argsOnly = true) String originalKey) {
         // TODO: remove behavior of returning key when it's missing from translation files?
         String value = instance.getProperty(key, defaultValue);
-        if (originalKey != null && value.equals("")) {
+        if (originalKey != null && value.isEmpty()) {
             String[] parts = originalKey.split("\\.");
             value = parts[parts.length - 1];
             instance.setProperty(key, value);
@@ -55,7 +55,7 @@ public abstract class MixinTranslationStorage implements ExTranslationStorage {
 
     private void loadAcTranslations(String name) {
         try {
-            String acName = "/assets/adventurecraft" + name;
+            String acName = "/assets/" + ACMod.MOD_ID + name;
             InputStream stream = ACMod.class.getResourceAsStream(acName);
             if (stream != null) {
                 this.keys.load(new InputStreamReader(stream, StandardCharsets.UTF_8));

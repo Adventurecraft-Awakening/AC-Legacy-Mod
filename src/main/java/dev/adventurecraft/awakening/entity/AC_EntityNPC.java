@@ -1,5 +1,7 @@
 package dev.adventurecraft.awakening.entity;
 
+import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
+import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
@@ -18,8 +20,6 @@ public class AC_EntityNPC extends AC_EntityLivingScript {
     public boolean trackPlayer = true;
     public boolean isAttackable = false;
     public Entity entityToTrack = null;
-    private boolean ranOnCreate = false;
-
 
     public AC_EntityNPC(Level world) {
         super(world);
@@ -34,11 +34,6 @@ public class AC_EntityNPC extends AC_EntityLivingScript {
 
     @Override
     public void tick() {
-        if (!this.ranOnCreate) {
-            this.ranOnCreate = true;
-            this.runCreatedScript();
-        }
-
         if (this.pathToHome && !this.isPathing() && this.distanceToSqr(this.spawnX, this.spawnY, this.spawnZ) > 4.0D) {
             this.pathToPosition((int) this.spawnX, (int) this.spawnY, (int) this.spawnZ);
         }
@@ -51,7 +46,8 @@ public class AC_EntityNPC extends AC_EntityLivingScript {
         if (this.entityToTrack != null) {
             if (!this.entityToTrack.isAlive()) {
                 this.entityToTrack = null;
-            } else if (this.entityToTrack.distanceTo(this) > 16.0F || !this.canSee(this.entityToTrack)) {
+            }
+            else if (this.entityToTrack.distanceTo(this) > 16.0F || !this.canSee(this.entityToTrack)) {
                 this.entityToTrack = null;
             }
         }
@@ -59,18 +55,9 @@ public class AC_EntityNPC extends AC_EntityLivingScript {
         if (this.entityToTrack != null) {
             double dX = this.entityToTrack.x - this.x;
             double dZ = this.entityToTrack.z - this.z;
-            float newYaw = (float) (Math.atan2(dZ, dX) * 180.0D / (double) ((float) Math.PI)) - 90.0F;
+            float newYaw = (float) Math.toDegrees(Math.atan2(dZ, dX)) - 90.0F;
 
-            float extraYaw = newYaw - this.yRot;
-            while (extraYaw < -180.0F) {
-                extraYaw += 360.0F;
-            }
-
-            while (extraYaw > 180.0F) {
-                extraYaw -= 360.0F;
-            }
-
-            extraYaw = Math.max(Math.min(extraYaw, 10.0F), -10.0F);
+            float extraYaw = MathF.clampAngle(newYaw - this.yRot, -10.0F, 10.0F);
             this.yRot += extraYaw;
         }
 
@@ -107,8 +94,8 @@ public class AC_EntityNPC extends AC_EntityLivingScript {
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag tag) {
-        super.readAdditionalSaveData(tag);
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
         tag.putString("npcName", this.npcName);
         tag.putString("chatMsg", this.chatMsg);
         tag.putString("texture", this.textureName);
@@ -121,40 +108,34 @@ public class AC_EntityNPC extends AC_EntityLivingScript {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag tag) {
-        super.addAdditionalSaveData(tag);
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        var exTag = (ExCompoundTag) tag;
+
         this.npcName = tag.getString("npcName");
         this.chatMsg = tag.getString("chatMsg");
         this.textureName = tag.getString("texture");
+
         if (tag.hasKey("spawnX")) {
             this.spawnX = tag.getDouble("spawnX");
             this.spawnY = tag.getDouble("spawnY");
             this.spawnZ = tag.getDouble("spawnZ");
         }
 
-        if (tag.hasKey("pathToHome")) {
-            this.pathToHome = tag.getBoolean("pathToHome");
-        }
-
-        if (tag.hasKey("trackPlayer")) {
-            this.trackPlayer = tag.getBoolean("trackPlayer");
-        }
-
-        if (tag.hasKey("isAttackable")) {
-            this.isAttackable = tag.getBoolean("isAttackable");
-        }
+        exTag.findBool("pathToHome").ifPresent(b -> this.pathToHome = b);
+        exTag.findBool("trackPlayer").ifPresent(b -> this.trackPlayer = b);
+        exTag.findBool("isAttackable").ifPresent(b -> this.isAttackable = b);
     }
 
     @Override
     public boolean interact(Player entity) {
         if (super.interact(entity)) {
-            if (this.chatMsg != null && !this.chatMsg.equals("")) {
+            if (this.chatMsg != null && !this.chatMsg.isEmpty()) {
                 Minecraft.instance.gui.addMessage(String.format("<%s> %s", this.npcName, this.chatMsg));
             }
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     @Override

@@ -25,6 +25,8 @@ accessible method net/minecraft/world/level/tile/Tile containsZ (Lnet/minecraft/
 accessible method net/minecraft/world/item/Item <init> (I)V
 accessible method net/minecraft/world/item/Item setMaxDamage (I)Lnet/minecraft/world/item/Item;
 
+accessible field net/minecraft/world/item/TileItem tileId I
+
 extendable class net/minecraft/world/ItemInstance
 
 accessible field net/minecraft/world/level/Level saveInterval I
@@ -47,15 +49,16 @@ accessible field net/minecraft/world/level/pathfinder/Path nodes [Lnet/minecraft
 mutable field net/minecraft/world/level/pathfinder/Path nodes [Lnet/minecraft/world/level/pathfinder/Node; # field_2691
 accessible field net/minecraft/world/level/pathfinder/Path pos I # field_2692
 
-accessible field net/minecraft/world/entity/LivingEntity jumping Z
-accessible field net/minecraft/world/entity/LivingEntity lastHurt I # field_1058
-accessible field net/minecraft/world/entity/LivingEntity lookAt Lnet/minecraft/world/entity/Entity;
+accessible field net/minecraft/world/entity/Mob jumping Z
+accessible field net/minecraft/world/entity/Mob lastHurt I # field_1058
+accessible field net/minecraft/world/entity/Mob lookAt Lnet/minecraft/world/entity/Entity;
 
 accessible method net/minecraft/world/entity/player/Player actuallyHurt (I)V
 
 accessible method net/minecraft/world/entity/animal/Wolf spawnTamingParticles (Z)V
 
 accessible method net/minecraft/world/entity/player/Inventory getSlot (I)I
+accessible method net/minecraft/world/entity/player/Inventory getFreeSlot ()I
 
 accessible method net/minecraft/world/inventory/AbstractContainerMenu addSlot (Lnet/minecraft/world/inventory/Slot;)V
 
@@ -67,6 +70,9 @@ accessible field net/minecraft/world/entity/projectile/Arrow flightTime I
 
 accessible field net/minecraft/world/entity/item/ItemEntity health I
 
+accessible method net/minecraft/world/phys/Vec3 set (DDD)Lnet/minecraft/world/phys/Vec3;
+accessible method net/minecraft/world/phys/Vec3 <init> (DDD)V
+
 accessible field net/minecraft/client/renderer/TileRenderer level Lnet/minecraft/world/level/LevelSource;
 
 accessible field net/minecraft/client/renderer/GameRenderer fov F # field_2365
@@ -77,6 +83,11 @@ accessible field net/minecraft/world/level/FoliageColor pixels [I
 accessible field net/minecraft/client/renderer/Textures idMap Ljava/util/HashMap;
 accessible field net/minecraft/client/renderer/Textures skins Lnet/minecraft/client/skins/TexturePackRepository;
 
+accessible method net/minecraft/client/renderer/Tesselator <init> (I)V
+extendable method net/minecraft/client/renderer/Tesselator clear ()V
+accessible field net/minecraft/client/renderer/Tesselator tesselating Z
+accessible field net/minecraft/client/renderer/Tesselator mode I
+
 accessible field net/minecraft/client/gui/screens/Screen buttons Ljava/util/List;
 accessible field net/minecraft/client/gui/screens/Screen font Lnet/minecraft/client/gui/Font;
 accessible field net/minecraft/client/gui/screens/Screen clickedButton Lnet/minecraft/client/gui/components/Button;
@@ -86,3 +97,5 @@ accessible class net/minecraft/client/gui/screens/SelectWorldScreen$WorldSelecti
 accessible method net/minecraft/client/gui/GuiComponent fillGradient (IIIIII)V
 
 accessible field net/minecraft/client/gui/components/SliderButton option Lnet/minecraft/client/Option;
+
+accessible class net/minecraft/world/level/chunk/storage/RegionFile$ChunkBuffer

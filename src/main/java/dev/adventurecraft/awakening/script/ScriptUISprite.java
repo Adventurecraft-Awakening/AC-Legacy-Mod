@@ -5,66 +5,88 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.client.renderer.Textures;
-import org.lwjgl.opengl.GL11;
 
 @SuppressWarnings("unused")
-public class ScriptUISprite extends UIElement {
+public class ScriptUISprite extends UIElement implements ScriptColor {
 
     public String texture;
-    public float width;
-    public float height;
-    public float imageWidth;
-    public float imageHeight;
+    public double width;
+    public double height;
+    public double imageWidth;
+    public double imageHeight;
     public double u;
     public double v;
-    public float red;
-    public float green;
-    public float blue;
-    public float alpha;
 
-    public ScriptUISprite(String var1, float var2, float var3, float var4, float var5, double var6, double var8) {
-        this(var1, var2, var3, var4, var5, var6, var8, ((ExInGameHud) Minecraft.instance.gui).getScriptUI());
+    private ScriptVec4 color;
+
+    public ScriptUISprite(String texture, double x, double y, double width, double height, double u, double v) {
+        this(texture, x, y, width, height, u, v, ((ExInGameHud) Minecraft.instance.gui).getScriptUI());
     }
 
-    public ScriptUISprite(String var1, float var2, float var3, float var4, float var5, double var6, double var8, ScriptUIContainer var10) {
+    public ScriptUISprite(
+        String texture,
+        double x,
+        double y,
+        double width,
+        double height,
+        double u,
+        double v,
+        ScriptUIContainer container
+    ) {
+        super(x, y);
         this.imageWidth = 256.0F;
         this.imageHeight = 256.0F;
-        this.red = 1.0F;
-        this.green = 1.0F;
-        this.blue = 1.0F;
-        this.alpha = 1.0F;
-        this.texture = var1;
-        this.prevX = this.curX = var2;
-        this.prevY = this.curY = var3;
-        this.width = var4;
-        this.height = var5;
-        this.u = var6;
-        this.v = var8;
-        if (var10 != null) {
-            var10.add(this);
+        this.texture = texture;
+        this.width = width;
+        this.height = height;
+        this.u = u;
+        this.v = v;
+        this.color = new ScriptVec4(1.0);
+        if (container != null) {
+            container.add(this);
         }
-
     }
 
     @Override
-    public void render(Font var1, Textures var2, float var3) {
+    public void render(Font font, Textures textures, float deltaTime) {
         if (this.texture.startsWith("http")) {
-            var2.bind(var2.loadHttpTexture(this.texture, "./pack.png"));
-        } else {
-            var2.bind(var2.loadTexture(this.texture));
+            textures.bind(textures.loadHttpTexture(this.texture, "./pack.png"));
+        }
+        else {
+            textures.bind(textures.loadTexture(this.texture));
         }
 
-        GL11.glColor4f(this.red, this.green, this.blue, this.alpha);
-        float var4 = this.getXAtTime(var3);
-        float var5 = this.getYAtTime(var3);
-        float var6 = 1.0F / this.imageWidth;
-        float var7 = 1.0F / this.imageHeight;
-        Tesselator var8 = Tesselator.instance;
-        var8.begin();
-        var8.vertexUV(var4, var5 + this.height, 0.0D, this.u * (double) var6, (this.v + (double) this.height) * (double) var7);
-        var8.vertexUV(var4 + this.width, var5 + this.height, 0.0D, (float) (this.u + (double) this.width) * var6, (float) (this.v + (double) this.height) * var7);
-        var8.vertexUV(var4 + this.width, var5, 0.0D, (float) (this.u + (double) this.width) * var6, this.v * (double) var7);
-        var8.vertexUV(var4, var5, 0.0D, this.u * (double) var6, this.v * (double) var7);
-        var8.end();
+        double x = this.getXAtTime(deltaTime);
+        double y = this.getYAtTime(deltaTime);
+        double w = this.width;
+        double h = this.height;
+        double ru = 1.0F / this.imageWidth;
+        double rv = 1.0F / this.imageHeight;
+        Tesselator ts = Tesselator.instance;
+        ts.begin();
+        ScriptVec4 c = this.getColor();
+        float r = (float) c.getR();
+        float g = (float) c.getG();
+        float b = (float) c.getB();
+        float a = (float) c.getA();
+        ts.color(r, g, b, a);
+        ts.vertexUV(x, y + h, 0.0D, this.u * ru, (this.v + h) * rv);
+        ts.vertexUV(x + w, y + h, 0.0D, (this.u + w) * ru, (this.v + h) * rv);
+        ts.vertexUV(x + w, y, 0.0D, (this.u + w) * ru, this.v * rv);
+        ts.vertexUV(x, y, 0.0D, this.u * ru, this.v * rv);
+        ts.end();
+    }
+
+    @Override
+    public ScriptVec4 getColor() {
+        return this.color;
+    }
+
+    @Override
+    public void setColor(ScriptVec4 value) {
+        if (value == null) {
+            value = new ScriptVec4(1.0);
+        }
+        this.color = value;
     }
 }

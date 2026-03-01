@@ -131,12 +131,12 @@ public class AC_TileEntityEffect extends TileEntity {
             for (int i = 0; i < this.particlesPerSpawn; ++i) {
                 this.level.addParticle(
                     this.particleType,
-                    pX + this.randX * (2.0F * rand.nextFloat() - 1.0F),
-                    pY + this.randY * (2.0F * rand.nextFloat() - 1.0F),
-                    pZ + this.randZ * (2.0F * rand.nextFloat() - 1.0F),
-                    this.floatArg1 + this.floatRand1 * (2.0F * rand.nextFloat() - 1.0F),
-                    this.floatArg2 + this.floatRand2 * (2.0F * rand.nextFloat() - 1.0F),
-                    this.floatArg3 + this.floatRand3 * (2.0F * rand.nextFloat() - 1.0F));
+                    pX + this.randX * this.rand.nextSignedFloat(),
+                    pY + this.randY * this.rand.nextSignedFloat(),
+                    pZ + this.randZ * this.rand.nextSignedFloat(),
+                    this.floatArg1 + this.floatRand1 * this.rand.nextSignedFloat(),
+                    this.floatArg2 + this.floatRand2 * this.rand.nextSignedFloat(),
+                    this.floatArg3 + this.floatRand3 * this.rand.nextSignedFloat());
             }
             this.ticksBeforeParticle = this.ticksBetweenParticles;
         }

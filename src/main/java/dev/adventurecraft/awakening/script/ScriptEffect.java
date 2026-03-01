@@ -102,8 +102,17 @@ public class ScriptEffect {
         ((ExWorldEventRenderer) Minecraft.instance.levelRenderer).updateAllTheRenderers();
     }
 
-    public void registerTextureAnimation(String animationName, String texName, String imageName, int x, int y, int width, int height) {
+    public void registerTextureAnimation(
+        String animationName,
+        String texName,
+        String imageName,
+        int x,
+        int y,
+        int width,
+        int height
+    ) {
         var animation = new AC_TextureAnimated(texName, x, y, width, height);
+        //noinspection DataFlowIssue
         ((AC_TextureBinder) animation).loadImage(imageName, world);
         ((ExTextureManager) Minecraft.instance.textures).registerTextureAnimation(animationName, animation);
     }
@@ -128,7 +137,7 @@ public class ScriptEffect {
         ((ExMinecraft) Minecraft.instance).setCameraActive(false);
     }
 
-    public boolean getIsCameraActive(){
+    public boolean getIsCameraActive() {
         return ((ExMinecraft) Minecraft.instance).isCameraActive();
     }
 }

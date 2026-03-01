@@ -6,11 +6,11 @@ import dev.adventurecraft.awakening.common.gui.AC_GuiCamera;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
-public class AC_EntityCamera extends LivingEntity {
+public class AC_EntityCamera extends Mob {
 
     private float time;
     private AC_CutsceneCameraBlendType type;
@@ -34,11 +34,11 @@ public class AC_EntityCamera extends LivingEntity {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag var1) {
+    public void readAdditionalSaveData(CompoundTag tag) {
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag var1) {
+    public void addAdditionalSaveData(CompoundTag tag) {
     }
 
     @Override

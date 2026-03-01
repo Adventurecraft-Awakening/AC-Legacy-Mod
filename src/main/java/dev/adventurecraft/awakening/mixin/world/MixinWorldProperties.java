@@ -1,11 +1,13 @@
 package dev.adventurecraft.awakening.mixin.world;
 
+import dev.adventurecraft.awakening.extension.nbt.ExTag;
 import dev.adventurecraft.awakening.tile.AC_BlockEffect;
 import dev.adventurecraft.awakening.common.LightHelper;
 import dev.adventurecraft.awakening.common.WorldGenProperties;
 import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
+import dev.adventurecraft.awakening.world.GameRules;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
@@ -13,32 +15,28 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.LevelData;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Mixin(LevelData.class)
 public abstract class MixinWorldProperties implements ExWorldProperties {
 
-    @Shadow
-    private boolean raining;
-
-    @Shadow
-    private long time;
+    @Shadow private boolean raining;
+    @Shadow private long time;
 
     private boolean hudEnabled = true;
-    public double tempOffset;
+    public float tempOffset;
     private WorldGenProperties worldGenProps = new WorldGenProperties();
-    public boolean iceMelts = true;
-    public boolean leavesDecay = false;
     public CompoundTag triggerData = null;
     float timeOfDay;
     float timeRate;
     public String playingMusic = "";
-    public boolean mobsBurn = true;
     public boolean overrideFogColor = false;
     public float fogR;
     public float fogG;
@@ -59,14 +57,17 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     public CompoundTag worldScope = null;
     public CompoundTag musicScope = null;
     public boolean originallyFromAC = false;
-    public boolean allowsInventoryCrafting = false;
+    private GameRules gameRules = new GameRules();
 
-    @Inject(method = "<init>(Lnet/minecraft/nbt/CompoundTag;)V", at = @At("TAIL"))
+    @Inject(
+        method = "<init>(Lnet/minecraft/nbt/CompoundTag;)V",
+        at = @At("TAIL")
+    )
     private void init(CompoundTag tag, CallbackInfo ci) {
-        this.tempOffset = tag.getDouble("TemperatureOffset");
-        if (tag.hasKey("IsPrecipitating")) {
-            this.raining = tag.getBoolean("IsPrecipitating");
-        }
+        var exTag = (ExCompoundTag) tag;
+
+        this.tempOffset = (float) (double) exTag.findDouble("TemperatureOffset").orElse(0.0);
+        exTag.findBool("IsPrecipitating").ifPresent(b -> this.raining = b);
 
         Entity.ENTITY_COUNTER = tag.getInt("nextEntityID");
         if (tag.hasKey("useImages")) {
@@ -84,88 +85,70 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
             wgp.volatilityWeight2 = tag.getDouble("volatilityWeight2");
         }
 
-        if (tag.hasKey("iceMelts")) {
-            this.iceMelts = tag.getBoolean("iceMelts");
-        }
+        exTag.findCompound("triggerAreas").ifPresent(c -> this.triggerData = c);
 
-        if (tag.hasKey("leavesDecay")) {
-            this.leavesDecay = tag.getBoolean("leavesDecay");
-        }
-
-        if (tag.hasKey("triggerAreas")) {
-            this.triggerData = tag.getCompoundTag("triggerAreas");
-        }
-
-        if (tag.hasKey("timeRate")) {
-            this.timeRate = tag.getFloat("timeRate");
-        } else {
-            this.timeRate = 1.0F;
-        }
-
-        if (tag.hasKey("timeOfDay")) {
-            this.timeOfDay = tag.getFloat("timeOfDay");
-        } else {
-            this.timeOfDay = (float) this.time;
-        }
-
+        this.timeRate = exTag.findFloat("timeRate").orElse(1.0F);
+        this.timeOfDay = exTag.findFloat("timeOfDay").orElse((float) this.time);
         this.playingMusic = tag.getString("playingMusic");
-        if (tag.hasKey("mobsBurn")) {
-            this.mobsBurn = tag.getBoolean("mobsBurn");
-        }
 
         this.overlay = tag.getString("overlay");
-        if (tag.hasKey("textureReplacements")) {
-            this.replacementTag = tag.getCompoundTag("textureReplacements");
-        }
+        exTag.findCompound("textureReplacements").ifPresent(c -> this.replacementTag = c);
 
         this.onNewSaveScript = tag.getString("onNewSaveScript");
         this.onLoadScript = tag.getString("onLoadScript");
         this.onUpdateScript = tag.getString("onUpdateScript");
-        if (tag.hasKey("playerName")) {
-            this.playerName = tag.getString("playerName");
-        }
+
+        exTag.findString("playerName").ifPresent(this::setPlayerName);
 
         for (int i = 0; i < 16; ++i) {
-            String id = "brightness" + i;
-            if (tag.hasKey(id)) {
-                this.brightness[i] = tag.getFloat(id);
-            } else {
+            Optional<Float> value = exTag.findFloat("brightness" + i);
+            if (value.isPresent()) {
+                this.brightness[i] = value.get();
+            }
+            else {
                 this.brightness[i] = LightHelper.getDefaultLightAtIndex(i);
             }
         }
 
-        if (tag.hasKey("globalScope")) {
-            this.globalScope = tag.getCompoundTag("globalScope");
-        }
+        exTag.findCompound("globalScope").ifPresent(this::setGlobalScope);
+        exTag.findCompound("worldScope").ifPresent(this::setWorldScope);
+        exTag.findCompound("musicScope").ifPresent(this::setMusicScope);
 
-        if (tag.hasKey("worldScope")) {
-            this.worldScope = tag.getCompoundTag("worldScope");
-        }
+        this.originallyFromAC = exTag.findBool("originallyFromAC").orElseGet(() -> tag.hasKey("TemperatureOffset"));
 
-        if (tag.hasKey("musicScope")) {
-            this.musicScope = tag.getCompoundTag("musicScope");
-        }
+        this.hudEnabled = exTag.findBool("hudEnabled").orElse(true);
 
-        if (tag.hasKey("originallyFromAC")) {
-            this.originallyFromAC = tag.getBoolean("originallyFromAC");
-        } else {
-            this.originallyFromAC = tag.hasKey("TemperatureOffset");
-        }
-
-        if (tag.hasKey("allowsInventoryCrafting")) {
-            this.allowsInventoryCrafting = tag.getBoolean("allowsInventoryCrafting");
-        } else {
-            this.allowsInventoryCrafting = true;
-        }
-
-        if (tag.hasKey("hudEnabled")) {
-            this.hudEnabled = tag.getBoolean("hudEnabled");
-        } else {
-            this.hudEnabled = true;
-        }
+        exTag
+            .findCompound("gameRules")
+            .ifPresentOrElse(t -> this.gameRules.load(t), () -> this.convertToGameRules(exTag));
     }
 
-    @Inject(method = "<init>(JLjava/lang/String;)V", at = @At("TAIL"))
+    /**
+     * Recover rule properties from existing saves.
+     */
+    @Unique
+    private void convertToGameRules(ExCompoundTag tag) {
+        // TODO: proper versioning
+
+        this.setGameRuleFrom(tag, "iceMelts", GameRules.MELT_ICE);
+        this.setGameRuleFrom(tag, "leavesDecay", GameRules.DECAY_LEAVES);
+        this.setGameRuleFrom(tag, "mobsBurn", GameRules.SUNBURN_UNDEAD);
+
+        this.setGameRuleFrom(tag, "allowsInventoryCrafting", GameRules.ALLOW_INVENTORY_CRAFTING);
+        this.setGameRuleFrom(tag, "canSleep", GameRules.ALLOW_BED);
+        this.setGameRuleFrom(tag, "canUseHoe", GameRules.ALLOW_HOE);
+        this.setGameRuleFrom(tag, "canUseBonemeal", GameRules.ALLOW_BONEMEAL);
+    }
+
+    @Unique
+    private <R extends GameRules.Rule<R>> void setGameRuleFrom(ExCompoundTag tag, String key, GameRules.Key<R> rule) {
+        tag.findTag(key).ifPresent(t -> this.gameRules.find(rule).setFromTag(t));
+    }
+
+    @Inject(
+        method = "<init>(JLjava/lang/String;)V",
+        at = @At("TAIL")
+    )
     private void init(long var1, String var2, CallbackInfo ci) {
         this.timeRate = 1.0F;
 
@@ -174,12 +157,18 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         }
     }
 
-    @Inject(method = "<init>(Lnet/minecraft/world/level/storage/LevelData;)V", at = @At("TAIL"))
+    @Inject(
+        method = "<init>(Lnet/minecraft/world/level/storage/LevelData;)V",
+        at = @At("TAIL")
+    )
     private void init(LevelData var1, CallbackInfo ci) {
         System.arraycopy(((MixinWorldProperties) (Object) var1).brightness, 0, this.brightness, 0, 16);
     }
 
-    @Inject(method = "save(Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/nbt/CompoundTag;)V", at = @At("TAIL"))
+    @Inject(
+        method = "save(Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/nbt/CompoundTag;)V",
+        at = @At("TAIL")
+    )
     private void insertWorldPropsForAC(CompoundTag tag, CompoundTag playerTag, CallbackInfo ci) {
         WorldGenProperties wgp = this.worldGenProps;
         tag.putDouble("TemperatureOffset", this.tempOffset);
@@ -195,8 +184,6 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         tag.putDouble("volatility2", wgp.volatility2);
         tag.putDouble("volatilityWeight1", wgp.volatilityWeight1);
         tag.putDouble("volatilityWeight2", wgp.volatilityWeight2);
-        tag.putBoolean("iceMelts", this.iceMelts);
-        tag.putBoolean("leavesDecay", this.leavesDecay);
         if (Minecraft.instance.level != null) {
             var world = (ExWorld) Minecraft.instance.level;
             if (world.getTriggerManager() != null) {
@@ -206,34 +193,33 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
 
         tag.putFloat("timeOfDay", this.timeOfDay);
         tag.putFloat("timeRate", this.timeRate);
-        if (!this.playingMusic.equals("")) {
+        if (!this.playingMusic.isEmpty()) {
             tag.putString("playingMusic", this.playingMusic);
         }
 
-        tag.putBoolean("mobsBurn", this.mobsBurn);
-        if (!this.overlay.equals("")) {
+        if (!this.overlay.isEmpty()) {
             tag.putString("overlay", this.overlay);
         }
 
         tag.putCompoundTag("textureReplacements", this.getTextureReplacementTags());
-        if (!this.onNewSaveScript.equals("")) {
+        if (!this.onNewSaveScript.isEmpty()) {
             tag.putString("onNewSaveScript", this.onNewSaveScript);
         }
 
-        if (!this.onLoadScript.equals("")) {
+        if (!this.onLoadScript.isEmpty()) {
             tag.putString("onLoadScript", this.onLoadScript);
         }
 
-        if (!this.onUpdateScript.equals("")) {
+        if (!this.onUpdateScript.isEmpty()) {
             tag.putString("onUpdateScript", this.onUpdateScript);
         }
 
-        if (!this.playerName.equals("")) {
+        if (!this.playerName.isEmpty()) {
             tag.putString("playerName", this.playerName);
         }
 
-        for (int var3 = 0; var3 < 16; ++var3) {
-            tag.putFloat("brightness" + var3, this.brightness[var3]);
+        for (int i = 0; i < 16; ++i) {
+            tag.putFloat("brightness" + i, this.brightness[i]);
         }
 
         if (this.globalScope != null) {
@@ -249,8 +235,11 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         }
 
         tag.putBoolean("originallyFromAC", this.originallyFromAC);
-        tag.putBoolean("allowsInventoryCrafting", this.allowsInventoryCrafting);
         tag.putBoolean("hudEnabled", this.hudEnabled);
+
+        var gameRuleTag = new CompoundTag();
+        this.gameRules.save(gameRuleTag);
+        tag.putTag("gameRules", gameRuleTag);
     }
 
     @Override
@@ -289,12 +278,12 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     }
 
     @Override
-    public double getTempOffset() {
+    public float getTempOffset() {
         return this.tempOffset;
     }
 
     @Override
-    public void setTempOffset(double value) {
+    public void setTempOffset(float value) {
         this.tempOffset = value;
     }
 
@@ -342,7 +331,8 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         String found = this.replacementTextures.get(key);
         if (found != null && found.equals(value)) {
             return false;
-        } else {
+        }
+        else {
             this.replacementTextures.put(key, value);
             return true;
         }
@@ -356,23 +346,20 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     @Override
     public CompoundTag getTextureReplacementTags() {
         var tag = new CompoundTag();
-
-        for (Map.Entry<String, String> entry : this.replacementTextures.entrySet()) {
-            tag.putString(entry.getKey(), entry.getValue());
-        }
-
+        this.replacementTextures.forEach(tag::putString);
         return tag;
     }
 
     @Override
     public void loadTextureReplacements(Level world) {
-        if (this.replacementTag != null) {
-            this.replacementTextures.clear();
-
-            for (String replacementKey : ((ExCompoundTag) this.replacementTag).getKeys()) {
-                AC_BlockEffect.replaceTexture(world, replacementKey, this.replacementTag.getString(replacementKey));
-            }
+        if (this.replacementTag == null) {
+            return;
         }
+        this.replacementTextures.clear();
+
+        ((ExCompoundTag) this.replacementTag).forEach((key, tag) -> ((ExTag) tag)
+            .getString()
+            .ifPresent(name -> AC_BlockEffect.replaceTexture(world, key, name)));
     }
 
     @Override
@@ -393,36 +380,6 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     @Override
     public void setOverrideFogColor(boolean value) {
         this.overrideFogColor = value;
-    }
-
-    @Override
-    public boolean getIceMelts() {
-        return this.iceMelts;
-    }
-
-    @Override
-    public void setIceMelts(boolean value) {
-        this.iceMelts = value;
-    }
-
-    @Override
-    public boolean getLeavesDecay() {
-        return this.leavesDecay;
-    }
-
-    @Override
-    public void setLeavesDecay(boolean value) {
-        this.leavesDecay = value;
-    }
-
-    @Override
-    public boolean getMobsBurn() {
-        return this.mobsBurn;
-    }
-
-    @Override
-    public void setMobsBurn(boolean value) {
-        this.mobsBurn = value;
     }
 
     @Override
@@ -506,16 +463,6 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
     }
 
     @Override
-    public boolean getAllowsInventoryCrafting() {
-        return this.allowsInventoryCrafting;
-    }
-
-    @Override
-    public void setAllowsInventoryCrafting(boolean value) {
-        this.allowsInventoryCrafting = value;
-    }
-
-    @Override
     public String getOnNewSaveScript() {
         return this.onNewSaveScript;
     }
@@ -575,11 +522,17 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         this.musicScope = value;
     }
 
-    public void setHudEnabled(boolean arg){
+    @Override
+    public void setHudEnabled(boolean arg) {
         this.hudEnabled = arg;
     }
 
-    public boolean getHudEnabled(){
+    @Override
+    public boolean getHudEnabled() {
         return this.hudEnabled;
+    }
+
+    public @Override GameRules getGameRules() {
+        return this.gameRules;
     }
 }

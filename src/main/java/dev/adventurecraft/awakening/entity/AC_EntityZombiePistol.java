@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.entity;
 
 import dev.adventurecraft.awakening.common.AC_UtilBullet;
-import dev.adventurecraft.awakening.extension.entity.ExLivingEntity;
+import dev.adventurecraft.awakening.extension.entity.ExMob;
 import dev.adventurecraft.awakening.extension.item.ExItemStack;
 import dev.adventurecraft.awakening.item.AC_Items;
 import net.minecraft.world.ItemInstance;
@@ -16,7 +16,7 @@ public class AC_EntityZombiePistol extends Zombie {
 
     public AC_EntityZombiePistol(Level var1) {
         super(var1);
-        ((ExLivingEntity) this).setHeldItem(new ItemInstance(AC_Items.pistol, 1));
+        ((ExMob) this).setHeldItem(new ItemInstance(AC_Items.pistol, 1));
         this.damage = 6;
     }
 
@@ -43,7 +43,7 @@ public class AC_EntityZombiePistol extends Zombie {
     public void tick() {
         super.tick();
 
-        var heldItem = (ExItemStack) ((ExLivingEntity) this).getSelectedItem();
+        var heldItem = (ExItemStack) ((ExMob) this).getSelectedItem();
         if (this.health <= 0) {
             heldItem.setTimeLeft(0);
             return;

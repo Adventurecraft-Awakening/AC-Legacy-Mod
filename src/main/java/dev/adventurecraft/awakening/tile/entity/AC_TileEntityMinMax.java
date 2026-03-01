@@ -1,38 +1,50 @@
 package dev.adventurecraft.awakening.tile.entity;
 
+import dev.adventurecraft.awakening.common.Coord;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.tile.entity.TileEntity;
+import org.jetbrains.annotations.NotNull;
 
 public class AC_TileEntityMinMax extends TileEntity {
 
-	public int minX;
-	public int minY;
-	public int minZ;
-	public int maxX;
-	public int maxY;
-	public int maxZ;
+    private Coord min = Coord.zero;
+    private Coord max = Coord.zero;
 
-	public void load(CompoundTag tag) {
-		super.load(tag);
-		this.minX = tag.getInt("minX");
-		this.minY = tag.getInt("minY");
-		this.minZ = tag.getInt("minZ");
-		this.maxX = tag.getInt("maxX");
-		this.maxY = tag.getInt("maxY");
-		this.maxZ = tag.getInt("maxZ");
-	}
+    public @Override void load(CompoundTag tag) {
+        super.load(tag);
+        this.setMin(new Coord(tag.getInt("minX"), tag.getInt("minY"), tag.getInt("minZ")));
+        this.setMax(new Coord(tag.getInt("maxX"), tag.getInt("maxY"), tag.getInt("maxZ")));
+    }
 
-	public void save(CompoundTag tag) {
-		super.save(tag);
-		tag.putInt("minX", this.minX);
-		tag.putInt("minY", this.minY);
-		tag.putInt("minZ", this.minZ);
-		tag.putInt("maxX", this.maxX);
-		tag.putInt("maxY", this.maxY);
-		tag.putInt("maxZ", this.maxZ);
-	}
+    public @Override void save(CompoundTag tag) {
+        super.save(tag);
+        Coord min = this.min();
+        Coord max = this.max();
+        tag.putInt("minX", min.x);
+        tag.putInt("minY", min.y);
+        tag.putInt("minZ", min.z);
+        tag.putInt("maxX", max.x);
+        tag.putInt("maxY", max.y);
+        tag.putInt("maxZ", max.z);
+    }
 
-	public boolean isSet() {
-		return this.minX != 0 || this.minY != 0 || this.minZ != 0 || this.maxX != 0 || this.maxY != 0 || this.maxZ != 0;
-	}
+    public boolean isSet() {
+        return !this.min().equals(0) || !this.max().equals(0);
+    }
+
+    public Coord min() {
+        return this.min;
+    }
+
+    public void setMin(@NotNull Coord min) {
+        this.min = min;
+    }
+
+    public Coord max() {
+        return this.max;
+    }
+
+    public void setMax(@NotNull Coord max) {
+        this.max = max;
+    }
 }

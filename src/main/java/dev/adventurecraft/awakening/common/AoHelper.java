@@ -1,5 +1,7 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.util.MathF;
+
 public class AoHelper {
 
     public static float lightLevel0 = 0;
@@ -11,12 +13,9 @@ public class AoHelper {
     }
 
     public static float fixAoLight(float min, float max, float a, float b, float factor) {
-        if (a > min) {
+        if (b <= max) {
             return a;
-        } else if (b <= max) {
-            return a;
-        } else {
-            return a + (b - a) * factor;
         }
+        return MathF.fastLerp(factor, Math.max(a, min), b);
     }
 }

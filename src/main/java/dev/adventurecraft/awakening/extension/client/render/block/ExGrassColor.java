@@ -15,6 +15,12 @@ public interface ExGrassColor {
         return GrassColor.pixels[0];
     }
 
+    static int get(float temperature, float downfall) {
+        int x = (int) ((1f - temperature) * 255f);
+        int y = (int) ((1f - (downfall * temperature)) * 255f);
+        return GrassColor.pixels[(y << 8) | x];
+    }
+
     static void loadGrass(String fileName, Level world) {
         var image = ((ExWorld) world).loadMapTexture(fileName);
         if (image == null) {

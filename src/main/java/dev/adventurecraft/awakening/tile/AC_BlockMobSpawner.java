@@ -1,19 +1,17 @@
 package dev.adventurecraft.awakening.tile;
 
-import java.util.Random;
-
 import dev.adventurecraft.awakening.common.AC_DebugMode;
-import dev.adventurecraft.awakening.tile.entity.AC_TileEntityMobSpawner;
 import dev.adventurecraft.awakening.common.gui.AC_GuiMobSpawner;
+import dev.adventurecraft.awakening.extension.world.ExWorld;
+import dev.adventurecraft.awakening.tile.entity.AC_TileEntityMobSpawner;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelSource;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.tile.TileEntityTile;
 import net.minecraft.world.level.tile.entity.TileEntity;
 import net.minecraft.world.phys.AABB;
 
-public class AC_BlockMobSpawner extends TileEntityTile implements AC_ITriggerBlock {
+public class AC_BlockMobSpawner extends TileEntityTile implements AC_ITriggerDebugBlock {
 
     protected AC_BlockMobSpawner(int var1, int var2) {
         super(var1, var2, Material.AIR);
@@ -22,16 +20,6 @@ public class AC_BlockMobSpawner extends TileEntityTile implements AC_ITriggerBlo
     @Override
     protected TileEntity newTileEntity() {
         return new AC_TileEntityMobSpawner();
-    }
-
-    @Override
-    public int getResource(int var1, Random var2) {
-        return 0;
-    }
-
-    @Override
-    public int getResourceCount(Random var1) {
-        return 0;
     }
 
     @Override
@@ -46,37 +34,32 @@ public class AC_BlockMobSpawner extends TileEntityTile implements AC_ITriggerBlo
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (AC_DebugMode.active) {
-            var entity = (AC_TileEntityMobSpawner) world.getTileEntity(x, y, z);
-            AC_GuiMobSpawner.showUI(entity);
-            return true;
-        } else {
+        if (!AC_DebugMode.showDebugGuiOnUse(player)) {
             return false;
         }
-    }
-
-    @Override
-    public boolean shouldRender(LevelSource view, int x, int y, int z) {
-        return AC_DebugMode.active;
-    }
-
-    @Override
-    public boolean canBeTriggered() {
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityMobSpawner.class);
+        AC_GuiMobSpawner.showUI(entity);
         return true;
     }
 
     @Override
     public void onTriggerActivated(Level world, int x, int y, int z) {
-        var entity = (AC_TileEntityMobSpawner) world.getTileEntity(x, y, z);
-        if (entity.spawnOnTrigger && !AC_DebugMode.triggerResetActive) {
+        if (AC_DebugMode.triggerResetActive) {
+            return;
+        }
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityMobSpawner.class);
+        if (entity.spawnOnTrigger) {
             entity.spawnMobs();
         }
     }
 
     @Override
     public void onTriggerDeactivated(Level world, int x, int y, int z) {
-        var entity = (AC_TileEntityMobSpawner) world.getTileEntity(x, y, z);
-        if (entity.spawnOnDetrigger && !AC_DebugMode.triggerResetActive) {
+        if (AC_DebugMode.triggerResetActive) {
+            return;
+        }
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityMobSpawner.class);
+        if (entity.spawnOnDetrigger) {
             entity.spawnMobs();
         }
     }
@@ -88,7 +71,7 @@ public class AC_BlockMobSpawner extends TileEntityTile implements AC_ITriggerBlo
 
     @Override
     public void reset(Level world, int x, int y, int z, boolean forDeath) {
-        var entity = (AC_TileEntityMobSpawner) world.getTileEntity(x, y, z);
+        var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityMobSpawner.class);
         if (!forDeath) {
             entity.hasDroppedItem = false;
         }

@@ -2,12 +2,11 @@ package dev.adventurecraft.awakening.tile;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelSource;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.tile.Tile;
 import net.minecraft.world.phys.AABB;
 
-public class AC_BlockDarkness extends Tile implements AC_ITriggerBlock {
+public class AC_BlockDarkness extends Tile implements AC_ITriggerDebugBlock {
 
     protected AC_BlockDarkness(int id, int texture) {
         super(id, texture, Material.AIR);
@@ -24,9 +23,8 @@ public class AC_BlockDarkness extends Tile implements AC_ITriggerBlock {
         return null;
     }
 
-    @Override
-    public boolean shouldRender(LevelSource view, int x, int y, int z) {
-        return AC_DebugMode.active;
+    public @Override boolean canBeTriggered() {
+        return false;
     }
 
     @Override
