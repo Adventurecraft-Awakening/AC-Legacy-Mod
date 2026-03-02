@@ -99,3 +99,6 @@ accessible method net/minecraft/client/gui/GuiComponent fillGradient (IIIIII)V
 accessible field net/minecraft/client/gui/components/SliderButton option Lnet/minecraft/client/Option;
 
 accessible class net/minecraft/world/level/chunk/storage/RegionFile$ChunkBuffer
+
+extendable method net/minecraft/nbt/Tag read (Ljava/io/DataInput;)V
+extendable method net/minecraft/nbt/Tag write (Ljava/io/DataOutput;)V
