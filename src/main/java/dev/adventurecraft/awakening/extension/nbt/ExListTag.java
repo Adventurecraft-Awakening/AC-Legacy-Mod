@@ -2,13 +2,16 @@ package dev.adventurecraft.awakening.extension.nbt;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-public interface ExListTag extends ExTag {
+public interface ExListTag extends ExTag, Iterable<Tag> {
+
+    byte getElementType();
 
     void setInnerList(List<?> list);
 

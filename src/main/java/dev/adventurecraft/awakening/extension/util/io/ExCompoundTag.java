@@ -64,7 +64,11 @@ public interface ExCompoundTag extends ExTag {
 
     void forEach(BiConsumer<String, Tag> consumer);
 
-    Set<String> getKeys();
+    int size();
+
+    boolean isEmpty();
+
+    Set<String> keySet();
 
     void putTag(String key, Tag tag);
 

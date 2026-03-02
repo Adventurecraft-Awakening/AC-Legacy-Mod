@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.mixin.nbt;
 
 import dev.adventurecraft.awakening.extension.nbt.ExTag;
+import dev.adventurecraft.awakening.nbt.TagVisitor;
 import net.minecraft.nbt.Tag;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
@@ -19,6 +20,9 @@ public abstract class MixinTag implements ExTag {
     @Invoker
     public abstract void invokeRead(DataInput input)
         throws IOException;
+
+    @Override
+    public abstract void accept(TagVisitor visitor);
 
     @Override
     public abstract Tag copy();

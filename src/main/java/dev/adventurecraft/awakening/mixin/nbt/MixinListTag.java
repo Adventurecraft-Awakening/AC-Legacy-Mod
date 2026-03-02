@@ -1,8 +1,10 @@
 package dev.adventurecraft.awakening.mixin.nbt;
 
+import dev.adventurecraft.awakening.collections.bytes.ByteArrayList;
+import dev.adventurecraft.awakening.collections.bytes.ByteList;
 import dev.adventurecraft.awakening.extension.nbt.ExListTag;
 import dev.adventurecraft.awakening.extension.nbt.ExTag;
-import dev.adventurecraft.awakening.util.IoConsumer;
+import dev.adventurecraft.awakening.nbt.TagVisitor;
 import dev.adventurecraft.awakening.util.TagUtil;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
@@ -11,6 +13,7 @@ import it.unimi.dsi.fastutil.floats.FloatList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.nbt.*;
+import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -20,17 +23,18 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Mixin(ListTag.class)
-public abstract class MixinListTag extends MixinTag implements ExListTag {
+public abstract class MixinListTag extends MixinTag implements ExListTag, Iterable<Tag> {
 
     @Shadow private List<?> list;
     @Shadow private byte type;
+    @Unique private boolean isPrimitive;
 
     @Overwrite
     public void write(DataOutput output)
@@ -42,32 +46,32 @@ public abstract class MixinListTag extends MixinTag implements ExListTag {
             return;
         }
 
-        var first = list.getFirst();
-        if (first instanceof Tag) {
-            //noinspection unchecked
-            for (Tag tag : (List<Tag>) list) {
-                ((ExTag) tag).invokeWrite(output);
+        switch (list) {
+            case ByteList byteList -> {
+                for (int i = 0; i < byteList.size(); i++) {
+                    output.writeByte(byteList.getByte(i));
+                }
             }
-            return;
-        }
-
-        switch (TagUtil.getTypeId(first)) {
-            case Tags.TAG_BYTE -> writeList(list, output::writeByte);
-            case Tags.TAG_SHORT -> writeList(list, output::writeShort);
-            case Tags.TAG_INT -> writeList(list, output::writeInt);
-            case Tags.TAG_LONG -> writeList(list, output::writeLong);
-            case Tags.TAG_FLOAT -> writeList(list, output::writeFloat);
-            case Tags.TAG_DOUBLE -> writeList(list, output::writeDouble);
-            default -> TagUtil.throwInvalidType(first);
-        }
-    }
-
-    @Unique
-    private static <T> void writeList(List<?> list, IoConsumer<T> consumer)
-        throws IOException {
-        //noinspection unchecked
-        for (T value : (List<T>) list) {
-            consumer.accept(value);
+            case IntList intList -> {
+                for (int i = 0; i < intList.size(); i++) {
+                    output.writeInt(intList.getInt(i));
+                }
+            }
+            case FloatList floatList -> {
+                for (int i = 0; i < floatList.size(); i++) {
+                    output.writeFloat(floatList.getFloat(i));
+                }
+            }
+            case DoubleList doubleList -> {
+                for (int i = 0; i < doubleList.size(); i++) {
+                    output.writeDouble(doubleList.getDouble(i));
+                }
+            }
+            default -> {
+                for (Object tag : list) {
+                    ((ExTag) tag).invokeWrite(output);
+                }
+            }
         }
     }
 
@@ -89,11 +93,7 @@ public abstract class MixinListTag extends MixinTag implements ExListTag {
 
     @Overwrite
     public Tag get(int index) {
-        Object item = this.list.get(index);
-        if (item instanceof Tag tag) {
-            return tag;
-        }
-        return this.convertAndGet(index);
+        return this.wrapPrimitives().get(index);
     }
 
     /**
@@ -101,10 +101,27 @@ public abstract class MixinListTag extends MixinTag implements ExListTag {
      * Wraps all underlying primitives into {@link Tag}s to preserve semantics of {@link Tag#setType}.
      */
     @Unique
-    private Tag convertAndGet(int index) {
-        var tags = this.list.stream().map(TagUtil::wrap).collect(Collectors.toList());
-        this.list = tags;
-        return tags.get(index);
+    private List<Tag> wrapPrimitives() {
+        if (this.isPrimitive) {
+            var result = new ArrayList<Tag>(this.list.size());
+            for (Object item : this.list) {
+                result.add(TagUtil.wrap(item));
+            }
+            this.list = result;
+            this.isPrimitive = false;
+        }
+        //noinspection unchecked
+        return (List<Tag>) this.list;
+    }
+
+    @Override
+    public byte getElementType() {
+        return this.type;
+    }
+
+    @Override
+    public @NotNull Iterator<Tag> iterator() {
+        return this.wrapPrimitives().iterator();
     }
 
     public @Override void setInnerList(List<?> list) {
@@ -129,24 +146,35 @@ public abstract class MixinListTag extends MixinTag implements ExListTag {
         });
     }
 
+    public @Override void accept(TagVisitor visitor) {
+        visitor.visit((ListTag) (Object) this);
+    }
+
     @Override
     public ListTag copy() {
         var tag = new ListTag();
         var exTag = (ExListTag) tag;
         var list = this.list;
-        switch (list) {
-            case IntList intList -> exTag.setInnerList(new IntArrayList(intList));
-            case DoubleList doubleList -> exTag.setInnerList(new DoubleArrayList(doubleList));
-            case FloatList floatList -> exTag.setInnerList(new FloatArrayList(floatList));
-            default -> list.forEach(t -> tag.add(((ExTag) t).copy()));
-        }
+        exTag.setInnerList(switch (list) {
+            case ByteList byteList -> new ByteArrayList(byteList);
+            case IntList intList -> new IntArrayList(intList);
+            case DoubleList doubleList -> new DoubleArrayList(doubleList);
+            case FloatList floatList -> new FloatArrayList(floatList);
+            default -> {
+                var result = new ArrayList<Tag>(list.size());
+                for (Object item : list) {
+                    result.add(((ExTag) item).copy());
+                }
+                yield result;
+            }
+        });
         return tag;
     }
 
     @Override
     public Optional<CompoundTag> getCompound(int index) {
         var list = this.list;
-        if (index >= 0 && index < list.size()) {
+        if (!this.isPrimitive && index >= 0 && index < list.size()) {
             if (list.get(index) instanceof CompoundTag tag) {
                 return Optional.of(tag);
             }

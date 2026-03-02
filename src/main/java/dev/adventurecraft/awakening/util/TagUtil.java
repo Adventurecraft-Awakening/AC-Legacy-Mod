@@ -64,6 +64,10 @@ public final class TagUtil {
         return typeId == Tags.TAG_FLOAT || typeId == Tags.TAG_DOUBLE;
     }
 
+    public static boolean isNumericType(byte typeId) {
+        return isIntegerType(typeId) || isFloatType(typeId);
+    }
+
     public static Tag wrap(Object primitive) {
         return switch (primitive) {
             case Byte b -> new ByteTag(b);

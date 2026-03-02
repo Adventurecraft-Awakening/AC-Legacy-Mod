@@ -1,14 +1,15 @@
 package dev.adventurecraft.awakening.mixin.nbt;
 
+import dev.adventurecraft.awakening.nbt.TagVisitor;
 import net.minecraft.nbt.EndTag;
-import net.minecraft.nbt.LongTag;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-
-import java.util.Optional;
 
 @Mixin(EndTag.class)
 public abstract class MixinEndTag extends MixinTag {
+
+    public @Override void accept(TagVisitor visitor) {
+        visitor.visit((EndTag) (Object) this);
+    }
 
     @Override
     public EndTag copy() {

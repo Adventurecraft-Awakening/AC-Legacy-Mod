@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.extension.nbt;
 
+import dev.adventurecraft.awakening.nbt.TagVisitor;
 import net.minecraft.nbt.Tag;
 
 import java.io.DataInput;
@@ -9,11 +10,17 @@ import java.util.Optional;
 
 public interface ExTag {
 
-    void invokeWrite(DataOutput output)
-        throws IOException;
+    default void invokeWrite(DataOutput output)
+        throws IOException {
+        throw new AssertionError();
+    }
 
-    void invokeRead(DataInput input)
-        throws IOException;
+    default void invokeRead(DataInput input)
+        throws IOException {
+        throw new AssertionError();
+    }
+
+    void accept(TagVisitor visitor);
 
     Tag copy();
 

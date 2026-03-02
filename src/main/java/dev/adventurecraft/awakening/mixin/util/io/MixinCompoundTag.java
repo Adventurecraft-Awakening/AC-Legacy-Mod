@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.mixin.util.io;
 
 import dev.adventurecraft.awakening.extension.nbt.ExTag;
 import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
+import dev.adventurecraft.awakening.nbt.TagVisitor;
 import it.unimi.dsi.fastutil.bytes.ByteArrays;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.nbt.*;
@@ -12,7 +13,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -121,6 +121,10 @@ public abstract class MixinCompoundTag implements ExCompoundTag {
         return this.findList(key).orElseGet(ListTag::new);
     }
 
+    public @Override void accept(TagVisitor visitor) {
+        visitor.visit((CompoundTag) (Object) this);
+    }
+
     @Override
     public CompoundTag copy() {
         var compound = new CompoundTag();
@@ -133,8 +137,15 @@ public abstract class MixinCompoundTag implements ExCompoundTag {
         this.entries.forEach(consumer);
     }
 
-    @Override
-    public Set<String> getKeys() {
+    public @Override int size() {
+        return this.entries.size();
+    }
+
+    public @Override boolean isEmpty() {
+        return this.entries.isEmpty();
+    }
+
+    public @Override Set<String> keySet() {
         return this.entries.keySet();
     }
 
