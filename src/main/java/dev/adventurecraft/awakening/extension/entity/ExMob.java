@@ -82,4 +82,6 @@ public interface ExMob extends ExEntity {
     int getRandomLookRateVariation();
 
     void setRandomLookRateVariation(int value);
+
+    void setRotUnwrapped(float yRot, float xRot);
 }
