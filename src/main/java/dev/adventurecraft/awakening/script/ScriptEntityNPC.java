@@ -67,4 +67,12 @@ public class ScriptEntityNPC extends ScriptEntityLivingScript {
     public void setTrackPlayer(boolean var1) {
         this.npc.trackPlayer = var1;
     }
+
+    public boolean getIsAttackable() {
+        return this.npc.isAttackable;
+    }
+
+    public void setIsAttackable(boolean var1) {
+        this.npc.isAttackable = var1;
+    }
 }
