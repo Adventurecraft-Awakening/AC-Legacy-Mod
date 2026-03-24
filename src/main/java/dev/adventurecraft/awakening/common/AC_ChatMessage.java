@@ -1,12 +1,14 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.chat.Component;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
+import net.minecraft.client.gui.Font;
 
 import java.util.ArrayList;
 
 public class AC_ChatMessage {
 
-    public final String text;
+    public final Component content;
     public final long timestamp;
 
     public final ArrayList<Line> lines;
@@ -14,8 +16,8 @@ public class AC_ChatMessage {
     public int height;
     public int maxWidth;
 
-    public AC_ChatMessage(String text, long timestamp) {
-        this.text = text;
+    public AC_ChatMessage(Component content, long timestamp) {
+        this.content = content;
         this.timestamp = timestamp;
         this.lines = new ArrayList<>();
     }
@@ -24,9 +26,10 @@ public class AC_ChatMessage {
         return System.currentTimeMillis() - this.timestamp;
     }
 
-    public void rebuild(ExTextRenderer font, int maxWidth) {
-        final String text = this.text;
-        final int textLength = this.text.length();
+    public void rebuild(Font font, int maxWidth) {
+        final String text = this.content.getString();
+        final int textLength = text.length();
+        final var exFont = (ExTextRenderer) font;
 
         int offset = 0;
         int width = 0;
@@ -34,7 +37,7 @@ public class AC_ChatMessage {
 
         this.lines.clear();
         do {
-            TextRect rect = font.measureText(text, offset, textLength, maxWidth, true);
+            TextRect rect = exFont.measureText(text, offset, textLength, maxWidth, true);
             if (rect.charCount() == 0) {
                 break;
             }
@@ -45,7 +48,7 @@ public class AC_ChatMessage {
                 lineEnd -= 1;
             }
 
-            this.lines.add(new Line(offset, lineEnd, rect.width()));
+            this.lines.add(new Line(text.substring(offset, lineEnd), rect.width()));
 
             offset += rect.charCount();
             width = Math.max(rect.width(), width);
@@ -58,6 +61,6 @@ public class AC_ChatMessage {
         this.maxWidth = maxWidth;
     }
 
-    public record Line(int start, int end, int width) {
+    public record Line(CharSequence content, int width) {
     }
 }
