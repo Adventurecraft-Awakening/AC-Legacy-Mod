@@ -49,4 +49,6 @@ public interface ExEntity extends AC_IMultiAttackEntity, EntityClass {
     Object getTag(String key);
 
     Object setTag(String key, Object value);
+
+    void setRotUnwrapped(float yRot, float xRot);
 }

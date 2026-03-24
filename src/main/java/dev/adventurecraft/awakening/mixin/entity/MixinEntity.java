@@ -500,4 +500,29 @@ public abstract class MixinEntity implements ExEntity {
         }
         return this.customData;
     }
+
+    @Unique
+    private static float closestAngle(float target, float reference) {
+        float delta = target - reference;
+
+        while (delta <= -180.0F) {
+            delta += 360.0F;
+        }
+        while (delta > 180.0F) {
+            delta -= 360.0F;
+        }
+
+        return reference + delta;
+    }
+    @Override
+    public void setRotUnwrapped(float yRot, float xRot) {
+        float newYRot = closestAngle(yRot, this.yRot);
+        float newXRot = xRot;
+
+        this.yRotO = this.yRot;
+        this.xRotO = this.xRot;
+
+        this.yRot = newYRot;
+        this.xRot = newXRot;
+    }
 }

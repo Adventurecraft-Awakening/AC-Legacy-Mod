@@ -99,11 +99,7 @@ public class ScriptEntity implements EntityClass {
     }
 
     public void setRotation(float yaw, float pitch) {
-        // Clamp previous values to prevent snapping.
-        this.entity.yRotO %= 360.0f;
-        this.entity.xRotO %= 360.0f;
-
-        this.entity.setRot(yaw, pitch);
+        ((ExEntity) this.entity).setRotUnwrapped(yaw, pitch);
     }
 
     public ScriptVec3 getLookVec() {
