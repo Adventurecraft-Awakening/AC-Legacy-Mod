@@ -108,11 +108,12 @@ public abstract class MixinCuboid implements ExCuboid {
             this.yTexOffs + length + height, this.xTexOffs + length + width, this.yTexOffs + length, w, h);
         this.polygons[1] = ExTexturedQuad.create(new Vertex[]{this.vertices[0], this.vertices[4], this.vertices[7], this.vertices[3]},
             this.xTexOffs + length, this.yTexOffs + length + height, this.xTexOffs, this.yTexOffs + length, w, h);
-        this.polygons[2] = ExTexturedQuad.create(new Vertex[]{this.vertices[5], this.vertices[4], this.vertices[0], this.vertices[1]},
+        this.polygons[2] = ExTexturedQuad.create(new Vertex[]{this.vertices[0], this.vertices[1], this.vertices[5], this.vertices[4]},
             this.xTexOffs + length + width + width, this.yTexOffs,
             this.xTexOffs + length + width, this.yTexOffs + length, w, h);
-        this.polygons[3] = ExTexturedQuad.create(new Vertex[]{this.vertices[2], this.vertices[3], this.vertices[7], this.vertices[6]},
+        this.polygons[3] = ExTexturedQuad.create(new Vertex[]{this.vertices[3], this.vertices[2], this.vertices[6], this.vertices[7]},
             this.xTexOffs + length + width, this.yTexOffs, this.xTexOffs + length, this.yTexOffs + length, w, h);
+
         this.polygons[4] = ExTexturedQuad.create(new Vertex[]{this.vertices[1], this.vertices[0], this.vertices[3], this.vertices[2]},
             this.xTexOffs + length + width + length + width,
             this.yTexOffs + length + height, this.xTexOffs + length + width + length, this.yTexOffs + length, w, h);
