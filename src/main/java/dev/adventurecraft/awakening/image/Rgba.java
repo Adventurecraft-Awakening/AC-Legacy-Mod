@@ -1,5 +1,7 @@
 package dev.adventurecraft.awakening.image;
 
+import dev.adventurecraft.awakening.util.MathF;
+
 public final class Rgba {
 
     public static final int WHITE = 0xffffffff;
@@ -25,6 +27,15 @@ public final class Rgba {
         return (r & 0xff) | ((g & 0xff) << 8) | ((b & 0xff) << 16) | ((a & 0xff) << 24);
     }
 
+    public static int saturateFromRgba8(int r, int g, int b, int a) {
+        return fromRgba8(
+            MathF.clamp(r, 0, 255),
+            MathF.clamp(g, 0, 255),
+            MathF.clamp(b, 0, 255),
+            MathF.clamp(a, 0, 255)
+        );
+    }
+
     public static int withRgb(int rgba, int rgb) {
         return (rgba & 0xff000000) | (rgb & 0xffffff);
     }
@@ -45,6 +56,18 @@ public final class Rgba {
         return rgba >>> 24;
     }
 
+    public static int red(int rgba) {
+        return rgba & 0xff;
+    }
+
+    public static int green(int rgba) {
+        return (rgba >>> 8) & 0xff;
+    }
+
+    public static int blue(int rgba) {
+        return (rgba >>> 16) & 0xff;
+    }
+
     public static int crispBlend(int L, int R) {
         return RgbaF.crispBlend(RgbaF.fromRgba(L), RgbaF.fromRgba(R)).toRgba();
     }
@@ -54,4 +77,34 @@ public final class Rgba {
         RgbaF b = RgbaF.crispBlend(RgbaF.fromRgba(bR), RgbaF.fromRgba(bL));
         return RgbaF.crispBlend(t, b).toRgba();
     }
+
+    public static int toByte(float value) {
+        return (int) Math.floor(value * 255.0F);
+    }
+
+    public static int toByte(double value) {
+        return (int) Math.floor(value * 255.0F);
+    }
+
+    public static int saturateToByte(float value) {
+        return toByte(MathF.clamp(value, 0, 255));
+    }
+
+    public static int saturateToByte(double value) {
+        return toByte(MathF.clamp(value, 0, 255));
+    }
+
+    public static int scale(int color, float rgb) {
+        return scale(color, rgb, rgb, rgb);
+    }
+
+    public static int scale(int color, float r, float g, float b) {
+        return fromRgba8(
+            saturateToByte(red(color) * r),
+            saturateToByte(green(color) * g),
+            saturateToByte(blue(color) * b),
+            color
+        );
+    }
+
 }

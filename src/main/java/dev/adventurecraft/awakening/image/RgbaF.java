@@ -17,8 +17,11 @@ public record RgbaF(float r, float g, float b, float a) {
     public static RgbaF crispBlend(RgbaF L, RgbaF R) {
         float aL = L.a;
         float aR = R.a;
-        float a = (aL + aR) * 0.5f;
+        float a = aL + aR;
+        aL /= a;
+        aR /= a;
 
+        a *= 0.5f;
         if (aL == 0) {
             L = R;
             a *= 0.5f;
@@ -28,11 +31,14 @@ public record RgbaF(float r, float g, float b, float a) {
             a *= 0.5f;
         }
 
-        float div = 1.0f / (aL + aR);
-        float b = (L.b * aL + R.b * aR) * div;
-        float g = (L.g * aL + R.g * aR) * div;
-        float r = (L.r * aL + R.r * aR) * div;
+        float b = L.b * aL + R.b * aR;
+        float g = L.g * aL + R.g * aR;
+        float r = L.r * aL + R.r * aR;
 
         return new RgbaF(r, g, b, a);
+    }
+
+    public static float fromByte(int value) {
+        return (value & 0xff) / 255.0F;
     }
 }

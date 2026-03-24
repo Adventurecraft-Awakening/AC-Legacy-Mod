@@ -9,6 +9,7 @@ import dev.adventurecraft.awakening.filesystem.FileIconFlags;
 import dev.adventurecraft.awakening.filesystem.FileIconOptions;
 import dev.adventurecraft.awakening.filesystem.FileIconRenderer;
 import dev.adventurecraft.awakening.image.ImageFormat;
+import dev.adventurecraft.awakening.image.Rgba;
 import dev.adventurecraft.awakening.layout.*;
 import dev.adventurecraft.awakening.layout.Border;
 import dev.adventurecraft.awakening.layout.Point;
@@ -141,7 +142,7 @@ public class FilePickerWidget extends ScrollableWidget {
 
         float x = (float) entryLocation.x + 3;
         float y = (float) entryLocation.y + 3;
-        exText.drawString(displayName, x, y, 0xffffff, true);
+        exText.drawString(displayName, x, y, Rgba.WHITE, true);
     }
 
     public void charTyped(char codepoint, int key) {
@@ -316,7 +317,7 @@ public class FilePickerWidget extends ScrollableWidget {
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
 
         ts.begin();
-        DrawUtil.fillRect(ts, rect, new IntCorner(0xffffffff), new Rect(0, 0, 1, 1));
+        DrawUtil.fillRect(ts, rect, new IntCorner(Rgba.WHITE), new Rect(0, 0, 1, 1));
         ts.end();
 
         texMan.releaseTexture(texId);

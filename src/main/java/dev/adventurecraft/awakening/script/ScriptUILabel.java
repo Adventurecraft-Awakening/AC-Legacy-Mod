@@ -6,7 +6,6 @@ import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import dev.adventurecraft.awakening.image.Rgba;
 import dev.adventurecraft.awakening.primitives.IntRange;
 import dev.adventurecraft.awakening.text.LinesSpliterator;
-import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.Tesselator;
@@ -44,7 +43,7 @@ public class ScriptUILabel extends UIElement implements ScriptColor {
     @Override
     public void render(Font font, Textures textures, float deltaTime) {
         ScriptVec4 color = this.getColor();
-        int alpha = (int) MathF.clamp((color.getA() * 255.0F), 0, 255);
+        int alpha = Rgba.saturateToByte(color.getA());
         if (alpha == 0) {
             return;
         }
@@ -54,9 +53,9 @@ public class ScriptUILabel extends UIElement implements ScriptColor {
             this.dirty = false;
         }
 
-        int red = (int) MathF.clamp((color.getR() * 255.0F), 0, 255);
-        int green = (int) MathF.clamp((color.getG() * 255.0F), 0, 255);
-        int blue = (int) MathF.clamp((color.getB() * 255.0F), 0, 255);
+        int red = Rgba.saturateToByte(color.getR());
+        int green = Rgba.saturateToByte(color.getG());
+        int blue = Rgba.saturateToByte(color.getB());
         int rgba = Rgba.fromRgba8(red, green, blue, alpha);
 
         double x = this.getXAtTime(deltaTime);

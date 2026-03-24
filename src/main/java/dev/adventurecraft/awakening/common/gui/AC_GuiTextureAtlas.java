@@ -32,7 +32,7 @@ public class AC_GuiTextureAtlas extends Screen {
 
     @Override
     public void render(int mouseX, int mouseY, float tick) {
-        this.fill(0, 0, this.width, this.height, Rgba.fromRgba8(0, 0, 0, 128));
+        this.fill(0, 0, this.width, this.height, Rgba.withAlpha(0, 128));
 
         super.render(mouseX, mouseY, tick);
 
@@ -45,7 +45,7 @@ public class AC_GuiTextureAtlas extends Screen {
         int padding = 4;
         int yOffset = padding + this.scrollY;
 
-        var color = new IntCorner(0xffffffff);
+        var color = new IntCorner(Rgba.WHITE);
         var uv = new Rect(0, 0, 1, 1);
 
         var infoList = new IdentityHashMap<GLTextureInfo, ArrayList<MipLevel>>();
