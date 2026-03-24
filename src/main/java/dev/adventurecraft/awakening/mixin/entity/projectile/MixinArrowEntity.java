@@ -233,4 +233,6 @@ public abstract class MixinArrowEntity extends MixinEntity implements ExArrowEnt
     public void setAttackStrength(int value) {
         this.attackStrength = value;
     }
+
+    public void setOwner(Mob entity){this.owner = entity;}
 }
