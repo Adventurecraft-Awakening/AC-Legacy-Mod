@@ -12,9 +12,15 @@ import org.lwjgl.input.Keyboard;
 @Environment(EnvType.CLIENT)
 public class AC_ChatScreen extends Screen {
 
+    protected final LocalPlayer player;
+
     protected AC_EditBox messageBox;
 
-    public void init() {
+    public AC_ChatScreen(LocalPlayer player) {
+        this.player = player;
+    }
+
+    public @Override void init() {
         Keyboard.enableRepeatEvents(true);
 
         int chatH = 16;
@@ -22,18 +28,23 @@ public class AC_ChatScreen extends Screen {
         var border = new IntBorder(2);
 
         var rect = new IntRect(0, this.height - chatH - barOffset, this.width, chatH).shrink(border);
-        this.messageBox = new AC_EditBox(rect, "");
-        this.messageBox.setActive(true);
+        if (this.messageBox == null) {
+            this.messageBox = new AC_EditBox(rect, "");
+            this.messageBox.setActive(true);
 
-        this.messageBox.setBoxBackColor(Rgba.withAlpha(this.messageBox.getBoxBackColor(), 100));
-        this.messageBox.setBoxBorderColor(Rgba.withAlpha(this.messageBox.getBoxBorderColor(), 100));
+            this.messageBox.setBoxBackColor(Rgba.withAlpha(this.messageBox.getBoxBackColor(), 100));
+            this.messageBox.setBoxBorderColor(Rgba.withAlpha(this.messageBox.getBoxBorderColor(), 100));
+        }
+        else {
+            this.messageBox.setRect(rect);
+        }
     }
 
-    public void removed() {
+    public @Override void removed() {
         Keyboard.enableRepeatEvents(false);
     }
 
-    public void tick() {
+    public @Override void tick() {
         this.messageBox.setActive(true);
         this.messageBox.tick();
     }
@@ -49,18 +60,21 @@ public class AC_ChatScreen extends Screen {
         }
     }
 
-    protected void keyPressed(char eventCharacter, int eventKey) {
+    protected @Override void keyPressed(char eventCharacter, int eventKey) {
         if (this.messageBox.getTickCount() < 1) {
             // Skip first frame since it includes the key that opened chat.
             return;
         }
 
-        if (eventKey == 1) {
+        if (eventKey == Keyboard.KEY_ESCAPE) {
             this.minecraft.setScreen(null);
         }
-        else if (eventKey == 28) {
+        else if (eventKey == Keyboard.KEY_RETURN) {
             this.minecraft.setScreen(null);
             this.submitMessage();
+        }
+        else if (eventKey == Keyboard.KEY_TAB) {
+
         }
         else {
             this.messageBox.charTyped(eventCharacter, eventKey);
@@ -83,7 +97,7 @@ public class AC_ChatScreen extends Screen {
         super.render(mouseX, mouseY, a);
     }
 
-    protected void mouseClicked(int mouseX, int mouseY, int button) {
+    protected @Override void mouseClicked(int mouseX, int mouseY, int button) {
         if (button == 0) {
             String name = this.minecraft.gui.selectedName;
             if (name != null) {

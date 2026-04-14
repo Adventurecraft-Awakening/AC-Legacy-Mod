@@ -626,7 +626,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
                 this.setScreen(null);
             }
             else if (this.player.isSleeping() && this.level != null && this.level.isClientSide) {
-                this.setScreen(new AC_InBedChatScreen());
+                this.setScreen(new AC_InBedChatScreen(this.player));
             }
         }
         else if (this.screen != null && this.screen instanceof AC_InBedChatScreen && !this.player.isSleeping()) {
@@ -750,7 +750,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
                             this.player.drop();
                         }
                         else if ((this.isOnline() || AC_DebugMode.active) && eventKey == this.options.keyChat.key) {
-                            this.setScreen(new AC_ChatScreen());
+                            this.setScreen(new AC_ChatScreen(this.player));
                         }
                         else if (AC_DebugMode.active && isControlPressed) {
                             var mc = (Minecraft) (Object) this;
