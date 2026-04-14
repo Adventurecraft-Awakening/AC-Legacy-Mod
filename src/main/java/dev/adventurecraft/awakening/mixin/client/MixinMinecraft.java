@@ -767,9 +767,10 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
                     while (true) {
                         if (currentSlot >= 9) {
-                            if (eventKey == this.options.keyFog.key) {
-                                this.options.toggle(Option.RENDER_DISTANCE, !isShiftPressed ? 1 : -1);
-                            }
+                            // TODO: fix RENDER_DISTANCE toggle?
+                            //if (eventKey == this.options.keyFog.key) {
+                            //    this.options.toggle(Option.RENDER_DISTANCE, !isShiftPressed ? 1 : -1);
+                            //}
                             break;
                         }
 
