@@ -46,14 +46,14 @@ public class FilePickerWidget extends ScrollableWidget {
     public FilePickerWidget(Screen parent, IntRect layoutRect, int entryHeight) {
         super(((ExScreen) parent).getMinecraft(), layoutRect, entryHeight);
 
-        this.searchPatternBox = makePatternBox(parent, layoutRect);
+        this.searchPatternBox = new SearchPatternBox(parent, createPatternBoxRect(layoutRect));
     }
 
-    private static SearchPatternBox makePatternBox(Screen parent, IntRect layoutRect) {
+    private static IntRect createPatternBoxRect(IntRect layoutRect) {
         var offset = new IntPoint(2, 0);
         int width = Math.min(layoutRect.width() / 2 - offset.x, 120);
         int x = layoutRect.right() - width - offset.x;
-        return new SearchPatternBox(parent, new IntRect(x, layoutRect.y + 2, width, 16));
+        return new IntRect(x, layoutRect.y + 2, width, 16);
     }
 
     @Override

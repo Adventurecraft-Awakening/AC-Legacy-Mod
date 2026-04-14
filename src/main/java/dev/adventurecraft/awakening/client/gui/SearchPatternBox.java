@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.client.gui;
 
 import dev.adventurecraft.awakening.client.gui.components.AC_EditBox;
+import dev.adventurecraft.awakening.extension.client.gui.components.ExButton;
 import dev.adventurecraft.awakening.extension.client.gui.screen.ExScreen;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import dev.adventurecraft.awakening.image.Rgba;
@@ -35,14 +36,10 @@ public class SearchPatternBox {
         this.textBox = new AC_EditBox(layoutRect, "");
         this.font = ((ExScreen) parent).getFont();
 
-        int bX = layoutRect.x - 1;
-        int bY = layoutRect.y;
-        int bW = layoutRect.h + 1;
-        int bH = layoutRect.h - 1;
-
-        this.matchCaseButton = new Button(10001, bX - bW * 3, bY, bW, bH, "");
-        this.matchWordsButton = new Button(10002, bX - bW * 2, bY, bW, bH, "");
-        this.useRegexButton = new Button(10003, bX - bW, bY, bW, bH, "");
+        this.matchCaseButton = new Button(10001, 0, 0, "");
+        this.matchWordsButton = new Button(10002, 0, 0, "");
+        this.useRegexButton = new Button(10003, 0, 0, "");
+        this.setRect(layoutRect);
 
         var buttonList = (List<Button>) parent.buttons;
         buttonList.add(this.matchCaseButton);
@@ -50,6 +47,19 @@ public class SearchPatternBox {
         buttonList.add(this.useRegexButton);
 
         this.refreshButtonLabels();
+    }
+
+    public void setRect(IntRect rect) {
+        this.textBox.setRect(rect);
+
+        int bX = rect.x - 1;
+        int bY = rect.y;
+        int bW = rect.h + 1;
+        int bH = rect.h - 1;
+
+        ((ExButton) this.matchCaseButton).setRect(bX - bW * 3, bY, bW, bH);
+        ((ExButton) this.matchWordsButton).setRect(bX - bW * 2, bY, bW, bH);
+        ((ExButton) this.useRegexButton).setRect(bX - bW, bY, bW, bH);
     }
 
     public void markDirty() {

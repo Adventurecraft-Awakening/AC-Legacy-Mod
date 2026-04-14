@@ -190,6 +190,7 @@ public class AC_GuiMobSpawner extends Screen {
 
             int scriptY = 124;
             int scriptHeight = this.height - scriptY;
+            // TODO: do not recreate widget
             this.scriptWidget = new FilePickerWidget(
                 this,
                 new IntRect(this.width / 2, scriptY, this.width / 2, scriptHeight),

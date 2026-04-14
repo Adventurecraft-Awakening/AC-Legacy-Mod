@@ -17,8 +17,6 @@ public class AC_ValueBox<T> extends AC_EditBox {
     private Property<T> property;
     private Format format;
 
-    private int prevVersion;
-    private int version;
     private boolean resupply;
 
     public AC_ValueBox(IntRect rect, Property<T> property, Format format) {
@@ -27,10 +25,6 @@ public class AC_ValueBox<T> extends AC_EditBox {
         this.format = Objects.requireNonNull(format);
 
         this.supply();
-    }
-
-    protected @Override void onValueChanged() {
-        this.version++;
     }
 
     protected @Override void onSubmit() {
@@ -42,7 +36,8 @@ public class AC_ValueBox<T> extends AC_EditBox {
         this.resetTextColor();
     }
 
-    private void rebind() {
+    protected @Override void onRenderVersionChange() {
+        super.onRenderVersionChange();
         this.resetError();
 
         String value = this.getValue();
@@ -69,11 +64,6 @@ public class AC_ValueBox<T> extends AC_EditBox {
 
     @Override
     public void render(Font font) {
-        if (this.prevVersion != this.version) {
-            this.prevVersion = this.version;
-            this.rebind();
-        }
-
         if (this.resupply) {
             this.resupply = false;
             this.supply();
