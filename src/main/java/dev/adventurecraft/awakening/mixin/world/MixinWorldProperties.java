@@ -102,12 +102,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
 
         for (int i = 0; i < 16; ++i) {
             Optional<Float> value = exTag.findFloat("brightness" + i);
-            if (value.isPresent()) {
-                this.brightness[i] = value.get();
-            }
-            else {
-                this.brightness[i] = LightHelper.getDefaultLightAtIndex(i);
-            }
+            this.brightness[i] = value.isPresent() ? value.get() : LightHelper.getDefaultLightAtIndex(i);
         }
 
         exTag.findCompound("globalScope").ifPresent(this::setGlobalScope);

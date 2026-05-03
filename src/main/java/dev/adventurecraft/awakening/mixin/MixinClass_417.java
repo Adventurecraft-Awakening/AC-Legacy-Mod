@@ -29,7 +29,7 @@ public abstract class MixinClass_417 {
         int n3 = this.z1 - this.z0 + 1;
         int n4 = n * n2 * n3;
         if (n4 > 32768) {
-            ACMod.LOGGER.warn("Light too large, skipping!");
+            ACMod.LOGGER.warn("Light too large ({}), skipping!", n4);
             return;
         }
 
@@ -128,5 +128,45 @@ public abstract class MixinClass_417 {
             return value;
         }
         return Math.max(value, level.getBrightness(this.type, x, y, z));
+    }
+
+    @Overwrite
+    public boolean expandToContain(int xA, int yA, int zA, int xB, int yB, int zB) {
+        if (xA >= this.x0 && yA >= this.y0 && zA >= this.z0 && xB <= this.x1 && yB <= this.y1 && zB <= this.z1) {
+            // Expansion is contained fully within this update.
+            return true;
+        }
+
+        // Avoid expanding any dimension more than `n` tiles.
+        final int n = 1;
+        if (xA < this.x0 - n || yA < this.y0 - n || zA < this.z0 - n || //
+            xB > this.x1 + n || yB > this.y1 + n || zB > this.z1 + n) {
+            return false;
+        }
+
+        xA = Math.min(xA, this.x0);
+        yA = Math.min(yA, this.y0);
+        zA = Math.min(zA, this.z0);
+
+        xB = Math.max(xB, this.x1);
+        yB = Math.max(yB, this.y1);
+        zB = Math.max(zB, this.z1);
+
+        // TODO: add 1 for actual size? but that would merge a lot more light updates...
+        int w = (this.x1 - this.x0);
+        int h = (this.y1 - this.y0);
+        int d = (this.z1 - this.z0);
+
+        if (((xB - xA) * (yB - yA) * (zB - zA)) - (w * h * d) > 2) {
+            return false;
+        }
+
+        this.x0 = xA;
+        this.y0 = yA;
+        this.z0 = zA;
+        this.x1 = xB;
+        this.y1 = yB;
+        this.z1 = zB;
+        return true;
     }
 }

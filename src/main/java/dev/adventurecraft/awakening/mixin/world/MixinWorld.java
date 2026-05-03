@@ -46,12 +46,7 @@ import net.minecraft.util.ProgressListener;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.global.LightningBolt;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelListener;
-import net.minecraft.world.level.LevelSource;
-import net.minecraft.world.level.LightLayer;
-import net.minecraft.world.level.LightUpdate;
-import net.minecraft.world.level.TickNextTickData;
+import net.minecraft.world.level.*;
 import net.minecraft.world.level.chunk.ChunkCache;
 import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -83,7 +78,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Mixin(Level.class)
-public abstract class MixinWorld implements ExWorld, LevelSource, AC_LevelSource, Closeable {
+public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
 
     @Unique private static final int MAX_LIGHT = 15;
 
@@ -122,6 +117,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource, AC_LevelSource
     @Shadow public List<Entity> globalEntities;
     @Shadow private long cloudColor;
     @Shadow private List<Entity> es;
+    @Shadow private int maxRecurse;
     @Shadow private boolean spawnFriendlies;
     @Shadow private boolean spawnEnemies;
     @Shadow private long sessionId;
@@ -1191,7 +1187,37 @@ public abstract class MixinWorld implements ExWorld, LevelSource, AC_LevelSource
     }
 
     @Overwrite
-    public void updateLight(LightLayer lightType, int x0, int y0, int z0, int x1, int y1, int z1, boolean var8) {
+    public boolean updateLights() {
+        if (this.maxRecurse >= 50) {
+            return false;
+        }
+        ++this.maxRecurse;
+        var self = (Level) (Object) this;
+        try {
+            int n = 1024 * 64;
+            while (!this.lightUpdates.isEmpty()) {
+                if (n <= 0) {
+                    return true;
+                }
+                LightUpdate l = this.lightUpdates.removeLast();
+
+                int w = l.x1 - l.x0 + 1;
+                int h = l.y1 - l.y0 + 1;
+                int d = l.z1 - l.z0 + 1;
+                int volume = w * h * d;
+                n -= volume;
+
+                l.update(self);
+            }
+            return false;
+        }
+        finally {
+            --this.maxRecurse;
+        }
+    }
+
+    @Overwrite
+    public void updateLight(LightLayer lightType, int x0, int y0, int z0, int x1, int y1, int z1, boolean expand) {
         if (this.dimension.hasCeiling && lightType == LightLayer.SKY) {
             return;
         }
@@ -1212,7 +1238,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource, AC_LevelSource
                 return;
             }
 
-            if (var8) {
+            if (expand) {
                 int count = Math.min(this.lightUpdates.size(), 5);
                 for (int i = 0; i < count; ++i) {
                     LightUpdate update = this.lightUpdates.get(this.lightUpdates.size() - i - 1);
