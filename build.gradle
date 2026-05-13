@@ -1,7 +1,7 @@
 plugins {
     id "maven-publish"
-    id "fabric-loom" version "1.14.6"
-    id "babric-loom-extension" version "1.13.3"
+    id "fabric-loom" version "1.15.5"
+    id "babric-loom-extension" version "1.15.3"
 }
 
 import groovy.json.JsonOutput
