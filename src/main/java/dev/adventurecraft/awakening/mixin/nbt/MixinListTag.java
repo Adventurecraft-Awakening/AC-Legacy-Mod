@@ -4,6 +4,7 @@ import dev.adventurecraft.awakening.collections.bytes.ByteArrayList;
 import dev.adventurecraft.awakening.collections.bytes.ByteList;
 import dev.adventurecraft.awakening.extension.nbt.ExListTag;
 import dev.adventurecraft.awakening.extension.nbt.ExTag;
+import dev.adventurecraft.awakening.nbt.SnbtTagVisitor;
 import dev.adventurecraft.awakening.nbt.TagVisitor;
 import dev.adventurecraft.awakening.util.TagUtil;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
@@ -216,5 +217,9 @@ public abstract class MixinListTag extends MixinTag implements ExListTag, Iterab
             }
         }
         return Optional.empty();
+    }
+
+    public @Override String toString() {
+        return new SnbtTagVisitor("").resetAndBuild((ListTag) (Object) this);
     }
 }
