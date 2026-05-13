@@ -29,6 +29,8 @@ import java.util.concurrent.atomic.AtomicReference;
 @Environment(EnvType.CLIENT)
 public class AC_ChatScreen extends Screen {
 
+    public static final String JS_PROMPT = ""; // TODO: "$";
+
     protected final LocalPlayer player;
 
     protected AC_EditBox messageBox;
@@ -99,27 +101,28 @@ public class AC_ChatScreen extends Screen {
             this.messageBox.charTyped(eventCharacter, eventKey);
 
             var message = this.messageBox.getValueSpan();
-            String prompt = ServerCommandSource.COMMAND_PROMPT;
-            if (StringUtil.startsWith(message, prompt)) {
+            String cmdPrompt = ServerCommandSource.COMMAND_PROMPT;
+            if (StringUtil.startsWith(message, cmdPrompt)) {
                 var exPlayer = (ExAbstractClientPlayerEntity) this.player;
                 var dispatcher = exPlayer.getCommandDispatcher();
 
-                var reader = new StringReader(message.subSequence(prompt.length(), message.length()).toString());
+                var reader = new StringReader(message.subSequence(cmdPrompt.length(), message.length()).toString());
                 var parsed = dispatcher.parse(reader, exPlayer.createCommandSource());
-                int cursor = Math.max(0, this.messageBox.getSelectionOrFull().end() - prompt.length());
+                int cursor = Math.max(0, this.messageBox.getSelectionOrFull().end() - cmdPrompt.length());
                 this.suggestionFuture = dispatcher.getCompletionSuggestions(parsed, cursor);
             }
-            else if (StringUtil.startsWith(message, "$")) {
+            else if (StringUtil.startsWith(message, JS_PROMPT)) {
                 var script = ((ExWorld) this.player.level).getScript();
-                var src = message.subSequence(prompt.length(), message.length()).toString();
-                int cursor = Math.max(0, this.messageBox.getSelectionOrFull().end() - prompt.length());
+                var src = message.subSequence(JS_PROMPT.length(), message.length()).toString();
+                int cursor = Math.max(0, this.messageBox.getSelectionOrFull().end() - JS_PROMPT.length());
 
                 var env = CompilerEnvirons.ideEnvirons();
                 env.setXmlAvailable(false);
 
-                AstRoot root = parseAst(env, src, "<cmd>", 0);
+                AstRoot root = parseAst(env, src, "<cmd_suggest>", 0);
                 if (root != null) {
                     var sugg = suggestAtCursor(script.getContext(), script.globalScope, root, cursor);
+                    // TODO:
                 }
             }
             else {
@@ -141,7 +144,7 @@ public class AC_ChatScreen extends Screen {
 
         var future = new CompletableFuture<Suggestions>();
 
-
+        // TODO:
 
         return future;
     }
