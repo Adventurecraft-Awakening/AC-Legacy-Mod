@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.nbt;
 
-import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
+import dev.adventurecraft.awakening.extension.nbt.ExCompoundTag;
 import net.minecraft.nbt.*;
 
 import java.util.Collection;

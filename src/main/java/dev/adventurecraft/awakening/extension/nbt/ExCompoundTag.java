@@ -1,10 +1,9 @@
-package dev.adventurecraft.awakening.extension.util.io;
+package dev.adventurecraft.awakening.extension.nbt;
 
 import dev.adventurecraft.awakening.codec.DataResult;
 import dev.adventurecraft.awakening.codec.Decoder;
 import dev.adventurecraft.awakening.codec.Encoder;
 import dev.adventurecraft.awakening.codec.ops.NbtOps;
-import dev.adventurecraft.awakening.extension.nbt.ExTag;
 import dev.adventurecraft.awakening.util.TagUtil;
 import net.minecraft.nbt.*;
 

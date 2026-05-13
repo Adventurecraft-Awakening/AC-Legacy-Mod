@@ -3,7 +3,7 @@ package dev.adventurecraft.awakening.mixin.entity;
 import dev.adventurecraft.awakening.common.IEntityPather;
 import dev.adventurecraft.awakening.extension.entity.ExPathfinderMob;
 import dev.adventurecraft.awakening.extension.entity.ai.pathing.ExEntityPath;
-import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
+import dev.adventurecraft.awakening.extension.nbt.ExCompoundTag;
 import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;

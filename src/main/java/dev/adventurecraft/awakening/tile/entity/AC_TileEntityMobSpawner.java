@@ -7,7 +7,7 @@ import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.entity.AC_EntityLivingScript;
 import dev.adventurecraft.awakening.entity.AC_EntitySkeletonSword;
 import dev.adventurecraft.awakening.extension.entity.ExFallingBlockEntity;
-import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
+import dev.adventurecraft.awakening.extension.nbt.ExCompoundTag;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.util.Xoshiro128PP;

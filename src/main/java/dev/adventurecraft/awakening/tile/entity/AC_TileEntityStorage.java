@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.tile.entity;
 
 import dev.adventurecraft.awakening.common.Coord;
-import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
+import dev.adventurecraft.awakening.extension.nbt.ExCompoundTag;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.tile.AC_Blocks;

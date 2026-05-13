@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.mixin.nbt;
 
 import dev.adventurecraft.awakening.extension.nbt.ExTag;
-import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
+import dev.adventurecraft.awakening.extension.nbt.ExCompoundTag;
 import dev.adventurecraft.awakening.nbt.SnbtTagVisitor;
 import dev.adventurecraft.awakening.nbt.TagVisitor;
 import it.unimi.dsi.fastutil.bytes.ByteArrays;

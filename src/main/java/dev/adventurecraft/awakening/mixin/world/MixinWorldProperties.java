@@ -4,7 +4,7 @@ import dev.adventurecraft.awakening.extension.nbt.ExTag;
 import dev.adventurecraft.awakening.tile.AC_BlockEffect;
 import dev.adventurecraft.awakening.common.LightHelper;
 import dev.adventurecraft.awakening.common.WorldGenProperties;
-import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
+import dev.adventurecraft.awakening.extension.nbt.ExCompoundTag;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.world.GameRules;

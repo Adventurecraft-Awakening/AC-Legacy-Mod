@@ -4,7 +4,7 @@ import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.common.IEntityPather;
 import dev.adventurecraft.awakening.extension.entity.ExMob;
 import dev.adventurecraft.awakening.extension.entity.ai.pathing.ExEntityPath;
-import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
+import dev.adventurecraft.awakening.extension.nbt.ExCompoundTag;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.script.EntityDescriptions;
 import dev.adventurecraft.awakening.script.ScopeTag;

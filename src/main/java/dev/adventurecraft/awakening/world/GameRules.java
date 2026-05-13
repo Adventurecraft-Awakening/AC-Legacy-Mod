@@ -6,7 +6,7 @@ package dev.adventurecraft.awakening.world;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
+import dev.adventurecraft.awakening.extension.nbt.ExCompoundTag;
 import dev.adventurecraft.awakening.util.TagUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntTag;
