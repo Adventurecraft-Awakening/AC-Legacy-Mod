@@ -1,5 +1,9 @@
 package dev.adventurecraft.awakening.extension.util.io;
 
+import dev.adventurecraft.awakening.codec.DataResult;
+import dev.adventurecraft.awakening.codec.Decoder;
+import dev.adventurecraft.awakening.codec.Encoder;
+import dev.adventurecraft.awakening.codec.ops.NbtOps;
 import dev.adventurecraft.awakening.extension.nbt.ExTag;
 import dev.adventurecraft.awakening.util.TagUtil;
 import net.minecraft.nbt.*;
@@ -57,6 +61,14 @@ public interface ExCompoundTag extends ExTag {
 
     default ListTag findListOrEmpty(String key) {
         return this.findList(key).orElseGet(ListTag::new);
+    }
+
+    default <T> Optional<T> decode(String key, Decoder<T> decoder) {
+        return this.findTag(key).map(t -> decoder.read(NbtOps.DEFAULT, t)).map(DataResult::unwrap);
+    }
+
+    default <T> void encode(String key, Encoder<T> encoder, T value) {
+        this.putTag(key, encoder.encode(value, NbtOps.DEFAULT).unwrap());
     }
 
     @Override
