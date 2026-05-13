@@ -13,17 +13,49 @@ public abstract class MixinByteTag extends MixinTag implements NumericTag {
 
     @Shadow public byte data;
 
-    @Override
-    public Optional<Integer> getInt() {
-        return Optional.of((int) this.data);
-    }
-
     public @Override void accept(TagVisitor visitor) {
         visitor.visit((ByteTag) (Object) this);
     }
 
-    @Override
-    public ByteTag copy() {
+    public @Override ByteTag copy() {
         return new ByteTag(this.data);
     }
+
+    public @Override Number box() {
+        return this.data;
+    }
+
+    public @Override byte byteValue() {
+        return this.data;
+    }
+
+    public @Override short shortValue() {
+        return this.data;
+    }
+
+    public @Override int intValue() {
+        return this.data;
+    }
+
+    public @Override long longValue() {
+        return this.data;
+    }
+
+    public @Override float floatValue() {
+        return this.data;
+    }
+
+    public @Override double doubleValue() {
+        return this.data;
+    }
+
+    public @Override Optional<Number> asNumber() {
+        return Optional.of(this.data);
+    }
+
+    public @Override Optional<Integer> asInt() {
+        return Optional.of((int) this.data);
+    }
+
+    // TODO: cache every byte value when Tag.typeName is removed
 }

@@ -353,7 +353,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         this.replacementTextures.clear();
 
         ((ExCompoundTag) this.replacementTag).forEach((key, tag) -> ((ExTag) tag)
-            .getString()
+            .asString()
             .ifPresent(name -> AC_BlockEffect.replaceTexture(world, key, name)));
     }
 

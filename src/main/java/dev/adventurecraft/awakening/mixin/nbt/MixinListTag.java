@@ -193,7 +193,7 @@ public abstract class MixinListTag extends MixinTag implements ExListTag, Iterab
                 return Optional.of(intList.getInt(index));
             }
             if (list.get(index) instanceof ExTag tag) {
-                return tag.getInt();
+                return tag.asInt();
             }
         }
         return Optional.empty();
@@ -211,7 +211,7 @@ public abstract class MixinListTag extends MixinTag implements ExListTag, Iterab
                     return Optional.of(doubleList.getDouble(index));
                 }
                 if (list.get(index) instanceof ExTag tag) {
-                    return tag.getDouble();
+                    return tag.asDouble();
                 }
             }
         }

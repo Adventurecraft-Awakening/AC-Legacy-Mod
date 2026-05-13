@@ -1,4 +1,4 @@
-package dev.adventurecraft.awakening.mixin.util.io;
+package dev.adventurecraft.awakening.mixin.nbt;
 
 import dev.adventurecraft.awakening.extension.nbt.ExTag;
 import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;

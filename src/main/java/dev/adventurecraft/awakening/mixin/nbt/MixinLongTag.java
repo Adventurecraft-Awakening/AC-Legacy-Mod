@@ -6,30 +6,44 @@ import net.minecraft.nbt.LongTag;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-import java.util.Optional;
-
 @Mixin(LongTag.class)
 public abstract class MixinLongTag extends MixinTag implements NumericTag {
 
     @Shadow public long data;
 
-    @Override
-    public Optional<Integer> getInt() {
-        long l = this.data;
-        int i = (int) l;
-        return i == l ? Optional.of(i) : Optional.empty();
-    }
-
-    public Optional<Long> getLong() {
-        return Optional.of(this.data);
-    }
-
     public @Override void accept(TagVisitor visitor) {
         visitor.visit((LongTag) (Object) this);
     }
 
-    @Override
-    public LongTag copy() {
+    public @Override LongTag copy() {
         return new LongTag(this.data);
+    }
+
+    public @Override Number box() {
+        return this.data;
+    }
+
+    public @Override byte byteValue() {
+        return (byte) (this.data & 0xffL);
+    }
+
+    public @Override short shortValue() {
+        return (short) (this.data & 0xffffL);
+    }
+
+    public @Override int intValue() {
+        return (int) this.data;
+    }
+
+    public @Override long longValue() {
+        return this.data;
+    }
+
+    public @Override float floatValue() {
+        return this.data;
+    }
+
+    public @Override double doubleValue() {
+        return this.data;
     }
 }

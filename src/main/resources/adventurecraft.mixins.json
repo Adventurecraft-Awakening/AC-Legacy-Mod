@@ -152,7 +152,7 @@
     "nbt.MixinStringTag",
     "nbt.MixinTag",
     "util.MixinMth",
-    "util.io.MixinCompoundTag",
+    "nbt.MixinCompoundTag",
     "world.MixinCakeTile",
     "world.MixinWorld",
     "world.MixinWorldManager",

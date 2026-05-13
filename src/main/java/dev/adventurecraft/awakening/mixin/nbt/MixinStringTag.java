@@ -13,17 +13,15 @@ public abstract class MixinStringTag extends MixinTag implements PrimitiveTag {
 
     @Shadow public String contents;
 
-    @Override
-    public Optional<String> getString() {
-        return Optional.of(this.contents);
-    }
-
     public @Override void accept(TagVisitor visitor) {
         visitor.visit((StringTag) (Object) this);
     }
 
-    @Override
-    public StringTag copy() {
+    public @Override StringTag copy() {
         return new StringTag(this.contents);
+    }
+
+    public @Override Optional<String> asString() {
+        return Optional.of(this.contents);
     }
 }

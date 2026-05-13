@@ -1,8 +1,13 @@
 package dev.adventurecraft.awakening.nbt;
 
+import dev.adventurecraft.awakening.extension.nbt.ExTag;
 import net.minecraft.nbt.*;
 
 public interface TagVisitor {
+
+    default void visit(Tag tag) {
+        ((ExTag) tag).accept(this);
+    }
 
     default void visit(StringTag stringTag) {
     }
