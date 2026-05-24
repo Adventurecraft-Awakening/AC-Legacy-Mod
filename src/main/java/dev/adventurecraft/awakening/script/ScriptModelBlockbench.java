@@ -24,6 +24,14 @@ public class ScriptModelBlockbench extends ScriptModelBase {
     public float pivotY = 0.0F;
     public float pivotZ = 0.0F;
 
+    public double worldX = 0.0D;
+    public double worldY = 0.0D;
+    public double worldZ = 0.0D;
+
+    public float worldYaw = 0.0F;
+    public float worldPitch = 0.0F;
+    public float worldRoll = 0.0F;
+
     public ScriptModelBlockbench() {
         this.addToRendering();
     }
@@ -39,16 +47,34 @@ public class ScriptModelBlockbench extends ScriptModelBase {
         super.transform(partialTick, matrix);
 
         float invDelta = 1.0F - partialTick;
+
         double x = partialTick * this.x + invDelta * this.prevX;
         double y = partialTick * this.y + invDelta * this.prevY;
         double z = partialTick * this.z + invDelta * this.prevZ;
 
         float pxSize = this.pixelSize;
-        // Move Rotation Origin to given pivot
-        matrix.translate(-this.pivotX * pxSize, this.pivotY * pxSize, -this.pivotZ * pxSize);
+
+        // World/model transform layer
+        matrix.translate(
+            (float) (this.worldX * pxSize),
+            (float) (this.worldY * pxSize),
+            (float) (this.worldZ * pxSize)
+        );
+
+        matrix.rotateY(MathF.toRadians(this.worldYaw));
+        matrix.rotateX(MathF.toRadians(this.worldPitch));
+        matrix.rotateZ(MathF.toRadians(this.worldRoll));
+
+        // Move rotation origin to given pivot
+        matrix.translate(
+            -this.pivotX * pxSize,
+            this.pivotY * pxSize,
+            -this.pivotZ * pxSize
+        );
 
         float deg = MathF.toRadians(partialTick);
         float invDeg = MathF.toRadians(invDelta);
+
         matrix.rotateZ(-(deg * this.roll + invDeg * this.prevRoll));
         matrix.rotateY(-(deg * -this.pitch + invDeg * -this.prevPitch));
         matrix.rotateX(deg * -this.yaw + invDeg * -this.prevYaw);
@@ -56,11 +82,12 @@ public class ScriptModelBlockbench extends ScriptModelBase {
         // Apply scaling
         matrix.scale(this.scaleX, this.scaleY, this.scaleZ);
 
-        // Move Object to intended Position
+        // Move object to intended local Blockbench position
         matrix.translate(
             (float) ((-x - this.sizeX + this.pivotX) * pxSize),
-            (float) ((y - this.pivotY) * pxSize),
-            (float) ((-z - this.sizeZ + this.pivotZ) * pxSize));
+            (float) (( y - this.pivotY) * pxSize),
+            (float) ((-z - this.sizeZ + this.pivotZ) * pxSize)
+        );
     }
 
     @Override
@@ -136,6 +163,44 @@ public class ScriptModelBlockbench extends ScriptModelBase {
 
     public ScriptVec3 getPivot() {
         return new ScriptVec3(this.pivotX, this.pivotY, this.pivotZ);
+    }
+
+    public void setWorldPosition(double x, double y, double z) {
+        this.worldX = x * 16.0D;
+        this.worldY =  y * 16.0D;
+        this.worldZ = z * 16.0D;
+        this.markCollisionDirty();
+    }
+
+    public ScriptVec3 getWorldPosition() {
+        return new ScriptVec3(
+            this.worldX / 16.0D,
+            this.worldY / 16.0D,
+            this.worldZ / 16.0D
+        );
+    }
+
+    public void setWorldRotation(float yaw, float pitch, float roll) {
+        this.worldYaw = yaw;
+        this.worldPitch = pitch;
+        this.worldRoll = roll;
+        this.markCollisionDirty();
+    }
+
+    public ScriptVec3 getWorldRotation() {
+        return new ScriptVec3(this.worldYaw, this.worldPitch, this.worldRoll);
+    }
+
+    public void setWorldTransform(
+        double x,
+        double y,
+        double z,
+        float yaw,
+        float pitch,
+        float roll
+    ) {
+        this.setWorldPosition(x, y, z);
+        this.setWorldRotation(yaw, pitch, roll);
     }
 }
 
