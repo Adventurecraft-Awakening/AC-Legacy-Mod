@@ -169,7 +169,7 @@ public class ScriptModelBlockbench extends ScriptModelBase {
         this.worldX = x * 16.0D;
         this.worldY =  y * 16.0D;
         this.worldZ = z * 16.0D;
-        this.markCollisionDirty();
+        //this.markCollisionDirty();
     }
 
     public ScriptVec3 getWorldPosition() {
@@ -184,7 +184,7 @@ public class ScriptModelBlockbench extends ScriptModelBase {
         this.worldYaw = yaw;
         this.worldPitch = pitch;
         this.worldRoll = roll;
-        this.markCollisionDirty();
+        //this.markCollisionDirty();
     }
 
     public ScriptVec3 getWorldRotation() {
