@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.util;
 
-import dev.adventurecraft.awakening.common.Coord;
+import dev.adventurecraft.awakening.math.IntVec3;
 import net.minecraft.world.phys.Vec3;
 import org.lwjgl.util.vector.Vector3f;
 
@@ -27,7 +27,7 @@ public final class VecUtil {
         return l >> 16;
     }
 
-    public static long getSeed(Coord coord) {
-        return getSeed(coord.x, coord.y, coord.z);
+    public static long getSeed(IntVec3 pos) {
+        return getSeed(pos.x(), pos.y(), pos.z());
     }
 }

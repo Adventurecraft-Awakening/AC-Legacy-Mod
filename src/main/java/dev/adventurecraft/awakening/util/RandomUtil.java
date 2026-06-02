@@ -1,8 +1,11 @@
 package dev.adventurecraft.awakening.util;
 
+import dev.adventurecraft.awakening.world.BlockPos;
+
 import java.io.*;
 import java.security.SecureRandom;
 import java.util.Random;
+import java.util.random.RandomGenerator;
 
 public final class RandomUtil {
 
@@ -31,5 +34,13 @@ public final class RandomUtil {
         catch (IOException | ClassNotFoundException ex) {
             throw new AssertionError(null, ex);
         }
+    }
+
+    public static RandomGenerator at(long seed, int x, int y, int z) {
+        return new Random(VecUtil.getSeed(x, y, z) ^ seed);
+    }
+
+    public static RandomGenerator at(long seed, BlockPos pos) {
+        return at(seed, pos.x(), pos.y(), pos.z());
     }
 }

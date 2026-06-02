@@ -1,6 +1,10 @@
 package dev.adventurecraft.awakening.util;
 
+import dev.adventurecraft.awakening.extension.nbt.ExListTag;
+import dev.adventurecraft.awakening.world.BlockPos;
 import net.minecraft.nbt.*;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
@@ -102,6 +106,36 @@ public final class TagUtil {
                 yield null;
             }
         };
+    }
+
+    public static BlockPos posFromTag(@Nullable ListTag tag) {
+        if (tag == null) {
+            return BlockPos.ZERO;
+        }
+        var t = (ExListTag) tag;
+        int x = t.getInt(0).orElse(0);
+        int y = t.getInt(1).orElse(0);
+        int z = t.getInt(2).orElse(0);
+        return new BlockPos.Mut(x, y, z);
+    }
+
+    public static BlockPos posFromTag(Optional<ListTag> tag) {
+        return posFromTag(tag.orElse(null));
+    }
+
+    public static Vec3 vecFromTag(@Nullable ListTag tag) {
+        if (tag == null) {
+            return Vec3.create(0, 0, 0);
+        }
+        var t = (ExListTag) tag;
+        double x = t.getDouble(0).orElse(0.0);
+        double y = t.getDouble(1).orElse(0.0);
+        double z = t.getDouble(2).orElse(0.0);
+        return Vec3.create(x, y, z);
+    }
+
+    public static Vec3 vecFromTag(Optional<ListTag> tag) {
+        return vecFromTag(tag.orElse(null));
     }
 
     public static byte throwInvalidType(Object item) {
