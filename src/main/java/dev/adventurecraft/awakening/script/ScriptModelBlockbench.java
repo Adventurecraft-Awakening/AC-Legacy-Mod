@@ -7,11 +7,12 @@ import org.lwjgl.util.vector.Matrix4f;
 
 public class ScriptModelBlockbench extends ScriptModelBase {
 
-    float pixelSize = 0.0625f;
+    private static final float PIXEL_SIZE = 0.0625F; // 1 / 16
 
     public float prevScaleX;
     public float prevScaleY;
     public float prevScaleZ;
+
     public float scaleX = 1.0F;
     public float scaleY = 1.0F;
     public float scaleZ = 1.0F;
@@ -52,41 +53,39 @@ public class ScriptModelBlockbench extends ScriptModelBase {
         double y = partialTick * this.y + invDelta * this.prevY;
         double z = partialTick * this.z + invDelta * this.prevZ;
 
-        float pxSize = this.pixelSize;
-
-        // World/model transform layer
         matrix.translate(
-            (float) (this.worldX * pxSize),
-            (float) (this.worldY * pxSize),
-            (float) (this.worldZ * pxSize)
+            (float) this.worldX,
+            (float) this.worldY,
+            (float) this.worldZ
         );
 
         matrix.rotateY(MathF.toRadians(this.worldYaw));
         matrix.rotateX(MathF.toRadians(this.worldPitch));
         matrix.rotateZ(MathF.toRadians(this.worldRoll));
 
-        // Move rotation origin to given pivot
         matrix.translate(
-            -this.pivotX * pxSize,
-            this.pivotY * pxSize,
-            -this.pivotZ * pxSize
+            -this.pivotX * PIXEL_SIZE,
+            this.pivotY * PIXEL_SIZE,
+            -this.pivotZ * PIXEL_SIZE
         );
 
-        float deg = MathF.toRadians(partialTick);
-        float invDeg = MathF.toRadians(invDelta);
+        float interpolatedRoll = partialTick * this.roll + invDelta * this.prevRoll;
+        float interpolatedPitch = partialTick * this.pitch + invDelta * this.prevPitch;
+        float interpolatedYaw = partialTick * this.yaw + invDelta * this.prevYaw;
 
-        matrix.rotateZ(-(deg * this.roll + invDeg * this.prevRoll));
-        matrix.rotateY(-(deg * -this.pitch + invDeg * -this.prevPitch));
-        matrix.rotateX(deg * -this.yaw + invDeg * -this.prevYaw);
+        matrix.rotateZ(-MathF.toRadians(interpolatedRoll));
+        matrix.rotateY(MathF.toRadians(interpolatedPitch));
+        matrix.rotateX(-MathF.toRadians(interpolatedYaw));
 
-        // Apply scaling
+        /*
+         * Apply model scale.
+         */
         matrix.scale(this.scaleX, this.scaleY, this.scaleZ);
 
-        // Move object to intended local Blockbench position
         matrix.translate(
-            (float) ((-x - this.sizeX + this.pivotX) * pxSize),
-            (float) (( y - this.pivotY) * pxSize),
-            (float) ((-z - this.sizeZ + this.pivotZ) * pxSize)
+            (float) ((-x - this.sizeX + this.pivotX) * PIXEL_SIZE),
+            (float) (( y - this.pivotY) * PIXEL_SIZE),
+            (float) ((-z - this.sizeZ + this.pivotZ) * PIXEL_SIZE)
         );
     }
 
@@ -100,20 +99,30 @@ public class ScriptModelBlockbench extends ScriptModelBase {
     }
 
     public void addBox(
-        int width, int height, int length,
-        int textureOffsetX, int textureOffsetY) {
+        int width,
+        int height,
+        int length,
+        int textureOffsetX,
+        int textureOffsetY
+    ) {
         this.addBoxInflated(width, height, length, textureOffsetX, textureOffsetY, 0.0F);
     }
 
     public void addBoxInflated(
-        int width, int height, int length,
-        int textureOffsetX, int textureOffsetY, float inflate) {
+        int width,
+        int height,
+        int length,
+        int textureOffsetX,
+        int textureOffsetY,
+        float inflate
+    ) {
         this.setSize(width, height, length);
 
         var cuboid = new ModelPart(textureOffsetX, textureOffsetY);
         ((ExCuboid) cuboid).setTWidth(this.textureWidth);
         ((ExCuboid) cuboid).setTHeight(this.textureHeight);
         ((ExCuboid) cuboid).addBoxInverted(0, 0, 0, width, height, length, inflate);
+
         this.boxes.add(cuboid);
     }
 
@@ -124,14 +133,16 @@ public class ScriptModelBlockbench extends ScriptModelBase {
     }
 
     public void scaleBy(float x, float y, float z) {
-        x += this.scaleX;
-        y += this.scaleY;
-        z += this.scaleZ;
-        this.scaleTo(x, y, z);
+        this.scaleTo(
+            this.scaleX + x,
+            this.scaleY + y,
+            this.scaleZ + z
+        );
     }
 
     public void setScale(float x, float y, float z) {
         this.scaleTo(x, y, z);
+
         this.prevScaleX = this.scaleX;
         this.prevScaleY = this.scaleY;
         this.prevScaleZ = this.scaleZ;
@@ -166,17 +177,20 @@ public class ScriptModelBlockbench extends ScriptModelBase {
     }
 
     public void setWorldPosition(double x, double y, double z) {
-        this.worldX = x * 16.0D;
-        this.worldY =  y * 16.0D;
-        this.worldZ = z * 16.0D;
-        //this.markCollisionDirty();
+        this.worldX = x;
+        this.worldY = y;
+        this.worldZ = z;
     }
 
     public ScriptVec3 getWorldPosition() {
-        return new ScriptVec3(
-            this.worldX / 16.0D,
-            this.worldY / 16.0D,
-            this.worldZ / 16.0D
+        return new ScriptVec3(this.worldX, this.worldY, this.worldZ);
+    }
+
+    public void moveWorldPosition(double x, double y, double z) {
+        this.setWorldPosition(
+            this.worldX + x,
+            this.worldY + y,
+            this.worldZ + z
         );
     }
 
@@ -184,11 +198,18 @@ public class ScriptModelBlockbench extends ScriptModelBase {
         this.worldYaw = yaw;
         this.worldPitch = pitch;
         this.worldRoll = roll;
-        //this.markCollisionDirty();
     }
 
     public ScriptVec3 getWorldRotation() {
         return new ScriptVec3(this.worldYaw, this.worldPitch, this.worldRoll);
+    }
+
+    public void rotateWorld(float yaw, float pitch, float roll) {
+        this.setWorldRotation(
+            this.worldYaw + yaw,
+            this.worldPitch + pitch,
+            this.worldRoll + roll
+        );
     }
 
     public void setWorldTransform(
@@ -199,9 +220,12 @@ public class ScriptModelBlockbench extends ScriptModelBase {
         float pitch,
         float roll
     ) {
-        this.setWorldPosition(x, y, z);
-        this.setWorldRotation(yaw, pitch, roll);
+        this.worldX = x;
+        this.worldY = y;
+        this.worldZ = z;
+
+        this.worldYaw = yaw;
+        this.worldPitch = pitch;
+        this.worldRoll = roll;
     }
 }
-
-
