@@ -20,6 +20,10 @@ public interface IntVec3 extends Comparable<IntVec3> {
         return new ImplMut(this);
     }
 
+    default Mut mutCopy() {
+        return new ImplMut(this);
+    }
+
     default int[] toArray() {
         return new int[]{this.x(), this.y(), this.z()};
     }
@@ -190,6 +194,10 @@ public interface IntVec3 extends Comparable<IntVec3> {
             this.x = x;
             this.y = y;
             this.z = z;
+            return this;
+        }
+
+        public @Override Mut mut() {
             return this;
         }
     }

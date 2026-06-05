@@ -195,15 +195,15 @@ public class AC_ChunkProviderHeightMapGenerate implements ChunkSource, AsyncChun
     @Override
     public LevelChunk getChunk(int x, int z) {
         this.rand.setSeed((long) x * 341873128712L + (long) z * 132897987541L);
-        byte[] var3 = new byte[-Short.MIN_VALUE];
-        LevelChunk var4 = new LevelChunk(this.world, var3, x, z);
+        byte[] tiles = new byte[16 * 128 * 16];
+        var chunk = new LevelChunk(this.world, tiles, x, z);
         this.biomes = this.biomeSource.getBiomeBlock(this.biomes, x * 16, z * 16, 16, 16);
-        double[] var5 = this.biomeSource.temperatures;
-        this.generateTerrain(x, z, var3, this.biomes, var5);
-        this.replaceBlocksForBiome(x, z, var3, this.biomes);
-        var4.recalcHeightmap();
-        var4.unsaved = false;
-        return var4;
+        double[] temp = this.biomeSource.temperatures;
+        this.generateTerrain(x, z, tiles, this.biomes, temp);
+        this.replaceBlocksForBiome(x, z, tiles, this.biomes);
+        chunk.recalcHeightmap();
+        chunk.unsaved = false;
+        return chunk;
     }
 
     @Override

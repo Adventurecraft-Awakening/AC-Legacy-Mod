@@ -1,7 +1,11 @@
 package dev.adventurecraft.awakening.mixin.entity;
 
 import dev.adventurecraft.awakening.extension.entity.ExBlockEntity;
+import dev.adventurecraft.awakening.extension.world.ExWorld;
+import dev.adventurecraft.awakening.tile.AC_TileEntityStructure;
 import dev.adventurecraft.awakening.tile.entity.*;
+import dev.adventurecraft.awakening.world.BlockPos;
+import dev.adventurecraft.awakening.world.level.block.state.BlockState;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.tile.entity.TileEntity;
 import org.spongepowered.asm.mixin.Mixin;
@@ -21,6 +25,9 @@ public abstract class MixinBlockEntity implements ExBlockEntity {
     @Shadow private static Map<Class<?>, String> classIdMap;
 
     @Shadow public Level level;
+    @Shadow public int x;
+    @Shadow public int y;
+    @Shadow public int z;
 
     @Unique private boolean killedFromSaving;
 
@@ -35,6 +42,11 @@ public abstract class MixinBlockEntity implements ExBlockEntity {
     }
 
     @Override
+    public BlockPos getBlockPos() {
+        return new BlockPos.Mut(this.x, this.y, this.z);
+    }
+
+    @Override
     public boolean isKilledFromSaving() {
         return this.killedFromSaving;
     }
@@ -42,6 +54,11 @@ public abstract class MixinBlockEntity implements ExBlockEntity {
     @Override
     public void setKilledFromSaving(boolean value) {
         this.killedFromSaving = value;
+    }
+
+    @Override
+    public BlockState getBlockState() {
+        return ((ExWorld) this.level).ac$getBlockState(this.x, this.y, this.z);
     }
 
     @ModifyConstant(method = "<clinit>", constant = @Constant(stringValue = "Music"))
@@ -71,5 +88,7 @@ public abstract class MixinBlockEntity implements ExBlockEntity {
         setId(AC_TileEntityEffect.class, "Effect");
         setId(AC_TileEntityUrl.class, "Url");
         setId(AC_TileEntityNpcPath.class, "NpcPath");
+
+        setId(AC_TileEntityStructure.class, "StructureBlock");
     }
 }

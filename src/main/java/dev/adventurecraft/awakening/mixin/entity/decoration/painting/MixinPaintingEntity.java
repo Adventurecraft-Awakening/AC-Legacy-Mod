@@ -1,8 +1,8 @@
 package dev.adventurecraft.awakening.mixin.entity.decoration.painting;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
-import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.extension.world.entity.item.ExPainting;
+import dev.adventurecraft.awakening.world.BlockPos;
 import net.minecraft.world.entity.item.Painting;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -32,7 +32,7 @@ public abstract class MixinPaintingEntity implements ExPainting {
     }
 
     @Override
-    public Coord getTilePos() {
-        return new Coord(this.xTile, this.yTile, this.zTile);
+    public BlockPos getTilePos() {
+        return new BlockPos.Mut(this.xTile, this.yTile, this.zTile);
     }
 }

@@ -5,10 +5,13 @@ import dev.adventurecraft.awakening.image.ImageBuffer;
 import dev.adventurecraft.awakening.script.Script;
 import dev.adventurecraft.awakening.util.UnsafeUtil;
 import dev.adventurecraft.awakening.world.AC_LevelSource;
+import dev.adventurecraft.awakening.world.BlockPos;
+import dev.adventurecraft.awakening.world.level.LevelHeightAccessor;
 import net.minecraft.util.ProgressListener;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.TickNextTickData;
+import net.minecraft.world.level.chunk.ChunkPos;
 import net.minecraft.world.level.dimension.Dimension;
 import net.minecraft.world.level.storage.LevelIO;
 import net.minecraft.world.phys.HitResult;
@@ -18,7 +21,7 @@ import org.mozilla.javascript.Scriptable;
 import java.io.File;
 import java.util.ArrayList;
 
-public interface ExWorld extends AC_LevelSource {
+public interface ExWorld extends AC_LevelSource, LevelHeightAccessor {
 
     void initWorld(
         String mapName,
@@ -58,6 +61,26 @@ public interface ExWorld extends AC_LevelSource {
     );
 
     void recordRayDebugList(double aX, double aY, double aZ, double bX, double bY, double bZ, HitResult hit);
+
+    boolean outOfBounds(int x, int z);
+
+    default boolean isOutsideSpawnableHeight(int y) {
+        return y < -20000000 || y >= 20000000;
+    }
+
+    default boolean isInWorldBounds(int x, int y, int z) {
+        return !this.isOutsideSpawnableHeight(y) && !this.outOfBounds(x, z);
+    }
+
+    default boolean isInWorldBounds(BlockPos pos) {
+        return this.isInWorldBounds(pos.x(), pos.y(), pos.z());
+    }
+
+    boolean ac$hasChunk(int x, int z);
+
+    default boolean hasChunk(ChunkPos pos) {
+        return this.ac$hasChunk(pos.x, pos.z);
+    }
 
     // TODO: get rid of this method
     @Deprecated

@@ -132,6 +132,10 @@ public class BlockPos implements IntVec3 {
         return new Mut(this);
     }
 
+    public @Override Mut mutCopy() {
+        return new Mut(this);
+    }
+
     public @Override boolean equals(Object o) {
         if (this == o) {
             return true;
@@ -218,7 +222,7 @@ public class BlockPos implements IntVec3 {
         }
 
         public @Override BlockPos.Mut mut() {
-            return new BlockPos.Mut(this);
+            return this;
         }
     }
 }

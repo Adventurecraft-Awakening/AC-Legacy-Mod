@@ -1,12 +1,14 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.math.IntVec3;
 import dev.adventurecraft.awakening.util.HashCode;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class Coord {
+public final class Coord implements IntVec3 {
 
-    public static final Coord zero = new Coord(0, 0, 0);
-    public static final Coord one = new Coord(1, 1, 1);
+    public static final Coord zero = new Coord(0);
+    public static final Coord one = new Coord(1);
 
     public final int x;
     public final int y;
@@ -19,7 +21,21 @@ public final class Coord {
     }
 
     public Coord(int value) {
-        this(value, value, value);
+        this.x = value;
+        this.y = value;
+        this.z = value;
+    }
+
+    public @Override int x() {
+        return this.x;
+    }
+
+    public @Override int y() {
+        return this.y;
+    }
+
+    public @Override int z() {
+        return this.z;
     }
 
     public Coord add(int x, int y, int z) {
@@ -118,7 +134,7 @@ public final class Coord {
         return HashCode.combine(this.x, this.y, this.z);
     }
 
-    public @Override String toString() {
-        return "{" + "x=" + x + ", y=" + y + ", z=" + z + '}';
+    public @Override @NotNull String toString() {
+        return '{' + "x=" + this.x + ", y=" + this.y + ", z=" + this.z + '}';
     }
 }
