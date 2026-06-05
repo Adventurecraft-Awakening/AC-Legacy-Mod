@@ -1,11 +1,11 @@
 package dev.adventurecraft.awakening.tile.entity;
 
-import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.extension.nbt.ExCompoundTag;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.util.NibbleBuffer;
+import dev.adventurecraft.awakening.world.BlockPos;
 import dev.adventurecraft.awakening.world.BlockRegion;
 import dev.adventurecraft.awakening.world.region.BlockEntityLayer;
 import net.minecraft.nbt.CompoundTag;
@@ -15,7 +15,7 @@ public class AC_TileEntityStorage extends AC_TileEntityMinMax {
 
     BlockRegion blockRegion;
 
-    public void setArea(Coord min, Coord max) {
+    public void setArea(BlockPos min, BlockPos max) {
         this.setMin(min);
         this.setMax(max);
 

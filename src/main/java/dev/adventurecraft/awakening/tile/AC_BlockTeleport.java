@@ -1,10 +1,10 @@
 package dev.adventurecraft.awakening.tile;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
-import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTeleport;
+import dev.adventurecraft.awakening.world.BlockPos;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -64,10 +64,10 @@ public class AC_BlockTeleport extends TileEntityTile implements AC_ITriggerDebug
             return false;
         }
         var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityTeleport.class);
-        Coord pos = AC_ItemCursor.min();
-        entity.x = pos.x;
-        entity.y = pos.y;
-        entity.z = pos.z;
+        BlockPos pos = AC_ItemCursor.min();
+        entity.x = pos.x();
+        entity.y = pos.y();
+        entity.z = pos.z();
         entity.hasPosition = true;
         Minecraft.instance.gui.addMessage(String.format(
             "Setting Teleport (%d, %d, %d)",

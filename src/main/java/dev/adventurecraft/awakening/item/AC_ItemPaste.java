@@ -1,9 +1,9 @@
 package dev.adventurecraft.awakening.item;
 
 import dev.adventurecraft.awakening.ACMod;
-import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.world.AC_BlockCopyUtils;
+import dev.adventurecraft.awakening.world.BlockPos;
 import dev.adventurecraft.awakening.world.BlockRegion;
 import dev.adventurecraft.awakening.world.history.AC_EditAction;
 import dev.adventurecraft.awakening.world.history.AC_RegionEditAction;
@@ -66,13 +66,13 @@ public class AC_ItemPaste extends Item {
         undoStack.pushLayer(null);
         try {
             // Copy blocks from selection (non-destructive)
-            Coord min = AC_ItemCursor.min();
-            Coord max = AC_ItemCursor.max();
+            BlockPos min = AC_ItemCursor.min();
+            BlockPos max = AC_ItemCursor.max();
             BlockRegion region = BlockRegion.readFromMinMax(world, min, max);
 
             // Calculate where to paste based on player's look direction
-            Coord start = AC_BlockCopyUtils.calculatePastePosition();
-            Coord end = start.add(region.getSize().sub(Coord.one));
+            BlockPos start = AC_BlockCopyUtils.calculatePastePosition();
+            BlockPos end = start.add(BlockPos.sub(region.getSize(), BlockPos.ONE));
 
             if (saveHistory) {
                 BlockRegion prevRegion = BlockRegion.readFromMinMax(world, start, end);

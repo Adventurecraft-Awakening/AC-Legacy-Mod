@@ -7,6 +7,7 @@ import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.item.AC_ItemNudge;
 import dev.adventurecraft.awakening.item.AC_ItemPaste;
+import dev.adventurecraft.awakening.math.IntVec3;
 import dev.adventurecraft.awakening.world.history.AC_EditAction;
 import dev.adventurecraft.awakening.world.history.AC_EditActionList;
 import dev.adventurecraft.awakening.world.history.AC_RegionEditAction;
@@ -35,10 +36,10 @@ public final class AC_BlockCopyUtils {
      * The paste position is determined by projecting from the camera entity's position
      * along their look direction by the configured reach distance.
      *
-     * @return {@link Coord} representing the calculated paste coordinates
+     * @return {@link BlockPos} representing the calculated paste coordinates
      * @throws IllegalStateException if camera entity is not available
      */
-    public static Coord calculatePastePosition() {
+    public static BlockPos calculatePastePosition() {
         Mob entity = Minecraft.instance.cameraEntity;
         if (entity == null) {
             throw new IllegalStateException("Camera entity is not available");
@@ -49,7 +50,7 @@ public final class AC_BlockCopyUtils {
         int baseY = (int) (entity.y + AC_DebugMode.reachDistance * lookDirection.y);
         int baseZ = (int) (entity.z + AC_DebugMode.reachDistance * lookDirection.z);
 
-        return new Coord(baseX, baseY, baseZ);
+        return new BlockPos(baseX, baseY, baseZ);
     }
 
     /**
@@ -60,10 +61,10 @@ public final class AC_BlockCopyUtils {
      * This is useful for discrete block-based movement operations.
      *
      * @param vec The view rotation vector (must not be null)
-     * @return Unit direction as {@link Coord} with values of -1, 0, or 1 on each axis
+     * @return Unit direction as {@link BlockPos} with values of -1, 0, or 1 on each axis
      * @throws IllegalArgumentException if vec is null
      */
-    public static Coord getUnitDirection(@NotNull Vec3 vec) {
+    public static BlockPos getUnitDirection(@NotNull Vec3 vec) {
         double absX = Math.abs(vec.x);
         double absY = Math.abs(vec.y);
         double absZ = Math.abs(vec.z);
@@ -85,7 +86,7 @@ public final class AC_BlockCopyUtils {
             // Z-axis is dominant
             z = vec.z > 0.0D ? 1 : -1;
         }
-        return new Coord(x, y, z);
+        return new BlockPos(x, y, z);
     }
 
     /**
@@ -98,7 +99,7 @@ public final class AC_BlockCopyUtils {
      * @throws IllegalArgumentException if amount is null
      * @throws IllegalStateException if cursor selection is not set
      */
-    public static void shiftCursor(Coord amount) {
+    public static void shiftCursor(IntVec3 amount) {
         if (amount == null) {
             throw new IllegalArgumentException("Amount cannot be null");
         }
@@ -124,7 +125,7 @@ public final class AC_BlockCopyUtils {
      * @param direction The direction vector to nudge by (must not be null)
      * @throws IllegalArgumentException if world or direction is null
      */
-    public static void performNudge(Level world, Coord direction) {
+    public static void performNudge(Level world, IntVec3 direction) {
         if (world == null) {
             throw new IllegalArgumentException("World cannot be null");
         }
@@ -138,14 +139,14 @@ public final class AC_BlockCopyUtils {
         undoStack.pushLayer(null);
         try {
             // Copy blocks from current selection
-            Coord min = AC_ItemCursor.min();
-            Coord max = AC_ItemCursor.max();
+            BlockPos min = AC_ItemCursor.min();
+            BlockPos max = AC_ItemCursor.max();
             BlockRegion region = BlockRegion.readFromMinMax(world, min, max);
 
             // Move the cursor selection
             shiftCursor(direction);
-            Coord start = AC_ItemCursor.min();
-            Coord end = start.add(region.getSize().sub(Coord.one));
+            BlockPos start = AC_ItemCursor.min();
+            BlockPos end = start.add(region.getSize().sub(Coord.one));
 
             BlockRegion emptyRegion = BlockRegion.airFromMinMax(min, max);
             if (saveHistory) {

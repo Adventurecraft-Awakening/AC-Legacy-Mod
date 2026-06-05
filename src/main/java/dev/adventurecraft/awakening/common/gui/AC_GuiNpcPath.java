@@ -1,9 +1,9 @@
 package dev.adventurecraft.awakening.common.gui;
 
-import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.entity.AC_EntityNPC;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityNpcPath;
+import dev.adventurecraft.awakening.world.BlockPos;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.OptionButton;
@@ -44,8 +44,8 @@ public class AC_GuiNpcPath extends Screen {
             this.path.setMax(AC_ItemCursor.max());
         }
         else if (button.id == 2) {
-            this.path.setMin(Coord.zero);
-            this.path.setMax(Coord.zero);
+            this.path.setMin(BlockPos.ZERO);
+            this.path.setMax(BlockPos.ZERO);
         }
 
         this.path.setChanged();

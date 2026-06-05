@@ -1,33 +1,38 @@
 package dev.adventurecraft.awakening.tile.entity;
 
-import java.util.*;
-
 import dev.adventurecraft.awakening.ACMod;
-import dev.adventurecraft.awakening.common.*;
+import dev.adventurecraft.awakening.common.AC_TriggerArea;
 import dev.adventurecraft.awakening.entity.AC_EntityLivingScript;
 import dev.adventurecraft.awakening.entity.AC_EntitySkeletonSword;
 import dev.adventurecraft.awakening.extension.entity.ExFallingBlockEntity;
 import dev.adventurecraft.awakening.extension.nbt.ExCompoundTag;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
+import dev.adventurecraft.awakening.script.ScopeTag;
+import dev.adventurecraft.awakening.script.ScriptEntity;
+import dev.adventurecraft.awakening.util.ArrayUtil;
 import dev.adventurecraft.awakening.util.Xoshiro128PP;
-import net.minecraft.world.level.tile.Tile;
+import dev.adventurecraft.awakening.world.BlockPos;
 import net.minecraft.client.Minecraft;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityIO;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.animal.Wolf;
 import net.minecraft.world.entity.item.FallingTile;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.item.Minecart;
-import net.minecraft.world.entity.animal.Wolf;
 import net.minecraft.world.entity.monster.Skeleton;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.ItemInstance;
-import dev.adventurecraft.awakening.script.ScopeTag;
-import dev.adventurecraft.awakening.script.ScriptEntity;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.tile.Tile;
 import org.mozilla.javascript.Scriptable;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
 
@@ -46,10 +51,10 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
     public int spawnID;
     public int spawnMeta;
     private final Xoshiro128PP rand;
-    public final Coord[] minVec;
-    public final Coord[] maxVec;
-    public Coord minSpawnVec;
-    public Coord maxSpawnVec;
+    public final BlockPos.Mut[] minVec;
+    public final BlockPos.Mut[] maxVec;
+    public final BlockPos.Mut minSpawnVec;
+    public final BlockPos.Mut maxSpawnVec;
     public int ticksBeforeLoad = 20;
     public CompoundTag delayLoadData;
     public boolean showDebugInfo = true;
@@ -70,14 +75,11 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
         this.spawnOnTrigger = true;
         this.spawnOnDetrigger = false;
         this.rand = new Xoshiro128PP();
-        this.minVec = new Coord[8];
-        this.maxVec = new Coord[8];
+        this.minVec = ArrayUtil.fill(new BlockPos.Mut[8], BlockPos::mutZero);
+        this.maxVec = ArrayUtil.fill(new BlockPos.Mut[8], BlockPos::mutZero);
 
-        Arrays.fill(this.minVec, Coord.zero);
-        Arrays.fill(this.maxVec, Coord.zero);
-
-        this.minSpawnVec = Coord.zero;
-        this.maxSpawnVec = Coord.zero;
+        this.minSpawnVec = BlockPos.mutZero();
+        this.maxSpawnVec = BlockPos.mutZero();
         this.delayLoadData = null;
         this.scope = ((ExWorld) Minecraft.instance.level).getScript().getNewScope();
     }
@@ -111,7 +113,7 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
     }
 
     private boolean canSpawn(Entity entity) {
-        if (ignoreSpawnConditions) {
+        if (this.ignoreSpawnConditions) {
             return true;
         }
         return this.level.isUnobstructed(entity.bb) && this.level.getCubes(entity, entity.bb).isEmpty() &&
@@ -198,18 +200,18 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
                         }
                         break;
                 }
-                double y = this.y + this.maxSpawnVec.y;
-                if (this.maxSpawnVec.y != this.minSpawnVec.y) {
+                double y = this.y + this.maxSpawnVec.y();
+                if (this.maxSpawnVec.y() != this.minSpawnVec.y()) {
                     // TODO: use nextDouble()?
-                    int bound = this.maxSpawnVec.y - this.minSpawnVec.y;
-                    y = this.y + this.minSpawnVec.y + this.level.random.nextInt(bound);
+                    int bound = this.maxSpawnVec.y() - this.minSpawnVec.y();
+                    y = this.y + this.minSpawnVec.y() + this.level.random.nextInt(bound);
                 }
 
-                double x = (double) (this.x + this.minSpawnVec.x) +
-                    this.level.random.nextDouble() * (double) (this.maxSpawnVec.x - this.minSpawnVec.x) + 0.5D;
+                double x = (double) (this.x + this.minSpawnVec.x()) +
+                    this.level.random.nextDouble() * (double) (this.maxSpawnVec.x() - this.minSpawnVec.x()) + 0.5D;
 
-                double z = (double) (this.z + this.minSpawnVec.z) +
-                    this.level.random.nextDouble() * (double) (this.maxSpawnVec.z - this.minSpawnVec.z) + 0.5D;
+                double z = (double) (this.z + this.minSpawnVec.z()) +
+                    this.level.random.nextDouble() * (double) (this.maxSpawnVec.z() - this.minSpawnVec.z()) + 0.5D;
 
                 float yaw = 0.0F;
                 if (!id.equalsIgnoreCase("FallingSand")) {
@@ -382,20 +384,20 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
     }
 
     public void setSpawnVec() {
-        var origin = new Coord(this.x, this.y, this.z);
-        this.minSpawnVec = AC_ItemCursor.min().sub(origin);
-        this.maxSpawnVec = AC_ItemCursor.max().sub(origin);
+        var origin = new BlockPos(this.x, this.y, this.z);
+        this.minSpawnVec.set(AC_ItemCursor.min().sub(origin));
+        this.maxSpawnVec.set(AC_ItemCursor.max().sub(origin));
     }
 
     public boolean isTriggerSet(int id) {
-        Coord min = this.minVec[id];
-        Coord max = this.maxVec[id];
-        return !min.equals(0) || !max.equals(0);
+        BlockPos min = this.minVec[id];
+        BlockPos max = this.maxVec[id];
+        return !min.equalsAll(0) || !max.equalsAll(0);
     }
 
     public void setTrigger(int id) {
-        this.minVec[id] = AC_ItemCursor.min();
-        this.maxVec[id] = AC_ItemCursor.max();
+        this.minVec[id].set(AC_ItemCursor.min());
+        this.maxVec[id].set(AC_ItemCursor.max());
     }
 
     public void setCursor(int id) {
@@ -404,8 +406,8 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
     }
 
     public void clearTrigger(int id) {
-        this.minVec[id] = Coord.zero;
-        this.maxVec[id] = Coord.zero;
+        this.minVec[id].splat(0);
+        this.maxVec[id].splat(0);
     }
 
     private void activateTriggers() {
@@ -416,8 +418,8 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
         }
     }
 
-    private void activateTrigger(int id, Coord min, Coord max) {
-        if (min.equals(0) && max.equals(0)) {
+    private void activateTrigger(int id, BlockPos min, BlockPos max) {
+        if (min.equalsAll(0) && max.equalsAll(0)) {
             return;
         }
         var area = new AC_TriggerArea(min, max);
@@ -446,13 +448,12 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
         exTag.findBool("ShowDebugInfo").ifPresent(b -> this.showDebugInfo = b);
         exTag.findBool("ShowParticles").ifPresent(b -> this.showParticles = b);
 
-        // TODO: replace with NBT int arrays
         for (int id = 0; id < 8; ++id) {
-            this.minVec[id] = new Coord(tag.getInt("minX" + id), tag.getInt("minY" + id), tag.getInt("minZ" + id));
-            this.maxVec[id] = new Coord(tag.getInt("maxX" + id), tag.getInt("maxY" + id), tag.getInt("maxZ" + id));
+            this.minVec[id].set(tag.getInt("minX" + id), tag.getInt("minY" + id), tag.getInt("minZ" + id));
+            this.maxVec[id].set(tag.getInt("maxX" + id), tag.getInt("maxY" + id), tag.getInt("maxZ" + id));
         }
-        this.minSpawnVec = new Coord(tag.getInt("minSpawnX"), tag.getInt("minSpawnY"), tag.getInt("minSpawnZ"));
-        this.maxSpawnVec = new Coord(tag.getInt("maxSpawnX"), tag.getInt("maxSpawnY"), tag.getInt("maxSpawnZ"));
+        this.minSpawnVec.set(tag.getInt("minSpawnX"), tag.getInt("minSpawnY"), tag.getInt("minSpawnZ"));
+        this.maxSpawnVec.set(tag.getInt("maxSpawnX"), tag.getInt("maxSpawnY"), tag.getInt("maxSpawnZ"));
 
         if (exTag.findShort("numEntities").filter(n -> n > 0).isPresent()) {
             this.ticksBeforeLoad = 20;
@@ -479,22 +480,22 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
         tag.putBoolean("ShowParticles", this.showParticles);
 
         for (int id = 0; id < 8; ++id) {
-            Coord min = this.minVec[id];
-            Coord max = this.maxVec[id];
-            tag.putInt("minX" + id, min.x);
-            tag.putInt("minY" + id, min.y);
-            tag.putInt("minZ" + id, min.z);
-            tag.putInt("maxX" + id, max.x);
-            tag.putInt("maxY" + id, max.y);
-            tag.putInt("maxZ" + id, max.z);
+            BlockPos min = this.minVec[id];
+            BlockPos max = this.maxVec[id];
+            tag.putInt("minX" + id, min.x());
+            tag.putInt("minY" + id, min.y());
+            tag.putInt("minZ" + id, min.z());
+            tag.putInt("maxX" + id, max.x());
+            tag.putInt("maxY" + id, max.y());
+            tag.putInt("maxZ" + id, max.z());
         }
 
-        tag.putInt("minSpawnX", this.minSpawnVec.x);
-        tag.putInt("minSpawnY", this.minSpawnVec.y);
-        tag.putInt("minSpawnZ", this.minSpawnVec.z);
-        tag.putInt("maxSpawnX", this.maxSpawnVec.x);
-        tag.putInt("maxSpawnY", this.maxSpawnVec.y);
-        tag.putInt("maxSpawnZ", this.maxSpawnVec.z);
+        tag.putInt("minSpawnX", this.minSpawnVec.x());
+        tag.putInt("minSpawnY", this.minSpawnVec.y());
+        tag.putInt("minSpawnZ", this.minSpawnVec.z());
+        tag.putInt("maxSpawnX", this.maxSpawnVec.x());
+        tag.putInt("maxSpawnY", this.maxSpawnVec.y());
+        tag.putInt("maxSpawnZ", this.maxSpawnVec.z());
         tag.putShort("numEntities", (short) this.spawnedEntities.size());
 
         int id = 0;

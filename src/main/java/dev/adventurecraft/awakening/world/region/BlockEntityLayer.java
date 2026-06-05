@@ -3,6 +3,7 @@ package dev.adventurecraft.awakening.world.region;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
+import dev.adventurecraft.awakening.world.BlockPos;
 import dev.adventurecraft.awakening.world.BlockRegion;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -25,13 +26,13 @@ public final class BlockEntityLayer extends BlockMetaLayer {
         return this.tileEntities;
     }
 
-    public CompoundTag putTileEntity(Coord min, Coord max, CompoundTag tag) {
-        int x = tag.getInt("x") - min.x;
-        int y = tag.getInt("y") - min.y;
-        int z = tag.getInt("z") - min.z;
-        int w = max.x - min.x + 1;
-        int h = max.y - min.y + 1;
-        int d = max.z - min.z + 1;
+    public CompoundTag putTileEntity(BlockPos min, BlockPos max, CompoundTag tag) {
+        int x = tag.getInt("x") - min.x();
+        int y = tag.getInt("y") - min.y();
+        int z = tag.getInt("z") - min.z();
+        int w = max.x() - min.x() + 1;
+        int h = max.y() - min.y() + 1;
+        int d = max.z() - min.z() + 1;
         return this.tileEntities.put(BlockRegion.makeIndex(x, y, z, w, h, d), tag);
     }
 

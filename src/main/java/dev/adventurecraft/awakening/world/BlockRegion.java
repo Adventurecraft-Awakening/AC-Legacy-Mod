@@ -48,9 +48,9 @@ public final class BlockRegion implements BlockLayer {
      *
      * @return A new region containing air.
      */
-    public static BlockRegion fromMinMax(Coord min, Coord max) {
-        Coord delta = max.sub(min).add(Coord.one);
-        return new BlockRegion(delta, true);
+    public static BlockRegion fromMinMax(BlockPos min, BlockPos max) {
+        BlockPos delta = max.sub(min).add(BlockPos.ONE);
+        return new BlockRegion(new Coord(delta), true);
     }
 
     /**
@@ -58,9 +58,9 @@ public final class BlockRegion implements BlockLayer {
      *
      * @return A new region with no backing storage.
      */
-    public static BlockRegion valueFromMinMax(Coord min, Coord max, int id, int meta) {
-        Coord delta = max.sub(min).add(Coord.one);
-        return new BlockRegion(delta, id, meta);
+    public static BlockRegion valueFromMinMax(BlockPos min, BlockPos max, int id, int meta) {
+        BlockPos delta = max.sub(min).add(BlockPos.ONE);
+        return new BlockRegion(new Coord(delta), id, meta);
     }
 
     /**
@@ -68,7 +68,7 @@ public final class BlockRegion implements BlockLayer {
      *
      * @return A new region with no backing storage.
      */
-    public static BlockRegion airFromMinMax(Coord min, Coord max) {
+    public static BlockRegion airFromMinMax(BlockPos min, BlockPos max) {
         return valueFromMinMax(min, max, 0, 0);
     }
 
@@ -78,7 +78,7 @@ public final class BlockRegion implements BlockLayer {
      * @param level The level to copy blocks from.
      * @return A new region containing the copied blocks.
      */
-    public static BlockRegion readFromMinMax(Level level, Coord min, Coord max) {
+    public static BlockRegion readFromMinMax(Level level, BlockPos min, BlockPos max) {
         var region = fromMinMax(min, max);
         region.readBlocks(level, min, max);
         return region;
@@ -110,7 +110,7 @@ public final class BlockRegion implements BlockLayer {
         return makeIndex(x, y, z, dim.x, dim.y, dim.z);
     }
 
-    public long readBlocks(Level level, Coord min, Coord max) {
+    public long readBlocks(Level level, BlockPos min, BlockPos max) {
         return this.forEachBlock(level, min, max, BlockRegion::readBlock);
     }
 
@@ -122,7 +122,7 @@ public final class BlockRegion implements BlockLayer {
      * @param level The world to paste blocks into
      * @param min Base coordinates for pasting
      */
-    public long writeBlocks(Level level, Coord min, Coord max) {
+    public long writeBlocks(Level level, BlockPos min, BlockPos max) {
         // First pass: set blocks without updates for performance
         return this.forEachBlock(level, min, max, BlockRegion::writeBlock
         );
@@ -135,21 +135,21 @@ public final class BlockRegion implements BlockLayer {
      *
      * @param min Base coordinates for pasting
      */
-    public long updateBlocks(Level level, Coord min, Coord max) {
+    public long updateBlocks(Level level, BlockPos min, BlockPos max) {
         return this.forEachBlock(level, min, max, BlockRegion::updateBlock);
     }
 
-    public long forEachBlock(Level level, Coord min, Coord max, BlockIndexConsumer consumer) {
+    public long forEachBlock(Level level, BlockPos min, BlockPos max, BlockIndexConsumer consumer) {
         long count = 0;
-        for (int x = min.x; x <= max.x; ++x) {
-            for (int z = min.z; z <= max.z; ++z) {
-                int lX = x - min.x;
-                int lZ = z - min.z;
+        for (int x = min.x(); x <= max.x(); ++x) {
+            for (int z = min.z(); z <= max.z(); ++z) {
+                int lX = x - min.x();
+                int lZ = z - min.z();
                 int indexBase = this.makeIndex(lX, 0, lZ);
 
                 int count32 = 0;
-                for (int y = min.y; y <= max.y; ++y) {
-                    int lY = y - min.y;
+                for (int y = min.y(); y <= max.y(); ++y) {
+                    int lY = y - min.y();
                     int index = indexBase + lY;
 
                     count32 += consumer.apply(this, level, index, x, y, z) ? 1 : 0;

@@ -80,6 +80,10 @@ public class BlockPos implements IntVec3 {
         return new BlockPos(this.x * scale, this.y * scale, this.z * scale);
     }
 
+    public BlockPos negate() {
+        return new BlockPos(-this.x, -this.y, -this.z);
+    }
+
     public BlockPos min(IntVec3 other) {
         return new BlockPos(Math.min(this.x, other.x()), Math.min(this.y, other.y()), Math.min(this.z, other.z()));
     }
@@ -90,6 +94,14 @@ public class BlockPos implements IntVec3 {
 
     public boolean lessAny(int x, int y, int z) {
         return this.x < x || this.y < y || this.z < z;
+    }
+
+    public boolean equals(int x, int y, int z) {
+        return this.x == x || this.y == y || this.z == z;
+    }
+
+    public boolean equalsAll(int value) {
+        return this.equals(value, value, value);
     }
 
     public BlockPos relative(Direction direction) {
@@ -151,8 +163,20 @@ public class BlockPos implements IntVec3 {
         return '{' + "x=" + this.x + ", y=" + this.y + ", z=" + this.z + '}';
     }
 
+    public static BlockPos.Mut mutZero() {
+        return new BlockPos.Mut();
+    }
+
     public static BlockPos floor(Vec3 vec) {
         return new BlockPos((int) Math.floor(vec.x), (int) Math.floor(vec.y), (int) Math.floor(vec.z));
+    }
+
+    public static BlockPos sub(IntVec3 a, IntVec3 b) {
+        return new BlockPos(a.x() - b.x(), a.y() - b.y(), a.z() - b.z());
+    }
+
+    public static boolean contains(int x, int y, int z, IntVec3 min, IntVec3 max) {
+        return IntVec3.contains(x, y, z, min, max);
     }
 
     public static AABB inclusiveAABB(IntVec3 a, IntVec3 b) {
@@ -214,7 +238,17 @@ public class BlockPos implements IntVec3 {
         }
 
         public @Override BlockPos.Mut set(IntVec3 other) {
-            return this.set(other.x(), other.y(), other.z());
+            this.x = other.x();
+            this.y = other.y();
+            this.z = other.z();
+            return this;
+        }
+
+        public @Override BlockPos.Mut splat(int value) {
+            this.x = value;
+            this.y = value;
+            this.z = value;
+            return this;
         }
 
         public @Override BlockPos freeze() {

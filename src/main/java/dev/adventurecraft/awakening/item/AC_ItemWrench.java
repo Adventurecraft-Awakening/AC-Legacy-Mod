@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.item;
 
-import dev.adventurecraft.awakening.common.Coord;
+import dev.adventurecraft.awakening.world.BlockPos;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;
@@ -23,12 +23,13 @@ public class AC_ItemWrench extends Item {
         int tileMeta = level.getData(x, y, z);
         Minecraft.instance.gui.addMessage(String.format("Swapping blocks with BlockID %d", tileId));
 
-        Coord min = AC_ItemCursor.one().min(AC_ItemCursor.two());
-        Coord max = AC_ItemCursor.one().max(AC_ItemCursor.two());
+        BlockPos min = AC_ItemCursor.one().min(AC_ItemCursor.two());
+        BlockPos max = AC_ItemCursor.one().max(AC_ItemCursor.two());
 
-        for (int bX = min.x; bX <= max.x; bX++) {
-            for (int bY = min.y; bY <= max.y; bY++) {
-                for (int bZ = min.z; bZ <= max.z; bZ++) {
+        // TODO: get in bulk, filter, and set in bulk?
+        for (int bX = min.x(); bX <= max.x(); bX++) {
+            for (int bY = min.y(); bY <= max.y(); bY++) {
+                for (int bZ = min.z(); bZ <= max.z(); bZ++) {
                     int foundId = level.getTile(bX, bY, bZ);
                     // TODO: clean this switch up...
                     switch (foundId) {

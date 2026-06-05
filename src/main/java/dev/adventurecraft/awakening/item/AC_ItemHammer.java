@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.item;
 
-import dev.adventurecraft.awakening.common.Coord;
+import dev.adventurecraft.awakening.world.BlockPos;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;
@@ -24,12 +24,13 @@ public class AC_ItemHammer extends Item {
         int meta = world.getData(bX, bY, bZ);
         Minecraft.instance.gui.addMessage(String.format("Swapping Area With BlockID %d", id));
 
-        Coord min = AC_ItemCursor.one().min(AC_ItemCursor.two());
-        Coord max = AC_ItemCursor.one().max(AC_ItemCursor.two());
+        BlockPos min = AC_ItemCursor.one().min(AC_ItemCursor.two());
+        BlockPos max = AC_ItemCursor.one().max(AC_ItemCursor.two());
 
-        for (int x = min.x; x <= max.x; x++) {
-            for (int y = min.y; y <= max.y; y++) {
-                for (int z = min.z; z <= max.z; z++) {
+        // TODO: block fill
+        for (int x = min.x(); x <= max.x(); x++) {
+            for (int y = min.y(); y <= max.y(); y++) {
+                for (int z = min.z(); z <= max.z(); z++) {
                     world.setTileAndData(x, y, z, id, meta);
                 }
             }

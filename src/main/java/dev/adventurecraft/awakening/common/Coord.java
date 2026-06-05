@@ -26,6 +26,12 @@ public final class Coord implements IntVec3 {
         this.z = value;
     }
 
+    public Coord(IntVec3 other) {
+        this.x = other.x();
+        this.y = other.y();
+        this.z = other.z();
+    }
+
     public @Override int x() {
         return this.x;
     }
@@ -42,24 +48,24 @@ public final class Coord implements IntVec3 {
         return new Coord(this.x + x, this.y + y, this.z + z);
     }
 
-    public Coord add(Coord other) {
-        return this.add(other.x, other.y, other.z);
+    public Coord add(IntVec3 other) {
+        return this.add(other.x(), other.y(), other.z());
     }
 
-    public Coord sub(Coord other) {
-        return new Coord(this.x - other.x, this.y - other.y, this.z - other.z);
+    public Coord sub(IntVec3 other) {
+        return new Coord(this.x - other.x(), this.y - other.y(), this.z - other.z());
     }
 
     public Coord mul(int factor) {
         return new Coord(this.x * factor, this.y * factor, this.z * factor);
     }
 
-    public Coord min(Coord other) {
-        return new Coord(Math.min(this.x, other.x), Math.min(this.y, other.y), Math.min(this.z, other.z));
+    public Coord min(IntVec3 other) {
+        return new Coord(Math.min(this.x, other.x()), Math.min(this.y, other.y()), Math.min(this.z, other.z()));
     }
 
-    public Coord max(Coord other) {
-        return new Coord(Math.max(this.x, other.x), Math.max(this.y, other.y), Math.max(this.z, other.z));
+    public Coord max(IntVec3 other) {
+        return new Coord(Math.max(this.x, other.x()), Math.max(this.y, other.y()), Math.max(this.z, other.z()));
     }
 
     public Coord negate() {
@@ -118,7 +124,7 @@ public final class Coord implements IntVec3 {
         return this.x == x && this.y == y && this.z == z;
     }
 
-    public boolean equals(int value) {
+    public boolean equalsAll(int value) {
         return this.equals(value, value, value);
     }
 

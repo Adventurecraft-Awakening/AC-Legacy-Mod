@@ -58,6 +58,19 @@ public interface IntVec3 extends Comparable<IntVec3> {
         return Integer.compare(this.z(), other.z());
     }
 
+    static boolean contains(int x, int y, int z, IntVec3 min, IntVec3 max) {
+        if (x >= min.x() && x <= max.x()) {
+            if (y >= min.y() && y <= max.y()) {
+                return min.z() <= z && z <= max.z();
+            }
+        }
+        return false;
+    }
+
+    static boolean contains(IntVec3 value, IntVec3 min, IntVec3 max) {
+        return contains(value.x(), value.y(), value.z(), min, max);
+    }
+
     static AABB inclusiveAABB(IntVec3 a, IntVec3 b) {
         return AABB.create(
             Math.min(a.x(), b.x()),
@@ -110,6 +123,10 @@ public interface IntVec3 extends Comparable<IntVec3> {
 
         default Mut set(IntVec3 other) {
             return this.set(other.x(), other.y(), other.z());
+        }
+
+        default Mut splat(int value) {
+            return this.set(value, value, value);
         }
     }
 

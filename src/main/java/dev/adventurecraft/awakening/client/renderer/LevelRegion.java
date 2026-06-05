@@ -8,8 +8,10 @@ import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import dev.adventurecraft.awakening.extension.world.level.biome.ExBiomeSource;
 import dev.adventurecraft.awakening.layout.IntBox;
 import dev.adventurecraft.awakening.util.LightUtil;
+import dev.adventurecraft.awakening.util.MathF;
 import dev.adventurecraft.awakening.util.NibbleBuffer;
 import dev.adventurecraft.awakening.world.AC_LevelSource;
+import dev.adventurecraft.awakening.world.BlockPos;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectCollection;
@@ -29,7 +31,7 @@ public final class LevelRegion implements AC_LevelSource, LevelSource {
     private static final int MAX_LIGHT = 15;
 
     private final Coord size;
-    private Coord origin;
+    private final BlockPos.Mut origin = BlockPos.mutZero();
 
     private final ByteBuffer blockBuffer;
     private final NibbleBuffer dataBuffer;
@@ -108,13 +110,13 @@ public final class LevelRegion implements AC_LevelSource, LevelSource {
         }
     }
 
-    public void read(Level level, Coord origin) {
-        this.origin = origin;
+    public void read(Level level, BlockPos origin) {
+        this.origin.set(origin);
         var readBox = IntBox.fromBox(origin, this.size);
 
         forEachSectionSlice(
             readBox,
-            (int bX, int bY, int bZ, int cX, int cY, int cZ, int x0, int y0, int z0, int x1, int y1, int z1) -> {
+            (int bX, int bY, int bZ, int cX, int _, int cZ, int x0, int y0, int z0, int x1, int y1, int z1) -> {
                 var chunk = (ExChunk) level.getChunk(cX, cZ);
 
                 for (int ix = 0; ix < x1 - x0; ++ix) {
@@ -178,22 +180,23 @@ public final class LevelRegion implements AC_LevelSource, LevelSource {
     }
 
     public void forEach(Coord start, Coord size, IndexConsumer consumer) {
-        final Coord origin = this.origin;
+        BlockPos origin = this.origin;
         final Coord dim = this.size;
         final Coord max = start.add(size);
 
+        var pos = new BlockPos.Mut();
         for (int x = start.x; x < max.x; ++x) {
-            final int bX = x + origin.x;
+            pos.x(x + origin.x());
 
             for (int z = start.z; z < max.z; ++z) {
-                final int bZ = z + origin.z;
+                pos.z(z + origin.z());
                 final int baseIndex = dim.x * (dim.z * x + z);
 
                 for (int y = start.y; y < max.y; ++y) {
                     final int index = baseIndex + y;
-                    final int bY = y + origin.y;
+                    pos.y(y + origin.y());
 
-                    consumer.apply(this, index, bX, bY, bZ);
+                    consumer.apply(this, index, pos);
                 }
             }
         }
@@ -205,10 +208,10 @@ public final class LevelRegion implements AC_LevelSource, LevelSource {
     }
 
     private int makeIndex(int x, int y, int z) {
-        Coord s = this.origin;
-        int x0 = x - s.x;
-        int y0 = y - s.y;
-        int z0 = z - s.z;
+        BlockPos s = this.origin;
+        int x0 = x - s.x();
+        int y0 = y - s.y();
+        int z0 = z - s.z();
         return this.makeLocalIndex(x0, y0, z0);
     }
 
@@ -244,7 +247,7 @@ public final class LevelRegion implements AC_LevelSource, LevelSource {
     private float getLightValue(int x, int y, int z) {
         int raw = this.getRawBrightness(x, y, z, true);
         float torch = AC_PlayerTorch.getTorchLight(x, y, z);
-        return Math.max(raw, Math.min(torch, 15.0F));
+        return MathF.clamp(torch, raw, 15.0F);
     }
 
     @Override
@@ -365,7 +368,7 @@ public final class LevelRegion implements AC_LevelSource, LevelSource {
 
     @FunctionalInterface
     public interface IndexConsumer {
-        void apply(LevelRegion region, int index, int x, int y, int z);
+        void apply(LevelRegion region, int index, BlockPos pos);
     }
 
     @FunctionalInterface

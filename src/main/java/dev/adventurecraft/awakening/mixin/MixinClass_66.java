@@ -14,6 +14,7 @@ import dev.adventurecraft.awakening.extension.client.render.block.ExBlockRendere
 import dev.adventurecraft.awakening.extension.client.util.ExCameraView;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import dev.adventurecraft.awakening.util.DrawUtil;
+import dev.adventurecraft.awakening.world.BlockPos;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Chunk;
 import net.minecraft.client.renderer.Tesselator;
@@ -33,7 +34,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import javax.annotation.Nullable;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -172,7 +172,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
         LevelRegion region = builder.region;
         region.clear();
 
-        final Coord readOrigin = new Coord(this.x, this.y, this.z).sub(ChunkBuilder.PADDING);
+        var readOrigin = new BlockPos(this.x, this.y, this.z).sub(ChunkBuilder.PADDING);
         region.read(this.level, readOrigin);
         printTime(builder, "Tile Copy");
 
@@ -219,7 +219,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
 
         final var regionSize = new Coord(this.xs, this.ys, this.zs);
         builder.region.forEach(
-            ChunkBuilder.PADDING, regionSize, (region, index, x, y, z) -> {
+            ChunkBuilder.PADDING, regionSize, (region, index, pos) -> {
                 int blockId = region.getTileAt(index);
                 if (blockId <= 0) {
                     return;
@@ -230,7 +230,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
                 int layer = block.getRenderLayer();
 
                 int meshIndex = (layer * ChunkMesh.MAX_TEXTURES) + texId;
-                renderers[meshIndex].tesselateInWorld(block, x, y, z);
+                renderers[meshIndex].tesselateInWorld(block, pos.x(), pos.y(), pos.z());
             }
         );
         printTime(builder, "Tessellate");

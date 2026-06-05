@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.item;
 
-import dev.adventurecraft.awakening.common.Coord;
+import dev.adventurecraft.awakening.math.IntVec3;
+import dev.adventurecraft.awakening.world.BlockPos;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;
@@ -13,10 +14,10 @@ public class AC_ItemCursor extends Item implements AC_ILeftClickItem {
     public static boolean bothSet = false;
     public static boolean firstPosition = true;
 
-    private static Coord one = Coord.zero;
-    private static Coord two = Coord.zero;
-    private static Coord min = Coord.zero;
-    private static Coord max = Coord.zero;
+    private static BlockPos.Mut one = BlockPos.mutZero();
+    private static BlockPos.Mut two = BlockPos.mutZero();
+    private static BlockPos.Mut min = BlockPos.mutZero();
+    private static BlockPos.Mut max = BlockPos.mutZero();
 
     protected AC_ItemCursor(int id) {
         super(id);
@@ -31,11 +32,11 @@ public class AC_ItemCursor extends Item implements AC_ILeftClickItem {
     public boolean useOn(ItemInstance stack, Player player, Level world, int x, int y, int z, int side) {
         int positionIndex;
         if (firstPosition) {
-            setOne(new Coord(x, y, z));
+            setOne(new BlockPos(x, y, z));
             positionIndex = 0;
         }
         else {
-            setTwo(new Coord(x, y, z));
+            setTwo(new BlockPos(x, y, z));
             bothSet = true;
             positionIndex = 1;
         }
@@ -46,10 +47,10 @@ public class AC_ItemCursor extends Item implements AC_ILeftClickItem {
         firstPosition = !firstPosition;
 
         if (bothSet) {
-            Coord delta = max().sub(min());
-            int width = delta.x + 1;
-            int height = delta.y + 1;
-            int depth = delta.z + 1;
+            BlockPos delta = max().sub(min());
+            int width = delta.x() + 1;
+            int height = delta.y() + 1;
+            int depth = delta.z() + 1;
             int blockCount = width * height * depth;
 
             message += String.format("\nCursor Volume [%d, %d, %d]: %d blocks", width, height, depth, blockCount);
@@ -60,39 +61,35 @@ public class AC_ItemCursor extends Item implements AC_ILeftClickItem {
     }
 
 
-    public static Coord one() {
+    public static BlockPos one() {
         return one;
     }
 
-    public static Coord setOne(@NotNull Coord one) {
-        AC_ItemCursor.one = one;
-        return one;
+    public static BlockPos setOne(@NotNull IntVec3 one) {
+        return AC_ItemCursor.one.set(one);
     }
 
-    public static Coord two() {
+    public static BlockPos two() {
         return two;
     }
 
-    public static Coord setTwo(@NotNull Coord two) {
-        AC_ItemCursor.two = two;
-        return two;
+    public static BlockPos setTwo(@NotNull IntVec3 two) {
+        return AC_ItemCursor.two.set(two);
     }
 
-    public static Coord min() {
+    public static BlockPos min() {
         return min;
     }
 
-    public static Coord setMin(@NotNull Coord min) {
-        AC_ItemCursor.min = min;
-        return min;
+    public static BlockPos setMin(@NotNull IntVec3 min) {
+        return AC_ItemCursor.min.set(min);
     }
 
-    public static Coord max() {
+    public static BlockPos max() {
         return max;
     }
 
-    public static Coord setMax(@NotNull Coord max) {
-        AC_ItemCursor.max = max;
-        return max;
+    public static BlockPos setMax(@NotNull IntVec3 max) {
+        return AC_ItemCursor.max.set(max);
     }
 }

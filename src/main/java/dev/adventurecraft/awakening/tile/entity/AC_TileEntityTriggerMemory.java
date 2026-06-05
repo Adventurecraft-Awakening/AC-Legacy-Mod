@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.tile.entity;
 
-import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
+import dev.adventurecraft.awakening.world.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,7 +11,7 @@ public class AC_TileEntityTriggerMemory extends AC_TileEntityMinMax {
     public boolean activateOnDetrigger;
     public boolean resetOnDeath;
 
-    public void set(@NotNull Coord min, @NotNull Coord max) {
+    public void set(@NotNull BlockPos min, @NotNull BlockPos max) {
         if (this.isSet() && this.isActivated) {
             AC_Blocks.triggerMemory.triggerDeactivate(this.level, this.x, this.y, this.z);
         }
