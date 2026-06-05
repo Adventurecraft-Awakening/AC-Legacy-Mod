@@ -247,7 +247,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         }
 
         Thread thread = Thread.currentThread();
-        thread.setName("Minecraft main thread");
+        thread.setName("Main");
         thread.setPriority(10);
         acThread.run();
     }
