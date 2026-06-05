@@ -1,10 +1,6 @@
-package dev.adventurecraft.awakening.chat.contents;
+package dev.adventurecraft.awakening.dom;
 
 import com.google.common.collect.ImmutableList;
-import dev.adventurecraft.awakening.chat.Component;
-import dev.adventurecraft.awakening.chat.Contents;
-import dev.adventurecraft.awakening.chat.StyledText;
-import dev.adventurecraft.awakening.chat.Style;
 import dev.adventurecraft.awakening.extension.client.resource.language.ExTranslationStorage;
 import net.minecraft.locale.I18n;
 import org.jetbrains.annotations.Nullable;
@@ -17,12 +13,12 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class LocaleContents implements Contents {
+public class LocaleNode implements Node {
 
     public static final Object[] NO_ARGS = new Object[0];
 
-    private static final StyledText TEXT_PERCENT = StyledText.of("%");
-    private static final StyledText TEXT_NULL = StyledText.of("null");
+    private static final Node TEXT_PERCENT = Node.text("%");
+    private static final Node TEXT_NULL = Node.text("null");
 
     private static final Pattern FORMAT_PATTERN = Pattern.compile("%(?:(\\d+)\\$)?([A-Za-z%]|$)");
 
@@ -31,18 +27,18 @@ public class LocaleContents implements Contents {
     private final Object[] args;
 
     private @Nullable I18n decomposedWith;
-    private List<StyledText> decomposedParts = ImmutableList.of();
+    private List<Node> decomposedNodes = ImmutableList.of();
 
-    public LocaleContents(String key, @Nullable String fallback, Object[] args) {
+    private LocaleNode(String key, @Nullable String fallback, Object[] args) {
         this.key = key;
         this.fallback = fallback;
         this.args = args;
     }
 
-    public @Override <T> Optional<T> visit(StyledText.Consumer<T> consumer) {
+    public @Override <T> Optional<T> visit(NodeConsumer<T> consumer) {
         this.decompose();
-        for (StyledText part : this.decomposedParts) {
-            Optional<T> o = part.visit(consumer);
+        for (Node node : this.decomposedNodes) {
+            Optional<T> o = node.visit(consumer);
             if (o.isPresent()) {
                 return o;
             }
@@ -50,10 +46,10 @@ public class LocaleContents implements Contents {
         return Optional.empty();
     }
 
-    public @Override <T> Optional<T> visit(StyledText.StyledConsumer<T> consumer, Style style) {
+    public @Override <T> Optional<T> visit(StyledConsumer<T> consumer, Style style) {
         this.decompose();
-        for (StyledText part : this.decomposedParts) {
-            Optional<T> o = part.visit(consumer, style);
+        for (Node node : this.decomposedNodes) {
+            Optional<T> o = node.visit(consumer, style);
             if (o.isPresent()) {
                 return o;
             }
@@ -65,7 +61,7 @@ public class LocaleContents implements Contents {
         if (this == object) {
             return true;
         }
-        if (object instanceof LocaleContents contents) {
+        if (object instanceof LocaleNode contents) {
             return Objects.equals(this.key, contents.key) && Objects.equals(this.fallback, contents.fallback) &&
                 Arrays.equals(this.args, contents.args);
         }
@@ -90,19 +86,37 @@ public class LocaleContents implements Contents {
         return this.args;
     }
 
-    public final StyledText getArgument(int i) {
+    public final Node getArgument(int i) {
         if (i >= 0 && i < this.args.length) {
             Object object = this.args[i];
-            if (object instanceof Component component) {
-                return component;
+            if (object instanceof Node node) {
+                return node;
             }
-            return object == null ? TEXT_NULL : StyledText.of(object.toString());
+            return object == null ? TEXT_NULL : TextNode.of(object.toString());
         }
         throw new LocaleFormatException(this, i);
     }
 
     public static boolean isAllowedPrimitiveArgument(@Nullable Object object) {
         return object instanceof Number || object instanceof Boolean || object instanceof String;
+    }
+
+    public static LocaleNode key(String key) {
+        return new LocaleNode(key, null, LocaleNode.NO_ARGS);
+    }
+
+    public static LocaleNode format(String key, Object... args) {
+        return new LocaleNode(key, null, args);
+    }
+
+    public static LocaleNode escaped(String key, Object... args) {
+        for (int i = 0; i < args.length; i++) {
+            Object arg = args[i];
+            if (!LocaleNode.isAllowedPrimitiveArgument(arg) && !(arg instanceof Node)) {
+                args[i] = String.valueOf(arg);
+            }
+        }
+        return format(key, args);
     }
 
     private void decompose() {
@@ -114,16 +128,16 @@ public class LocaleContents implements Contents {
         var exLang = ((ExTranslationStorage) lang);
         String value = this.fallback != null ? exLang.getOr(this.key, this.fallback) : lang.get(this.key);
         try {
-            var builder = ImmutableList.<StyledText>builder();
+            var builder = ImmutableList.<Node>builder();
             this.decomposeTemplate(value, builder::add);
-            this.decomposedParts = builder.build();
+            this.decomposedNodes = builder.build();
         }
         catch (LocaleFormatException ex) {
-            this.decomposedParts = ImmutableList.of(StyledText.of(value));
+            this.decomposedNodes = ImmutableList.of(Node.text(value));
         }
     }
 
-    private void decomposeTemplate(String template, Consumer<StyledText> consumer) {
+    private void decomposeTemplate(String template, Consumer<Node> consumer) {
         Matcher matcher = FORMAT_PATTERN.matcher(template);
         try {
             int argOffset = 0;
@@ -137,7 +151,7 @@ public class LocaleContents implements Contents {
                     if (text.indexOf(37) != -1) {
                         throw new IllegalArgumentException();
                     }
-                    consumer.accept(StyledText.of(text));
+                    consumer.accept(Node.text(text));
                 }
 
                 String specifier = matcher.group(2);
@@ -160,10 +174,10 @@ public class LocaleContents implements Contents {
 
             if (i < template.length()) {
                 String text = template.substring(i);
-                if (text.indexOf(37) != -1) {
+                if (text.indexOf('%') != -1) {
                     throw new IllegalArgumentException();
                 }
-                consumer.accept(StyledText.of(text));
+                consumer.accept(Node.text(text));
             }
         }
         catch (IllegalArgumentException ex) {

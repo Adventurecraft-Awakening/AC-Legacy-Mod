@@ -1,6 +1,8 @@
 package dev.adventurecraft.awakening.client.gui;
 
 import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.context.StringRange;
+import com.mojang.brigadier.suggestion.Suggestion;
 import com.mojang.brigadier.suggestion.Suggestions;
 import dev.adventurecraft.awakening.client.gui.components.AC_EditBox;
 import dev.adventurecraft.awakening.common.ServerCommandSource;
@@ -8,6 +10,8 @@ import dev.adventurecraft.awakening.extension.client.entity.player.ExAbstractCli
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.image.Rgba;
+import dev.adventurecraft.awakening.js.CodeSuggestion;
+import dev.adventurecraft.awakening.js.Evaluator;
 import dev.adventurecraft.awakening.layout.IntBorder;
 import dev.adventurecraft.awakening.layout.IntRect;
 import dev.adventurecraft.awakening.util.DrawUtil;
@@ -20,16 +24,17 @@ import net.minecraft.client.renderer.Tesselator;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.input.Keyboard;
 import org.mozilla.javascript.*;
-import org.mozilla.javascript.ast.AstNode;
-import org.mozilla.javascript.ast.AstRoot;
+import org.mozilla.javascript.ast.*;
 
+import java.text.DecimalFormat;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 @Environment(EnvType.CLIENT)
 public class AC_ChatScreen extends Screen {
 
-    public static final String JS_PROMPT = ""; // TODO: "$";
+    public static final String JS_PROMPT = ""; // TODO: change to "$" ???
 
     protected final LocalPlayer player;
 
@@ -116,61 +121,28 @@ public class AC_ChatScreen extends Screen {
                 var src = message.subSequence(JS_PROMPT.length(), message.length()).toString();
                 int cursor = Math.max(0, this.messageBox.getSelectionOrFull().end() - JS_PROMPT.length());
 
-                var env = CompilerEnvirons.ideEnvirons();
-                env.setXmlAvailable(false);
-
-                AstRoot root = parseAst(env, src, "<cmd_suggest>", 0);
+                // TODO: use futures properly...
+                var eval = new Evaluator(); // TODO: store as field
+                AstRoot root = eval.parseAst(src, "<cmd_suggest>", 0);
                 if (root != null) {
-                    var sugg = suggestAtCursor(script.getContext(), script.globalScope, root, cursor);
-                    // TODO:
+                    Stream<CodeSuggestion> keys = Evaluator.suggestAtCursor(
+                        script.getContext(),
+                        script.globalScope,
+                        root,
+                        new StringRange(cursor, cursor)
+                    );
+
+                    this.suggestionFuture = CompletableFuture.completedFuture(
+                        Evaluator.wrap(keys
+                        .map(k -> (Suggestion) k)
+                        .sorted()
+                        .toList()));
                 }
             }
             else {
                 this.suggestionFuture = null;
             }
         }
-    }
-
-    protected static CompletableFuture<Suggestions> suggestAtCursor(
-        Context context,
-        Scriptable scope,
-        AstRoot root,
-        int cursor
-    ) {
-        AstNode node = findNode(root, cursor);
-        if (node == null) {
-            return Suggestions.empty();
-        }
-
-        var future = new CompletableFuture<Suggestions>();
-
-        // TODO:
-
-        return future;
-    }
-
-    public static AstRoot parseAst(CompilerEnvirons env, String sourceString, String sourceName, int lineno) {
-        var p = new Parser(env, env.getErrorReporter());
-        try {
-            return p.parse(sourceString, sourceName, lineno);
-        }
-        catch (Exception ex) {
-            return null;
-        }
-    }
-
-    public static @Nullable AstNode findNode(AstRoot root, int cursor) {
-        var focus = new AtomicReference<AstNode>();
-        root.visit(node -> {
-            int pos = node.getAbsolutePosition();
-            int end = pos + node.getLength();
-            // TODO: improve node selection?
-            if (cursor >= pos && cursor <= end) {
-                focus.set(node);
-            }
-            return true;
-        });
-        return focus.get();
     }
 
     public @Override void render(int mouseX, int mouseY, float a) {
@@ -187,12 +159,12 @@ public class AC_ChatScreen extends Screen {
         this.messageBox.render(this.font);
 
         if (this.suggestionFuture != null && this.suggestionFuture.isDone()) {
-            Suggestions suggestions = this.suggestionFuture.resultNow();
+            Suggestions suggestions = this.suggestionFuture.join();
             if (suggestions.isEmpty()) {
 
             }
-            if (!suggestions.isEmpty()) {
-                var list = suggestions.getList();
+            else {
+                List<Suggestion> list = suggestions.getList();
 
                 IntRect rect = this.messageBox.getValueRenderRect(this.font);
 
@@ -208,9 +180,22 @@ public class AC_ChatScreen extends Screen {
                 state.setColor(Rgba.fromRgb8(0xe0, 0xe0, 0xe0));
                 state.setShadowToColor();
 
+                var df = new DecimalFormat();
+                df.setMinimumFractionDigits(1);
+                df.setMaximumFractionDigits(3);
+
                 state.begin(ts);
                 for (int i = 0; i < list.size(); i++) {
-                    state.drawText(list.get(i).getText(), rect.x, rect.top() - i * 10 - 12);
+                    Suggestion sugg = list.get(list.size() - i - 1);
+                    int ty = rect.top() - i * 10 - 12;
+                    state.drawText(sugg.getText(), rect.x, ty);
+
+                    if (sugg instanceof CodeSuggestion codeSugg) {
+                        state.drawText(codeSugg.value().getString(), bgRect.right() + 2, ty);
+
+                        // TODO: render score in some kind of dev/debug mode?
+                        // state.drawText(df.format(codeSugg.getScore()), bgRect.right() + 2, ty);
+                    }
                 }
                 state.end();
             }

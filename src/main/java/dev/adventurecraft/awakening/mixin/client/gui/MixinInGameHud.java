@@ -1,10 +1,11 @@
 package dev.adventurecraft.awakening.mixin.client.gui;
 
 import dev.adventurecraft.awakening.ACMod;
-import dev.adventurecraft.awakening.chat.*;
 import dev.adventurecraft.awakening.client.gl.GLDevice;
 import dev.adventurecraft.awakening.client.gui.AC_ChatScreen;
 import dev.adventurecraft.awakening.common.*;
+import dev.adventurecraft.awakening.dom.Node;
+import dev.adventurecraft.awakening.dom.Style;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
@@ -600,13 +601,13 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
 
     @Overwrite
     public void addMessage(String message) {
-        this.addMessage(Component.literal(message));
+        this.addMessage(Node.text(message));
     }
 
     @Override
-    public void addMessage(Component component) {
+    public void addMessage(Node node) {
         var builder = new StringBuilder();
-        component.visit(
+        node.visit(
             (content, style) -> {
                 // TODO: apply remaining style options
                 Integer color = style.getColor();
@@ -628,7 +629,7 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
         );
         ACMod.CHAT_LOGGER.info(builder.toString());
 
-        var entry = new AC_ChatMessage(component, System.currentTimeMillis());
+        var entry = new AC_ChatMessage(node, System.currentTimeMillis());
         entry.rebuild(this.minecraft.font, this.chatWidth);
         this.chatMessages.addFirst(entry);
 

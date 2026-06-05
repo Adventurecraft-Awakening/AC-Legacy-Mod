@@ -153,9 +153,7 @@ public abstract class MixinAbstractClientPlayerEntity extends Player implements 
         else {
             Script script = ((ExWorld) this.level).getScript();
             String result = script.runString(message, "<cmd>");
-            if (result != null) {
-                this.minecraft.gui.addMessage("(JS) " + result);
-            }
+            this.minecraft.gui.addMessage("(JS) " + result);
         }
     }
 

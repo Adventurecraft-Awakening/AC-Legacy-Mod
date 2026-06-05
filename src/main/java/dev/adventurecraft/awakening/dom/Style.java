@@ -1,27 +1,32 @@
-package dev.adventurecraft.awakening.chat;
+package dev.adventurecraft.awakening.dom;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.text.NumberFormat;
+
 public class Style {
 
-    public static final Style EMPTY = new Style(null, null, null, null, null, null, null);
+    public static final Style EMPTY = new Style(null, null, null, null, null, null, null, null);
 
-    final @Nullable Integer color;
-    final @Nullable Integer shadowColor;
-    final @Nullable Boolean bold;
-    final @Nullable Boolean italic;
-    final @Nullable Boolean underlined;
-    final @Nullable Boolean strikethrough;
-    final @Nullable Boolean obfuscated;
+    // TODO: collapse into style stack
+    public final @Nullable Integer color;
+    public final @Nullable Integer shadowColor;
+    public final @Nullable Boolean bold;
+    public final @Nullable Boolean italic;
+    public final @Nullable Boolean underlined;
+    public final @Nullable Boolean strikethrough;
+    public final @Nullable Boolean obfuscated;
+    public final @Nullable NumberFormat numberFormat;
 
-    private Style(
+    public Style(
         @Nullable Integer color,
         @Nullable Integer shadowColor,
         @Nullable Boolean bold,
         @Nullable Boolean italic,
         @Nullable Boolean underlined,
         @Nullable Boolean strikethrough,
-        @Nullable Boolean obfuscated
+        @Nullable Boolean obfuscated,
+        @Nullable NumberFormat numberFormat
     ) {
         this.color = color;
         this.shadowColor = shadowColor;
@@ -30,6 +35,7 @@ public class Style {
         this.underlined = underlined;
         this.strikethrough = strikethrough;
         this.obfuscated = obfuscated;
+        this.numberFormat = numberFormat;
     }
 
     public @Nullable Integer getColor() {
@@ -38,6 +44,10 @@ public class Style {
 
     public @Nullable Integer getShadowColor() {
         return this.shadowColor;
+    }
+
+    public @Nullable NumberFormat getNumberFormat() {
+        return this.numberFormat;
     }
 
     public boolean isBold() {
@@ -64,27 +74,6 @@ public class Style {
         return this == EMPTY;
     }
 
-    public Style applyFormat(ChatFormat format) {
-        Integer color = this.color;
-        Boolean bold = this.bold;
-        Boolean italic = this.italic;
-        Boolean strikethrough = this.strikethrough;
-        Boolean underlined = this.underlined;
-        Boolean obfuscated = this.obfuscated;
-        switch (format) {
-            case OBFUSCATED -> obfuscated = true;
-            case BOLD -> bold = true;
-            case STRIKETHROUGH -> strikethrough = true;
-            case UNDERLINE -> underlined = true;
-            case ITALIC -> italic = true;
-            case RESET -> {
-                return EMPTY;
-            }
-            default -> color = format.color();
-        }
-        return new Style(color, this.shadowColor, bold, italic, underlined, strikethrough, obfuscated);
-    }
-
     public Style applyTo(Style style) {
         if (this == EMPTY) {
             return style;
@@ -99,7 +88,8 @@ public class Style {
             this.italic != null ? this.italic : style.italic,
             this.underlined != null ? this.underlined : style.underlined,
             this.strikethrough != null ? this.strikethrough : style.strikethrough,
-            this.obfuscated != null ? this.obfuscated : style.obfuscated
+            this.obfuscated != null ? this.obfuscated : style.obfuscated,
+            this.numberFormat != null ? this.numberFormat : style.numberFormat
         );
     }
 }

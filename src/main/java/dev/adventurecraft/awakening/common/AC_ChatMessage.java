@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
-import dev.adventurecraft.awakening.chat.Component;
+import dev.adventurecraft.awakening.dom.Node;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import net.minecraft.client.gui.Font;
 
@@ -8,7 +8,7 @@ import java.util.ArrayList;
 
 public class AC_ChatMessage {
 
-    public final Component content;
+    public final Node content;
     public final long timestamp;
 
     public final ArrayList<Line> lines;
@@ -16,7 +16,7 @@ public class AC_ChatMessage {
     public int height;
     public int maxWidth;
 
-    public AC_ChatMessage(Component content, long timestamp) {
+    public AC_ChatMessage(Node content, long timestamp) {
         this.content = content;
         this.timestamp = timestamp;
         this.lines = new ArrayList<>();

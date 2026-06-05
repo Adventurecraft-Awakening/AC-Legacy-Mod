@@ -1,11 +1,11 @@
 package dev.adventurecraft.awakening.extension.client.gui;
 
-import dev.adventurecraft.awakening.chat.Component;
+import dev.adventurecraft.awakening.dom.Node;
 import dev.adventurecraft.awakening.script.ScriptUIContainer;
 
 public interface ExInGameHud {
 
-    void addMessage(Component component);
+    void addMessage(Node node);
 
     ScriptUIContainer getScriptUI();
 

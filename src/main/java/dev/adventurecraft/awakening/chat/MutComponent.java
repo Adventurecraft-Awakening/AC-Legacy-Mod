@@ -1,36 +1,33 @@
 package dev.adventurecraft.awakening.chat;
 
+import dev.adventurecraft.awakening.dom.Node;
+import dev.adventurecraft.awakening.dom.Style;
 import dev.adventurecraft.awakening.util.StringUtil;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.List;
 
 public class MutComponent implements Component {
 
-    private Contents contents;
-    private List<Component> siblings;
+    private final Node node;
+    private final List<Component> siblings;
     private Style style;
 
-    public MutComponent(Contents contents, List<Component> siblings, Style style) {
-        this.contents = contents;
+    public MutComponent(Node node, List<Component> siblings, Style style) {
+        this.node = node;
         this.siblings = siblings;
         this.style = style;
     }
 
-    public static MutComponent create(Contents contents) {
-        return new MutComponent(contents, new ArrayList<>(), Style.EMPTY);
+    public @Override Node contents() {
+        return this.node;
     }
 
-    public @Override Contents getContents() {
-        return this.contents;
-    }
-
-    public @Override List<Component> getSiblings() {
+    public @Override List<Component> siblings() {
         return this.siblings;
     }
 
-    public @Override Style getStyle() {
+    public @Override Style style() {
         return this.style;
     }
 
@@ -40,12 +37,12 @@ public class MutComponent implements Component {
     }
 
     public MutComponent withStyle(Style style) {
-        this.setStyle(style.applyTo(this.getStyle()));
+        this.setStyle(style.applyTo(this.style()));
         return this;
     }
 
     public MutComponent withStyle(ChatFormat format) {
-        this.setStyle(this.getStyle().applyFormat(format));
+        this.setStyle(format.apply(this.style()));
         return this;
     }
 
@@ -56,17 +53,17 @@ public class MutComponent implements Component {
         return this;
     }
 
-    public MutComponent append(@Nullable String string) {
-        if (!StringUtil.isNullOrEmpty(string)) {
-            this.append(Component.literal(string));
+    public MutComponent append(@Nullable String value) {
+        if (!StringUtil.isNullOrEmpty(value)) {
+            this.append(Component.literal(value));
         }
         return this;
     }
 
     public @Override String toString() {
-        String contentStr = this.contents.toString();
+        String contentStr = this.node.toString();
         boolean styled = !this.style.isEmpty();
-        boolean siblings = !this.siblings.isEmpty();
+        boolean siblings = !this.siblings().isEmpty();
         if (!styled && !siblings) {
             return contentStr;
         }

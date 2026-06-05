@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.chat;
 
+import dev.adventurecraft.awakening.dom.Style;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
@@ -78,6 +79,38 @@ public enum ChatFormat {
 
     public @Override String toString() {
         return this.toString;
+    }
+
+    public Style apply(Style style) {
+        Integer color = style.color;
+        Boolean bold = style.bold;
+        Boolean italic = style.italic;
+        Boolean strikethrough = style.strikethrough;
+        Boolean underlined = style.underlined;
+        Boolean obfuscated = style.obfuscated;
+        switch (this) {
+            case OBFUSCATED -> obfuscated = true;
+            case BOLD -> bold = true;
+            case STRIKETHROUGH -> strikethrough = true;
+            case UNDERLINE -> underlined = true;
+            case ITALIC -> italic = true;
+            case RESET -> { return Style.EMPTY; }
+            default -> color = this.color();
+        }
+        return new Style(
+            color,
+            style.shadowColor,
+            bold,
+            italic,
+            underlined,
+            strikethrough,
+            obfuscated,
+            style.getNumberFormat()
+        );
+    }
+
+    public Style toStyle() {
+        return this.apply(Style.EMPTY);
     }
 
     public static @Nullable ChatFormat getByCode(char c) {

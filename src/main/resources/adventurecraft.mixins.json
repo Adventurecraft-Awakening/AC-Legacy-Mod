@@ -140,6 +140,7 @@
     "item.MixinSwordItem",
     "item.MixinTileItemWithoutTranslation",
     "js.MixinContext",
+    "js.MixinParser",
     "nbt.MixinByteArrayTag",
     "nbt.MixinByteTag",
     "nbt.MixinDoubleTag",
