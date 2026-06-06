@@ -521,13 +521,17 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
         }
     }
 
-    private static @Unique boolean outOfBounds(int x, int z) {
+    public @Override boolean outOfBounds(int x, int z) {
         return Math.max(Math.abs(x), Math.abs(z)) > 32000000;
+    }
+
+    public @Override boolean ac$hasChunk(int x, int z) {
+        return this.hasChunk(x, z);
     }
 
     @Override
     public boolean setBlockAndMetadataTemp(int x, int y, int z, int id, int meta) {
-        if (outOfBounds(x, z)) {
+        if (this.outOfBounds(x, z)) {
             return false;
         }
 
@@ -540,7 +544,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
 
     @Override
     public boolean ac$setTileAndDataNoUpdate(int x, int y, int z, int id, int meta, boolean dropItems) {
-        if (outOfBounds(x, z)) {
+        if (this.outOfBounds(x, z)) {
             return false;
         }
 

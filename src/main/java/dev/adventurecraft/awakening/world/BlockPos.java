@@ -129,9 +129,9 @@ public class BlockPos implements IntVec3 {
 
     public BlockPos rotate(Rotation rotation) {
         return switch (rotation) {
-            case CLOCKWISE_90 -> new BlockPos(-this.z, this.y, this.x);
-            case CLOCKWISE_180 -> new BlockPos(-this.x, this.y, -this.z);
-            case COUNTERCLOCKWISE_90 -> new BlockPos(this.z, this.y, -this.x);
+            case RIGHT_90 -> new BlockPos(-this.z, this.y, this.x);
+            case RIGHT_180 -> new BlockPos(-this.x, this.y, -this.z);
+            case LEFT_90 -> new BlockPos(this.z, this.y, -this.x);
             case NONE -> this.freeze();
         };
     }
