@@ -4,11 +4,20 @@ plugins {
     id "babric-loom-extension" version "1.15.3"
 }
 
+
 import groovy.json.JsonOutput
-import groovy.json.JsonSlurper
+import groovy.json.StringEscapeUtils
+import org.gradle.internal.os.OperatingSystem
 
 version = project.mod_version
 group = project.maven_group
+
+def git = project.gradle.sharedServices.registerIfAbsent("git", GitService.class, spec -> {
+    spec.parameters { it ->
+        it.rootProjectDir.set(project.rootDir)
+        it.rootProjectBuildDir.set(project.layout.buildDirectory as Provider<Directory>)
+    }
+}) as Provider<GitService>
 
 base {
     archivesName = project.archives_base_name
@@ -47,20 +56,20 @@ repositories {
     }
 }
 
-import org.gradle.internal.os.OperatingSystem
-
-switch (OperatingSystem.current()) {
+def lwjglNatives = switch (OperatingSystem.current()) {
     case OperatingSystem.LINUX:
-        project.ext.lwjglNatives = "natives-linux"
-        break
+        yield "natives-linux"
+
     case OperatingSystem.MAC_OS:
-        project.ext.lwjglNatives = "natives-macos"
-        break
+        yield "natives-macos"
+
     case OperatingSystem.WINDOWS:
         def osArch = System.getProperty("os.arch")
         def winArm64 = "natives-windows${osArch.startsWith("aarch64") ? "-arm64" : ""}"
-        project.ext.lwjglNatives = osArch.contains("64") ? winArm64 : "natives-windows-x86"
-        break
+        yield osArch.contains("64") ? winArm64 : "natives-windows-x86"
+
+    case OperatingSystem:
+        throw new IllegalStateException("Unsupported OS")
 }
 
 dependencies {
@@ -122,46 +131,33 @@ configurations.configureEach {
     exclude group: "org.lwjgl.lwjgl"
 }
 
-def gitStateFile = layout.buildDirectory.file("git-state.json")
-
 processResources {
-    inputs.file(gitStateFile)
-    dependsOn("readGitState")
+    usesService(git)
+    def git_map = git.get().properties.collectEntries {
+        it.value instanceof Provider ? new AbstractMap.SimpleEntry<>(it.key, ((Provider) it.value).get()) : null
+    }
+
+    // Extract useful properties from our "gradle.properties".
+    def props = project.properties.collectEntries {
+        // Filter into strings or the cache serialization fails.
+        it.value instanceof String ? it : null
+    }
+    // Dump git info into dedicated property.
+    props.put("build_env", [git: StringEscapeUtils.escapeJava(JsonOutput.toJson(git_map))])
+
+    // Register input for caching purposes.
+    inputs.property "props", props
 
     filesMatching("fabric.mod.json") {
-        def gitMap = [git: new JsonSlurper().parseText(file(gitStateFile).text)]
-        expand(project.properties + gitMap)
+        expand props
     }
 }
 
-tasks.register("fixRunResources") {
+tasks.register("fixRunResources", Copy) {
     dependsOn("processResources")
-    doLast {
-        copy {
-            from("build/resources/main")
-            into("out/production/resources")
-        }
-    }
-}
 
-tasks.register("readGitState") {
-    outputs.file(gitStateFile)
-    doNotTrackState("GIT")
-    doLast {
-        def git = new GitState(project.rootDir)
-        def json = JsonOutput.toJson([
-            describe      : git.describe,
-            branch        : git.branch,
-            hash          : git.hash,
-            shortHash     : git.shortHash,
-            lastTag       : git.lastTag,
-            commitDistance: git.commitDistance,
-            isCleanTag    : git.isCleanTag,
-            version       : git.version,
-            originUrl     : git.originUrl,
-        ])
-        file(gitStateFile).write(json)
-    }
+    from(layout.buildDirectory.dir("resources/main"))
+    into("out/production/resources")
 }
 
 java {
@@ -174,8 +170,9 @@ java {
 }
 
 jar {
+    def name = archiveBaseName.get()
     from("LICENSE") {
-        rename { "${it}_${project.base.archivesName.get()}" }
+        rename { "${it}_${name}" }
     }
 }
 
