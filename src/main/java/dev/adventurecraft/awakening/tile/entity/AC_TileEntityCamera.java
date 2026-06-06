@@ -4,7 +4,7 @@ import dev.adventurecraft.awakening.common.AC_CutsceneCamera;
 import dev.adventurecraft.awakening.common.AC_CutsceneCameraBlendType;
 import dev.adventurecraft.awakening.common.AC_CutsceneCameraPoint;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
-import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
+import dev.adventurecraft.awakening.extension.nbt.ExCompoundTag;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.tile.entity.TileEntity;

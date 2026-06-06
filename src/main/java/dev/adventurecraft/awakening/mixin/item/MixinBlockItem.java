@@ -36,6 +36,7 @@ public abstract class MixinBlockItem implements ExTileItem {
         }
     }
 
+    // The original check prevents placing blocks at 127.
     @ModifyConstant(
         method = "useOn",
         constant = @Constant(intValue = 127)

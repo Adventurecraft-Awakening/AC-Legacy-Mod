@@ -40,16 +40,8 @@
     "mm": ">=0.2"
   },
   "custom": {
-    "git": {
-      "describe": "${git.describe}",
-      "branch": "${git.branch}",
-      "hash": "${git.hash}",
-      "shortHash": "${git.shortHash}",
-      "lastTag": "${git.lastTag}",
-      "commitDistance": "${git.commitDistance}",
-      "isCleanTag": "${git.isCleanTag}",
-      "version": "${git.version}",
-      "originUrl": "${git.originUrl}"
+    "buildEnv": {
+      "git": "${build_env.git}"
     }
   }
 }

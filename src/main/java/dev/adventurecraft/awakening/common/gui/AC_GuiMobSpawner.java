@@ -2,14 +2,16 @@ package dev.adventurecraft.awakening.common.gui;
 
 import dev.adventurecraft.awakening.client.gui.FilePickerWidget;
 import dev.adventurecraft.awakening.common.AC_JScriptHandler;
-import dev.adventurecraft.awakening.item.AC_Items;
-import dev.adventurecraft.awakening.layout.*;
-import dev.adventurecraft.awakening.primitives.TickTime;
-import dev.adventurecraft.awakening.tile.entity.AC_TileEntityMobSpawner;
-import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.common.GuiSlider2;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
+import dev.adventurecraft.awakening.item.AC_Items;
+import dev.adventurecraft.awakening.layout.IntBorder;
+import dev.adventurecraft.awakening.layout.IntPoint;
+import dev.adventurecraft.awakening.layout.IntRect;
+import dev.adventurecraft.awakening.math.IntVec3;
+import dev.adventurecraft.awakening.primitives.TickTime;
 import dev.adventurecraft.awakening.script.EntityDescriptions;
+import dev.adventurecraft.awakening.tile.entity.AC_TileEntityMobSpawner;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -190,6 +192,7 @@ public class AC_GuiMobSpawner extends Screen {
 
             int scriptY = 124;
             int scriptHeight = this.height - scriptY;
+            // TODO: do not recreate widget
             this.scriptWidget = new FilePickerWidget(
                 this,
                 new IntRect(this.width / 2, scriptY, this.width / 2, scriptHeight),
@@ -418,8 +421,8 @@ public class AC_GuiMobSpawner extends Screen {
         return TickTime.FULL_TIME_FORMAT.format(new TickTime(delay));
     }
 
-    private static String formatSpawnVec(Coord min, Coord max) {
-        return String.format("Spawn: (%d, %d, %d), (%d, %d, %d)", min.x, min.y, min.z, max.x, max.y, max.z);
+    private static String formatSpawnVec(IntVec3 min, IntVec3 max) {
+        return String.format("Spawn: (%d, %d, %d), (%d, %d, %d)", min.x(), min.y(), min.z(), max.x(), max.y(), max.z());
     }
 
     static {

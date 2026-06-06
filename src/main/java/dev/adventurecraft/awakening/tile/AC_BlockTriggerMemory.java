@@ -2,11 +2,11 @@ package dev.adventurecraft.awakening.tile;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.AC_TriggerArea;
-import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.common.gui.AC_GuiTriggerMemory;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTriggerMemory;
+import dev.adventurecraft.awakening.world.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Material;
@@ -86,8 +86,8 @@ public class AC_BlockTriggerMemory extends TileEntityTile implements AC_ITrigger
 
     public void setTriggerToSelection(Level world, int x, int y, int z) {
         var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityTriggerMemory.class);
-        Coord min = AC_ItemCursor.min();
-        Coord max = AC_ItemCursor.max();
+        BlockPos min = AC_ItemCursor.min();
+        BlockPos max = AC_ItemCursor.max();
         if (!entity.min().equals(min) || !entity.max().equals(max)) {
             entity.set(min, max);
         }

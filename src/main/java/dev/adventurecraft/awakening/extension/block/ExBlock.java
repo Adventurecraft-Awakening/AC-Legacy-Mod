@@ -1,8 +1,8 @@
 package dev.adventurecraft.awakening.extension.block;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
-import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.tile.AC_ITriggerBlock;
+import dev.adventurecraft.awakening.world.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.tile.Tile;
 
@@ -26,14 +26,14 @@ public interface ExBlock extends AC_TexturedBlock, AC_ITriggerBlock {
 
     Tile setTextureNum(int var1);
 
-    static void resetArea(Level world, Coord min, Coord max) {
+    static void resetArea(Level world, BlockPos min, BlockPos max) {
         boolean previousState = AC_DebugMode.triggerResetActive;
         AC_DebugMode.triggerResetActive = true;
 
-        // TODO: iterate over chunk slices
-        for (int bX = min.x; bX <= max.x; ++bX) {
-            for (int bZ = min.z; bZ <= max.z; ++bZ) {
-                for (int bY = min.y; bY <= max.y; ++bY) {
+        // TODO: iterate over chunk slices to avoid getTile overhead
+        for (int bX = min.x(); bX <= max.x(); ++bX) {
+            for (int bZ = min.z(); bZ <= max.z(); ++bZ) {
+                for (int bY = min.y(); bY <= max.y(); ++bY) {
                     int id = world.getTile(bX, bY, bZ);
                     if (id == 0) {
                         continue;

@@ -1,7 +1,8 @@
-package dev.adventurecraft.awakening.mixin.util.io;
+package dev.adventurecraft.awakening.mixin.nbt;
 
 import dev.adventurecraft.awakening.extension.nbt.ExTag;
-import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
+import dev.adventurecraft.awakening.extension.nbt.ExCompoundTag;
+import dev.adventurecraft.awakening.nbt.SnbtTagVisitor;
 import dev.adventurecraft.awakening.nbt.TagVisitor;
 import it.unimi.dsi.fastutil.bytes.ByteArrays;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -157,5 +158,9 @@ public abstract class MixinCompoundTag implements ExCompoundTag {
     @Override
     public Optional<Tag> removeTag(String key) {
         return Optional.of(this.entries.remove(key));
+    }
+
+    public @Override String toString() {
+        return new SnbtTagVisitor("").resetAndBuild((CompoundTag) (Object) this);
     }
 }

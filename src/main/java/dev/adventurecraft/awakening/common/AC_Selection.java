@@ -1,13 +1,14 @@
 package dev.adventurecraft.awakening.common;
 
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
+import dev.adventurecraft.awakening.world.BlockPos;
 
-public record AC_Selection(Coord one, Coord two) {
+public record AC_Selection(BlockPos one, BlockPos two) {
 
-    public static final AC_Selection ZERO = new AC_Selection(Coord.zero, Coord.zero);
+    public static final AC_Selection ZERO = new AC_Selection(BlockPos.ZERO, BlockPos.ZERO);
 
     public static AC_Selection fromCursor() {
-        return new AC_Selection(AC_ItemCursor.one(), AC_ItemCursor.two());
+        return new AC_Selection(AC_ItemCursor.one().freeze(), AC_ItemCursor.two().freeze());
     }
 
     public void load() {

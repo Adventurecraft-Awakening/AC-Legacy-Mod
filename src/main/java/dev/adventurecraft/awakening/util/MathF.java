@@ -5,7 +5,9 @@ import com.google.common.primitives.UnsignedLong;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Random;
+import java.util.function.IntPredicate;
 
+@SuppressWarnings("MathClampMigration") // see reason below
 public final class MathF {
 
     private static final double DEGREES_TO_RADIANS = Math.PI / 180.0;
@@ -134,8 +136,9 @@ public final class MathF {
         float cos = sqrt(1.0f - sin * sin);
         float a = angle + PI_OVER_2;
         float b = floor(a / PI_2) * PI_2;
-        if (b < 0.0)
+        if (b < 0.0) {
             b = PI_2 + b;
+        }
         return b >= PI ? -cos : cos;
     }
 
@@ -207,10 +210,26 @@ public final class MathF {
     }
 
     public static int roundUpToPow2(int value) {
-        return (int)(0x1_0000_0000L >> Integer.numberOfLeadingZeros(value - 1));
+        return (int) (0x1_0000_0000L >> Integer.numberOfLeadingZeros(value - 1));
     }
 
     public static int roundUpToPow2Mask(int value) {
-        return (int)(0x0_FFFF_FFFFL >> Integer.numberOfLeadingZeros((value | 1) - 1));
+        return (int) (0x0_FFFF_FFFFL >> Integer.numberOfLeadingZeros((value | 1) - 1));
+    }
+
+    public static int binarySearch(int from, int to, IntPredicate condition) {
+        int i = to - from;
+        while (i > 0) {
+            int half = i / 2;
+            int mid = from + half;
+            if (condition.test(mid)) {
+                i = half;
+            }
+            else {
+                from = mid + 1;
+                i -= half + 1;
+            }
+        }
+        return from;
     }
 }

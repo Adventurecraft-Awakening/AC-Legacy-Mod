@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.tile.entity;
 
-import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
+import dev.adventurecraft.awakening.extension.nbt.ExCompoundTag;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.common.AC_TriggerArea;
 import net.minecraft.nbt.CompoundTag;

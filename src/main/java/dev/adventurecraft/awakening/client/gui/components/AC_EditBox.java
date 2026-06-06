@@ -5,6 +5,7 @@ import dev.adventurecraft.awakening.common.ClipboardHandler;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import dev.adventurecraft.awakening.image.Rgba;
 import dev.adventurecraft.awakening.layout.IntBorder;
+import dev.adventurecraft.awakening.layout.IntPoint;
 import dev.adventurecraft.awakening.layout.IntRect;
 import dev.adventurecraft.awakening.util.DrawUtil;
 import dev.adventurecraft.awakening.util.MathF;
@@ -31,6 +32,9 @@ public class AC_EditBox extends GuiComponent {
     private int maxLength;
     private @Nullable EditSelection selection;
 
+    private int version;
+    private int renderVersion;
+
     private int tickCount;
     private boolean visible = true;
 
@@ -49,6 +53,10 @@ public class AC_EditBox extends GuiComponent {
     }
 
     protected void onValueChanged() {
+        this.version++;
+    }
+
+    protected void onRenderVersionChange() {
     }
 
     protected void onSubmit() {
@@ -67,6 +75,10 @@ public class AC_EditBox extends GuiComponent {
         this.value.setLength(0);
         this.value.append(msg);
         this.onValueChanged();
+    }
+
+    public void setRect(IntRect rect) {
+        this.rect = rect;
     }
 
     public void append(CharSequence value) {
@@ -100,7 +112,7 @@ public class AC_EditBox extends GuiComponent {
             this.onValueChanged();
         }
 
-        this.selection = new EditSelection(start + length);
+        this.setSelection(new EditSelection(start + length));
         return start;
     }
 
@@ -113,7 +125,7 @@ public class AC_EditBox extends GuiComponent {
         int start = sel.absStart();
         this.value.delete(start, sel.absEnd());
         this.onValueChanged();
-        this.selection = new EditSelection(start);
+        this.setSelection(new EditSelection(start));
     }
 
     public void tick() {
@@ -173,7 +185,7 @@ public class AC_EditBox extends GuiComponent {
                 }
             }
             else if (key == Keyboard.KEY_A) {
-                this.selection = new EditSelection(0, this.value.length());
+                this.setSelection(new EditSelection(0, this.value.length()));
             }
         }
         else if (SharedConstants.acceptableLetters.indexOf(codePoint) >= 0) {
@@ -207,14 +219,14 @@ public class AC_EditBox extends GuiComponent {
 
     public void expandSelection(EditSelection origin, int amount) {
         int end = MathF.clamp(origin.end() + amount, 0, this.value.length());
-        this.selection = new EditSelection(origin.start(), end);
+        this.setSelection(new EditSelection(origin.start(), end));
     }
 
     public void moveSelection(EditSelection origin, int amount) {
         int newStart = amount < 0 ? origin.absStart() : origin.absEnd();
         int newAmount = origin.isEmpty() ? amount : 0;
         int start = Math.clamp(newStart + newAmount, 0, this.value.length());
-        this.selection = new EditSelection(start);
+        this.setSelection(new EditSelection(start));
     }
 
     public void clicked(int mouseX, int mouseY, int button) {
@@ -229,12 +241,12 @@ public class AC_EditBox extends GuiComponent {
         if (active) {
             if (!this.isActive()) {
                 this.tickCount = 0;
-                this.selection = new EditSelection(this.value.length());
+                this.setSelection(new EditSelection(this.value.length()));
             }
         }
         else {
             if (this.selection != null) {
-                this.selection = null;
+                this.setSelection(null);
                 this.onSubmit();
             }
         }
@@ -245,21 +257,26 @@ public class AC_EditBox extends GuiComponent {
     }
 
     public void render(Font font) {
+        if (this.renderVersion != this.version) {
+            this.renderVersion = this.version;
+            this.onRenderVersionChange();
+        }
+
         var ts = Tesselator.instance;
         var state = ((ExTextRenderer) font).createState();
 
         EditSelection sel = this.selection;
         IntRect rect = this.rect;
-        int x = rect.x + 4;
-        int y = rect.y + (rect.h - 8) / 2;
+        IntPoint point = this.getValueRenderPoint();
 
         DrawUtil.beginFill(ts);
         DrawUtil.fillRect(ts, rect.expand(new IntBorder(1)).asFloat(), this.boxBorderColor);
         DrawUtil.fillRect(ts, rect.asFloat(), this.boxBackColor);
 
         if (sel != null && !sel.isEmpty()) {
+            // TODO: measure selection once per change
             int i = sel.absStart();
-            int left = x - 1 + state.measureText(this.value, 0, i).width();
+            int left = point.x - 1 + state.measureText(this.value, 0, i).width();
             int right = left + 1 + state.measureText(this.value, i, sel.absEnd()).width();
             var selRect = IntRect.fromEdges(left, rect.top(), right, rect.bot());
 
@@ -271,15 +288,48 @@ public class AC_EditBox extends GuiComponent {
         state.setShadowToColor();
 
         state.begin(ts);
-        state.drawText(this.value, x, y);
+        state.drawText(this.value, point.x, point.y);
         if (sel != null) {
             boolean showCaret = this.tickCount / 6 % 2 == 0;
             if (showCaret) {
                 int width = state.measureText(this.value, 0, sel.end()).width();
-                state.drawText("_", x + width, y + 1);
+                state.drawText("_", point.x + width, point.y + 1);
             }
         }
         state.end();
+    }
+
+    public IntPoint getValueRenderPoint() {
+        IntRect rect = this.rect;
+        int x = rect.x + 4;
+        int y = rect.y + (rect.h - 8) / 2;
+        return new IntPoint(x, y);
+    }
+
+    public IntRect getValueRenderRect(Font font) {
+        IntPoint point = this.getValueRenderPoint();
+        int width = ((ExTextRenderer) font).measureText(this.getValueSpan()).width();
+        int height = 8; // TODO: multiline?
+        return new IntRect(point.x, point.y, width, height);
+    }
+
+    public @Nullable EditSelection getSelection() {
+        return this.selection;
+    }
+
+    public EditSelection getSelectionOrFull() {
+        if (this.selection == null) {
+            return new EditSelection(0, this.value.length());
+        }
+        return this.selection;
+    }
+
+    private void setSelection(@Nullable EditSelection selection) {
+        this.selection = selection;
+    }
+
+    public int getVersion() {
+        return this.version;
     }
 
     public int getMaxLength() {

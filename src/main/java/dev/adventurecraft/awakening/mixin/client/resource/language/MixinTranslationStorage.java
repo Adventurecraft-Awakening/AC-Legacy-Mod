@@ -21,10 +21,12 @@ public abstract class MixinTranslationStorage implements ExTranslationStorage {
 
     private Properties initialTranslations;
 
-    @Shadow
-    private Properties keys;
+    @Shadow private Properties keys;
 
-    @Inject(method = "<init>", at = @At("TAIL"))
+    @Inject(
+        method = "<init>",
+        at = @At("TAIL")
+    )
     private void copyInitialTranslations(CallbackInfo ci) {
         this.initialTranslations = (Properties) this.keys.clone();
 
@@ -36,12 +38,14 @@ public abstract class MixinTranslationStorage implements ExTranslationStorage {
         at = @At(
             value = "INVOKE",
             target = "Ljava/util/Properties;getProperty(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;"
-        ))
+        )
+    )
     private String returnKeyNameOnEmpty(
         Properties instance,
         String key,
         String defaultValue,
-        @Local(argsOnly = true) String originalKey) {
+        @Local(argsOnly = true) String originalKey
+    ) {
         // TODO: remove behavior of returning key when it's missing from translation files?
         String value = instance.getProperty(key, defaultValue);
         if (originalKey != null && value.isEmpty()) {
@@ -60,7 +64,8 @@ public abstract class MixinTranslationStorage implements ExTranslationStorage {
             if (stream != null) {
                 this.keys.load(new InputStreamReader(stream, StandardCharsets.UTF_8));
             }
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             // TODO: ACMod.LOGGER.warn about resource load
             e.printStackTrace();
         }
@@ -87,8 +92,14 @@ public abstract class MixinTranslationStorage implements ExTranslationStorage {
                 var stream = new FileInputStream(file);
                 this.keys.load(new InputStreamReader(stream, StandardCharsets.ISO_8859_1));
             }
-        } catch (IOException var4) {
+        }
+        catch (IOException var4) {
             // TODO: ACMod.LOGGER.warn about resource load
         }
+    }
+
+    @Override
+    public String getOr(String key, String fallback) {
+        return this.keys.getProperty(key, fallback);
     }
 }

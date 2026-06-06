@@ -4,6 +4,8 @@ import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.client.gl.GLDevice;
 import dev.adventurecraft.awakening.client.gui.AC_ChatScreen;
 import dev.adventurecraft.awakening.common.*;
+import dev.adventurecraft.awakening.dom.Node;
+import dev.adventurecraft.awakening.dom.Style;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
@@ -46,14 +48,14 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.awt.*;
 import java.util.ArrayDeque;
+import java.util.Optional;
 import java.util.Random;
 
 @Mixin(Gui.class)
 public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud {
 
-    private static final String[] CODE_TO_ANSI_SEQUENCE = new String[] {
+    @Unique private static final String[] CODE_TO_ANSI_SEQUENCE = new String[] {
         // Regular
         "\033[0;30m", // BLACK
         "\033[0;34m", // BLUE
@@ -75,7 +77,7 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
         "\033[0;97m", // WHITE
     };
 
-    private static final long MAX_MESSAGE_AGE = 200 * 50;
+    @Unique private static final long MAX_MESSAGE_AGE = 200 * 50;
 
     @Shadow private Random random;
     @Shadow private Minecraft minecraft;
@@ -418,7 +420,7 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
 
                 var gitMeta = ACMod.GIT_META;
                 if (gitMeta != null && !gitMeta.isCleanTag) {
-                    String branchHash = "Branch \"" + gitMeta.branch + "\" - " + gitMeta.shortHash;
+                    String branchHash = "Branch \"" + gitMeta.branch + "\" - " + gitMeta.version;
                     font.drawShadow(branchHash, x, y, color0);
                     y += 10;
                 }
@@ -441,7 +443,7 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
             if (alpha > 0) {
                 int color = color0;
                 if (this.animateOverlayMessageColor) {
-                    color = Color.HSBtoRGB(partialTime / 50.0F, 0.7F, 0.6F) & color0;
+                    color = java.awt.Color.HSBtoRGB(partialTime / 50.0F, 0.7F, 0.6F) & color0;
                 }
 
                 int pX = screenWidth / 2 - font.width(this.nowPlayingString) / 2;
@@ -459,9 +461,10 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
         GL11.glEnable(GL11.GL_ALPHA_TEST);
     }
 
+    @Unique
     private void renderChat(int screenWidth, int screenHeight) {
         final var ts = Tesselator.instance;
-        final var exFont = (ExTextRenderer) this.minecraft.font;
+        final Font font = this.minecraft.font;
         final ArrayDeque<AC_ChatMessage> messages = this.chatMessages;
 
         var shadowBorder = new Border(1, 1, 1, 0);
@@ -506,7 +509,7 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
             }
 
             if (message.maxWidth != this.chatWidth) {
-                message.rebuild(exFont, this.chatWidth);
+                message.rebuild(font, this.chatWidth);
             }
 
             int usedLines = Math.min(freeLines, message.lines.size());
@@ -523,7 +526,7 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
 
         int stateHeight = 0;
 
-        TextRendererState textState = exFont.createState();
+        TextRendererState textState = ((ExTextRenderer) font).createState();
         textState.setShadowOffset(1, 1);
 
         textState.begin(ts);
@@ -551,7 +554,6 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
             int msgHeight = usedLines * lineHeight;
             int y = chatY - stateHeight - msgHeight;
 
-            String text = message.text;
             int color = Rgba.withAlpha(0xffffff, alpha);
             textState.setColor(color);
             textState.setShadowToColor();
@@ -559,13 +561,13 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
 
             // Apply formatting of skipped lines.
             for (int i = 0; i < startLine; i++) {
-                var line = lines.get(i);
-                textState.formatText(text, line.start(), line.end());
+                var content = lines.get(i).content();
+                textState.formatText(content, 0, content.length());
             }
 
             for (int i = startLine; i < totalLines; i++) {
-                var line = lines.get(i);
-                textState.drawText(text, line.start(), line.end(), x, y);
+                var content = lines.get(i).content();
+                textState.drawText(content, 0, content.length(), x, y);
                 y += lineHeight;
             }
 
@@ -576,6 +578,7 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
         GL11.glDisable(GL11.GL_BLEND);
     }
 
+    @Unique
     private int getMessageAlpha(long ageMillis, boolean isChatOpen) {
         if (isChatOpen) {
             return 255;
@@ -598,10 +601,36 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
 
     @Overwrite
     public void addMessage(String message) {
-        ACMod.CHAT_LOGGER.info(colorCodesToAnsi(message, 0, message.length()).toString());
+        this.addMessage(Node.text(message));
+    }
 
-        var entry = new AC_ChatMessage(message, System.currentTimeMillis());
-        entry.rebuild((ExTextRenderer) this.minecraft.font, this.chatWidth);
+    @Override
+    public void addMessage(Node node) {
+        var builder = new StringBuilder();
+        node.visit(
+            (content, style) -> {
+                // TODO: apply remaining style options
+                Integer color = style.getColor();
+                if (color != null) {
+                    builder
+                        .append("\033[38;2;")
+                        .append(Rgba.red(color))
+                        .append(';')
+                        .append(Rgba.green(color))
+                        .append(';')
+                        .append(Rgba.blue(color))
+                        .append('m');
+                }
+                // TODO: do color-code conversion at higher levels to avoid overhead here
+                colorCodesToAnsi(content, 0, content.length(), builder);
+                builder.append("\033[0m");
+                return Optional.empty();
+            }, Style.EMPTY
+        );
+        ACMod.CHAT_LOGGER.info(builder.toString());
+
+        var entry = new AC_ChatMessage(node, System.currentTimeMillis());
+        entry.rebuild(this.minecraft.font, this.chatWidth);
         this.chatMessages.addFirst(entry);
 
         int bufferLimit = ((ExGameOptions) minecraft.options).getChatMessageBufferLimit();
@@ -610,9 +639,9 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
         }
     }
 
-    private static StringBuilder colorCodesToAnsi(CharSequence text, int start, int end) {
+    @Unique
+    private static void colorCodesToAnsi(CharSequence text, int start, int end, StringBuilder builder) {
         TextRendererState.validateCharSequence(text, start, end);
-        var builder = new StringBuilder((int) ((end - start) * 1.1));
         for (int i = start; i < end; ++i) {
             char c = text.charAt(i);
             if (end > i + 1 && c == '§') {
@@ -628,9 +657,9 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
             }
             builder.append(c);
         }
-        return builder;
     }
 
+    @Unique
     private void renderOverlay(int x, int y, String name) {
         GL11.glDisable(GL11.GL_DEPTH_TEST);
         GL11.glDepthMask(false);

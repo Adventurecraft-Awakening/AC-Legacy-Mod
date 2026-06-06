@@ -11,8 +11,7 @@ public abstract class MixinEndTag extends MixinTag {
         visitor.visit((EndTag) (Object) this);
     }
 
-    @Override
-    public EndTag copy() {
+    public @Override EndTag copy() {
         return new EndTag();
     }
 }

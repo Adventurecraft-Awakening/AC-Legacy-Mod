@@ -1,8 +1,8 @@
 package dev.adventurecraft.awakening.tile.entity;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
-import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
+import dev.adventurecraft.awakening.world.BlockPos;
 import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 import net.minecraft.world.level.tile.Tile;
 import net.minecraft.world.level.tile.entity.TileEntity;
@@ -43,16 +43,17 @@ public class AC_TileEntityMobSpawnerRenderer extends TileEntityRenderer {
         GL11.glBegin(GL11.GL_LINES);
 
         for (int i = 0; i < 8; i++) {
-            Coord min = entity.minVec[i];
-            Coord max = entity.maxVec[i];
-            for (int bX = min.x; bX <= max.x; bX++) {
-                for (int bY = min.y; bY <= max.y; bY++) {
-                    for (int bZ = min.z; bZ <= max.z; bZ++) {
+            BlockPos min = entity.minVec[i];
+            BlockPos max = entity.maxVec[i];
+            for (int bX = min.x(); bX <= max.x(); bX++) {
+                for (int bY = min.y(); bY <= max.y(); bY++) {
+                    for (int bZ = min.z(); bZ <= max.z(); bZ++) {
                         Tile block = Tile.tiles[entity.level.getTile(bX, bY, bZ)];
                         if (block != null && ((ExBlock) block).canBeTriggered()) {
                             GL11.glColor3f(0.0F, 0.0F, 0.0F);
                             GL11.glVertex3f(0.0F, 0.0F, 0.0F);
-                            GL11.glColor3d(lineColors[i].x, lineColors[i].y, lineColors[i].z);
+                            Vec3 c = this.lineColors[i];
+                            GL11.glColor3d(c.x, c.y, c.z);
                             GL11.glVertex3f((float) (bX - entity.x), (float) (bY - entity.y), (float) (bZ - entity.z));
                         }
                     }

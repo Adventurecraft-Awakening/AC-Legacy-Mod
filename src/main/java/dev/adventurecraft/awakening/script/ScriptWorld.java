@@ -1,15 +1,15 @@
 package dev.adventurecraft.awakening.script;
 
-import dev.adventurecraft.awakening.common.Coord;
+import dev.adventurecraft.awakening.common.AC_TriggerArea;
+import dev.adventurecraft.awakening.common.AC_UtilBullet;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
+import dev.adventurecraft.awakening.world.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityIO;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.HitType;
 import net.minecraft.world.phys.Vec3;
-import dev.adventurecraft.awakening.common.AC_TriggerArea;
-import dev.adventurecraft.awakening.common.AC_UtilBullet;
 
 @SuppressWarnings("unused")
 public class ScriptWorld {
@@ -49,18 +49,18 @@ public class ScriptWorld {
     }
 
     public void triggerArea(int aX, int aY, int aZ, int bX, int bY, int bZ) {
-        var area = new AC_TriggerArea(new Coord(aX, aY, aZ), new Coord(bX, bY, bZ));
+        var area = new AC_TriggerArea(new BlockPos(aX, aY, aZ), new BlockPos(bX, bY, bZ));
         ((ExWorld) this.world).getTriggerManager().addArea(0, -1, 0, area);
         ((ExWorld) this.world).getTriggerManager().removeArea(0, -1, 0);
     }
 
     public void setTriggerArea(int x, int y, int z, int aX, int aY, int aZ, int bX, int bY, int bZ) {
-        var area = new AC_TriggerArea(new Coord(aX, aY, aZ), new Coord(bX, bY, bZ));
+        var area = new AC_TriggerArea(new BlockPos(aX, aY, aZ), new BlockPos(bX, bY, bZ));
         ((ExWorld) this.world).getTriggerManager().addArea(x, y, z, area);
     }
 
     public void setTriggerArea(int x, int y, int z, int id, int aX, int aY, int aZ, int bX, int bY, int bZ) {
-        var area = new AC_TriggerArea(new Coord(aX, aY, aZ), new Coord(bX, bY, bZ));
+        var area = new AC_TriggerArea(new BlockPos(aX, aY, aZ), new BlockPos(bX, bY, bZ));
         ((ExWorld) this.world).getTriggerManager().addArea(x, y, z, id, area);
     }
 

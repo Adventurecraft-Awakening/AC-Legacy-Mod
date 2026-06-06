@@ -1,35 +1,33 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.math.IntVec3;
 import dev.adventurecraft.awakening.util.HashCode;
+import dev.adventurecraft.awakening.world.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class AC_TriggerArea {
 
-    public final Coord min;
-    public final Coord max;
+    public final BlockPos min;
+    public final BlockPos max;
 
-    public AC_TriggerArea(@NotNull Coord min, @NotNull Coord max) {
-        this.min = min;
-        this.max = max;
+    public AC_TriggerArea(@NotNull BlockPos min, @NotNull BlockPos max) {
+        this.min = min.freeze();
+        this.max = max.freeze();
     }
 
-    public AC_TriggerArea(@NotNull Coord value) {
-        this(value, value);
+    public AC_TriggerArea(@NotNull BlockPos value) {
+        BlockPos f = value.freeze();
+        this(f, f);
     }
 
     public boolean isPointInside(int x, int y, int z) {
-        if (x >= this.min.x && x <= this.max.x) {
-            if (y >= this.min.y && y <= this.max.y) {
-                return this.min.z <= z && z <= this.max.z;
-            }
-        }
-        return false;
+        return BlockPos.contains( x, y, z, this.min, this.max);
     }
 
-    public boolean isPointInside(Coord coord) {
-        return this.isPointInside(coord.x, coord.y, coord.z);
+    public boolean isPointInside(IntVec3 vec) {
+        return this.isPointInside(vec.x(), vec.y(), vec.z());
     }
 
     public @Override boolean equals(@Nullable Object o) {
@@ -49,18 +47,18 @@ public final class AC_TriggerArea {
 
     public CompoundTag getTagCompound() {
         var tag = new CompoundTag();
-        tag.putInt("minX", this.min.x);
-        tag.putInt("minY", this.min.y);
-        tag.putInt("minZ", this.min.z);
-        tag.putInt("maxX", this.max.x);
-        tag.putInt("maxY", this.max.y);
-        tag.putInt("maxZ", this.max.z);
+        tag.putInt("minX", this.min.x());
+        tag.putInt("minY", this.min.y());
+        tag.putInt("minZ", this.min.z());
+        tag.putInt("maxX", this.max.x());
+        tag.putInt("maxY", this.max.y());
+        tag.putInt("maxZ", this.max.z());
         return tag;
     }
 
     public static AC_TriggerArea getFromTagCompound(CompoundTag tag) {
-        var min = new Coord(tag.getInt("minX"), tag.getInt("minY"), tag.getInt("minZ"));
-        var max = new Coord(tag.getInt("maxX"), tag.getInt("maxY"), tag.getInt("maxZ"));
+        var min = new BlockPos(tag.getInt("minX"), tag.getInt("minY"), tag.getInt("minZ"));
+        var max = new BlockPos(tag.getInt("maxX"), tag.getInt("maxY"), tag.getInt("maxZ"));
         return new AC_TriggerArea(min, max);
     }
 }

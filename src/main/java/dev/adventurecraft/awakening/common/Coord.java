@@ -1,12 +1,14 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.math.IntVec3;
 import dev.adventurecraft.awakening.util.HashCode;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class Coord {
+public final class Coord implements IntVec3 {
 
-    public static final Coord zero = new Coord(0, 0, 0);
-    public static final Coord one = new Coord(1, 1, 1);
+    public static final Coord zero = new Coord(0);
+    public static final Coord one = new Coord(1);
 
     public final int x;
     public final int y;
@@ -19,31 +21,51 @@ public final class Coord {
     }
 
     public Coord(int value) {
-        this(value, value, value);
+        this.x = value;
+        this.y = value;
+        this.z = value;
+    }
+
+    public Coord(IntVec3 other) {
+        this.x = other.x();
+        this.y = other.y();
+        this.z = other.z();
+    }
+
+    public @Override int x() {
+        return this.x;
+    }
+
+    public @Override int y() {
+        return this.y;
+    }
+
+    public @Override int z() {
+        return this.z;
     }
 
     public Coord add(int x, int y, int z) {
         return new Coord(this.x + x, this.y + y, this.z + z);
     }
 
-    public Coord add(Coord other) {
-        return this.add(other.x, other.y, other.z);
+    public Coord add(IntVec3 other) {
+        return this.add(other.x(), other.y(), other.z());
     }
 
-    public Coord sub(Coord other) {
-        return new Coord(this.x - other.x, this.y - other.y, this.z - other.z);
+    public Coord sub(IntVec3 other) {
+        return new Coord(this.x - other.x(), this.y - other.y(), this.z - other.z());
     }
 
     public Coord mul(int factor) {
         return new Coord(this.x * factor, this.y * factor, this.z * factor);
     }
 
-    public Coord min(Coord other) {
-        return new Coord(Math.min(this.x, other.x), Math.min(this.y, other.y), Math.min(this.z, other.z));
+    public Coord min(IntVec3 other) {
+        return new Coord(Math.min(this.x, other.x()), Math.min(this.y, other.y()), Math.min(this.z, other.z()));
     }
 
-    public Coord max(Coord other) {
-        return new Coord(Math.max(this.x, other.x), Math.max(this.y, other.y), Math.max(this.z, other.z));
+    public Coord max(IntVec3 other) {
+        return new Coord(Math.max(this.x, other.x()), Math.max(this.y, other.y()), Math.max(this.z, other.z()));
     }
 
     public Coord negate() {
@@ -102,7 +124,7 @@ public final class Coord {
         return this.x == x && this.y == y && this.z == z;
     }
 
-    public boolean equals(int value) {
+    public boolean equalsAll(int value) {
         return this.equals(value, value, value);
     }
 
@@ -118,7 +140,7 @@ public final class Coord {
         return HashCode.combine(this.x, this.y, this.z);
     }
 
-    public @Override String toString() {
-        return "{" + "x=" + x + ", y=" + y + ", z=" + z + '}';
+    public @Override @NotNull String toString() {
+        return '{' + "x=" + this.x + ", y=" + this.y + ", z=" + this.z + '}';
     }
 }

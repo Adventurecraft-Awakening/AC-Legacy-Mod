@@ -21,7 +21,7 @@ public abstract class Timers {
         installMethod(scope, "clearTimeout", this::clearTimeout);
     }
 
-    private void installMethod(Scriptable scope, String name, Callable callable) {
+    private void installMethod(Scriptable scope, String name, SerializableCallable callable) {
         var func = new LambdaFunction(scope, name, 1, callable);
         ScriptableObject.defineProperty(scope, name, func, ScriptableObject.DONTENUM);
     }

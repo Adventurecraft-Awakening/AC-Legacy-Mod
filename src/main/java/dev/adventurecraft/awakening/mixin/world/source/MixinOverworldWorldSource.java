@@ -2,6 +2,11 @@ package dev.adventurecraft.awakening.mixin.world.source;
 
 import dev.adventurecraft.awakening.common.WorldGenProperties;
 import dev.adventurecraft.awakening.extension.world.source.ExOverworldWorldSource;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.levelgen.RandomLevelSource;
+import net.minecraft.world.level.levelgen.synth.PerlinNoise;
+import net.minecraft.world.level.tile.Tile;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -9,31 +14,19 @@ import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Random;
-import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraft.world.level.levelgen.RandomLevelSource;
-import net.minecraft.world.level.levelgen.synth.PerlinNoise;
-import net.minecraft.world.level.tile.Tile;
 
 // TODO: overwrite everything instead of fragile mixins
 
 @Mixin(RandomLevelSource.class)
 public abstract class MixinOverworldWorldSource implements ExOverworldWorldSource {
 
-    @Shadow
-    private Random random;
-    @Shadow
-    private PerlinNoise perlinNoise2;
-    @Shadow
-    private PerlinNoise perlinNoise3;
-    @Shadow
-    private double[] buffer;
-    @Shadow
-    private double[] sandBuffer;
-    @Shadow
-    private double[] gravelBuffer;
-    @Shadow
-    private double[] depthBuffer;
+    @Shadow private Random random;
+    @Shadow private PerlinNoise perlinNoise2;
+    @Shadow private PerlinNoise perlinNoise3;
+    @Shadow private double[] buffer;
+    @Shadow private double[] sandBuffer;
+    @Shadow private double[] gravelBuffer;
+    @Shadow private double[] depthBuffer;
 
     private WorldGenProperties props;
 
@@ -41,21 +34,21 @@ public abstract class MixinOverworldWorldSource implements ExOverworldWorldSourc
     protected abstract double[] getHeights(double[] ds, int i, int j, int k, int l, int m, int n);
 
     @Overwrite
-    public void prepareHeights(int var1, int var2, byte[] var3, Biome[] var4, double[] var5) {
+    public void prepareHeights(int x, int z, byte[] tiles, Biome[] var4, double[] var5) {
         byte var6 = 4;
         int var7 = var6 + 1;
         byte var8 = 17;
         int var9 = var6 + 1;
-        this.buffer = this.getHeights(this.buffer, var1 * var6, 0, var2 * var6, var7, var8, var9);
+        this.buffer = this.getHeights(this.buffer, x * var6, 0, z * var6, var7, var8, var9);
 
-        for (int var10 = 0; var10 < var6; ++var10) {
-            for (int var11 = 0; var11 < var6; ++var11) {
-                for (int var12 = 0; var12 < 16; ++var12) {
+        for (int rx = 0; rx < var6; ++rx) {
+            for (int rz = 0; rz < var6; ++rz) {
+                for (int ry = 0; ry < 16; ++ry) {
                     double var13 = 0.125D;
-                    int noise1 = (var10 * var9 + var11) * var8 + var12;
-                    int noise2 = (var10 * var9 + var11 + 1) * var8 + var12;
-                    int noise3 = ((var10 + 1) * var9 + var11) * var8 + var12;
-                    int noise4 = ((var10 + 1) * var9 + var11 + 1) * var8 + var12;
+                    int noise1 = (rx * var9 + rz) * var8 + ry;
+                    int noise2 = (rx * var9 + rz + 1) * var8 + ry;
+                    int noise3 = ((rx + 1) * var9 + rz) * var8 + ry;
+                    int noise4 = ((rx + 1) * var9 + rz + 1) * var8 + ry;
                     double var15 = this.buffer[noise1];
                     double var23 = (this.buffer[noise1 + 1] - var15) * var13;
                     double var17 = this.buffer[noise2];
@@ -73,31 +66,32 @@ public abstract class MixinOverworldWorldSource implements ExOverworldWorldSourc
                         double var40 = (var21 - var17) * var32;
 
                         for (int var42 = 0; var42 < 4; ++var42) {
-                            int var43 = var42 + var10 * 4 << 11 | 0 + var11 * 4 << 7 | var12 * 8 + var31;
+                            int var43 = ((var42 + rx * 4) << 11) | ((rz * 4) << 7) | (ry * 8 + var31);
                             short var44 = 128;
                             double var45 = 0.25D;
                             double var47 = var34;
                             double var49 = (var36 - var34) * var45;
 
                             for (int var51 = 0; var51 < 4; ++var51) {
-                                int var52 = Math.abs(var1 * 16 + var10 * 4 + var42);
-                                int var53 = Math.abs(var2 * 16 + var11 * 4 + var51);
-                                double var54 = Math.max(Math.sqrt(var52 * var52 + var53 * var53) - this.props.mapSize, 0.0D) / 2.0D;
-                                double var56 = var5[(var10 * 4 + var42) * 16 + var11 * 4 + var51];
-                                int var58 = 0;
-                                if (var12 * 8 + var31 < this.props.waterLevel) {
-                                    if (var56 < 0.5D && var12 * 8 + var31 >= this.props.waterLevel - 1) {
-                                        var58 = Tile.ICE.id;
-                                    } else {
-                                        var58 = Tile.WATER.id;
+                                int ax = Math.abs(x * 16 + rx * 4 + var42);
+                                int az = Math.abs(z * 16 + rz * 4 + var51);
+                                double var54 = Math.max(Math.sqrt(ax * ax + az * az) - this.props.mapSize, 0.0D) / 2.0D;
+                                double var56 = var5[(rx * 4 + var42) * 16 + rz * 4 + var51];
+                                int tile = 0;
+                                if (ry * 8 + var31 < this.props.waterLevel) {
+                                    if (var56 < 0.5D && ry * 8 + var31 >= this.props.waterLevel - 1) {
+                                        tile = Tile.ICE.id;
+                                    }
+                                    else {
+                                        tile = Tile.WATER.id;
                                     }
                                 }
 
                                 if (var47 - var54 > 0.0D) {
-                                    var58 = Tile.STONE.id;
+                                    tile = Tile.STONE.id;
                                 }
 
-                                var3[var43] = (byte) var58;
+                                tiles[var43] = (byte) tile;
                                 var43 += var44;
                                 var47 += var49;
                             }
@@ -117,69 +111,78 @@ public abstract class MixinOverworldWorldSource implements ExOverworldWorldSourc
     }
 
     @Overwrite
-    public void buildSurfaces(int var1, int var2, byte[] var3, Biome[] var4) {
-        double var5 = 1.0D / 32.0D;
-        this.sandBuffer = this.perlinNoise2.getRegion(this.sandBuffer, var1 * 16, var2 * 16, 0.0D, 16, 16, 1, var5, var5, 1.0D);
-        this.gravelBuffer = this.perlinNoise2.getRegion(this.gravelBuffer, var1 * 16, 109.0134D, var2 * 16, 16, 1, 16, var5, 1.0D, var5);
-        this.depthBuffer = this.perlinNoise3.getRegion(this.depthBuffer, var1 * 16, var2 * 16, 0.0D, 16, 16, 1, var5 * 2.0D, var5 * 2.0D, var5 * 2.0D);
+    public void buildSurfaces(int x, int z, byte[] tiles, Biome[] biomes) {
+        double s = 1.0D / 32.0D;
+        int C = 16;
+        int bx = x * C;
+        int bz = z * C;
+        this.sandBuffer = this.perlinNoise2.getRegion(this.sandBuffer, bx, bz, 0, C, C, 1, s, s, 1);
+        this.gravelBuffer = this.perlinNoise2.getRegion(this.gravelBuffer, bx, 109.0134D, bz, C, 1, C, s, 1, s);
+        this.depthBuffer = this.perlinNoise3.getRegion(this.depthBuffer, bx, bz, 0, C, C, 1, s * 2, s * 2, s * 2);
 
-        for (int var7 = 0; var7 < 16; ++var7) {
-            for (int var8 = 0; var8 < 16; ++var8) {
-                Biome var9 = var4[var7 + var8 * 16];
-                boolean var10 = this.sandBuffer[var7 + var8 * 16] + this.random.nextDouble() * 0.2D > 0.0D;
-                boolean var11 = this.gravelBuffer[var7 + var8 * 16] + this.random.nextDouble() * 0.2D > 3.0D;
-                int var12 = (int) (this.depthBuffer[var7 + var8 * 16] / 3.0D + 3.0D + this.random.nextDouble() * 0.25D);
+        for (int var7 = 0; var7 < C; ++var7) {
+            for (int var8 = 0; var8 < C; ++var8) {
+                Biome biome = biomes[var7 + var8 * C];
+                boolean isSand = this.sandBuffer[var7 + var8 * C] + this.random.nextDouble() * 0.2D > 0.0D;
+                boolean isGravel = this.gravelBuffer[var7 + var8 * C] + this.random.nextDouble() * 0.2D > 3.0D;
+                int depth = (int) (this.depthBuffer[var7 + var8 * C] / 3.0D + 3.0D + this.random.nextDouble() * 0.25D);
                 int var13 = -1;
-                byte var14 = var9.topMaterial;
-                byte var15 = var9.material;
+                byte topTile = biome.topMaterial;
+                byte tile = biome.material;
 
-                for (int var16 = 127; var16 >= 0; --var16) {
-                    int var17 = (var8 * 16 + var7) * 128 + var16;
-                    byte var18 = var3[var17];
-                    if (var18 == 0) {
+                for (int y = 127; y >= 0; --y) {
+                    int var17 = (var8 * C + var7) * 128 + y;
+                    byte prevTile = tiles[var17];
+                    if (prevTile == 0) {
                         var13 = -1;
-                    } else if (var18 == Tile.STONE.id) {
-                        if (var13 == -1) {
-                            if (var12 <= 0) {
-                                var14 = 0;
-                                var15 = (byte) Tile.STONE.id;
-                            } else if (var16 >= this.props.waterLevel - 4 && var16 <= this.props.waterLevel + 1) {
-                                var14 = var9.topMaterial;
-                                var15 = var9.material;
-                                if (var11) {
-                                    var14 = 0;
-                                }
-
-                                if (var11) {
-                                    var15 = (byte) Tile.GRAVEL.id;
-                                }
-
-                                if (var10) {
-                                    var14 = (byte) Tile.SAND.id;
-                                }
-
-                                if (var10) {
-                                    var15 = (byte) Tile.SAND.id;
-                                }
+                        continue;
+                    }
+                    if (prevTile != Tile.STONE.id) {
+                        continue;
+                    }
+                    if (var13 == -1) {
+                        if (depth <= 0) {
+                            topTile = 0;
+                            tile = (byte) Tile.STONE.id;
+                        }
+                        else if (y >= this.props.waterLevel - 4 && y <= this.props.waterLevel + 1) {
+                            topTile = biome.topMaterial;
+                            tile = biome.material;
+                            if (isGravel) {
+                                topTile = 0;
                             }
 
-                            if (var16 < this.props.waterLevel && var14 == 0) {
-                                var14 = (byte) Tile.WATER.id;
+                            if (isGravel) {
+                                tile = (byte) Tile.GRAVEL.id;
                             }
 
-                            var13 = var12;
-                            if (var16 >= this.props.waterLevel - 1) {
-                                var3[var17] = var14;
-                            } else {
-                                var3[var17] = var15;
+                            if (isSand) {
+                                topTile = (byte) Tile.SAND.id;
                             }
-                        } else if (var13 > 0) {
-                            --var13;
-                            var3[var17] = var15;
-                            if (var13 == 0 && var15 == Tile.SAND.id) {
-                                var13 = this.random.nextInt(4);
-                                var15 = (byte) Tile.SANDSTONE.id;
+
+                            if (isSand) {
+                                tile = (byte) Tile.SAND.id;
                             }
+                        }
+
+                        if (y < this.props.waterLevel && topTile == 0) {
+                            topTile = (byte) Tile.WATER.id;
+                        }
+
+                        var13 = depth;
+                        if (y >= this.props.waterLevel - 1) {
+                            tiles[var17] = topTile;
+                        }
+                        else {
+                            tiles[var17] = tile;
+                        }
+                    }
+                    else if (var13 > 0) {
+                        --var13;
+                        tiles[var17] = tile;
+                        if (var13 == 0 && tile == Tile.SAND.id) {
+                            var13 = this.random.nextInt(4);
+                            tile = (byte) Tile.SANDSTONE.id;
                         }
                     }
                 }
@@ -187,21 +190,32 @@ public abstract class MixinOverworldWorldSource implements ExOverworldWorldSourc
         }
     }
 
-    @Inject(method = "getChunk", at = @At("RETURN"))
-    private void markChunkAtReturn(int var1, int var2, CallbackInfoReturnable<LevelChunk> cir) {
+    @Inject(
+        method = "getChunk",
+        at = @At("RETURN")
+    )
+    private void markChunkAtReturn(int x, int z, CallbackInfoReturnable<LevelChunk> cir) {
         cir.getReturnValue().unsaved = false;
     }
 
     @ModifyConstant(
         method = "getHeights",
-        constant = @Constant(doubleValue = 684.412D, ordinal = 0))
+        constant = @Constant(
+            doubleValue = 684.412D,
+            ordinal = 0
+        )
+    )
     private double modifyFractureHorizontal(double constant) {
         return constant * this.props.fractureHorizontal;
     }
 
     @ModifyConstant(
         method = "getHeights",
-        constant = @Constant(doubleValue = 684.412D, ordinal = 1))
+        constant = @Constant(
+            doubleValue = 684.412D,
+            ordinal = 1
+        )
+    )
     private double modifyFractureVertical(double constant) {
         return constant * this.props.fractureVertical;
     }
@@ -211,8 +225,10 @@ public abstract class MixinOverworldWorldSource implements ExOverworldWorldSourc
         at = @At(
             value = "CONSTANT",
             args = "doubleValue=1.4",
-            shift = At.Shift.BEFORE),
-        ordinal = 6)
+            shift = At.Shift.BEFORE
+        ),
+        ordinal = 6
+    )
     private double subAvgDepth(double value) {
         return value - this.props.maxAvgDepth;
     }
@@ -222,8 +238,10 @@ public abstract class MixinOverworldWorldSource implements ExOverworldWorldSourc
         at = @At(
             value = "CONSTANT",
             args = "doubleValue=8.0",
-            shift = At.Shift.BEFORE),
-        ordinal = 6)
+            shift = At.Shift.BEFORE
+        ),
+        ordinal = 6
+    )
     private double addAvgHeight(double value) {
         return value + this.props.maxAvgHeight;
     }
@@ -233,7 +251,9 @@ public abstract class MixinOverworldWorldSource implements ExOverworldWorldSourc
         at = @At(
             value = "FIELD",
             target = "Lnet/minecraft/world/level/levelgen/RandomLevelSource;ar:[D",
-            args = "array=get"))
+            args = "array=get"
+        )
+    )
     private double multiplyVolatility1(double[] array, int index) {
         return array[index] * this.props.volatility1;
     }
@@ -243,21 +263,31 @@ public abstract class MixinOverworldWorldSource implements ExOverworldWorldSourc
         at = @At(
             value = "FIELD",
             target = "Lnet/minecraft/world/level/levelgen/RandomLevelSource;br:[D",
-            args = "array=get"))
+            args = "array=get"
+        )
+    )
     private double multiplyVolatility2(double[] array, int index) {
         return array[index] * this.props.volatility2;
     }
 
     @ModifyConstant(
         method = "getHeights",
-        constant = @Constant(doubleValue = 0.0D, ordinal = 7))
+        constant = @Constant(
+            doubleValue = 0.0D,
+            ordinal = 7
+        )
+    )
     private double modifyVolatilityWeight1(double constant) {
         return this.props.volatilityWeight1;
     }
 
     @ModifyConstant(
         method = "getHeights",
-        constant = @Constant(doubleValue = 1.0D, ordinal = 7))
+        constant = @Constant(
+            doubleValue = 1.0D,
+            ordinal = 7
+        )
+    )
     private double modifyVolatilityWeight2(double constant) {
         return this.props.volatilityWeight2;
     }

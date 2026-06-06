@@ -2,6 +2,9 @@ package dev.adventurecraft.awakening.mixin.entity;
 
 import dev.adventurecraft.awakening.extension.entity.ExBlockEntity;
 import dev.adventurecraft.awakening.tile.entity.*;
+import dev.adventurecraft.awakening.world.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.tile.entity.TileEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -13,14 +16,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Map;
 
-import net.minecraft.world.level.tile.entity.TileEntity;
-
 @Mixin(TileEntity.class)
 public abstract class MixinBlockEntity implements ExBlockEntity {
 
-    @Unique private boolean killedFromSaving;
-
     @Shadow private static Map<Class<?>, String> classIdMap;
+
+    @Shadow public Level level;
+    @Shadow public int x;
+    @Shadow public int y;
+    @Shadow public int z;
+
+    @Unique private boolean killedFromSaving;
 
     @Shadow
     private static void setId(Class<?> type, String string) {
@@ -30,6 +36,11 @@ public abstract class MixinBlockEntity implements ExBlockEntity {
     @Override
     public String getClassName() {
         return classIdMap.get(this.getClass());
+    }
+
+    @Override
+    public BlockPos getBlockPos() {
+        return new BlockPos.Mut(this.x, this.y, this.z);
     }
 
     @Override

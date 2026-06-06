@@ -1,10 +1,9 @@
 package dev.adventurecraft.awakening.entity;
 
-import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.common.IEntityPather;
 import dev.adventurecraft.awakening.extension.entity.ExMob;
 import dev.adventurecraft.awakening.extension.entity.ai.pathing.ExEntityPath;
-import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
+import dev.adventurecraft.awakening.extension.nbt.ExCompoundTag;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.script.EntityDescriptions;
 import dev.adventurecraft.awakening.script.ScopeTag;
@@ -12,15 +11,14 @@ import dev.adventurecraft.awakening.script.ScriptEntity;
 import dev.adventurecraft.awakening.script.ScriptEntityDescription;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityNpcPath;
 import dev.adventurecraft.awakening.util.MathF;
+import dev.adventurecraft.awakening.world.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.Nullable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -40,10 +38,11 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
     private String onInteraction = "";
     private Path path;
     private Entity pathToEntity;
-    private @Nullable Coord pathToVec;
+    private final BlockPos.Mut pathToVec = BlockPos.mutZero();
+    private boolean hasPathToVec;
     private float maxPathDistance = 64.0F;
     private int nextPathIn;
-    private double prevDistToPoint = 999999.0D;
+    private double prevDistToPoint = Double.POSITIVE_INFINITY;
     private AC_TileEntityNpcPath triggerOnPath = null;
     private boolean ranOnCreated = false;
 
@@ -190,30 +189,31 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
     }
 
     public boolean isPathing() {
-        return this.pathToEntity != null || this.pathToVec != null || this.path != null;
+        return this.pathToEntity != null || this.hasPathToVec || this.path != null;
     }
 
     public void pathToEntity(Entity entity) {
         this.pathToEntity = entity;
-        this.pathToVec = null;
+        this.hasPathToVec = false;
         this.path = this.level.findPath(this, this.pathToEntity, this.maxPathDistance);
         this.nextPathIn = this.level.random.nextInt(40) + 60;
-        this.prevDistToPoint = 999999.0D;
+        this.prevDistToPoint = Double.POSITIVE_INFINITY;
         this.setTriggerOnPath(null);
     }
 
     public void pathToPosition(int x, int y, int z) {
         this.pathToEntity = null;
-        this.pathToVec = new Coord(x, y, z);
+        this.pathToVec.set(x, y, z);
+        this.hasPathToVec = true;
         this.path = this.level.findPath(this, x, y, z, this.maxPathDistance);
         this.nextPathIn = this.level.random.nextInt(40) + 60;
-        this.prevDistToPoint = 999999.0D;
+        this.prevDistToPoint = Double.POSITIVE_INFINITY;
         this.setTriggerOnPath(null);
     }
 
     public void clearPathing() {
         this.pathToEntity = null;
-        this.pathToVec = null;
+        this.hasPathToVec = false;
         this.path = null;
         this.setTriggerOnPath(null);
         this.zza = 0.0F;
@@ -230,14 +230,12 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
                 this.path = this.level.findPath(this, this.pathToEntity, this.maxPathDistance);
             }
             else {
-                Coord p = this.pathToVec;
-                if (p != null) {
-                    this.path = this.level.findPath(this, p.x, p.y, p.z, this.maxPathDistance);
-                }
+                var p = this.pathToVec;
+                this.path = this.level.findPath(this, p.x(), p.y(), p.z(), this.maxPathDistance);
             }
 
             this.nextPathIn = this.level.random.nextInt(40) + 10;
-            this.prevDistToPoint = 999999.0D;
+            this.prevDistToPoint = Double.POSITIVE_INFINITY;
         }
 
         if (this.path == null) {
@@ -260,7 +258,6 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
         while (point != null && point.distanceToSqr(this.x, point.y, this.z) < maxDist) {
             this.path.next();
             if (this.path.isDone()) {
-                point = null;
                 this.path = null;
                 this.runPathCompletedScript();
                 var path = this.getTriggerOnPath();
@@ -270,14 +267,14 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
                 return;
             }
             point = this.path.current(this);
-            this.prevDistToPoint = 999999.0D;
+            this.prevDistToPoint = Double.POSITIVE_INFINITY;
         }
 
         if (point != null) {
             double dX = point.x - this.x;
             double dZ = point.z - this.z;
-            double dY = point.y - (double) Mth.floor(this.bb.y0 + 0.5D);
-            float newYaw = (float) Math.toDegrees(Math.atan2(dZ, dX)) - 90.0F;
+            double dY = point.y - Math.floor(this.bb.y0 + 0.5D);
+            float newYaw = (float) MathF.toDegrees(Math.atan2(dZ, dX)) - 90.0F;
             float extraYaw = MathF.clampAngle(newYaw - this.yRot, -30.0F, 30.0F);
 
             this.zza = this.runSpeed;

@@ -1,8 +1,8 @@
 package dev.adventurecraft.awakening.item;
 
 import dev.adventurecraft.awakening.common.AC_TriggerArea;
-import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
+import dev.adventurecraft.awakening.world.BlockPos;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;
@@ -19,7 +19,7 @@ public class AC_ItemTriggerStick extends Item implements AC_ILeftClickItem {
     @Override
     public boolean onItemUseLeftClick(ItemInstance stack, Player player, Level world, int x, int y, int z, int side) {
         Minecraft.instance.gui.addMessage(String.format("Triggering (%d, %d, %d)", x, y, z));
-        var area = new AC_TriggerArea(new Coord(x, y, z));
+        var area = new AC_TriggerArea(new BlockPos(x, y, z));
         ((ExWorld) world).getTriggerManager().addArea(0, -1, 0, area);
         ((ExWorld) world).getTriggerManager().removeArea(0, -1, 0);
         return false;

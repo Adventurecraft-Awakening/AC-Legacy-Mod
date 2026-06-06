@@ -205,7 +205,7 @@ public class ServerCommands {
 
     public static int cmdConfig(CommandContext<ServerCommandSource> context) {
         var source = context.getSource();
-        var world = source.getWorld();
+        var world = source.getLevel();
         if (world != null) {
             source.getClient().setScreen(new AC_GuiWorldConfig(world));
             return Command.SINGLE_SUCCESS;
@@ -215,7 +215,7 @@ public class ServerCommands {
 
     public static int cmdTest(CommandContext<ServerCommandSource> context) {
         var source = context.getSource();
-        var world = source.getWorld();
+        var world = source.getLevel();
         if (world != null) {
             source.getClient().setScreen(new AC_GuiMapEditHUD(world));
             return Command.SINGLE_SUCCESS;
@@ -225,7 +225,7 @@ public class ServerCommands {
 
     public static int cmdScriptStats(CommandContext<ServerCommandSource> context) {
         var source = context.getSource();
-        var world = source.getWorld();
+        var world = source.getLevel();
         if (world != null) {
             source.getClient().setScreen(new AC_GuiScriptStats(world));
             return Command.SINGLE_SUCCESS;
@@ -240,7 +240,7 @@ public class ServerCommands {
     }
 
     public static int cmdDay(CommandContext<ServerCommandSource> context) {
-        var world = context.getSource().getWorld();
+        var world = context.getSource().getLevel();
         if (world instanceof ExWorld exWorld) {
             exWorld.setTimeOfDay(0L);
             return Command.SINGLE_SUCCESS;
@@ -249,7 +249,7 @@ public class ServerCommands {
     }
 
     public static int cmdNight(CommandContext<ServerCommandSource> context) {
-        var world = context.getSource().getWorld();
+        var world = context.getSource().getLevel();
         if (world instanceof ExWorld exWorld) {
             exWorld.setTimeOfDay(14000L);
             return Command.SINGLE_SUCCESS;
@@ -259,7 +259,7 @@ public class ServerCommands {
 
     public static int cmdRemoveMobs(CommandContext<ServerCommandSource> context) {
         var source = context.getSource();
-        var world = source.getWorld();
+        var world = source.getLevel();
         if (world == null) {
             return 0;
         }
@@ -300,7 +300,7 @@ public class ServerCommands {
 
     public static int cmdFullBright(CommandContext<ServerCommandSource> context) {
         var source = context.getSource();
-        var world = source.getWorld();
+        var world = source.getLevel();
         if (world != null) {
             for (int i = 0; i < 16; ++i) {
                 world.dimension.brightnessRamp[i] = 1.0F;
@@ -314,7 +314,7 @@ public class ServerCommands {
 
     public static int cmdScriptStatReset(CommandContext<ServerCommandSource> context) {
         var source = context.getSource();
-        var world = source.getWorld();
+        var world = source.getLevel();
         if (world instanceof ExWorld exWorld) {
             var infos = exWorld.getScriptHandler().getScripts();
             int count = infos.size();
@@ -349,7 +349,7 @@ public class ServerCommands {
     }
 
     public static int cmdUndo(ServerCommandSource source, Integer amount) {
-        var world = source.getWorld();
+        var world = source.getLevel();
         if (world instanceof ExWorld exWorld) {
             var undoStack = exWorld.getUndoStack();
             int reqCount = amount != null ? amount : 1;
@@ -374,7 +374,7 @@ public class ServerCommands {
     }
 
     public static int cmdRedo(ServerCommandSource source, Integer amount) {
-        var world = source.getWorld();
+        var world = source.getLevel();
         if (world instanceof ExWorld exWorld) {
             var undoStack = exWorld.getUndoStack();
             int reqCount = amount != null ? amount : 1;
@@ -488,7 +488,7 @@ public class ServerCommands {
 
     public static int cmdSetGameRule(CommandContext<ServerCommandSource> context, GameRules.Key<?> key, Object value) {
         var source = context.getSource();
-        var world = source.getWorld();
+        var world = source.getLevel();
         if (world == null) {
             return 0;
         }
@@ -635,7 +635,7 @@ public class ServerCommands {
 
     public static int cmdUndoStack(CommandContext<ServerCommandSource> context) {
         var source = context.getSource();
-        var world = source.getWorld();
+        var world = source.getLevel();
         if (world instanceof ExWorld exWorld) {
             var undoStack = exWorld.getUndoStack();
 
@@ -651,7 +651,7 @@ public class ServerCommands {
 
     public static int cmdUndoStackClear(CommandContext<ServerCommandSource> context) {
         var source = context.getSource();
-        var world = source.getWorld();
+        var world = source.getLevel();
         if (world instanceof ExWorld exWorld) {
             var undoStack = exWorld.getUndoStack();
             int undoCount = undoStack.undoStack.size();

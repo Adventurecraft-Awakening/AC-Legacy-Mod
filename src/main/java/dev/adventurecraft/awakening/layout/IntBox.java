@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.layout;
 
 import dev.adventurecraft.awakening.common.Coord;
+import dev.adventurecraft.awakening.math.IntVec3;
 
 public final class IntBox {
 
@@ -24,12 +25,12 @@ public final class IntBox {
         this.z1 = z1;
     }
 
-    public static IntBox fromCorners(Coord p0, Coord p1) {
-        return new IntBox(p0.x, p0.y, p0.z, p1.x, p1.y, p1.z);
+    public static IntBox fromCorners(IntVec3 p0, IntVec3 p1) {
+        return new IntBox(p0.x(), p0.y(), p0.z(), p1.x(), p1.y(), p1.z());
     }
 
-    public static IntBox fromBox(Coord origin, Coord size) {
-        return fromCorners(origin, origin.add(size));
+    public static IntBox fromBox(IntVec3 origin, IntVec3 size) {
+        return fromCorners(origin, new Coord(origin).add(size));
     }
 
     public IntBox shiftRight(int amount) {

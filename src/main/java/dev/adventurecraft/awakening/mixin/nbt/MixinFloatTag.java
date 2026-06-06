@@ -6,8 +6,6 @@ import net.minecraft.nbt.FloatTag;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-import java.util.Optional;
-
 @Mixin(FloatTag.class)
 public abstract class MixinFloatTag extends MixinTag implements NumericTag {
 
@@ -17,13 +15,35 @@ public abstract class MixinFloatTag extends MixinTag implements NumericTag {
         visitor.visit((FloatTag) (Object) this);
     }
 
-    @Override
-    public FloatTag copy() {
+    public @Override FloatTag copy() {
         return new FloatTag(this.data);
     }
 
-    @Override
-    public Optional<Double> getDouble() {
-        return Optional.of((double) this.data);
+    public @Override Number box() {
+        return this.data;
+    }
+
+    public @Override byte byteValue() {
+        return (byte) ((int) this.data & 0xff);
+    }
+
+    public @Override short shortValue() {
+        return (short) ((int) this.data & 0xffff);
+    }
+
+    public @Override int intValue() {
+        return (int) this.data;
+    }
+
+    public @Override long longValue() {
+        return (long) this.data;
+    }
+
+    public @Override float floatValue() {
+        return this.data;
+    }
+
+    public @Override double doubleValue() {
+        return this.data;
     }
 }

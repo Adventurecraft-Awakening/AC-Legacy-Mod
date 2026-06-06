@@ -2,13 +2,13 @@ package dev.adventurecraft.awakening.tile;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.AC_TriggerArea;
-import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.common.gui.AC_GuiTrigger;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityMinMax;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityTrigger;
+import dev.adventurecraft.awakening.world.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -17,8 +17,6 @@ import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.tile.TileEntityTile;
 import net.minecraft.world.level.tile.entity.TileEntity;
 import net.minecraft.world.phys.AABB;
-
-import java.util.Random;
 
 public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerDebugBlock {
 
@@ -173,8 +171,8 @@ public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerDebugB
 
     public void setTriggerToSelection(Level world, int x, int y, int z) {
         var e = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityMinMax.class);
-        Coord min = AC_ItemCursor.min();
-        Coord max = AC_ItemCursor.max();
+        BlockPos min = AC_ItemCursor.min();
+        BlockPos max = AC_ItemCursor.max();
         if (e.min().equals(min) && e.max().equals(max)) {
             return;
         }

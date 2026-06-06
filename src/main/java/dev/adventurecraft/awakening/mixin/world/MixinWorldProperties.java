@@ -4,7 +4,7 @@ import dev.adventurecraft.awakening.extension.nbt.ExTag;
 import dev.adventurecraft.awakening.tile.AC_BlockEffect;
 import dev.adventurecraft.awakening.common.LightHelper;
 import dev.adventurecraft.awakening.common.WorldGenProperties;
-import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
+import dev.adventurecraft.awakening.extension.nbt.ExCompoundTag;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.world.GameRules;
@@ -102,12 +102,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
 
         for (int i = 0; i < 16; ++i) {
             Optional<Float> value = exTag.findFloat("brightness" + i);
-            if (value.isPresent()) {
-                this.brightness[i] = value.get();
-            }
-            else {
-                this.brightness[i] = LightHelper.getDefaultLightAtIndex(i);
-            }
+            this.brightness[i] = value.isPresent() ? value.get() : LightHelper.getDefaultLightAtIndex(i);
         }
 
         exTag.findCompound("globalScope").ifPresent(this::setGlobalScope);
@@ -358,7 +353,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
         this.replacementTextures.clear();
 
         ((ExCompoundTag) this.replacementTag).forEach((key, tag) -> ((ExTag) tag)
-            .getString()
+            .asString()
             .ifPresent(name -> AC_BlockEffect.replaceTexture(world, key, name)));
     }
 

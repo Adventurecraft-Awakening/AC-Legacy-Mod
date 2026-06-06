@@ -5,6 +5,7 @@ import dev.adventurecraft.awakening.extension.client.render.block.ExBlockRendere
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.world.AC_BlockCopyUtils;
+import dev.adventurecraft.awakening.world.BlockPos;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.client.renderer.TileRenderer;
@@ -141,7 +142,7 @@ public class AC_MapEditing {
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL14.GL_CONSTANT_ALPHA, GL14.GL_ONE_MINUS_CONSTANT_ALPHA);
 
-        Coord coord = AC_BlockCopyUtils.calculatePastePosition().sub(AC_ItemCursor.min());
+        BlockPos pos = AC_BlockCopyUtils.calculatePastePosition().sub(AC_ItemCursor.min());
 
         // TODO: generate mesh
         for (int texIndex = 0; texIndex <= 3; ++texIndex) {
@@ -154,16 +155,16 @@ public class AC_MapEditing {
 
             ((ExBlockRenderer) this.renderBlocks).startRenderingBlocks(this.world);
 
-            Coord min = AC_ItemCursor.min();
-            Coord max = AC_ItemCursor.max();
-            for (int x = min.x; x <= max.x; x++) {
-                for (int y = min.y; y <= max.y; y++) {
-                    for (int z = min.z; z <= max.z; z++) {
+            BlockPos min = AC_ItemCursor.min();
+            BlockPos max = AC_ItemCursor.max();
+            for (int x = min.x(); x <= max.x(); x++) {
+                for (int y = min.y(); y <= max.y(); y++) {
+                    for (int z = min.z(); z <= max.z(); z++) {
                         int id = this.mc.level.getTile(x, y, z);
                         Tile block = Tile.tiles[id];
                         if (block != null && ((ExBlock) block).getTextureNum() == texIndex) {
                             int meta = this.mc.level.getData(x, y, z);
-                            this.drawBlock(x + coord.x, y + coord.y, z + coord.z, id, meta);
+                            this.drawBlock(x + pos.x(), y + pos.y(), z + pos.z(), id, meta);
                         }
                     }
                 }

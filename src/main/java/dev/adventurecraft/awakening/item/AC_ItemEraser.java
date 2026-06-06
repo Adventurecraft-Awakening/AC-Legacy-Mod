@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.item;
 
-import dev.adventurecraft.awakening.common.Coord;
+import dev.adventurecraft.awakening.world.BlockPos;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;
@@ -19,20 +19,20 @@ public class AC_ItemEraser extends Item {
             return false;
         }
 
-        Coord min = AC_ItemCursor.one().min(AC_ItemCursor.two());
-        Coord max = AC_ItemCursor.one().max(AC_ItemCursor.two());
+        BlockPos min = AC_ItemCursor.one().min(AC_ItemCursor.two());
+        BlockPos max = AC_ItemCursor.one().max(AC_ItemCursor.two());
 
-        Coord delta = max.sub(min);
-        int width = delta.x + 1;
-        int height = delta.y + 1;
-        int depth = delta.z + 1;
+        BlockPos delta = max.sub(min);
+        int width = delta.x() + 1;
+        int height = delta.y() + 1;
+        int depth = delta.z() + 1;
         int blockCount = width * height * depth;
         Minecraft.instance.gui.addMessage(String.format("Erasing Area (%d blocks)", blockCount));
 
         // TODO: bulk fill
-        for (int bX = min.x; bX <= max.x; bX++) {
-            for (int bY = min.y; bY <= max.y; bY++) {
-                for (int bZ = min.z; bZ <= max.z; bZ++) {
+        for (int bX = min.x(); bX <= max.x(); bX++) {
+            for (int bY = min.y(); bY <= max.y(); bY++) {
+                for (int bZ = min.z(); bZ <= max.z(); bZ++) {
                     world.setTile(bX, bY, bZ, 0);
                 }
             }

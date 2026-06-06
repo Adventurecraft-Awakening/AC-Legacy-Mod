@@ -26,7 +26,7 @@ public class CustomForkJoinWorkerThreadFactory implements ForkJoinPool.ForkJoinW
     public String nextName() {
         String name = this.prefix;
         if (name == null) {
-            name = "Custom-ForkJoin-Thread";
+            name = "Custom-ForkJoin";
         }
         if (this.counter >= 0) {
             name = name + "-" + this.counter;

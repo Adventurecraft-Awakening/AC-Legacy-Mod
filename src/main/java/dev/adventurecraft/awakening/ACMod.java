@@ -8,11 +8,17 @@ import net.fabricmc.loader.api.ModContainer;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongepowered.include.com.google.gson.*;
+import org.spongepowered.include.com.google.gson.Gson;
+import org.spongepowered.include.com.google.gson.JsonElement;
 
 import java.io.StringReader;
 import java.util.HashMap;
-import java.util.concurrent.*;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ThreadFactory;
+import java.util.stream.Collectors;
 
 public class ACMod implements ModInitializer {
 
@@ -81,7 +87,14 @@ public class ACMod implements ModInitializer {
         LOGGER.info("Mod container custom metadata: {}", customValues);
 
         try {
-            String gitElement = String.valueOf(customValues.get("git"));
+            Map<String, JsonElement> buildEnv = customValues
+                .get("buildEnv")
+                .getAsJsonObject()
+                .entrySet()
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+            String gitElement = buildEnv.get("git").getAsString();
             GIT_META = new Gson().fromJson(new StringReader(gitElement), GitMetadata.class);
         }
         catch (Exception e) {

@@ -1,8 +1,8 @@
 package dev.adventurecraft.awakening.item;
 
 import dev.adventurecraft.awakening.ACMod;
-import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.world.AC_BlockCopyUtils;
+import dev.adventurecraft.awakening.world.BlockPos;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.Mob;
@@ -66,7 +66,7 @@ public class AC_ItemNudge extends Item implements AC_ILeftClickItem {
         try {
             // Get forward direction based on player's look direction
             Mob viewEntity = Minecraft.instance.cameraEntity;
-            Coord direction = AC_BlockCopyUtils.getUnitDirection(viewEntity.getLookAngle()).negate();
+            BlockPos direction = AC_BlockCopyUtils.getUnitDirection(viewEntity.getLookAngle()).negate();
 
             // Perform the nudge operation (destructive move)
             AC_BlockCopyUtils.performNudge(world, direction);
@@ -103,7 +103,7 @@ public class AC_ItemNudge extends Item implements AC_ILeftClickItem {
         try {
             // Get backward direction (opposite to player's look direction)
             Mob viewEntity = Minecraft.instance.cameraEntity;
-            Coord direction = AC_BlockCopyUtils.getUnitDirection(viewEntity.getLookAngle());
+            BlockPos direction = AC_BlockCopyUtils.getUnitDirection(viewEntity.getLookAngle());
 
             // Perform the nudge operation (destructive move)
             AC_BlockCopyUtils.performNudge(world, direction);

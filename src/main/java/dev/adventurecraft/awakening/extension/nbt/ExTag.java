@@ -24,19 +24,39 @@ public interface ExTag {
 
     Tag copy();
 
-    default Optional<String> getString() {
+    default Optional<String> asString() {
         return Optional.empty();
     }
 
-    default Optional<Integer> getInt() {
+    default Optional<Number> asNumber() {
         return Optional.empty();
     }
 
-    default Optional<Long> getLong() {
-        return this.getInt().map(i -> (long) i);
+    default Optional<Byte> asByte() {
+        return this.asNumber().map(Number::byteValue);
     }
 
-    default Optional<Double> getDouble() {
-        return this.getLong().map(l -> (double) l);
+    default Optional<Short> asShort() {
+        return this.asNumber().map(Number::shortValue);
+    }
+
+    default Optional<Integer> asInt() {
+        return this.asNumber().map(Number::intValue);
+    }
+
+    default Optional<Long> asLong() {
+        return this.asNumber().map(Number::longValue);
+    }
+
+    default Optional<Float> asFloat() {
+        return this.asNumber().map(Number::floatValue);
+    }
+
+    default Optional<Double> asDouble() {
+        return this.asNumber().map(Number::doubleValue);
+    }
+
+    default Optional<Boolean> asBool() {
+        return this.asByte().map(b -> b != 0);
     }
 }

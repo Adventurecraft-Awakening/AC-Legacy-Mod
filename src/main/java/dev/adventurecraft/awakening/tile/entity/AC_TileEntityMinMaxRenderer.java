@@ -1,8 +1,8 @@
 package dev.adventurecraft.awakening.tile.entity;
 
 import dev.adventurecraft.awakening.common.AC_DebugMode;
-import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
+import dev.adventurecraft.awakening.world.BlockPos;
 import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 import net.minecraft.world.level.tile.Tile;
 import net.minecraft.world.level.tile.entity.TileEntity;
@@ -27,8 +27,8 @@ public class AC_TileEntityMinMaxRenderer extends TileEntityRenderer {
     }
 
     public static void renderArea(
-        Coord min,
-        Coord max,
+        BlockPos min,
+        BlockPos max,
         TileEntity entity,
         double x,
         double y,
@@ -47,9 +47,9 @@ public class AC_TileEntityMinMaxRenderer extends TileEntityRenderer {
         GL11.glShadeModel(GL11.GL_SMOOTH);
         GL11.glBegin(GL11.GL_LINES);
 
-        for (int bX = min.x; bX <= max.x; bX++) {
-            for (int bY = min.y; bY <= max.y; bY++) {
-                for (int bZ = min.z; bZ <= max.z; bZ++) {
+        for (int bX = min.x(); bX <= max.x(); bX++) {
+            for (int bY = min.y(); bY <= max.y(); bY++) {
+                for (int bZ = min.z(); bZ <= max.z(); bZ++) {
                     Tile tile = Tile.tiles[entity.level.getTile(bX, bY, bZ)];
                     if (tile != null && ((ExBlock) tile).canBeTriggered()) {
                         GL11.glColor3f(0.0F, 0.0F, 0.0F);

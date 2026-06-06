@@ -2,7 +2,6 @@ package dev.adventurecraft.awakening.mixin.world.chunk;
 
 import com.llamalad7.mixinextras.injector.WrapWithCondition;
 import com.llamalad7.mixinextras.sugar.Local;
-import dev.adventurecraft.awakening.ACMainThread;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.AC_BlockEditAction;
 import dev.adventurecraft.awakening.common.AC_UndoStack;
@@ -17,29 +16,27 @@ import dev.adventurecraft.awakening.util.BufferUtil;
 import dev.adventurecraft.awakening.util.NibbleBuffer;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.LightUpdate;
+import net.minecraft.world.level.chunk.DataLayer;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.tile.Tile;
+import net.minecraft.world.level.tile.entity.TileEntity;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LightLayer;
-import net.minecraft.world.level.chunk.DataLayer;
-import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraft.world.level.tile.Tile;
-import net.minecraft.world.level.tile.entity.TileEntity;
-
-import javax.annotation.Nullable;
 
 @Mixin(LevelChunk.class)
 public abstract class MixinChunk implements ExChunk {
@@ -148,8 +145,10 @@ public abstract class MixinChunk implements ExChunk {
 
     @Unique
     private void recordLightUpdate(LightLayer type, int x0, int y0, int z0, int x1, int y1, int z1) {
-        if (!this.worldGenLight.isEmpty()) {
-            LightUpdate update = this.worldGenLight.getLast();
+        // TODO: optimize lightGaps to do batched call?
+        int n = Math.min(5, this.worldGenLight.size());
+        for (int i = 0; i < n; i++) {
+            LightUpdate update = this.worldGenLight.get(this.worldGenLight.size() - i - 1);
             if (update.type == type && update.expandToContain(x0, y0, z0, x1, y1, z1)) {
                 return;
             }

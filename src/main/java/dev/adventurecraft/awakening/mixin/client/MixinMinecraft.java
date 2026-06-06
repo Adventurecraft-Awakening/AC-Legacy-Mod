@@ -5,14 +5,14 @@ import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.ACMainThread;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.client.gl.GLDevice;
-import dev.adventurecraft.awakening.client.options.Config;
-import dev.adventurecraft.awakening.client.renderer.PoolingBlockAllocator;
-import dev.adventurecraft.awakening.client.renderer.BlockAllocator;
-import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.client.gui.AC_ChatScreen;
+import dev.adventurecraft.awakening.client.gui.AC_InBedChatScreen;
+import dev.adventurecraft.awakening.client.options.Config;
+import dev.adventurecraft.awakening.client.renderer.BlockAllocator;
+import dev.adventurecraft.awakening.client.renderer.PoolingBlockAllocator;
+import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.common.gui.AC_GuiMapSelect;
 import dev.adventurecraft.awakening.common.gui.AC_GuiStore;
-import dev.adventurecraft.awakening.client.gui.AC_InBedChatScreen;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.entity.player.ExAbstractClientPlayerEntity;
@@ -33,12 +33,7 @@ import dev.adventurecraft.awakening.script.*;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.util.MathF;
 import net.fabricmc.loader.impl.util.Arguments;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.Option;
-import net.minecraft.client.Options;
-import net.minecraft.client.ProgressRenderer;
-import net.minecraft.client.ScreenSizeCalculator;
-import net.minecraft.client.User;
+import net.minecraft.client.*;
 import net.minecraft.client.gamemode.CreativeMode;
 import net.minecraft.client.gamemode.GameMode;
 import net.minecraft.client.gui.Gui;
@@ -247,7 +242,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         }
 
         Thread thread = Thread.currentThread();
-        thread.setName("Minecraft main thread");
+        thread.setName("Main");
         thread.setPriority(10);
         acThread.run();
     }
@@ -626,7 +621,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
                 this.setScreen(null);
             }
             else if (this.player.isSleeping() && this.level != null && this.level.isClientSide) {
-                this.setScreen(new AC_InBedChatScreen());
+                this.setScreen(new AC_InBedChatScreen(this.player));
             }
         }
         else if (this.screen != null && this.screen instanceof AC_InBedChatScreen && !this.player.isSleeping()) {
@@ -750,7 +745,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
                             this.player.drop();
                         }
                         else if ((this.isOnline() || AC_DebugMode.active) && eventKey == this.options.keyChat.key) {
-                            this.setScreen(new AC_ChatScreen());
+                            this.setScreen(new AC_ChatScreen(this.player));
                         }
                         else if (AC_DebugMode.active && isControlPressed) {
                             var mc = (Minecraft) (Object) this;
@@ -767,9 +762,10 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
                     while (true) {
                         if (currentSlot >= 9) {
-                            if (eventKey == this.options.keyFog.key) {
-                                this.options.toggle(Option.RENDER_DISTANCE, !isShiftPressed ? 1 : -1);
-                            }
+                            // TODO: fix RENDER_DISTANCE toggle?
+                            //if (eventKey == this.options.keyFog.key) {
+                            //    this.options.toggle(Option.RENDER_DISTANCE, !isShiftPressed ? 1 : -1);
+                            //}
                             break;
                         }
 

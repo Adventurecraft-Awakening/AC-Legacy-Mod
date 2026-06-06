@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.ACMod;
-import dev.adventurecraft.awakening.extension.util.io.ExCompoundTag;
+import dev.adventurecraft.awakening.extension.nbt.ExCompoundTag;
 import net.minecraft.nbt.CompoundTag;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
