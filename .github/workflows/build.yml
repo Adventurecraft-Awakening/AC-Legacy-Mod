@@ -26,8 +26,12 @@ jobs:
           java-version: ${{ matrix.java }}
           distribution: 'temurin'
 
-      - name: setup gradle
-        uses: gradle/actions/setup-gradle@v6
+      - name: make gradle wrapper executable
+        if: ${{ runner.os != 'Windows' }}
+        run: chmod +x ./gradlew
+
+      # TODO: cache build artifacts manually because we can't have good things
+      #       i wish i was making this up: https://blog.gradle.org/choice-clarity-future-caching-gradle-actions
 
       - name: build
         run: ./gradlew build --no-daemon
