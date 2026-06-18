@@ -9,6 +9,9 @@ import groovy.json.JsonOutput
 import groovy.json.StringEscapeUtils
 import org.gradle.internal.os.OperatingSystem
 
+import java.util.stream.Collectors
+import java.util.stream.Stream
+
 version = project.mod_version
 group = project.maven_group
 
@@ -93,7 +96,10 @@ dependencies {
     implementation "org.lwjgl:lwjgl-stb:${project.lwjgl_version}"
     implementation "org.lwjgl:lwjgl-opengl:${project.lwjgl_version}"
 
-    def lwjglNatives = String.join("-", getLwjglNativesPrefix(), getOsArchSuffix())
+    def lwjglNatives = Stream.of(getLwjglNativesPrefix(), getOsArchSuffix())
+        .filter(part -> !part.isBlank())
+        .collect(Collectors.joining("-"))
+
     runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
     runtimeOnly "org.lwjgl:lwjgl-glfw::$lwjglNatives"
     runtimeOnly "org.lwjgl:lwjgl-openal::$lwjglNatives"
