@@ -10,6 +10,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 
+// TODO: use GLFW/SDL3 for clipboard management
 public class ClipboardHandler {
 
     private static Clipboard getSystemClipboard() {
