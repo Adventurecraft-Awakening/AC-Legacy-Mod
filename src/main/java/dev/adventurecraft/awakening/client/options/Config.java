@@ -54,6 +54,8 @@ public class Config {
         boolean hasDebugOutput = glVersion >= 43 || caps.GL_KHR_debug || caps.GL_ARB_debug_output;
         logger.info("OpenGL Debug output: {}", hasDebugOutput);
 
+        logger.info("OpenGL extensions: {}", GL11.glGetString(GL11.GL_EXTENSIONS));
+
         if (hasDebugOutput && ACMainThread.glDebugLogSeverity != ACMainThread.GlDebugSeverity.Ignore) {
             GL11.glEnable(37600 /* GL_DEBUG_OUTPUT */);
 

@@ -194,6 +194,10 @@ public abstract class MixinMinecraft implements ExMinecraft {
 
     @Overwrite(remap = false)
     public static void main(String[] args) {
+        // Prevent AWT from creating an event dispatcher, among other things.
+        // This also fixes the glfwPollEvents hang on MacOS.
+        System.setProperty("java.awt.headless", "true");
+
         var arguments = new Arguments();
         arguments.parse(args);
 
@@ -293,6 +297,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         if (ACMainThread.glDebugContext) {
             GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_DEBUG_CONTEXT, 1);
         }
+        GLFW.glfwWindowHint(GLFW.GLFW_COCOA_RETINA_FRAMEBUFFER, 0);
 
         var pixelFormat = new PixelFormat();
         try {

@@ -28,6 +28,12 @@ loom {
 
     // Our custom manifest replaces LWJGL2 with our LWJGL3 injector.
     // customMinecraftMetadata = ""
+
+    if (OperatingSystem.current() == OperatingSystem.MAC_OS) {
+        runConfigs.configureEach {
+            vmArg "-XstartOnFirstThread"
+        }
+    }
 }
 
 babric {
@@ -56,20 +62,25 @@ repositories {
     }
 }
 
-def lwjglNatives = switch (OperatingSystem.current()) {
-    case OperatingSystem.LINUX:
-        yield "natives-linux"
+static String getOsArchSuffix() {
+    def arch = System.getProperty("os.arch")
+    return switch (arch) {
+        case "amd64", "x86_64": yield ""
+        case "x86": yield "x86"
+        case "arm64", "aarch64": yield "arm64"
+        case "arm", "arm32": yield "arm32"
+        default: throw new IllegalStateException("Unsupported arch: " + arch)
+    }
+}
 
-    case OperatingSystem.MAC_OS:
-        yield "natives-macos"
-
-    case OperatingSystem.WINDOWS:
-        def osArch = System.getProperty("os.arch")
-        def winArm64 = "natives-windows${osArch.startsWith("aarch64") ? "-arm64" : ""}"
-        yield osArch.contains("64") ? winArm64 : "natives-windows-x86"
-
-    case OperatingSystem:
-        throw new IllegalStateException("Unsupported OS")
+static String getLwjglNativesPrefix() {
+    def os = OperatingSystem.current()
+    return switch (os) {
+        case OperatingSystem.LINUX: yield "natives-linux"
+        case OperatingSystem.MAC_OS: yield "natives-macos"
+        case OperatingSystem.WINDOWS: yield "natives-windows"
+        default: throw new IllegalStateException("Unsupported OS: " + os)
+    }
 }
 
 dependencies {
@@ -82,6 +93,7 @@ dependencies {
     implementation "org.lwjgl:lwjgl-stb:${project.lwjgl_version}"
     implementation "org.lwjgl:lwjgl-opengl:${project.lwjgl_version}"
 
+    def lwjglNatives = String.join("-", getLwjglNativesPrefix(), getOsArchSuffix())
     runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
     runtimeOnly "org.lwjgl:lwjgl-glfw::$lwjglNatives"
     runtimeOnly "org.lwjgl:lwjgl-openal::$lwjglNatives"

@@ -3,18 +3,25 @@ package dev.adventurecraft.awakening.client.gl;
 import org.lwjgl.opengl.*;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 public final class GLDevice {
 
+    private final ContextCapabilities caps;
     private final DeviceInfo info = new DeviceInfo();
 
     private GLBuffer shortElementCache;
     private GLBuffer intElementCache;
 
     public GLDevice(ContextCapabilities caps) {
-        if (!caps.OpenGL31) {
+        this.caps = caps;
+        if (!caps.OpenGL15 && !caps.OpenGL30) {
             throw new UnsupportedOperationException("Unsupported OpenGL version.");
         }
+    }
+
+    public ContextCapabilities getCaps() {
+        return this.caps;
     }
 
     public DeviceInfo getDeviceInfo() {
@@ -55,7 +62,7 @@ public final class GLDevice {
         GL31.glCopyBufferSubData(src.symbol, dst.symbol, srcOffset, dstOffset, size);
     }
 
-    public long bindQuadElements(GLBufferTarget target, GLElementType type, long quadCount) {
+    public void bindQuadElements(GLBufferTarget target, GLElementType type, long quadCount) {
         if (type == GLElementType.SHORT) {
             this.shortElementCache = this.computeElementBuffer(target, type, this.shortElementCache, quadCount);
         }
@@ -65,7 +72,6 @@ public final class GLDevice {
         else {
             throw new IllegalArgumentException("unsupported index type");
         }
-        return byteSizeForQuadElements(type, quadCount);
     }
 
     private GLBuffer computeElementBuffer(
@@ -99,20 +105,34 @@ public final class GLDevice {
         bind(target, buffer);
         alloc(target, buffer.sizeInBytes(), GLBufferUsage.STATIC_COPY);
 
-        int access = GL30.GL_MAP_WRITE_BIT | GL30.GL_MAP_INVALIDATE_BUFFER_BIT | GL30.GL_MAP_UNSYNCHRONIZED_BIT;
-        ByteBuffer mapping = GL30.glMapBufferRange(target.symbol, 0, buffer.sizeInBytes(), access);
-        if (mapping == null) {
-            throw new IllegalStateException("failed to bind index buffer for writing");
+        if (this.caps.OpenGL30) {
+            int access = GL30.GL_MAP_WRITE_BIT | GL30.GL_MAP_INVALIDATE_BUFFER_BIT | GL30.GL_MAP_UNSYNCHRONIZED_BIT;
+            ByteBuffer mapping = GL30.glMapBufferRange(target.symbol, 0, buffer.sizeInBytes(), access);
+            if (mapping == null) {
+                throw new IllegalStateException("failed to bind index buffer for writing");
+            }
+            quadPut(mapping, type, quadCount);
+            GL30.glUnmapBuffer(target.symbol);
         }
-
-        switch (type) {
-            case SHORT -> quadPutShort(mapping, 0, (int) quadCount);
-            case INT -> quadPutInt(mapping, 0, (int) quadCount);
-            default -> throw new IllegalStateException("unsupported index type");
+        else {
+            // TODO: allocate smaller buffer and upload chunks
+            ByteBuffer tmp = ByteBuffer
+                .allocateDirect(Math.toIntExact(buffer.sizeInBytes()))
+                .order(ByteOrder.nativeOrder());
+            quadPut(tmp, type, quadCount);
+            tmp.flip();
+            uploadData(target, 0, tmp);
         }
-
-        GL30.glUnmapBuffer(target.symbol);
         return buffer;
+    }
+
+    public static void quadPut(ByteBuffer mapping, GLElementType type, long quadCount) {
+        int count = Math.toIntExact(quadCount);
+        switch (type) {
+            case SHORT -> quadPutShort(mapping, 0, count);
+            case INT -> quadPutInt(mapping, 0, count);
+            default -> throw new IllegalStateException("unsupported index type: " + type);
+        }
     }
 
     private static void quadPutShort(ByteBuffer buffer, int baseVertex, int quadCount) {
@@ -139,7 +159,7 @@ public final class GLDevice {
         }
     }
 
-    private static long byteSizeForQuadElements(GLElementType type, long quadCount) {
+    public static long byteSizeForQuadElements(GLElementType type, long quadCount) {
         int bytesPerQuad = type.size * 6;
         return quadCount * (long) bytesPerQuad;
     }
