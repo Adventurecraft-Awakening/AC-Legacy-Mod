@@ -67,6 +67,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.HitType;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.*;
@@ -294,18 +295,26 @@ public abstract class MixinMinecraft implements ExMinecraft {
         int sampleCount = ((ExGameOptions) options).ofAaLevel();
         ACMod.LOGGER.info("MSAA Samples: {}x", sampleCount);
 
+        GLFW.glfwSetErrorCallback(GLFWErrorCallback.createPrint());
+
+        // TODO: could come in handy for GL3 core experiment
+        //GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 2);
+        //GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 1);
+        //GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_FORWARD_COMPAT, GLFW.GLFW_TRUE);
+        //GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_COMPAT_PROFILE);
+
         if (ACMainThread.glDebugContext) {
-            GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_DEBUG_CONTEXT, 1);
+            GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_DEBUG_CONTEXT, GLFW.GLFW_TRUE);
         }
-        GLFW.glfwWindowHint(GLFW.GLFW_COCOA_RETINA_FRAMEBUFFER, 0);
+        GLFW.glfwWindowHint(GLFW.GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW.GLFW_FALSE);
 
         var pixelFormat = new PixelFormat();
         try {
-            createDisplay(pixelFormat.withSamples(sampleCount), true);
+            this.createDisplay(pixelFormat.withSamples(sampleCount), true);
         }
         catch (LWJGLException ex) {
             ACMod.LOGGER.warn("Error setting MSAA {}x: ", sampleCount, ex);
-            createDisplay(pixelFormat, false);
+            this.createDisplay(pixelFormat, false);
         }
 
         var caps = GLContext.getCapabilities();
