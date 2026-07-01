@@ -37,12 +37,24 @@ loom {
             vmArg "-XstartOnFirstThread"
         }
     }
+
+    runs {
+        client {
+            client()
+            // TODO: add sponge-mixin agent automatically
+            vmArgs("-XX:+UnlockDiagnosticVMOptions", "-XX:+UseCompactObjectHeaders")
+
+            // TODO: make optional?
+            programArgs("--glDebugContext")
+        }
+    }
 }
 
 babric {
     // Disable gambac library (M1 colours fix.)
     // Our LWJGL3 injector already deals with it.
     disableM1Fixes.set(true)
+    disablePomOverride.set(true)
 }
 
 repositories {
@@ -156,10 +168,11 @@ processResources {
     }
 
     // Extract useful properties from our "gradle.properties".
-    def props = project.properties.collectEntries {
-        // Filter into strings or the cache serialization fails.
-        it.value instanceof String ? it : null
-    }
+    def props = [
+        "loader_version",
+        "version"
+    ].collectEntries { key -> [key, project.property(key)] }
+
     // Dump git info into dedicated property.
     props.put("build_env", [git: StringEscapeUtils.escapeJava(JsonOutput.toJson(git_map))])
 
