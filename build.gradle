@@ -1,6 +1,6 @@
 plugins {
     id "maven-publish"
-    id "fabric-loom" version "1.15.5"
+    id "fabric-loom" version "1.16.3"
     id "babric-loom-extension" version "1.15.3"
 }
 
@@ -221,5 +221,14 @@ publishing {
         // Notice: This block does NOT have the same function as the block in the top level.
         // The repositories here will be used for publishing your artifact,
         // not for retrieving dependencies.
+    }
+}
+
+tasks.register("packLauncherInstances") {
+    def runtimeClasspath = java.sourceSets.main.runtimeClasspath
+    doFirst {
+        runtimeClasspath.forEach {
+            println it
+        }
     }
 }

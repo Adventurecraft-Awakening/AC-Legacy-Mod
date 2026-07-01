@@ -2,9 +2,6 @@ package dev.adventurecraft.awakening.mixin.client.gui.screen.menu;
 
 import dev.adventurecraft.awakening.common.gui.AC_GuiMapSelect;
 import dev.adventurecraft.awakening.common.AC_Version;
-import dev.adventurecraft.awakening.extension.client.sound.ExSoundHelper;
-import dev.adventurecraft.awakening.script.ScriptModel;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.JoinMultiplayerScreen;
 import net.minecraft.client.gui.screens.OptionsScreen;
@@ -18,9 +15,6 @@ import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(TitleScreen.class)
 public abstract class MixinTitleScreen extends Screen {
