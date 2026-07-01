@@ -65,16 +65,16 @@ public abstract class MixinPlayerEntity extends MixinMob implements ExPlayerEnti
     public abstract void removeSelectedItem();
 
     @Shadow
-    protected abstract void method_510(Mob arg, boolean bl);
+    protected abstract void setTamedAgro(Mob attacker, boolean bl);
 
     @Shadow
-    public abstract void awardStat(Stat arg, int i);
+    public abstract void awardStat(Stat stat, int increment);
 
     @Shadow
     public abstract boolean isSleeping();
 
     @Shadow
-    public abstract void stopSleepInBed(boolean bl, boolean bl2, boolean bl3);
+    public abstract void stopSleepInBed(boolean resetCounter, boolean updatePlayerList, boolean setRespawnPos);
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(Level var1, CallbackInfo ci) {
@@ -289,7 +289,7 @@ public abstract class MixinPlayerEntity extends MixinMob implements ExPlayerEnti
         }
 
         if (owner instanceof Mob livingOwner) {
-            this.method_510(livingOwner, false);
+            this.setTamedAgro(livingOwner, false);
         }
 
         this.awardStat(Stats.DAMAGE_TAKEN, damage);
@@ -372,7 +372,7 @@ public abstract class MixinPlayerEntity extends MixinMob implements ExPlayerEnti
 
         if (entity instanceof Mob mob) {
             if (entity.isAlive()) {
-                this.method_510(mob, true);
+                this.setTamedAgro(mob, true);
             }
 
             this.awardStat(Stats.DAMAGE_DEALT, attackDamage);
