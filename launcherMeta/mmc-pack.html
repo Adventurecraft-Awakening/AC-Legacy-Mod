@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>MMC Pack Template</title>
+    <link rel="stylesheet" href="https://unpkg.com/@speed-highlight/core/dist/themes/default.css"/>
+    <link rel="stylesheet" href="style.css"/>
+
+    <script src="prelude.js"></script>
+    <script src="patches/babric.intermediary.js"></script>
+    <script src="patches/net.fabricmc.fabric-loader.js"></script>
+    <script src="patches/net.minecraft.js"></script>
+    <script src="patches/org.lwjgl3.js"></script>
+    <script>
+        const PACK = {
+            formatVersion: 1,
+            components: [
+                new CachedComponent(LWJGL3),
+                new CachedComponent(Minecraft, {important: true}),
+                new CachedComponent(Intermediary, {dependencyOnly: true}),
+                new CachedComponent(FabricLoader),
+            ],
+        };
+
+        function setPatch(name, component) {
+            files.set(`patches/${name}`, new JsonSource(component));
+        }
+
+        setPatch("org.lwjgl3.json", LWJGL3);
+        setPatch("net.minecraft.json", Minecraft);
+        setPatch("babric.intermediary.json", Intermediary);
+        setPatch("net.fabricmc.fabric-loader.json", FabricLoader);
+
+        files.set("mmc-pack.json", new JsonSource(PACK));
+    </script>
+</head>
+
+<body>
+<div class="preview-box">
+    <pre id="code-pre">
+    </pre>
+</div>
+
+<script type="module">
+    import {tokenize} from "https://cdn.jsdelivr.net/gh/speed-highlight/core/dist/index.js";
+
+    const groups = [];
+    let fileId = 0;
+    for (const [file, source] of files.entries()) {
+        const label = document.createElement("label");
+        label.textContent = file.toString();
+
+        const preview = document.createElement("code");
+        preview.class = "preview";
+        preview.id = fileId;
+        fileId += 1;
+
+        const json = JSON.stringify(source, null, 2);
+        const nodes = [];
+        await tokenize(json, "json", (str, type) => {
+            if (type) {
+                const span = document.createElement("span");
+                span.className = `shj-syn-${type}`;
+                span.innerText = str;
+                nodes.push(span);
+            } else {
+                nodes.push(str);
+            }
+        });
+        preview.append(...nodes);
+
+        const group = document.createElement("div");
+        group.append(label, preview);
+        groups.push(group);
+    }
+
+    const codePre = document.getElementById("code-pre");
+    codePre.append(...groups);
+</script>
+</body>
+</html>

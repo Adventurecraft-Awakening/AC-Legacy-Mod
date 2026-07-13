@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Electron Template</title>
+    <link rel="stylesheet" href="https://unpkg.com/@speed-highlight/core/dist/themes/default.css"/>
+    <link rel="stylesheet" href="style.css"/>
+
+    <script src="prelude.js"></script>
+    <script src="patches/babric.intermediary.js"></script>
+    <script src="patches/net.fabricmc.fabric-loader.js"></script>
+    <script src="patches/net.minecraft.js"></script>
+    <script src="patches/org.lwjgl3.js"></script>
+    <script>
+        const PACK = {
+            formatVersion: 1,
+            components: [
+                new CachedComponent(LWJGL3),
+                new CachedComponent(Minecraft, {important: true}),
+                new CachedComponent(Intermediary, {dependencyOnly: true}),
+                new CachedComponent(FabricLoader),
+            ],
+        };
+    </script>
+</head>
+
+<body>
+<pre><code id="preview"></code></pre>
+
+<script type="module">
+    import {highlightElement} from "https://cdn.jsdelivr.net/gh/speed-highlight/core/dist/index.js";
+
+    let preview = document.getElementById("preview");
+    preview.textContent = JSON.stringify(PACK, null, 2)
+    highlightElement(preview, "json");
+</script>
+</body>
+</html>

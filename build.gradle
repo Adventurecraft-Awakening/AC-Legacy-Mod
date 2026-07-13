@@ -226,11 +226,28 @@ publishing {
     }
 }
 
-tasks.register("packLauncherInstances") {
+tasks.register("createLauncherPacks", LauncherPackTask) {
+    def dir = new File("launcherMeta")
+    rootDirectory.set(dir)
+    templateFiles.from(new File(dir, "mmc-pack.html"), new File(dir, "electron.html"))
+
     def runtimeClasspath = java.sourceSets.main.runtimeClasspath
+
     doFirst {
-        runtimeClasspath.forEach {
-            println it
-        }
+        //def cx = JsContext.enter()
+
+        /*
+        def cx = Context.enter()
+        def scope = cx.initStandardObjects()
+
+        def result = cx.evaluateString(scope, root.text, "<cmd>", 1, null)
+
+        // Convert the result to a string and print it.
+        println Context.toString(result)
+        */
+
+        //runtimeClasspath.forEach {
+        //    println it
+        //}
     }
 }
