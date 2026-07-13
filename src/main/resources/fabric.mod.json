@@ -35,7 +35,7 @@
   ],
   "accessWidener": "adventurecraft.accesswidener",
   "depends": {
-    "fabricloader": ">=${loader_version}",
+    "fabricloader": ">=${fabric_loader_version}",
     "minecraft": "1.0.0-beta.7.3",
     "mm": ">=0.2"
   },

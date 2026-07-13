@@ -72,16 +72,16 @@ abstract class GitService implements BuildService<Parameters> {
         return output.standardOutput.asText
             .zip(output.standardError.asText) { a, b -> Pair.of(a, b) }
             .zip(output.result) { text, result ->
-            try {
-                result.assertNormalExitValue()
-                text.left().strip()
-            } catch (ProcessExecutionException ex) {
-                String message = String.format(
-                    "Process '%s' finished with non-zero exit value %d:\nError: %s\nOutput: %s",
-                    String.join(" ", argList), result.exitValue, text.right(), text.left())
-                throw new ProcessExecutionException(message, ex)
+                try {
+                    result.assertNormalExitValue()
+                    text.left().strip()
+                } catch (ProcessExecutionException ex) {
+                    String message = String.format(
+                        "Process '%s' finished with non-zero exit value %d:\nError: %s\nOutput: %s",
+                        String.join(" ", argList), result.exitValue, text.right(), text.left())
+                    throw new ProcessExecutionException(message, ex)
+                }
             }
-        }
     }
 
     static final boolean matchesPlainTag(String value) {

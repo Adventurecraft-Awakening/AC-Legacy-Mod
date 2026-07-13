@@ -98,40 +98,44 @@ static String getLwjglNativesPrefix() {
     }
 }
 
+// libs.versions.toml doesn't support classifiers... insert it manually
+Provider<MinimalExternalModuleDependency> classified(Provider<MinimalExternalModuleDependency> dependency, String classifier) {
+    dependencies.variantOf(dependency, { it.classifier(classifier) }) as Provider<MinimalExternalModuleDependency>
+}
+
 dependencies {
-    // Adds LWJGL3 wrapper
-    implementation "com.github.Adventurecraft-Awakening:AC-LWJGL3-Injector:${project.lwjgl_injector_version}"
+    implementation libs.lwjgl.injector
 
-    implementation platform("org.lwjgl:lwjgl-bom:${project.lwjgl_version}")
+    implementation platform(libs.lwjgl.bom)
 
-    implementation "org.lwjgl:lwjgl-glfw:${project.lwjgl_version}"
-    implementation "org.lwjgl:lwjgl-stb:${project.lwjgl_version}"
-    implementation "org.lwjgl:lwjgl-opengl:${project.lwjgl_version}"
+    implementation libs.lwjgl.glfw
+    implementation libs.lwjgl.stb
+    implementation libs.lwjgl.opengl
 
     def lwjglNatives = Stream.of(getLwjglNativesPrefix(), getOsArchSuffix())
         .filter(part -> !part.isBlank())
         .collect(Collectors.joining("-"))
 
-    runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
-    runtimeOnly "org.lwjgl:lwjgl-glfw::$lwjglNatives"
-    runtimeOnly "org.lwjgl:lwjgl-openal::$lwjglNatives"
-    runtimeOnly "org.lwjgl:lwjgl-opengl::$lwjglNatives"
-    runtimeOnly "org.lwjgl:lwjgl-stb::$lwjglNatives"
+    runtimeOnly classified(libs.lwjgl.core, lwjglNatives)
+    runtimeOnly classified(libs.lwjgl.glfw, lwjglNatives)
+    runtimeOnly classified(libs.lwjgl.openal, lwjglNatives)
+    runtimeOnly classified(libs.lwjgl.opengl, lwjglNatives)
+    runtimeOnly classified(libs.lwjgl.stb, lwjglNatives)
 
     // Rhino is the JS engine: https://github.com/mozilla/rhino/releases
     // Archived versions: https://www-archive.mozilla.org/rhino/rhino16r2
-    implementation "org.mozilla:rhino:${project.rhino_version}"
+    implementation libs.rhino
 
-    minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings "me.alphamode:nostalgia:${project.nostalgia_mappings}:v2"
-    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    minecraft libs.minecraft
+    mappings classified(libs.nostalgia.mappings, "v2")
+    modImplementation libs.fabric.loader
 
     // Override ASM to support Java 25
-    implementation "org.ow2.asm:asm:${project.asm_version}"
-    implementation "org.ow2.asm:asm-analysis:${project.asm_version}"
-    implementation "org.ow2.asm:asm-commons:${project.asm_version}"
-    implementation "org.ow2.asm:asm-tree:${project.asm_version}"
-    implementation "org.ow2.asm:asm-util:${project.asm_version}"
+    implementation libs.asm.core
+    implementation libs.asm.analysis
+    implementation libs.asm.commons
+    implementation libs.asm.tree
+    implementation libs.asm.util
 
     // Fabric-ASM allows us to extend enums.
     modImplementation "com.github.Chocohead:Fabric-ASM:v2.3"
@@ -163,21 +167,19 @@ configurations.configureEach {
 
 processResources {
     usesService(git)
-    def git_map = git.get().properties.collectEntries {
-        it.value instanceof Provider ? new AbstractMap.SimpleEntry<>(it.key, ((Provider) it.value).get()) : null
+    def gitProps = git.get().properties.collectEntries([:]) { e ->
+        e.value instanceof Provider ? [e.key, e.value.get()] : null
     }
 
-    // Extract useful properties from our "gradle.properties".
+    // Extract useful properties from our project.
     def props = [
-        "loader_version",
-        "version"
-    ].collectEntries { key -> [key, project.property(key)] }
-
-    // Dump git info into dedicated property.
-    props.put("build_env", [git: StringEscapeUtils.escapeJava(JsonOutput.toJson(git_map))])
-
-    // Register input for caching purposes.
-    inputs.property "props", props
+        "version"              : project.property("version"),
+        "fabric_loader_version": libs.fabric.loader.get().version,
+        "build_env"            : [
+            // Dump git info into dedicated property.
+            git: StringEscapeUtils.escapeJava(JsonOutput.toJson(gitProps))
+        ]
+    ]
 
     filesMatching("fabric.mod.json") {
         expand props

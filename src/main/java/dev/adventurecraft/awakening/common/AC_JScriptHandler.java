@@ -8,6 +8,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ProgressListener;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 import org.mozilla.javascript.*;
 
 import java.io.File;
@@ -17,7 +18,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
 import java.util.stream.Stream;
 
 public class AC_JScriptHandler {
@@ -168,7 +170,7 @@ public class AC_JScriptHandler {
         public final String scriptName;
         public final ContextFactory cxFactory;
 
-        public Script result;
+        public @Nullable Script result;
         public Exception ex;
 
         private ScriptLoadTask(Path path, String scriptName, ContextFactory cxFactory) {
@@ -179,18 +181,15 @@ public class AC_JScriptHandler {
 
         @Override
         public void run() {
-            Context cx = Context.getCurrentContext();
-            if (cx == null) {
-                //noinspection resource
-                cx = this.cxFactory.enterContext();
-            }
-
-            // TODO: update charset to UTF-8 in new maps?
-            try (var reader = new FileReader(this.path.toFile(), StandardCharsets.ISO_8859_1)) {
-                this.result = cx.compileReader(reader, this.scriptName, 1, null);
-            }
-            catch (Exception ex) {
-                this.ex = ex;
+            try (Context cx = this.cxFactory.enterContext()) {
+                // TODO: update charset to UTF-8 in new maps?
+                try (var reader = new FileReader(this.path.toFile(), StandardCharsets.ISO_8859_1)) {
+                    this.result = cx.compileReader(reader, this.scriptName, 1, null);
+                }
+                catch (Exception ex) {
+                    this.ex = ex;
+                    this.result = null;
+                }
             }
         }
     }

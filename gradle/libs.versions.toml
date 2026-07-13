@@ -1,0 +1,32 @@
+[versions]
+minecraft = "b1.7.3"
+nostalgia_mappings = "b1.7.3+build.47"
+fabric_loader = "0.19.3"
+
+asm = "9.10.1"
+lwjgl = "3.3.6"
+lwjgl_injector = "0.2.5.0"
+rhino = "1.9.1"
+
+
+[libraries]
+minecraft = { module = "com.mojang:minecraft", version.ref = "minecraft" }
+nostalgia-mappings = { module = "me.alphamode:nostalgia", version.ref = "nostalgia_mappings" }
+fabric-loader = { module = "net.fabricmc:fabric-loader", version.ref = "fabric_loader" }
+
+asm-core = { module = "org.ow2.asm:asm", version.ref = "asm" }
+asm-analysis = { module = "org.ow2.asm:asm-analysis", version.ref = "asm" }
+asm-commons = { module = "org.ow2.asm:asm-commons", version.ref = "asm" }
+asm-tree = { module = "org.ow2.asm:asm-tree", version.ref = "asm" }
+asm-util = { module = "org.ow2.asm:asm-util", version.ref = "asm" }
+
+lwjgl-injector = { module = "com.github.Adventurecraft-Awakening:AC-LWJGL3-Injector", version.ref = "lwjgl_injector" }
+
+lwjgl-bom = { module = "org.lwjgl:lwjgl-bom", version.ref = "lwjgl" }
+lwjgl-core = { module = "org.lwjgl:lwjgl", version.ref = "lwjgl" }
+lwjgl-glfw = { module = "org.lwjgl:lwjgl-glfw", version.ref = "lwjgl" }
+lwjgl-stb = { module = "org.lwjgl:lwjgl-stb", version.ref = "lwjgl" }
+lwjgl-openal = { module = "org.lwjgl:lwjgl-openal", version.ref = "lwjgl" }
+lwjgl-opengl = { module = "org.lwjgl:lwjgl-opengl", version.ref = "lwjgl" }
+
+rhino = { module = "org.mozilla:rhino", version.ref = "rhino" }
