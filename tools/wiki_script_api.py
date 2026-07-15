@@ -403,15 +403,23 @@ def wiki_page_name(type_name: str) -> str:
     return f"Scripting-API-{type_name}"
 
 
+def markdown_table_link(target: str, label: str) -> str:
+    """Render an internal link without Gollum's table-breaking pipe syntax."""
+    escaped = label.replace("|", "\\|")
+    return f"[{escaped}]({target})"
+
+
 def source_url(api_type: ApiType, base_url: str, line: int | None = None) -> str:
     url = f"{base_url.rstrip('/')}/{api_type.source_path}"
     return f"{url}#L{line}" if line else url
 
 
-def type_reference(value: str, local_names: set[str]) -> str:
+def type_reference(value: str, local_names: set[str], *, in_table: bool = False) -> str:
     simple_name_match = re.match(r"(?:[\w$.]+\.)?([A-Za-z_$][\w$]*)", value)
     if simple_name_match and simple_name_match.group(1) in local_names:
         name = simple_name_match.group(1)
+        if in_table:
+            return markdown_table_link(wiki_page_name(name), f"`{value}`")
         return f"[[{wiki_page_name(name)}|`{value}`]]"
     return f"`{value}`"
 
@@ -499,9 +507,12 @@ def render_index(
     local_names = {item.name for item in api_types}
     for api_type in api_types:
         inheritance_values = api_type.extends + api_type.implements
-        inheritance = ", ".join(type_reference(value, local_names) for value in inheritance_values) or "—"
+        inheritance = ", ".join(
+            type_reference(value, local_names, in_table=True) for value in inheritance_values
+        ) or "—"
+        type_link = markdown_table_link(wiki_page_name(api_type.name), api_type.name)
         lines.append(
-            f"| [[{wiki_page_name(api_type.name)}|{api_type.name}]] | {api_type.kind} | "
+            f"| {type_link} | {api_type.kind} | "
             f"{inheritance} | {len(api_type.members)} |"
         )
     lines.append("")

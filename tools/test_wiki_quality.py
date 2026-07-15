@@ -4,7 +4,13 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tools.wiki_quality import check_manifest, check_markdown, check_media, extract_urls
+from tools.wiki_quality import (
+    check_manifest,
+    check_markdown,
+    check_media,
+    check_wiki_links,
+    extract_urls,
+)
 
 
 class WikiQualityTests(unittest.TestCase):
@@ -52,6 +58,41 @@ class WikiQualityTests(unittest.TestCase):
             self.assertTrue(any("CRLF" in issue for issue in issues))
             self.assertTrue(any("misspelling" in issue for issue in issues))
             self.assertTrue(any("trailing whitespace" in issue for issue in issues))
+
+    def test_markdown_rejects_piped_wiki_links_in_tables(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "Current-Commands.md").write_text(
+                "# Current Commands\n\n| Syntax | Behavior |\n| --- | --- |\n"
+                "| [[Command config|`/config`]] | Opens config. |\n",
+                encoding="utf-8",
+            )
+            issues = check_markdown(root, allow_tokens=False, spellcheck=False)
+            self.assertTrue(
+                any("piped wiki link breaks Markdown table" in issue for issue in issues)
+            )
+
+    def test_markdown_allows_piped_wiki_link_example_in_fence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "Example.md").write_text(
+                "# Example\n\n```markdown\n| [[target|label]] |\n```\n",
+                encoding="utf-8",
+            )
+            issues = check_markdown(root, allow_tokens=False, spellcheck=False)
+            self.assertFalse(any("piped wiki link" in issue for issue in issues))
+
+    def test_wiki_links_validate_relative_markdown_destinations(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "Home.md").write_text(
+                "# Home\n\n[Works](Existing-Page) [Broken](Missing-Page)\n",
+                encoding="utf-8",
+            )
+            (root / "Existing-Page.md").write_text("# Existing\n", encoding="utf-8")
+            issues = check_wiki_links(root)
+            self.assertFalse(any("Existing-Page" in issue for issue in issues))
+            self.assertTrue(any("Missing-Page" in issue for issue in issues))
 
     def test_media_requires_alt_text_and_existing_file(self):
         with tempfile.TemporaryDirectory() as directory:

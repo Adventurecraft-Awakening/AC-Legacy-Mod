@@ -30,8 +30,10 @@ MISSPELLINGS = {
     "wether": "whether",
 }
 MARKDOWN_IMAGE_RE = re.compile(r"!\[([^\]]*)\]\(([^)]+)\)")
+MARKDOWN_LINK_RE = re.compile(r"(?<!!)\[(?:[^\]\n]|\](?!\())*\]\(([^)\n]+)\)")
 HTML_IMAGE_RE = re.compile(r"<img\b([^>]*)>", re.IGNORECASE)
 WIKI_LINK_RE = re.compile(r"\[\[([^\]]+)\]\]")
+PIPED_WIKI_LINK_RE = re.compile(r"\[\[[^\]\n]*\|[^\]\n]*\]\]")
 URL_RE = re.compile(r"https?://[^\s<>\"\]]+")
 TOKEN_RE = re.compile(r"\{\{[A-Z0-9_]+\}\}")
 
@@ -107,7 +109,6 @@ def check_markdown(root: Path, *, allow_tokens: bool, spellcheck: bool) -> list[
                 issues.append(f"{rel}:{number}: trailing whitespace")
             if "\t" in line:
                 issues.append(f"{rel}:{number}: tab character; use spaces")
-
             fence = re.match(r"^\s*(`{3,}|~{3,})", line)
             if fence:
                 current = fence.group(1)[0]
@@ -121,6 +122,11 @@ def check_markdown(root: Path, *, allow_tokens: bool, spellcheck: bool) -> list[
                 continue
             if in_fence:
                 continue
+            if line.lstrip().startswith("|") and PIPED_WIKI_LINK_RE.search(line):
+                issues.append(
+                    f"{rel}:{number}: piped wiki link breaks Markdown table columns; "
+                    "use a standard Markdown link"
+                )
 
             heading = re.match(r"^(#{1,6})\s+\S", line)
             if heading:
@@ -330,6 +336,25 @@ def check_wiki_links(root: Path) -> list[str]:
             if keys.isdisjoint(normalized):
                 line = text.count("\n", 0, match.start()) + 1
                 issues.append(f"{display_path(path, root)}:{line}: broken wiki link [[{raw}]]")
+        for match in MARKDOWN_LINK_RE.finditer(text):
+            destination = split_destination(match.group(1))
+            parsed = urllib.parse.urlsplit(destination)
+            if parsed.scheme or parsed.netloc or destination.startswith(("/", "//", "#")):
+                continue
+            target = urllib.parse.unquote(parsed.path).strip()
+            if not target or "/" in target or "\\" in target:
+                continue
+            if target.casefold().endswith(".md"):
+                target = target[:-3]
+            elif Path(target).suffix:
+                continue
+            key = target.casefold().replace(" ", "-")
+            if key not in normalized:
+                line = text.count("\n", 0, match.start()) + 1
+                issues.append(
+                    f"{display_path(path, root)}:{line}: broken Markdown wiki link "
+                    f"[{target}]"
+                )
     return issues
 
 

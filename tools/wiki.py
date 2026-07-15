@@ -183,6 +183,14 @@ def markdown_escape(value: str) -> str:
     return value.replace("|", "\\|").replace("\n", " ")
 
 
+def markdown_page_link(target: str, label: str, *, code: bool = False) -> str:
+    """Render an internal link that is safe inside a Markdown table cell."""
+    escaped = markdown_escape(label)
+    if code:
+        escaped = f"`{escaped}`"
+    return f"[{escaped}]({target})"
+
+
 def page_slug(value: str) -> str:
     slug = re.sub(r"[^A-Za-z0-9]+", "-", value).strip("-")
     if not slug:
@@ -426,7 +434,31 @@ def source_page_names() -> set[str]:
 
 
 def wiki_link_targets(markdown: str) -> set[str]:
-    return {match.group(1).strip().replace(" ", "-") for match in re.finditer(r"\[\[([^\]|#]+)", markdown)}
+    targets = {
+        match.group(1).strip().replace(" ", "-")
+        for match in re.finditer(r"\[\[([^\]|#]+)", markdown)
+    }
+    markdown_links = re.finditer(
+        r"(?<!!)\[(?:[^\]\n]|\](?!\())*\]\(([^)\n]+)\)", markdown
+    )
+    for match in markdown_links:
+        destination = match.group(1).strip()
+        if destination.startswith("<") and ">" in destination:
+            destination = destination[1 : destination.index(">")]
+        else:
+            destination = re.split(r"\s+[\"']", destination, maxsplit=1)[0]
+        parsed = urllib.parse.urlsplit(destination)
+        if parsed.scheme or parsed.netloc or destination.startswith(("/", "//", "#")):
+            continue
+        path = urllib.parse.unquote(parsed.path).strip()
+        if not path or "/" in path or "\\" in path:
+            continue
+        if path.casefold().endswith(".md"):
+            path = path[:-3]
+        elif Path(path).suffix:
+            continue
+        targets.add(path.replace(" ", "-"))
+    return targets
 
 
 def validate_current_evidence() -> None:
@@ -484,7 +516,8 @@ def render_blocks(entries: list[dict[str, object]]) -> str:
     for entry in entries:
         link = f"{source_url('src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java')}#L{entry['line']}"
         target = feature_page_name("Block", str(entry["name"]))
-        lines.append(f"| [[{target}|{markdown_escape(str(entry['name']))}]] | {entry['id']} | `{entry['field']}` | [`{entry['class']}`]({link}) |")
+        name_link = markdown_page_link(target, str(entry["name"]))
+        lines.append(f"| {name_link} | {entry['id']} | `{entry['field']}` | [`{entry['class']}`]({link}) |")
     lines.extend(["", "See [[Fact-Checking-and-Provenance]] for how legacy block pages are handled.", ""])
     return "\n".join(lines)
 
@@ -501,7 +534,8 @@ def render_items(entries: list[dict[str, object]]) -> str:
     for entry in entries:
         link = f"{source_url('src/main/java/dev/adventurecraft/awakening/item/AC_Items.java')}#L{entry['line']}"
         target = feature_page_name("Item", str(entry["name"]))
-        lines.append(f"| [[{target}|{markdown_escape(str(entry['name']))}]] | {entry['id']} | `{entry['field']}` | [`{entry['class']}`]({link}) |")
+        name_link = markdown_page_link(target, str(entry["name"]))
+        lines.append(f"| {name_link} | {entry['id']} | `{entry['field']}` | [`{entry['class']}`]({link}) |")
     lines.append("")
     return "\n".join(lines)
 
@@ -518,7 +552,8 @@ def render_entities(entries: list[dict[str, object]]) -> str:
     for entry in entries:
         link = f"{source_url('src/main/java/dev/adventurecraft/awakening/mixin/entity/MixinEntityRegistry.java')}#L{entry['line']}"
         target = feature_page_name("Entity", str(entry["name"]))
-        lines.append(f"| [[{target}|{markdown_escape(str(entry['name']))}]] | {entry['id']} | [`{entry['class']}`]({link}) |")
+        name_link = markdown_page_link(target, str(entry["name"]))
+        lines.append(f"| {name_link} | {entry['id']} | [`{entry['class']}`]({link}) |")
     lines.append("")
     return "\n".join(lines)
 
@@ -541,7 +576,8 @@ def render_commands(commands: list[str], rules: list[dict[str, str]]) -> str:
     ]
     for name in commands:
         syntax, description, _ = COMMAND_DOCS[name]
-        lines.append(f"| [[Command {name}|{syntax}]] | {description} |")
+        syntax_link = markdown_page_link(f"Command-{name}", syntax, code=True)
+        lines.append(f"| {syntax_link} | {description} |")
     lines.extend(
         [
             "",
@@ -700,16 +736,16 @@ def render_alias_pages(
         if len(targets) == 1:
             label, target = targets[0]
             lines.extend([f"This term refers to [[{target}|{label}: {display_name}]].", ""])
-            target_text = f"[[{target}|{display_name}]]"
+            target_text = markdown_page_link(target, display_name)
         else:
             lines.extend(["This name is used by more than one current registry entry:", ""])
             lines.extend(f"- [[{target}|{label}: {display_name}]]" for label, target in targets)
             lines.append("")
-            target_text = ", ".join(f"[[{target}|{label}]]" for label, target in targets)
+            target_text = ", ".join(markdown_page_link(target, label) for label, target in targets)
         lines.extend(["This alias adds no behavior claims. See the target page for source evidence.", ""])
         pages[f"{alias_name}.md"] = "\n".join(lines)
         evidence[alias_name] = ["wiki/feature-details.json", "wiki/fandom-baseline.json"]
-        index_lines.append(f"| [[{alias_name}|{markdown_escape(display_name)}]] | {target_text} |")
+        index_lines.append(f"| {markdown_page_link(alias_name, display_name)} | {target_text} |")
     index_lines.append("")
     pages["Aliases.md"] = "\n".join(index_lines)
     evidence["Aliases"] = ["wiki/feature-details.json", "wiki/fandom-baseline.json"]
@@ -974,7 +1010,7 @@ def validate() -> None:
             content = read_text(path)
             for target in wiki_link_targets(content):
                 if target not in page_names:
-                    errors.append(f"{path.name}: broken wiki link [[{target}]]")
+                    errors.append(f"{path.name}: broken internal wiki link {target!r}")
         forbidden = {
             "JDK **21**": "current build requires Java 25",
             "Java **21**": "current build requires Java 25",
