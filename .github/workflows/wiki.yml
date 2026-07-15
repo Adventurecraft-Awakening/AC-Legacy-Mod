@@ -37,7 +37,11 @@ jobs:
         run: python tools/wiki_quality.py sources wiki/pages
 
       - name: Test wiki generators and quality checks
-        run: python -m unittest tools/test_wiki_quality.py tools/tests/test_wiki_script_api.py
+        run: >-
+          python -m unittest
+          tools/test_wiki_quality.py
+          tools/tests/test_wiki_script_api.py
+          tools/tests/test_wiki_feature_pages.py
 
       - name: Build native wiki
         run: python tools/wiki.py build --output build/wiki

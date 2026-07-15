@@ -312,13 +312,14 @@ def render_feature_pages(
     items: list[dict[str, object]],
     entities: list[dict[str, object]],
     details: dict[str, dict[str, dict[str, object]]],
+    targets: dict[tuple[str, str], str],
 ) -> tuple[dict[str, str], dict[str, list[str]]]:
     pages: dict[str, str] = {}
     evidence_by_page: dict[str, list[str]] = {}
 
     def render_group(kind: str, label: str, group: list[dict[str, object]], detail_key: str) -> None:
         name = str(group[0]["name"])
-        page_name = feature_page_name(label, name)
+        page_name = targets[(label, name)]
         lines = [
             f"# {name}",
             "",
@@ -357,8 +358,11 @@ def render_feature_pages(
         lines.extend(f"- [`{path}`]({source_url(path)})" for path in sorted(collected_evidence))
         index_page = {"block": "Current Blocks", "item": "Current Items", "entity": "Current Entities"}[kind]
         lines.extend(["", f"Back to [[{index_page}]].", ""])
-        pages[f"{page_name}.md"] = "\n".join(lines)
-        evidence_by_page[page_name] = sorted(collected_evidence)
+        content = "\n".join(lines)
+        compatibility_page = feature_page_name(label, name)
+        for output_page in dict.fromkeys((page_name, compatibility_page)):
+            pages[f"{output_page}.md"] = content
+            evidence_by_page[output_page] = sorted(collected_evidence)
 
     for kind, label, entries, detail_key in (
         ("block", "Block", blocks, "field"),
@@ -433,6 +437,53 @@ def source_page_names() -> set[str]:
     return {path.stem for path in SOURCE_DIR.glob("*.md")}
 
 
+def build_feature_page_targets(
+    blocks: list[dict[str, object]],
+    items: list[dict[str, object]],
+    entities: list[dict[str, object]],
+) -> dict[tuple[str, str], str]:
+    """Prefer human-readable page names while namespacing ambiguous features."""
+    groups = (("Block", blocks), ("Item", items), ("Entity", entities))
+    keys = {
+        (label, str(entry["name"]))
+        for label, entries in groups
+        for entry in entries
+    }
+    human_owners: dict[str, set[tuple[str, str]]] = {}
+    namespaced_owners: dict[str, set[tuple[str, str]]] = {}
+    for key in keys:
+        label, name = key
+        human_owners.setdefault(page_slug(name), set()).add(key)
+        namespaced_owners.setdefault(feature_page_name(label, name), set()).add(key)
+
+    reserved = source_page_names() | {
+        "Current-Blocks",
+        "Current-Items",
+        "Current-Entities",
+        "Current-Commands",
+        "Fandom-Baseline-Index",
+        "Scripting-API",
+        "Verification-Status",
+        "Aliases",
+        "Script",
+        "_Sidebar",
+        "_Footer",
+    }
+    targets: dict[tuple[str, str], str] = {}
+    for key in sorted(keys):
+        label, name = key
+        human = page_slug(name)
+        conflicts_with_feature = len(human_owners[human]) > 1 or any(
+            owner != key for owner in namespaced_owners.get(human, set())
+        )
+        targets[key] = (
+            feature_page_name(label, name)
+            if human in reserved or conflicts_with_feature
+            else human
+        )
+    return targets
+
+
 def wiki_link_targets(markdown: str) -> set[str]:
     targets = {
         match.group(1).strip().replace(" ", "-")
@@ -504,43 +555,55 @@ def validate_current_evidence() -> None:
         raise WikiError(f"historical commands were registered again; review the wiki: {', '.join(sorted(obsolete))}")
 
 
-def render_blocks(entries: list[dict[str, object]]) -> str:
+def render_blocks(
+    entries: list[dict[str, object]], targets: dict[tuple[str, str], str]
+) -> str:
+    detail_count = len({targets[("Block", str(entry["name"]))] for entry in entries})
     lines = [
         "# Current Blocks",
         "",
         "> Generated from the current Java registry and English localization. IDs are current AC-Legacy IDs; historical Fandom ID charts are version-specific.",
+        "",
+        f"The **{detail_count} linked names** each open a source-backed block page. Rows that share a localized name are documented together as registry variants.",
         "",
         "| Name | ID | Registry field | Implementation |",
         "| --- | ---: | --- | --- |",
     ]
     for entry in entries:
         link = f"{source_url('src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java')}#L{entry['line']}"
-        target = feature_page_name("Block", str(entry["name"]))
+        target = targets[("Block", str(entry["name"]))]
         name_link = markdown_page_link(target, str(entry["name"]))
         lines.append(f"| {name_link} | {entry['id']} | `{entry['field']}` | [`{entry['class']}`]({link}) |")
     lines.extend(["", "See [[Fact-Checking-and-Provenance]] for how legacy block pages are handled.", ""])
     return "\n".join(lines)
 
 
-def render_items(entries: list[dict[str, object]]) -> str:
+def render_items(
+    entries: list[dict[str, object]], targets: dict[tuple[str, str], str]
+) -> str:
+    detail_count = len({targets[("Item", str(entry["name"]))] for entry in entries})
     lines = [
         "# Current Items",
         "",
         "> Generated from the current Java registry and English localization.",
+        "",
+        f"The **{detail_count} linked names** each open a source-backed item page.",
         "",
         "| Name | ID | Registry field | Implementation |",
         "| --- | ---: | --- | --- |",
     ]
     for entry in entries:
         link = f"{source_url('src/main/java/dev/adventurecraft/awakening/item/AC_Items.java')}#L{entry['line']}"
-        target = feature_page_name("Item", str(entry["name"]))
+        target = targets[("Item", str(entry["name"]))]
         name_link = markdown_page_link(target, str(entry["name"]))
         lines.append(f"| {name_link} | {entry['id']} | `{entry['field']}` | [`{entry['class']}`]({link}) |")
     lines.append("")
     return "\n".join(lines)
 
 
-def render_entities(entries: list[dict[str, object]]) -> str:
+def render_entities(
+    entries: list[dict[str, object]], targets: dict[tuple[str, str], str]
+) -> str:
     lines = [
         "# Current Entities",
         "",
@@ -551,7 +614,7 @@ def render_entities(entries: list[dict[str, object]]) -> str:
     ]
     for entry in entries:
         link = f"{source_url('src/main/java/dev/adventurecraft/awakening/mixin/entity/MixinEntityRegistry.java')}#L{entry['line']}"
-        target = feature_page_name("Entity", str(entry["name"]))
+        target = targets[("Entity", str(entry["name"]))]
         name_link = markdown_page_link(target, str(entry["name"]))
         lines.append(f"| {name_link} | {entry['id']} | [`{entry['class']}`]({link}) |")
     lines.append("")
@@ -695,20 +758,24 @@ def render_alias_pages(
     blocks: list[dict[str, object]],
     items: list[dict[str, object]],
     entities: list[dict[str, object]],
+    targets: dict[tuple[str, str], str],
 ) -> tuple[dict[str, str], dict[str, list[str]]]:
     candidates: dict[str, list[tuple[str, str]]] = {}
     for label, entries in (("Block", blocks), ("Item", items), ("Entity", entities)):
         for name in sorted({str(entry["name"]) for entry in entries}, key=str.casefold):
-            candidates.setdefault(name, []).append((label, feature_page_name(label, name)))
+            candidates.setdefault(name, []).append((label, targets[(label, name)]))
+
+    def current_target(label: str, name: str) -> str:
+        return targets.get((label, name), feature_page_name(label, name))
 
     manual = {
         "AdventureCraft Wiki": [("Wiki home", "Home")],
-        "Effects Block": [("Block", feature_page_name("Block", "Effect Block"))],
-        "Lightbulb": [("Block", feature_page_name("Block", "Light Bulb"))],
+        "Effects Block": [("Block", current_target("Block", "Effect Block"))],
+        "Lightbulb": [("Block", current_target("Block", "Light Bulb"))],
         "Main Page": [("Wiki home", "Home")],
-        "Paintbrush": [("Item", feature_page_name("Item", "Paint Brush"))],
-        "Pant Bucket": [("Item", feature_page_name("Item", "Paint Bucket"))],
-        "Script": [("Scripting overview", "Scripting")],
+        "Paintbrush": [("Item", current_target("Item", "Paint Brush"))],
+        "Pant Bucket": [("Item", current_target("Item", "Paint Bucket"))],
+        "Script": [("Block", current_target("Block", "Script Block"))],
     }
     candidates.update(manual)
 
@@ -727,21 +794,34 @@ def render_alias_pages(
         "Fandom-Baseline-Index", "Scripting-API", "Verification-Status", "Aliases",
         "_Sidebar", "_Footer",
     }
+    reserved.update(targets.values())
+    reserved.update(feature_page_name(label, name) for label, name in targets)
     for display_name in sorted(candidates, key=str.casefold):
         alias_name = page_slug(display_name)
         if alias_name in reserved:
             continue
-        targets = list(dict.fromkeys(candidates[display_name]))
+        candidate_targets = list(dict.fromkeys(candidates[display_name]))
         lines = [f"# {display_name}", ""]
-        if len(targets) == 1:
-            label, target = targets[0]
-            lines.extend([f"This term refers to [[{target}|{label}: {display_name}]].", ""])
+        if len(candidate_targets) == 1:
+            label, target = candidate_targets[0]
+            lines.extend(
+                [
+                    f"This term refers to {markdown_page_link(target, f'{label}: {display_name}')}.",
+                    "",
+                ]
+            )
             target_text = markdown_page_link(target, display_name)
         else:
             lines.extend(["This name is used by more than one current registry entry:", ""])
-            lines.extend(f"- [[{target}|{label}: {display_name}]]" for label, target in targets)
+            lines.extend(
+                f"- {markdown_page_link(target, f'{label}: {display_name}')}"
+                for label, target in candidate_targets
+            )
             lines.append("")
-            target_text = ", ".join(markdown_page_link(target, label) for label, target in targets)
+            target_text = ", ".join(
+                markdown_page_link(target, label)
+                for label, target in candidate_targets
+            )
         lines.extend(["This alias adds no behavior claims. See the target page for source evidence.", ""])
         pages[f"{alias_name}.md"] = "\n".join(lines)
         evidence[alias_name] = ["wiki/feature-details.json", "wiki/fandom-baseline.json"]
@@ -849,8 +929,13 @@ def build(output: Path) -> list[Path]:
     entities = parse_entities()
     commands, rules = parse_commands()
     feature_details = load_feature_details(blocks, items, entities)
-    feature_pages, feature_evidence = render_feature_pages(blocks, items, entities, feature_details)
-    alias_pages, alias_evidence = render_alias_pages(blocks, items, entities)
+    feature_targets = build_feature_page_targets(blocks, items, entities)
+    feature_pages, feature_evidence = render_feature_pages(
+        blocks, items, entities, feature_details, feature_targets
+    )
+    alias_pages, alias_evidence = render_alias_pages(
+        blocks, items, entities, feature_targets
+    )
 
     import wiki_script_api
 
@@ -859,9 +944,9 @@ def build(output: Path) -> list[Path]:
     script_base_url = source_url("")
     script_pages = wiki_script_api.render_reference(script_types, script_base_url)
     generated = {
-        "Current-Blocks.md": render_blocks(blocks),
-        "Current-Items.md": render_items(items),
-        "Current-Entities.md": render_entities(entities),
+        "Current-Blocks.md": render_blocks(blocks, feature_targets),
+        "Current-Items.md": render_items(items, feature_targets),
+        "Current-Entities.md": render_entities(entities, feature_targets),
         "Current-Commands.md": render_commands(commands, rules),
         "Fandom-Baseline-Index.md": render_baseline(baseline),
         "_Sidebar.md": render_sidebar(),
