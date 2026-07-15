@@ -9,12 +9,14 @@ python tools/wiki.py check
 python tools/wiki.py build --output build/wiki
 python tools/wiki_quality.py sources wiki/pages
 python tools/wiki_quality.py quality build/wiki --minimum-pages 250
-python -m unittest tools/test_wiki_quality.py tools/tests/test_wiki_script_api.py
+python -m unittest tools/test_wiki_quality.py tools/tests/test_wiki_script_api.py tools/tests/test_wiki_feature_pages.py
 python tools/wiki.py sync-baseline       # intentional network refresh only
 python tools/wiki.py sync-baseline --check
 ```
 
 Do not edit `build/wiki`; it is deterministic generated output and is ignored with the rest of `build/`.
+
+If `wiki/assets/registry/render-manifest.json` is present, `check` validates exact coverage of the current block and item registries before generating image-backed feature pages. An absent manifest is allowed while bootstrapping the native exporter; a committed partial or stale manifest is not. See `wiki/assets/registry/README.md` for the format and regeneration contract.
 
 ## One-time repository setup
 

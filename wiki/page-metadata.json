@@ -70,7 +70,9 @@
         "LICENSE",
         "src/main/resources/assets/adventurecraft/acLogo.png",
         "src/main/java/dev/adventurecraft/awakening/mixin/client/gui/screen/menu/MixinTitleScreen.java",
+        "src/main/java/dev/adventurecraft/awakening/client/WikiAssetExporter.java",
         "wiki/assets/current/acLogo.png",
+        "wiki/assets/registry/render-manifest.json",
         "src/main/resources/assets/adventurecraft/icon.png"
       ]
     }

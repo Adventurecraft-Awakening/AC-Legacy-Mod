@@ -8,6 +8,7 @@ import dev.adventurecraft.awakening.client.gl.GLDevice;
 import dev.adventurecraft.awakening.client.gui.AC_ChatScreen;
 import dev.adventurecraft.awakening.client.gui.AC_InBedChatScreen;
 import dev.adventurecraft.awakening.client.options.Config;
+import dev.adventurecraft.awakening.client.WikiAssetExporter;
 import dev.adventurecraft.awakening.client.renderer.BlockAllocator;
 import dev.adventurecraft.awakening.client.renderer.PoolingBlockAllocator;
 import dev.adventurecraft.awakening.common.*;
@@ -85,6 +86,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.io.*;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.Arrays;
 
 // TODO: clear RegionFileCache on world exit to not keep file handles alive
@@ -106,6 +108,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
     @Shadow public LocalPlayer player;
     @Shadow public Level level;
     @Shadow public volatile boolean pause;
+    @Shadow public volatile boolean running;
     @Shadow public GameMode gameMode;
     @Shadow public Textures textures;
     @Shadow public Screen screen;
@@ -387,6 +390,22 @@ public abstract class MixinMinecraft implements ExMinecraft {
         this.textures.loadTexture("/terrain3.png");
 
         ContextFactory.initGlobal(new Script.CustomContextFactory());
+
+        if (WikiAssetExporter.isEnabled()) {
+            String output = System.getProperty(WikiAssetExporter.OUTPUT_PROPERTY);
+            if (output == null || output.isBlank()) {
+                throw new IllegalArgumentException(
+                    "Wiki asset export requires -D" + WikiAssetExporter.OUTPUT_PROPERTY + "=<directory>"
+                );
+            }
+            try {
+                WikiAssetExporter.export((Minecraft) (Object) this, Path.of(output));
+            }
+            catch (IOException e) {
+                throw new UncheckedIOException("Failed to export wiki render assets", e);
+            }
+            this.running = false;
+        }
     }
 
     @Inject(

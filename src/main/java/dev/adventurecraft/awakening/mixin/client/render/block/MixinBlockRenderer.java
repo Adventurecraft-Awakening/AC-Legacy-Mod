@@ -1994,6 +1994,230 @@ public abstract class MixinBlockRenderer implements ExBlockRenderer {
             }
             tile.setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
         }
+        else if (shape == AC_BlockShapes.REDSTONE_POWER) {
+            double minX = tile.xx0;
+            double minY = tile.yy0;
+            double minZ = tile.zz0;
+            double maxX = tile.xx1;
+            double maxY = tile.yy1;
+            double maxZ = tile.zz1;
+            this.renderInventoryBox(tile, meta, 0.0F, 0.0F, 0.0F, 1.0F, 0.25F, 1.0F);
+            this.fixedTexture = 115;
+            ts.begin();
+            ts.normal(0.0F, -1.0F, 0.0F);
+            this.tesselateTorch(tile, o, o + 0.25D, o, 0.0D, 0.0D);
+            ts.end();
+            this.fixedTexture = -1;
+            tile.setShape((float) minX, (float) minY, (float) minZ, (float) maxX, (float) maxY, (float) maxZ);
+        }
+        else if (shape == AC_BlockShapes.SPIKES) {
+            ts.begin();
+            ts.normal(0.0F, -1.0F, 0.0F);
+            this.tesselateCrossTexture(tile, meta, o, o, o);
+            ts.end();
+        }
+        else if (shape == AC_BlockShapes.TABLE) {
+            double minX = tile.xx0;
+            double minY = tile.yy0;
+            double minZ = tile.zz0;
+            double maxX = tile.xx1;
+            double maxY = tile.yy1;
+            double maxZ = tile.zz1;
+            this.renderInventoryBox(tile, meta, 0.0F, 14.0F / 16.0F, 0.0F, 1.0F, 1.0F, 1.0F);
+            this.renderInventoryBox(tile, meta, 0.0F, 0.0F, 0.0F, 3.0F / 16.0F, 14.0F / 16.0F, 3.0F / 16.0F);
+            this.renderInventoryBox(tile, meta, 13.0F / 16.0F, 0.0F, 0.0F, 1.0F, 14.0F / 16.0F, 3.0F / 16.0F);
+            this.renderInventoryBox(tile, meta, 13.0F / 16.0F, 0.0F, 13.0F / 16.0F, 1.0F, 14.0F / 16.0F, 1.0F);
+            this.renderInventoryBox(tile, meta, 0.0F, 0.0F, 13.0F / 16.0F, 3.0F / 16.0F, 14.0F / 16.0F, 1.0F);
+            tile.setShape((float) minX, (float) minY, (float) minZ, (float) maxX, (float) maxY, (float) maxZ);
+        }
+        else if (shape == AC_BlockShapes.CHAIR) {
+            double minX = tile.xx0;
+            double minY = tile.yy0;
+            double minZ = tile.zz0;
+            double maxX = tile.xx1;
+            double maxY = tile.yy1;
+            double maxZ = tile.zz1;
+            this.renderInventoryBox(tile, meta, 2.0F / 16.0F, 0.5F, 2.0F / 16.0F, 14.0F / 16.0F, 10.0F / 16.0F, 14.0F / 16.0F);
+            switch (meta & 3) {
+                case 0 -> this.renderInventoryBox(tile, meta, 2.0F / 16.0F, 10.0F / 16.0F, 2.0F / 16.0F, 0.25F, 1.25F, 14.0F / 16.0F);
+                case 1 -> this.renderInventoryBox(tile, meta, 2.0F / 16.0F, 10.0F / 16.0F, 2.0F / 16.0F, 14.0F / 16.0F, 1.25F, 0.25F);
+                case 2 -> this.renderInventoryBox(tile, meta, 12.0F / 16.0F, 10.0F / 16.0F, 2.0F / 16.0F, 14.0F / 16.0F, 1.25F, 14.0F / 16.0F);
+                default -> this.renderInventoryBox(tile, meta, 2.0F / 16.0F, 10.0F / 16.0F, 12.0F / 16.0F, 14.0F / 16.0F, 1.25F, 14.0F / 16.0F);
+            }
+            this.renderInventoryBox(tile, meta, 2.0F / 16.0F, 0.0F, 2.0F / 16.0F, 0.25F, 0.5F, 0.25F);
+            this.renderInventoryBox(tile, meta, 12.0F / 16.0F, 0.0F, 2.0F / 16.0F, 14.0F / 16.0F, 0.5F, 0.25F);
+            this.renderInventoryBox(tile, meta, 12.0F / 16.0F, 0.0F, 12.0F / 16.0F, 14.0F / 16.0F, 0.5F, 14.0F / 16.0F);
+            this.renderInventoryBox(tile, meta, 2.0F / 16.0F, 0.0F, 12.0F / 16.0F, 0.25F, 0.5F, 14.0F / 16.0F);
+            tile.setShape((float) minX, (float) minY, (float) minZ, (float) maxX, (float) maxY, (float) maxZ);
+        }
+        else if (shape == AC_BlockShapes.ROPE) {
+            ts.begin();
+            ts.normal(0.0F, -1.0F, 0.0F);
+            switch (meta % 3) {
+                case 0 -> this.tesselateCrossTexture(tile, meta, o, o, o);
+                case 1 -> this.renderCrossedSquaresEast(tile, meta, o, o, o);
+                default -> this.renderCrossedSquaresNorth(tile, meta, o, o, o);
+            }
+            ts.end();
+        }
+        else if (shape == AC_BlockShapes.BLOCK_TREE) {
+            ts.begin();
+            ts.normal(0.0F, -1.0F, 0.0F);
+            this.tesselateCrossTexture(tile, meta, o, o, o);
+            ts.end();
+        }
+        else if (shape == AC_BlockShapes.BLOCK_OVERLAY) {
+            double minX = tile.xx0;
+            double minY = tile.yy0;
+            double minZ = tile.zz0;
+            double maxX = tile.xx1;
+            double maxY = tile.yy1;
+            double maxZ = tile.zz1;
+            tile.setShape(0.0F, 0.0F, 0.0F, 1.0F, 1.0F / 64.0F, 1.0F);
+            ts.begin();
+            ts.normal(0.0F, 1.0F, 0.0F);
+            this.renderFaceUp(tile, o, o, o, tile.getTexture(Facing.UP, meta));
+            ts.normal(0.0F, -1.0F, 0.0F);
+            this.renderFaceDown(tile, o, o, o, tile.getTexture(Facing.DOWN, meta));
+            ts.end();
+            tile.setShape((float) minX, (float) minY, (float) minZ, (float) maxX, (float) maxY, (float) maxZ);
+        }
+        else if (shape == AC_BlockShapes.BLOCK_SLOPE) {
+            this.renderInventorySlope(tile, meta);
+        }
+    }
+
+    private @Unique void renderInventoryBox(
+        Tile tile,
+        int meta,
+        float minX,
+        float minY,
+        float minZ,
+        float maxX,
+        float maxY,
+        float maxZ
+    ) {
+        tile.setShape(minX, minY, minZ, maxX, maxY, maxZ);
+        Tesselator ts = this.tesselator();
+        double o = -0.5D;
+        ts.begin();
+        ts.normal(0.0F, -1.0F, 0.0F);
+        this.renderFaceDown(tile, o, o, o, tile.getTexture(Facing.DOWN, meta));
+        ts.normal(0.0F, 1.0F, 0.0F);
+        this.renderFaceUp(tile, o, o, o, tile.getTexture(Facing.UP, meta));
+        ts.normal(0.0F, 0.0F, -1.0F);
+        this.renderNorth(tile, o, o, o, tile.getTexture(Facing.NORTH, meta));
+        ts.normal(0.0F, 0.0F, 1.0F);
+        this.renderSouth(tile, o, o, o, tile.getTexture(Facing.SOUTH, meta));
+        ts.normal(-1.0F, 0.0F, 0.0F);
+        this.renderWest(tile, o, o, o, tile.getTexture(Facing.WEST, meta));
+        ts.normal(1.0F, 0.0F, 0.0F);
+        this.renderEast(tile, o, o, o, tile.getTexture(Facing.EAST, meta));
+        ts.end();
+    }
+
+    private @Unique void renderInventorySlope(Tile tile, int meta) {
+        Tesselator ts = this.tesselator();
+        int texture = tile.getTexture(Facing.DOWN, meta);
+        double texX = (texture & 15) << 4;
+        double texY = texture & 240;
+        double u0 = texX / 256.0D;
+        double u1 = (texX + 15.99D) / 256.0D;
+        double v0 = texY / 256.0D;
+        double v1 = (texY + 15.99D) / 256.0D;
+        double a = -0.5D;
+        double b = 0.5D;
+
+        ts.begin();
+        ts.normal(0.0F, -1.0F, 0.0F);
+        ts.vertexUV(a, a, a, u0, v0);
+        ts.vertexUV(b, a, a, u1, v0);
+        ts.vertexUV(b, a, b, u1, v1);
+        ts.vertexUV(a, a, b, u0, v1);
+
+        switch (meta & 3) {
+            case 0 -> {
+                this.renderInventorySlopeNorthSouth(ts, a, b, u0, u1, v0, v1, false);
+            }
+            case 1 -> {
+                this.renderInventorySlopeNorthSouth(ts, a, b, u0, u1, v0, v1, true);
+            }
+            case 2 -> {
+                this.renderInventorySlopeEastWest(ts, a, b, u0, u1, v0, v1, false);
+            }
+            default -> {
+                this.renderInventorySlopeEastWest(ts, a, b, u0, u1, v0, v1, true);
+            }
+        }
+        ts.end();
+    }
+
+    private @Unique void renderInventorySlopeNorthSouth(
+        Tesselator ts,
+        double a,
+        double b,
+        double u0,
+        double u1,
+        double v0,
+        double v1,
+        boolean reverse
+    ) {
+        double lowZ = reverse ? b : a;
+        double highZ = reverse ? a : b;
+        ts.normal(0.0F, 0.7071F, reverse ? 0.7071F : -0.7071F);
+        ts.vertexUV(a, a, lowZ, u0, v1);
+        ts.vertexUV(b, a, lowZ, u1, v1);
+        ts.vertexUV(b, b, highZ, u1, v0);
+        ts.vertexUV(a, b, highZ, u0, v0);
+        ts.normal(0.0F, 0.0F, reverse ? -1.0F : 1.0F);
+        ts.vertexUV(a, a, highZ, u0, v1);
+        ts.vertexUV(a, b, highZ, u0, v0);
+        ts.vertexUV(b, b, highZ, u1, v0);
+        ts.vertexUV(b, a, highZ, u1, v1);
+        ts.normal(-1.0F, 0.0F, 0.0F);
+        ts.vertexUV(a, a, lowZ, u0, v1);
+        ts.vertexUV(a, b, highZ, u1, v0);
+        ts.vertexUV(a, a, highZ, u1, v1);
+        ts.vertexUV(a, a, highZ, u1, v1);
+        ts.normal(1.0F, 0.0F, 0.0F);
+        ts.vertexUV(b, a, highZ, u1, v1);
+        ts.vertexUV(b, b, highZ, u0, v0);
+        ts.vertexUV(b, a, lowZ, u0, v1);
+        ts.vertexUV(b, a, lowZ, u0, v1);
+    }
+
+    private @Unique void renderInventorySlopeEastWest(
+        Tesselator ts,
+        double a,
+        double b,
+        double u0,
+        double u1,
+        double v0,
+        double v1,
+        boolean reverse
+    ) {
+        double lowX = reverse ? b : a;
+        double highX = reverse ? a : b;
+        ts.normal(reverse ? 0.7071F : -0.7071F, 0.7071F, 0.0F);
+        ts.vertexUV(lowX, a, a, u0, v1);
+        ts.vertexUV(lowX, a, b, u1, v1);
+        ts.vertexUV(highX, b, b, u1, v0);
+        ts.vertexUV(highX, b, a, u0, v0);
+        ts.normal(reverse ? -1.0F : 1.0F, 0.0F, 0.0F);
+        ts.vertexUV(highX, a, a, u0, v1);
+        ts.vertexUV(highX, b, a, u0, v0);
+        ts.vertexUV(highX, b, b, u1, v0);
+        ts.vertexUV(highX, a, b, u1, v1);
+        ts.normal(0.0F, 0.0F, -1.0F);
+        ts.vertexUV(lowX, a, a, u0, v1);
+        ts.vertexUV(highX, b, a, u1, v0);
+        ts.vertexUV(highX, a, a, u1, v1);
+        ts.vertexUV(highX, a, a, u1, v1);
+        ts.normal(0.0F, 0.0F, 1.0F);
+        ts.vertexUV(highX, a, b, u1, v1);
+        ts.vertexUV(highX, b, b, u0, v0);
+        ts.vertexUV(lowX, a, b, u0, v1);
+        ts.vertexUV(lowX, a, b, u0, v1);
     }
 
     public @Unique void renderCrossedSquaresUpsideDown(Tile block, int meta, double x, double y, double z) {

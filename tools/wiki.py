@@ -13,6 +13,7 @@ import sys
 import tempfile
 import urllib.parse
 import urllib.request
+import zlib
 from collections import Counter
 from pathlib import Path
 
@@ -23,6 +24,8 @@ SOURCE_DIR = WIKI_DIR / "pages"
 BASELINE_PATH = WIKI_DIR / "fandom-baseline.json"
 PAGE_METADATA_PATH = WIKI_DIR / "page-metadata.json"
 FEATURE_DETAILS_PATH = WIKI_DIR / "feature-details.json"
+REGISTRY_RENDER_DIR = WIKI_DIR / "assets" / "registry"
+REGISTRY_RENDER_MANIFEST_PATH = REGISTRY_RENDER_DIR / "render-manifest.json"
 DEFAULT_OUTPUT = ROOT / "build" / "wiki"
 
 FANDOM_API = "https://adventurecraftmod.fandom.com/api.php"
@@ -183,6 +186,16 @@ def markdown_escape(value: str) -> str:
     return value.replace("|", "\\|").replace("\n", " ")
 
 
+def markdown_image_alt(value: str) -> str:
+    return (
+        value.replace("\\", "\\\\")
+        .replace("]", "\\]")
+        .replace("|", "\\|")
+        .replace("\n", " ")
+        .strip()
+    )
+
+
 def markdown_page_link(target: str, label: str, *, code: bool = False) -> str:
     """Render an internal link that is safe inside a Markdown table cell."""
     escaped = markdown_escape(label)
@@ -241,11 +254,16 @@ def parse_items(lang: dict[str, str]) -> list[dict[str, object]]:
         if not (field_match and ctor_match and desc_match):
             raise WikiError(f"cannot parse item registration at {path.relative_to(ROOT)}:{line_no}")
         description_id = desc_match.group(1)
+        constructor_id = int(ctor_match.group(2))
         entries.append(
             {
                 "field": field_match.group(1),
                 "class": ctor_match.group(1),
-                "id": int(ctor_match.group(2)),
+                # Beta 1.7.3 Item reserves 0-255 for block-backed items. The
+                # constructor accepts an array index and stores index + 256 as
+                # the public runtime ID used by ItemInstance and registries.
+                "constructor_id": constructor_id,
+                "id": constructor_id + 256,
                 "description_id": description_id,
                 "name": lang.get(f"item.{description_id}.name", description_id),
                 "line": line_no,
@@ -267,6 +285,168 @@ def parse_entities() -> list[dict[str, object]]:
     if len(entries) < 10:
         raise WikiError(f"parsed only {len(entries)} AdventureCraft entities; the source format may have changed")
     return entries
+
+
+def _display_path(path: Path) -> str:
+    try:
+        return path.relative_to(ROOT).as_posix()
+    except ValueError:
+        return str(path)
+
+
+def _validate_rgba_png(path: Path, expected_width: int, expected_height: int) -> None:
+    """Validate enough of the PNG container to reject corrupt or non-RGBA renders."""
+    try:
+        data = path.read_bytes()
+    except FileNotFoundError as exc:
+        raise WikiError(f"registry render is missing: {_display_path(path)}") from exc
+    if not data.startswith(b"\x89PNG\r\n\x1a\n"):
+        raise WikiError(f"registry render is not a PNG: {_display_path(path)}")
+
+    offset = 8
+    seen_ihdr = False
+    seen_idat = False
+    seen_iend = False
+    while offset < len(data):
+        if offset + 12 > len(data):
+            raise WikiError(f"registry render has a truncated PNG chunk: {_display_path(path)}")
+        length = int.from_bytes(data[offset : offset + 4], "big")
+        chunk_type = data[offset + 4 : offset + 8]
+        chunk_end = offset + 12 + length
+        if chunk_end > len(data):
+            raise WikiError(f"registry render has a truncated PNG chunk: {_display_path(path)}")
+        payload = data[offset + 8 : offset + 8 + length]
+        expected_crc = int.from_bytes(data[offset + 8 + length : chunk_end], "big")
+        actual_crc = zlib.crc32(payload, zlib.crc32(chunk_type)) & 0xFFFFFFFF
+        if actual_crc != expected_crc:
+            raise WikiError(f"registry render has an invalid PNG checksum: {_display_path(path)}")
+
+        if not seen_ihdr:
+            if chunk_type != b"IHDR" or length != 13:
+                raise WikiError(f"registry render has no leading PNG IHDR: {_display_path(path)}")
+            width = int.from_bytes(payload[0:4], "big")
+            height = int.from_bytes(payload[4:8], "big")
+            bit_depth, color_type, compression, filtering, interlace = payload[8:13]
+            if (width, height) != (expected_width, expected_height):
+                raise WikiError(
+                    f"registry render dimensions must be {expected_width}x{expected_height}, "
+                    f"found {width}x{height}: {_display_path(path)}"
+                )
+            if (bit_depth, color_type) != (8, 6):
+                raise WikiError(f"registry render must be 8-bit RGBA PNG: {_display_path(path)}")
+            if (compression, filtering, interlace) != (0, 0, 0):
+                raise WikiError(f"registry render uses unsupported PNG encoding: {_display_path(path)}")
+            seen_ihdr = True
+        elif chunk_type == b"IHDR":
+            raise WikiError(f"registry render has multiple PNG IHDR chunks: {_display_path(path)}")
+
+        if chunk_type == b"IDAT":
+            seen_idat = True
+        if chunk_type == b"IEND":
+            if length != 0 or chunk_end != len(data):
+                raise WikiError(f"registry render has an invalid PNG IEND: {_display_path(path)}")
+            seen_iend = True
+            break
+        offset = chunk_end
+
+    if not (seen_ihdr and seen_idat and seen_iend):
+        raise WikiError(f"registry render is an incomplete PNG: {_display_path(path)}")
+
+
+def load_registry_render_manifest(
+    blocks: list[dict[str, object]],
+    items: list[dict[str, object]],
+    manifest_path: Path = REGISTRY_RENDER_MANIFEST_PATH,
+) -> dict[str, dict[str, dict[str, object]]] | None:
+    """Load committed native renders, if present, and require complete registry coverage."""
+    if not manifest_path.is_file():
+        return None
+    try:
+        data = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise WikiError(f"invalid JSON in {_display_path(manifest_path)}: {exc}") from exc
+
+    if data.get("format") != 1:
+        raise WikiError("wiki registry render manifest must use format 1")
+    width, height = data.get("width"), data.get("height")
+    if not isinstance(width, int) or isinstance(width, bool) or width <= 0:
+        raise WikiError("wiki registry render manifest width must be a positive integer")
+    if not isinstance(height, int) or isinstance(height, bool) or height <= 0:
+        raise WikiError("wiki registry render manifest height must be a positive integer")
+    if width != height:
+        raise WikiError("wiki registry renders must use fixed square dimensions")
+    if data.get("contains_community_maps") is not False:
+        raise WikiError("wiki registry render manifest must explicitly exclude community maps")
+
+    result: dict[str, dict[str, dict[str, object]]] = {}
+    asset_root = manifest_path.parent
+    for kind, expected_entries in (("blocks", blocks), ("items", items)):
+        records = data.get(kind)
+        if not isinstance(records, list):
+            raise WikiError(f"wiki registry render manifest {kind} must be a list")
+        records_by_field: dict[str, dict[str, object]] = {}
+        for record in records:
+            if not isinstance(record, dict):
+                raise WikiError(f"wiki registry render manifest {kind} contains a non-object entry")
+            required_record_fields = {"field", "id", "file", "sha256", "alt"}
+            if set(record) != required_record_fields:
+                raise WikiError(
+                    f"wiki registry render manifest {kind} entry must contain exactly "
+                    f"{sorted(required_record_fields)}"
+                )
+            field = record.get("field")
+            if not isinstance(field, str) or not field:
+                raise WikiError(f"wiki registry render manifest {kind} entry has no field")
+            if field in records_by_field:
+                raise WikiError(f"wiki registry render manifest duplicates {kind}.{field}")
+            records_by_field[field] = record
+
+        expected_by_field = {str(entry["field"]): entry for entry in expected_entries}
+        if set(records_by_field) != set(expected_by_field):
+            missing = set(expected_by_field) - set(records_by_field)
+            extra = set(records_by_field) - set(expected_by_field)
+            raise WikiError(
+                f"{kind} registry render coverage mismatch; missing={sorted(missing)}, extra={sorted(extra)}"
+            )
+
+        for field, expected in expected_by_field.items():
+            record = records_by_field[field]
+            if record.get("id") != expected["id"]:
+                raise WikiError(
+                    f"wiki registry render {kind}.{field} ID does not match the current registry"
+                )
+            expected_file = f"{kind}/{field}.png"
+            if record.get("file") != expected_file:
+                raise WikiError(
+                    f"wiki registry render {kind}.{field} must use file {expected_file!r}"
+                )
+            alt = record.get("alt")
+            if not isinstance(alt, str) or not alt.strip() or "\n" in alt or "\r" in alt:
+                raise WikiError(f"wiki registry render {kind}.{field} needs single-line alt text")
+            digest = record.get("sha256")
+            if not isinstance(digest, str) or re.fullmatch(r"[0-9a-f]{64}", digest) is None:
+                raise WikiError(f"wiki registry render {kind}.{field} needs a lowercase SHA-256")
+            image_path = asset_root / expected_file
+            _validate_rgba_png(image_path, width, height)
+            actual_digest = hashlib.sha256(image_path.read_bytes()).hexdigest()
+            if digest != actual_digest:
+                raise WikiError(f"wiki registry render hash mismatch: {_display_path(image_path)}")
+        expected_files = {str(record["file"]) for record in records}
+        category_root = asset_root / kind
+        actual_files = {
+            path.relative_to(asset_root).as_posix()
+            for path in category_root.rglob("*")
+            if path.is_file()
+        }
+        if actual_files != expected_files:
+            missing = expected_files - actual_files
+            extra = actual_files - expected_files
+            raise WikiError(
+                f"{kind} registry render file coverage mismatch; "
+                f"missing={sorted(missing)}, extra={sorted(extra)}"
+            )
+        result[kind] = records_by_field
+    return result
 
 
 def load_feature_details(
@@ -313,6 +493,7 @@ def render_feature_pages(
     entities: list[dict[str, object]],
     details: dict[str, dict[str, dict[str, object]]],
     targets: dict[tuple[str, str], str],
+    registry_renders: dict[str, dict[str, dict[str, object]]] | None = None,
 ) -> tuple[dict[str, str], dict[str, list[str]]]:
     pages: dict[str, str] = {}
     evidence_by_page: dict[str, list[str]] = {}
@@ -324,10 +505,40 @@ def render_feature_pages(
             f"# {name}",
             "",
             f"> Current {kind} reference generated from the AC-Legacy registry and source-backed feature audit.",
-            "",
-            "## Registry variants",
-            "",
         ]
+        render_records: list[dict[str, object]] = []
+        if kind != "entity" and registry_renders is not None:
+            render_records = [
+                registry_renders[f"{kind}s"][str(entry["field"])]
+                for entry in group
+            ]
+        if len(render_records) == 1:
+            record = render_records[0]
+            alt = markdown_image_alt(str(record["alt"]))
+            lines.extend(
+                [
+                    "",
+                    f"![{alt}](assets/registry/{record['file']})",
+                    "",
+                    f"*Native {kind} render for `{group[0]['field']}`.*",
+                ]
+            )
+        elif render_records:
+            lines.extend(
+                [
+                    "",
+                    "## Registry render gallery",
+                    "",
+                    "| Registry field | Native render |",
+                    "| --- | --- |",
+                ]
+            )
+            for entry, record in zip(group, render_records, strict=True):
+                alt = markdown_image_alt(str(record["alt"]))
+                lines.append(
+                    f"| `{entry['field']}` | ![{alt}](assets/registry/{record['file']}) |"
+                )
+        lines.extend(["", "## Registry variants", ""])
         if kind == "entity":
             lines.extend(["| Registry name | Numeric ID | Implementation |", "| --- | ---: | --- |"])
             for entry in group:
@@ -338,6 +549,11 @@ def render_feature_pages(
                 lines.append(f"| `{entry['field']}` | {entry['id']} | `{entry['class']}` |")
 
         collected_evidence: set[str] = set()
+        if render_records:
+            collected_evidence.add("wiki/assets/registry/render-manifest.json")
+            collected_evidence.update(
+                f"wiki/assets/registry/{record['file']}" for record in render_records
+            )
         for entry in group:
             key = str(entry[detail_key])
             detail_collection = {"block": "blocks", "item": "items", "entity": "entities"}[kind]
@@ -585,7 +801,7 @@ def render_items(
     lines = [
         "# Current Items",
         "",
-        "> Generated from the current Java registry and English localization.",
+        "> Generated from the current Java registry and English localization. Numeric IDs are runtime `Item.id` values; Beta 1.7.3 adds 256 to the constructor index declared in `AC_Items.java`.",
         "",
         f"The **{detail_count} linked names** each open a source-backed item page.",
         "",
@@ -929,9 +1145,10 @@ def build(output: Path) -> list[Path]:
     entities = parse_entities()
     commands, rules = parse_commands()
     feature_details = load_feature_details(blocks, items, entities)
+    registry_renders = load_registry_render_manifest(blocks, items)
     feature_targets = build_feature_page_targets(blocks, items, entities)
     feature_pages, feature_evidence = render_feature_pages(
-        blocks, items, entities, feature_details, feature_targets
+        blocks, items, entities, feature_details, feature_targets, registry_renders
     )
     alias_pages, alias_evidence = render_alias_pages(
         blocks, items, entities, feature_targets
@@ -998,6 +1215,9 @@ def build(output: Path) -> list[Path]:
         "_Sidebar": ("navigation", ["tools/wiki.py"]),
         "_Footer": ("navigation", ["tools/wiki.py"]),
     }
+    if registry_renders is not None:
+        for page in ("Current-Blocks", "Current-Items"):
+            fixed_generated[page][1].append("wiki/assets/registry/render-manifest.json")
     for page, (status, evidence) in fixed_generated.items():
         verification[page] = {"status": status, "evidence": evidence}
     for page, evidence in feature_evidence.items():

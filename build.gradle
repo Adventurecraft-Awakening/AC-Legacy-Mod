@@ -15,6 +15,13 @@ import java.util.stream.Stream
 version = project.mod_version
 group = project.maven_group
 
+// The native wiki asset exporter writes to the committed registry asset tree by
+// default. CI overrides this with -PwikiAssetExportDir=build/wiki-assets-llvmpipe
+// so that it can validate a clean regeneration without modifying the checkout.
+def wikiAssetExportDir = file(
+    providers.gradleProperty("wikiAssetExportDir").getOrElse("wiki/assets/registry")
+).absolutePath
+
 def git = project.gradle.sharedServices.registerIfAbsent("git", GitService.class, spec -> {
     spec.parameters { it ->
         it.rootProjectDir.set(project.rootDir)
@@ -46,6 +53,18 @@ loom {
 
             // TODO: make optional?
             programArgs("--glDebugContext")
+        }
+
+        wikiAssetExporter {
+            client()
+            runDir("run/wiki-asset-exporter")
+            vmArgs(
+                "-XX:+UnlockDiagnosticVMOptions",
+                "-XX:+UseCompactObjectHeaders",
+                "-Dac.wiki.export=true",
+                "-Dac.wiki.exportDir=${wikiAssetExportDir}"
+            )
+            ideConfigGenerated(false)
         }
     }
 }

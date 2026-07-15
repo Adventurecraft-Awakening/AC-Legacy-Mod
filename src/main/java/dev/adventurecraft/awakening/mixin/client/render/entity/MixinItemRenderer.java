@@ -1,9 +1,11 @@
 package dev.adventurecraft.awakening.mixin.client.render.entity;
 
 import com.llamalad7.mixinextras.sugar.Local;
+import dev.adventurecraft.awakening.client.WikiAssetExporter;
 import dev.adventurecraft.awakening.item.AC_IItemReload;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.client.render.entity.ExItemRenderer;
+import dev.adventurecraft.awakening.tile.AC_BlockShapes;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.client.renderer.Textures;
@@ -30,6 +32,28 @@ public abstract class MixinItemRenderer extends EntityRenderer implements ExItem
         Font textRenderer, Textures texManager, int itemId, int meta, int texture, int x, int y);
 
     public float scale = 1.0F;
+
+    @Redirect(
+        method = "renderGuiItem",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/TileRenderer;canRender(I)Z"
+        )
+    )
+    private boolean canRenderAdventureCraftInventoryShape(int shape) {
+        return net.minecraft.client.renderer.TileRenderer.canRender(shape) ||
+            WikiAssetExporter.isEnabled() && switch (shape) {
+            case AC_BlockShapes.REDSTONE_POWER,
+                 AC_BlockShapes.SPIKES,
+                 AC_BlockShapes.TABLE,
+                 AC_BlockShapes.CHAIR,
+                 AC_BlockShapes.ROPE,
+                 AC_BlockShapes.BLOCK_TREE,
+                 AC_BlockShapes.BLOCK_OVERLAY,
+                 AC_BlockShapes.BLOCK_SLOPE -> true;
+            default -> false;
+        };
+    }
 
     @ModifyArgs(
         method = "render(Lnet/minecraft/world/entity/item/ItemEntity;DDDFF)V",

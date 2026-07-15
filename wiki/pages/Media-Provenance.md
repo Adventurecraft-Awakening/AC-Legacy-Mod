@@ -16,6 +16,14 @@ This screenshot was captured from a locally built AC-Legacy 0.6.0 client at sour
 
 The documentation logo is a lossless 320×31 composition of the two source-sprite rectangles used by `MixinTitleScreen`: 256×31 pixels from `(0, 0)` followed by 64×31 pixels from `(0, 128)`. This preserves the in-game title exactly without exposing the sprite-sheet spacing. The application icon is copied during generation from `src/main/resources/assets/adventurecraft/icon.png`. Both are derived from the MIT-licensed project source.
 
+## Native block and item renders
+
+Block and item pages use PNGs exported by the AC-Legacy client from the current registries, textures, and render code. Blocks use the native block renderer; items use the native inventory renderer. A grouped page shows a gallery when several registry fields share one localized name.
+
+Every committed render set is described by `wiki/assets/registry/render-manifest.json`. The wiki build accepts the set only when it covers every current AdventureCraft block and item registration, each image is a fixed-size 8-bit RGBA PNG, and its SHA-256 matches the manifest. This makes stale, partial, or manually substituted images a build error.
+
+The exporter initializes a synthetic render scene rather than loading a world. Registry renders therefore contain no community map geometry, textures, or artwork. The manifest must record `contains_community_maps` as `false`; map screenshots and legacy map images remain prohibited.
+
 ## Screenshot standard
 
 A screenshot is accepted only when its provenance record contains:
