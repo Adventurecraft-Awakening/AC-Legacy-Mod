@@ -1,0 +1,8 @@
+# Wiki ownership boundaries. No verified GitHub team or maintainer handle is
+# recorded in the repository, so these patterns intentionally remain comments.
+# Replace them with active entries only after the project confirms an owner.
+#
+# /wiki/
+# /tools/wiki.py
+# /tools/wiki_quality.py
+# /.github/workflows/wiki.yml

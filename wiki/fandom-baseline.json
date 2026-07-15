@@ -1,0 +1,2719 @@
+{
+  "format": 1,
+  "source": "https://adventurecraftmod.fandom.com/wiki/AdventureCraft_Wiki",
+  "api": "https://adventurecraftmod.fandom.com/api.php",
+  "captured_at": "2026-07-15T15:16:34Z",
+  "scope": "Non-map namespace-0 pages returned by list=allpages; legacy community maps and catalogs are excluded; content is hashed but not copied.",
+  "source_page_count": 414,
+  "excluded_legacy_map_page_count": 236,
+  "license": {
+    "name": "CC-BY-SA",
+    "url": "https://www.fandom.com/licensing"
+  },
+  "pages": [
+    {
+      "title": "Advanced Destructible Blocks",
+      "page_id": 2949,
+      "revision_id": 5724,
+      "revision_timestamp": "2019-04-13T21:52:02Z",
+      "content_bytes": 6017,
+      "content_sha1": "55fee7c47c880e47cd2fbb12e651400dd844e576",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Advanced Inventory Management",
+      "page_id": 2948,
+      "revision_id": 5773,
+      "revision_timestamp": "2019-04-14T14:07:06Z",
+      "content_bytes": 5217,
+      "content_sha1": "2a65a0f34f34ce411cc2bc611eac8c9af93331f4",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "AdventureCraft Wiki",
+      "page_id": 1461,
+      "revision_id": 7761,
+      "revision_timestamp": "2025-01-25T09:09:23Z",
+      "content_bytes": 3965,
+      "content_sha1": "7aa69e5675ca73eb71fbc1ff2b5b4e48ffcaa1a1",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [],
+      "disposition": "rewritten-current",
+      "replacement": "Home"
+    },
+    {
+      "title": "Animation",
+      "page_id": 2950,
+      "revision_id": 5726,
+      "revision_timestamp": "2019-04-13T21:53:00Z",
+      "content_bytes": 13400,
+      "content_sha1": "8b0ebf5ab0c5660418f825be87c3ba379d5dbdc8",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Anti-Gravity Kit",
+      "page_id": 2951,
+      "revision_id": 5727,
+      "revision_timestamp": "2019-04-13T21:54:45Z",
+      "content_bytes": 7925,
+      "content_sha1": "b6e4926c754f226165da4dbd1cc1a3b9142f9d22",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Anti-Suffocation",
+      "page_id": 2952,
+      "revision_id": 5728,
+      "revision_timestamp": "2019-04-13T21:56:25Z",
+      "content_bytes": 3033,
+      "content_sha1": "c49ba719649034a31b7353c5cc382da83a3bae6e",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Assault Rifle",
+      "page_id": 2475,
+      "revision_id": 5042,
+      "revision_timestamp": "2018-06-09T03:43:26Z",
+      "content_bytes": 1427,
+      "content_sha1": "bffc663e87f47ed75bcea15584bc67a117ed1845",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Items",
+        "Weapons"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Items"
+    },
+    {
+      "title": "Available Scripts",
+      "page_id": 2262,
+      "revision_id": 4476,
+      "revision_timestamp": "2016-10-21T21:50:20Z",
+      "content_bytes": 290,
+      "content_sha1": "4aaa8850189026a5b20109d81ae142731d028294",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [],
+      "disposition": "rewritten-current",
+      "replacement": "Scripting"
+    },
+    {
+      "title": "Basic Scripting Tutorial (by UniverseGamerGER)",
+      "page_id": 2161,
+      "revision_id": 4242,
+      "revision_timestamp": "2015-03-15T13:59:01Z",
+      "content_bytes": 1807,
+      "content_sha1": "1dfb906a2f90331128e6bdd37d2ca9409887e354",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Tutorials & Guides"
+      ],
+      "disposition": "historical-reference",
+      "replacement": null
+    },
+    {
+      "title": "Biome Test",
+      "page_id": 3262,
+      "revision_id": 6895,
+      "revision_timestamp": "2022-04-09T15:37:03Z",
+      "content_bytes": 0,
+      "content_sha1": "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [],
+      "disposition": "historical-reference",
+      "replacement": null
+    },
+    {
+      "title": "Block Puzzle Combination",
+      "page_id": 2954,
+      "revision_id": 6545,
+      "revision_timestamp": "2020-08-11T08:22:21Z",
+      "content_bytes": 1546,
+      "content_sha1": "7b37b8fc58e87be2e251dd53f9bad61c8ce6224f",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Block Storage",
+      "page_id": 2325,
+      "revision_id": 4966,
+      "revision_timestamp": "2018-06-05T02:57:43Z",
+      "content_bytes": 1640,
+      "content_sha1": "b1fb83efb6ea9edcdd523b095095c0b66c0f2d3a",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Mechanical",
+        "Triggerable Blocks"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "Bomb",
+      "page_id": 2490,
+      "revision_id": 4981,
+      "revision_timestamp": "2018-06-05T04:30:47Z",
+      "content_bytes": 1430,
+      "content_sha1": "b3a5516862ae58bcb270ed4863cac3bf5a0d0e5a",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Items",
+        "Weapons"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Items"
+    },
+    {
+      "title": "Bomb Arrow",
+      "page_id": 2496,
+      "revision_id": 4988,
+      "revision_timestamp": "2018-06-05T04:46:04Z",
+      "content_bytes": 1854,
+      "content_sha1": "97c0c2a0a4a9101096566b5f57bfa45c88ad334e",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Items",
+        "Weapons"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Items"
+    },
+    {
+      "title": "Bomb Placeholder",
+      "page_id": 2955,
+      "revision_id": 5730,
+      "revision_timestamp": "2019-04-13T21:57:43Z",
+      "content_bytes": 9490,
+      "content_sha1": "eb50760223de00a1eefe8ed7cd8578cc36c24775",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Boomerang",
+      "page_id": 2501,
+      "revision_id": 5304,
+      "revision_timestamp": "2018-09-03T13:32:44Z",
+      "content_bytes": 1080,
+      "content_sha1": "c51858a72ebffa0223592a491b5b9067c13372af",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Adventure Mode",
+        "Defense",
+        "Items"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Items"
+    },
+    {
+      "title": "Boss Door",
+      "page_id": 2326,
+      "revision_id": 5333,
+      "revision_timestamp": "2018-09-03T14:44:58Z",
+      "content_bytes": 1240,
+      "content_sha1": "d47de8dc27f5e08bbd4ed4a9e6ced6ea24b83a71",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Puzzle Blocks"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "Bow and Arrow Switch",
+      "page_id": 2957,
+      "revision_id": 5731,
+      "revision_timestamp": "2019-04-13T21:58:04Z",
+      "content_bytes": 3010,
+      "content_sha1": "5bf61d66bdb82bdb3d15ec1ec71394c2f3aab5b1",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Bow Displays Arrow Count",
+      "page_id": 2956,
+      "revision_id": 5732,
+      "revision_timestamp": "2019-04-13T21:58:19Z",
+      "content_bytes": 5032,
+      "content_sha1": "e6170f777bb38360935c76bc0d2acd01285ec43e",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Camera Block",
+      "page_id": 2291,
+      "revision_id": 4968,
+      "revision_timestamp": "2018-06-05T03:07:53Z",
+      "content_bytes": 3494,
+      "content_sha1": "5e7143db437ab2f53d256c33d18601586a6b0376",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Mechanical",
+        "Triggerable Blocks"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "Clear Inventory",
+      "page_id": 2958,
+      "revision_id": 5733,
+      "revision_timestamp": "2019-04-13T21:58:35Z",
+      "content_bytes": 721,
+      "content_sha1": "b78dc6c8dbdec5bfc3eab7331b43753379c19eba",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Clip Block",
+      "page_id": 2327,
+      "revision_id": 5334,
+      "revision_timestamp": "2018-09-03T14:45:20Z",
+      "content_bytes": 676,
+      "content_sha1": "70f4882543444ca4da534a4031a9c029dfb0fcc8",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Puzzle Blocks"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "Cocorococo",
+      "page_id": 3119,
+      "revision_id": 6391,
+      "revision_timestamp": "2019-06-27T18:17:32Z",
+      "content_bytes": 41,
+      "content_sha1": "25eaf9ab3260456bc7008ead31c71a0ee152c1a6",
+      "is_redirect": true,
+      "redirect_target": "Jojo's Incredible Adventure",
+      "categories": [],
+      "disposition": "historical-reference",
+      "replacement": null
+    },
+    {
+      "title": "Commands",
+      "page_id": 2589,
+      "revision_id": 7484,
+      "revision_timestamp": "2024-05-30T11:59:30Z",
+      "content_bytes": 3939,
+      "content_sha1": "fe5b6fcfd1727284501ec5110bc6bd43beda5c4c",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [],
+      "disposition": "rewritten-current",
+      "replacement": "Current-Commands"
+    },
+    {
+      "title": "Console",
+      "page_id": 2959,
+      "revision_id": 5734,
+      "revision_timestamp": "2019-04-13T22:20:53Z",
+      "content_bytes": 15810,
+      "content_sha1": "3a3c60f32d52b6e8627d03ff34bbb8d18a6c99c0",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Cracked Cobblestone",
+      "page_id": 2328,
+      "revision_id": 5335,
+      "revision_timestamp": "2018-09-03T14:45:38Z",
+      "content_bytes": 900,
+      "content_sha1": "778cdcb989761d03edc3747b141d85444fde042a",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Puzzle Blocks"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "Cracked Stone",
+      "page_id": 2329,
+      "revision_id": 5336,
+      "revision_timestamp": "2018-09-03T14:46:20Z",
+      "content_bytes": 871,
+      "content_sha1": "48d0137865c03a42a2dbb515a53161836255d244",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Puzzle Blocks"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "Crafting Utilities",
+      "page_id": 2960,
+      "revision_id": 5735,
+      "revision_timestamp": "2019-04-13T22:21:46Z",
+      "content_bytes": 12355,
+      "content_sha1": "82d5c906cebfe4a2ee65164046a63025b1b61a4a",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Crumbling Blocks",
+      "page_id": 2961,
+      "revision_id": 5736,
+      "revision_timestamp": "2019-04-13T22:22:07Z",
+      "content_bytes": 3782,
+      "content_sha1": "9912877699bb615cec43a1ef839a7c2e813b4752",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Cryect",
+      "page_id": 2049,
+      "revision_id": 3918,
+      "revision_timestamp": "2013-04-16T11:31:22Z",
+      "content_bytes": 234,
+      "content_sha1": "3c7d20c1c10b3ce3d2e3cebb36fd49d284b4cbcb",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [],
+      "disposition": "historical-reference",
+      "replacement": null
+    },
+    {
+      "title": "Currency Converter",
+      "page_id": 2962,
+      "revision_id": 5737,
+      "revision_timestamp": "2019-04-13T22:22:51Z",
+      "content_bytes": 936,
+      "content_sha1": "019b57af30fba7c128b6d327b6c0e5d2dd1fc822",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Cursor",
+      "page_id": 2466,
+      "revision_id": 6438,
+      "revision_timestamp": "2019-09-16T02:42:52Z",
+      "content_bytes": 1134,
+      "content_sha1": "310f6aa4f1d2d8237c9d4589f6227cc7b4eb377c",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Debug Mode",
+        "Items"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Items"
+    },
+    {
+      "title": "Custom Entity Drops",
+      "page_id": 2972,
+      "revision_id": 5747,
+      "revision_timestamp": "2019-04-13T22:33:20Z",
+      "content_bytes": 4511,
+      "content_sha1": "0754bc8f5d0c68bba8523778de0985ead868f70d",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Custom Fonts",
+      "page_id": 2963,
+      "revision_id": 5738,
+      "revision_timestamp": "2019-04-13T22:23:29Z",
+      "content_bytes": 5124,
+      "content_sha1": "c08adace0a8a096f219966252b4a2ef474097f7a",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Custom Items",
+      "page_id": 2964,
+      "revision_id": 5739,
+      "revision_timestamp": "2019-04-13T22:24:03Z",
+      "content_bytes": 559,
+      "content_sha1": "b523b88f050f84c5421a847c067215a1bc23a541",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Custom Mobs",
+      "page_id": 2965,
+      "revision_id": 5740,
+      "revision_timestamp": "2019-04-13T22:24:23Z",
+      "content_bytes": 2604,
+      "content_sha1": "fcbcf4fa738bbdc217ab298bfcb10d7c2a2880e8",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Custom Scripts",
+      "page_id": 2943,
+      "revision_id": 5673,
+      "revision_timestamp": "2019-04-03T04:24:52Z",
+      "content_bytes": 61108,
+      "content_sha1": "a2d7107180a6c99efc6a1cd83ceaaafb688ccab6",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [],
+      "disposition": "historical-reference",
+      "replacement": null
+    },
+    {
+      "title": "Customizable Mob Spawner",
+      "page_id": 2282,
+      "revision_id": 4670,
+      "revision_timestamp": "2018-05-10T14:34:08Z",
+      "content_bytes": 4375,
+      "content_sha1": "334ece3b912aa03e19a6310d2968656b82035e5c",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Mechanical",
+        "Trigger Blocks",
+        "Triggerable Blocks"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "Customizable Mobs",
+      "page_id": 2966,
+      "revision_id": 5808,
+      "revision_timestamp": "2019-04-15T22:20:36Z",
+      "content_bytes": 1086,
+      "content_sha1": "6796c989356ada5afba60de98c51d60f02ebb587",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Cut Grass",
+      "page_id": 2967,
+      "revision_id": 5788,
+      "revision_timestamp": "2019-04-14T20:42:37Z",
+      "content_bytes": 1618,
+      "content_sha1": "9db4eea629528461679929d6177956eca14ae485",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Darkness",
+      "page_id": 2324,
+      "revision_id": 5337,
+      "revision_timestamp": "2018-09-03T14:46:33Z",
+      "content_bytes": 965,
+      "content_sha1": "7648f3d2d8a9f9d89fe68ed50a181475896a489c",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Puzzle Blocks"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "Data Values Script",
+      "page_id": 2968,
+      "revision_id": 5743,
+      "revision_timestamp": "2019-04-13T22:29:40Z",
+      "content_bytes": 1073,
+      "content_sha1": "a2a526d59c58d47ae39c3e7fce0cb5db2cec5f69",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Day/Night Skeleton Archer",
+      "page_id": 2953,
+      "revision_id": 5744,
+      "revision_timestamp": "2019-04-13T22:30:15Z",
+      "content_bytes": 4329,
+      "content_sha1": "c655728f27d92bfa1ecee5149ec9338de1ee0dad",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Deku Stick",
+      "page_id": 2969,
+      "revision_id": 5745,
+      "revision_timestamp": "2019-04-13T22:30:37Z",
+      "content_bytes": 1344,
+      "content_sha1": "8b57638da5170ac3dc42ee28a8c1adcc6b6d8f9f",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Devs",
+      "page_id": 3281,
+      "revision_id": 7172,
+      "revision_timestamp": "2024-01-18T11:57:06Z",
+      "content_bytes": 0,
+      "content_sha1": "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [],
+      "disposition": "historical-reference",
+      "replacement": null
+    },
+    {
+      "title": "Distance Script",
+      "page_id": 2970,
+      "revision_id": 5723,
+      "revision_timestamp": "2019-04-13T21:51:26Z",
+      "content_bytes": 2416,
+      "content_sha1": "5e0c13a68ae5bbf9adce8aaae6bf48482e0d7d9f",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Download Scripts",
+      "page_id": 2609,
+      "revision_id": 6506,
+      "revision_timestamp": "2020-04-05T09:51:24Z",
+      "content_bytes": 1391,
+      "content_sha1": "ab3e691b466b8e92af5132f4083902650d05278c",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [],
+      "disposition": "historical-reference",
+      "replacement": null
+    },
+    {
+      "title": "Effects Block",
+      "page_id": 2330,
+      "revision_id": 4973,
+      "revision_timestamp": "2018-06-05T03:23:34Z",
+      "content_bytes": 3992,
+      "content_sha1": "bd74cdfc397958e72f3b9debb4099bff31860f01",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Mechanical",
+        "Triggerable Blocks"
+      ],
+      "disposition": "historical-reference",
+      "replacement": null
+    },
+    {
+      "title": "Eraser",
+      "page_id": 2505,
+      "revision_id": 6439,
+      "revision_timestamp": "2019-09-16T02:45:15Z",
+      "content_bytes": 761,
+      "content_sha1": "6f64feb4ffc56da2df4295351f79c696bc040792",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Debug Mode",
+        "Items"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Items"
+    },
+    {
+      "title": "Evilcraft",
+      "page_id": 3265,
+      "revision_id": 7508,
+      "revision_timestamp": "2024-05-31T03:03:31Z",
+      "content_bytes": 31,
+      "content_sha1": "fdc24ed2084086fef53bf38d84c3628020246b00",
+      "is_redirect": true,
+      "redirect_target": "Evilcraft: Reborn",
+      "categories": [],
+      "disposition": "historical-reference",
+      "replacement": null
+    },
+    {
+      "title": "Experience System",
+      "page_id": 2973,
+      "revision_id": 5748,
+      "revision_timestamp": "2019-04-13T22:43:58Z",
+      "content_bytes": 7717,
+      "content_sha1": "8b6d434669bb9078e0ad9ec1b188c952f660242b",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Falling Stone",
+      "page_id": 2975,
+      "revision_id": 5750,
+      "revision_timestamp": "2019-04-13T23:27:16Z",
+      "content_bytes": 1102,
+      "content_sha1": "0baf2edd5db3e3ebef655ba307b3c2ae4d152ef3",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Fan",
+      "page_id": 2375,
+      "revision_id": 5338,
+      "revision_timestamp": "2018-09-03T14:46:48Z",
+      "content_bytes": 1543,
+      "content_sha1": "d7205ad7cb428abdd407c51ab3a955015fd9b9f1",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Puzzle Blocks",
+        "Triggerable Blocks"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "FAQ",
+      "page_id": 2035,
+      "revision_id": 3915,
+      "revision_timestamp": "2013-04-16T00:36:39Z",
+      "content_bytes": 572,
+      "content_sha1": "2d3b5f289054d48a976927beaf63aec699727307",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [],
+      "disposition": "historical-reference",
+      "replacement": null
+    },
+    {
+      "title": "Fire & Ice Rods",
+      "page_id": 2976,
+      "revision_id": 5751,
+      "revision_timestamp": "2019-04-13T23:39:47Z",
+      "content_bytes": 15001,
+      "content_sha1": "7785549cb15a9e4337848f01135acba674c2952c",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Fire & Ice Sword",
+      "page_id": 2977,
+      "revision_id": 5752,
+      "revision_timestamp": "2019-04-14T00:06:16Z",
+      "content_bytes": 2110,
+      "content_sha1": "77e68e406f9c9a265240c8736612aa74986c9848",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Fire Keese",
+      "page_id": 2978,
+      "revision_id": 5753,
+      "revision_timestamp": "2019-04-14T00:10:20Z",
+      "content_bytes": 1843,
+      "content_sha1": "1f2d34c314d943feff2f5a65131c2c37b897dddf",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Flamethrower",
+      "page_id": 2979,
+      "revision_id": 5754,
+      "revision_timestamp": "2019-04-14T00:19:59Z",
+      "content_bytes": 7942,
+      "content_sha1": "0b658c0c4e7e9f2f55c918c0413884a177647837",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Flippers",
+      "page_id": 2980,
+      "revision_id": 5755,
+      "revision_timestamp": "2019-04-14T00:34:31Z",
+      "content_bytes": 3257,
+      "content_sha1": "816b4cb537cdb4628d282fe85c6dfacd4200c1d7",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "FOV Detection Script",
+      "page_id": 3234,
+      "revision_id": 7690,
+      "revision_timestamp": "2024-07-07T22:38:34Z",
+      "content_bytes": 14530,
+      "content_sha1": "b39a8f145a6e70e050051199077f8a5b15a86429",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Gamebox",
+      "page_id": 2081,
+      "revision_id": 4028,
+      "revision_timestamp": "2014-07-27T19:01:15Z",
+      "content_bytes": 35,
+      "content_sha1": "e69a4630a098548d52ac175db3fccc7af1da9628",
+      "is_redirect": true,
+      "redirect_target": "Template:GameboxBlack",
+      "categories": [],
+      "disposition": "historical-reference",
+      "replacement": null
+    },
+    {
+      "title": "Gamemodes",
+      "page_id": 2583,
+      "revision_id": 5310,
+      "revision_timestamp": "2018-09-03T13:46:02Z",
+      "content_bytes": 845,
+      "content_sha1": "b7d2620c6fe6158deb2f8c1f7ed4a0aa07209843",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [],
+      "disposition": "rewritten-current",
+      "replacement": "Controls-and-Game-Modes"
+    },
+    {
+      "title": "Gold Key",
+      "page_id": 2508,
+      "revision_id": 5307,
+      "revision_timestamp": "2018-09-03T13:34:22Z",
+      "content_bytes": 618,
+      "content_sha1": "0bb99f84e0bac127dd59044522c679474ae94689",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Adventure Mode",
+        "Items"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Items"
+    },
+    {
+      "title": "Goron Tunic",
+      "page_id": 2981,
+      "revision_id": 5756,
+      "revision_timestamp": "2019-04-14T00:53:43Z",
+      "content_bytes": 1022,
+      "content_sha1": "ad110ab32deba3be6d3379853d0c22713921c231",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Guitar",
+      "page_id": 2515,
+      "revision_id": 5311,
+      "revision_timestamp": "2018-09-03T13:46:45Z",
+      "content_bytes": 993,
+      "content_sha1": "f4832a6d44ae4c78a4dfacdacff75a7bbc4bf0a5",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Adventure Mode",
+        "Items",
+        "Musical Instruments"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Items"
+    },
+    {
+      "title": "Hammer",
+      "page_id": 2512,
+      "revision_id": 6443,
+      "revision_timestamp": "2019-09-16T02:47:15Z",
+      "content_bytes": 1381,
+      "content_sha1": "8202625a09fb1ed2f3762b6e376a43151dddcb58",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Debug Mode",
+        "Items"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Items"
+    },
+    {
+      "title": "Harp",
+      "page_id": 2517,
+      "revision_id": 5313,
+      "revision_timestamp": "2018-09-03T13:48:14Z",
+      "content_bytes": 989,
+      "content_sha1": "11c966bbc7939b9988fd3c65aae4715fa955ff9a",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Adventure Mode",
+        "Items",
+        "Musical Instruments"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Items"
+    },
+    {
+      "title": "Heal/Damage Block",
+      "page_id": 2294,
+      "revision_id": 4697,
+      "revision_timestamp": "2018-05-11T11:34:39Z",
+      "content_bytes": 838,
+      "content_sha1": "04872abd81a093fcc6883ca9580f330fdecb1f31",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Mechanical",
+        "Triggerable Blocks"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "Heart Container",
+      "page_id": 2522,
+      "revision_id": 4902,
+      "revision_timestamp": "2018-06-03T21:00:55Z",
+      "content_bytes": 1395,
+      "content_sha1": "840856cb01ff9974670d3cafbc26f8e517cbe8ac",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Items",
+        "Recovery"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Items"
+    },
+    {
+      "title": "Heart Piece",
+      "page_id": 2525,
+      "revision_id": 4903,
+      "revision_timestamp": "2018-06-03T21:01:25Z",
+      "content_bytes": 1398,
+      "content_sha1": "270834a13fe25edb44ea25e89c2ad0ac992746a7",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Items",
+        "Recovery"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Items"
+    },
+    {
+      "title": "Heat Damage",
+      "page_id": 2982,
+      "revision_id": 5757,
+      "revision_timestamp": "2019-04-14T00:59:34Z",
+      "content_bytes": 4258,
+      "content_sha1": "382dacb0cab0fdaaa3c0b5709997f26546a36f4e",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Hookshot",
+      "page_id": 2529,
+      "revision_id": 5314,
+      "revision_timestamp": "2018-09-03T13:48:41Z",
+      "content_bytes": 1153,
+      "content_sha1": "fcaf1fcb20d03bf592fe91c77ecc34152cb8fe8f",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Adventure Mode",
+        "Items"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Items"
+    },
+    {
+      "title": "Icarus Wings",
+      "page_id": 2983,
+      "revision_id": 5758,
+      "revision_timestamp": "2019-04-14T01:04:01Z",
+      "content_bytes": 2850,
+      "content_sha1": "c97bfe68444bc1d9eded18884ab57db5f4fda361",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Ice Monster",
+      "page_id": 2984,
+      "revision_id": 5759,
+      "revision_timestamp": "2019-04-14T01:07:42Z",
+      "content_bytes": 3255,
+      "content_sha1": "20f556a24f3aeecffcb0d30ec9fd365b1c31676b",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Interactable Dialogue",
+      "page_id": 2985,
+      "revision_id": 5760,
+      "revision_timestamp": "2019-04-14T01:14:44Z",
+      "content_bytes": 19481,
+      "content_sha1": "8f824cf4f086be75e351c8e4d3f4bb2642500dcc",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [],
+      "disposition": "historical-reference",
+      "replacement": null
+    },
+    {
+      "title": "Inventory Management Template",
+      "page_id": 2986,
+      "revision_id": 5761,
+      "revision_timestamp": "2019-04-14T01:21:17Z",
+      "content_bytes": 1382,
+      "content_sha1": "3d34f35ae7b043cfde626ecb2feef02c198f4e98",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Iron Boots",
+      "page_id": 2987,
+      "revision_id": 5762,
+      "revision_timestamp": "2019-04-14T01:27:10Z",
+      "content_bytes": 1828,
+      "content_sha1": "00f53b7729277fe2eb3c15fca31b1f6ea727f1e2",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Joes Adventure",
+      "page_id": 2819,
+      "revision_id": 5427,
+      "revision_timestamp": "2019-03-14T04:13:35Z",
+      "content_bytes": 29,
+      "content_sha1": "c12293a66aad236a0ca8c3ff17de907eec0a9f16",
+      "is_redirect": true,
+      "redirect_target": "Joe's Adventure",
+      "categories": [],
+      "disposition": "historical-reference",
+      "replacement": null
+    },
+    {
+      "title": "Lantern",
+      "page_id": 2534,
+      "revision_id": 5315,
+      "revision_timestamp": "2018-09-03T13:49:15Z",
+      "content_bytes": 918,
+      "content_sha1": "d8ed1d6dd7e2fb09bc2de636e5c84a1d193194fe",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Adventure Mode",
+        "Items"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Items"
+    },
+    {
+      "title": "Lava Slime",
+      "page_id": 2988,
+      "revision_id": 5763,
+      "revision_timestamp": "2019-04-14T01:35:09Z",
+      "content_bytes": 2672,
+      "content_sha1": "697265ccd51a70e151b9e26e38f9785bde7f2d9a",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Lightbulb",
+      "page_id": 2383,
+      "revision_id": 4975,
+      "revision_timestamp": "2018-06-05T03:26:25Z",
+      "content_bytes": 806,
+      "content_sha1": "aee00c00b7ef2a38e463c9cf5be5d607e1ebabed",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Mechanical"
+      ],
+      "disposition": "historical-reference",
+      "replacement": null
+    },
+    {
+      "title": "Limiter",
+      "page_id": 2989,
+      "revision_id": 5764,
+      "revision_timestamp": "2019-04-14T01:50:27Z",
+      "content_bytes": 5301,
+      "content_sha1": "a3229446f938a51d99fc23c6d6827558f3380908",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Linked List",
+      "page_id": 2990,
+      "revision_id": 5765,
+      "revision_timestamp": "2019-04-14T04:21:23Z",
+      "content_bytes": 6738,
+      "content_sha1": "194def0cfb24530640ffc0223df1fbcf19cabf2f",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Locked Door",
+      "page_id": 2322,
+      "revision_id": 7193,
+      "revision_timestamp": "2024-05-13T04:16:34Z",
+      "content_bytes": 1713,
+      "content_sha1": "2683b4444431565b41b2d5743b04c19be0a4a4eb",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Puzzle Blocks",
+        "Triggerable Blocks"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "Magic Bar",
+      "page_id": 2991,
+      "revision_id": 5766,
+      "revision_timestamp": "2019-04-14T04:27:54Z",
+      "content_bytes": 4151,
+      "content_sha1": "96bb216c625f6495fb2cdde8d5d37cecc2d5c221",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Main Page",
+      "page_id": 2031,
+      "revision_id": 3873,
+      "revision_timestamp": "2011-05-21T20:46:57Z",
+      "content_bytes": 33,
+      "content_sha1": "64d4c26af5b330157353557b471483bd28b5152d",
+      "is_redirect": true,
+      "redirect_target": "AdventureCraft Wiki",
+      "categories": [],
+      "disposition": "rewritten-current",
+      "replacement": "Home"
+    },
+    {
+      "title": "Mana System",
+      "page_id": 2992,
+      "revision_id": 5768,
+      "revision_timestamp": "2019-04-14T04:34:16Z",
+      "content_bytes": 5235,
+      "content_sha1": "6ca3e0c92422c91a01a7f7cf8d754fd63028755e",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Mana System: Fire & Ice Sword",
+      "page_id": 2993,
+      "revision_id": 5769,
+      "revision_timestamp": "2019-04-14T04:43:41Z",
+      "content_bytes": 1566,
+      "content_sha1": "f60c839604a9ec11cdf939378d8ec72abcb307bd",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Mana System: Mana Potion",
+      "page_id": 2994,
+      "revision_id": 5770,
+      "revision_timestamp": "2019-04-14T04:58:58Z",
+      "content_bytes": 1179,
+      "content_sha1": "f40be661623750eb5e4e362a34c24cfd9a5fa72d",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Medkit",
+      "page_id": 2995,
+      "revision_id": 5771,
+      "revision_timestamp": "2019-04-14T14:01:10Z",
+      "content_bytes": 2877,
+      "content_sha1": "02062b7872b52b498f870a0131d822363b1da789",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Message Block",
+      "page_id": 2285,
+      "revision_id": 4712,
+      "revision_timestamp": "2018-05-11T19:33:05Z",
+      "content_bytes": 2391,
+      "content_sha1": "19f6cd1c3a11b69742f66f88edab3a49e809438b",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Mechanical",
+        "Triggerable Blocks"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "Mobs",
+      "page_id": 2488,
+      "revision_id": 4854,
+      "revision_timestamp": "2018-06-02T05:24:27Z",
+      "content_bytes": 587,
+      "content_sha1": "402c813a26876fd645c8a459889e5e7de37c6689",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [],
+      "disposition": "rewritten-current",
+      "replacement": "Current-Entities"
+    },
+    {
+      "title": "Money GUI",
+      "page_id": 2996,
+      "revision_id": 5772,
+      "revision_timestamp": "2019-04-14T14:03:49Z",
+      "content_bytes": 904,
+      "content_sha1": "dc74dfa8f36178d08223b0218dd5d2d9a471e5a9",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Money Management",
+      "page_id": 2997,
+      "revision_id": 5774,
+      "revision_timestamp": "2019-04-14T14:08:25Z",
+      "content_bytes": 3882,
+      "content_sha1": "96519e5d71cbc4ff711446264f4e3101e8d11f18",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Money System",
+      "page_id": 2998,
+      "revision_id": 5775,
+      "revision_timestamp": "2019-04-14T14:10:24Z",
+      "content_bytes": 4476,
+      "content_sha1": "5214ac7ce01b038d511865050d258e0df5e86c7c",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Music Block",
+      "page_id": 2288,
+      "revision_id": 4717,
+      "revision_timestamp": "2018-05-11T20:14:00Z",
+      "content_bytes": 1438,
+      "content_sha1": "db48c54c402ce1b810d28a169da29f099856d60c",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Mechanical",
+        "Triggerable Blocks"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "NPC",
+      "page_id": 2606,
+      "revision_id": 5058,
+      "revision_timestamp": "2018-06-09T18:05:14Z",
+      "content_bytes": 2673,
+      "content_sha1": "a43ffbe3969138042c4d4afce767cbe2c096eac2",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Mobs"
+      ],
+      "disposition": "rewritten-current",
+      "replacement": "Current-Entities"
+    },
+    {
+      "title": "NPC Path Block",
+      "page_id": 2396,
+      "revision_id": 4723,
+      "revision_timestamp": "2018-05-12T04:10:14Z",
+      "content_bytes": 2240,
+      "content_sha1": "df6a552f141a057e16cb77922b49cf0cde9d24c6",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Mechanical",
+        "Triggerable Blocks"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Entities"
+    },
+    {
+      "title": "NPC Stick",
+      "page_id": 2537,
+      "revision_id": 6445,
+      "revision_timestamp": "2019-09-16T02:48:29Z",
+      "content_bytes": 2017,
+      "content_sha1": "e0c1de3dde6494572b73578a259307ae2301d061",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Debug Mode",
+        "Items"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Items"
+    },
+    {
+      "title": "Nudge",
+      "page_id": 2541,
+      "revision_id": 6447,
+      "revision_timestamp": "2019-09-16T02:49:10Z",
+      "content_bytes": 1220,
+      "content_sha1": "c22575eb1e56c230f94e92bafa79c8e95af0578f",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Debug Mode",
+        "Items"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Items"
+    },
+    {
+      "title": "Paint Brush",
+      "page_id": 2549,
+      "revision_id": 6440,
+      "revision_timestamp": "2019-09-16T02:46:05Z",
+      "content_bytes": 1340,
+      "content_sha1": "c389b76a919c4984c65d56529f77928c23655210",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Debug Mode",
+        "Items"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Items"
+    },
+    {
+      "title": "Paint Bucket",
+      "page_id": 2545,
+      "revision_id": 6441,
+      "revision_timestamp": "2019-09-16T02:46:28Z",
+      "content_bytes": 1507,
+      "content_sha1": "c73d056b95d7cbc4a57109c5f6a522fc8a8051a1",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Debug Mode",
+        "Items"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Items"
+    },
+    {
+      "title": "Paintbrush",
+      "page_id": 2550,
+      "revision_id": 4930,
+      "revision_timestamp": "2018-06-04T04:24:43Z",
+      "content_bytes": 25,
+      "content_sha1": "28e9aa35db563cf33d34967735ea47cfa948ff06",
+      "is_redirect": true,
+      "redirect_target": "Paint Brush",
+      "categories": [],
+      "disposition": "historical-reference",
+      "replacement": null
+    },
+    {
+      "title": "Pant Bucket",
+      "page_id": 2551,
+      "revision_id": 4934,
+      "revision_timestamp": "2018-06-04T04:26:55Z",
+      "content_bytes": 26,
+      "content_sha1": "3efff2dec99b1d076ebd0b6ac4cdfc8fb4769b34",
+      "is_redirect": true,
+      "redirect_target": "Paint Bucket",
+      "categories": [],
+      "disposition": "historical-reference",
+      "replacement": null
+    },
+    {
+      "title": "Paste",
+      "page_id": 2556,
+      "revision_id": 6442,
+      "revision_timestamp": "2019-09-16T02:46:54Z",
+      "content_bytes": 1619,
+      "content_sha1": "d4f2acc990ab273fa4dfd55eed9696ebe9111177",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Debug Mode",
+        "Items"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Items"
+    },
+    {
+      "title": "Path Making Boots",
+      "page_id": 2999,
+      "revision_id": 5776,
+      "revision_timestamp": "2019-04-14T14:23:07Z",
+      "content_bytes": 2816,
+      "content_sha1": "03e5c7a7c25b85f5d7ed884e5cab03214dc33335",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Pegasus Boots",
+      "page_id": 2559,
+      "revision_id": 5321,
+      "revision_timestamp": "2018-09-03T14:21:55Z",
+      "content_bytes": 940,
+      "content_sha1": "bbf52fd34c5970bf04f916aac38a7b85a78693e9",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Adventure Mode",
+        "Items"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Items"
+    },
+    {
+      "title": "Pick Up Skeleton Arrows",
+      "page_id": 3000,
+      "revision_id": 5777,
+      "revision_timestamp": "2019-04-14T14:27:38Z",
+      "content_bytes": 2411,
+      "content_sha1": "9101946a9024b4b5839692ade6f6d6636f8c5235",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Pistol",
+      "page_id": 2481,
+      "revision_id": 5044,
+      "revision_timestamp": "2018-06-09T03:44:22Z",
+      "content_bytes": 1307,
+      "content_sha1": "befe7c8b63657838fffb6d0623f5620d535c2272",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Items",
+        "Weapons"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Items"
+    },
+    {
+      "title": "Power Glove",
+      "page_id": 2565,
+      "revision_id": 5322,
+      "revision_timestamp": "2018-09-03T14:22:16Z",
+      "content_bytes": 1049,
+      "content_sha1": "c31b6157ddb841187a5b71aa337c93a9f8b99da6",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Adventure Mode",
+        "Items"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Items"
+    },
+    {
+      "title": "Predator Script",
+      "page_id": 3001,
+      "revision_id": 5778,
+      "revision_timestamp": "2019-04-14T14:35:31Z",
+      "content_bytes": 1543,
+      "content_sha1": "ed428d0b206da30eabd24ed35b07974c26e6d2be",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Previous Spawn Inventory",
+      "page_id": 3002,
+      "revision_id": 5779,
+      "revision_timestamp": "2019-04-14T14:39:18Z",
+      "content_bytes": 1247,
+      "content_sha1": "12bf351fc83a424774d2c355df642d02f70b90f1",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Pushable Block",
+      "page_id": 2296,
+      "revision_id": 5340,
+      "revision_timestamp": "2018-09-03T14:47:16Z",
+      "content_bytes": 1972,
+      "content_sha1": "a21741c9a9765e50ff219d565a062a0668d1ed3b",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Puzzle Blocks",
+        "Trigger Blocks"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "Qube Souls",
+      "page_id": 3276,
+      "revision_id": 7506,
+      "revision_timestamp": "2024-05-31T02:46:27Z",
+      "content_bytes": 38,
+      "content_sha1": "cd8e1d9ce81f799ae0e745f9df35de2b0d7d2517",
+      "is_redirect": true,
+      "redirect_target": "Qube Souls Demon Edition",
+      "categories": [],
+      "disposition": "historical-reference",
+      "replacement": null
+    },
+    {
+      "title": "Quill",
+      "page_id": 2568,
+      "revision_id": 6444,
+      "revision_timestamp": "2019-09-16T02:48:05Z",
+      "content_bytes": 1147,
+      "content_sha1": "34daf64af5e1c8a753a7995776279097ada10105",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Adventure Mode",
+        "Debug Mode",
+        "Items"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Items"
+    },
+    {
+      "title": "Rat",
+      "page_id": 2592,
+      "revision_id": 5037,
+      "revision_timestamp": "2018-06-09T01:54:30Z",
+      "content_bytes": 952,
+      "content_sha1": "5e28c47345d990aadbf34fd9ff1b5c611e38dcb5",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Mobs"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Entities"
+    },
+    {
+      "title": "Redstone Power",
+      "page_id": 2407,
+      "revision_id": 4739,
+      "revision_timestamp": "2018-05-14T04:58:44Z",
+      "content_bytes": 1191,
+      "content_sha1": "21fc3be3ea3286ef737e04f49004acd02dfbcfa2",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Power",
+        "Triggerable Blocks"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "Redstone Trigger",
+      "page_id": 2414,
+      "revision_id": 4743,
+      "revision_timestamp": "2018-05-15T00:08:50Z",
+      "content_bytes": 1107,
+      "content_sha1": "9e45f927ea6464f6e556bd5027fda81bce99f9f3",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Mechanical",
+        "Trigger Blocks"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "Renounce4's Scripts",
+      "page_id": 3003,
+      "revision_id": 5780,
+      "revision_timestamp": "2019-04-14T14:43:11Z",
+      "content_bytes": 659,
+      "content_sha1": "e1c38b23edccb79deb5194437c20b3e5eba3a032",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Respawn Health",
+      "page_id": 3008,
+      "revision_id": 5785,
+      "revision_timestamp": "2019-04-14T20:01:13Z",
+      "content_bytes": 687,
+      "content_sha1": "f53f4e331312585c3b5d5377b2cf0bb6026c1d38",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Roc's Feather",
+      "page_id": 3004,
+      "revision_id": 5781,
+      "revision_timestamp": "2019-04-14T19:18:41Z",
+      "content_bytes": 2673,
+      "content_sha1": "c80cccca7d7f03a291a7c1b8a88bd8d72d6e0574",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Rollover Health",
+      "page_id": 3005,
+      "revision_id": 5782,
+      "revision_timestamp": "2019-04-14T19:20:13Z",
+      "content_bytes": 3428,
+      "content_sha1": "62e6b02e0cedb5cd406b19b8c0094b3270273895",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Run Script",
+      "page_id": 3006,
+      "revision_id": 5783,
+      "revision_timestamp": "2019-04-14T19:21:59Z",
+      "content_bytes": 1398,
+      "content_sha1": "02f8d9d0fb246f92be71b67d39c456cfe8a6eba9",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Script",
+      "page_id": 2278,
+      "revision_id": 4978,
+      "revision_timestamp": "2018-06-05T03:34:09Z",
+      "content_bytes": 45,
+      "content_sha1": "8f3fa4893d720a7c00c167e29c21bd3660d7bd0a",
+      "is_redirect": true,
+      "redirect_target": "Script Block",
+      "categories": [],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "Script Block",
+      "page_id": 2418,
+      "revision_id": 4755,
+      "revision_timestamp": "2018-05-15T04:09:47Z",
+      "content_bytes": 2537,
+      "content_sha1": "39f194729b97d7ca52f01adf734e97da95dd4a8d",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Mechanical",
+        "Triggerable Blocks"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "Script Guide",
+      "page_id": 2090,
+      "revision_id": 7790,
+      "revision_timestamp": "2026-02-20T09:02:40Z",
+      "content_bytes": 71797,
+      "content_sha1": "3aa0c43cd6ed9c3c833e3f9b4f456c50c12f3403",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripting",
+        "Tutorials & Guides"
+      ],
+      "disposition": "rewritten-current",
+      "replacement": "Scripting"
+    },
+    {
+      "title": "Scripting Tutorial (by UniverseGamerGER)",
+      "page_id": 2162,
+      "revision_id": 4222,
+      "revision_timestamp": "2015-02-17T23:50:52Z",
+      "content_bytes": 60,
+      "content_sha1": "054681a5f65d3101c448627baecf05cc85ed34a5",
+      "is_redirect": true,
+      "redirect_target": "Basic Scripting Tutorial (by UniverseGamerGER)",
+      "categories": [],
+      "disposition": "historical-reference",
+      "replacement": null
+    },
+    {
+      "title": "Sculpt Tool",
+      "page_id": 3007,
+      "revision_id": 5784,
+      "revision_timestamp": "2019-04-14T19:48:12Z",
+      "content_bytes": 24449,
+      "content_sha1": "3a9b341bcee75823593c923ad983c7a166d1a429",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Shop Interface",
+      "page_id": 3009,
+      "revision_id": 5786,
+      "revision_timestamp": "2019-04-14T20:31:36Z",
+      "content_bytes": 3758,
+      "content_sha1": "06ff1dee117d081a471eeee1511e0e8b524d6568",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Shotgun",
+      "page_id": 2486,
+      "revision_id": 5043,
+      "revision_timestamp": "2018-06-09T03:44:02Z",
+      "content_bytes": 1549,
+      "content_sha1": "e448a88157eb51a7a07306197e0c7f0639f6d133",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "Shovel Script",
+      "page_id": 3010,
+      "revision_id": 5789,
+      "revision_timestamp": "2019-04-14T20:43:16Z",
+      "content_bytes": 2597,
+      "content_sha1": "1ed3a1cf00f33f86cc184b86d4d1f973ec46dad3",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Silver Key",
+      "page_id": 2571,
+      "revision_id": 5324,
+      "revision_timestamp": "2018-09-03T14:22:58Z",
+      "content_bytes": 624,
+      "content_sha1": "5e037b6303f5affd53743f2932badfa6b5e91997",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Adventure Mode",
+        "Items"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Items"
+    },
+    {
+      "title": "Simulated HDR Lighting",
+      "page_id": 2974,
+      "revision_id": 5749,
+      "revision_timestamp": "2019-04-13T23:25:19Z",
+      "content_bytes": 2959,
+      "content_sha1": "14efcfc7b1671378d17526eb65f41835a2db3628",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Skeleton Boss",
+      "page_id": 2595,
+      "revision_id": 5041,
+      "revision_timestamp": "2018-06-09T03:10:50Z",
+      "content_bytes": 974,
+      "content_sha1": "e31924ef11410908380cd92eb6717569fd0203ac",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Mobs"
+      ],
+      "disposition": "historical-reference",
+      "replacement": null
+    },
+    {
+      "title": "Skeleton Rifle",
+      "page_id": 2597,
+      "revision_id": 5048,
+      "revision_timestamp": "2018-06-09T04:02:59Z",
+      "content_bytes": 1037,
+      "content_sha1": "448ef1c2e0c0abaa393c9d25a5a85229d299f246",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Mobs"
+      ],
+      "disposition": "historical-reference",
+      "replacement": null
+    },
+    {
+      "title": "Skeleton Shotgun",
+      "page_id": 2599,
+      "revision_id": 5049,
+      "revision_timestamp": "2018-06-09T04:04:53Z",
+      "content_bytes": 1253,
+      "content_sha1": "33a9a90dee493d2c3fcdc92c39557b2a37c99e10",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Mobs"
+      ],
+      "disposition": "historical-reference",
+      "replacement": null
+    },
+    {
+      "title": "Skeleton Sword",
+      "page_id": 2601,
+      "revision_id": 5051,
+      "revision_timestamp": "2018-06-09T04:14:06Z",
+      "content_bytes": 647,
+      "content_sha1": "b559967cbbc4ace4b04b87960fd8381fab51e9f6",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Mobs"
+      ],
+      "disposition": "historical-reference",
+      "replacement": null
+    },
+    {
+      "title": "Slingshot Script",
+      "page_id": 3011,
+      "revision_id": 5790,
+      "revision_timestamp": "2019-04-14T20:45:12Z",
+      "content_bytes": 2086,
+      "content_sha1": "b5cde252225653c626966889bbcb52880836988a",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Snare Drum",
+      "page_id": 2519,
+      "revision_id": 5325,
+      "revision_timestamp": "2018-09-03T14:23:18Z",
+      "content_bytes": 990,
+      "content_sha1": "5fcf655b64796e273a2d2c15bf2e3c701d3d287b",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Adventure Mode",
+        "Items",
+        "Musical Instruments"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Items"
+    },
+    {
+      "title": "Spawn Point",
+      "page_id": 2272,
+      "revision_id": 4979,
+      "revision_timestamp": "2018-06-05T03:36:35Z",
+      "content_bytes": 995,
+      "content_sha1": "bb634fae1ec9b54f5d36852ba03c61ae35b466a2",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Mechanical",
+        "Triggerable Blocks"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "Spawned: the Creepers Forge",
+      "page_id": 3256,
+      "revision_id": 6834,
+      "revision_timestamp": "2022-03-20T20:10:04Z",
+      "content_bytes": 41,
+      "content_sha1": "0d8b0c689225ac8db62e01f7bc29878bda8d7747",
+      "is_redirect": true,
+      "redirect_target": "Spawned: The Creepers Forge",
+      "categories": [],
+      "disposition": "historical-reference",
+      "replacement": null
+    },
+    {
+      "title": "Spawned: The Creepers Forge",
+      "page_id": 3258,
+      "revision_id": 6841,
+      "revision_timestamp": "2022-03-20T20:20:31Z",
+      "content_bytes": 42,
+      "content_sha1": "29d7b3a236610d071d502ade3444a3a581aa0537",
+      "is_redirect": true,
+      "redirect_target": "Spawned: The Creeper's Forge",
+      "categories": [],
+      "disposition": "historical-reference",
+      "replacement": null
+    },
+    {
+      "title": "Spikes",
+      "page_id": 2428,
+      "revision_id": 5341,
+      "revision_timestamp": "2018-09-03T14:47:29Z",
+      "content_bytes": 785,
+      "content_sha1": "4067ed9214f29375b0a83c77a11456e3c308c895",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Puzzle Blocks"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "Stacks Above 64",
+      "page_id": 3012,
+      "revision_id": 5792,
+      "revision_timestamp": "2019-04-15T01:55:23Z",
+      "content_bytes": 8697,
+      "content_sha1": "23d5c337c4935d783c5602d5d9cc81fbb1796382",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Stamina System",
+      "page_id": 3013,
+      "revision_id": 6179,
+      "revision_timestamp": "2019-05-06T23:50:40Z",
+      "content_bytes": 2966,
+      "content_sha1": "2058b73ebe1fca01943629640f5b5b82504feddc",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Stamina System: Pegasus Boots",
+      "page_id": 3014,
+      "revision_id": 5794,
+      "revision_timestamp": "2019-04-15T02:58:46Z",
+      "content_bytes": 3440,
+      "content_sha1": "17de7566341b1ba5b3fab84ea918e12b665ee4e0",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Stamina System: Weapons",
+      "page_id": 3015,
+      "revision_id": 5795,
+      "revision_timestamp": "2019-04-15T03:23:14Z",
+      "content_bytes": 3818,
+      "content_sha1": "3ad84eee79d44c94dee6cafb63a5d6633c14bcb5",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Store Block",
+      "page_id": 2432,
+      "revision_id": 4774,
+      "revision_timestamp": "2018-05-20T05:32:15Z",
+      "content_bytes": 2358,
+      "content_sha1": "305f1ce84dbe6f93e87db9c7888b25c8d9613147",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Mechanical",
+        "Trigger Blocks"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "Super Attack",
+      "page_id": 3016,
+      "revision_id": 5796,
+      "revision_timestamp": "2019-04-15T03:24:25Z",
+      "content_bytes": 1332,
+      "content_sha1": "97503405479809214b754a05e0d18f6ebf3b342a",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Teleport",
+      "page_id": 2438,
+      "revision_id": 4778,
+      "revision_timestamp": "2018-05-20T13:52:47Z",
+      "content_bytes": 722,
+      "content_sha1": "b4a751f13f1aaa7c9bc968be4a79543da6f3ff03",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Mechanical",
+        "Triggerable Blocks"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "Test",
+      "page_id": 3264,
+      "revision_id": 6909,
+      "revision_timestamp": "2022-04-09T15:58:52Z",
+      "content_bytes": 85,
+      "content_sha1": "6787ef82f32ab4486751e428284077084a2d10a4",
+      "is_redirect": true,
+      "redirect_target": "Biome Test",
+      "categories": [],
+      "disposition": "historical-reference",
+      "replacement": null
+    },
+    {
+      "title": "The Legend Of Zelda - Spreading Light",
+      "page_id": 2942,
+      "revision_id": 5671,
+      "revision_timestamp": "2019-04-03T02:17:37Z",
+      "content_bytes": 51,
+      "content_sha1": "ae0cb7a42f6bda52c3efb17a1bf202d345099b16",
+      "is_redirect": true,
+      "redirect_target": "The Legend of Zelda - Spreading Light",
+      "categories": [],
+      "disposition": "historical-reference",
+      "replacement": null
+    },
+    {
+      "title": "The Legend of Zelda Darkness To Hyrule",
+      "page_id": 3253,
+      "revision_id": 6761,
+      "revision_timestamp": "2021-09-28T05:35:27Z",
+      "content_bytes": 1814,
+      "content_sha1": "e88dda4d9a79a5da60350087be0da48c1cdc9777",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [],
+      "disposition": "historical-reference",
+      "replacement": null
+    },
+    {
+      "title": "The Legend Of Zelda: The Triforce Of Courage",
+      "page_id": 2053,
+      "revision_id": 3922,
+      "revision_timestamp": "2013-04-17T01:31:37Z",
+      "content_bytes": 1758,
+      "content_sha1": "74b8b6d5489ffa489c5dc61f9e04bc818c5e55f5",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [],
+      "disposition": "historical-reference",
+      "replacement": null
+    },
+    {
+      "title": "Timer",
+      "page_id": 2275,
+      "revision_id": 4784,
+      "revision_timestamp": "2018-05-20T21:13:38Z",
+      "content_bytes": 2445,
+      "content_sha1": "79b62b6dacc0656697dd28a14e2621173719e1ae",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Mechanical",
+        "Triggerable Blocks"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "Timing Events",
+      "page_id": 3018,
+      "revision_id": 5798,
+      "revision_timestamp": "2019-04-15T04:18:34Z",
+      "content_bytes": 4061,
+      "content_sha1": "b06c04973c192a732588931feee59f0308fa41ce",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Tougher Monster",
+      "page_id": 3017,
+      "revision_id": 5797,
+      "revision_timestamp": "2019-04-15T03:40:37Z",
+      "content_bytes": 1756,
+      "content_sha1": "470af52b527b8db42e23922d8e6a73518707d0d1",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Trauma System",
+      "page_id": 3019,
+      "revision_id": 5799,
+      "revision_timestamp": "2019-04-15T04:19:46Z",
+      "content_bytes": 13808,
+      "content_sha1": "a0649552104cbef3742b813fb9c6b56cbfd4c441",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Trigger",
+      "page_id": 2254,
+      "revision_id": 4788,
+      "revision_timestamp": "2018-05-21T04:37:18Z",
+      "content_bytes": 1631,
+      "content_sha1": "1ae6de52d4698ba9574b31a10f80098cb9061f49",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Mechanical",
+        "Trigger Blocks"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "Trigger Inverter",
+      "page_id": 2318,
+      "revision_id": 4632,
+      "revision_timestamp": "2018-05-07T04:41:39Z",
+      "content_bytes": 2526,
+      "content_sha1": "55e5f2f2d2df6246e4ba590fcde23de943cc5782",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Mechanical",
+        "Trigger Blocks",
+        "Triggerable Blocks"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "Trigger Memory",
+      "page_id": 2451,
+      "revision_id": 4796,
+      "revision_timestamp": "2018-05-21T05:15:48Z",
+      "content_bytes": 1715,
+      "content_sha1": "f9d4b0f968ddd0199c41faafc91490624752b489",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Mechanical",
+        "Trigger Blocks",
+        "Triggerable Blocks"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "Trigger Pushable",
+      "page_id": 2455,
+      "revision_id": 4800,
+      "revision_timestamp": "2018-05-22T02:11:50Z",
+      "content_bytes": 2508,
+      "content_sha1": "59263ccd4903b8b842d5f7f9dbd4d19a1835cc5e",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Mechanical",
+        "Trigger Blocks",
+        "Triggerable Blocks"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "Trigger Stick",
+      "page_id": 2604,
+      "revision_id": 6446,
+      "revision_timestamp": "2019-09-16T02:48:51Z",
+      "content_bytes": 1467,
+      "content_sha1": "aee1fc03fd5b6fd2a89fadd646201c52518f8e79",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Debug Mode",
+        "Items"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Items"
+    },
+    {
+      "title": "Triggered Door",
+      "page_id": 2447,
+      "revision_id": 4790,
+      "revision_timestamp": "2018-05-21T05:01:10Z",
+      "content_bytes": 1634,
+      "content_sha1": "2d6b0691925e9d949ee3939cc61a99115a4314c8",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "Umbrella",
+      "page_id": 2574,
+      "revision_id": 5327,
+      "revision_timestamp": "2018-09-03T14:23:55Z",
+      "content_bytes": 1038,
+      "content_sha1": "9918414860dfd3cab3819a18fe19fa24abf8545a",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Adventure Mode",
+        "Defense",
+        "Items"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Items"
+    },
+    {
+      "title": "URL Block",
+      "page_id": 2460,
+      "revision_id": 4810,
+      "revision_timestamp": "2018-05-22T04:56:14Z",
+      "content_bytes": 2183,
+      "content_sha1": "bd9e546da7b913272bd8be47c4b03e9fdb165579",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Mechanical",
+        "Triggerable Blocks"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "Vec2 Utility",
+      "page_id": 3020,
+      "revision_id": 5800,
+      "revision_timestamp": "2019-04-15T04:24:17Z",
+      "content_bytes": 2738,
+      "content_sha1": "f617860515904ff839dfff5288f5091f690356d7",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Version History",
+      "page_id": 2205,
+      "revision_id": 4346,
+      "revision_timestamp": "2015-08-07T09:26:19Z",
+      "content_bytes": 33337,
+      "content_sha1": "86a1758fc397c63dbfc1e0bf99f9763783e6066d",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [],
+      "disposition": "rewritten-current",
+      "replacement": "Release-History"
+    },
+    {
+      "title": "Water Slime",
+      "page_id": 3021,
+      "revision_id": 5801,
+      "revision_timestamp": "2019-04-15T04:35:25Z",
+      "content_bytes": 1135,
+      "content_sha1": "27bccf94ca57fc3f9e1e4f0dc5e35a8c65ad015a",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Weather",
+      "page_id": 2464,
+      "revision_id": 4816,
+      "revision_timestamp": "2018-05-23T04:09:24Z",
+      "content_bytes": 2152,
+      "content_sha1": "9f78c8c5e63750de7f4710d081b32f3c178ff871",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Blocks",
+        "Mechanical",
+        "Triggerable Blocks"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Blocks"
+    },
+    {
+      "title": "Wizards and Magic Missiles",
+      "page_id": 3022,
+      "revision_id": 5802,
+      "revision_timestamp": "2019-04-15T04:37:14Z",
+      "content_bytes": 3340,
+      "content_sha1": "d7a2c68dc669dd755637b585f3f018688f26352f",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Woodcutting",
+      "page_id": 3023,
+      "revision_id": 5803,
+      "revision_timestamp": "2019-04-15T04:38:39Z",
+      "content_bytes": 2967,
+      "content_sha1": "61ad6d8df5c0b4895822e2d5b8e1e5d94e049eef",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Wooden Shield",
+      "page_id": 2581,
+      "revision_id": 5328,
+      "revision_timestamp": "2018-09-03T14:24:17Z",
+      "content_bytes": 703,
+      "content_sha1": "f14e69218a338f369014fe52c369f1278d50224b",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Adventure Mode",
+        "Defense",
+        "Items"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Items"
+    },
+    {
+      "title": "Worm Boss",
+      "page_id": 3024,
+      "revision_id": 5804,
+      "revision_timestamp": "2019-04-15T04:46:17Z",
+      "content_bytes": 8049,
+      "content_sha1": "437a8f3ec3d3ed3d2c6f0fff64bde29d37a95f29",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Wrench",
+      "page_id": 2580,
+      "revision_id": 6448,
+      "revision_timestamp": "2019-09-16T02:49:34Z",
+      "content_bytes": 1406,
+      "content_sha1": "8df71c5d7d1e61175ddf579aed9d744301149e6f",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Debug Mode",
+        "Items"
+      ],
+      "disposition": "inventory-verified",
+      "replacement": "Current-Items"
+    },
+    {
+      "title": "Zant Mob",
+      "page_id": 3025,
+      "revision_id": 5805,
+      "revision_timestamp": "2019-04-15T04:49:40Z",
+      "content_bytes": 2026,
+      "content_sha1": "45172bd91e040ca161065c61474ec5efe8763cd9",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    },
+    {
+      "title": "Zombie Pistol",
+      "page_id": 2603,
+      "revision_id": 5053,
+      "revision_timestamp": "2018-06-09T04:30:04Z",
+      "content_bytes": 1020,
+      "content_sha1": "8168455b920a9ef9c4c9502e3c6f50f4b1a1ec3d",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Mobs"
+      ],
+      "disposition": "historical-reference",
+      "replacement": null
+    },
+    {
+      "title": "Zora Tunic",
+      "page_id": 3026,
+      "revision_id": 5806,
+      "revision_timestamp": "2019-04-15T04:51:26Z",
+      "content_bytes": 1327,
+      "content_sha1": "33571c8de017f926fbb0c35028cd050d52e4123b",
+      "is_redirect": false,
+      "redirect_target": null,
+      "categories": [
+        "Scripts"
+      ],
+      "disposition": "historical-script",
+      "replacement": null
+    }
+  ]
+}
