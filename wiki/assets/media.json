@@ -1,0 +1,18 @@
+{
+  "format": 1,
+  "assets": [
+    {
+      "path": "screenshots/title-screen.png",
+      "kind": "runtime-screenshot",
+      "alt": "AdventureCraft Legacy title screen with New Save, Load Save, Craft a Map, Options, and Quit Game buttons",
+      "captured_at": "2026-07-15",
+      "mod_version": "0.6.0",
+      "source_commit": "93f4e97671214a06d3ee4b060fa2c61341ac804b",
+      "working_tree_note": "Wiki documentation changes were uncommitted; executable Java and resource sources matched the recorded commit.",
+      "operating_system": "Windows 11",
+      "java": "25.0.1 Eclipse Adoptium",
+      "renderer": "NVIDIA GeForce RTX 4090, OpenGL 4.6",
+      "contains_community_map": false
+    }
+  ]
+}

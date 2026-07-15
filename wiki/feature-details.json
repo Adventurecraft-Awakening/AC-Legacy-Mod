@@ -1,0 +1,851 @@
+{
+  "schema_version": 1,
+  "schema": {
+    "blocks_and_items": "Objects keyed by the exact Java registry field name.",
+    "entities": "Objects keyed by the exact registered AdventureCraft entity class name.",
+    "required_entry_fields": ["purpose", "behavior", "mode_notes", "interactions", "evidence"],
+    "optional_entry_fields": ["unknowns"]
+  },
+  "source_policy": {
+    "baseline": "Current Java source only; no external-wiki prose is used.",
+    "null_mode_notes": "No mode-specific behavior was proven in the cited source.",
+    "unknowns": "An unknowns entry names behavior that the cited source does not establish; it must not be presented as fact."
+  },
+  "blocks": {
+    "lockedDoor": {
+      "purpose": "A key-locked wooden door assembled from contiguous blocks.",
+      "behavior": "Attacking it while the inventory contains the matching Gold Key consumes one key and marks the connected door blocks unlocked.",
+      "mode_notes": "Unlocked blocks become non-colliding and visually absent outside debug mode; debug mode keeps the door visible for editing.",
+      "interactions": ["Uses the doorKey item registered by AC_Items."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockLockedDoor.java"]
+    },
+    "lockedBossDoor": {
+      "purpose": "A key-locked metal boss door assembled from contiguous blocks.",
+      "behavior": "Attacking it while the inventory contains the matching Silver Key consumes one key and marks the connected door blocks unlocked.",
+      "mode_notes": "Unlocked blocks become non-colliding and visually absent outside debug mode; debug mode keeps the door visible for editing.",
+      "interactions": ["Uses the bossKey item registered by AC_Items."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockLockedDoor.java"]
+    },
+    "newMobSpawner": {
+      "purpose": "An invisible configurable mob-spawning controller.",
+      "behavior": "It can spawn its configured mobs on trigger activation and/or deactivation, and reset its spawned-mob state.",
+      "mode_notes": "It is pickable and its configuration GUI is available only in debug mode; GUI use additionally requires an empty hand or Cursor.",
+      "interactions": ["Responds to AdventureCraft trigger areas."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockMobSpawner.java", "src/main/java/dev/adventurecraft/awakening/tile/entity/AC_TileEntityMobSpawner.java"]
+    },
+    "spawnBlock": {
+      "purpose": "An invisible player spawn-point controller.",
+      "behavior": "A player entering it sets the world spawn position and spawn yaw; trigger activation also sets the spawn position.",
+      "mode_notes": "It is pickable only in debug mode.",
+      "interactions": ["Responds both to player collision and trigger activation."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockSpawn.java"]
+    },
+    "triggerBlock": {
+      "purpose": "An invisible player-presence trigger linked to a configured block region.",
+      "behavior": "Outside debug mode, player entry activates its configured area or resets that area; connected trigger blocks share activation state and release the area after the player leaves.",
+      "mode_notes": "It is pickable and configurable only in debug mode; configuration use requires an empty hand or Cursor.",
+      "interactions": ["The Cursor selection can become the target area.", "It is a trigger source and deliberately cannot itself be triggered."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockTrigger.java", "src/main/java/dev/adventurecraft/awakening/tile/entity/AC_TileEntityTrigger.java"]
+    },
+    "triggerDoor": {
+      "purpose": "A door whose presence is controlled by AdventureCraft triggers.",
+      "behavior": "Activation makes it rendered and collidable and plays the open sound; deactivation makes it hidden and non-colliding and plays the close sound.",
+      "mode_notes": "Debug mode keeps it rendered for editing.",
+      "interactions": ["Responds to AdventureCraft trigger areas."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockTriggeredDoor.java"]
+    },
+    "spikeBlock": {
+      "purpose": "A damaging spike obstacle.",
+      "behavior": "Any entity inside its narrowed collision area is hurt for 10 damage.",
+      "mode_notes": null,
+      "interactions": [],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockSpike.java"]
+    },
+    "triggerInverter": {
+      "purpose": "An invisible trigger source that outputs the inverse of its input state.",
+      "behavior": "Input activation removes its configured output area; input deactivation adds that area.",
+      "mode_notes": "It is pickable and configurable only in debug mode; configuration use requires an empty hand or Cursor.",
+      "interactions": ["The Cursor selection can become the output area."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockTriggerInverter.java", "src/main/java/dev/adventurecraft/awakening/tile/entity/AC_TileEntityTriggerInverter.java"]
+    },
+    "triggerMemory": {
+      "purpose": "An invisible one-shot trigger latch.",
+      "behavior": "It latches its configured output area active on either input activation or deactivation, according to configuration, until reset.",
+      "mode_notes": "It is pickable and configurable only in debug mode; configuration use requires an empty hand or Cursor.",
+      "interactions": ["The Cursor selection can become the output area.", "Its reset-on-death setting controls whether death resets the latch."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockTriggerMemory.java", "src/main/java/dev/adventurecraft/awakening/tile/entity/AC_TileEntityTriggerMemory.java"]
+    },
+    "clipBlock": {
+      "purpose": "An invisible, non-solid-rendering collision block.",
+      "behavior": "It uses AIR material while retaining the default tile collision shape and cannot be activated by AdventureCraft triggers.",
+      "mode_notes": null,
+      "interactions": [],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockClip.java"]
+    },
+    "redstoneTrigger": {
+      "purpose": "A bridge from redstone power to an AdventureCraft trigger area.",
+      "behavior": "Neighbor redstone power activates its configured area, or resets that area when configured; loss of power removes its trigger area.",
+      "mode_notes": "Its configuration GUI is limited to debug mode with an empty hand or Cursor.",
+      "interactions": ["The Cursor selection can become the output area.", "Reads neighboring redstone signals."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockRedstoneTrigger.java", "src/main/java/dev/adventurecraft/awakening/tile/entity/AC_TileEntityRedstoneTrigger.java"]
+    },
+    "redstonePower": {
+      "purpose": "A bridge from an AdventureCraft trigger state to redstone power.",
+      "behavior": "It emits direct and indirect redstone signal, light level 14, and red-dust particles while its position is trigger-active.",
+      "mode_notes": null,
+      "interactions": ["Responds to AdventureCraft trigger areas and updates neighboring blocks on state changes."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockRedstonePower.java"]
+    },
+    "bombableCobblestone": {
+      "purpose": "A color-variant cracked cobblestone block that AdventureCraft bombs can remove.",
+      "behavior": "Bomb explosions remove instances within the bomb destruction radius because the block is an AC_BlockBombable.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing.", "Destroyed by AC_EntityBomb explosions."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockBombable.java", "src/main/java/dev/adventurecraft/awakening/entity/AC_EntityBomb.java"]
+    },
+    "bombableStone": {
+      "purpose": "A color-variant cracked stone block that AdventureCraft bombs can remove.",
+      "behavior": "Bomb explosions remove instances within the bomb destruction radius because the block is an AC_BlockBombable.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing.", "Destroyed by AC_EntityBomb explosions."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockBombable.java", "src/main/java/dev/adventurecraft/awakening/entity/AC_EntityBomb.java"]
+    },
+    "weather": {
+      "purpose": "An invisible trigger controller for world environment settings.",
+      "behavior": "On activation it can change precipitation, temperature offset, time of day, and time rate, with each change independently configurable.",
+      "mode_notes": "It is pickable and configurable only in debug mode; configuration use requires an empty hand or Cursor.",
+      "interactions": ["Responds to AdventureCraft trigger areas."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockWeather.java", "src/main/java/dev/adventurecraft/awakening/tile/entity/AC_TileEntityWeather.java"]
+    },
+    "musicTriggered": {
+      "purpose": "An invisible trigger controller for streaming music.",
+      "behavior": "Activation plays the configured music with fade-out and fade-in values, or stops music when no track is configured.",
+      "mode_notes": "It is pickable and configurable only in debug mode; configuration use requires an empty hand or Cursor.",
+      "interactions": ["Responds to AdventureCraft trigger areas."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockMusic.java", "src/main/java/dev/adventurecraft/awakening/tile/entity/AC_TileEntityMusic.java"]
+    },
+    "pushableBlock": {
+      "purpose": "A color-variant movable block.",
+      "behavior": "It falls through air, fire, water, or lava and preserves its metadata while falling.",
+      "mode_notes": null,
+      "interactions": ["The Power Glove can push or pull it.", "A same-color adjacent instance can activate Trigger Pushable."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockPushable.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemPowerGlove.java"]
+    },
+    "timer": {
+      "purpose": "An invisible configurable delayed and timed trigger source.",
+      "behavior": "Input activation starts a configurable delay, then activates or resets the selected area for an active interval and enforces an inactive interval before it can reactivate.",
+      "mode_notes": "It is pickable and configurable only in debug mode; configuration use requires an empty hand or Cursor.",
+      "interactions": ["Outputs an AdventureCraft trigger area selected with the Cursor."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockTimer.java", "src/main/java/dev/adventurecraft/awakening/tile/entity/AC_TileEntityTimer.java"]
+    },
+    "message": {
+      "purpose": "An invisible trigger controller for a HUD message and sound.",
+      "behavior": "Activation displays the configured non-empty message and plays the configured non-empty sound.",
+      "mode_notes": "It is pickable and configurable only in debug mode; configuration use requires an empty hand or Cursor.",
+      "interactions": ["Responds to AdventureCraft trigger areas."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockMessage.java", "src/main/java/dev/adventurecraft/awakening/tile/entity/AC_TileEntityMessage.java"]
+    },
+    "fan": {
+      "purpose": "The active state of a directional fan.",
+      "behavior": "Each tick outside debug mode it pushes entities and particles through up to four unobstructed blocks; redstone power swaps it to fanOff.",
+      "mode_notes": "Debug-mode use rotates its facing; debug mode suppresses its pushing behavior.",
+      "interactions": ["An equipped Umbrella doubles the fan's push coefficient for players.", "Neighbor redstone power turns it off."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockFan.java"]
+    },
+    "camera": {
+      "purpose": "An invisible cutscene-camera controller.",
+      "behavior": "Activation loads and starts its camera path, enables the cutscene camera, and applies the configured pause-game setting.",
+      "mode_notes": "It is pickable and configurable only in debug mode; configuration use requires an empty hand or Cursor and selects the active editing camera.",
+      "interactions": ["Responds to AdventureCraft trigger areas."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockCamera.java", "src/main/java/dev/adventurecraft/awakening/tile/entity/AC_TileEntityCamera.java"]
+    },
+    "lightBulb": {
+      "purpose": "An invisible configurable light source controlled by triggers.",
+      "behavior": "Its metadata stores a light level set to 15 on placement; while trigger-active it emits no light, and otherwise emits the stored level.",
+      "mode_notes": "It is pickable and its light-level GUI opens only in debug mode.",
+      "interactions": ["Responds to AdventureCraft trigger areas."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockLightBulb.java"]
+    },
+    "fanOff": {
+      "purpose": "The inactive state of a directional fan.",
+      "behavior": "It does not push entities; removal of neighboring redstone power swaps it to the active fan while preserving facing metadata.",
+      "mode_notes": "Debug-mode use rotates its facing.",
+      "interactions": ["Neighbor redstone power selects between fan and fanOff."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockFan.java"]
+    },
+    "script": {
+      "purpose": "An invisible trigger controller for JavaScript files.",
+      "behavior": "Activation runs the configured on-trigger script in the block's persistent scope; deactivation runs its on-detrigger script and updates activation state.",
+      "mode_notes": "It is pickable and configurable only in debug mode; configuration use requires an empty hand or Cursor.",
+      "interactions": ["Responds to AdventureCraft trigger areas."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockScript.java", "src/main/java/dev/adventurecraft/awakening/tile/entity/AC_TileEntityScript.java"]
+    },
+    "store": {
+      "purpose": "A configurable item-trading block.",
+      "behavior": "Outside debug mode, use consumes the configured sell item amount, grants the configured buy item amount, decrements supply, and can pulse a trade trigger area.",
+      "mode_notes": "Debug-mode use opens the store configuration GUI instead of trading.",
+      "interactions": ["Can emit a one-shot AdventureCraft trigger after a successful trade."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockStore.java", "src/main/java/dev/adventurecraft/awakening/tile/entity/AC_TileEntityStore.java"]
+    },
+    "effect": {
+      "purpose": "An invisible trigger controller for particles and visual environment effects.",
+      "behavior": "While active it can emit configurable particles; activation can also change fog color/density, set an overlay, and replace or revert textures.",
+      "mode_notes": "It is pickable and configurable only in debug mode; configuration use requires an empty hand or Cursor.",
+      "interactions": ["Responds to AdventureCraft trigger areas."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockEffect.java", "src/main/java/dev/adventurecraft/awakening/tile/entity/AC_TileEntityEffect.java"]
+    },
+    "darkness": {
+      "purpose": "An invisible light-attenuating block.",
+      "behavior": "It has no collision box, is not solid-rendered, blocks light by 2, and deliberately cannot be activated by triggers.",
+      "mode_notes": "It is pickable only in debug mode.",
+      "interactions": [],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockDarkness.java"]
+    },
+    "triggerPushable": {
+      "purpose": "A color-matched detector for adjacent Pushable Blocks.",
+      "behavior": "A same-metadata Pushable Block on any adjacent face activates its configured area or resets that area; removing the neighbor deactivates the output.",
+      "mode_notes": "Its configuration GUI is limited to debug mode with an empty hand or Cursor.",
+      "interactions": ["Works with pushableBlock and AC_IBlockColor metadata.", "Outputs an AdventureCraft trigger area."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockTriggerPushable.java", "src/main/java/dev/adventurecraft/awakening/tile/entity/AC_TileEntityTriggerPushable.java"]
+    },
+    "storage": {
+      "purpose": "An invisible snapshot-and-restore controller for a selected block region.",
+      "behavior": "Configuration captures blocks, metadata, and block entities from its selected region; trigger activation restores the saved region and updates it.",
+      "mode_notes": "It is pickable and configurable only in debug mode; configuration use requires an empty hand or Cursor.",
+      "interactions": ["Uses a Cursor-selected region.", "Responds to AdventureCraft trigger areas."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockStorage.java", "src/main/java/dev/adventurecraft/awakening/tile/entity/AC_TileEntityStorage.java"]
+    },
+    "healDamage": {
+      "purpose": "An invisible trigger controller that changes every player's health.",
+      "behavior": "Activation heals all players when the configured value is positive and directly hurts all players by its absolute value otherwise.",
+      "mode_notes": "It is pickable and configurable only in debug mode; configuration use requires an empty hand or Cursor.",
+      "interactions": ["Responds to AdventureCraft trigger areas."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockHealDamage.java", "src/main/java/dev/adventurecraft/awakening/tile/entity/AC_TileEntityHealDamage.java"]
+    },
+    "teleport": {
+      "purpose": "An invisible trigger controller that teleports all players.",
+      "behavior": "Activation moves every player to the configured X/Z and the first air block at or above the configured Y; it does nothing until a target is set.",
+      "mode_notes": "It is pickable only in debug mode; debug use with an empty hand or Cursor stores Cursor position one as the destination.",
+      "interactions": ["Uses the Cursor selection endpoint as its destination.", "Responds to AdventureCraft trigger areas."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockTeleport.java", "src/main/java/dev/adventurecraft/awakening/tile/entity/AC_TileEntityTeleport.java"]
+    },
+    "url": {
+      "purpose": "An invisible trigger controller for a URL confirmation prompt.",
+      "behavior": "Activation opens a URL request GUI when a non-empty URL is configured.",
+      "mode_notes": "It is pickable and configurable only in debug mode; configuration use requires an empty hand or Cursor.",
+      "interactions": ["Responds to AdventureCraft trigger areas."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockUrl.java", "src/main/java/dev/adventurecraft/awakening/tile/entity/AC_TileEntityUrl.java"]
+    },
+    "npcPath": {
+      "purpose": "An invisible trigger controller that sends a selected NPC to the block.",
+      "behavior": "Activation paths the bound NPC to this block; on arrival it can pulse a configured trigger area.",
+      "mode_notes": "It is pickable and configurable only in debug mode; configuration use requires an empty hand or Cursor.",
+      "interactions": ["Binds an AC_EntityNPC and can output an AdventureCraft trigger pulse."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockNpcPath.java", "src/main/java/dev/adventurecraft/awakening/tile/entity/AC_TileEntityNpcPath.java"]
+    },
+    "pillarStone": {
+      "purpose": "A decorative stone pillar with 16 metadata variants.",
+      "behavior": "Top, bottom, and side faces use coordinated textures selected by metadata.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockPillar.java"]
+    },
+    "pillarMetal": {
+      "purpose": "A decorative metal-sounding pillar with 16 metadata variants.",
+      "behavior": "Top, bottom, and side faces use coordinated textures selected by metadata.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockPillar.java"]
+    },
+    "plant1": {
+      "purpose": "A decorative non-colliding plant family with 16 metadata variants.",
+      "behavior": "It renders as crossed reeds with texture selected by metadata.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockPlant.java"]
+    },
+    "trees": {
+      "purpose": "A decorative tree-model family with 16 texture variants and per-block tree settings.",
+      "behavior": "It is non-colliding, uses a custom tree render shape, and stores its tree configuration in a block entity.",
+      "mode_notes": "It is pickable only in debug mode; its configuration GUI requires debug mode and an empty hand or Cursor.",
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockTree.java", "src/main/java/dev/adventurecraft/awakening/tile/entity/AC_TileEntityTree.java"]
+    },
+    "glassBlocks": {
+      "purpose": "A decorative transparent solid-block family with 16 metadata variants.",
+      "behavior": "It suppresses faces between blocks of the same ID and selects texture by metadata.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockTransparent.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockSolid.java"]
+    },
+    "cageBlocks": {
+      "purpose": "A decorative transparent cage-block family with 10 metadata variants.",
+      "behavior": "It suppresses faces between blocks of the same ID and selects texture by metadata.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockTransparent.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockSolid.java"]
+    },
+    "stoneBlocks1": {
+      "purpose": "The first decorative solid stone-texture bank, with 16 metadata variants.",
+      "behavior": "Metadata selects one of its registered texture variants.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockSolid.java"]
+    },
+    "stoneBlocks2": {
+      "purpose": "The second decorative solid stone-texture bank, with 16 metadata variants.",
+      "behavior": "Metadata selects one of its registered texture variants.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockSolid.java"]
+    },
+    "stoneBlocks3": {
+      "purpose": "The third decorative solid stone-texture bank, with 16 metadata variants.",
+      "behavior": "Metadata selects one of its registered texture variants.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockSolid.java"]
+    },
+    "woodBlocks": {
+      "purpose": "A decorative solid wood-texture bank with 16 metadata variants.",
+      "behavior": "Metadata selects one of its registered texture variants.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing.", "Hookshots can attach to it."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockSolid.java", "src/main/java/dev/adventurecraft/awakening/entity/AC_EntityHookshot.java"]
+    },
+    "halfSteps1": {
+      "purpose": "A stone half-step bank with 16 metadata states.",
+      "behavior": "Even metadata places a lower slab and odd metadata an upper slab; paired metadata values select textures.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockHalfStep.java"]
+    },
+    "halfSteps2": {
+      "purpose": "A metal-sounding half-step bank with 16 metadata states.",
+      "behavior": "Even metadata places a lower slab and odd metadata an upper slab; paired metadata values select textures.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockHalfStep.java"]
+    },
+    "halfSteps3": {
+      "purpose": "A wood-sounding half-step bank with 16 metadata states.",
+      "behavior": "Even metadata places a lower slab and odd metadata an upper slab; paired metadata values select textures.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing.", "Hookshots can attach to it."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockHalfStep.java", "src/main/java/dev/adventurecraft/awakening/entity/AC_EntityHookshot.java"]
+    },
+    "tableBlocks": {
+      "purpose": "A decorative table family with 16 metadata variants.",
+      "behavior": "It uses a thin tabletop collision shape and a custom table renderer.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockTable.java"]
+    },
+    "chairBlocks1": {
+      "purpose": "The first decorative chair bank with texture and facing metadata.",
+      "behavior": "It uses a custom chair renderer and rotates to the placer direction while preserving its variant group.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockChair.java"]
+    },
+    "chairBlocks2": {
+      "purpose": "The second decorative chair bank with texture and facing metadata.",
+      "behavior": "It uses a custom chair renderer and rotates to the placer direction while preserving its variant group.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockChair.java"]
+    },
+    "chairBlocks3": {
+      "purpose": "The third decorative chair bank with texture and facing metadata.",
+      "behavior": "It uses a custom chair renderer and rotates to the placer direction while preserving its variant group.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "unknowns": ["AC_Blocks registers 16 subtypes but does not install a dedicated AC_ItemSubtypes item for this third chair bank."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockChair.java"]
+    },
+    "chairBlocks4": {
+      "purpose": "The fourth decorative chair bank with texture and facing metadata.",
+      "behavior": "It uses a custom chair renderer and rotates to the placer direction while preserving its variant group.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "unknowns": ["AC_Blocks registers 16 subtypes but does not install a dedicated AC_ItemSubtypes item for this fourth chair bank."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockChair.java"]
+    },
+    "ropes1": {
+      "purpose": "The first decorative rope bank, with five textures in three orientations.",
+      "behavior": "Metadata chooses a vertical, X-axis, or Z-axis rope shape and a texture group; the vertical state has no collision.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockRope.java"]
+    },
+    "ropes2": {
+      "purpose": "The second decorative rope bank, with five textures in three orientations.",
+      "behavior": "Metadata chooses a vertical, X-axis, or Z-axis rope shape and a texture group; the vertical state has no collision.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockRope.java"]
+    },
+    "chains": {
+      "purpose": "A decorative chain bank, with three textures in three orientations.",
+      "behavior": "It inherits rope orientation and collision behavior and chooses side-sensitive chain textures from metadata.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockChain.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockRope.java"]
+    },
+    "ladders1": {
+      "purpose": "The first decorative climbable ladder bank with four texture variants.",
+      "behavior": "Metadata combines four variant groups with four wall-facing directions; it does not remove itself when neighbors change.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing in steps of four metadata values."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockLadderSubtypes.java"]
+    },
+    "ladders2": {
+      "purpose": "The second decorative climbable ladder bank with four texture variants.",
+      "behavior": "Metadata combines four variant groups with four wall-facing directions; it does not remove itself when neighbors change.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing in steps of four metadata values."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockLadderSubtypes.java"]
+    },
+    "ladders3": {
+      "purpose": "The third decorative climbable ladder bank with four texture variants.",
+      "behavior": "Metadata combines four variant groups with four wall-facing directions; it does not remove itself when neighbors change.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing in steps of four metadata values."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockLadderSubtypes.java"]
+    },
+    "ladders4": {
+      "purpose": "The fourth decorative climbable ladder bank with four texture variants.",
+      "behavior": "Metadata combines four variant groups with four wall-facing directions; it does not remove itself when neighbors change.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing in steps of four metadata values."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockLadderSubtypes.java"]
+    },
+    "lights1": {
+      "purpose": "A decorative non-colliding light family with 14 metadata variants.",
+      "behavior": "It renders as crossed reeds and is registered with light emission 15.0F / 16.0F for every variant.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockPlant.java"]
+    },
+    "plant2": {
+      "purpose": "The second decorative tree-model plant bank with 16 texture variants.",
+      "behavior": "It is non-colliding, uses a custom tree render shape, and stores per-block tree configuration.",
+      "mode_notes": "It is pickable only in debug mode; its configuration GUI requires debug mode and an empty hand or Cursor.",
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockTree.java", "src/main/java/dev/adventurecraft/awakening/tile/entity/AC_TileEntityTree.java"]
+    },
+    "plant3": {
+      "purpose": "The third decorative tree-model plant bank with 16 texture variants.",
+      "behavior": "It is non-colliding, uses a custom tree render shape, and stores per-block tree configuration.",
+      "mode_notes": "It is pickable only in debug mode; its configuration GUI requires debug mode and an empty hand or Cursor.",
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockTree.java", "src/main/java/dev/adventurecraft/awakening/tile/entity/AC_TileEntityTree.java"]
+    },
+    "overlay1": {
+      "purpose": "A thin decorative overlay bank with seven texture variants.",
+      "behavior": "It aligns a non-colliding overlay plane to the first adjacent solid face and selects texture by metadata.",
+      "mode_notes": "It is pickable only in debug mode.",
+      "interactions": ["Supports AC_IBlockColor editing.", "Implements AC_ITriggerBlock, but the interface default reports it as not triggerable and the class defines no activation callback."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockOverlay.java"]
+    },
+    "stairs1": {
+      "purpose": "The first wood-template stair bank with four texture variants.",
+      "behavior": "Placement stores facing in the low two metadata bits and the texture variant in the higher bits.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockStairMulti.java"]
+    },
+    "stairs2": {
+      "purpose": "The second wood-template stair bank with four texture variants.",
+      "behavior": "Placement stores facing in the low two metadata bits and the texture variant in the higher bits.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockStairMulti.java"]
+    },
+    "stairs3": {
+      "purpose": "The first cobblestone-template stair bank with four texture variants.",
+      "behavior": "Placement stores facing in the low two metadata bits and the texture variant in the higher bits.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockStairMulti.java"]
+    },
+    "stairs4": {
+      "purpose": "The second cobblestone-template stair bank with four texture variants.",
+      "behavior": "Placement stores facing in the low two metadata bits and the texture variant in the higher bits.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockStairMulti.java"]
+    },
+    "slopes1": {
+      "purpose": "The first wood-template slope bank with four texture variants.",
+      "behavior": "It shares stair placement and metadata behavior but uses the custom slope render shape.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockSlope.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockStairMulti.java"]
+    },
+    "slopes2": {
+      "purpose": "The second wood-template slope bank with four texture variants.",
+      "behavior": "It shares stair placement and metadata behavior but uses the custom slope render shape.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockSlope.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockStairMulti.java"]
+    },
+    "slopes3": {
+      "purpose": "The first cobblestone-template slope bank with four texture variants.",
+      "behavior": "It shares stair placement and metadata behavior but uses the custom slope render shape.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockSlope.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockStairMulti.java"]
+    },
+    "slopes4": {
+      "purpose": "The second cobblestone-template slope bank with four texture variants.",
+      "behavior": "It shares stair placement and metadata behavior but uses the custom slope render shape.",
+      "mode_notes": null,
+      "interactions": ["Supports AC_IBlockColor editing."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockSlope.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockStairMulti.java"]
+    }
+  },
+  "items": {
+    "boomerang": {
+      "purpose": "A reusable thrown boomerang.",
+      "behavior": "Use launches one only while the item is inactive; the projectile returns to its owner and restores the item's active metadata when removed.",
+      "mode_notes": null,
+      "interactions": ["The projectile carries encountered item entities, stuns encountered mobs for 20 ticks, and operates levers it passes through."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemBoomerang.java", "src/main/java/dev/adventurecraft/awakening/entity/AC_EntityBoomerang.java"]
+    },
+    "doorKey": {
+      "purpose": "The consumable key for Locked Doors.",
+      "behavior": "Attacking a Locked Door consumes one Gold Key and unlocks the connected door blocks.",
+      "mode_notes": null,
+      "interactions": ["Matched to lockedDoor by its item ID."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockLockedDoor.java"]
+    },
+    "hookshot": {
+      "purpose": "A reusable hookshot usable from the main hand or offhand.",
+      "behavior": "Use launches a hook when the player is grounded, swimming, or supported by the other attached hook; using it again recalls that hook.",
+      "mode_notes": null,
+      "interactions": ["It attaches to logs and AdventureCraft wood/wood half-step blocks, pulls the player toward attached surfaces, and returns grabbed mobs or items."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemHookshot.java", "src/main/java/dev/adventurecraft/awakening/entity/AC_EntityHookshot.java", "src/main/java/dev/adventurecraft/awakening/mixin/entity/player/MixinPlayerEntity.java"]
+    },
+    "heart": {
+      "purpose": "An immediate health pickup.",
+      "behavior": "Adding it to player inventory consumes the stack and heals 4 health per item instead of storing it.",
+      "mode_notes": null,
+      "interactions": ["Can be produced by AdventureCraft mob-drop handling."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/mixin/inventory/MixinPlayerInventory.java", "src/main/java/dev/adventurecraft/awakening/mixin/entity/MixinMob.java"]
+    },
+    "heartContainer": {
+      "purpose": "A permanent maximum-health pickup.",
+      "behavior": "Adding it to player inventory consumes the stack, increases maximum health by 4 per item, and heals the player to the new maximum.",
+      "mode_notes": null,
+      "interactions": [],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/mixin/inventory/MixinPlayerInventory.java"]
+    },
+    "woodenShield": {
+      "purpose": "A held shield that enables player damage protection.",
+      "behavior": "The player reports shield protection while it is in the selected hand or offhand and the offhand swing progress is zero.",
+      "mode_notes": null,
+      "interactions": ["Protection is implemented by the player mixin rather than the base Item class."],
+      "unknowns": ["The cited item-specific source does not define which damage paths honor protectedByShield."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/mixin/entity/player/MixinPlayerEntity.java"]
+    },
+    "bossKey": {
+      "purpose": "The consumable key for Boss Doors.",
+      "behavior": "Attacking a Boss Door consumes one Silver Key and unlocks the connected door blocks.",
+      "mode_notes": null,
+      "interactions": ["Matched to lockedBossDoor by its item ID."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockLockedDoor.java"]
+    },
+    "bomb": {
+      "purpose": "A consumable thrown timed explosive.",
+      "behavior": "Use consumes one item and launches a bomb entity with a 45-tick fuse; the blast damages and pushes nearby entities and removes AC_BlockBombable blocks within radius 3.",
+      "mode_notes": null,
+      "interactions": ["The bomb also detonates immediately when hurt."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemBomb.java", "src/main/java/dev/adventurecraft/awakening/entity/AC_EntityBomb.java"]
+    },
+    "bombArow": {
+      "purpose": "Consumable explosive ammunition for bows and dispensers.",
+      "behavior": "Using a bow with Bomb Arrows in either hand consumes one and launches AC_EntityArrowBomb; a dispenser also launches that entity for this item.",
+      "mode_notes": null,
+      "interactions": ["The registered Java field is intentionally recorded as bombArow, while its description ID is bombArrow."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/mixin/item/MixinBowItem.java", "src/main/java/dev/adventurecraft/awakening/mixin/block/MixinDispenserBlock.java", "src/main/java/dev/adventurecraft/awakening/entity/AC_EntityArrowBomb.java"]
+    },
+    "powerGlove": {
+      "purpose": "A tool for moving Pushable Blocks horizontally.",
+      "behavior": "Use on a Pushable Block launches it one block away from the clicked face; holding either Control key reverses the direction to pull it.",
+      "mode_notes": "No debug-mode guard is present in the item implementation.",
+      "interactions": ["The destination must be air, liquid, or fire, and only one tracked falling block can be moved at once."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemPowerGlove.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockPushable.java"]
+    },
+    "heartPiece": {
+      "purpose": "A quarter-container permanent-health pickup.",
+      "behavior": "Adding it to inventory consumes it and accumulates pieces; each four pieces increase maximum health by 4 and heal the player to full.",
+      "mode_notes": null,
+      "interactions": [],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/mixin/inventory/MixinPlayerInventory.java"]
+    },
+    "umbrella": {
+      "purpose": "A held mobility and air-push tool.",
+      "behavior": "Holding it in either hand caps downward velocity at -0.2; grounded use pushes entities and particles in a forward hemisphere and starts a 10-tick cooldown.",
+      "mode_notes": null,
+      "interactions": ["Fans apply twice their normal push coefficient to a player holding an Umbrella."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemUmbrella.java", "src/main/java/dev/adventurecraft/awakening/mixin/entity/player/MixinPlayerEntity.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_BlockFan.java"]
+    },
+    "lantern": {
+      "purpose": "A portable light source with consumable fuel.",
+      "behavior": "While used as a light it advances damage toward its 1200-point capacity; when exhausted it consumes one Oil and resets, otherwise it stops lighting.",
+      "mode_notes": null,
+      "interactions": ["Player-held lighting is integrated by MixinPlayerEntity."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemLantern.java", "src/main/java/dev/adventurecraft/awakening/mixin/entity/player/MixinPlayerEntity.java"]
+    },
+    "oil": {
+      "purpose": "Consumable fuel for the Lantern.",
+      "behavior": "One Oil is removed from inventory whenever an exhausted held Lantern refuels.",
+      "mode_notes": null,
+      "interactions": ["Consumed automatically by AC_ItemLantern or player-held lantern handling."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemLantern.java", "src/main/java/dev/adventurecraft/awakening/mixin/entity/player/MixinPlayerEntity.java"]
+    },
+    "pistol": {
+      "purpose": "A magazine-fed hitscan firearm.",
+      "behavior": "Use fires one damage-9 bullet with 0.05 spread and consumes one of 15 loaded shots; reload consumes Pistol Ammo to refill all missing shots and applies a reload delay.",
+      "mode_notes": null,
+      "interactions": ["Implements muzzle-flash lighting and the item reload/use-delay interfaces."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemPistol.java", "src/main/java/dev/adventurecraft/awakening/common/AC_UtilBullet.java"]
+    },
+    "rifle": {
+      "purpose": "A magazine-fed automatic hitscan firearm.",
+      "behavior": "Use fires one damage-10 bullet with spread based on the remaining use timer, consumes one of 30 loaded shots, and adds upward recoil; reload consumes Assault Rifle Ammo to refill all missing shots.",
+      "mode_notes": null,
+      "interactions": ["Implements muzzle-flash lighting and the item reload/use-delay interfaces."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemRifle.java", "src/main/java/dev/adventurecraft/awakening/common/AC_UtilBullet.java"]
+    },
+    "shotgun": {
+      "purpose": "A shell-fed spread hitscan firearm.",
+      "behavior": "Use fires fourteen damage-2 pellets with 0.12 spread and consumes one of seven loaded shells; each reload step consumes one Shotgun Ammo and restores one shell.",
+      "mode_notes": null,
+      "interactions": ["Implements muzzle-flash lighting and the item reload/use-delay interfaces."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemShotgun.java", "src/main/java/dev/adventurecraft/awakening/common/AC_UtilBullet.java"]
+    },
+    "pistolAmmo": {
+      "purpose": "Reload ammunition for the Pistol.",
+      "behavior": "Pistol reload removes one item for each missing loaded shot until the magazine is full or ammunition runs out.",
+      "mode_notes": null,
+      "interactions": ["Also used as the death loot ID of AC_EntityZombiePistol."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemPistol.java", "src/main/java/dev/adventurecraft/awakening/entity/AC_EntityZombiePistol.java"]
+    },
+    "rifleAmmo": {
+      "purpose": "Reload ammunition for the Assault Rifle.",
+      "behavior": "Rifle reload removes one item for each missing loaded shot until the magazine is full or ammunition runs out.",
+      "mode_notes": null,
+      "interactions": ["Also used as the death loot ID of AC_EntitySkeletonRifle."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemRifle.java", "src/main/java/dev/adventurecraft/awakening/entity/AC_EntitySkeletonRifle.java"]
+    },
+    "shotgunAmmo": {
+      "purpose": "Reload ammunition for the Shotgun.",
+      "behavior": "Each shotgun reload step removes one item and restores one missing shell.",
+      "mode_notes": null,
+      "interactions": ["Also used as the death loot ID of AC_EntitySkeletonShotgun."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemShotgun.java", "src/main/java/dev/adventurecraft/awakening/entity/AC_EntitySkeletonShotgun.java"]
+    },
+    "harp": {
+      "purpose": "A playable note.harp instrument.",
+      "behavior": "Use opens its music-sheet GUI; use on a sign plays the sign's song with the harp configuration.",
+      "mode_notes": null,
+      "interactions": ["Configured with the default +3 tuning used by AC_ItemInstrument."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemInstrument.java"]
+    },
+    "guitar": {
+      "purpose": "A playable note.bass instrument.",
+      "behavior": "Use opens its music-sheet GUI; use on a sign plays the sign's song with the guitar configuration.",
+      "mode_notes": null,
+      "interactions": ["Configured with the default +3 tuning used by AC_ItemInstrument."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemInstrument.java"]
+    },
+    "snare": {
+      "purpose": "A playable note.snare instrument.",
+      "behavior": "Use opens its music-sheet GUI; use on a sign plays the sign's song with the snare configuration.",
+      "mode_notes": null,
+      "interactions": ["Configured with the default +3 tuning used by AC_ItemInstrument."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemInstrument.java"]
+    },
+    "pegagusBoots": {
+      "purpose": "Armor boots that grant extra movement abilities while equipped.",
+      "behavior": "Equipping them in slot 36 enables wall jumping and one air jump; removing them disables both.",
+      "mode_notes": null,
+      "interactions": ["The registered Java field is pegagusBoots; documentation must preserve that field spelling while displaying the localized name Pegasus Boots."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemPegasusBoots.java", "src/main/java/dev/adventurecraft/awakening/common/mixin/MixinAC_ItemPegasusBoots.java"]
+    },
+    "cursor": {
+      "purpose": "A two-point region-selection tool used by AdventureCraft editors.",
+      "behavior": "Left- or right-clicking blocks alternates selection endpoints, computes the inclusive minimum/maximum bounds, and reports the selected volume.",
+      "mode_notes": "No debug-mode guard is present in the item; several block configuration GUIs explicitly permit Cursor as the held item in debug mode.",
+      "interactions": ["Supplies bounds to area tools and configurable trigger blocks."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemCursor.java", "src/main/java/dev/adventurecraft/awakening/common/AC_DebugMode.java"]
+    },
+    "brush": {
+      "purpose": "A single-block metadata color/variant editing tool.",
+      "behavior": "Use increments the clicked AC_IBlockColor value; sneaking decrements it, and unsupported blocks produce a message.",
+      "mode_notes": "No debug-mode guard is present in the item implementation.",
+      "interactions": ["Works only on blocks implementing AC_IBlockColor."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemBrush.java", "src/main/java/dev/adventurecraft/awakening/tile/AC_IBlockColor.java"]
+    },
+    "eraser": {
+      "purpose": "A region deletion tool.",
+      "behavior": "With both Cursor points set, use replaces every block in the inclusive selection with air.",
+      "mode_notes": "No debug-mode guard is present in the item implementation.",
+      "interactions": ["Requires a completed Cursor selection."],
+      "unknowns": ["This implementation does not explicitly record an undo action."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemEraser.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemCursor.java"]
+    },
+    "paintBucket": {
+      "purpose": "A region-wide metadata color/variant editing tool.",
+      "behavior": "With both Cursor points set, use increments every AC_IBlockColor block in the selection; sneaking decrements them.",
+      "mode_notes": "No debug-mode guard is present in the item implementation.",
+      "interactions": ["Requires a completed Cursor selection and ignores blocks without AC_IBlockColor."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemPaintBucket.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemCursor.java"]
+    },
+    "hammer": {
+      "purpose": "A region fill tool and fast block-breaking tool.",
+      "behavior": "With both Cursor points set, use fills the selection with the clicked block ID and metadata; it also reports destroy speed 32 and can destroy special blocks.",
+      "mode_notes": "No debug-mode guard is present in the item implementation; normal block breaking is separately restricted by the interaction manager outside debug mode.",
+      "interactions": ["Requires a completed Cursor selection."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemHammer.java", "src/main/java/dev/adventurecraft/awakening/mixin/client/MixinSingleplayerInteractionManager.java"]
+    },
+    "wrench": {
+      "purpose": "A filtered region replacement tool.",
+      "behavior": "With both Cursor points set, use replaces selected block IDs allowed by its switch with the clicked block ID and metadata, while preserving excluded IDs.",
+      "mode_notes": "No debug-mode guard is present in the item implementation.",
+      "interactions": ["Requires a completed Cursor selection."],
+      "unknowns": ["The source gives no semantic label for why the hard-coded excluded ID set is preserved."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemWrench.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemCursor.java"]
+    },
+    "npcStick": {
+      "purpose": "An NPC creation and configuration tool.",
+      "behavior": "Use on a block spawns an AC_EntityNPC above it; hitting an NPC with the item opens that NPC's configuration GUI.",
+      "mode_notes": "No debug-mode guard is present in the item implementation.",
+      "interactions": ["Creates and edits AC_EntityNPC instances."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemNPCStick.java", "src/main/java/dev/adventurecraft/awakening/entity/AC_EntityNPC.java"]
+    },
+    "triggerStick": {
+      "purpose": "A trigger diagnostics and manual-pulse tool.",
+      "behavior": "Left-clicking a block adds then removes a one-block trigger area to pulse it; right-clicking reports the trigger sources affecting the block.",
+      "mode_notes": "No debug-mode guard is present in the item implementation.",
+      "interactions": ["Directly calls the world's AdventureCraft trigger manager."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemTriggerStick.java"]
+    },
+    "quill": {
+      "purpose": "A long-range editor teleport tool.",
+      "behavior": "Use on a block teleports the player to the first air block from the clicked Y through Y=128 at the block's centered X/Z; its pick range is 500 blocks.",
+      "mode_notes": "No debug-mode guard is present in the item implementation or its pick-range override.",
+      "interactions": [],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemQuill.java", "src/main/java/dev/adventurecraft/awakening/mixin/client/MixinSingleplayerInteractionManager.java"]
+    },
+    "paste": {
+      "purpose": "A non-destructive region copy/paste tool.",
+      "behavior": "Use copies the completed Cursor region and writes it at the position calculated from the camera's look direction and reach; it records an undo region when history recording is active.",
+      "mode_notes": "No debug-mode guard is present in the item implementation.",
+      "interactions": ["Requires a completed Cursor selection.", "Its render integration previews the calculated paste position."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemPaste.java", "src/main/java/dev/adventurecraft/awakening/world/AC_BlockCopyUtils.java", "src/main/java/dev/adventurecraft/awakening/mixin/client/render/MixinGameRenderer.java"]
+    },
+    "nudge": {
+      "purpose": "A destructive one-block region movement tool.",
+      "behavior": "Right-click moves the completed Cursor region one block in the look-derived forward direction; left-click moves it in the opposite direction, and the selection follows the move.",
+      "mode_notes": "No debug-mode guard is present in the item implementation.",
+      "interactions": ["Requires a completed Cursor selection."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/item/AC_Items.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemNudge.java", "src/main/java/dev/adventurecraft/awakening/world/AC_BlockCopyUtils.java"]
+    }
+  },
+  "entities": {
+    "AC_EntitySkeletonSword": {
+      "purpose": "A melee skeleton variant carrying a wooden sword.",
+      "behavior": "It has damage 1, attacks within distance 2.5 on a 20-tick cooldown, and has no configured death-loot item.",
+      "mode_notes": null,
+      "interactions": [],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/mixin/entity/MixinEntityRegistry.java", "src/main/java/dev/adventurecraft/awakening/entity/AC_EntitySkeletonSword.java"]
+    },
+    "AC_EntitySkeletonBoss": {
+      "purpose": "A large, high-health ranged skeleton boss variant.",
+      "behavior": "It is scaled to 2.5 times normal skeleton width/height, has 100 health, and fires five-arrow volleys at targets within 20 blocks on a 30-tick cooldown.",
+      "mode_notes": null,
+      "interactions": ["Its hurt override accepts damage only when the attacking entity is null; its fire-tick code applies such null-source damage."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/mixin/entity/MixinEntityRegistry.java", "src/main/java/dev/adventurecraft/awakening/entity/AC_EntitySkeletonBoss.java"]
+    },
+    "AC_EntityBat": {
+      "purpose": "A small hostile flying creature.",
+      "behavior": "It has 5 health, seeks a nearby player within 100 blocks, alternates between wandering and moving to the target, and attacks at close range on a 10-tick cooldown.",
+      "mode_notes": "It removes itself when world difficulty is peaceful (difficulty 0).",
+      "interactions": [],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/mixin/entity/MixinEntityRegistry.java", "src/main/java/dev/adventurecraft/awakening/entity/AC_EntityBat.java"]
+    },
+    "AC_EntityRat": {
+      "purpose": "A small fast hostile ground creature.",
+      "behavior": "It has 6 health, damage 1, run speed 0.5, and targets the nearest visible player within 5 blocks.",
+      "mode_notes": null,
+      "interactions": [],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/mixin/entity/MixinEntityRegistry.java", "src/main/java/dev/adventurecraft/awakening/entity/AC_EntityRat.java"]
+    },
+    "AC_EntityNPC": {
+      "purpose": "A configurable non-player character built on the scripted-living-entity system.",
+      "behavior": "By default it is non-pushable, non-attackable, tracks nearby visible players, and paths back toward its saved spawn position when more than two blocks away and not already pathing.",
+      "mode_notes": "No debug-mode guard is present in the entity; the NPC Stick exposes creation and configuration.",
+      "interactions": ["Inherits configurable created, update, attacked, interaction, death, and path-reached scripts from AC_EntityLivingScript.", "Can be assigned to NPC Path blocks."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/mixin/entity/MixinEntityRegistry.java", "src/main/java/dev/adventurecraft/awakening/entity/AC_EntityNPC.java", "src/main/java/dev/adventurecraft/awakening/entity/AC_EntityLivingScript.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemNPCStick.java"]
+    },
+    "AC_EntitySkeletonRifle": {
+      "purpose": "A skeleton variant armed with an Assault Rifle.",
+      "behavior": "It has damage 6, probabilistically fires one bullet with 0.07 spread when a target is within 15 blocks, uses 5-tick shot intervals and a 40-tick pause after each 30-shot magazine, and drops Assault Rifle Ammo as its loot ID.",
+      "mode_notes": null,
+      "interactions": ["Its held-item timer is updated for rifle firing/reload animation state."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/mixin/entity/MixinEntityRegistry.java", "src/main/java/dev/adventurecraft/awakening/entity/AC_EntitySkeletonRifle.java", "src/main/java/dev/adventurecraft/awakening/common/AC_UtilBullet.java"]
+    },
+    "AC_EntitySkeletonShotgun": {
+      "purpose": "A skeleton variant armed with a Shotgun.",
+      "behavior": "It has damage 2, probabilistically fires eight bullets with 0.12 spread when a target is within 10 blocks, uses a 50-tick attack cooldown, and drops Shotgun Ammo as its loot ID.",
+      "mode_notes": null,
+      "interactions": ["Its held-item timer is updated for shotgun firing animation state."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/mixin/entity/MixinEntityRegistry.java", "src/main/java/dev/adventurecraft/awakening/entity/AC_EntitySkeletonShotgun.java", "src/main/java/dev/adventurecraft/awakening/common/AC_UtilBullet.java"]
+    },
+    "AC_EntityZombiePistol": {
+      "purpose": "A zombie variant armed with a Pistol.",
+      "behavior": "It has damage 6, probabilistically fires one bullet with 0.08 spread whenever its inherited combat AI calls the attack check, uses a 20-tick shot interval and a 50-tick pause after each 15-shot magazine, and drops Pistol Ammo.",
+      "mode_notes": null,
+      "interactions": ["Its held-item timer is updated for pistol firing/reload animation state."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/mixin/entity/MixinEntityRegistry.java", "src/main/java/dev/adventurecraft/awakening/entity/AC_EntityZombiePistol.java", "src/main/java/dev/adventurecraft/awakening/common/AC_UtilBullet.java"]
+    },
+    "AC_EntityBomb": {
+      "purpose": "The live projectile/entity state of a thrown AdventureCraft Bomb.",
+      "behavior": "It uses a 45-tick fuse, then deals distance-scaled damage up to 20 and knockback within 5 blocks and removes AC_BlockBombable blocks within radius 3; being hurt detonates it early.",
+      "mode_notes": null,
+      "interactions": ["Spawned by AC_ItemBomb and reused as the explosion implementation for Bomb Arrows."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/mixin/entity/MixinEntityRegistry.java", "src/main/java/dev/adventurecraft/awakening/entity/AC_EntityBomb.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemBomb.java"]
+    },
+    "AC_EntityBoomerang": {
+      "purpose": "The outbound and returning projectile state of the Boomerang item.",
+      "behavior": "It flies outward and then homes back to its owner; it carries encountered item entities, stuns encountered mobs for 20 ticks, and toggles levers it crosses.",
+      "mode_notes": null,
+      "interactions": ["On removal it searches the owner's carried item, inventory, and nearby item entities to clear the matching Boomerang's active metadata."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/mixin/entity/MixinEntityRegistry.java", "src/main/java/dev/adventurecraft/awakening/entity/AC_EntityBoomerang.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemBoomerang.java"]
+    },
+    "AC_EntityArrowBomb": {
+      "purpose": "The projectile state of Bomb Arrow ammunition.",
+      "behavior": "It inherits arrow flight, emits smoke, and detonates through AC_EntityBomb after a 45-tick fuse or immediately when hurt; players cannot pick it up by touch.",
+      "mode_notes": null,
+      "interactions": ["Spawned by bows holding Bomb Arrows and by dispensers containing Bomb Arrows."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/mixin/entity/MixinEntityRegistry.java", "src/main/java/dev/adventurecraft/awakening/entity/AC_EntityArrowBomb.java", "src/main/java/dev/adventurecraft/awakening/mixin/item/MixinBowItem.java", "src/main/java/dev/adventurecraft/awakening/mixin/block/MixinDispenserBlock.java"]
+    },
+    "AC_EntityHookshot": {
+      "purpose": "The outbound, attached, and returning projectile state of the Hookshot item.",
+      "behavior": "It attaches to logs and AdventureCraft wood/wood half-step blocks, pulls its owner while attached, or grabs an encountered mob/item and carries it back while returning.",
+      "mode_notes": null,
+      "interactions": ["It is removed if its hand no longer contains the originating stack and is not persisted across a load.", "An attached hook suppresses normal player gravity through MixinPlayerEntity."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/mixin/entity/MixinEntityRegistry.java", "src/main/java/dev/adventurecraft/awakening/entity/AC_EntityHookshot.java", "src/main/java/dev/adventurecraft/awakening/item/AC_ItemHookshot.java", "src/main/java/dev/adventurecraft/awakening/mixin/entity/player/MixinPlayerEntity.java"]
+    },
+    "AC_EntityLivingScript": {
+      "purpose": "A configurable living entity driven by an entity-description record and JavaScript callbacks.",
+      "behavior": "Its description can set health, size, texture, movement speed, and callback script names; it runs created, per-tick update, attacked, interaction, death, and path-completed scripts and supports pathing to an entity or position.",
+      "mode_notes": null,
+      "interactions": ["The attacked and interaction scripts may return a Boolean to allow or deny the default action.", "NPC extends this entity type."],
+      "evidence": ["src/main/java/dev/adventurecraft/awakening/mixin/entity/MixinEntityRegistry.java", "src/main/java/dev/adventurecraft/awakening/entity/AC_EntityLivingScript.java", "src/main/java/dev/adventurecraft/awakening/script/EntityDescriptions.java", "src/main/java/dev/adventurecraft/awakening/script/ScriptEntityDescription.java"]
+    }
+  }
+}

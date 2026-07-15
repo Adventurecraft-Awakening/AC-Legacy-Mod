@@ -1,0 +1,74 @@
+{
+  "format": 1,
+  "pages": {
+    "Home": {
+      "status": "verified",
+      "evidence": [
+        "gradle.properties",
+        "build.gradle",
+        "src/main/resources/fabric.mod.json"
+      ]
+    },
+    "Getting-Started": {
+      "status": "verified",
+      "evidence": [
+        "build.gradle",
+        "src/main/java/dev/adventurecraft/awakening/ACMainThread.java",
+        "src/main/java/dev/adventurecraft/awakening/common/AC_MapList.java"
+      ]
+    },
+    "Controls-and-Game-Modes": {
+      "status": "verified",
+      "evidence": [
+        "src/main/java/dev/adventurecraft/awakening/mixin/client/MixinMinecraft.java",
+        "src/main/java/dev/adventurecraft/awakening/common/ServerCommands.java"
+      ]
+    },
+    "Scripting": {
+      "status": "verified",
+      "evidence": [
+        "build.gradle",
+        "src/main/java/dev/adventurecraft/awakening/script/Script.java",
+        "src/main/java/dev/adventurecraft/awakening/common/AC_JScriptHandler.java"
+      ]
+    },
+    "Release-History": {
+      "status": "release-notes",
+      "evidence": [
+        "changelog/0.6.0.md",
+        "gradle.properties"
+      ]
+    },
+    "Fact-Checking-and-Provenance": {
+      "status": "process",
+      "evidence": [
+        "tools/wiki.py",
+        "wiki/fandom-baseline.json"
+      ]
+    },
+    "Contributing-to-the-Wiki": {
+      "status": "process",
+      "evidence": [
+        "tools/wiki.py",
+        ".github/workflows/wiki.yml"
+      ]
+    },
+    "Glossary": {
+      "status": "verified",
+      "evidence": [
+        "src/main/java/dev/adventurecraft/awakening/common/AC_DebugMode.java",
+        "src/main/java/dev/adventurecraft/awakening/common/ServerCommands.java",
+        "src/main/java/dev/adventurecraft/awakening/script/Script.java",
+        "src/main/java/dev/adventurecraft/awakening/tile/AC_Blocks.java"
+      ]
+    },
+    "Media-Provenance": {
+      "status": "process",
+      "evidence": [
+        "LICENSE",
+        "src/main/resources/assets/adventurecraft/acLogo.png",
+        "src/main/resources/assets/adventurecraft/icon.png"
+      ]
+    }
+  }
+}

@@ -1,0 +1,233 @@
+name: wiki
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "37 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Validate and build wiki
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: wiki-build-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.14"
+
+      - name: Validate wiki sources and facts
+        run: python tools/wiki.py check
+
+      - name: Check authored wiki quality
+        run: python tools/wiki_quality.py sources wiki/pages
+
+      - name: Test wiki generators and quality checks
+        run: python -m unittest tools/test_wiki_quality.py tools/tests/test_wiki_script_api.py
+
+      - name: Build native wiki
+        run: python tools/wiki.py build --output build/wiki
+
+      - name: Check generated wiki quality
+        env:
+          WIKI_MIN_PAGES: ${{ vars.WIKI_MIN_PAGES }}
+        shell: bash
+        run: python tools/wiki_quality.py quality build/wiki --minimum-pages "${WIKI_MIN_PAGES:-250}"
+
+      - name: Upload wiki preview
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: github-wiki-${{ github.sha }}
+          path: build/wiki
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    name: Publish native GitHub wiki
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: github-native-wiki-publish
+      cancel-in-progress: false
+    environment:
+      name: github-wiki
+      url: ${{ github.server_url }}/${{ github.repository }}/wiki
+    permissions:
+      contents: write
+    steps:
+      - name: Download validated wiki
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: github-wiki-${{ github.sha }}
+          path: generated-wiki
+
+      - name: Publish changed pages
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          WIKI_MIN_PAGES: ${{ vars.WIKI_MIN_PAGES }}
+          MAIN_REMOTE: ${{ github.server_url }}/${{ github.repository }}.git
+          WIKI_REMOTE: ${{ github.server_url }}/${{ github.repository }}.wiki.git
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          auth="$(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 -w 0)"
+          python3 - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+
+          root = Path("generated-wiki")
+          manifest = json.loads((root / "wiki-manifest.json").read_text(encoding="utf-8"))
+          pages = manifest["pages"]
+          assets = manifest.get("assets", [])
+          entries = pages + assets
+          expected_pages = {entry["file"] for entry in pages}
+          actual_pages = {path.name for path in root.glob("*.md")}
+          if actual_pages != expected_pages:
+              raise SystemExit(
+                  f"wiki page manifest mismatch: expected {sorted(expected_pages)}, "
+                  f"found {sorted(actual_pages)}"
+              )
+          expected_files = {entry["file"] for entry in entries}
+          actual_files = {
+              path.relative_to(root).as_posix()
+              for path in root.rglob("*")
+              if path.is_file() and path.name != "wiki-manifest.json"
+          }
+          if actual_files != expected_files:
+              raise SystemExit(
+                  f"wiki output manifest mismatch: expected {sorted(expected_files)}, "
+                  f"found {sorted(actual_files)}"
+              )
+          for entry in entries:
+              digest = hashlib.sha256((root / entry["file"]).read_bytes()).hexdigest()
+              if digest != entry["sha256"]:
+                  raise SystemExit(f"checksum mismatch: {entry['file']}")
+          print(f"Verified {len(pages)} wiki pages and {len(assets)} media assets.")
+          PY
+
+          test -f generated-wiki/Home.md
+          test -f generated-wiki/_Sidebar.md
+          test -f generated-wiki/_Footer.md
+          if find generated-wiki -type l -print -quit | grep -q .; then
+            echo "::error::Symlinks are forbidden in wiki output."
+            exit 1
+          fi
+
+          minimum="${WIKI_MIN_PAGES:-250}"
+          if [[ ! "$minimum" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error::WIKI_MIN_PAGES must be a positive integer."
+            exit 1
+          fi
+          page_count="$(find generated-wiki -type f -name '*.md' -printf '.' | wc -c)"
+          if (( page_count < minimum )); then
+            echo "::error::Generated $page_count pages; deletion safety floor is $minimum."
+            exit 1
+          fi
+
+          latest="$(git -c http.https://github.com/.extraheader="AUTHORIZATION: basic $auth" ls-remote "$MAIN_REMOTE" refs/heads/main | awk 'NR == 1 {print $1}')"
+          if [[ "$latest" != "$GITHUB_SHA" ]]; then
+            echo "Skipping superseded source commit $GITHUB_SHA; main is $latest."
+            exit 0
+          fi
+
+          for attempt in 1 2 3; do
+            rm -rf published-wiki
+            git -c http.https://github.com/.extraheader="AUTHORIZATION: basic $auth" \
+              clone --depth=1 "$WIKI_REMOTE" published-wiki
+
+            branch="$(git -C published-wiki symbolic-ref --short HEAD)"
+            rsync -a --delete --exclude='.git/' generated-wiki/ published-wiki/
+            git -C published-wiki add --all
+            if git -C published-wiki diff --cached --quiet; then
+              echo "Wiki is already current."
+              exit 0
+            fi
+
+            git -C published-wiki commit \
+              -m "docs: publish wiki from ${GITHUB_SHA::12}" \
+              -m "Source-Commit: $GITHUB_SHA" \
+              -m "Workflow-Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+
+            latest="$(git -c http.https://github.com/.extraheader="AUTHORIZATION: basic $auth" ls-remote "$MAIN_REMOTE" refs/heads/main | awk 'NR == 1 {print $1}')"
+            if [[ "$latest" != "$GITHUB_SHA" ]]; then
+              echo "Skipping superseded source commit $GITHUB_SHA; main is $latest."
+              exit 0
+            fi
+
+            if git -C published-wiki \
+              -c http.https://github.com/.extraheader="AUTHORIZATION: basic $auth" \
+              push origin "HEAD:refs/heads/$branch"; then
+              exit 0
+            fi
+            echo "Wiki changed during publish; retrying ($attempt/3)."
+          done
+
+          echo "::error::Wiki push failed after three attempts."
+          exit 1
+
+  external-links:
+    name: Report external wiki links
+    if: github.event_name == 'schedule'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Check out quality tools
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.14"
+
+      - name: Download validated wiki
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: github-wiki-${{ github.sha }}
+          path: generated-wiki
+
+      - name: Audit external links
+        run: >-
+          python tools/wiki_quality.py links generated-wiki
+          --report build/wiki-external-links.json
+          --soft-fail
+
+      - name: Add report to workflow summary
+        if: always()
+        shell: bash
+        run: test ! -f build/wiki-external-links.md || cat build/wiki-external-links.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload external-link report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: wiki-external-links-${{ github.sha }}
+          path: build/wiki-external-links.*
+          if-no-files-found: error
+          retention-days: 30
