@@ -121,7 +121,11 @@ class RenderingTests(unittest.TestCase):
             )
             index = first["Scripting-API.md"].decode()
             beta = first["Scripting-API-Beta.md"].decode()
-            self.assertLess(index.index("|Alpha]]"), index.index("|Beta]]"))
+            self.assertLess(
+                index.index("[Alpha](Scripting-API-Alpha)"),
+                index.index("[Beta](Scripting-API-Beta)"),
+            )
+            self.assertNotIn("[[", index)
             self.assertIn("[[Scripting-API-Alpha|`Alpha`]]", beta)
             self.assertIn("## Other methods", beta)
             self.assertIn("https://example.invalid/repository/blob/main/Beta.java#L1", beta)
