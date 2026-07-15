@@ -847,16 +847,23 @@ def build(output: Path) -> list[Path]:
         (output / name).write_text(content.rstrip() + "\n", encoding="utf-8", newline="\n")
 
     media_suffixes = {".avif", ".gif", ".jpeg", ".jpg", ".png", ".svg", ".webp"}
+    documentation_logo = WIKI_DIR / "assets/current/acLogo.png"
+    logo_bytes = documentation_logo.read_bytes()
+    logo_dimensions = (
+        int.from_bytes(logo_bytes[16:20], "big"),
+        int.from_bytes(logo_bytes[20:24], "big"),
+    )
+    if not logo_bytes.startswith(b"\x89PNG\r\n\x1a\n") or logo_dimensions != (320, 31):
+        raise WikiError("documentation logo must be the composed 320x31 PNG")
     for source in sorted((WIKI_DIR / "assets").rglob("*")):
         if source.is_file() and source.suffix.casefold() in media_suffixes:
             destination = output / "assets" / source.relative_to(WIKI_DIR / "assets")
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source, destination)
     current_assets = ROOT / "src/main/resources/assets/adventurecraft"
-    for filename in ("acLogo.png", "icon.png"):
-        destination = output / "assets/current" / filename
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(current_assets / filename, destination)
+    icon_destination = output / "assets/current/icon.png"
+    icon_destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(current_assets / "icon.png", icon_destination)
 
     verification: dict[str, dict[str, object]] = {}
     for page, metadata in authored_metadata.items():

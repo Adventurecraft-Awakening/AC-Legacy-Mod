@@ -2,6 +2,19 @@
   "format": 1,
   "assets": [
     {
+      "path": "current/acLogo.png",
+      "kind": "lossless-source-sprite-composite",
+      "alt": "AdventureCraft Legacy logo",
+      "source": "src/main/resources/assets/adventurecraft/acLogo.png",
+      "renderer_source": "src/main/java/dev/adventurecraft/awakening/mixin/client/gui/screen/menu/MixinTitleScreen.java",
+      "source_rectangles": [
+        "x=0,y=0,width=256,height=31",
+        "x=0,y=128,width=64,height=31"
+      ],
+      "output_dimensions": "320x31",
+      "contains_community_map": false
+    },
+    {
       "path": "screenshots/title-screen.png",
       "kind": "runtime-screenshot",
       "alt": "AdventureCraft Legacy title screen with New Save, Load Save, Craft a Map, Options, and Quit Game buttons",

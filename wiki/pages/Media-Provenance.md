@@ -14,7 +14,7 @@ This screenshot was captured from a locally built AC-Legacy 0.6.0 client at sour
 
 ![AdventureCraft Legacy application icon](assets/current/icon.png)
 
-These files are copied during generation from `src/main/resources/assets/adventurecraft/` and are versioned with the MIT-licensed project source.
+The documentation logo is a lossless 320×31 composition of the two source-sprite rectangles used by `MixinTitleScreen`: 256×31 pixels from `(0, 0)` followed by 64×31 pixels from `(0, 128)`. This preserves the in-game title exactly without exposing the sprite-sheet spacing. The application icon is copied during generation from `src/main/resources/assets/adventurecraft/icon.png`. Both are derived from the MIT-licensed project source.
 
 ## Screenshot standard
 

@@ -6,7 +6,9 @@
       "evidence": [
         "gradle.properties",
         "build.gradle",
-        "src/main/resources/fabric.mod.json"
+        "src/main/resources/fabric.mod.json",
+        "src/main/java/dev/adventurecraft/awakening/mixin/client/gui/screen/menu/MixinTitleScreen.java",
+        "wiki/assets/current/acLogo.png"
       ]
     },
     "Getting-Started": {
@@ -67,6 +69,8 @@
       "evidence": [
         "LICENSE",
         "src/main/resources/assets/adventurecraft/acLogo.png",
+        "src/main/java/dev/adventurecraft/awakening/mixin/client/gui/screen/menu/MixinTitleScreen.java",
+        "wiki/assets/current/acLogo.png",
         "src/main/resources/assets/adventurecraft/icon.png"
       ]
     }
