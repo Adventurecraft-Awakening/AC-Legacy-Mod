@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8"/>
     <title>MMC Pack Template</title>
-    <link rel="stylesheet" href="https://unpkg.com/@speed-highlight/core/dist/themes/default.css"/>
+    <link rel="stylesheet" href="themes/default.css"/>
     <link rel="stylesheet" href="style.css"/>
 
     <script src="prelude.js"></script>
@@ -36,9 +36,7 @@
 </head>
 
 <body>
-<div class="preview-box">
-    <pre id="code-pre">
-    </pre>
+<div id="preview-box">
 </div>
 
 <script type="module">
@@ -49,11 +47,6 @@
     for (const [file, source] of files.entries()) {
         const label = document.createElement("label");
         label.textContent = file.toString();
-
-        const preview = document.createElement("code");
-        preview.class = "preview";
-        preview.id = fileId;
-        fileId += 1;
 
         const json = JSON.stringify(source, null, 2);
         const nodes = [];
@@ -67,15 +60,24 @@
                 nodes.push(str);
             }
         });
-        preview.append(...nodes);
+
+        const block = document.createElement("code");
+        block.append(...nodes);
+
+        const pre = document.createElement("pre");
+        pre.className = "shj-lang-json";
+        pre.append(block);
 
         const group = document.createElement("div");
-        group.append(label, preview);
+        group.id = fileId;
+        group.append(label, pre);
+
         groups.push(group);
+        fileId += 1;
     }
 
-    const codePre = document.getElementById("code-pre");
-    codePre.append(...groups);
+    const previewBox = document.getElementById("preview-box");
+    previewBox.append(...groups);
 </script>
 </body>
 </html>

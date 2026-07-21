@@ -1,0 +1,63 @@
+[class*=shj-lang-] {
+    white-space: pre;
+    color: #112;
+    box-sizing: border-box;
+    background: #fff;
+    border-radius: 10px;
+    margin: 5px 0;
+    padding: 5px 5px;
+    font: 12px/14px monospace;
+    box-shadow: 0 0 5px #0001
+}
+
+.shj-inline {
+    border-radius: 5px;
+    margin: 0;
+    padding: 2px 5px;
+    display: inline-block
+}
+
+[class*=shj-lang-]::selection {
+    background: #bdf5
+}
+
+[class*=shj-lang-] ::selection {
+    background: #bdf5
+}
+
+.shj-syn-cmnt {
+    color: #999;
+    font-style: italic
+}
+
+.shj-syn-err, .shj-syn-kwd {
+    color: #e16
+}
+
+.shj-syn-num, .shj-syn-class {
+    color: #f81
+}
+
+.shj-syn-insert, .shj-syn-str {
+    color: #4d5
+}
+
+.shj-syn-bool {
+    color: #3af
+}
+
+.shj-syn-type, .shj-syn-oper {
+    color: #69f
+}
+
+.shj-syn-section, .shj-syn-func {
+    color: #84f
+}
+
+.shj-syn-deleted, .shj-syn-var {
+    color: #f44
+}
+
+.shj-oneline {
+    padding: 12px 10px
+}

@@ -7,12 +7,6 @@ pre {
     word-wrap: break-word;
 }
 
-[class*=shj-lang-] {
-    font-size: 12px;
-    line-height: 14px;
-    background: rgba(255, 255, 255, 0.2);
-}
-
 @media (prefers-color-scheme: dark) {
     body {
         background: #202020;
@@ -20,9 +14,7 @@ pre {
     }
 
     [class*=shj-lang-] {
-        font-size: 12px;
-        line-height: 14px;
         color: #ffffff;
-        background: rgba(0, 0, 0, 0.2);
+        background: #000;
     }
 }
