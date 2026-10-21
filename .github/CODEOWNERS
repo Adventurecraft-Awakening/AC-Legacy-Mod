@@ -3,6 +3,4 @@
 # Replace them with active entries only after the project confirms an owner.
 #
 # /wiki/
-# /tools/wiki.py
-# /tools/wiki_quality.py
 # /.github/workflows/wiki.yml

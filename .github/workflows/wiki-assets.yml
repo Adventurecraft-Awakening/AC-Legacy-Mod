@@ -12,6 +12,9 @@ on:
       - "src/main/java/**"
       - "src/main/resources/**"
       - "wiki/assets/registry/**"
+      - "wiki/src/**"
+      - "wiki/build.gradle"
+      - "wiki/settings.gradle"
   push:
     branches: [main]
     paths:
@@ -24,6 +27,9 @@ on:
       - "src/main/java/**"
       - "src/main/resources/**"
       - "wiki/assets/registry/**"
+      - "wiki/src/**"
+      - "wiki/build.gradle"
+      - "wiki/settings.gradle"
   schedule:
     - cron: "17 5 * * 1"
   workflow_dispatch:
@@ -93,110 +99,7 @@ jobs:
 
       - name: Verify committed and regenerated assets
         shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          import hashlib
-          import json
-          import struct
-          from pathlib import Path
-
-          PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
-          REQUIRED_KEYS = {"field", "id", "file", "sha256", "alt"}
-
-
-          def load_tree(root: Path):
-              manifest_path = root / "render-manifest.json"
-              if not manifest_path.is_file():
-                  raise SystemExit(f"missing render manifest: {manifest_path}")
-              manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-
-              expected_header = {
-                  "format": 1,
-                  "width": 128,
-                  "height": 128,
-                  "contains_community_maps": False,
-              }
-              for key, expected in expected_header.items():
-                  if manifest.get(key) != expected:
-                      raise SystemExit(
-                          f"{manifest_path}: expected {key}={expected!r}, "
-                          f"found {manifest.get(key)!r}"
-                      )
-
-              identities = set()
-              declared_files = set()
-              for category in ("blocks", "items"):
-                  entries = manifest.get(category)
-                  if not isinstance(entries, list) or not entries:
-                      raise SystemExit(f"{manifest_path}: {category} must be a non-empty array")
-                  for index, entry in enumerate(entries):
-                      if not isinstance(entry, dict) or set(entry) != REQUIRED_KEYS:
-                          raise SystemExit(
-                              f"{manifest_path}: invalid {category}[{index}] keys: "
-                              f"{sorted(entry) if isinstance(entry, dict) else type(entry).__name__}"
-                          )
-                      relative = Path(entry["file"])
-                      if relative.is_absolute() or ".." in relative.parts:
-                          raise SystemExit(f"{manifest_path}: unsafe asset path: {relative}")
-                      if len(relative.parts) != 2 or relative.parts[0] != category or relative.suffix != ".png":
-                          raise SystemExit(
-                              f"{manifest_path}: {category} asset is outside its directory: {relative}"
-                          )
-                      if relative.as_posix() in declared_files:
-                          raise SystemExit(f"{manifest_path}: duplicate asset path: {relative}")
-                      identity = (category, entry["field"], entry["id"], relative.as_posix(), entry["alt"])
-                      if identity in identities:
-                          raise SystemExit(f"{manifest_path}: duplicate registry identity: {identity}")
-                      identities.add(identity)
-                      declared_files.add(relative.as_posix())
-
-                      asset = root / relative
-                      data = asset.read_bytes()
-                      if hashlib.sha256(data).hexdigest() != entry["sha256"]:
-                          raise SystemExit(f"{manifest_path}: checksum mismatch: {relative}")
-                      if len(data) < 33 or data[:8] != PNG_SIGNATURE or data[12:16] != b"IHDR":
-                          raise SystemExit(f"{manifest_path}: invalid PNG: {relative}")
-                      png_header = struct.unpack(">IIBBBBB", data[16:29])
-                      if png_header != (128, 128, 8, 6, 0, 0, 0):
-                          width, height, bit_depth, color_type, compression, filtering, interlace = png_header
-                          raise SystemExit(
-                              f"{manifest_path}: {relative} must be non-interlaced 128x128 8-bit RGBA, "
-                              f"found {width}x{height}, depth={bit_depth}, type={color_type}, "
-                              f"compression={compression}, filter={filtering}, interlace={interlace}"
-                          )
-
-              actual_files = {
-                  path.relative_to(root).as_posix()
-                  for category in ("blocks", "items")
-                  for path in (root / category).rglob("*")
-                  if path.is_file()
-              }
-              if actual_files != declared_files:
-                  missing = sorted(declared_files - actual_files)
-                  extra = sorted(actual_files - declared_files)
-                  raise SystemExit(
-                      f"{manifest_path}: asset coverage mismatch; missing={missing}, extra={extra}"
-                  )
-              return manifest, identities
-
-
-          committed, committed_ids = load_tree(Path("wiki/assets/registry"))
-          generated, generated_ids = load_tree(Path("build/wiki-assets-llvmpipe"))
-          if committed_ids != generated_ids:
-              missing = sorted(committed_ids - generated_ids)
-              extra = sorted(generated_ids - committed_ids)
-              raise SystemExit(
-                  "registry coverage differs between committed and regenerated assets; "
-                  f"missing={missing}, extra={extra}"
-              )
-
-          print(
-              f"Verified {len(committed['blocks'])} blocks and {len(committed['items'])} items "
-              "in committed and llvmpipe-rendered asset trees."
-          )
-          PY
-          python3 tools/wiki.py check
+        run: ./gradlew -p wiki verifyWikiAssets checkWikiSources -PwikiRenderedAssets=build/wiki-assets-llvmpipe --no-daemon
 
       - name: Upload llvmpipe render
         if: always()

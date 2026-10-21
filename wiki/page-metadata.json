@@ -44,14 +44,14 @@
     "Fact-Checking-and-Provenance": {
       "status": "process",
       "evidence": [
-        "tools/wiki.py",
+        "wiki/src/main/groovy/dev/adventurecraft/wiki/WikiBuilder.groovy",
         "wiki/fandom-baseline.json"
       ]
     },
     "Contributing-to-the-Wiki": {
       "status": "process",
       "evidence": [
-        "tools/wiki.py",
+        "wiki/src/main/groovy/dev/adventurecraft/wiki/WikiBuilder.groovy",
         ".github/workflows/wiki.yml"
       ]
     },

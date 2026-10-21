@@ -33,8 +33,3 @@ bin/
 
 run/
 maps/
-
-# python
-
-__pycache__/
-*.py[cod]

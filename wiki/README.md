@@ -1,22 +1,29 @@
 # GitHub wiki pipeline
 
-This directory is the reviewed source for the repository's native GitHub wiki. `tools/wiki.py` combines the authored pages in `wiki/pages`, current Java registries and build properties, source-derived feature details, the Java scripting API, and the retained non-map records in `fandom-baseline.json` into GitHub-wiki Markdown.
+This directory is the reviewed source for the repository's native GitHub wiki. Its standalone Gradle build combines authored pages, current Java registries and build properties, source-derived feature details, the Java scripting API, and retained non-map records in `fandom-baseline.json` into GitHub-wiki Markdown. The implementation lives in `wiki/src/main/groovy` and uses the JDK and Gradle's bundled Groovy, with no additional runtime or library dependencies. It does not configure the game build or download Minecraft dependencies.
 
 ## Local commands
 
 ```shell
-python tools/wiki.py check
-python tools/wiki.py build --output build/wiki
-python tools/wiki_quality.py sources wiki/pages
-python tools/wiki_quality.py quality build/wiki --minimum-pages 250
-python -m unittest tools/test_wiki_quality.py tools/tests/test_wiki_script_api.py tools/tests/test_wiki_feature_pages.py
-python tools/wiki.py sync-baseline       # intentional network refresh only
-python tools/wiki.py sync-baseline --check
+./gradlew -p wiki build
+```
+
+Run from the repository root with a supported JDK (21 or 25). This command validates source facts and authored Markdown, builds the wiki, and verifies generated quality, assets, and the publication manifest. Output goes to `build/wiki`. Use `-PwikiOutput=build/wiki-preview` to choose another output directory beneath `build/`, and `-PwikiMinimumPages=250` to set the deletion-safety floor. An absolute output path outside the repository is also supported.
+
+Additional tasks:
+
+```shell
+./gradlew -p wiki generateWiki           # generate pages without running all checks
+./gradlew -p wiki checkWikiSources       # source facts and authored Markdown
+./gradlew -p wiki checkWikiLinks         # advisory external-link report
+./gradlew -p wiki verifyWikiAssets       # compare native renders in build/wiki-assets-llvmpipe
+./gradlew -p wiki syncBaseline           # intentional network refresh only
+./gradlew -p wiki checkBaseline          # compare live baseline without writing
 ```
 
 Do not edit `build/wiki`; it is deterministic generated output and is ignored with the rest of `build/`.
 
-If `wiki/assets/registry/render-manifest.json` is present, `check` validates exact coverage of the current block and item registries before generating image-backed feature pages. An absent manifest is allowed while bootstrapping the native exporter; a committed partial or stale manifest is not. See `wiki/assets/registry/README.md` for the format and regeneration contract.
+If `wiki/assets/registry/render-manifest.json` is present, validation checks exact coverage of the current block and item registries before generating image-backed feature pages. An absent manifest is allowed while bootstrapping the native exporter; a committed partial or stale manifest is not. See `wiki/assets/registry/README.md` for the format and regeneration contract.
 
 ## One-time repository setup
 
