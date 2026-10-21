@@ -8,9 +8,7 @@ import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
-import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -107,8 +105,7 @@ public class AC_ItemCustom extends Item implements AC_IUseDelayItem {
         if (!this.onItemUsedScript.isEmpty()) {
             ScriptItem scriptItem = new ScriptItem(stack);
             Scriptable scope = ((ExWorld) world).getScope();
-            Object jsObj = Context.javaToJS(scriptItem, scope);
-            ScriptableObject.putProperty(scope, "itemUsed", jsObj);
+            ((ExWorld) world).getScript().runtime().bind(scope, "itemUsed", scriptItem);
             ((ExWorld) world).getScriptHandler().runScript(this.onItemUsedScript, scope);
         }
 

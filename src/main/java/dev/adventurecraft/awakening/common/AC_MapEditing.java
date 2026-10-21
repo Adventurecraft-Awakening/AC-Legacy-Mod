@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.client.render.block.ExBlockRenderer;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
@@ -128,7 +129,7 @@ public class AC_MapEditing {
     }
 
     public void renderSelection(float deltaTime) {
-        if (!AC_ItemCursor.bothSet) {
+        if (!EditorSession.current().selection.bothSet) {
             return;
         }
 

@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.tile.entity;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.world.BlockPos;
@@ -22,7 +23,7 @@ public class AC_TileEntityMobSpawnerRenderer extends TileEntityRenderer {
     };
 
     public void render(AC_TileEntityMobSpawner entity, double x, double y, double z, float tickTime) {
-        if (!AC_DebugMode.active) {
+        if (!EditorSession.forLevel(entity.level).active) {
             return;
         }
         if (!entity.showDebugInfo) {

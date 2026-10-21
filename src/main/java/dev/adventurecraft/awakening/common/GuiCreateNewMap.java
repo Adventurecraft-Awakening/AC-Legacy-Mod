@@ -137,7 +137,7 @@ public class GuiCreateNewMap extends Screen {
             }
 
             this.minecraft.gameMode = new SurvivalGameMode(this.minecraft);
-            AC_DebugMode.levelEditing = true;
+            dev.adventurecraft.awakening.editor.EditorSession.requestMapEditing();
             String wName = this.textboxMapName.getValue().trim();
             ((ExMinecraft) this.minecraft).saveMapUsed(wName, wName);
             Level world = ((ExMinecraft) this.minecraft).getWorld(wName, wSeed, wName);

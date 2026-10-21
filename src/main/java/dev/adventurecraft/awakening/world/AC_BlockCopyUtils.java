@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.world;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.ACMod;
-import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
@@ -46,9 +46,9 @@ public final class AC_BlockCopyUtils {
         }
 
         Vec3 lookDirection = entity.getLookAngle();
-        int baseX = (int) (entity.x + AC_DebugMode.reachDistance * lookDirection.x);
-        int baseY = (int) (entity.y + AC_DebugMode.reachDistance * lookDirection.y);
-        int baseZ = (int) (entity.z + AC_DebugMode.reachDistance * lookDirection.z);
+        int baseX = (int) (entity.x + EditorSession.current().reachDistance * lookDirection.x);
+        int baseY = (int) (entity.y + EditorSession.current().reachDistance * lookDirection.y);
+        int baseZ = (int) (entity.z + EditorSession.current().reachDistance * lookDirection.z);
 
         return new BlockPos(baseX, baseY, baseZ);
     }
@@ -103,7 +103,7 @@ public final class AC_BlockCopyUtils {
         if (amount == null) {
             throw new IllegalArgumentException("Amount cannot be null");
         }
-        if (!AC_ItemCursor.bothSet) {
+        if (!EditorSession.current().selection.bothSet) {
             throw new IllegalStateException("Cursor selection must be set before shifting");
         }
 
@@ -136,8 +136,7 @@ public final class AC_BlockCopyUtils {
         AC_EditAction editAction = null;
         var undoStack = ((ExWorld) world).getUndoStack();
         boolean saveHistory = undoStack.isRecording();
-        undoStack.pushLayer(null);
-        try {
+        try (var ignored = undoStack.suppressScope()) {
             // Copy blocks from current selection
             BlockPos min = AC_ItemCursor.min();
             BlockPos max = AC_ItemCursor.max();
@@ -168,9 +167,6 @@ public final class AC_BlockCopyUtils {
             // Log error but don't crash the game
             ACMod.LOGGER.error("Failed to nudge blocks: ", e);
             Minecraft.instance.gui.addMessage("Failed to nudge blocks: " + e.getMessage());
-        }
-        finally {
-            undoStack.popLayer(saveHistory);
         }
 
         if (editAction != null) {

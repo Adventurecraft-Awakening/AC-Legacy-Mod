@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.common.gui;
 
-import dev.adventurecraft.awakening.common.AC_DebugMode;
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.common.AC_MapEditing;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
@@ -16,11 +16,11 @@ public class AC_GuiMapEditHUD extends Screen {
 
     public AC_GuiMapEditHUD(Level var1) {
         this.world = var1;
-        AC_DebugMode.editMode = true;
-        if (AC_DebugMode.mapEditing == null) {
-            AC_DebugMode.mapEditing = new AC_MapEditing(Minecraft.instance, var1);
+        EditorSession.forLevel(this.world).editMode = true;
+        if (EditorSession.forLevel(this.world).mapEditing == null) {
+            EditorSession.forLevel(this.world).mapEditing = new AC_MapEditing(Minecraft.instance, var1);
         } else {
-            AC_DebugMode.mapEditing.updateWorld(var1);
+            EditorSession.forLevel(this.world).mapEditing.updateWorld(var1);
         }
 
         this.palette = new AC_GuiEditPalette();
@@ -53,7 +53,7 @@ public class AC_GuiMapEditHUD extends Screen {
         if (var2 == 1) {
             this.minecraft.setScreen(null);
             this.minecraft.grabMouse();
-            AC_DebugMode.editMode = false;
+            EditorSession.forLevel(this.world).editMode = false;
         }
     }
 
@@ -63,7 +63,7 @@ public class AC_GuiMapEditHUD extends Screen {
             if (var3 == 0) {
                 long var4 = this.world.getTime();
                 if (this.clickedTime != var4) {
-                    AC_DebugMode.mapEditing.paint();
+                    EditorSession.forLevel(this.world).mapEditing.paint();
                 }
             } else if (var3 == 1) {
                 this.minecraft.mouseHandler.grab();

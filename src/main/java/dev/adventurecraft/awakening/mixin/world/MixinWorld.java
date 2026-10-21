@@ -4,18 +4,11 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.ACMainThread;
 import dev.adventurecraft.awakening.ACMod;
-import dev.adventurecraft.awakening.client.render.AC_TextureBinder;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
-import dev.adventurecraft.awakening.extension.block.ExLadderBlock;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
-import dev.adventurecraft.awakening.extension.client.ExTextureManager;
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
-import dev.adventurecraft.awakening.extension.client.render.block.ExFoliageColor;
-import dev.adventurecraft.awakening.extension.client.render.block.ExGrassColor;
-import dev.adventurecraft.awakening.extension.client.resource.language.ExTranslationStorage;
-import dev.adventurecraft.awakening.extension.client.sound.ExSoundHelper;
 import dev.adventurecraft.awakening.extension.entity.ExBlockEntity;
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
@@ -23,24 +16,20 @@ import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunk;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunkCache;
 import dev.adventurecraft.awakening.image.ImageBuffer;
-import dev.adventurecraft.awakening.image.ImageFormat;
-import dev.adventurecraft.awakening.image.ImageLoadOptions;
-import dev.adventurecraft.awakening.image.ImageLoader;
-import dev.adventurecraft.awakening.item.AC_ItemCustom;
-import dev.adventurecraft.awakening.script.EntityDescriptions;
-import dev.adventurecraft.awakening.script.ScopeTag;
 import dev.adventurecraft.awakening.script.Script;
 import dev.adventurecraft.awakening.script.ScriptModel;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityNpcPath;
 import dev.adventurecraft.awakening.util.*;
-import dev.adventurecraft.awakening.world.AC_LevelSource;
+import dev.adventurecraft.awakening.world.MapResources;
+import dev.adventurecraft.awakening.world.WorldScripts;
+import dev.adventurecraft.awakening.world.collision.CollisionQueries;
+import dev.adventurecraft.awakening.world.collision.LevelCollisionSource;
+import dev.adventurecraft.awakening.editor.EditorSession;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockShapes;
-import net.minecraft.client.renderer.ptexture.*;
-import net.minecraft.locale.I18n;
 import net.minecraft.util.Mth;
 import net.minecraft.util.ProgressListener;
 import net.minecraft.world.entity.Entity;
@@ -72,15 +61,18 @@ import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.io.*;
+import java.io.Closeable;
+import java.io.File;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Mixin(Level.class)
 public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
 
     @Unique private static final int MAX_LIGHT = 15;
+    @Unique private static final boolean ac$collisionEarlyExit =
+        Boolean.parseBoolean(System.getProperty("ac.collision.earlyExit", "true"));
+    @Unique private CollisionQueries<Entity> ac$collisionQueries;
 
     @Shadow static int maxLoop;
 
@@ -127,6 +119,9 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
     public ArrayList<String> musicList;
     public ArrayList<String> soundList;
     private LevelIO mapHandler;
+    @Unique private EditorSession editorSession;
+    @Unique private MapResources mapResources;
+    @Unique private WorldScripts worldScripts;
     public AC_TriggerManager triggerManager;
     public boolean fogColorOverridden;
     public boolean fogDensityOverridden;
@@ -225,17 +220,17 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
         this.fogDensityOverridden = false;
         this.firstTick = true;
         this.newSave = false;
-        this.musicList = new ArrayList<>();
-        this.soundList = new ArrayList<>();
         this.triggerManager = new AC_TriggerManager(self);
-        this.undoStack = new AC_UndoStack();
+        this.editorSession = EditorSession.create();
+        this.undoStack = this.editorSession.history();
         this.collisionDebugLists = new ArrayList<>();
         this.rayCheckedBlocks = new ArrayList<>();
         this.rayDebugLists = new ArrayList<>();
-        File gameDir = Minecraft.getWorkingDirectory();
         File mapsDir = ACMainThread.getMapsDirectory();
         File levelDir = new File(mapsDir, mapName);
-        ((ExTranslationStorage) I18n.getInstance()).loadMapTranslation(levelDir);
+        this.mapResources = new MapResources(Minecraft.instance, self, levelDir);
+        this.musicList = this.mapResources.music();
+        this.soundList = this.mapResources.sounds();
         this.mapHandler = new McRegionLevelStorageSource(mapsDir, mapName, false);
         this.levelDir = levelDir;
         this.lightUpdates = new ArrayList<>();
@@ -272,9 +267,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
             this.levelData = this.mapHandler.getLevelData();
         }
 
-        if (!AC_TerrainImage.loadMap(levelDir)) {
-            AC_TerrainImage.loadMap(new File(new File(gameDir, "saves"), saveName));
-        }
+        this.mapResources.loadTerrain(saveName);
 
         this.isNew = this.levelData == null;
         if (dimension != null) {
@@ -328,115 +321,22 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
         this.loadMapMusic();
         this.loadMapSounds();
 
-        this.script = new Script(self);
+        this.worldScripts = new WorldScripts(self, levelDir);
+        this.script = this.worldScripts.script();
+        this.scriptHandler = this.worldScripts.handler();
+        this.worldScripts.load(props, progressListener);
+        this.musicScripts = this.worldScripts.music();
+        this.scope = this.worldScripts.scope();
 
-        if (props.getGlobalScope() != null) {
-            ScopeTag.loadScopeFromTag(this.script.globalScope, props.getGlobalScope());
-        }
-
-        this.scriptHandler = new AC_JScriptHandler(self, levelDir);
-        this.scriptHandler.loadScripts(progressListener);
-
-        this.musicScripts = new AC_MusicScripts(this.script, levelDir, this.scriptHandler);
-        if (props.getMusicScope() != null) {
-            ScopeTag.loadScopeFromTag(this.musicScripts.scope, props.getMusicScope());
-        }
-
-        this.scope = this.script.getNewScope();
-        if (props.getWorldScope() != null) {
-            ScopeTag.loadScopeFromTag(this.scope, props.getWorldScope());
-        }
-
-        this.loadSoundOverrides();
-        EntityDescriptions.loadDescriptions(new File(levelDir, "entitys"));
-        AC_ItemCustom.loadItems(new File(levelDir, "items"));
+        this.mapResources.loadDefinitions();
         AC_TileEntityNpcPath.lastEntity = null;
     }
 
     @Override
-    public void loadMapTextures() {
-        var texManager = ((ExTextureManager) Minecraft.instance.textures);
-        Minecraft.instance.textures.reloadAll();
-
-        for (Object oEntry : Minecraft.instance.textures.idMap.entrySet()) {
-            var entry = (Map.Entry<String, Integer>) oEntry;
-            String name = entry.getKey();
-            int id = entry.getValue();
-            try {
-                texManager.loadTexture(id, name);
-            }
-            catch (IllegalArgumentException ex) {
-                ACMod.LOGGER.error("Failed to load texture \"{}\".", name, ex);
-            }
-        }
-
-        this.loadTextureAnimations();
-        Level self = (Level) (Object) this;
-        AC_TextureBinder.loadImages(texManager, AC_TextureFanFX.class, self);
-        AC_TextureBinder.loadImages(texManager, FireTexture.class, self);
-        AC_TextureBinder.loadImages(texManager, LavaTexture.class, self);
-        AC_TextureBinder.loadImages(texManager, LavaSideTexture.class, self);
-        AC_TextureBinder.loadImages(texManager, PortalTexture.class, self);
-        AC_TextureBinder.loadImages(texManager, WaterTexture.class, self);
-        AC_TextureBinder.loadImages(texManager, WaterSideTexture.class, self);
-        ExGrassColor.loadGrass("/misc/grasscolor.png", self);
-        ExFoliageColor.loadFoliage("/misc/foliagecolor.png", self);
-        ((ExWorldProperties) this.levelData).loadTextureReplacements(self);
-    }
-
-    private void loadTextureAnimations() {
-        var texManager = ((ExTextureManager) Minecraft.instance.textures);
-        texManager.clearTextureAnimations();
-
-        var file = new File(this.levelDir, "animations.txt");
-        if (!file.exists()) {
-            return;
-        }
-
-        Level self = (Level) (Object) this;
-        try {
-            var reader = new BufferedReader(new FileReader(file, StandardCharsets.ISO_8859_1));
-            while (reader.ready()) {
-                String line = reader.readLine();
-                String[] elements = line.split(",", 7);
-                if (elements.length == 7) {
-                    try {
-                        String animName = elements[0].trim();
-                        String texName = elements[1].trim();
-                        String imageName = elements[2].trim();
-                        int x = Integer.parseInt(elements[3].trim());
-                        int y = Integer.parseInt(elements[4].trim());
-                        int w = Integer.parseInt(elements[5].trim());
-                        int h = Integer.parseInt(elements[6].trim());
-                        var instance = new AC_TextureAnimated(texName, x, y, w, h);
-                        //noinspection DataFlowIssue
-                        ((AC_TextureBinder) instance).loadImage(imageName, self);
-                        texManager.registerTextureAnimation(animName, instance);
-                    }
-                    catch (Exception var12) {
-                        var12.printStackTrace();
-                    }
-                }
-            }
-        }
-        catch (IOException var13) {
-            var13.printStackTrace();
-        }
-    }
+    public void loadMapTextures() { this.mapResources.loadMapTextures(); }
 
     @Override
-    public ImageBuffer loadMapTexture(String name) {
-        var file = new File(this.levelDir, name);
-        if (file.exists()) {
-            try {
-                return ImageLoader.load(file, ImageLoadOptions.withFormat(ImageFormat.RGBA_U8));
-            }
-            catch (Exception ex) {
-                ACMod.LOGGER.error("Failed to load map texture \"{}\":", file.getPath(), ex);
-            }
-        }
-        return null;
-    }
+    public ImageBuffer loadMapTexture(String name) { return this.mapResources.loadMapTexture(name); }
 
     @Override
     public void updateChunkProvider() {
@@ -507,16 +407,11 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
         )
     )
     private void modifySave(LevelIO instance, LevelData worldProperties, List<Player> list) {
-        var exProps = (ExWorldProperties) worldProperties;
-        exProps.setGlobalScope(ScopeTag.getTagFromScope(this.script.globalScope));
-        exProps.setWorldScope(ScopeTag.getTagFromScope(this.scope));
-        exProps.setMusicScope(ScopeTag.getTagFromScope(this.musicScripts.scope));
-
+        this.worldScripts.save((ExWorldProperties) worldProperties);
         if (this.levelIo != null) {
             this.levelIo.saveWithPlayers(worldProperties, list);
         }
-
-        if (AC_DebugMode.levelEditing || this.levelIo == null) {
+        if (this.getEditorSession().levelEditing || this.levelIo == null) {
             this.mapHandler.saveWithPlayers(worldProperties, list);
         }
     }
@@ -527,6 +422,27 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
 
     public @Override boolean ac$hasChunk(int x, int z) {
         return this.hasChunk(x, z);
+    }
+
+    private @Unique CollisionQueries<Entity> ac$collisionQueries() {
+        // AdventureCraft also allocates worlds without invoking a constructor.
+        if (this.ac$collisionQueries == null) {
+            this.ac$collisionQueries = new CollisionQueries<>(new LevelCollisionSource((Level) (Object) this));
+        }
+        return this.ac$collisionQueries;
+    }
+
+    public @Override boolean ac$hasCollision(Entity entity, AABB area) {
+        CollisionQueries<Entity> queries = this.ac$collisionQueries();
+        if (!ac$collisionEarlyExit || this.getEditorSession().renderCollisions) {
+            queries.recordFallback();
+            return !((Level) (Object) this).getCubes(entity, area).isEmpty();
+        }
+        return queries.hasCollision(entity, area);
+    }
+
+    public @Override CollisionQueries.Statistics ac$collisionStatistics() {
+        return this.ac$collisionQueries().statistics();
     }
 
     @Override
@@ -556,6 +472,8 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
     }
 
     public @Override <E extends TileEntity> E ac$tryGetTileEntity(int x, int y, int z, Class<E> type) {
+        E pending = this.ac$findPendingTileEntity(x, y, z, type);
+        if (pending != null) return pending;
         LevelChunk chunk = this.getChunk(x >> 4, z >> 4);
         if (chunk != null) {
             return ((ExChunk) chunk).ac$tryGetTileEntity(x & 15, y, z & 15, type);
@@ -564,11 +482,34 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
     }
 
     public @Override <E extends TileEntity> E ac$getTileEntity(int x, int y, int z, Class<E> type) {
+        E pending = this.ac$findPendingTileEntity(x, y, z, type);
+        if (pending != null) return pending;
         LevelChunk chunk = this.getChunk(x >> 4, z >> 4);
         if (chunk != null) {
-            return ((ExChunk) chunk).ac$getTileEntity(x & 15, y, z & 15, type);
+            E entity = ((ExChunk) chunk).ac$getTileEntity(x & 15, y, z & 15, type);
+            // Lazy creation can queue the entity instead of inserting it into the chunk.
+            return entity != null ? entity : this.ac$findPendingTileEntity(x, y, z, type);
         }
         return null;
+    }
+
+    @Unique
+    @SuppressWarnings("unchecked")
+    private <E extends TileEntity> E ac$findPendingTileEntity(int x, int y, int z, Class<E> type) {
+        // Storage blocks can restore entities while the world is ticking tile entities.
+        // The newest live replacement is authoritative until the pending list is drained.
+        for (int i = this.pendingTileEntities.size() - 1; i >= 0; i--) {
+            TileEntity entity = this.pendingTileEntities.get(i);
+            if (!entity.isRemoved() && entity.x == x && entity.y == y && entity.z == z) {
+                return type != null ? type.cast(entity) : (E) entity;
+            }
+        }
+        return null;
+    }
+
+    @Overwrite
+    public TileEntity getTileEntity(int x, int y, int z) {
+        return this.ac$getTileEntity(x, y, z, null);
     }
 
     public @Override void getTileColumn(ByteBuffer buffer, int x, int y0, int z, int y1) {
@@ -720,7 +661,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
             collideWithClip
         );
 
-        if (AC_DebugMode.renderRays) {
+        if (this.getEditorSession().renderRays) {
             this.recordRayDebugList(paX, paY, paZ, pointB.x, pointB.y, pointB.z, hit);
         }
         return hit;
@@ -738,7 +679,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
 
     @Unique
     public boolean isClippingBlock(int id) {
-        return id == AC_Blocks.clipBlock.id || ExLadderBlock.isLadderID(id);
+        return LevelCollisionSource.isClippingBlock(id);
     }
 
     @Override
@@ -765,7 +706,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
                 aBlock.mayPick(this.getData(aX, aY, aZ), blockCollidableFlag)
             )) {
 
-            if (aAabb != null && AC_DebugMode.renderRays) {
+            if (aAabb != null && this.getEditorSession().renderRays) {
                 this.rayCheckedBlocks.add(aAabb);
             }
 
@@ -900,7 +841,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
                 // TODO: is getRenderShape check needed after mayPick?
                 ((ExBlock) block).getRenderShape(this, aX, aY, aZ) != BlockShapes.NONE) {
 
-                if (aabb != null && AC_DebugMode.renderRays) {
+                if (aabb != null && this.getEditorSession().renderRays) {
                     this.rayCheckedBlocks.add(aabb);
                 }
 
@@ -946,9 +887,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
         @Local(argsOnly = true) Entity entity
     ) {
 
-        if (((ExEntity) entity).getCollidesWithClipBlocks() || !this.isClippingBlock(block.id)) {
-            block.addAABBs(world, x, y, z, aabb, output);
-        }
+        LevelCollisionSource.addBlockCollisions(block, world, entity, x, y, z, aabb, output);
     }
 
     @Inject(
@@ -956,7 +895,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
         at = @At("RETURN")
     )
     private void recordCollision(Entity entity, AABB aabb, CallbackInfoReturnable<List<AABB>> cir) {
-        if (!AC_DebugMode.renderCollisions) {
+        if (!this.getEditorSession().renderCollisions) {
             return;
         }
 
@@ -1055,7 +994,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
     private boolean fixupRemoveCondition(boolean value, @Local Entity entity) {
         ExMinecraft mc = (ExMinecraft) Minecraft.instance;
         return !(!entity.removed && (!mc.isCameraActive() || !mc.isCameraPause()) &&
-            (!AC_DebugMode.active || entity instanceof Player)
+            (!this.getEditorSession().active || entity instanceof Player)
         );
     }
 
@@ -1177,6 +1116,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
     )
     private void removeBlockEntityOnSet(int x, int y, int z, TileEntity var4, CallbackInfo ci) {
         this.removeTileEntity(x, y, z);
+        var4.level = (Level) (Object) this;
     }
 
     @Redirect(
@@ -1561,62 +1501,11 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
     }
 
     @Override
-    public void loadMapMusic() {
-        this.musicList.clear();
+    public void loadMapMusic() { this.mapResources.loadMapMusic(); }
 
-        File musicDir = new File(this.levelDir, "music");
-        File[] files = musicDir.listFiles();
-        if (files != null) {
-            for (File file : files) {
-                if (file.isFile() && file.getName().endsWith(".ogg")) {
-                    String fileName = file.getName().toLowerCase();
-                    String name = String.format("music/%s", fileName);
-                    Minecraft.instance.soundEngine.addStreaming(name, file);
+    public void loadMapSounds() { this.mapResources.loadMapSounds(); }
 
-                    String musicName = String.format("music.%s", fileName.replace(".ogg", ""));
-                    this.musicList.add(musicName);
-                }
-            }
-        }
-
-        // TODO: play after level is initialized
-        String playingMusic = ((ExWorldProperties) this.levelData).getPlayingMusic();
-        if (!playingMusic.isEmpty()) {
-            var level = (Level) (Object) this;
-            ((ExSoundHelper) Minecraft.instance.soundEngine).playMusicFromStreaming(level, playingMusic, 0, 0);
-        }
-    }
-
-    public void loadMapSounds() {
-        this.soundList.clear();
-
-        File soundDir = new File(this.levelDir, "sound");
-        File[] files = soundDir.listFiles();
-        if (files == null) {
-            return;
-        }
-
-        for (File file : files) {
-            if (file.isFile() && file.getName().endsWith(".ogg")) {
-                String fileName = file.getName().toLowerCase();
-                String name = String.format("sound/%s", fileName);
-                Minecraft.instance.soundEngine.add(name, file);
-
-                String soundName = String.format("sound.%s", fileName.replace(".ogg", ""));
-                this.soundList.add(soundName);
-            }
-        }
-    }
-
-    public void loadSoundOverrides() {
-        // TODO: unload sounds?
-
-        Minecraft.instance.bgLoader.forceReload();
-        File var1 = new File(this.levelDir, "soundOverrides");
-        if (var1.exists()) {
-            Minecraft.instance.bgLoader.loadAll(var1, "");
-        }
-    }
+    public void loadSoundOverrides() { this.mapResources.loadSoundOverrides(); }
 
     @Override
     public void loadBrightness() {
@@ -1640,7 +1529,18 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
 
     @Override
     public void close() {
-        this.script.close();
+        try {
+            if (this.worldScripts != null) this.worldScripts.close();
+        } finally {
+            if (this.editorSession != null) this.editorSession.close();
+            if (this.mapResources != null) this.mapResources.close();
+        }
+    }
+
+    @Override
+    public EditorSession getEditorSession() {
+        if (this.editorSession == null) this.editorSession = EditorSession.create();
+        return this.editorSession;
     }
 
     @Override

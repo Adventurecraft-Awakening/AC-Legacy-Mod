@@ -17,13 +17,22 @@ public class AC_JScriptInfo {
         this.compiledScript = Objects.requireNonNull(script);
     }
 
+    /** Scheduled callbacks have profiling data without a separately compiled source file. */
+    public AC_JScriptInfo(String name) {
+        this.name = name;
+    }
+
     public void addTime(long time) {
+        this.addTime(time, true);
+    }
+
+    public void addTime(long time, boolean invocation) {
         this.totalTime += time;
         if (time > this.maxTime) {
             this.maxTime = time;
         }
 
-        ++this.count;
+        if (invocation) ++this.count;
     }
 
     public void clear() {

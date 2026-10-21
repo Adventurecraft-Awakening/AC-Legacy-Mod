@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.common.gui;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,7 +56,7 @@ class AC_GuiEditPalette extends GuiComponent {
 					var4.soundEngine.playUI("random.click", 1.0F, 1.0F);
 					var11 = var9 + var10 * columns;
 					if(var11 + this.getOffset() < this.blocks.size()) {
-						AC_DebugMode.mapEditing.setBlock(((Tile)this.blocks.get(var11 + this.getOffset())).id, 0);
+						EditorSession.current().mapEditing.setBlock(((Tile)this.blocks.get(var11 + this.getOffset())).id, 0);
 						return true;
 					}
 				} else if(var9 == columns && var1 % 16 < 4 && this.needScrollbar()) {

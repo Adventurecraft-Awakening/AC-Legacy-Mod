@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.item;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.tile.AC_IBlockColor;
 import dev.adventurecraft.awakening.world.BlockPos;
 import net.minecraft.world.ItemInstance;
@@ -16,14 +17,14 @@ public class AC_ItemPaintBucket extends Item {
 
     public boolean useOn(ItemInstance stack, Player player, Level world, int x, int y, int z, int meta) {
         // TODO: use on singular block?
-        if (!AC_ItemCursor.bothSet) {
+        if (!EditorSession.forLevel(world).selection.bothSet) {
             return false;
         }
 
         int amount = player.isSneaking() ? -1 : 1;
 
-        BlockPos min = AC_ItemCursor.one().min(AC_ItemCursor.two());
-        BlockPos max = AC_ItemCursor.one().max(AC_ItemCursor.two());
+        BlockPos min = EditorSession.forLevel(world).selection.one.min(EditorSession.forLevel(world).selection.two);
+        BlockPos max = EditorSession.forLevel(world).selection.one.max(EditorSession.forLevel(world).selection.two);
 
         for (int bX = min.x(); bX <= max.x(); bX++) {
             for (int bY = min.y(); bY <= max.y(); bY++) {

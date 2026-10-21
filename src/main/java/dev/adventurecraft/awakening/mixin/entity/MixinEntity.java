@@ -8,6 +8,7 @@ import dev.adventurecraft.awakening.extension.nbt.ExCompoundTag;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.util.TagUtil;
+import dev.adventurecraft.awakening.world.collision.CollisionQueries;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -28,6 +29,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.List;
 import java.util.Random;
 
 @Mixin(Entity.class)
@@ -131,8 +133,34 @@ public abstract class MixinEntity implements ExEntity {
     @Shadow
     protected abstract void markHurt();
 
-    @Shadow
-    public abstract boolean isFree(double d, double e, double f);
+    @Overwrite
+    public boolean isFree(double x, double y, double z) {
+        AABB area = this.bb.offset(x, y, z);
+        return !((ExWorld) this.level).ac$hasCollision((Entity) (Object) this, area) &&
+            !this.level.containsAnyLiquid(area);
+    }
+
+    @Redirect(method = "resetPos", at = @At(value = "INVOKE",
+        target = "Lnet/minecraft/world/level/Level;getCubes(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/AABB;)Ljava/util/List;"))
+    private List<AABB> ac$resetCollisionPresence(Level level, Entity entity, AABB area) {
+        return CollisionQueries.presenceList(((ExWorld) level).ac$hasCollision(entity, area));
+    }
+
+    // The first two getCubes calls in move only test support while sneaking.
+    // The later axis/step resolution calls continue to receive complete lists.
+    @Redirect(method = "move", at = @At(value = "INVOKE",
+        target = "Lnet/minecraft/world/level/Level;getCubes(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/AABB;)Ljava/util/List;",
+        ordinal = 0))
+    private List<AABB> ac$sneakXCollisionPresence(Level level, Entity entity, AABB area) {
+        return CollisionQueries.presenceList(((ExWorld) level).ac$hasCollision(entity, area));
+    }
+
+    @Redirect(method = "move", at = @At(value = "INVOKE",
+        target = "Lnet/minecraft/world/level/Level;getCubes(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/AABB;)Ljava/util/List;",
+        ordinal = 1))
+    private List<AABB> ac$sneakZCollisionPresence(Level level, Entity entity, AABB area) {
+        return CollisionQueries.presenceList(((ExWorld) level).ac$hasCollision(entity, area));
+    }
 
     @Shadow
     public abstract boolean isSneaking();
@@ -516,11 +544,13 @@ public abstract class MixinEntity implements ExEntity {
     }
     @Override
     public void setRotUnwrapped(float yRot, float xRot) {
-        float newYRot = closestAngle(yRot, this.yRot);
-        float newXRot = xRot;
+        float newYRot = yRot % 360.0F;
+        float newXRot = xRot % 360.0F;
 
-        this.yRotO = this.yRot;
-        this.xRotO = this.xRot;
+        // Legacy scripts read the requested angle back, including zero resets for cursors.
+        // Rebase the previous yaw for smooth interpolation without changing that target.
+        this.yRotO = closestAngle(this.yRot, newYRot);
+        this.xRotO = this.xRot % 360.0F;
 
         this.yRot = newYRot;
         this.xRot = newXRot;

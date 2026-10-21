@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.mixin.client;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import com.llamalad7.mixinextras.injector.WrapWithCondition;
-import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.common.AC_UndoStack;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
@@ -22,30 +22,29 @@ public abstract class MixinSingleplayerInteractionManager extends MixinClientInt
     @Overwrite
     public boolean destroyBlock(int x, int y, int z, int side) {
         AC_UndoStack undoStack = ((ExWorld) this.minecraft.level).getUndoStack();
-        undoStack.pushLayer();
+        try (var ignored = undoStack.recordingScope()) {
+            boolean broken = false;
+            int destroyWidth = this.getDestroyExtraWidth();
+            int destroyDepth = this.getDestroyExtraDepth();
 
-        boolean broken = false;
-        int destroyWidth = this.getDestroyExtraWidth();
-        int destroyDepth = this.getDestroyExtraDepth();
-
-        for (int w = -destroyWidth; w <= destroyWidth; ++w) {
-            for (int h = -destroyWidth; h <= destroyWidth; ++h) {
-                for (int d = 0; d <= destroyDepth; ++d) {
-                    broken |= switch (side) {
-                        case Facing.DOWN -> this._sendBlockRemoved(x + w, y + d, z + h, side);
-                        case Facing.UP -> this._sendBlockRemoved(x + w, y - d, z + h, side);
-                        case Facing.NORTH -> this._sendBlockRemoved(x + w, y + h, z + d, side);
-                        case Facing.SOUTH -> this._sendBlockRemoved(x + w, y + h, z - d, side);
-                        case Facing.WEST -> this._sendBlockRemoved(x + d, y + h, z + w, side);
-                        case Facing.EAST -> this._sendBlockRemoved(x - d, y + h, z + w, side);
-                        default -> false;
-                    };
+            for (int w = -destroyWidth; w <= destroyWidth; ++w) {
+                for (int h = -destroyWidth; h <= destroyWidth; ++h) {
+                    for (int d = 0; d <= destroyDepth; ++d) {
+                        broken |= switch (side) {
+                            case Facing.DOWN -> this._sendBlockRemoved(x + w, y + d, z + h, side);
+                            case Facing.UP -> this._sendBlockRemoved(x + w, y - d, z + h, side);
+                            case Facing.NORTH -> this._sendBlockRemoved(x + w, y + h, z + d, side);
+                            case Facing.SOUTH -> this._sendBlockRemoved(x + w, y + h, z - d, side);
+                            case Facing.WEST -> this._sendBlockRemoved(x + d, y + h, z + w, side);
+                            case Facing.EAST -> this._sendBlockRemoved(x - d, y + h, z + w, side);
+                            default -> false;
+                        };
+                    }
                 }
             }
-        }
 
-        undoStack.popLayer();
-        return broken;
+            return broken;
+        }
     }
 
     @Unique
@@ -82,7 +81,7 @@ public abstract class MixinSingleplayerInteractionManager extends MixinClientInt
         )
     )
     private boolean onlyBreakBlockInDebugMode(SurvivalGameMode instance, int var1, int var2, int var3, int var4) {
-        return AC_DebugMode.active;
+        return EditorSession.forLevel(this.minecraft.level).active;
     }
 
     @Inject(
@@ -91,7 +90,7 @@ public abstract class MixinSingleplayerInteractionManager extends MixinClientInt
         cancellable = true
     )
     private void onlyDigInDebugMode(int var1, int var2, int var3, int var4, CallbackInfo ci) {
-        if (!AC_DebugMode.active) {
+        if (!EditorSession.forLevel(this.minecraft.level).active) {
             ci.cancel();
         }
     }
@@ -102,8 +101,8 @@ public abstract class MixinSingleplayerInteractionManager extends MixinClientInt
         if (heldItem != null && heldItem.id == AC_Items.quill.id) {
             return 500.0F;
         }
-        if (AC_DebugMode.active) {
-            return (float) AC_DebugMode.reachDistance;
+        if (EditorSession.forLevel(this.minecraft.level).active) {
+            return (float) EditorSession.forLevel(this.minecraft.level).reachDistance;
         }
         return 4.0F;
     }

@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.tile;
 
-import dev.adventurecraft.awakening.common.AC_DebugMode;
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.common.gui.AC_GuiStoreDebug;
 import dev.adventurecraft.awakening.extension.inventory.ExPlayerInventory;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
@@ -37,7 +37,7 @@ public class AC_BlockStore extends TileEntityTile implements AC_ITriggerBlock {
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
         var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityStore.class);
-        if (AC_DebugMode.active) {
+        if (EditorSession.forLevel(world).active) {
             AC_GuiStoreDebug.showUI(entity);
             return true;
         }

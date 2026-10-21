@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import dev.adventurecraft.awakening.extension.block.ExLadderBlock;
 import dev.adventurecraft.awakening.extension.entity.ExMob;
 import dev.adventurecraft.awakening.extension.nbt.ExCompoundTag;
+import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.util.MathF;
@@ -30,6 +31,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Mob.class)
 public abstract class MixinMob extends MixinEntity implements ExMob {
+
+    @Overwrite
+    public boolean canSpawn() {
+        return this.level.isUnobstructed(this.bb) &&
+            !((ExWorld) this.level).ac$hasCollision((Entity) (Object) this, this.bb) &&
+            !this.level.containsAnyLiquid(this.bb);
+    }
 
     @Shadow public int invulnerableDuration;
     @Shadow protected String textureName;

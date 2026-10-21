@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.tile;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.common.AC_DebugMode;
 import net.minecraft.client.renderer.BlockShapes;
@@ -34,18 +35,18 @@ public class AC_BlockLockedDoor extends Tile implements AC_ITriggerDebugBlock {
     @Override
     public HitResult clip(Level level, int x, int y, int z, Vec3 vec1, Vec3 vec2) {
         boolean unlocked = (level.getData(x, y, z) & 1) != 0;
-        return !AC_DebugMode.active && unlocked ? null : super.clip(level, x, y, z, vec1, vec2);
+        return !EditorSession.forLevel(level).active && unlocked ? null : super.clip(level, x, y, z, vec1, vec2);
     }
 
     @Override
     public AABB getAABB(Level level, int x, int y, int z) {
         boolean unlocked = (level.getData(x, y, z) & 1) == 0;
-        return !AC_DebugMode.active && unlocked ? super.getAABB(level, x, y, z) : null;
+        return !EditorSession.forLevel(level).active && unlocked ? super.getAABB(level, x, y, z) : null;
     }
 
     @Override
     public int getRenderShape(LevelSource view, int x, int y, int z) {
-        if (AC_DebugMode.active || view.getData(x, y, z) == 0) {
+        if (EditorSession.current().active || view.getData(x, y, z) == 0) {
             return this.getRenderShape();
         }
         return BlockShapes.NONE;

@@ -1,65 +1,56 @@
 package dev.adventurecraft.awakening.common;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-
+import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.script.Script;
+import dev.adventurecraft.awakening.script.ScriptAttachment;
 import org.mozilla.javascript.Scriptable;
 
-public class AC_MusicScripts {
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-    ArrayList<AC_MusicScriptEntry> musicEntries = new ArrayList<>();
-    AC_JScriptHandler handler;
+public class AC_MusicScripts {
+    private final Map<String, AC_MusicScriptEntry> entries = new LinkedHashMap<>();
+    private final Script script;
+    private final AC_JScriptHandler handler;
+    private final ScriptAttachment attachment;
     public Scriptable scope;
 
-    public AC_MusicScripts(Script var1, File var2, AC_JScriptHandler var3) {
-        this.handler = var3;
-        this.scope = var1.getNewScope();
-        this.loadMusic(var2);
+    public AC_MusicScripts(Script script, File mapDirectory, AC_JScriptHandler handler) {
+        this.script = script;
+        this.handler = handler;
+        this.attachment = script.runtime().attachment();
+        this.scope = this.attachment.attach(script);
+        this.loadMusic(mapDirectory);
     }
 
-    public void loadMusic(File var1) {
-        this.musicEntries.clear();
-        File musicEntryFile = new File(var1, "musicScripts.txt");
-        if (!musicEntryFile.exists()) {
-            return;
-        }
+    public ScriptAttachment attachment() { return this.attachment; }
 
-        try {
-            var reader = new BufferedReader(new FileReader(musicEntryFile));
-            while (reader.ready()) {
-                this.processLine(reader.readLine());
+    public void loadMusic(File mapDirectory) {
+        this.entries.clear();
+        var path = mapDirectory.toPath().resolve("musicScripts.txt");
+        if (!Files.isRegularFile(path)) return;
+        try (var reader = Files.newBufferedReader(path, Charset.defaultCharset())) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",", 3);
+                if (parts.length == 3) {
+                    var entry = new AC_MusicScriptEntry(parts[0].trim(), parts[1].trim(), parts[2].trim());
+                    this.entries.putIfAbsent(entry.musicKey, entry);
+                }
             }
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void processLine(String line) {
-        String[] parts = line.split(",", 3);
-        if (parts.length == 3) {
-            this.musicEntries.add(new AC_MusicScriptEntry(parts[0].trim(), parts[1].trim(), parts[2].trim()));
+        } catch (IOException error) {
+            ACMod.LOGGER.warn("Failed to load music scripts from {}.", path, error);
         }
     }
 
     public AC_MusicScriptEntry executeMusic(CharSequence musicKey) {
-        Iterator<AC_MusicScriptEntry> iterator = this.musicEntries.iterator();
-
-        AC_MusicScriptEntry entry;
-        do {
-            if (!iterator.hasNext()) {
-                return null;
-            }
-            entry = iterator.next();
-        }
-        while (!entry.musicKey.contentEquals(musicKey));
-
+        AC_MusicScriptEntry entry = this.entries.get(musicKey.toString());
+        if (entry == null) return null;
+        this.scope = this.attachment.attach(this.script);
         this.handler.runScript(entry.scriptFile, this.scope);
         return entry;
     }

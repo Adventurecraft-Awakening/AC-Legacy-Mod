@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.mixin.client.render;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.client.options.Config;
@@ -392,8 +393,8 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
     )
     private void updateCursor(float var1, long var2, CallbackInfo ci, @Local Mob var22) {
         GL11.glPushMatrix();
-        if (AC_DebugMode.editMode && AC_DebugMode.mapEditing != null) {
-            AC_DebugMode.mapEditing.updateCursor(var22, this.getFov(var1), var1);
+        if (EditorSession.current().editMode && EditorSession.current().mapEditing != null) {
+            EditorSession.current().mapEditing.updateCursor(var22, this.getFov(var1), var1);
         }
     }
 
@@ -407,20 +408,20 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         )
     )
     private void renderWorldEditing(float deltaTime, long var2, CallbackInfo ci) {
-        if (AC_DebugMode.editMode && AC_DebugMode.mapEditing != null) {
-            AC_DebugMode.mapEditing.render(deltaTime);
+        if (EditorSession.current().editMode && EditorSession.current().mapEditing != null) {
+            EditorSession.current().mapEditing.render(deltaTime);
         }
 
         ItemInstance heldItem = this.mc.player.inventory.getSelected();
         if (heldItem != null && heldItem.id == AC_Items.paste.id) {
-            if (AC_DebugMode.mapEditing == null) {
-                AC_DebugMode.mapEditing = new AC_MapEditing(this.mc, this.mc.level);
+            if (EditorSession.forLevel(this.mc.level).mapEditing == null) {
+                EditorSession.forLevel(this.mc.level).mapEditing = new AC_MapEditing(this.mc, this.mc.level);
             }
             else {
-                AC_DebugMode.mapEditing.updateWorld(this.mc.level);
+                EditorSession.forLevel(this.mc.level).mapEditing.updateWorld(this.mc.level);
             }
 
-            AC_DebugMode.mapEditing.renderSelection(deltaTime);
+            EditorSession.forLevel(this.mc.level).mapEditing.renderSelection(deltaTime);
         }
     }
 
@@ -433,7 +434,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         )
     )
     private boolean noHeldItemInEditMode(boolean value) {
-        return !AC_DebugMode.editMode && value;
+        return !EditorSession.current().editMode && value;
     }
 
     @Redirect(
@@ -456,19 +457,19 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         GL11.glDisable(GL11.GL_ALPHA_TEST);
         wer.drawCursorSelection(viewEntity, ((Player) viewEntity).inventory.getSelected(), deltaTime);
 
-        if (AC_DebugMode.active) {
+        if (EditorSession.current().active) {
             AC_CutsceneCamera activeCamera = ((ExMinecraft) this.mc).getActiveCutsceneCamera();
             if (activeCamera != null) {
                 activeCamera.drawLines(viewEntity, deltaTime);
             }
 
-            if (AC_DebugMode.renderPaths) {
+            if (EditorSession.current().renderPaths) {
                 for (Entity entity : (List<Entity>) this.mc.level.entities) {
                     wer.drawEntityPath(entity, viewEntity, deltaTime);
                 }
             }
 
-            if (AC_DebugMode.renderFov) {
+            if (EditorSession.current().renderFov) {
                 for (Entity entity : (List<Entity>) this.mc.level.entities) {
                     if (entity instanceof Mob) {
                         wer.drawEntityFOV((Mob) entity, viewEntity, deltaTime);
@@ -477,12 +478,12 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
             }
         }
 
-        if (AC_DebugMode.renderCollisions) {
+        if (EditorSession.current().renderCollisions) {
             var collisionLists = ((ExWorld) this.mc.level).getCollisionDebugLists();
             this.drawCollisionLists(collisionLists, viewEntity, deltaTime);
         }
 
-        if (AC_DebugMode.renderRays) {
+        if (EditorSession.current().renderRays) {
             var rayDebugLists = ((ExWorld) this.mc.level).getRayDebugLists();
             this.drawRayDebugLists(rayDebugLists, viewEntity, deltaTime);
             rayDebugLists.clear();

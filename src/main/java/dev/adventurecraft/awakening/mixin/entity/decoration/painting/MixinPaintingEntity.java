@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.mixin.entity.decoration.painting;
 
-import dev.adventurecraft.awakening.common.AC_DebugMode;
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.extension.world.entity.item.ExPainting;
 import dev.adventurecraft.awakening.world.BlockPos;
 import net.minecraft.world.entity.item.Painting;
@@ -26,7 +26,7 @@ public abstract class MixinPaintingEntity implements ExPainting {
     // Only breakable in debug mode!
     @Inject(method = "hurt", at = @At("HEAD"), cancellable = true)
     private void disableHurt(CallbackInfoReturnable<Boolean> ci) {
-        if (!AC_DebugMode.active) {
+        if (!EditorSession.current().active) {
             ci.setReturnValue(false);
         }
     }

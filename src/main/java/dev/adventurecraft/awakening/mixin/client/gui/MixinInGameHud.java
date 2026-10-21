@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.mixin.client.gui;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.client.gl.GLDevice;
 import dev.adventurecraft.awakening.client.gui.AC_ChatScreen;
@@ -414,7 +415,7 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
         }
         else {
             int y = 2; // 12 prev
-            if (AC_DebugMode.active) {
+            if (EditorSession.current().active) {
                 font.drawShadow(AC_Version.shortVersion, x, y, color0);
                 y += 10;
 
@@ -429,7 +430,7 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
                 y += 10;
             }
 
-            if (AC_DebugMode.levelEditing) {
+            if (EditorSession.current().levelEditing) {
                 font.drawShadow("Map Editing", x, y, color0);
             }
         }

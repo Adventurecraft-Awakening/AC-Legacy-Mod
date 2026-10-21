@@ -1,11 +1,13 @@
 package dev.adventurecraft.awakening.extension.world;
 
 import dev.adventurecraft.awakening.common.*;
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.image.ImageBuffer;
 import dev.adventurecraft.awakening.script.Script;
 import dev.adventurecraft.awakening.util.UnsafeUtil;
 import dev.adventurecraft.awakening.world.AC_LevelSource;
 import dev.adventurecraft.awakening.world.BlockPos;
+import dev.adventurecraft.awakening.world.collision.CollisionQueries;
 import dev.adventurecraft.awakening.world.level.LevelHeightAccessor;
 import net.minecraft.util.ProgressListener;
 import net.minecraft.world.entity.Entity;
@@ -15,6 +17,7 @@ import net.minecraft.world.level.chunk.ChunkPos;
 import net.minecraft.world.level.dimension.Dimension;
 import net.minecraft.world.level.storage.LevelIO;
 import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.mozilla.javascript.Scriptable;
 
@@ -78,6 +81,10 @@ public interface ExWorld extends AC_LevelSource, LevelHeightAccessor {
 
     boolean ac$hasChunk(int x, int z);
 
+    boolean ac$hasCollision(Entity entity, AABB area);
+
+    CollisionQueries.Statistics ac$collisionStatistics();
+
     default boolean hasChunk(ChunkPos pos) {
         return this.ac$hasChunk(pos.x, pos.z);
     }
@@ -122,6 +129,8 @@ public interface ExWorld extends AC_LevelSource, LevelHeightAccessor {
 
     AC_UndoStack getUndoStack();
 
+    EditorSession getEditorSession();
+
     ArrayList<String> getMusicList();
 
     ArrayList<String> getSoundList();
@@ -149,8 +158,16 @@ public interface ExWorld extends AC_LevelSource, LevelHeightAccessor {
         ProgressListener progressListener
     ) {
         var world = UnsafeUtil.allocateInstance(Level.class);
-        ((ExWorld) world).initWorld(mapName, dimData, saveName, seed, dimension, progressListener);
-        return world;
+        try {
+            ((ExWorld) world).initWorld(mapName, dimData, saveName, seed, dimension, progressListener);
+            return world;
+        } catch (RuntimeException | Error failure) {
+            if (world instanceof java.io.Closeable closeable) {
+                try { closeable.close(); }
+                catch (Exception cleanup) { failure.addSuppressed(cleanup); }
+            }
+            throw failure;
+        }
     }
 
     static Level createWorld(

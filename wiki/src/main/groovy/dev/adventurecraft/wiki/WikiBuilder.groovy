@@ -668,20 +668,30 @@ Applies to AC-Legacy **${properties.mod_version}** at source revision **`${short
             'build.gradle': ['JavaVersion.VERSION_25'],
             'src/main/java/dev/adventurecraft/awakening/ACMainThread.java': ['new File(getWorkingDirectory(), "../maps")'],
             'src/main/java/dev/adventurecraft/awakening/mixin/client/MixinMinecraft.java': [
-                'eventKey == Keyboard.KEY_F4', 'AC_DebugMode.active = !AC_DebugMode.active',
                 'eventKey == Keyboard.KEY_F5', 'this.options.thirdPersonView = !this.options.thirdPersonView',
-                'eventKey == Keyboard.KEY_F6', 'eventKey == Keyboard.KEY_F7',
-                'eventKey == Keyboard.KEY_Z', 'eventKey == Keyboard.KEY_Y'],
+                'EditorInput.handleShortcut', 'EditorInput.handleHistoryShortcut'],
+            'src/main/java/dev/adventurecraft/awakening/client/input/EditorInput.java': [
+                'EditorSession.forLevel(client.level)', 'key == Keyboard.KEY_F4', 'editor.active = !editor.active',
+                'key == Keyboard.KEY_F6', 'if (editor.active)', 'resetAll()',
+                'key == Keyboard.KEY_F7', 'displayGUIPalette()',
+                '!editor.active || !controlDown', 'key == Keyboard.KEY_Z', 'ServerCommands.cmdUndo',
+                'key == Keyboard.KEY_Y', 'ServerCommands.cmdRedo'],
             'src/main/java/dev/adventurecraft/awakening/common/AC_JScriptHandler.java': [
-                'new File(var2, "scripts")', 'Files.walk(this.scriptDir.toPath(), 1)', 'name.endsWith(".js")'],
+                'mapDirectory.toPath().resolve("scripts")', 'this.catalog.load(progress)'],
+            'src/main/java/dev/adventurecraft/awakening/script/ScriptCatalog.java': [
+                'Files.list(this.directory)', 'Files::isRegularFile',
+                'WorldScriptRuntime.key(path.getFileName().toString()).endsWith(".js")'],
+            'src/main/java/dev/adventurecraft/awakening/script/WorldScriptRuntime.java': [
+                'new ScriptBindings(this, world, client)'],
+            'src/main/java/dev/adventurecraft/awakening/script/ScriptBindings.java': ['objects.forEach(runtime::bind)'],
             'src/main/java/dev/adventurecraft/awakening/common/ServerCommands.java': ['exWorld.setTimeOfDay(0L)', 'exWorld.setTimeOfDay(14000L)']
         ]
         expected.each { path, snippets ->
             def source = read(path)
             snippets.each { require(source.contains(it), "current wiki evidence changed: '${it}' is missing from ${path}") }
         }
-        def source = read('src/main/java/dev/adventurecraft/awakening/script/Script.java')
-        def installed = (source =~ /this\.addObject\("([^"]+)"/).collect { it[1] }.toSet()
+        def source = read('src/main/java/dev/adventurecraft/awakening/script/ScriptBindings.java')
+        def installed = (source =~ /objects\.put\("([^"]+)"/).collect { it[1] }.toSet()
         def missing = ['time', 'world', 'chat', 'weather', 'effect', 'particle', 'sound', 'ui', 'screen', 'script', 'keyboard', 'renderer'].toSet() - installed
         require(!missing, "current scripting globals changed; missing: ${missing.sort().join(', ')}")
         def obsolete = ['toggledecay', 'togglemelting', 'mobsburn'].toSet().intersect(parseCommands().commands.toSet())

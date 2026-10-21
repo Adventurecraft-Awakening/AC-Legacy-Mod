@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.mixin.block;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import com.llamalad7.mixinextras.sugar.Local;
-import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.entity.AC_EntityArrowBomb;
 import dev.adventurecraft.awakening.item.AC_Items;
 import net.minecraft.world.ItemInstance;
@@ -33,7 +33,7 @@ public abstract class MixinDispenserBlock extends MixinBlock {
         Player player,
         CallbackInfoReturnable<Boolean> cir
     ) {
-        if (!AC_DebugMode.active) {
+        if (!EditorSession.current().active) {
             cir.setReturnValue(false);
         }
     }

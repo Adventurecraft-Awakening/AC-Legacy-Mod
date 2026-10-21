@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.entity.AC_EntityCamera;
 import net.minecraft.client.model.Model;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
@@ -19,7 +20,7 @@ public class RenderCamera extends LivingEntityRenderer {
 
     @Override
     public void render(Mob var1, double var2, double var4, double var6, float var8, float var9) {
-        if (AC_DebugMode.active) {
+        if (EditorSession.current().active) {
             super.render(var1, var2, var4, var6, var8, var9);
         }
     }

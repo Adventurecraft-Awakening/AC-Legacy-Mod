@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.mixin.client.render;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.ACMod;
@@ -1045,7 +1046,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             }
 
             float tickTime = partialTick;
-            if (cameraPaused || (AC_DebugMode.active && !(entity instanceof Player)) ||
+            if (cameraPaused || (EditorSession.current().active && !(entity instanceof Player)) ||
                 ((ExEntity) entity).getStunned() > 0) {
                 tickTime = 1.0F;
             }
@@ -1159,7 +1160,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
 
     @Override
     public void drawCursorSelection(Mob entity, ItemInstance stack, float deltaTime) {
-        if (!AC_ItemCursor.bothSet) {
+        if (!EditorSession.current().selection.bothSet) {
             return;
         }
         if (stack == null || stack.id < AC_Items.cursor.id || stack.id > AC_Items.cursor.id + 20) {
@@ -1366,7 +1367,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     }
 
     private void doReset(boolean var1) {
-        AC_DebugMode.triggerResetActive = true;
+        EditorSession.current().triggerResetActive = true;
 
         // TODO: iterate actual loaded chunks from level, not visuals from renderer
         for (Chunk item : this.chunks) {
@@ -1391,6 +1392,6 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             }
         }
 
-        AC_DebugMode.triggerResetActive = false;
+        EditorSession.current().triggerResetActive = false;
     }
 }

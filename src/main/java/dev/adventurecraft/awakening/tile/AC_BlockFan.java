@@ -1,9 +1,9 @@
 package dev.adventurecraft.awakening.tile;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import java.util.List;
 import java.util.Random;
 
-import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.entity.AC_EntityAirFX;
 import dev.adventurecraft.awakening.extension.client.particle.ExParticleManager;
 import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
@@ -61,7 +61,7 @@ public class AC_BlockFan extends Tile {
         }
 
         world.addToTickNextTick(x, y, z, this.id, this.getTickDelay());
-        if (AC_DebugMode.active) {
+        if (EditorSession.forLevel(world).active) {
             return;
         }
 
@@ -163,7 +163,7 @@ public class AC_BlockFan extends Tile {
 
     @Override
     public boolean use(Level world, int x, int y, int z, Player player) {
-        if (!AC_DebugMode.active) {
+        if (!EditorSession.forLevel(world).active) {
             return false;
         }
         world.setData(x, y, z, (world.getData(x, y, z) + 1) % 6);

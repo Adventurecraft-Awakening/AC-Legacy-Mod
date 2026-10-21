@@ -1,55 +1,37 @@
 package dev.adventurecraft.awakening.common.gui;
 
+import dev.adventurecraft.awakening.client.gui.components.BoundSlider;
+import dev.adventurecraft.awakening.primitives.Property;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityHealDamage;
-import dev.adventurecraft.awakening.common.GuiSlider2;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.world.level.Level;
 
 public class AC_GuiHealDamage extends Screen {
-    private AC_TileEntityHealDamage tileEnt;
-    GuiSlider2 healDamage;
+    private final AC_TileEntityHealDamage tileEnt;
+    private BoundSlider<Integer> healDamage;
 
-    public AC_GuiHealDamage(AC_TileEntityHealDamage var1) {
-        this.tileEnt = var1;
-    }
+    public AC_GuiHealDamage(AC_TileEntityHealDamage entity) { this.tileEnt = entity; }
 
-    public void tick() {
-    }
-
-    public void init() {
-        this.healDamage = new GuiSlider2(4, 4, 4, 10, String.format("Heal: %d", this.tileEnt.healDamage), (float) (this.tileEnt.healDamage + 40) / 80.0F);
-        if (this.tileEnt.healDamage < 0) {
-            this.healDamage.message = String.format("Damage: %d", -this.tileEnt.healDamage);
-        }
-
+    @Override public void init() {
+        var value = Property.of(() -> this.tileEnt.healDamage, next -> {
+            this.tileEnt.healDamage = next;
+            this.tileEnt.setChanged();
+        });
+        this.healDamage = new BoundSlider<>(4, 4, 4, value, amount -> (amount + 40) / 80.0F,
+            position -> (int) ((double) position * 80.0D - 40.0D),
+            amount -> String.format(amount < 0 ? "Damage: %d" : "Heal: %d", Math.abs(amount)));
         this.buttons.add(this.healDamage);
     }
 
-    public void render(int var1, int var2, float var3) {
+    @Override public void tick() { this.healDamage.refresh(); }
+    @Override protected void mouseReleased(int mouseX, int mouseY, int button) {
+        super.mouseReleased(mouseX, mouseY, button);
+        BoundSlider.drag(this.buttons, mouseX);
+    }
+    @Override public void render(int mouseX, int mouseY, float delta) {
         this.fill(0, 0, this.width, this.height, Integer.MIN_VALUE);
-        this.tileEnt.healDamage = (int) ((double) this.healDamage.sliderValue * 80.0D - 40.0D);
-        if (this.tileEnt.healDamage < 0) {
-            this.healDamage.message = String.format("Damage: %d", -this.tileEnt.healDamage);
-        } else {
-            this.healDamage.message = String.format("Heal: %d", this.tileEnt.healDamage);
-        }
-
-        super.render(var1, var2, var3);
+        super.render(mouseX, mouseY, delta);
     }
-
-    @Override
-    public void removed() {
-        super.removed();
-
-        this.tileEnt.setChanged();
-    }
-
-    public static void showUI(AC_TileEntityHealDamage var1) {
-        Minecraft.instance.setScreen(new AC_GuiHealDamage(var1));
-    }
-
-    public boolean isPauseScreen() {
-        return false;
-    }
+    public static void showUI(AC_TileEntityHealDamage entity) { Minecraft.instance.setScreen(new AC_GuiHealDamage(entity)); }
+    @Override public boolean isPauseScreen() { return false; }
 }

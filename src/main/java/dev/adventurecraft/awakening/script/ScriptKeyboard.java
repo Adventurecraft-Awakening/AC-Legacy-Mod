@@ -7,9 +7,7 @@ import net.minecraft.client.Options;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.level.Level;
 import org.lwjgl.input.Keyboard;
-import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
 
 @SuppressWarnings("unused")
 public class ScriptKeyboard {
@@ -57,13 +55,13 @@ public class ScriptKeyboard {
         String binding = this.keyBinds.get(key);
         if (binding != null) {
             isPut = true;
-            ScriptableObject.putProperty(scope, "keyID", key);
+            ((ExWorld) this.world).getScript().runtime().bind(scope, "keyID", key);
             ((ExWorld) this.world).getScriptHandler().runScript(binding, scope);
         }
 
         if (this.allKeys != null) {
             if (!isPut) {
-                ScriptableObject.putProperty(scope, "keyID", key);
+                ((ExWorld) this.world).getScript().runtime().bind(scope, "keyID", key);
             }
             ((ExWorld) this.world).getScriptHandler().runScript(this.allKeys, scope);
         }
@@ -117,8 +115,8 @@ public class ScriptKeyboard {
 
     private boolean runScript(String script, int key, boolean isDown) {
         var world = (ExWorld) this.world;
-        ScriptableObject.putProperty(world.getScope(), "keyID", key);
-        ScriptableObject.putProperty(this.scope, "keyState", isDown);
+        world.getScript().runtime().bind(world.getScope(), "keyID", key);
+        world.getScript().runtime().bind(this.scope, "keyState", isDown);
         Object var5 = world.getScriptHandler().runScript(script, this.scope);
         return var5 instanceof Boolean b ? b : true;
     }

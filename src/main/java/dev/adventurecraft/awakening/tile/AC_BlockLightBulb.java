@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.tile;
 
-import dev.adventurecraft.awakening.common.AC_DebugMode;
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.common.gui.AC_GuiLightBulb;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.client.Minecraft;
@@ -56,7 +56,7 @@ public class AC_BlockLightBulb extends Tile implements AC_ITriggerDebugBlock {
 
     @Override
     public boolean mayPick() {
-        return AC_DebugMode.active;
+        return EditorSession.current().active;
     }
 
     @Override
@@ -71,7 +71,7 @@ public class AC_BlockLightBulb extends Tile implements AC_ITriggerDebugBlock {
 
     @Override
     public boolean use(Level var1, int var2, int var3, int var4, Player var5) {
-        if (AC_DebugMode.active) {
+        if (EditorSession.forLevel(var1).active) {
             AC_GuiLightBulb.showUI(var1, var2, var3, var4);
         }
         return true;

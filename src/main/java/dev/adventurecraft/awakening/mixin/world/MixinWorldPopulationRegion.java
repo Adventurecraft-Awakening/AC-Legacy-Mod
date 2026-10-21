@@ -26,6 +26,11 @@ public abstract class MixinWorldPopulationRegion implements ExRegion {
     @Shadow private LevelChunk[][] chunks;
     @Shadow private Level level;
 
+    @Override
+    public Level ac$getLevel() {
+        return this.level;
+    }
+
     @Shadow
     public abstract int getRawBrightness(int x, int y, int z);
 

@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.tile.entity;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.common.AC_DebugMode;
 import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 import net.minecraft.world.level.tile.entity.TileEntity;
@@ -7,7 +8,7 @@ import org.lwjgl.opengl.GL11;
 
 public class AC_TileEntityEffectRenderer extends TileEntityRenderer {
 	public void render(AC_TileEntityEffect var1, double var2, double var4, double var6, float var8) {
-		if(AC_DebugMode.active) {
+		if(EditorSession.current().active) {
 			GL11.glPushMatrix();
 			GL11.glEnable(GL11.GL_BLEND);
 			GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);

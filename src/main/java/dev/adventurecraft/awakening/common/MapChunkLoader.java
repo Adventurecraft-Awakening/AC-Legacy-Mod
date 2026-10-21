@@ -30,7 +30,7 @@ public class MapChunkLoader implements AsyncChunkStorage {
     @Override
     public void save(Level level, LevelChunk chunk) {
         this.saveRegion.save(level, chunk);
-        if (AC_DebugMode.levelEditing) {
+        if (dev.adventurecraft.awakening.editor.EditorSession.forLevel(level).levelEditing) {
             this.mapRegion.save(level, chunk);
         }
     }

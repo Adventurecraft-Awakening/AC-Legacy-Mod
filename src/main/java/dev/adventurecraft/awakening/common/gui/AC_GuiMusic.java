@@ -1,7 +1,8 @@
 package dev.adventurecraft.awakening.common.gui;
 
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityMusic;
-import dev.adventurecraft.awakening.common.GuiSlider2;
+import dev.adventurecraft.awakening.client.gui.components.BoundSlider;
+import dev.adventurecraft.awakening.primitives.Property;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
@@ -13,8 +14,8 @@ public class AC_GuiMusic extends Screen {
 
     private Level world;
     private AC_TileEntityMusic music;
-    private GuiSlider2 fadeOut;
-    private GuiSlider2 fadeIn;
+    private BoundSlider<Integer> fadeOut;
+    private BoundSlider<Integer> fadeIn;
     private int page;
 
     public AC_GuiMusic(Level world, AC_TileEntityMusic entity) {
@@ -23,6 +24,14 @@ public class AC_GuiMusic extends Screen {
     }
 
     public void tick() {
+        this.fadeOut.refresh();
+        this.fadeIn.refresh();
+    }
+
+    @Override
+    protected void mouseReleased(int mouseX, int mouseY, int button) {
+        super.mouseReleased(mouseX, mouseY, button);
+        BoundSlider.drag(this.buttons, mouseX);
     }
 
     public void init() {
@@ -43,8 +52,14 @@ public class AC_GuiMusic extends Screen {
             this.buttons.add(button);
         }
 
-        this.fadeOut = new GuiSlider2(200, 4, 16, 10, String.format("Fade Out: %d", this.music.fadeOut), (float) this.music.fadeOut / 5000.0F);
-        this.fadeIn = new GuiSlider2(201, this.width / 2, 16, 10, String.format("Fade In: %d", this.music.fadeIn), (float) this.music.fadeIn / 5000.0F);
+        this.fadeOut = new BoundSlider<>(200, 4, 16,
+            Property.of(() -> this.music.fadeOut, value -> { this.music.fadeOut = value; this.music.setChanged(); }),
+            value -> value / 5000.0F, position -> (int) (position * 5000.0F + 0.5F),
+            value -> String.format("Fade Out: %d", value));
+        this.fadeIn = new BoundSlider<>(201, this.width / 2, 16,
+            Property.of(() -> this.music.fadeIn, value -> { this.music.fadeIn = value; this.music.setChanged(); }),
+            value -> value / 5000.0F, position -> (int) (position * 5000.0F + 0.5F),
+            value -> String.format("Fade In: %d", value));
         this.buttons.add(this.fadeOut);
         this.buttons.add(this.fadeIn);
 
@@ -57,10 +72,10 @@ public class AC_GuiMusic extends Screen {
 
     protected void buttonClicked(Button button) {
         if (button.id == 0 && this.page == 0) {
-            this.music.musicName = "";
+            this.setMusic("");
         } else if (button.id < 100) {
             int var2 = 3 * ((this.height - 60) / 20);
-            this.music.musicName = ((ExWorld) this.world).getMusicList().get(button.id + var2 * this.page - 1);
+            this.setMusic(((ExWorld) this.world).getMusicList().get(button.id + var2 * this.page - 1));
         } else if (button.id < 200) {
             this.page = button.id - 100;
             this.buttons.clear();
@@ -76,19 +91,12 @@ public class AC_GuiMusic extends Screen {
             this.drawString(this.font, String.format("Music: %s", this.music.musicName), 4, 4, 14737632);
         }
 
-        this.music.fadeOut = (int) (this.fadeOut.sliderValue * 5000.0F + 0.5F);
-        this.fadeOut.message = String.format("Fade Out: %d", this.music.fadeOut);
-
-        this.music.fadeIn = (int) (this.fadeIn.sliderValue * 5000.0F + 0.5F);
-        this.fadeIn.message = String.format("Fade In: %d", this.music.fadeIn);
-        
         super.render(mouseX, mouseY, deltaTime);
     }
 
-    @Override
-    public void removed() {
-        super.removed();
-
+    private void setMusic(String name) {
+        if (name.equals(this.music.musicName)) return;
+        this.music.musicName = name;
         this.music.setChanged();
     }
 

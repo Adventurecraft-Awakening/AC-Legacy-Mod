@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.tile;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.client.render.AC_TextureBinder;
 import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.AC_TerrainImage;
@@ -46,7 +47,7 @@ public class AC_BlockEffect extends TileEntityTile implements AC_ITriggerDebugBl
 
     @Override
     public boolean mayPick() {
-        return AC_DebugMode.active;
+        return EditorSession.current().active;
     }
 
     @Override

@@ -1,63 +1,56 @@
 package dev.adventurecraft.awakening.common;
 
+import org.lwjgl.opengl.GL11;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
-import org.lwjgl.opengl.GL11;
 
 public class GuiSlider2 extends Button {
-
     public static int DEFAULT_WIDTH = 150;
     public static int DEFAULT_HEIGHT = 20;
-	public float sliderValue;
-	public boolean dragging = false;
+    public float sliderValue;
+    public boolean dragging;
 
-	public GuiSlider2(int buttonID, int xPosition, int yPosition, int var4, String var5, float sliderValue) {
-		super(buttonID, xPosition, yPosition, DEFAULT_WIDTH, DEFAULT_HEIGHT, var5);
-		this.sliderValue = sliderValue;
-	}
+    public GuiSlider2(int id, int x, int y, int unused, String label, float value) {
+        super(id, x, y, DEFAULT_WIDTH, DEFAULT_HEIGHT, label);
+        this.sliderValue = value;
+    }
 
-	protected int getYImage(boolean var1) {
-		return 0;
-	}
+    protected int getYImage(boolean hovered) { return 0; }
 
-	protected void renderBg(Minecraft var1, int var2, int var3) {
-		if(this.visible) {
-			if(this.dragging) {
-				this.sliderValue = (float)(var2 - (this.x + 4)) / (float)(this.width - 8);
-				if(this.sliderValue < 0.0F) {
-					this.sliderValue = 0.0F;
-				}
+    /** Existing unbound screens retain drag polling until they adopt input-bound controls. */
+    protected boolean updateWhileRendering() { return true; }
 
-				if(this.sliderValue > 1.0F) {
-					this.sliderValue = 1.0F;
-				}
-			}
+    protected void renderBg(Minecraft minecraft, int mouseX, int mouseY) {
+        if (!this.visible) return;
+        if (this.updateWhileRendering()) this.dragTo(mouseX);
+        GL11.glColor4f(1, 1, 1, 1);
+        int thumbX = this.x + (int) (this.sliderValue * (this.width - 8));
+        this.blit(thumbX, this.y, 0, 66, 4, 20);
+        this.blit(thumbX + 4, this.y, 196, 66, 4, 20);
+    }
 
-			GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-			this.blit(this.x + (int)(this.sliderValue * (float)(this.width - 8)), this.y, 0, 66, 4, 20);
-			this.blit(this.x + (int)(this.sliderValue * (float)(this.width - 8)) + 4, this.y, 196, 66, 4, 20);
-		}
-	}
+    public boolean isMouseOver(Minecraft minecraft, int mouseX, int mouseY) {
+        if (!super.isMouseOver(minecraft, mouseX, mouseY)) return false;
+        this.dragging = true;
+        this.updateFromMouse(mouseX);
+        return true;
+    }
 
-	public boolean isMouseOver(Minecraft var1, int var2, int var3) {
-		if(super.isMouseOver(var1, var2, var3)) {
-			this.sliderValue = (float)(var2 - (this.x + 4)) / (float)(this.width - 8);
-			if(this.sliderValue < 0.0F) {
-				this.sliderValue = 0.0F;
-			}
+    public void dragTo(int mouseX) {
+        if (this.dragging) this.updateFromMouse(mouseX);
+    }
 
-			if(this.sliderValue > 1.0F) {
-				this.sliderValue = 1.0F;
-			}
+    public void mouseReleased(int mouseX, int mouseY) {
+        this.dragTo(mouseX);
+        this.dragging = false;
+    }
 
-			this.dragging = true;
-			return true;
-		} else {
-			return false;
-		}
-	}
+    protected void valueChanged(float value) { }
 
-	public void mouseReleased(int var1, int var2) {
-		this.dragging = false;
-	}
+    private void updateFromMouse(int mouseX) {
+        float value = Math.clamp((float) (mouseX - (this.x + 4)) / Math.max(1, this.width - 8), 0, 1);
+        if (Float.compare(value, this.sliderValue) == 0) return;
+        this.sliderValue = value;
+        this.valueChanged(value);
+    }
 }

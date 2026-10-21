@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.tile.entity;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.AC_TriggerArea;
 import dev.adventurecraft.awakening.extension.client.render.entity.ExItemRenderer;
@@ -33,7 +34,7 @@ public class AC_TileEntityStoreRenderer extends TileEntityRenderer {
         }
 
         AC_TriggerArea area = tileEntity.tradeTrigger;
-        if (AC_DebugMode.active && area != null) {
+        if (EditorSession.forLevel(tileEntity.level).active && area != null) {
             AC_TileEntityMinMaxRenderer.renderArea(area.min, area.max, tileEntity, x, y, z, 1, 1, 1);
         }
     }

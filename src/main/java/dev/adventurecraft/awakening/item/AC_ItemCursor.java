@@ -1,6 +1,8 @@
 package dev.adventurecraft.awakening.item;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.math.IntVec3;
+import dev.adventurecraft.awakening.editor.EditorSelection;
 import dev.adventurecraft.awakening.world.BlockPos;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.ItemInstance;
@@ -10,14 +12,6 @@ import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 
 public class AC_ItemCursor extends Item implements AC_ILeftClickItem {
-
-    public static boolean bothSet = false;
-    public static boolean firstPosition = true;
-
-    private static BlockPos.Mut one = BlockPos.mutZero();
-    private static BlockPos.Mut two = BlockPos.mutZero();
-    private static BlockPos.Mut min = BlockPos.mutZero();
-    private static BlockPos.Mut max = BlockPos.mutZero();
 
     protected AC_ItemCursor(int id) {
         super(id);
@@ -30,24 +24,25 @@ public class AC_ItemCursor extends Item implements AC_ILeftClickItem {
 
     @Override
     public boolean useOn(ItemInstance stack, Player player, Level world, int x, int y, int z, int side) {
+        EditorSelection selection = EditorSession.forLevel(world).selection;
         int positionIndex;
-        if (firstPosition) {
-            setOne(new BlockPos(x, y, z));
+        if (selection.firstPosition) {
+            selection.one.set(new BlockPos(x, y, z));
             positionIndex = 0;
         }
         else {
-            setTwo(new BlockPos(x, y, z));
-            bothSet = true;
+            selection.two.set(new BlockPos(x, y, z));
+            selection.bothSet = true;
             positionIndex = 1;
         }
         String message = String.format("Setting Cursor Position %d (%d, %d, %d)", positionIndex + 1, x, y, z);
 
-        setMin(one().min(two()));
-        setMax(one().max(two()));
-        firstPosition = !firstPosition;
+        selection.min.set(selection.one.min(selection.two));
+        selection.max.set(selection.one.max(selection.two));
+        selection.firstPosition = !selection.firstPosition;
 
-        if (bothSet) {
-            BlockPos delta = max().sub(min());
+        if (selection.bothSet) {
+            BlockPos delta = selection.max.sub(selection.min);
             int width = delta.x() + 1;
             int height = delta.y() + 1;
             int depth = delta.z() + 1;
@@ -62,34 +57,34 @@ public class AC_ItemCursor extends Item implements AC_ILeftClickItem {
 
 
     public static BlockPos one() {
-        return one;
+        return EditorSession.current().selection.one;
     }
 
     public static BlockPos setOne(@NotNull IntVec3 one) {
-        return AC_ItemCursor.one.set(one);
+        return EditorSession.current().selection.one.set(one);
     }
 
     public static BlockPos two() {
-        return two;
+        return EditorSession.current().selection.two;
     }
 
     public static BlockPos setTwo(@NotNull IntVec3 two) {
-        return AC_ItemCursor.two.set(two);
+        return EditorSession.current().selection.two.set(two);
     }
 
     public static BlockPos min() {
-        return min;
+        return EditorSession.current().selection.min;
     }
 
     public static BlockPos setMin(@NotNull IntVec3 min) {
-        return AC_ItemCursor.min.set(min);
+        return EditorSession.current().selection.min.set(min);
     }
 
     public static BlockPos max() {
-        return max;
+        return EditorSession.current().selection.max;
     }
 
     public static BlockPos setMax(@NotNull IntVec3 max) {
-        return AC_ItemCursor.max.set(max);
+        return EditorSession.current().selection.max.set(max);
     }
 }

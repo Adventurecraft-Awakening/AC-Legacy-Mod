@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.tile;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.gui.AC_GuiStorage;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
@@ -50,6 +51,6 @@ public class AC_BlockStorage extends TileEntityTile implements AC_ITriggerDebugB
 
     @Override
     public boolean mayPick() {
-        return AC_DebugMode.active;
+        return EditorSession.current().active;
     }
 }

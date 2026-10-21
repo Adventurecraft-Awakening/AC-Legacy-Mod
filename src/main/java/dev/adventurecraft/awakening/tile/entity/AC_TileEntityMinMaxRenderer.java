@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.tile.entity;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.world.BlockPos;
@@ -21,7 +22,7 @@ public class AC_TileEntityMinMaxRenderer extends TileEntityRenderer {
     }
 
     public void renderArea(AC_TileEntityMinMax entity, double x, double y, double z, float tickTime) {
-        if (AC_DebugMode.active) {
+        if (EditorSession.forLevel(entity.level).active) {
             renderArea(entity.min(), entity.max(), entity, x, y, z, this.r, this.g, this.b);
         }
     }

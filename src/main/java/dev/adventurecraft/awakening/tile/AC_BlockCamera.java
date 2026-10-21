@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.tile;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.gui.AC_GuiCameraBlock;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
@@ -63,6 +64,6 @@ public class AC_BlockCamera extends TileEntityTile implements AC_ITriggerDebugBl
 
     @Override
     public boolean mayPick() {
-        return AC_DebugMode.active;
+        return EditorSession.current().active;
     }
 }

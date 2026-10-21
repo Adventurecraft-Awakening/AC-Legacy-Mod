@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.tile;
 
-import dev.adventurecraft.awakening.common.AC_DebugMode;
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelSource;
@@ -65,7 +65,7 @@ public class AC_BlockOverlay extends Tile implements AC_IBlockColor, AC_ITrigger
 
     @Override
     public boolean mayPick() {
-        return AC_DebugMode.active;
+        return EditorSession.current().active;
     }
 
     @Override

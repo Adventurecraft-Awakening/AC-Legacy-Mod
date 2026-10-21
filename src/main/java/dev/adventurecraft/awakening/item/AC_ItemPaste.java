@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.item;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.world.AC_BlockCopyUtils;
@@ -56,18 +57,17 @@ public class AC_ItemPaste extends Item {
     @Override
     public ItemInstance use(ItemInstance item, Level world, Player player) {
         // Ensure cursor selection is properly set
-        if (!AC_ItemCursor.bothSet) {
+        if (!EditorSession.forLevel(world).selection.bothSet) {
             return item;
         }
 
         AC_EditAction editAction = null;
         var undoStack = ((ExWorld) world).getUndoStack();
         boolean saveHistory = undoStack.isRecording();
-        undoStack.pushLayer(null);
-        try {
+        try (var ignored = undoStack.suppressScope()) {
             // Copy blocks from selection (non-destructive)
-            BlockPos min = AC_ItemCursor.min();
-            BlockPos max = AC_ItemCursor.max();
+            BlockPos min = EditorSession.forLevel(world).selection.min;
+            BlockPos max = EditorSession.forLevel(world).selection.max;
             BlockRegion region = BlockRegion.readFromMinMax(world, min, max);
 
             // Calculate where to paste based on player's look direction
@@ -88,9 +88,6 @@ public class AC_ItemPaste extends Item {
             // Log error but don't crash the game
             ACMod.LOGGER.error("Failed to paste blocks: ", e);
             Minecraft.instance.gui.addMessage("Failed to paste blocks: " + e.getMessage());
-        }
-        finally {
-            undoStack.popLayer(saveHistory);
         }
 
         if (editAction != null) {

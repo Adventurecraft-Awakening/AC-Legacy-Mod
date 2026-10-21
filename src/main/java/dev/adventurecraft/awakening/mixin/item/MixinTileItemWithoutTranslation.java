@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.mixin.item;
 
-import dev.adventurecraft.awakening.common.AC_DebugMode;
+import dev.adventurecraft.awakening.editor.EditorSession;
 import net.minecraft.world.item.TileItemWithoutTranslation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -15,7 +15,7 @@ public abstract class MixinTileItemWithoutTranslation {
 
     @Inject(method = "useOn", at = @At("HEAD"), cancellable = true)
     private void disableUsageInDebugMode(ItemInstance var1, Player var2, Level var3, int var4, int var5, int var6, int var7, CallbackInfoReturnable<Boolean> cir) {
-        if (!AC_DebugMode.active) {
+        if (!EditorSession.current().active) {
             cir.setReturnValue(false);
         }
     }
