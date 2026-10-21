@@ -58,9 +58,9 @@ public class AC_MapEditing {
             var projMatrix = stack.mallocFloat(16);
             var objPos = stack.mallocFloat(3);
 
-            GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, modelMatrix);
-            GL11.glGetFloat(GL11.GL_PROJECTION_MATRIX, projMatrix);
-            GL11.glGetInteger(GL11.GL_VIEWPORT, viewport);
+            GL11.glGetFloatv(GL11.GL_MODELVIEW_MATRIX, modelMatrix);
+            GL11.glGetFloatv(GL11.GL_PROJECTION_MATRIX, projMatrix);
+            GL11.glGetIntegerv(GL11.GL_VIEWPORT, viewport);
             GLU.gluUnProject(mouseX, mouseY, 1.0F, modelMatrix, projMatrix, viewport, objPos);
 
             Vec3 start = entity.getPos(deltaTime);

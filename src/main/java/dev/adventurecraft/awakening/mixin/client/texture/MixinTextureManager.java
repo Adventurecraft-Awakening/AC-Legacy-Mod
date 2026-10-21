@@ -108,7 +108,7 @@ public abstract class MixinTextureManager implements ExTextureManager {
                 // TODO: cache this
                 FloatBuffer buf = BufferUtils.createFloatBuffer(1);
                 buf.rewind();
-                GL11.glGetFloat(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, buf);
+                GL11.glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, buf);
                 float anisoLimit = buf.get(0);
 
                 anisoLevel = Math.min(((ExGameOptions) this.options).ofAfLevel(), anisoLimit);

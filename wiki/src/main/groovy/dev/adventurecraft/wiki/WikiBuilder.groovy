@@ -665,7 +665,7 @@ Applies to AC-Legacy **${properties.mod_version}** at source revision **`${short
 
     void validateCurrentEvidence() {
         def expected = [
-            'build.gradle': ['JavaVersion.VERSION_25'],
+            'build.gradle': ['JavaVersion.VERSION_27'],
             'src/main/java/dev/adventurecraft/awakening/ACMainThread.java': ['new File(getWorkingDirectory(), "../maps")'],
             'src/main/java/dev/adventurecraft/awakening/mixin/client/MixinMinecraft.java': [
                 'eventKey == Keyboard.KEY_F5', 'this.options.thirdPersonView = !this.options.thirdPersonView',
@@ -733,7 +733,8 @@ Applies to AC-Legacy **${properties.mod_version}** at source revision **`${short
             names.each { if ((it =~ /[\\\/:*?"<>|]/).find()) errors << "invalid GitHub wiki page title: ${it}" }
             require(names.size() == names.collect { it.toLowerCase(Locale.ROOT) }.toSet().size(), 'case-insensitive wiki page filename collision')
             def forbidden = [
-                'JDK **21**': 'current game build requires Java 25', 'Java **21**': 'current game build requires Java 25', 'Java 21+': 'current game build requires Java 25',
+                'JDK **21**': 'current game build requires Java 27', 'Java **21**': 'current game build requires Java 27', 'Java 21+': 'current game build requires Java 27',
+                'JDK **25**': 'current game build requires Java 27', 'Java **25**': 'current game build requires Java 27',
                 'Fabric Loader 0.16': 'current minimum is read from gradle.properties',
                 'F5 toggles level editing': 'F5 toggles third-person view; /mapedit controls map editing',
                 'player.sendMessage("Hello': 'current chat output API is chat.print',

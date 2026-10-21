@@ -1,7 +1,20 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        // LWJGL 3.4.3 ships Java 27 multi-release classes. Loom's remapper
+        // must be able to read them even when the build runs on JDK 25.
+        ["asm", "asm-analysis", "asm-commons", "asm-tree", "asm-util"].each {
+            classpath "org.ow2.asm:${it}:${project.asm_version}"
+        }
+    }
+}
+
 plugins {
     id "maven-publish"
-    id "fabric-loom" version "1.16.3"
-    id "babric-loom-extension" version "1.15.3"
+    id "fabric-loom" version "1.17.21"
+    id "babric-loom-extension" version "1.17.5"
 }
 
 
@@ -36,8 +49,8 @@ base {
 loom {
     accessWidenerPath = file("src/main/resources/${project.mod_id}.accesswidener")
 
-    // Our custom manifest replaces LWJGL2 with our LWJGL3 injector.
-    // customMinecraftMetadata = ""
+    // Beta has no vanilla server-GUI Queue appender used by Loom's default config.
+    log4jConfigs.setFrom(file("config/log4j2.xml"))
 
     if (OperatingSystem.current() == OperatingSystem.MAC_OS) {
         runConfigs.configureEach {
@@ -49,7 +62,7 @@ loom {
         client {
             client()
             // TODO: add sponge-mixin agent automatically
-            vmArgs("-XX:+UnlockDiagnosticVMOptions", "-XX:+UseCompactObjectHeaders")
+            vmArgs("-XX:+UnlockDiagnosticVMOptions", "-XX:+UseCompactObjectHeaders", "--enable-native-access=ALL-UNNAMED")
 
             // TODO: make optional?
             programArgs("--glDebugContext")
@@ -61,6 +74,7 @@ loom {
             vmArgs(
                 "-XX:+UnlockDiagnosticVMOptions",
                 "-XX:+UseCompactObjectHeaders",
+                "--enable-native-access=ALL-UNNAMED",
                 "-Dac.wiki.export=true",
                 "-Dac.wiki.exportDir=${wikiAssetExportDir}"
             )
@@ -71,7 +85,7 @@ loom {
 
 babric {
     // Disable gambac library (M1 colours fix.)
-    // Our LWJGL3 injector already deals with it.
+    // The built-in LWJGL3 compatibility layer already deals with it.
     disableM1Fixes.set(true)
     disablePomOverride.set(true)
 }
@@ -96,6 +110,12 @@ repositories {
     }
 }
 
+sourceSets {
+    // Original game bytecode still links these org.lwjgl names. Compile the ABI
+    // shims together with main, while keeping them out of native source packages.
+    main.java.srcDir("src/compat/java")
+}
+
 static String getOsArchSuffix() {
     def arch = System.getProperty("os.arch")
     return switch (arch) {
@@ -118,14 +138,16 @@ static String getLwjglNativesPrefix() {
 }
 
 dependencies {
-    // Adds LWJGL3 wrapper
-    implementation "com.github.Adventurecraft-Awakening:AC-LWJGL3-Injector:${project.lwjgl_injector_version}"
-
     implementation platform("org.lwjgl:lwjgl-bom:${project.lwjgl_version}")
 
-    implementation "org.lwjgl:lwjgl-glfw:${project.lwjgl_version}"
-    implementation "org.lwjgl:lwjgl-stb:${project.lwjgl_version}"
-    implementation "org.lwjgl:lwjgl-opengl:${project.lwjgl_version}"
+    implementation "org.lwjgl:lwjgl"
+    implementation "org.lwjgl:lwjgl-glfw"
+    implementation "org.lwjgl:lwjgl-stb"
+    implementation "org.lwjgl:lwjgl-openal"
+    implementation "org.lwjgl:lwjgl-opengl"
+
+    // Annotations used by the bundled LWJGL compatibility sources.
+    compileOnly "com.google.code.findbugs:jsr305:3.0.2"
 
     def lwjglNatives = Stream.of(getLwjglNativesPrefix(), getOsArchSuffix())
         .filter(part -> !part.isBlank())
@@ -145,7 +167,7 @@ dependencies {
     mappings "me.alphamode:nostalgia:${project.nostalgia_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    // Override ASM to support Java 25
+    // Keep ASM consistent across the game and build-time bytecode tools.
     implementation "org.ow2.asm:asm:${project.asm_version}"
     implementation "org.ow2.asm:asm-analysis:${project.asm_version}"
     implementation "org.ow2.asm:asm-commons:${project.asm_version}"
@@ -157,22 +179,23 @@ dependencies {
     include "com.github.Chocohead:Fabric-ASM:v2.3"
 
     // FastUtil provides specialized collection types.
-    implementation "it.unimi.dsi:fastutil-core:8.5.15"
+    implementation "it.unimi.dsi:fastutil-core:8.5.19"
 
     // Brigadier provides modern command parsing.
-    modImplementation "com.mojang:brigadier:1.3.10"
+    modImplementation "com.mojang:brigadier:1.3.11"
 
-    implementation "org.slf4j:slf4j-api:1.8.0-beta4"
-    implementation "org.apache.logging.log4j:log4j-slf4j18-impl:2.18.0"
+    implementation "org.slf4j:slf4j-api:2.0.20"
+    implementation platform("org.apache.logging.log4j:log4j-bom:2.26.1")
+    runtimeOnly "org.apache.logging.log4j:log4j-slf4j2-impl"
 
-    implementation "com.google.guava:guava:33.4.0-jre"
-    implementation "org.apache.commons:commons-lang3:3.19.0"
+    implementation "com.google.guava:guava:33.7.2-jre"
+    implementation "org.apache.commons:commons-lang3:3.21.0"
 
     // Optional dependencies for filesystem icon rendering.
-    implementation "net.java.dev.jna:jna:5.17.0"
-    implementation "net.java.dev.jna:jna-platform:5.17.0"
+    implementation "net.java.dev.jna:jna:5.19.1"
+    implementation "net.java.dev.jna:jna-platform:5.19.1"
 
-    implementation "com.github.bailuk:java-gtk:0.6.0"
+    implementation "com.github.bailuk:java-gtk:0.6.1"
 }
 
 configurations.configureEach {
@@ -216,7 +239,15 @@ java {
     // If you remove this line, sources will not be generated.
     withSourcesJar()
 
-    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_25
+    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_27
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(27)
+    }
+}
+
+// Select the game/tooling JVM independently of the JVM running Gradle itself.
+tasks.withType(JavaExec).configureEach {
+    javaLauncher = javaToolchains.launcherFor(java.toolchain)
 }
 
 jar {
@@ -224,6 +255,12 @@ jar {
     from("LICENSE") {
         rename { "${it}_${name}" }
     }
+    from("LICENSE-Macula")
+    from("LICENSE-LWJGL3")
+}
+
+tasks.named("sourcesJar") {
+    from("LICENSE-LWJGL3")
 }
 
 // For information on how to set up publishing,

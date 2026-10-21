@@ -12,7 +12,7 @@ Starting a map creates a save separately from the source map. Use **New Save** t
 
 Requirements:
 
-- JDK **25**
+- JDK **27**
 - Git
 - No separate Gradle installation; the wrapper is committed
 

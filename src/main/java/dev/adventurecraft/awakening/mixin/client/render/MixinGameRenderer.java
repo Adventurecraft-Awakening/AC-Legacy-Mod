@@ -887,7 +887,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
     @Overwrite
     private void setupFog(int var1, float var2) {
         Mob viewEntity = this.mc.cameraEntity;
-        GL11.glFog(GL11.GL_FOG_COLOR, this.getBuffer(this.fogRed, this.fogGreen, this.fogBlue, 1.0F));
+        GL11.glFogfv(GL11.GL_FOG_COLOR, this.getBuffer(this.fogRed, this.fogGreen, this.fogBlue, 1.0F));
         GL11.glNormal3f(0.0F, -1.0F, 0.0F);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 

@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.mixin.client.util;
 
-import org.lwjgl.opengl.Display;
+import dev.adventurecraft.awakening.client.platform.window.GameWindow;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -16,7 +16,7 @@ public abstract class MixinMouseHelper {
             target = "Ljava/awt/Component;getWidth()I"
     ))
     private int fix_ungrabWidth(Component instance) {
-        return Display.getWidth();
+        return GameWindow.getWidth();
     }
 
     @Redirect(method = "release", at = @At(
@@ -24,6 +24,6 @@ public abstract class MixinMouseHelper {
             target = "Ljava/awt/Component;getHeight()I"
     ))
     private int fix_ungrabHeight(Component instance) {
-        return Display.getHeight();
+        return GameWindow.getHeight();
     }
 }

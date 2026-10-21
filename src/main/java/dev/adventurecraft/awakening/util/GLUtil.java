@@ -16,9 +16,9 @@ public final class GLUtil {
             var objPos0 = stack.mallocFloat(3);
             var objPos1 = stack.mallocFloat(3);
 
-            GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, modelViewMatrix);
-            GL11.glGetFloat(GL11.GL_PROJECTION_MATRIX, projMatrix);
-            GL11.glGetInteger(GL11.GL_VIEWPORT, viewport);
+            GL11.glGetFloatv(GL11.GL_MODELVIEW_MATRIX, modelViewMatrix);
+            GL11.glGetFloatv(GL11.GL_PROJECTION_MATRIX, projMatrix);
+            GL11.glGetIntegerv(GL11.GL_VIEWPORT, viewport);
 
             float left = (float) rect.left();
             float top = (float) rect.top();
@@ -39,7 +39,7 @@ public final class GLUtil {
     public static Matrix4f getModelViewMatrix(Matrix4f matrix) {
         try (var stack = MemoryStack.stackPush()) {
             var matBuf = stack.mallocFloat(16);
-            GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, matBuf);
+            GL11.glGetFloatv(GL11.GL_MODELVIEW_MATRIX, matBuf);
             return matrix.load(matBuf);
         }
     }

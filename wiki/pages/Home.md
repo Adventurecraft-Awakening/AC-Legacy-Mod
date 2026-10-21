@@ -4,7 +4,7 @@
 
 This is the current, source-verified wiki for **AdventureCraft Legacy**, the Fabric-based revival of AdventureCraft for Minecraft **{{MINECRAFT_VERSION}}**.
 
-The configured mod version is **{{MOD_VERSION}}**. The codebase currently declares Fabric Loader **{{LOADER_VERSION}}**, Rhino **{{RHINO_VERSION}}**, and Java **25** for development and builds.
+The configured mod version is **{{MOD_VERSION}}**. The codebase currently declares Fabric Loader **{{LOADER_VERSION}}**, Rhino **{{RHINO_VERSION}}**, and Java **27** for development and builds.
 
 ## Start here
 
