@@ -1,5 +1,7 @@
 package dev.adventurecraft.awakening.mixin.client.gui.widget;
 
+import dev.adventurecraft.awakening.client.render.compat.LegacyPassBridge;
+import dev.adventurecraft.awakening.client.render.UiDrawContext;
 import dev.adventurecraft.awakening.common.ScrollableWidget;
 import dev.adventurecraft.awakening.extension.client.gui.widget.ExScrollableBaseWidget;
 import dev.adventurecraft.awakening.layout.*;
@@ -7,7 +9,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractSelectionList;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.renderer.Tesselator;
-import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -69,21 +70,21 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
             }
 
             @Override
-            protected void renderContentBackground(Tesselator ts, Rect rect, Point scroll) {
-                self.renderBackground();
-                super.renderContentBackground(ts, rect, scroll);
+            protected void renderContentBackground(UiDrawContext ui, Rect rect, Point scroll) {
+                LegacyPassBridge.legacyUi(ui, self::renderBackground, false);
+                super.renderContentBackground(ui, rect, scroll);
             }
 
             @Override
-            protected void renderEntry(Tesselator ts, int entryIndex, Point entryLocation, int entryHeight) {
+            protected void renderEntry(UiDrawContext ui, int entryIndex, Point entryLocation, int entryHeight) {
                 Point location = entryLocation.floor();
                 if (self.renderSelection) {
-                    this.renderSelection(ts, entryIndex, entryLocation);
+                    this.renderSelection(ui, entryIndex, entryLocation);
                 }
-                self.renderEntry(entryIndex, (int) location.x, (int) location.y, entryHeight - 4, ts);
+                LegacyPassBridge.legacyUi(ui, () -> self.renderEntry(entryIndex, (int) location.x, (int) location.y, entryHeight - 4, Tesselator.instance), false);
             }
 
-            private void renderSelection(Tesselator ts, int entryIndex, Point point) {
+            private void renderSelection(UiDrawContext ui, int entryIndex, Point point) {
                 boolean selected = self.isSelectedItem(entryIndex);
                 if (!selected && hoveredEntry != entryIndex) {
                     return;
@@ -95,32 +96,24 @@ public abstract class MixinScrollableBaseWidget implements ExScrollableBaseWidge
                 var borderColor = new IntCorner(isHover ? 0x80808080 : 0xff808080);
                 var backColor = new IntCorner(isHover ? 0x80000000 : 0xff000000);
 
-                GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-                GL11.glDisable(GL11.GL_TEXTURE_2D);
-                GL11.glEnable(GL11.GL_BLEND);
-                GL11.glDisable(GL11.GL_CULL_FACE);
-                ts.begin();
-                self.rootWidget.renderContentSelection(ts, rect, border, borderColor, backColor, null, null);
-                ts.end();
-                GL11.glEnable(GL11.GL_TEXTURE_2D);
-                GL11.glDisable(GL11.GL_BLEND);
+                self.rootWidget.renderContentSelection(ui, rect, border, borderColor, backColor, null, null);
             }
 
             @Override
-            protected void beforeEntryRender(Tesselator ts, IntPoint mouseLocation, Point entryLocation) {
+            protected void beforeEntryRender(UiDrawContext ui, IntPoint mouseLocation, Point entryLocation) {
                 if (self.renderHeader) {
                     Point headerLocation = entryLocation.floor();
                     int sX = (int) headerLocation.x;
                     int sY = (int) headerLocation.y - this.entryHeight;
-                    self.renderHeader(sX, sY, ts);
+                    LegacyPassBridge.legacyUi(ui, () -> self.renderHeader(sX, sY, Tesselator.instance), false);
                 }
 
                 self.hoveredEntry = self.getEntryAtPosition(mouseLocation.x, mouseLocation.y);
             }
 
             @Override
-            protected void afterRender(Tesselator ts, IntPoint mouseLocation, float tickTime) {
-                self.renderDecorations(mouseLocation.x + 2, mouseLocation.y - 2);
+            protected void afterRender(UiDrawContext ui, IntPoint mouseLocation, float tickTime) {
+                LegacyPassBridge.legacyUi(ui, () -> self.renderDecorations(mouseLocation.x + 2, mouseLocation.y - 2), false);
             }
         };
         this.rootWidget.setLayoutBorder(new IntBorder(0, 0, contentTop, height - contentBot));

@@ -1,6 +1,9 @@
 package dev.adventurecraft.awakening.mixin.client.particle;
 
 import dev.adventurecraft.awakening.extension.client.render.ExTesselator;
+import dev.adventurecraft.awakening.extension.client.particle.ExParticle;
+import dev.adventurecraft.awakening.client.render.ParticleRenderContext;
+import dev.adventurecraft.awakening.client.render.VertexSink;
 import dev.adventurecraft.awakening.mixin.entity.MixinEntity;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.renderer.Tesselator;
@@ -11,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(Particle.class)
-public abstract class MixinParticle extends MixinEntity {
+public abstract class MixinParticle extends MixinEntity implements ExParticle {
 
     @Shadow public static double zOff;
     @Shadow public static double yOff;
@@ -19,6 +22,10 @@ public abstract class MixinParticle extends MixinEntity {
 
     @Shadow protected int texture;
     @Shadow protected float size;
+    @Shadow protected int age;
+    @Shadow protected int lifetime;
+    @Shadow protected float uo;
+    @Shadow protected float vo;
 
     @Shadow protected float rCol;
     @Shadow protected float gCol;
@@ -34,6 +41,18 @@ public abstract class MixinParticle extends MixinEntity {
     )
     private double useFastRandomInInit() {
         return this.random.nextFloat();
+    }
+
+    @Override
+    public void ac$render(ParticleRenderContext context, VertexSink out) {
+        float tick = context.partialTick();
+        float luma = this.getBrightness(tick);
+        out.ac$color32(this.rCol * luma, this.gCol * luma, this.bCol * luma);
+        float u = (this.texture % 16) / 16F, v = (this.texture / 16) / 16F;
+        float px = (float) (this.xo - context.x()) + (float) (this.x - this.xo) * tick;
+        float py = (float) (this.yo - context.y()) + (float) (this.y - this.yo) * tick;
+        float pz = (float) (this.zo - context.z()) + (float) (this.z - this.zo) * tick;
+        context.billboard(out, px, py, pz, .1F * this.size, u, v, u + .0624375F, v + .0624375F, true);
     }
 
     @Overwrite

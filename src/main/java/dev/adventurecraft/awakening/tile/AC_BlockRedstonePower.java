@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.tile;
 
 import java.util.Random;
 
+import dev.adventurecraft.awakening.client.render.chunk.LevelRegion;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.level.Level;
@@ -25,7 +26,9 @@ public class AC_BlockRedstonePower extends Tile implements AC_ITriggerDebugBlock
     @Override
     public int getTexture(LevelSource var1, int var2, int var3, int var4, int var5) {
         if (var5 <= 1) {
-            if (((ExWorld) Minecraft.instance.level).getTriggerManager().isActivated(var2, var3, var4)) {
+            boolean active = var1 instanceof LevelRegion region ? region.isActivated(var2, var3, var4)
+                : ((ExWorld) Minecraft.instance.level).getTriggerManager().isActivated(var2, var3, var4);
+            if (active) {
                 return 185;
             }
             return 186;

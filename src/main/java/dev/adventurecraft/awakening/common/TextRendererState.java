@@ -1,6 +1,9 @@
 package dev.adventurecraft.awakening.common;
 
-import dev.adventurecraft.awakening.extension.client.render.ExTesselator;
+import dev.adventurecraft.awakening.client.render.compat.LegacyGlAdapter;
+import dev.adventurecraft.awakening.client.render.UiDrawContext;
+import dev.adventurecraft.awakening.client.render.compat.LegacyGlConstants;
+import dev.adventurecraft.awakening.client.render.VertexSink;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import dev.adventurecraft.awakening.image.Rgba;
 import dev.adventurecraft.awakening.text.TextMeasurer;
@@ -9,7 +12,6 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.Tesselator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.opengl.GL11;
 
 import java.util.Objects;
 
@@ -17,6 +19,7 @@ public final class TextRendererState implements TextMeasurer {
 
     private final Font font;
     private @Nullable Tesselator tesselator;
+    private @Nullable VertexSink writer;
 
     private int color;
     private int activeColor;
@@ -34,34 +37,42 @@ public final class TextRendererState implements TextMeasurer {
     }
 
     public void bindTexture() {
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.font.fontTexture);
+        LegacyGlAdapter.enable(LegacyGlConstants.TEXTURE_2D);
+        LegacyGlAdapter.bindTexture(LegacyGlConstants.TEXTURE_2D, this.font.fontTexture);
     }
 
-    private @NotNull Tesselator assertBegun() {
-        if (this.tesselator == null) {
+    private @NotNull VertexSink assertBegun() {
+        if (this.writer == null) {
             throw new AssertionError("not started");
         }
-        return this.tesselator;
+        return this.writer;
     }
 
     public void begin(Tesselator tesselator) {
         Objects.requireNonNull(tesselator);
-        if (this.tesselator != null) {
+        if (this.writer != null) {
             throw new AssertionError("already started");
         }
         this.bindTexture();
 
         this.tesselator = tesselator;
+        this.writer = (VertexSink) tesselator;
         this.tesselator.begin();
 
         this.resetFormat();
     }
 
+    public void begin(UiDrawContext context) {
+        if (this.writer != null) throw new AssertionError("already started");
+        this.writer = context.vertexWriter(context.fontTexture());
+        this.resetFormat();
+    }
+
     public void end() {
-        Tesselator ts = this.assertBegun();
-        ts.end();
+        this.assertBegun();
+        if (this.tesselator != null) this.tesselator.end();
         this.tesselator = null;
+        this.writer = null;
     }
 
     public TextRect drawText(CharSequence text, int start, int end, float x, float y) {
@@ -86,7 +97,7 @@ public final class TextRendererState implements TextMeasurer {
 
         formatOnly = formatOnly || (Rgba.getAlpha(this.activeColor) == 0);
 
-        var exTs = (ExTesselator) assertBegun();
+        var exTs = assertBegun();
         exTs.ac$color8(this.activeColor);
 
         var font = (ExTextRenderer) this.font;
@@ -193,7 +204,7 @@ public final class TextRendererState implements TextMeasurer {
         return this.font.hashCode();
     }
 
-    private static void drawChar(ExTesselator ts, int column, int row, float x, float y) {
+    private static void drawChar(VertexSink ts, int column, int row, float x, float y) {
         float u = column / 128f;
         float v = row / 128f;
         float f = 7.99f;

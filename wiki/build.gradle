@@ -39,7 +39,7 @@ registerWikiTask('syncBaseline', 'sync-baseline', 'Refresh the retained Fandom b
 registerWikiTask('checkBaseline', 'check-baseline', 'Compare the retained baseline with Fandom without changing it.')
 registerWikiTask('verifyWikiManifest', 'manifest', 'Verify a downloaded wiki artifact before publishing.', [outputDirectory, minimumPages])
 registerWikiTask('verifyWikiAssets', 'assets', 'Compare committed and freshly rendered registry assets.', [
-    providers.gradleProperty('wikiRenderedAssets').orElse('build/wiki-assets-llvmpipe')
+    providers.gradleProperty('wikiRenderedAssets').orElse('build/wiki-assets-lavapipe')
 ])
 registerWikiTask('checkWikiLinks', 'links', 'Report external links; failures are advisory unless -PwikiLinksStrict=true.', [
     outputDirectory,

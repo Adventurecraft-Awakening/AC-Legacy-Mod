@@ -1,8 +1,6 @@
 package dev.adventurecraft.awakening.client.render.compat;
 
 
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.BufferUtils;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
@@ -150,7 +148,7 @@ public final class LegacyProjectionMath {
 
         cotangent = (float) Math.cos(radians) / sine;
 
-        var matrix = BufferUtils.createFloatBuffer(16);
+        var matrix = FloatBuffer.allocate(16);
         makeIdentity(matrix);
 
         matrix.put(0 * 4 + 0, cotangent / aspect);
@@ -160,7 +158,7 @@ public final class LegacyProjectionMath {
         matrix.put(3 * 4 + 2, -2 * zNear * zFar / deltaZ);
         matrix.put(3 * 4 + 3, 0);
 
-        GL11.glMultMatrixf(matrix);
+        LegacyGlAdapter.multMatrixf(matrix);
     }
 
     /**
@@ -207,7 +205,7 @@ public final class LegacyProjectionMath {
         /* Recompute up as: up = side x forward */
         cross(side, forward, up);
 
-        var matrix = BufferUtils.createFloatBuffer(16);
+        var matrix = FloatBuffer.allocate(16);
 
         makeIdentity(matrix);
         matrix.put(0 * 4 + 0, side[0]);
@@ -222,8 +220,8 @@ public final class LegacyProjectionMath {
         matrix.put(1 * 4 + 2, -forward[1]);
         matrix.put(2 * 4 + 2, -forward[2]);
 
-        GL11.glMultMatrixf(matrix);
-        GL11.glTranslatef(-eyex, -eyey, -eyez);
+        LegacyGlAdapter.multMatrixf(matrix);
+        LegacyGlAdapter.translatef(-eyex, -eyey, -eyez);
     }
 
     /**
@@ -297,7 +295,7 @@ public final class LegacyProjectionMath {
         float[] in = new float[4];
         float[] out = new float[4];
 
-        var finalMatrix = BufferUtils.createFloatBuffer(16);
+        var finalMatrix = FloatBuffer.allocate(16);
         multiplyMatrices(modelMatrix, projMatrix, finalMatrix);
 
         if (!invertMatrix(finalMatrix, finalMatrix))
@@ -351,11 +349,11 @@ public final class LegacyProjectionMath {
         }
 
         /* Translate and scale the picked region to the entire window */
-        GL11.glTranslatef(
+        LegacyGlAdapter.translatef(
                 (viewport.get(viewport.position() + 2) - 2 * (x - viewport.get(viewport.position() + 0))) / deltaX,
                 (viewport.get(viewport.position() + 3) - 2 * (y - viewport.get(viewport.position() + 1))) / deltaY,
                 0);
-        GL11.glScalef(viewport.get(viewport.position() + 2) / deltaX, viewport.get(viewport.position() + 3) / deltaY, 1.0f);
+        LegacyGlAdapter.scalef(viewport.get(viewport.position() + 2) / deltaX, viewport.get(viewport.position() + 3) / deltaY, 1.0f);
     }
     private static void normalize(float[] vector) {
         float length = (float) Math.sqrt(vector[0] * vector[0] + vector[1] * vector[1] + vector[2] * vector[2]);

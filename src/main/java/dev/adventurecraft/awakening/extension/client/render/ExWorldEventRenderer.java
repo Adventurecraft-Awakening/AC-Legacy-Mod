@@ -1,11 +1,26 @@
 package dev.adventurecraft.awakening.extension.client.render;
 
+import dev.adventurecraft.awakening.client.render.chunk.ChunkBuildStatistics;
+import dev.adventurecraft.awakening.client.render.lighting.TorchLightSections;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.level.Level;
 
 public interface ExWorldEventRenderer {
+
+    void ac$updateChunks(Mob camera, long deadline);
+
+    ChunkBuildStatistics ac$chunkBuildStatistics();
+
+    long ac$beginTorchLightUpdate(Level level);
+
+    void ac$endTorchLightUpdate(Level level, long epoch, TorchLightSections sections);
+
+    int ac$lastTorchDirtySections();
+
+    int ac$lastTorchDirtyChunks();
 
     void drawCursorSelection(Mob entity, ItemInstance stack, float deltaTime);
 
@@ -24,4 +39,5 @@ public interface ExWorldEventRenderer {
     void resetAll();
 
     void resetForDeath();
+
 }

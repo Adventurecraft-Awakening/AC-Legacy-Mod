@@ -1,6 +1,8 @@
 package dev.adventurecraft.awakening.script;
 
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
+import dev.adventurecraft.awakening.client.render.UiDrawContext;
+import dev.adventurecraft.awakening.client.render.compat.LegacyPassBridge;
 import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -52,6 +54,12 @@ public class UIElement {
     }
 
     public void render(Font font, Textures textures, float deltaTime) {
+        try (var context = LegacyPassBridge.uiContext(font, textures)) {
+            this.render(context, deltaTime);
+        }
+    }
+
+    public void render(UiDrawContext context, float deltaTime) {
     }
 
     public void onUpdate() {

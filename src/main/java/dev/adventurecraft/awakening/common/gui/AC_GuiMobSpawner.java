@@ -192,7 +192,8 @@ public class AC_GuiMobSpawner extends Screen {
 
             int scriptY = 124;
             int scriptHeight = this.height - scriptY;
-            // TODO: do not recreate widget
+            // Release cached GPU icons before replacing the widget after a layout change.
+            this.scriptWidget.close();
             this.scriptWidget = new FilePickerWidget(
                 this,
                 new IntRect(this.width / 2, scriptY, this.width / 2, scriptHeight),
@@ -366,7 +367,7 @@ public class AC_GuiMobSpawner extends Screen {
     @Override
     public void removed() {
         super.removed();
-
+        this.scriptWidget.close();
         this.mobSpawner.setChanged();
     }
 

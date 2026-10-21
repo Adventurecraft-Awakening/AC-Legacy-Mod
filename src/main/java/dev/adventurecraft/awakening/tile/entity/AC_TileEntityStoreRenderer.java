@@ -1,7 +1,6 @@
 package dev.adventurecraft.awakening.tile.entity;
 
 import dev.adventurecraft.awakening.editor.EditorSession;
-import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.AC_TriggerArea;
 import dev.adventurecraft.awakening.extension.client.render.entity.ExItemRenderer;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;

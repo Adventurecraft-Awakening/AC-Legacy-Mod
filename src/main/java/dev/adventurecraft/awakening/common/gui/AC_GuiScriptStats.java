@@ -9,10 +9,8 @@ import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.opengl.GL11;
 
 public class AC_GuiScriptStats extends Screen {
 
@@ -130,26 +128,28 @@ public class AC_GuiScriptStats extends Screen {
             this.renderSortArrow(this.activeButton);
         }
 
-        var state = ((ExTextRenderer) this.font).createState();
-        state.setColor(0xffe0e0e0);
-        state.setShadowToColor();
-        state.begin(Tesselator.instance);
+        try (var ui = dev.adventurecraft.awakening.client.render.compat.LegacyPassBridge.uiContext(this.font, this.minecraft.textures)) {
+            var state = ((ExTextRenderer) this.font).createState();
+            state.setColor(0xffe0e0e0);
+            state.setShadowToColor();
+            state.begin(ui);
 
-        int y = 25;
-        for (AC_JScriptInfo info : this.scriptInfos) {
-            double totalTime = (double) info.totalTime / 1000000.0D;
-            double avgTime = totalTime / (double) info.count;
-            double maxTime = (double) info.maxTime / 1000000.0D;
-            state.drawText(info.name, 4, y);
+            int y = 25;
+            for (AC_JScriptInfo info : this.scriptInfos) {
+                double totalTime = (double) info.totalTime / 1000000.0D;
+                double avgTime = totalTime / (double) info.count;
+                double maxTime = (double) info.maxTime / 1000000.0D;
+                state.drawText(info.name, 4, y);
 
-            int x = this.maxSize;
-            state.drawText(String.format("%.2f", avgTime), x, y);
-            state.drawText(String.format("%.2f", maxTime), x += COLUMN_SPACING, y);
-            state.drawText(String.format("%.2f", totalTime), x += COLUMN_SPACING, y);
-            state.drawText(String.format("%d", info.count), x += COLUMN_SPACING, y);
-            y += 10;
+                int x = this.maxSize;
+                state.drawText(String.format("%.2f", avgTime), x, y);
+                state.drawText(String.format("%.2f", maxTime), x += COLUMN_SPACING, y);
+                state.drawText(String.format("%.2f", totalTime), x += COLUMN_SPACING, y);
+                state.drawText(String.format("%d", info.count), x += COLUMN_SPACING, y);
+                y += 10;
+            }
+            state.end();
         }
-        state.end();
 
         super.render(mouseX, mouseY, deltaTime);
     }
@@ -160,17 +160,11 @@ public class AC_GuiScriptStats extends Screen {
     }
 
     private void renderSlotIcon(int x, int y, int u, int v) {
-        int texId = this.minecraft.textures.loadTexture("/gui/slot.png");
-        this.minecraft.textures.bind(texId);
-
-        GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-        Tesselator ts = Tesselator.instance;
-        double z = this.blitOffset;
-        ts.begin();
-        ts.vertexUV(x + 0., y + 18, z, (u + 0.) / 128f, (v + 18) / 128f);
-        ts.vertexUV(x + 18, y + 18, z, (u + 18) / 128f, (v + 18) / 128f);
-        ts.vertexUV(x + 18, y + 0., z, (u + 18) / 128f, (v + 0.) / 128f);
-        ts.vertexUV(x + 0., y + 0., z, (u + 0.) / 128f, (v + 0.) / 128f);
-        ts.end();
+        try (var ui = dev.adventurecraft.awakening.client.render.compat.LegacyPassBridge.uiContext(this.font, this.minecraft.textures)) {
+            ui.translated(0, 0, this.blitOffset).image(ui.texture("/gui/slot.png"),
+                new dev.adventurecraft.awakening.layout.Rect(x, y, 18, 18),
+                new dev.adventurecraft.awakening.layout.Rect(u / 128f, v / 128f, 18 / 128f, 18 / 128f),
+                new dev.adventurecraft.awakening.layout.IntCorner(-1));
+        }
     }
 }

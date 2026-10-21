@@ -14,6 +14,7 @@ public abstract class MixinAC_TextureFanFX extends MixinTextureBinder {
 
     @Override
     public void loadImage(String name, Level world) {
+        this.clearCompanions();
         if (name == null) {
             name = "/misc/fan.png";
         }
@@ -32,5 +33,6 @@ public abstract class MixinAC_TextureFanFX extends MixinTextureBinder {
         }
 
         super.loadImage(name, image);
+        this.loadCompanions(name, world, image);
     }
 }

@@ -23,6 +23,7 @@
     ],
     "mm:early_risers": [
       "dev.adventurecraft.awakening.earlyrisers.DesktopBootstrap",
+      "dev.adventurecraft.awakening.earlyrisers.VulkanRenderRouting",
       "dev.adventurecraft.awakening.earlyrisers.EnumInitializer",
       "dev.adventurecraft.awakening.earlyrisers.AppContextSetup"
     ],

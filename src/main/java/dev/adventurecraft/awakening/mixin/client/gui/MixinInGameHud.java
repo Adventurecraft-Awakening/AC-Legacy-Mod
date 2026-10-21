@@ -1,8 +1,12 @@
 package dev.adventurecraft.awakening.mixin.client.gui;
 
 import dev.adventurecraft.awakening.editor.EditorSession;
+import dev.adventurecraft.awakening.client.render.UiDrawContext;
+import dev.adventurecraft.awakening.client.render.resource.RenderTexture;
+import dev.adventurecraft.awakening.client.render.state.*;
+import dev.adventurecraft.awakening.client.render.compat.LegacyPassBridge;
 import dev.adventurecraft.awakening.ACMod;
-import dev.adventurecraft.awakening.client.gl.GLDevice;
+import dev.adventurecraft.awakening.client.render.resource.RenderDevice;
 import dev.adventurecraft.awakening.client.gui.AC_ChatScreen;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.dom.Node;
@@ -20,27 +24,22 @@ import dev.adventurecraft.awakening.image.Rgba;
 import dev.adventurecraft.awakening.layout.Border;
 import dev.adventurecraft.awakening.layout.IntRect;
 import dev.adventurecraft.awakening.layout.Rect;
-import dev.adventurecraft.awakening.util.DrawUtil;
 import dev.adventurecraft.awakening.util.FacingUtil;
 import dev.adventurecraft.awakening.util.HexConvert;
 import dev.adventurecraft.awakening.script.ScriptUIContainer;
 import dev.adventurecraft.awakening.util.MathF;
-import net.minecraft.client.Lighting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.ScreenSizeCalculator;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.tile.Tile;
 import net.minecraft.world.phys.HitType;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL12;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -80,6 +79,8 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
 
     @Unique private static final long MAX_MESSAGE_AGE = 200 * 50;
 
+    @Shadow private static net.minecraft.client.renderer.entity.ItemRenderer itemRenderer;
+    @Shadow float tbr;
     @Shadow private Random random;
     @Shadow private Minecraft minecraft;
     @Shadow private int tickCount;
@@ -115,6 +116,7 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
 
     @Overwrite
     public void render(float partialTick, boolean hasScreen, int mouseX, int mouseY) {
+        dev.adventurecraft.awakening.client.render.RenderSystem.phase(dev.adventurecraft.awakening.client.render.RenderPhase.UI);
         final Minecraft mc = this.minecraft;
         final LocalPlayer player = mc.player;
         final Font font = mc.font;
@@ -126,345 +128,354 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
         var barRect = new IntRect(screenWidth / 2 - 91, screenHeight - 22, 182, 22);
 
         mc.gameRenderer.setScreenProjectionMatrix();
-        GL11.glEnable(GL11.GL_BLEND);
-        if (Minecraft.useFancyGraphics()) {
-            this.renderVignette(player.getBrightness(partialTick), screenWidth, screenHeight);
-        }
-
-        if (!mc.options.thirdPersonView && !((ExMinecraft) mc).isCameraActive()) {
-            ItemInstance headItem = player.inventory.getArmor(3);
-            if (headItem != null && headItem.id == Tile.PUMPKIN.id) {
-                this.renderPumpkin(screenWidth, screenHeight);
+        try (var ui = LegacyPassBridge.uiContext(font, mc.textures)) {
+            RenderTexture hudTexture;
+            if (Minecraft.useFancyGraphics()) {
+                this.ac$vignette(ui,player.getBrightness(partialTick),screenWidth,screenHeight);
             }
-        }
 
-        if (mc.level != null) {
-            String overlay = ((ExWorldProperties) mc.level.levelData).getOverlay();
-            if (!overlay.isEmpty()) {
-                this.renderOverlay(screenWidth, screenHeight, overlay);
+            if (!mc.options.thirdPersonView && !((ExMinecraft) mc).isCameraActive()) {
+                ItemInstance headItem = player.inventory.getArmor(3);
+                if (headItem != null && headItem.id == Tile.PUMPKIN.id) {
+                    ui.image(ui.texture("%blur%/misc/pumpkinblur.png"), new Rect(0,0,screenWidth,screenHeight),new Rect(0,0,1,1),new dev.adventurecraft.awakening.layout.IntCorner(-1));
+                }
             }
-        }
 
-        float portalTime = MathF.fastLerp(partialTick, player.oPortalTime, player.portalTime);
-        if (portalTime > 0.0F) {
-            this.renderPortalOverlay(portalTime, screenWidth, screenHeight);
-        }
+            if (mc.level != null) {
+                String overlay = ((ExWorldProperties) mc.level.levelData).getOverlay();
+                if (!overlay.isEmpty()) {
+                    this.renderOverlay(ui,screenWidth,screenHeight,overlay);
+                }
+            }
 
-        if (mc.level != null) {
-            // Refresh hudEnabled property (has to be here, because ui.hudEnabled can be set directly....)
-            ((ExWorldProperties) mc.level.levelData).setHudEnabled(this.hudEnabled);
-        }
+            float portalTime = MathF.fastLerp(partialTick, player.oPortalTime, player.portalTime);
+            if (portalTime > 0.0F) {
+                this.ac$portal(ui,portalTime,screenWidth,screenHeight);
+            }
 
-        final int slotWidth = 20;
+            if (mc.level != null) {
+                // Refresh hudEnabled property (has to be here, because ui.hudEnabled can be set directly....)
+                ((ExWorldProperties) mc.level.levelData).setHudEnabled(this.hudEnabled);
+            }
 
-        if (this.hudEnabled) {
-            final int maxHealth = ((ExMob) player).getMaxHealth();
-            final int heartRows = (maxHealth - 1) / 40;
+            final int slotWidth = 20;
 
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, mc.textures.loadTexture("/gui/gui.png"));
-            Inventory inv = player.inventory;
-            this.blitOffset = -90.0F;
-            // Render bar
-            this.blit(barRect.left(), barRect.top(), 0, 0, barRect.width(), barRect.height());
+            if (this.hudEnabled) {
+                final int maxHealth = ((ExMob) player).getMaxHealth();
+                final int heartRows = (maxHealth - 1) / 40;
 
-            // Render off-hand slot outline.
-            int offhandLeft = barRect.left() - 1 + ((ExPlayerInventory) inv).getOffhandSlot() * slotWidth;
-            this.blit(offhandLeft, barRect.top() - 1, 24, 22, 48, barRect.height());
+                hudTexture=ui.texture("/gui/gui.png");
+                Inventory inv = player.inventory;
+                this.blitOffset = -90.0F;
+                // Render bar
+                this.ac$blit(ui,hudTexture,barRect.left(), barRect.top(), 0, 0, barRect.width(), barRect.height());
 
-            // Render main-hand slot outline.
-            int mainhandLeft = barRect.left() - 1 + inv.selected * slotWidth;
-            this.blit(mainhandLeft, barRect.top() - 1, 0, 22, 24, barRect.height());
+                // Render off-hand slot outline.
+                int offhandLeft = barRect.left() - 1 + ((ExPlayerInventory) inv).getOffhandSlot() * slotWidth;
+                this.ac$blit(ui,hudTexture,offhandLeft, barRect.top() - 1, 24, 22, 48, barRect.height());
 
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, mc.textures.loadTexture("/gui/icons.png"));
+                // Render main-hand slot outline.
+                int mainhandLeft = barRect.left() - 1 + inv.selected * slotWidth;
+                this.ac$blit(ui,hudTexture,mainhandLeft, barRect.top() - 1, 0, 22, 24, barRect.height());
 
-            // Render cross-hair
-            GL11.glEnable(GL11.GL_BLEND);
-            GL11.glBlendFunc(GL11.GL_ONE_MINUS_DST_COLOR, GL11.GL_ONE_MINUS_SRC_COLOR);
-            this.blit(screenWidth / 2 - 7, screenHeight / 2 - 7, 0, 0, 16, 16);
-            GL11.glDisable(GL11.GL_BLEND);
+                hudTexture=ui.texture("/gui/icons.png");
 
-            final int lowHealthThreshold = 8;
-            final int playerHealth = player.health;
-            final int playerPrevHealth = player.lastHealth;
-            this.random.setSeed(this.tickCount * 312871L);
+                // Render cross-hair
+                var crosshair=ui.withParameters(MaterialRecipe.UI_INVERT.apply(ui.parameters()));
+                this.ac$blit(crosshair,hudTexture,screenWidth / 2 - 7, screenHeight / 2 - 7, 0, 0, 16, 16);
+                var icons=ui.withParameters(MaterialRecipe.UI_CUTOUT.apply(ui.parameters()));
 
-            final int heartBot = barRect.top() - 10;
-            final int heartTop = heartBot - 9 * heartRows;
+                final int lowHealthThreshold = 8;
+                final int playerHealth = player.health;
+                final int playerPrevHealth = player.lastHealth;
+                this.random.setSeed(this.tickCount * 312871L);
 
-            if (mc.gameMode.canHurtPlayer()) {
-                int playerArmor = player.getArmor();
-                boolean isInvulnerable = player.invulnerableTime >= 10 && player.invulnerableTime / 3 % 2 == 1;
+                final int heartBot = barRect.top() - 10;
+                final int heartTop = heartBot - 9 * heartRows;
 
-                for (int armorIndex = 0; armorIndex < 10; ++armorIndex) {
-                    int y = heartBot;
-                    if (playerArmor > 0) {
-                        int armorLeft = barRect.right() - armorIndex * 8 - 9;
-                        int u = 25 - Integer.compare((armorIndex * 2 + 1), playerArmor) * 9;
-                        this.blit(armorLeft, y, u, 9, 9, 9);
-                    }
+                if (mc.gameMode.canHurtPlayer()) {
+                    int playerArmor = player.getArmor();
+                    boolean isInvulnerable = player.invulnerableTime >= 10 && player.invulnerableTime / 3 % 2 == 1;
 
-                    int heartLeft = barRect.left() + armorIndex * 8;
-                    if (playerHealth <= lowHealthThreshold) {
-                        y += this.random.nextInt(2);
-                    }
-
-                    for (int healthIndex = 0; healthIndex <= heartRows; ++healthIndex) {
-                        if ((armorIndex + 1 + healthIndex * 10) * 4 <= maxHealth) {
-                            int u0 = isInvulnerable ? 9 : 0;
-
-                            this.blit(heartLeft, y, 16 + u0, 0, 9, 9);
-
-                            if (isInvulnerable) {
-                                int u1 = -1;
-                                if (armorIndex * 4 + 3 + healthIndex * 40 < playerPrevHealth) {
-                                    u1 = 70;
-                                }
-                                else if (armorIndex * 4 + 3 + healthIndex * 40 == playerPrevHealth) {
-                                    u1 = 105;
-                                }
-                                else if (armorIndex * 4 + 2 + healthIndex * 40 == playerPrevHealth) {
-                                    u1 = 79;
-                                }
-                                else if (armorIndex * 4 + 1 + healthIndex * 40 == playerPrevHealth) {
-                                    u1 = 114;
-                                }
-                                if (u1 != -1) {
-                                    this.blit(heartLeft, y, u1, 0, 9, 9);
-                                }
-                            }
-
-                            int u2 = -1;
-                            if (armorIndex * 4 + 3 + healthIndex * 40 < playerHealth) {
-                                u2 = 52;
-                            }
-                            else if (armorIndex * 4 + 3 + healthIndex * 40 == playerHealth) {
-                                u2 = 87;
-                            }
-                            else if (armorIndex * 4 + 2 + healthIndex * 40 == playerHealth) {
-                                u2 = 61;
-                            }
-                            else if (armorIndex * 4 + 1 + healthIndex * 40 == playerHealth) {
-                                u2 = 96;
-                            }
-                            if (u2 != -1) {
-                                this.blit(heartLeft, y, u2, 0, 9, 9);
-                            }
+                    for (int armorIndex = 0; armorIndex < 10; ++armorIndex) {
+                        int y = heartBot;
+                        if (playerArmor > 0) {
+                            int armorLeft = barRect.right() - armorIndex * 8 - 9;
+                            int u = 25 - Integer.compare((armorIndex * 2 + 1), playerArmor) * 9;
+                            this.ac$blit(icons,hudTexture,armorLeft, y, u, 9, 9, 9);
                         }
-                        y -= 9;
+
+                        int heartLeft = barRect.left() + armorIndex * 8;
+                        if (playerHealth <= lowHealthThreshold) {
+                            y += this.random.nextInt(2);
+                        }
+
+                        for (int healthIndex = 0; healthIndex <= heartRows; ++healthIndex) {
+                            if ((armorIndex + 1 + healthIndex * 10) * 4 <= maxHealth) {
+                                int u0 = isInvulnerable ? 9 : 0;
+
+                                this.ac$blit(icons,hudTexture,heartLeft, y, 16 + u0, 0, 9, 9);
+
+                                if (isInvulnerable) {
+                                    int u1 = -1;
+                                    if (armorIndex * 4 + 3 + healthIndex * 40 < playerPrevHealth) {
+                                        u1 = 70;
+                                    }
+                                    else if (armorIndex * 4 + 3 + healthIndex * 40 == playerPrevHealth) {
+                                        u1 = 105;
+                                    }
+                                    else if (armorIndex * 4 + 2 + healthIndex * 40 == playerPrevHealth) {
+                                        u1 = 79;
+                                    }
+                                    else if (armorIndex * 4 + 1 + healthIndex * 40 == playerPrevHealth) {
+                                        u1 = 114;
+                                    }
+                                    if (u1 != -1) {
+                                        this.ac$blit(icons,hudTexture,heartLeft, y, u1, 0, 9, 9);
+                                    }
+                                }
+
+                                int u2 = -1;
+                                if (armorIndex * 4 + 3 + healthIndex * 40 < playerHealth) {
+                                    u2 = 52;
+                                }
+                                else if (armorIndex * 4 + 3 + healthIndex * 40 == playerHealth) {
+                                    u2 = 87;
+                                }
+                                else if (armorIndex * 4 + 2 + healthIndex * 40 == playerHealth) {
+                                    u2 = 61;
+                                }
+                                else if (armorIndex * 4 + 1 + healthIndex * 40 == playerHealth) {
+                                    u2 = 96;
+                                }
+                                if (u2 != -1) {
+                                    this.ac$blit(icons,hudTexture,heartLeft, y, u2, 0, 9, 9);
+                                }
+                            }
+                            y -= 9;
+                        }
+                    }
+                }
+
+                if (player.isUnderLiquid(Material.WATER)) {
+                    int airAlpha = (int) Math.ceil((player.airSupply - 2) * 10.0D / 300.0D);
+                    int airUsed = (int) Math.ceil(player.airSupply * 10.0D / 300.0D) - airAlpha;
+
+                    for (int bubbleIndex = 0; bubbleIndex < airAlpha + airUsed; ++bubbleIndex) {
+                        int u = bubbleIndex < airAlpha ? 16 : 25;
+                        int x = barRect.left() + bubbleIndex * 8;
+                        int y = heartTop - 9;
+                        this.ac$blit(icons,hudTexture,x, y, u, 18, 9, 9);
                     }
                 }
             }
 
-            if (player.isUnderLiquid(Material.WATER)) {
-                int airAlpha = (int) Math.ceil((player.airSupply - 2) * 10.0D / 300.0D);
-                int airUsed = (int) Math.ceil(player.airSupply * 10.0D / 300.0D) - airAlpha;
+            if (this.hudEnabled) {
 
-                for (int bubbleIndex = 0; bubbleIndex < airAlpha + airUsed; ++bubbleIndex) {
-                    int u = bubbleIndex < airAlpha ? 16 : 25;
-                    int x = barRect.left() + bubbleIndex * 8;
-                    int y = heartTop - 9;
-                    this.blit(x, y, u, 18, 9, 9);
+                for (int slot = 0; slot < 9; ++slot) {
+                    int x = barRect.left() + slot * slotWidth + 3;
+                    int y = barRect.top() + 3;
+                    var stack=player.inventory.items[slot];
+                    if(stack==null) continue;
+                    var preview=ui;
+                    float pop=stack.popTime-partialTick;
+                    if(pop>0) {
+                        float stretch=1+pop/5;
+                        var model=ui.parameters().object().model().translated(x+8,y+12,0)
+                            .scaled(1/stretch,(stretch+1)/2,1).translated(-x-8,-y-12,0);
+                        preview=ui.withParameters(ui.parameters().withObject(ui.parameters().object().withModel(model)));
+                    }
+                    ((dev.adventurecraft.awakening.extension.client.render.entity.ExItemRenderer)itemRenderer).renderGuiItem(preview,stack,x,y);
+                    dev.adventurecraft.awakening.client.render.ItemPreviewRenderer.decorations(ui,stack,x,y);
                 }
-            }
-        }
-        else {
-            GL11.glDisable(GL11.GL_BLEND);
-        }
 
-        if (this.hudEnabled) {
-            GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-            GL11.glPushMatrix();
-            GL11.glRotatef(120.0F, 1.0F, 0.0F, 0.0F);
-            Lighting.turnOn();
-            GL11.glPopMatrix();
-
-            for (int slot = 0; slot < 9; ++slot) {
-                int x = barRect.left() + slot * slotWidth + 3;
-                int y = barRect.top() + 3;
-                this.renderSlot(slot, x, y, partialTick);
             }
 
-            Lighting.turnOff();
-            GL11.glDisable(GL12.GL_RESCALE_NORMAL);
-        }
+            int sleepTimer = player.getSleepTimer();
+            if (sleepTimer > 0) {
 
-        int sleepTimer = player.getSleepTimer();
-        if (sleepTimer > 0) {
-            GL11.glDisable(GL11.GL_DEPTH_TEST);
-            GL11.glDisable(GL11.GL_ALPHA_TEST);
-            float sleepFactor = (float) sleepTimer / 100.0F;
-            if (sleepFactor > 1.0F) {
-                sleepFactor = 1.0F - (float) (sleepTimer - 100) / 10.0F;
-            }
-
-            int color = Rgba.withAlpha(0x101020, (int) (220.0F * sleepFactor));
-            this.fill(0, 0, screenWidth, screenHeight, color);
-            GL11.glEnable(GL11.GL_ALPHA_TEST);
-            GL11.glEnable(GL11.GL_DEPTH_TEST);
-        }
-
-        GL11.glColor4f(1f, 1f, 1f, 1f);
-
-        int x = 2;
-        final int color0 = 0xffffff;
-        final int color1 = 0xe0e0e0;
-
-        if (mc.options.renderDebug) {
-            int y = 2;
-            if (Minecraft.sessionTime > 0L) {
-                y += 32;
-            }
-
-            var ts = Tesselator.instance;
-            var textState = ((ExTextRenderer) font).createState();
-            textState.setShadowOffset(1, 1);
-
-            textState.setColor(Rgba.withAlpha(color0, 0xff));
-            textState.setShadowToColor();
-            textState.begin(ts);
-
-            textState.drawText(AC_Version.shortVersion, x, y);
-            textState.drawText(mc.fpsString, x, y += 10);
-            textState.drawText(mc.getChunkStatistics(), x, y += 10);
-            textState.drawText(mc.getEntityStatistics(), x, y += 10);
-            textState.drawText(mc.getParticleStatistics(), x, y += 10);
-            textState.drawText(mc.getDebugInfo(), x, y += 10);
-            y += 10;
-
-            textState.setColor(Rgba.withAlpha(color1, 0xff));
-            textState.setShadowToColor();
-            textState.resetFormat();
-
-            long maxMem = Runtime.getRuntime().maxMemory();
-            long totMem = Runtime.getRuntime().totalMemory();
-            long freeMem = Runtime.getRuntime().freeMemory();
-            long usedMem = totMem - freeMem;
-
-            int y1 = 2;
-            String usedMsg = "Used: %d%% (%dMB) of %dMB".formatted(
-                usedMem * 100L / maxMem,
-                usedMem / 1024L / 1024L,
-                maxMem / 1024L / 1024L
-            );
-            textState.drawText(usedMsg, screenWidth - font.width(usedMsg) - 2, y1);
-
-            String allocMsg = "Allocated: %d%% (%dMB)".formatted(totMem * 100L / maxMem, totMem / 1024L / 1024L);
-            textState.drawText(allocMsg, screenWidth - font.width(allocMsg) - 2, y1 += 10);
-            y1 += 10;
-
-            GLDevice.DeviceInfo glDeviceInfo = ((ExMinecraft) mc).getGlDevice().getDeviceInfo();
-            long gpuBufMem = glDeviceInfo.bufferAllocatedBytes();
-            long gpuBufCount = glDeviceInfo.bufferCount();
-            String gpuBufMsg = "GL Buffers: %d | %dMB".formatted(gpuBufCount, gpuBufMem / 1024L / 1024L);
-            textState.drawText(gpuBufMsg, screenWidth - font.width(gpuBufMsg) - 2, y1 += 10);
-
-            textState.drawText("XYZ: %.3f / %.5f / %.3f".formatted(player.x, player.y, player.z), x, y += 8);
-            int facing = FacingUtil.getFacing(player.yRot);
-            String facingName = FacingUtil.getFacingName(facing).toLowerCase();
-            String facingText = "Facing: %s (%s) (%.1f / %.1f)".formatted(
-                facingName,
-                FacingUtil.getFacingDir(facing),
-                player.yRot,
-                player.xRot
-            );
-            textState.drawText(facingText, x, y += 8);
-            y += 10;
-
-            boolean useWorldGenImages = ((ExWorldProperties) mc.level.levelData).getWorldGenProps().useImages;
-            if (useWorldGenImages) {
-                int pX = (int) player.x;
-                int pY = (int) player.z;
-                int tH = AC_TerrainImage.getTerrainHeight(pX, pY);
-                int wH = AC_TerrainImage.getWaterHeight(pX, pY);
-                float tTemp = AC_TerrainImage.getTerrainTemperature(pX, pY);
-                float tHumid = AC_TerrainImage.getTerrainHumidity(pX, pY);
-                String msg = String.format("T: %d W: %d Temp: %.2f Humid: %.2f", tH, wH, tTemp, tHumid);
-                textState.drawText(msg, x, y += 10);
-            }
-
-            var exPlayer = (ExEntity) player;
-            var collideMsg = String.format("Collide XZ: %d / %d", exPlayer.getCollisionX(), exPlayer.getCollisionZ());
-            textState.drawText(collideMsg, x, y += 10);
-            y += 10;
-
-            var hit = mc.hitResult;
-            if (hit != null) {
-                String targetMsg = "";
-                String hitMsg = "";
-                if (hit.hitType == HitType.TILE) {
-                    int id = mc.level.getTile(hit.x, hit.y, hit.z);
-                    int meta = mc.level.getData(hit.x, hit.y, hit.z);
-                    // TODO: better tile names (BlockState)
-                    Tile tile = Tile.tiles[id];
-                    String name = tile != null ? tile.getName() : "<noname>";
-
-                    targetMsg = String.format("Target Block: %d %d %d", hit.x, hit.y, hit.z);
-                    hitMsg = String.format("%d:%d (%s)", id, meta, name);
+                float sleepFactor = (float) sleepTimer / 100.0F;
+                if (sleepFactor > 1.0F) {
+                    sleepFactor = 1.0F - (float) (sleepTimer - 100) / 10.0F;
                 }
-                else if (hit.hitType == HitType.ENTITY) {
-                    Entity e = hit.entity;
-                    targetMsg = String.format("Target Entity: %.1f %.1f %.1f", e.x, e.y, e.z);
-                    hitMsg = ((EntityClass) e).getClassType() + "#" + Integer.toHexString(e.id);
-                }
-                textState.drawText(targetMsg, x, y += 10);
-                textState.drawText(hitMsg, x, y += 10);
+
+                int color = Rgba.withAlpha(0x101020, (int) (220.0F * sleepFactor));
+                ui.fill(new Rect(0,0,screenWidth,screenHeight),color);
+
             }
 
-            textState.end();
-        }
-        else {
-            int y = 2; // 12 prev
-            if (EditorSession.current().active) {
-                font.drawShadow(AC_Version.shortVersion, x, y, color0);
+            int x = 2;
+            final int color0 = 0xffffff;
+            final int color1 = 0xe0e0e0;
+
+            if (mc.options.renderDebug) {
+                int y = 2;
+                if (Minecraft.sessionTime > 0L) {
+                    y += 32;
+                }
+
+                var textState = ((ExTextRenderer) font).createState();
+                textState.setShadowOffset(1, 1);
+
+                textState.setColor(Rgba.withAlpha(color0, 0xff));
+                textState.setShadowToColor();
+                textState.begin(ui);
+
+                textState.drawText(AC_Version.shortVersion, x, y);
+                textState.drawText(mc.fpsString, x, y += 10);
+                textState.drawText(mc.getChunkStatistics(), x, y += 10);
+                textState.drawText(mc.getEntityStatistics(), x, y += 10);
+                textState.drawText(mc.getParticleStatistics(), x, y += 10);
+                textState.drawText(mc.getDebugInfo(), x, y += 10);
                 y += 10;
 
-                var gitMeta = ACMod.GIT_META;
-                if (gitMeta != null && !gitMeta.isCleanTag) {
-                    String branchHash = "Branch \"" + gitMeta.branch + "\" - " + gitMeta.version;
-                    font.drawShadow(branchHash, x, y, color0);
+                textState.setColor(Rgba.withAlpha(color1, 0xff));
+                textState.setShadowToColor();
+                textState.resetFormat();
+
+                long maxMem = Runtime.getRuntime().maxMemory();
+                long totMem = Runtime.getRuntime().totalMemory();
+                long freeMem = Runtime.getRuntime().freeMemory();
+                long usedMem = totMem - freeMem;
+
+                int y1 = 2;
+                String usedMsg = "Used: %d%% (%dMB) of %dMB".formatted(
+                    usedMem * 100L / maxMem,
+                    usedMem / 1024L / 1024L,
+                    maxMem / 1024L / 1024L
+                );
+                textState.drawText(usedMsg, screenWidth - font.width(usedMsg) - 2, y1);
+
+                String allocMsg = "Allocated: %d%% (%dMB)".formatted(totMem * 100L / maxMem, totMem / 1024L / 1024L);
+                textState.drawText(allocMsg, screenWidth - font.width(allocMsg) - 2, y1 += 10);
+                y1 += 10;
+
+                RenderDevice.DeviceInfo renderDeviceInfo = ((ExMinecraft) mc).getRenderDevice().getDeviceInfo();
+                long terrainBytes = renderDeviceInfo.bufferAllocatedBytes();
+                long terrainMeshes = renderDeviceInfo.bufferCount();
+                String terrainMsg = "Vulkan terrain: %d meshes | %dMB".formatted(terrainMeshes, terrainBytes / 1024L / 1024L);
+                textState.drawText(terrainMsg, screenWidth - font.width(terrainMsg) - 2, y1 += 10);
+
+                textState.drawText("XYZ: %.3f / %.5f / %.3f".formatted(player.x, player.y, player.z), x, y += 8);
+                int facing = FacingUtil.getFacing(player.yRot);
+                String facingName = FacingUtil.getFacingName(facing).toLowerCase();
+                String facingText = "Facing: %s (%s) (%.1f / %.1f)".formatted(
+                    facingName,
+                    FacingUtil.getFacingDir(facing),
+                    player.yRot,
+                    player.xRot
+                );
+                textState.drawText(facingText, x, y += 8);
+                y += 10;
+
+                boolean useWorldGenImages = ((ExWorldProperties) mc.level.levelData).getWorldGenProps().useImages;
+                if (useWorldGenImages) {
+                    int pX = (int) player.x;
+                    int pY = (int) player.z;
+                    int tH = AC_TerrainImage.getTerrainHeight(pX, pY);
+                    int wH = AC_TerrainImage.getWaterHeight(pX, pY);
+                    float tTemp = AC_TerrainImage.getTerrainTemperature(pX, pY);
+                    float tHumid = AC_TerrainImage.getTerrainHumidity(pX, pY);
+                    String msg = String.format("T: %d W: %d Temp: %.2f Humid: %.2f", tH, wH, tTemp, tHumid);
+                    textState.drawText(msg, x, y += 10);
+                }
+
+                var exPlayer = (ExEntity) player;
+                var collideMsg = String.format("Collide XZ: %d / %d", exPlayer.getCollisionX(), exPlayer.getCollisionZ());
+                textState.drawText(collideMsg, x, y += 10);
+                y += 10;
+
+                var hit = mc.hitResult;
+                if (hit != null) {
+                    String targetMsg = "";
+                    String hitMsg = "";
+                    if (hit.hitType == HitType.TILE) {
+                        int id = mc.level.getTile(hit.x, hit.y, hit.z);
+                        int meta = mc.level.getData(hit.x, hit.y, hit.z);
+                        // TODO: better tile names (BlockState)
+                        Tile tile = Tile.tiles[id];
+                        String name = tile != null ? tile.getName() : "<noname>";
+
+                        targetMsg = String.format("Target Block: %d %d %d", hit.x, hit.y, hit.z);
+                        hitMsg = String.format("%d:%d (%s)", id, meta, name);
+                    }
+                    else if (hit.hitType == HitType.ENTITY) {
+                        Entity e = hit.entity;
+                        targetMsg = String.format("Target Entity: %.1f %.1f %.1f", e.x, e.y, e.z);
+                        hitMsg = ((EntityClass) e).getClassType() + "#" + Integer.toHexString(e.id);
+                    }
+                    textState.drawText(targetMsg, x, y += 10);
+                    textState.drawText(hitMsg, x, y += 10);
+                }
+
+                textState.end();
+            }
+            else {
+                int y = 2; // 12 prev
+                if (EditorSession.current().active) {
+                    this.ac$text(ui,AC_Version.shortVersion, x, y, color0);
+                    y += 10;
+
+                    var gitMeta = ACMod.GIT_META;
+                    if (gitMeta != null && !gitMeta.isCleanTag) {
+                        String branchHash = "Branch \"" + gitMeta.branch + "\" - " + gitMeta.version;
+                        this.ac$text(ui,branchHash, x, y, color0);
+                        y += 10;
+                    }
+
+                    this.ac$text(ui,"Debug Active", x, y, color0);
                     y += 10;
                 }
 
-                font.drawShadow("Debug Active", x, y, color0);
-                y += 10;
-            }
-
-            if (EditorSession.current().levelEditing) {
-                font.drawShadow("Map Editing", x, y, color0);
-            }
-        }
-
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-
-        if (this.nowPlayingTime > 0) {
-            float partialTime = (float) this.nowPlayingTime - partialTick;
-            int alpha = Math.min((int) (partialTime * 256.0F / 20.0F), 255);
-            if (alpha > 0) {
-                int color = color0;
-                if (this.animateOverlayMessageColor) {
-                    color = java.awt.Color.HSBtoRGB(partialTime / 50.0F, 0.7F, 0.6F) & color0;
+                if (EditorSession.current().levelEditing) {
+                    this.ac$text(ui,"Map Editing", x, y, color0);
                 }
-
-                int pX = screenWidth / 2 - font.width(this.nowPlayingString) / 2;
-                font.draw(this.nowPlayingString, pX, screenHeight - 48 - 4, Rgba.withAlpha(color, alpha));
             }
+
+            if (this.nowPlayingTime > 0) {
+                float partialTime = (float) this.nowPlayingTime - partialTick;
+                int alpha = Math.min((int) (partialTime * 256.0F / 20.0F), 255);
+                if (alpha > 0) {
+                    int color = color0;
+                    if (this.animateOverlayMessageColor) {
+                        color = java.awt.Color.HSBtoRGB(partialTime / 50.0F, 0.7F, 0.6F) & color0;
+                    }
+
+                    int pX = screenWidth / 2 - font.width(this.nowPlayingString) / 2;
+                    ui.text(this.nowPlayingString,pX,screenHeight-48-4,Rgba.withAlpha(color,alpha),false);
+                }
+            }
+
+            this.scriptUI.render(ui,partialTick);
+
+            this.renderChat(ui,screenWidth,screenHeight);
         }
+    }
 
-        GL11.glDisable(GL11.GL_ALPHA_TEST);
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
-
-        this.scriptUI.render(font, mc.textures, partialTick);
-        GL11.glEnable(GL11.GL_DEPTH_TEST);
-
-        this.renderChat(screenWidth, screenHeight);
-        GL11.glEnable(GL11.GL_ALPHA_TEST);
+    @Unique private void ac$blit(UiDrawContext ui,RenderTexture texture,int x,int y,int u,int v,int width,int height) {
+        ui.image(texture,new Rect(x,y,width,height),new Rect(u/256.0,v/256.0,width/256.0,height/256.0),
+            new dev.adventurecraft.awakening.layout.IntCorner(-1));
+    }
+    @Unique private void ac$text(UiDrawContext ui,String text,int x,int y,int color) {
+        ui.text(text,x,y,Rgba.withAlpha(color,255),true);
+    }
+    @Unique private void ac$vignette(UiDrawContext ui,float brightness,int width,int height) {
+        float target=Math.clamp(1-brightness,0,1); this.tbr+=(target-this.tbr)*.01f;
+        var darken=ui.withParameters(ui.parameters().withRaster(ui.parameters().raster().withBlend(
+            new BlendState(true,BlendFactor.ZERO,BlendFactor.ONE_MINUS_SRC_COLOR,Color4.TRANSPARENT))));
+        int shade=Rgba.saturateToByte(this.tbr);
+        darken.image(ui.texture("%blur%/misc/vignette.png"),new Rect(0,0,width,height),new Rect(0,0,1,1),
+            new dev.adventurecraft.awakening.layout.IntCorner(Rgba.fromRgba8(shade,shade,shade,255)));
+    }
+    @Unique private void ac$portal(UiDrawContext ui,float alpha,int width,int height) {
+        if(alpha<1) { alpha*=alpha;alpha*=alpha;alpha=alpha*.8f+.2f; }
+        int tile=Tile.PORTAL.tex;
+        ui.image(ui.texture("/terrain.png"),new Rect(0,0,width,height),new Rect((tile%16)/16.0,(tile/16)/16.0,1.0/16,1.0/16),
+            new dev.adventurecraft.awakening.layout.IntCorner(Rgba.withAlpha(-1,Rgba.saturateToByte(alpha))));
     }
 
     @Unique
-    private void renderChat(int screenWidth, int screenHeight) {
-        final var ts = Tesselator.instance;
+    private void renderChat(UiDrawContext ui,int screenWidth,int screenHeight) {
         final Font font = this.minecraft.font;
         final ArrayDeque<AC_ChatMessage> messages = this.chatMessages;
 
@@ -489,10 +500,7 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
         int chatY = screenHeight - 48;
         int x = 2;
 
-        GL11.glEnable(GL11.GL_BLEND);
 
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        ts.begin();
         for (AC_ChatMessage message : messages) {
             long age = message.getAgeInMillis();
             if (age >= MAX_MESSAGE_AGE && !isChatOpen) {
@@ -518,19 +526,18 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
             int y = chatY - chatHeight - msgHeight;
 
             var rect = new Rect(x, y, chatWidth, msgHeight).expand(shadowBorder);
-            DrawUtil.fillRect(ts, rect, Rgba.withAlpha(0, alpha / 2));
+            ui.fill(rect,Rgba.withAlpha(0,alpha/2));
 
             chatHeight += msgHeight + messageSpacing;
         }
-        ts.end();
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
+
 
         int stateHeight = 0;
 
         TextRendererState textState = ((ExTextRenderer) font).createState();
         textState.setShadowOffset(1, 1);
 
-        textState.begin(ts);
+        textState.begin(ui);
         for (AC_ChatMessage message : messages) {
             long age = message.getAgeInMillis();
             if (age >= MAX_MESSAGE_AGE && !isChatOpen) {
@@ -576,7 +583,6 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
         }
         textState.end();
 
-        GL11.glDisable(GL11.GL_BLEND);
     }
 
     @Unique
@@ -661,24 +667,8 @@ public abstract class MixinInGameHud extends GuiComponent implements ExInGameHud
     }
 
     @Unique
-    private void renderOverlay(int x, int y, String name) {
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
-        GL11.glDepthMask(false);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        GL11.glDisable(GL11.GL_ALPHA_TEST);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.minecraft.textures.loadTexture("/overlays/" + name));
-        Tesselator ts = Tesselator.instance;
-        ts.begin();
-        ts.vertexUV(0.0D, y, -90.0D, 0.0D, 1.0D);
-        ts.vertexUV(x, y, -90.0D, 1.0D, 1.0D);
-        ts.vertexUV(x, 0.0D, -90.0D, 1.0D, 0.0D);
-        ts.vertexUV(0.0D, 0.0D, -90.0D, 0.0D, 0.0D);
-        ts.end();
-        GL11.glDepthMask(true);
-        GL11.glEnable(GL11.GL_DEPTH_TEST);
-        GL11.glEnable(GL11.GL_ALPHA_TEST);
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+    private void renderOverlay(UiDrawContext ui,int x,int y,String name) {
+        ui.image(ui.texture("/overlays/"+name),new Rect(0,0,x,y),new Rect(0,0,1,1),new dev.adventurecraft.awakening.layout.IntCorner(-1));
     }
 
     @Override

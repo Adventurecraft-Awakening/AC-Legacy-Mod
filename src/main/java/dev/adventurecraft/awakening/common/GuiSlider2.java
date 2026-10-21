@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
-import org.lwjgl.opengl.GL11;
+import dev.adventurecraft.awakening.client.render.compat.LegacyGlAdapter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 
@@ -23,7 +23,7 @@ public class GuiSlider2 extends Button {
     protected void renderBg(Minecraft minecraft, int mouseX, int mouseY) {
         if (!this.visible) return;
         if (this.updateWhileRendering()) this.dragTo(mouseX);
-        GL11.glColor4f(1, 1, 1, 1);
+        LegacyGlAdapter.color4f(1, 1, 1, 1);
         int thumbX = this.x + (int) (this.sliderValue * (this.width - 8));
         this.blit(thumbX, this.y, 0, 66, 4, 20);
         this.blit(thumbX + 4, this.y, 196, 66, 4, 20);

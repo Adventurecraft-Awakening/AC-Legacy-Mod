@@ -1,119 +1,108 @@
 package dev.adventurecraft.awakening.mixin.client.render.entity;
 
-import com.llamalad7.mixinextras.sugar.Local;
+import dev.adventurecraft.awakening.client.render.*;
+import dev.adventurecraft.awakening.client.render.state.MaterialRecipe;
+import dev.adventurecraft.awakening.client.render.compat.LegacyPassBridge;
+import dev.adventurecraft.awakening.client.render.state.*;
+import dev.adventurecraft.awakening.extension.client.ExTextureManager;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.util.Mth;
+import java.util.Random;
+import dev.adventurecraft.awakening.image.Rgba;
+import dev.adventurecraft.awakening.layout.Rect;
 import dev.adventurecraft.awakening.client.WikiAssetExporter;
 import dev.adventurecraft.awakening.item.AC_IItemReload;
-import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.client.render.entity.ExItemRenderer;
-import dev.adventurecraft.awakening.tile.AC_BlockShapes;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.client.renderer.Textures;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.tile.Tile;
-import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.*;
-import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
+import org.spongepowered.asm.mixin.Unique;
 
 @Mixin(ItemRenderer.class)
 public abstract class MixinItemRenderer extends EntityRenderer implements ExItemRenderer {
 
-    @Shadow
-    protected abstract void fillRect(Tesselator ts, int x, int y, int w, int h, int color);
-
-    @Shadow
-    public abstract void renderGuiItem(
-        Font textRenderer, Textures texManager, int itemId, int meta, int texture, int x, int y);
+    @Shadow public boolean field_1707;
+    @Shadow private Random random;
 
     public float scale = 1.0F;
 
-    @Redirect(
-        method = "renderGuiItem",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/TileRenderer;canRender(I)Z"
-        )
-    )
-    private boolean canRenderAdventureCraftInventoryShape(int shape) {
-        return net.minecraft.client.renderer.TileRenderer.canRender(shape) ||
-            WikiAssetExporter.isEnabled() && switch (shape) {
-            case AC_BlockShapes.REDSTONE_POWER,
-                 AC_BlockShapes.SPIKES,
-                 AC_BlockShapes.TABLE,
-                 AC_BlockShapes.CHAIR,
-                 AC_BlockShapes.ROPE,
-                 AC_BlockShapes.BLOCK_TREE,
-                 AC_BlockShapes.BLOCK_OVERLAY,
-                 AC_BlockShapes.BLOCK_SLOPE -> true;
-            default -> false;
-        };
+    @Unique private boolean ac$blockPreview(int id) {
+        if(id>=256) return false;
+        int shape=Tile.tiles[id].getRenderShape();
+        return BlockMeshes.standard3D(shape) || WikiAssetExporter.isEnabled() && BlockMeshes.custom3D(shape);
     }
 
-    @ModifyArgs(
-        method = "render(Lnet/minecraft/world/entity/item/ItemEntity;DDDFF)V",
-        at = @At(
-            value = "INVOKE",
-            target = "Lorg/lwjgl/opengl/GL11;glScalef(FFF)V",
-            remap = false))
-    private void useScale(Args args) {
-        float x = args.get(0);
-        float y = args.get(1);
-        float z = args.get(2);
-        args.set(0, x * this.scale);
-        args.set(1, y * this.scale);
-        args.set(2, z * this.scale);
-    }
-
-    @Redirect(
-        method = "render(Lnet/minecraft/world/entity/item/ItemEntity;DDDFF)V",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/entity/ItemRenderer;bindTexture(Ljava/lang/String;)V"),
-        slice = @Slice(
-            to = @At(
-                value = "INVOKE",
-                target = "Lnet/minecraft/client/renderer/entity/ItemRenderer;bindTexture(Ljava/lang/String;)V",
-                ordinal = 1)))
-    private void useTerrainTexture0(
-        ItemRenderer instance,
-        String s,
-        @Local ItemInstance stack) {
-
-        int texture = ((ExBlock) Tile.tiles[stack.id]).getTextureNum();
-        if (texture == 0) {
-            this.bindTexture("/terrain.png");
+    @Overwrite
+    public void render(ItemEntity entity,double x,double y,double z,float yaw,float tick) {
+        this.random.setSeed(187);
+        var stack=entity.item;
+        var parameters=LegacyPassBridge.worldEntry();
+        var pose=new PoseStack(parameters);
+        float bob=Mth.sin((entity.age+tick)/10+entity.bobOffs)*.1F+.1F;
+        float spin=((entity.age+tick)/20+entity.bobOffs)*57.295776F;
+        int copies=stack.count>20?4:stack.count>5?3:stack.count>1?2:1;
+        pose.translate((float)x,(float)y+bob,(float)z);
+        var textures=(ExTextureManager)Minecraft.instance.textures;
+        var texture=textures.texture(ItemPreviewRenderer.atlas(stack.id));
+        if(stack.id<256 && BlockMeshes.standard3D(Tile.tiles[stack.id].getRenderShape())) {
+            var tile=Tile.tiles[stack.id];
+            float scale=!tile.isCubeShaped() && stack.id!=Tile.SLAB.id && tile.getRenderShape()!=16?.5F:.25F;
+            pose.rotate(spin,0,1,0);pose.scale(scale*this.scale,scale*this.scale,scale*this.scale);
+            float brightness=entity.getBrightness(tick);
+            pose.tint(brightness,brightness,brightness,1);
+            var mesh=BlockMeshes.inventory(tile,stack.getAuxValue(),true);
+            for(int i=0;i<copies;i++) {
+                pose.push();
+                if(i>0) pose.translate((this.random.nextFloat()*2-1)*.2F/scale,
+                    (this.random.nextFloat()*2-1)*.2F/scale,(this.random.nextFloat()*2-1)*.2F/scale);
+                NativeRenderer.drawMesh(mesh,texture,pose.parameters());pose.pop();
+            }
         } else {
-            this.bindTexture(String.format("/terrain%d.png", texture));
+            pose.scale(.5F*this.scale,.5F*this.scale,.5F*this.scale);
+            if(this.field_1707) {
+                int color=Item.items[stack.id].getItemColor(stack.getAuxValue());float brightness=entity.getBrightness(tick);
+                pose.tint((color>>16&255)/255F*brightness,(color>>8&255)/255F*brightness,(color&255)/255F*brightness,1);
+            }
+            int icon=stack.getIcon();
+            var mesh=EntityMeshes.mesh("item-billboard:"+icon,() -> {
+                var out=new QuadBuilder(4);float u=(icon%16)/16F,v=(icon/16)/16F;out.normal(0,1,0);
+                out.vertexUV(-.5,-.25,0,u,v+1F/16);out.vertexUV(.5,-.25,0,u+1F/16,v+1F/16);
+                out.vertexUV(.5,.75,0,u+1F/16,v);out.vertexUV(-.5,.75,0,u,v);return out.vertices();
+            });
+            for(int i=0;i<copies;i++) {
+                pose.push();
+                if(i>0) pose.translate((this.random.nextFloat()*2-1)*.3F,(this.random.nextFloat()*2-1)*.3F,(this.random.nextFloat()*2-1)*.3F);
+                pose.rotate(180-this.entityRenderDispatcher.playerRotY,0,1,0);
+                NativeRenderer.drawMesh(mesh,texture,pose.parameters());pose.pop();
+            }
         }
     }
 
-    @Redirect(
-        method = "renderGuiItem",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/Textures;loadTexture(Ljava/lang/String;)I"),
-        slice = @Slice(
-            to = @At(
-                value = "INVOKE",
-                target = "Lnet/minecraft/client/renderer/Textures;loadTexture(Ljava/lang/String;)I",
-                ordinal = 1)))
-    private int useTerrainTexture1(
-        Textures instance,
-        String s,
-        @Local(index = 3, argsOnly = true) int id) {
-
-        int texture = ((ExBlock) Tile.tiles[id]).getTextureNum();
-        if (texture == 0) {
-            return instance.loadTexture("/terrain.png");
-        } else {
-            return instance.loadTexture(String.format("/terrain%d.png", texture));
+    @Overwrite
+    public void renderGuiItem(Font font,Textures textures,int id,int metadata,int icon,int x,int y) {
+        var parameters=MaterialRecipe.UI.apply(LegacyPassBridge.capture(false));
+        try(var ui=LegacyPassBridge.uiContext(parameters,font,textures)) {
+            ItemPreviewRenderer.render(ui,id,metadata,icon,x,y,this.field_1707,this.ac$blockPreview(id));
         }
+    }
+
+    @Override
+    public void renderGuiItem(UiDrawContext ui,ItemInstance stack,int x,int y) {
+        if(stack!=null) ItemPreviewRenderer.render(ui,stack.id,stack.getAuxValue(),stack.getIcon(),x,y,
+            this.field_1707,this.ac$blockPreview(stack.id));
+    }
+
+    @Override
+    public void renderGuiItemDecorations(UiDrawContext ui,ItemInstance stack,int x,int y) {
+        ItemPreviewRenderer.decorations(ui,stack,x,y);
     }
 
     @Overwrite
@@ -138,39 +127,12 @@ public abstract class MixinItemRenderer extends EntityRenderer implements ExItem
             return;
         }
 
-        GL11.glDisable(GL11.GL_LIGHTING);
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
-
-        String countText;
-        if (stack.count > 1) {
-            countText = String.valueOf(stack.count);
-        } else if (stack.count < 0) {
-            countText = "\u00ec"; // infinity
-        } else {
-            countText = null;
+        // Slot coordinates are local to the inherited item's current pose. A
+        // fresh screen-root UI state would lose the container/scroll offset.
+        var parameters = MaterialRecipe.UI.apply(LegacyPassBridge.capture(false));
+        try (var ui = LegacyPassBridge.uiContext(parameters, textRenderer, texManager)) {
+            ItemPreviewRenderer.decorations(ui,stack,x,y);
         }
-        if (countText != null) {
-            textRenderer.drawShadow(countText, x + 19 - 2 - textRenderer.width(countText), y + 6 + 3, 16777215);
-        }
-
-        if (drawDurability) {
-            double damage = stack.getDamageValue();
-            double durability = stack.getMaxDamage();
-            int width = (int) Math.round(13.0D - damage * 13.0D / durability);
-            int color = (int) Math.round(255.0D - damage * 255.0D / durability);
-            GL11.glDisable(GL11.GL_TEXTURE_2D);
-            Tesselator ts = Tesselator.instance;
-            int barColor = 255 - color << 16 | color << 8;
-            int backColor = (255 - color) / 4 << 16 | 0x3f00;
-            this.fillRect(ts, x + 2, y + 13, 13, 2, 0);
-            this.fillRect(ts, x + 2, y + 13, 12, 1, backColor);
-            this.fillRect(ts, x + 2, y + 13, width, 1, barColor);
-            GL11.glEnable(GL11.GL_TEXTURE_2D);
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        }
-
-        GL11.glEnable(GL11.GL_LIGHTING);
-        GL11.glEnable(GL11.GL_DEPTH_TEST);
     }
 
     @Override

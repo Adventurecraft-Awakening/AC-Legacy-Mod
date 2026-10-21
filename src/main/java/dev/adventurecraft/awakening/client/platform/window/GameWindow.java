@@ -1,13 +1,12 @@
-// Own GLFW resources and preserve the OpenGL context and input callbacks when changing display modes.
+// Modified for AdventureCraft on 2026-10-20: own GLFW resources and preserve
+// the Vulkan surface and input callbacks when changing display modes.
 package dev.adventurecraft.awakening.client.platform.window;
 
 import java.nio.ByteBuffer;
 import java.util.HashSet;
 
 import dev.adventurecraft.awakening.client.platform.input.InputService;
-import dev.adventurecraft.awakening.ACMainThread;
-import org.lwjgl.opengl.GL;
-import org.lwjgl.opengl.PixelFormat;
+import dev.adventurecraft.awakening.client.render.RenderSystem;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.LWJGLUtil;
@@ -58,7 +57,7 @@ public class GameWindow {
 
     private static boolean glfw_initialized;
 
-    private static boolean context_initialized;
+    private static boolean vulkan_initialized;
 
     private static ByteBuffer[] cached_icons = null;
 
@@ -149,30 +148,17 @@ public class GameWindow {
     }
 
     public static void swapBuffers() {
-        GLFW.glfwSwapBuffers(handle);
+        RenderSystem.present();
     }
 
     public static void create() throws LWJGLException {
-        create(new PixelFormat());
-    }
-
-    public static void create(PixelFormat format) throws LWJGLException {
-        java.util.Objects.requireNonNull(format, "pixelFormat must be not be null.");
         if (isCreated())
             throw new IllegalStateException("Only one game window may be instantiated at any one time.");
 
         initializeGlfw();
         GLFW.glfwDefaultWindowHints();
         GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE);
-        GLFW.glfwWindowHint(GLFW.GLFW_CLIENT_API, GLFW.GLFW_OPENGL_API);
-        GLFW.glfwWindowHint(GLFW.GLFW_ALPHA_BITS, format.getAlphaBits());
-        GLFW.glfwWindowHint(GLFW.GLFW_DEPTH_BITS, format.getDepthBits());
-        GLFW.glfwWindowHint(GLFW.GLFW_STENCIL_BITS, format.getStencilBits());
-        GLFW.glfwWindowHint(GLFW.GLFW_SAMPLES, format.getSamples());
-        GLFW.glfwWindowHint(GLFW.GLFW_STEREO, format.isStereo() ? GLFW.GLFW_TRUE : GLFW.GLFW_FALSE);
-        GLFW.glfwWindowHint(GLFW.GLFW_SRGB_CAPABLE, format.isSRGB() ? GLFW.GLFW_TRUE : GLFW.GLFW_FALSE);
-        GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_DEBUG_CONTEXT, ACMainThread.glDebugContext ? GLFW.GLFW_TRUE : GLFW.GLFW_FALSE);
-        GLFW.glfwWindowHint(GLFW.GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW.GLFW_FALSE);
+        GLFW.glfwWindowHint(GLFW.GLFW_CLIENT_API, GLFW.GLFW_NO_API);
 
         GLFW.glfwWindowHint(GLFW.GLFW_REFRESH_RATE, current_mode.getFrequency());
 
@@ -190,10 +176,9 @@ public class GameWindow {
         try {
             createWindow();
             readWindowMetrics();
-            GLFW.glfwMakeContextCurrent(handle);
-            GL.createCapabilities();
-            GLFW.glfwSwapInterval(swap_interval);
-            context_initialized = true;
+            RenderSystem.initialize(handle, framebufferWidth, framebufferHeight);
+            RenderSystem.setSwapInterval(swap_interval);
+            vulkan_initialized = true;
         } catch (LWJGLException | RuntimeException | Error e) {
             try {
                 destroy();
@@ -325,7 +310,7 @@ public class GameWindow {
         framebufferWidth = width;
         framebufferHeight = height;
         window_resized = true;
-
+        if (vulkan_initialized) RenderSystem.resize(width, height);
     }
 
     private static void destroyWindow() {
@@ -338,12 +323,9 @@ public class GameWindow {
         free(GLFW.glfwSetWindowContentScaleCallback(handle, null));
 
         try {
-            if (context_initialized) {
-                GL.setCapabilities(null);
-                GLFW.glfwMakeContextCurrent(MemoryUtil.NULL);
-            }
+            RenderSystem.close();
         } finally {
-            context_initialized = false;
+            vulkan_initialized = false;
             GLFW.glfwDestroyWindow(handle);
             handle = MemoryUtil.NULL;
             window_created = false;
@@ -415,8 +397,8 @@ public class GameWindow {
 
     public static void setSwapInterval(int interval) {
         swap_interval = interval;
-        if (context_initialized) {
-            GLFW.glfwSwapInterval(swap_interval);
+        if (vulkan_initialized) {
+            RenderSystem.setSwapInterval(swap_interval);
         }
     }
 

@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.world;
 
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.client.render.AC_TextureBinder;
+import dev.adventurecraft.awakening.client.render.material.MapMaterials;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.extension.client.ExTextureManager;
 import dev.adventurecraft.awakening.extension.client.render.block.ExFoliageColor;
@@ -34,6 +35,7 @@ public final class MapResources implements AutoCloseable {
         this.level = level;
         this.directory = directory;
         ((ExTranslationStorage) I18n.getInstance()).loadMapTranslation(directory);
+        MapMaterials.load(level, directory);
     }
 
     public void loadTerrain(String saveName) {
@@ -52,25 +54,17 @@ public final class MapResources implements AutoCloseable {
     public ArrayList<String> sounds() { return this.soundList; }
 
     @Override public void close() {
+        MapMaterials.unload(this.level);
         this.musicList.clear();
         this.soundList.clear();
     }
 
     public void loadMapTextures() {
+        if (!MapMaterials.isCurrent(this.level)) {
+            MapMaterials.load(this.level, this.directory);
+        }
         var texManager = ((ExTextureManager) this.client.textures);
         this.client.textures.reloadAll();
-
-        for (Object oEntry : this.client.textures.idMap.entrySet()) {
-            var entry = (java.util.Map.Entry<String, Integer>) oEntry;
-            String name = entry.getKey();
-            int id = entry.getValue();
-            try {
-                texManager.loadTexture(id, name);
-            }
-            catch (IllegalArgumentException ex) {
-                ACMod.LOGGER.error("Failed to load texture \"{}\".", name, ex);
-            }
-        }
 
         this.loadTextureAnimations();
         Level self = this.level;

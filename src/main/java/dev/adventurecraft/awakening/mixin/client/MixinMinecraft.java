@@ -1,24 +1,26 @@
 package dev.adventurecraft.awakening.mixin.client;
 
 import dev.adventurecraft.awakening.editor.EditorSession;
-import dev.adventurecraft.awakening.client.input.EditorInput;
+import dev.adventurecraft.awakening.client.platform.window.GameWindow;
+import dev.adventurecraft.awakening.client.platform.window.WindowMode;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.ACMainThread;
 import dev.adventurecraft.awakening.ACMod;
-import dev.adventurecraft.awakening.client.gl.GLDevice;
+import dev.adventurecraft.awakening.client.render.resource.RenderDevice;
 import dev.adventurecraft.awakening.client.gui.AC_ChatScreen;
 import dev.adventurecraft.awakening.client.gui.AC_InBedChatScreen;
 import dev.adventurecraft.awakening.client.options.Config;
+import dev.adventurecraft.awakening.client.input.EditorInput;
+import dev.adventurecraft.awakening.client.render.shader.MapShaderSupport;
 import dev.adventurecraft.awakening.client.WikiAssetExporter;
-import dev.adventurecraft.awakening.client.renderer.BlockAllocator;
-import dev.adventurecraft.awakening.client.renderer.PoolingBlockAllocator;
+import dev.adventurecraft.awakening.client.render.mesh.BlockAllocator;
+import dev.adventurecraft.awakening.client.render.mesh.PoolingBlockAllocator;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.common.gui.AC_GuiMapSelect;
 import dev.adventurecraft.awakening.common.gui.AC_GuiStore;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
-import dev.adventurecraft.awakening.extension.client.entity.player.ExAbstractClientPlayerEntity;
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import dev.adventurecraft.awakening.extension.client.gui.screen.ExScreen;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
@@ -34,7 +36,6 @@ import dev.adventurecraft.awakening.item.AC_ILeftClickItem;
 import dev.adventurecraft.awakening.item.AC_IUseDelayItem;
 import dev.adventurecraft.awakening.script.*;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
-import dev.adventurecraft.awakening.util.MathF;
 import net.fabricmc.loader.impl.util.Arguments;
 import net.minecraft.client.*;
 import net.minecraft.client.gamemode.CreativeMode;
@@ -73,11 +74,7 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
-import org.lwjgl.opengl.*;
-import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
-import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -195,7 +192,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
     @Unique ItemInstance lastItemUsed;
     @Unique Entity lastEntityHit;
     @Unique ScriptVec3 lastBlockHit;
-    @Unique private GLDevice glDevice;
+    @Unique private RenderDevice renderDevice;
     @Unique private BlockAllocator chunkBlockAllocator;
 
     @Overwrite(remap = false)
@@ -225,16 +222,6 @@ public abstract class MixinMinecraft implements ExMinecraft {
         if (arguments.containsKey("mapsDir")) {
             ACMainThread.mapsDirectory = new File(arguments.get("mapsDir"));
         }
-
-        ACMainThread.glDebugContext = arguments.getExtraArgs().contains("--glDebugContext");
-
-        ACMainThread.glDebugLogSeverity = ACMainThread.GlDebugSeverity.valueOf(arguments.getOrDefault("glDebugLogSeverity",
-            ACMainThread.glDebugLogSeverity.name()
-        ));
-
-        ACMainThread.glDebugTraceSeverity = ACMainThread.GlDebugSeverity.valueOf(arguments.getOrDefault("glDebugTraceSeverity",
-            ACMainThread.glDebugTraceSeverity.name()
-        ));
 
         boolean fullscreen = arguments.getExtraArgs().contains("--fullscreen");
         int width = Integer.parseInt(arguments.getOrDefault("width", "854"));
@@ -270,8 +257,9 @@ public abstract class MixinMinecraft implements ExMinecraft {
         at = @At("HEAD")
     )
     private void init_makeResizable(CallbackInfo ci) {
+        dev.adventurecraft.awakening.client.render.compat.LegacyPassBridge.installLifecycle();
         this.orgWidth = this.width;
-        Display.setResizable(true);
+        GameWindow.setResizable(true);
     }
 
     @Redirect(
@@ -297,76 +285,13 @@ public abstract class MixinMinecraft implements ExMinecraft {
     )
     private void init_createDisplay(CallbackInfo ci)
         throws LWJGLException {
-        int sampleCount = ((ExGameOptions) options).ofAaLevel();
-        ACMod.LOGGER.info("MSAA Samples: {}x", sampleCount);
-
         GLFW.glfwSetErrorCallback(GLFWErrorCallback.createPrint());
+        GameWindow.create();
+        dev.adventurecraft.awakening.client.platform.input.legacy.LegacyInputLifecycle.initialize();
+        Config.logRenderCaps();
 
-        // TODO: could come in handy for GL3 core experiment
-        //GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 2);
-        //GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 1);
-        //GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_FORWARD_COMPAT, GLFW.GLFW_TRUE);
-        //GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_COMPAT_PROFILE);
-
-        if (ACMainThread.glDebugContext) {
-            GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_DEBUG_CONTEXT, GLFW.GLFW_TRUE);
-        }
-        GLFW.glfwWindowHint(GLFW.GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW.GLFW_FALSE);
-
-        var pixelFormat = new PixelFormat();
-        try {
-            this.createDisplay(pixelFormat.withSamples(sampleCount), true);
-        }
-        catch (LWJGLException ex) {
-            ACMod.LOGGER.warn("Error setting MSAA {}x: ", sampleCount, ex);
-            this.createDisplay(pixelFormat, false);
-        }
-
-        var caps = GLContext.getCapabilities();
-        Config.logOpenGlCaps(caps);
-
-        this.glDevice = new GLDevice(caps);
+        this.renderDevice = new RenderDevice();
         this.chunkBlockAllocator = new PoolingBlockAllocator(1024 * 64 * 4, 4);
-    }
-
-    private void createDisplay(PixelFormat pixelFormat, boolean rethrowLast)
-        throws LWJGLException {
-        try {
-            Display.create(pixelFormat.withDepthBits(32));
-            return;
-        }
-        catch (LWJGLException e) {
-            ACMod.LOGGER.warn("Falling back to 24-bit depth buffer since 32-bit failed: ", e);
-        }
-
-        try {
-            Display.create(pixelFormat.withDepthBits(24));
-            return;
-        }
-        catch (LWJGLException e) {
-            ACMod.LOGGER.warn("Falling back to 16-bit depth buffer since 24-bit failed: ", e);
-        }
-
-        try {
-            Display.create(pixelFormat.withDepthBits(16));
-            return;
-        }
-        catch (LWJGLException e) {
-            ACMod.LOGGER.warn("Falling back to 8-bit depth buffer since 16-bit failed: ", e);
-        }
-
-        try {
-            Display.create(pixelFormat.withDepthBits(8));
-        }
-        catch (LWJGLException e) {
-            ACMod.LOGGER.warn("Falling back to unspecified depth buffer since 8-bit failed: ", e);
-
-            if (rethrowLast) {
-                throw e;
-            }
-        }
-
-        Display.create(pixelFormat.withDepthBits(0));
     }
 
     @Inject(
@@ -449,9 +374,9 @@ public abstract class MixinMinecraft implements ExMinecraft {
         )
     )
     private void fix_resize(CallbackInfo ci) {
-        if (!this.fullscreen && (Display.getWidth() != this.width || Display.getHeight() != this.height)) {
-            this.width = Display.getWidth();
-            this.height = Display.getHeight();
+        if (!this.fullscreen && (GameWindow.getWidth() != this.width || GameWindow.getHeight() != this.height)) {
+            this.width = GameWindow.getWidth();
+            this.height = GameWindow.getHeight();
             if (this.width <= 0) {
                 this.width = 1;
             }
@@ -526,6 +451,10 @@ public abstract class MixinMinecraft implements ExMinecraft {
         )
     )
     private void closeOnSetLevel(Minecraft instance, Level value) {
+        // Beta skips LevelRenderer.setLevel in the null-level branch. Retire its
+        // terrain workers/listener before closing the world, even without another world frame.
+        if (value == null && this.levelRenderer != null) this.levelRenderer.setLevel(null);
+        MapShaderSupport.unloadMap();
         if (this.level instanceof Closeable closeable) {
             try {
                 closeable.close();
@@ -535,6 +464,13 @@ public abstract class MixinMinecraft implements ExMinecraft {
             }
         }
         this.level = value;
+        MapShaderSupport.loadMap(value);
+    }
+
+    @Inject(method = "destroy", at = @At("HEAD"))
+    private void unloadShadersOnShutdown(CallbackInfo ci) {
+        if (this.levelRenderer != null) this.levelRenderer.setLevel(null);
+        MapShaderSupport.unloadMap();
     }
 
     @Redirect(
@@ -545,7 +481,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         )
     )
     private int fix_getWidthAfterFullscreen(Minecraft instance) {
-        return Display.getWidth();
+        return GameWindow.getWidth();
     }
 
     @Redirect(
@@ -556,7 +492,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         )
     )
     private int fix_getHeightAfterFullscreen(Minecraft instance) {
-        return Display.getHeight();
+        return GameWindow.getHeight();
     }
 
     @Inject(
@@ -570,8 +506,8 @@ public abstract class MixinMinecraft implements ExMinecraft {
     )
     private void fix_restoreSizeAfterFullscreen(CallbackInfo ci)
         throws LWJGLException {
-        if (!this.fullscreen && !Display.isMaximized()) {
-            Display.setDisplayMode(new DisplayMode(this.orgWidth, this.orgHeight));
+        if (!this.fullscreen && !GameWindow.isMaximized()) {
+            GameWindow.setDisplayMode(new WindowMode(this.orgWidth, this.orgHeight));
         }
     }
 
@@ -607,7 +543,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
     )
     private void updateDisplayAfterLoad()
         throws LWJGLException {
-        Display.update(false);
+        GameWindow.update(false);
     }
 
     /**
@@ -646,7 +582,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
             this.gameMode.tick();
         }
 
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.textures.loadTexture("/terrain.png"));
+        ((dev.adventurecraft.awakening.extension.client.ExTextureManager) this.textures).texture("/terrain.png");
         if (!this.pause) {
             this.textures.tick();
         }
@@ -1185,6 +1121,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         at = @At("HEAD")
     )
     private void resetStateOnInit(Level level, String stage, Player newPlayer, CallbackInfo ci) {
+        MapShaderSupport.unloadMap();
         ((ExInGameHud) this.gui).getScriptUI().clear();
         ScriptModel.clearAll();
         this.setCameraActive(false);
@@ -1505,8 +1442,8 @@ public abstract class MixinMinecraft implements ExMinecraft {
         return this.storeGUI;
     }
 
-    public @Override GLDevice getGlDevice() {
-        return this.glDevice;
+    public @Override RenderDevice getRenderDevice() {
+        return this.renderDevice;
     }
 
     public @Override BlockAllocator getChunkBlockAllocator() {

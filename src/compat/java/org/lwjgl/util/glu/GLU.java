@@ -1,7 +1,7 @@
 package org.lwjgl.util.glu;
 
 import dev.adventurecraft.awakening.client.render.compat.LegacyProjectionMath;
-import org.lwjgl.opengl.GL11;
+import dev.adventurecraft.awakening.client.render.compat.LegacyGlAdapter;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -34,7 +34,7 @@ public final class GLU {
     }
 
     public static void gluOrtho2D(float left, float right, float bottom, float top) {
-        GL11.glOrtho(left, right, bottom, top, -1, 1);
+        LegacyGlAdapter.ortho(left, right, bottom, top, -1, 1);
     }
 
     public static String gluErrorString(int error) {

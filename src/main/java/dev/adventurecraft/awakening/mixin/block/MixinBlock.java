@@ -1,9 +1,12 @@
 package dev.adventurecraft.awakening.mixin.block;
 
+import dev.adventurecraft.awakening.client.render.chunk.LevelRegion;
 import dev.adventurecraft.awakening.extension.block.AC_TexturedBlock;
 import dev.adventurecraft.awakening.tile.AC_BlockColor;
+import dev.adventurecraft.awakening.tile.AC_Blocks;
 import dev.adventurecraft.awakening.item.AC_ItemSubtypes;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
+import dev.adventurecraft.awakening.client.render.material.MapMaterials;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.world.item.TopSnowTileItem;
 import net.fabricmc.api.EnvType;
@@ -121,6 +124,14 @@ public abstract class MixinBlock implements ExBlock, Cloneable {
     @Environment(value = EnvType.CLIENT)
     @Overwrite
     public float getBrightness(LevelSource arg, int i, int j, int k) {
+        if (arg instanceof LevelRegion region) {
+            int emission = region.emission(i, j, k);
+            // Trigger lights have a dynamic override; their base table entry is not authoritative.
+            if (this.id != AC_Blocks.lightBulb.id && this.id != AC_Blocks.redstonePower.id) {
+                emission = Math.max(region.lightEmission(this.id), emission);
+            }
+            return region.getBrightness(i, j, k, emission);
+        }
         return arg.getBrightness(i, j, k, this.getBlockLightValue(arg, i, j, k));
     }
 
@@ -154,8 +165,17 @@ public abstract class MixinBlock implements ExBlock, Cloneable {
     public void popResource(Level var1, int var2, int var3, int var4, ItemInstance var5) {
     }
 
+    @Overwrite
+    public int getRenderLayer() {
+        return MapMaterials.isTransmissive(this.id) ? 1 : 0;
+    }
+
     @Override
     public int getBlockLightValue(LevelSource view, int x, int y, int z) {
+        if (view != null) {
+            int configured = MapMaterials.gameplayLight(view, (Tile) (Object) this, x, y, z);
+            if (configured >= 0) return configured;
+        }
         return Tile.lightEmission[this.id];
     }
 

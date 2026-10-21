@@ -1,18 +1,12 @@
 package org.lwjgl.opengl;
 
-/** Original game ABI backed by LWJGL 3's thread-local OpenGL context. */
+/** Original game ABI; the renderer owns Vulkan resources without an OpenGL context. */
 public final class GLContext {
-    private static final ThreadLocal<GLCapabilities> SOURCE = new ThreadLocal<>();
-    private static final ThreadLocal<ContextCapabilities> CAPABILITIES = new ThreadLocal<>();
+    private static final ContextCapabilities CAPABILITIES = new ContextCapabilities();
 
     private GLContext() { }
 
     public static ContextCapabilities getCapabilities() {
-        GLCapabilities current = GL.getCapabilities();
-        if (SOURCE.get() != current) {
-            SOURCE.set(current);
-            CAPABILITIES.set(new ContextCapabilities(current));
-        }
-        return CAPABILITIES.get();
+        return CAPABILITIES;
     }
 }

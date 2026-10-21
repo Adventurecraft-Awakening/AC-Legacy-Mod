@@ -1,12 +1,24 @@
 package dev.adventurecraft.awakening.mixin.client.render;
 
 import dev.adventurecraft.awakening.editor.EditorSession;
+import dev.adventurecraft.awakening.client.render.*;
+import dev.adventurecraft.awakening.client.render.state.*;
+import net.minecraft.client.ScreenSizeCalculator;
+import dev.adventurecraft.awakening.client.render.compat.LegacyPassBridge;
+import dev.adventurecraft.awakening.client.render.compat.LegacyGlAdapter;
+import dev.adventurecraft.awakening.client.render.NativeRenderer;
+import dev.adventurecraft.awakening.client.render.DebugDraw;
+import dev.adventurecraft.awakening.client.render.DebugLineBuilder;
+import dev.adventurecraft.awakening.client.render.state.MaterialRecipe;
+import dev.adventurecraft.awakening.client.render.QuadBuilder;
+import dev.adventurecraft.awakening.client.render.compat.LegacyGlConstants;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.client.options.Config;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.common.gui.AC_GuiStore;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
+import dev.adventurecraft.awakening.extension.client.ExTextureManager;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.render.ExGameRenderer;
 import dev.adventurecraft.awakening.extension.client.render.ExHeldItemRenderer;
@@ -41,9 +53,6 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.HitType;
 import org.lwjgl.input.Keyboard;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GLContext;
-import org.lwjgl.opengl.NVFogDistance;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -59,16 +68,30 @@ import java.util.List;
 import java.util.Random;
 
 @Mixin(GameRenderer.class)
-public abstract class MixinGameRenderer implements ExGameRenderer {
+public abstract class MixinGameRenderer implements ExGameRenderer, WorldRenderer.Hooks {
 
     @Shadow private Minecraft mc;
     @Shadow private float renderDistance;
+    @Shadow private float zOff;
+    @Shadow private float oldZOff;
+    @Shadow private float yRot;
+    @Shadow private float yRotO;
+    @Shadow private float xRot;
+    @Shadow private float xRotO;
+    @Shadow private float camTilt;
+    @Shadow private float camTiltO;
+    @Shadow private double zoom;
+    @Shadow private double zoom_x;
+    @Shadow private double zoom_y;
     @Shadow public ItemInHandRenderer itemInHandRenderer;
     @Shadow private int tick;
     @Shadow private Random random;
     @Shadow private int rainSoundTime;
 
     @Shadow private boolean thickFog;
+    @Shadow private float fogBrO;
+    @Shadow private float fogBr;
+    @Unique private WorldRenderer ac$worldRenderer;
     @Shadow float fogRed;
     @Shadow float fogGreen;
     @Shadow float fogBlue;
@@ -90,6 +113,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
     )
     private void init(Minecraft var1, CallbackInfo ci) {
         this.offHandItemRenderer = new ItemInHandRenderer(var1);
+        this.ac$worldRenderer = new WorldRenderer(var1);
     }
 
     @ModifyVariable(
@@ -159,31 +183,36 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         return value;
     }
 
-    @Redirect(
-        method = "setupCamera",
-        at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/client/renderer/GameRenderer;renderDistance:F",
-            ordinal = 0
-        )
-    )
-    private void redirectFarPlane(GameRenderer instance, float v) {
-        this.renderDistance = this.getFarPlane();
+    @Redirect(method = "render(F)V", at = @At(value = "INVOKE",
+        target = "Lorg/lwjgl/opengl/GL11;glViewport(IIII)V", remap = false))
+    private void ac$framebufferViewport(int x, int y, int width, int height) {
+        LegacyGlAdapter.viewport(0, 0, RenderSystem.width(), RenderSystem.height());
     }
 
-    @ModifyConstant(
-        method = "setupCamera",
-        constant = @Constant(floatValue = 2.0F),
-        slice = @Slice(
-            from = @At(
-                value = "INVOKE",
-                target = "Lorg/lwjgl/opengl/GL11;glScaled(DDD)V",
-                remap = false
-            )
-        )
-    )
-    private float reducePerspectiveFarPlane(float value) {
-        return 1.8F;
+    @Overwrite
+    private void setupCamera(float partialTick, int eye) {
+        this.renderDistance = this.getFarPlane();
+        var result = WorldCamera.build(this.mc, partialTick, eye, this.getFov(partialTick), this.renderDistance * 1.8F,
+            new WorldCamera.Motion(this.oldZOff, this.zOff, this.yRotO, this.yRot, this.xRotO, this.xRot,
+                this.camTiltO, this.camTilt, this.zoom, this.zoom_x, this.zoom_y, this.tick));
+        Mob camera = this.mc.cameraEntity;
+        var frame = result.frame();
+        var parameters = new DrawParameters(frame, ObjectData.IDENTITY, MaterialState.UNLIT, RasterState.defaults());
+        frame = HandLighting.apply(parameters, frame.view()).view();
+        RenderScene.world(frame, new Rect(0, 0, RenderSystem.width(), RenderSystem.height()),
+            camera.xOld + (camera.x - camera.xOld) * partialTick,
+            camera.yOld + (camera.y - camera.yOld) * partialTick,
+            camera.zOld + (camera.z - camera.zOld) * partialTick, eye);
+        this.thickFog = result.thickFog();
+    }
+
+    @Overwrite
+    public void setScreenProjectionMatrix() {
+        RenderSystem.ensureFrame();
+        RenderSystem.phase(RenderPhase.UI);
+        RenderSystem.clear(new ClearRequest(false, true, Color4.TRANSPARENT, 1, ColorMask.RGBA, null));
+        var size = new ScreenSizeCalculator(this.mc.options, this.mc.width, this.mc.height);
+        LegacyPassBridge.publishUi(RenderScene.ui(size.guiScaledWidth, size.guiScaledHeight));
     }
 
     @Inject(
@@ -191,6 +220,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         at = @At("HEAD")
     )
     private void injectTick(float var1, CallbackInfo ci) {
+        RenderSystem.beginFrame(AttachmentIntent.PRESERVE);
         Level world = this.mc.level;
         var options = (ExGameOptions) this.mc.options;
 
@@ -284,65 +314,8 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         }
     }
 
-    @Inject(
-        method = "render(FJ)V",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/Lighting;turnOff()V",
-            ordinal = 0,
-            shift = At.Shift.AFTER
-        )
-    )
-    private void injectAlphaFunc(float var1, long var2, CallbackInfo ci) {
-        if (Config.isUseAlphaFunc()) {
-            GL11.glAlphaFunc(GL11.GL_GREATER, Config.getAlphaFuncLevel());
-        }
-    }
-
-    @Redirect(
-        method = "render(FJ)V",
-        at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/client/Options;fancyGraphics:Z"
-        )
-    )
-    private boolean redirectFancyWaterToConfig(Options instance) {
-        return ((ExGameOptions) instance).isWaterFancy();
-    }
-
-    @Redirect(
-        method = "render(FJ)V",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/LevelRenderer;render(Lnet/minecraft/world/entity/Mob;ID)I",
-            ordinal = 1
-        )
-    )
-    private int renderSortedRenderers1(LevelRenderer instance, Mob var1, int var2, double var3) {
-        int result = ((ExWorldEventRenderer) instance).renderAllSortedRenderers(1, var3);
-        return result;
-    }
-
-    @Redirect(
-        method = "render(FJ)V",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/LevelRenderer;renderSameAsLast(ID)V"
-        )
-    )
-    private void renderSortedRenderers2(LevelRenderer instance, int var1, double var2) {
-        ((ExWorldEventRenderer) instance).renderAllSortedRenderers(1, var2);
-    }
-
-    @Inject(
-        method = "render(FJ)V",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/GameRenderer;pick(F)V",
-            shift = At.Shift.BEFORE
-        )
-    )
-    private void useCameraAsViewEntity(float var1, long var2, CallbackInfo ci) {
+    @Override
+    public void ac$selectCamera(float var1) {
         var mc = (ExMinecraft) this.mc;
         if (mc.isCameraActive() && mc.getCutsceneCamera().isEmpty()) {
             mc.setCameraActive(false);
@@ -368,48 +341,17 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         }
     }
 
-    @ModifyConstant(
-        method = "render(FJ)V",
-        constant = @Constant(intValue = 2),
-        slice = @Slice(
-            from = @At(
-                value = "INVOKE",
-                target = "Lnet/minecraft/client/renderer/culling/Frustum;getFrustum()Lnet/minecraft/client/renderer/culling/FrustumData;"
-            )
-        )
-    )
-    private int increaseSkyRenderDistance(int constant) {
-        return 3;
-    }
-
-    @Inject(
-        method = "render(FJ)V",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/GameRenderer;setupFog(IF)V",
-            shift = At.Shift.BEFORE,
-            ordinal = 2
-        )
-    )
-    private void updateCursor(float var1, long var2, CallbackInfo ci, @Local Mob var22) {
-        GL11.glPushMatrix();
-        if (EditorSession.current().editMode && EditorSession.current().mapEditing != null) {
-            EditorSession.current().mapEditing.updateCursor(var22, this.getFov(var1), var1);
+    @Override
+    public void ac$updateCursor(float var1) {
+        if (EditorSession.forLevel(this.mc.level).editMode && EditorSession.forLevel(this.mc.level).mapEditing != null) {
+            EditorSession.forLevel(this.mc.level).mapEditing.updateCursor(this.mc.cameraEntity, this.getFov(var1), var1);
         }
     }
 
-    @Inject(
-        method = "render(FJ)V",
-        at = @At(
-            value = "INVOKE",
-            target = "Lorg/lwjgl/opengl/GL11;glDepthMask(Z)V",
-            shift = At.Shift.BEFORE,
-            remap = false
-        )
-    )
-    private void renderWorldEditing(float deltaTime, long var2, CallbackInfo ci) {
-        if (EditorSession.current().editMode && EditorSession.current().mapEditing != null) {
-            EditorSession.current().mapEditing.render(deltaTime);
+    @Override
+    public void ac$editing(float deltaTime) {
+        if (EditorSession.forLevel(this.mc.level).editMode && EditorSession.forLevel(this.mc.level).mapEditing != null) {
+            EditorSession.forLevel(this.mc.level).mapEditing.render(deltaTime);
         }
 
         ItemInstance heldItem = this.mc.player.inventory.getSelected();
@@ -425,73 +367,50 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         }
     }
 
-    @ModifyExpressionValue(
-        method = "render(FJ)V",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/world/entity/Mob;isUnderLiquid(Lnet/minecraft/world/level/material/Material;)Z",
-            ordinal = 0
-        )
-    )
-    private boolean noHeldItemInEditMode(boolean value) {
-        return !EditorSession.current().editMode && value;
-    }
+    @Override
+    public void ac$decorations(float deltaTime) {
+        LevelRenderer worldRenderer = this.mc.levelRenderer;
+        Mob viewEntity = this.mc.cameraEntity;
+        dev.adventurecraft.awakening.client.render.RenderSystem.phase(dev.adventurecraft.awakening.client.render.RenderPhase.DEBUG);
+        try (var debug=DebugDraw.begin(RenderScene.worldParameters())) {
+            var wer = (ExWorldEventRenderer) worldRenderer;
 
-    @Redirect(
-        method = "render(FJ)V",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/GameRenderer;renderSnowAndRain(F)V",
-            ordinal = 0
-        )
-    )
-    private void renderDebugModeDecorations(
-        GameRenderer instance,
-        float deltaTime,
-        @Local LevelRenderer worldRenderer,
-        @Local Mob viewEntity
-    ) {
+            wer.drawCursorSelection(viewEntity, this.mc.player.inventory.getSelected(), deltaTime);
 
-        var wer = (ExWorldEventRenderer) worldRenderer;
-
-        GL11.glDisable(GL11.GL_ALPHA_TEST);
-        wer.drawCursorSelection(viewEntity, ((Player) viewEntity).inventory.getSelected(), deltaTime);
-
-        if (EditorSession.current().active) {
-            AC_CutsceneCamera activeCamera = ((ExMinecraft) this.mc).getActiveCutsceneCamera();
-            if (activeCamera != null) {
-                activeCamera.drawLines(viewEntity, deltaTime);
-            }
-
-            if (EditorSession.current().renderPaths) {
-                for (Entity entity : (List<Entity>) this.mc.level.entities) {
-                    wer.drawEntityPath(entity, viewEntity, deltaTime);
+            if (EditorSession.forLevel(this.mc.level).active) {
+                AC_CutsceneCamera activeCamera = ((ExMinecraft) this.mc).getActiveCutsceneCamera();
+                if (activeCamera != null) {
+                    activeCamera.drawLines(viewEntity, deltaTime);
                 }
-            }
 
-            if (EditorSession.current().renderFov) {
-                for (Entity entity : (List<Entity>) this.mc.level.entities) {
-                    if (entity instanceof Mob) {
-                        wer.drawEntityFOV((Mob) entity, viewEntity, deltaTime);
+                if (EditorSession.forLevel(this.mc.level).renderPaths) {
+                    for (Entity entity : (List<Entity>) this.mc.level.entities) {
+                        wer.drawEntityPath(entity, viewEntity, deltaTime);
+                    }
+                }
+
+                if (EditorSession.forLevel(this.mc.level).renderFov) {
+                    for (Entity entity : (List<Entity>) this.mc.level.entities) {
+                        if (entity instanceof Mob) {
+                            wer.drawEntityFOV((Mob) entity, viewEntity, deltaTime);
+                        }
                     }
                 }
             }
-        }
 
-        if (EditorSession.current().renderCollisions) {
-            var collisionLists = ((ExWorld) this.mc.level).getCollisionDebugLists();
-            this.drawCollisionLists(collisionLists, viewEntity, deltaTime);
-        }
+            if (EditorSession.forLevel(this.mc.level).renderCollisions) {
+                var collisionLists = ((ExWorld) this.mc.level).getCollisionDebugLists();
+                this.drawCollisionLists(collisionLists, viewEntity, deltaTime);
+            }
 
-        if (EditorSession.current().renderRays) {
-            var rayDebugLists = ((ExWorld) this.mc.level).getRayDebugLists();
-            this.drawRayDebugLists(rayDebugLists, viewEntity, deltaTime);
-            rayDebugLists.clear();
-        }
+            if (EditorSession.forLevel(this.mc.level).renderRays) {
+                var rayDebugLists = ((ExWorld) this.mc.level).getRayDebugLists();
+                this.drawRayDebugLists(rayDebugLists, viewEntity, deltaTime);
+                rayDebugLists.clear();
+            }
 
-        GL11.glEnable(GL11.GL_ALPHA_TEST);
+        }
     }
-
     private void drawCollisionLists(ArrayList<CollisionList> lists, Entity entity, double deltaTime) {
         double dX = entity.xOld + (entity.x - entity.xOld) * deltaTime;
         double dY = entity.yOld + (entity.y - entity.yOld) * deltaTime;
@@ -505,13 +424,12 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         double y2 = dY - off;
         double z2 = dZ - off;
 
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glLineWidth(2.0f);
 
-        Tesselator ts = Tesselator.instance;
-        ts.begin(GL11.GL_LINES);
+
+
+
+        var ts = new DebugLineBuilder(DebugDraw.current(),2,true);
+        ts.lines();
 
         for (CollisionList list : lists) {
             float alpha;
@@ -536,9 +454,8 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
 
         ts.end();
 
-        GL11.glLineWidth(1.0f);
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        GL11.glDisable(GL11.GL_BLEND);
+
+
     }
 
     private void drawRayDebugLists(ArrayList<RayDebugList> lists, Entity entity, double deltaTime) {
@@ -554,13 +471,12 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         double y2 = dY - off;
         double z2 = dZ - off;
 
-        Tesselator ts = Tesselator.instance;
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        var ts = new DebugLineBuilder(DebugDraw.current(),2,true);
 
-        GL11.glLineWidth(2.0f);
-        ts.begin(GL11.GL_LINES);
+
+
+
+        ts.lines();
         for (RayDebugList list : lists) {
             HitResult hit = list.hit;
             if (hit != null) {
@@ -587,9 +503,8 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
             }
         }
         ts.end();
-
-        GL11.glLineWidth(4.0f);
-        ts.begin(GL11.GL_LINES);
+        ts.width(4);
+        ts.lines();
         for (RayDebugList list : lists) {
             if (list.hit != null) {
                 ts.color(0.0f, 0.9f, 0.2f, 0.5f);
@@ -602,13 +517,12 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         }
         ts.end();
 
-        GL11.glLineWidth(1.0f);
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        GL11.glDisable(GL11.GL_BLEND);
+
+
     }
 
     private static void drawBoxes(
-        Tesselator ts,
+        DebugLineBuilder ts,
         float[] collisions,
         double x1,
         double y1,
@@ -631,7 +545,7 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
     }
 
     private static void drawBox(
-        Tesselator ts,
+        DebugLineBuilder ts,
         double minX,
         double minY,
         double minZ,
@@ -675,20 +589,6 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
 
         ts.vertex(minX, minY, maxZ);
         ts.vertex(minX, maxY, maxZ);
-    }
-
-    @Inject(
-        method = "render(FJ)V",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/GameRenderer;setupFog(IF)V",
-            shift = At.Shift.BEFORE,
-            ordinal = 6
-        )
-    )
-    private void finishDebugModeDecorations(float var1, long var2, CallbackInfo ci) {
-        GL11.glPopMatrix();
-        this.renderSnowAndRain(var1);
     }
 
     @Overwrite
@@ -761,6 +661,8 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         }
     }
 
+    @Unique private final QuadBuilder ac$weatherVertices = QuadBuilder.frameOwned(21 * 21 * 8);
+
     @Overwrite
     public void renderSnowAndRain(float deltaTime) {
         var options = (ExGameOptions) this.mc.options;
@@ -778,13 +680,17 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
         int viewX = Mth.floor(viewEntity.x);
         int viewY = Mth.floor(viewEntity.y);
         int viewZ = Mth.floor(viewEntity.z);
-        Tesselator ts = Tesselator.instance;
-        GL11.glDisable(GL11.GL_CULL_FACE);
-        GL11.glNormal3f(0.0F, 1.0F, 0.0F);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glAlphaFunc(GL11.GL_GREATER, 0.01F);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.textures.loadTexture("/environment/snow.png"));
+        QuadBuilder ts = this.ac$weatherVertices;
+        RenderSystem.phase(RenderPhase.WEATHER);
+        var worldState = RenderScene.worldParameters();
+        var passState = MaterialRecipe.WEATHER.apply(worldState.withRaster(
+            worldState.raster().withColorMask(this.ac$eyeMask(RenderScene.eye()))));
+        ts.clear();
+        ts.normal(0, 1, 0);
+        var textures = (ExTextureManager) this.mc.textures;
+        var snowTexture = textures.texture("/environment/snow.png");
+        var rainTexture = textures.texture("/environment/rain.png");
+        var weatherPass = NativeRenderer.pass(passState);
         double vrX = viewEntity.xOld + (viewEntity.x - viewEntity.xOld) * (double) deltaTime;
         double vrY = viewEntity.yOld + (viewEntity.y - viewEntity.yOld) * (double) deltaTime;
         double vrZ = viewEntity.zOld + (viewEntity.z - viewEntity.zOld) * (double) deltaTime;
@@ -812,9 +718,8 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
                 double dX = (double) ((float) x + 0.5F) - viewEntity.x;
                 double dZ = (double) ((float) z + 0.5F) - viewEntity.z;
                 float dist = Mth.sqrt(dX * dX + dZ * dZ) / (float) rainRange;
-                ts.begin();
                 float light = world.getBrightness(x, y, z);
-                GL11.glColor4f(light, light, light, ((1.0F - dist * dist) * 0.3F + 0.5F) * rainGradient);
+                ts.color(light, light, light, ((1.0F - dist * dist) * 0.3F + 0.5F) * rainGradient);
                 ts.offset(-vrX, -vrY, -vrZ);
 
                 float texScale = 1.0F;
@@ -830,12 +735,12 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
                 ts.vertexUV(x + 0.5D, minY, z + 1, tX2, tY1);
                 ts.vertexUV(x + 0.5D, maxY, z + 1, tX2, tY2);
                 ts.vertexUV(x + 0.5D, maxY, z + 0, tX1, tY2);
-                ts.offset(0.0D, 0.0D, 0.0D);
-                ts.end();
             }
         }
 
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.textures.loadTexture("/environment/rain.png"));
+        weatherPass.drawQuads(ts, snowTexture);
+        ts.clear();
+        ts.normal(0, 1, 0);
 
         for (int x = viewX - rainRange; x <= viewX + rainRange; ++x) {
             for (int z = viewZ - rainRange; z <= viewZ + rainRange; ++z) {
@@ -856,9 +761,8 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
                 double dX = (double) ((float) x + 0.5F) - viewEntity.x;
                 double dZ = (double) ((float) z + 0.5F) - viewEntity.z;
                 float dist = Mth.sqrt(dX * dX + dZ * dZ) / (float) rainRange;
-                ts.begin();
                 float light = world.getBrightness(x, 128, z) * 0.85F + 0.15F;
-                GL11.glColor4f(light, light, light, ((1.0F - dist * dist) * 0.5F + 0.5F) * rainGradient);
+                ts.color(light, light, light, ((1.0F - dist * dist) * 0.5F + 0.5F) * rainGradient);
                 ts.offset(-vrX, -vrY, -vrZ);
 
                 float texScale = 1.0F;
@@ -874,194 +778,100 @@ public abstract class MixinGameRenderer implements ExGameRenderer {
                 ts.vertexUV((double) x + 0.5D, minY, z + 1, tX2, tY1);
                 ts.vertexUV((double) x + 0.5D, maxY, z + 1, tX2, tY2);
                 ts.vertexUV((double) x + 0.5D, maxY, z + 0, tX1, tY2);
-                ts.offset(0.0D, 0.0D, 0.0D);
-                ts.end();
             }
         }
 
-        GL11.glEnable(GL11.GL_CULL_FACE);
-        GL11.glDisable(GL11.GL_BLEND);
-        GL11.glAlphaFunc(GL11.GL_GREATER, 0.1F);
+        weatherPass.drawQuads(ts, rainTexture);
+
     }
 
     @Overwrite
-    private void setupFog(int var1, float var2) {
-        Mob viewEntity = this.mc.cameraEntity;
-        GL11.glFogfv(GL11.GL_FOG_COLOR, this.getBuffer(this.fogRed, this.fogGreen, this.fogBlue, 1.0F));
-        GL11.glNormal3f(0.0F, -1.0F, 0.0F);
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-
-        var options = (ExGameOptions) this.mc.options;
-        float fogStart;
-        float fogEnd;
-        if (this.thickFog) {
-            GL11.glFogi(GL11.GL_FOG_MODE, GL11.GL_EXP);
-            GL11.glFogf(GL11.GL_FOG_DENSITY, 0.1F);
-            fogStart = 1.0F;
-            fogEnd = 1.0F;
-        }
-        else if (viewEntity.isUnderLiquid(Material.WATER)) {
-            GL11.glFogi(GL11.GL_FOG_MODE, GL11.GL_EXP);
-            fogStart = 0.1F;
-            if (options.ofClearWater()) {
-                fogStart = 0.02F;
-            }
-
-            GL11.glFogf(GL11.GL_FOG_DENSITY, fogStart);
-            fogEnd = 0.4F;
-        }
-        else if (viewEntity.isUnderLiquid(Material.LAVA)) {
-            GL11.glFogi(GL11.GL_FOG_MODE, GL11.GL_EXP);
-            GL11.glFogf(GL11.GL_FOG_DENSITY, 2.0F);
-            fogStart = 0.4F;
-            fogEnd = 0.3F;
-        }
-        else {
-            GL11.glFogi(GL11.GL_FOG_MODE, GL11.GL_LINEAR);
-            if (GLContext.getCapabilities().GL_NV_fog_distance) {
-                if (options.ofFogFancy()) {
-                    GL11.glFogi(NVFogDistance.GL_FOG_DISTANCE_MODE_NV, NVFogDistance.GL_EYE_RADIAL_NV);
-                }
-                else {
-                    GL11.glFogi(NVFogDistance.GL_FOG_DISTANCE_MODE_NV, NVFogDistance.GL_EYE_PLANE_ABSOLUTE_NV);
-                }
-            }
-
-            fogStart = options.ofFogStart();
-            fogEnd = 1.0F;
-            if (var1 < 0) {
-                fogStart = 0.0F;
-                fogEnd = 0.8F;
-            }
-
-            if (this.mc.level.dimension.natural) {
-                fogStart = 0.0F;
-                fogEnd = 1.0F;
-            }
-
-            var world = (ExWorld) this.mc.level;
-            GL11.glFogf(GL11.GL_FOG_START, world.getFogStart(this.renderDistance * fogStart, var2));
-            GL11.glFogf(GL11.GL_FOG_END, world.getFogEnd(this.renderDistance * fogEnd, var2));
-        }
-
-        GL11.glEnable(GL11.GL_COLOR_MATERIAL);
-        GL11.glColorMaterial(GL11.GL_FRONT, GL11.GL_AMBIENT);
+    private void setupFog(int pass, float partialTick) {
+        FogState fog = this.ac$fog(pass, partialTick);
+        RenderScene.fog(fog);
+        LegacyPassBridge.publishFog(fog);
     }
 
-    @Inject(
-        method = "bobView",
-        at = @At("HEAD"),
-        cancellable = true
-    )
-    private void renderPlayerWhenCameraInactive(float var1, CallbackInfo ci) {
-        if (!(!((ExMinecraft) this.mc).isCameraActive() && ((ExEntity) this.mc.cameraEntity).getStunned() == 0)) {
-            ci.cancel();
+    @Override
+    public FogState ac$fog(int pass, float partialTick) {
+        return WorldEnvironment.fog(this.mc, partialTick, pass, this.renderDistance, this.thickFog,
+            new Color4(this.fogRed, this.fogGreen, this.fogBlue, 1));
+    }
+
+    @Overwrite
+    private void setupClearColor(float partialTick) {
+        float brightness = this.fogBrO + (this.fogBr - this.fogBrO) * partialTick;
+        Color4 color = WorldEnvironment.clearColor(this.mc, partialTick, brightness, this.thickFog);
+        this.fogRed = color.r();
+        this.fogGreen = color.g();
+        this.fogBlue = color.b();
+    }
+
+    @Override
+    public Color4 ac$clearColor(float partialTick) {
+        this.setupClearColor(partialTick);
+        return new Color4(this.fogRed, this.fogGreen, this.fogBlue, 0);
+    }
+
+    @Overwrite
+    private void renderItemInHand(float partialTick, int eye) {
+        RenderSystem.phase(RenderPhase.HANDS);
+        Matrix4 base = Matrix4.identity();
+        if (this.mc.options.anaglyph3d) base = base.translated((eye * 2 - 1) * .1F, 0, 0);
+        var frame = new FrameView(RenderScene.world().projection(), Matrix4.identity(), FogState.NONE, LightingState.NONE);
+        var raster = RasterState.defaults().withViewport(RenderScene.viewport()).withColorMask(this.ac$eyeMask(eye));
+        var parameters = new DrawParameters(frame, ObjectData.IDENTITY.withModel(base),
+            new MaterialState(CompareOp.GREATER, .1F, false, ColorMaterial.NONE), raster);
+        if (!this.mc.options.thirdPersonView && !((ExMinecraft) this.mc).isCameraActive() && !this.mc.cameraEntity.isSleeping() && !this.mc.options.hideGui) {
+            Matrix4 pose = WorldCamera.hurt(this.mc, partialTick, base);
+            if (this.mc.options.bobView) pose = WorldCamera.bob(this.mc, partialTick, pose);
+            var hand = parameters.withObject(parameters.object().withModel(pose));
+            float main = this.mc.player.getAttackAnim(partialTick);
+            float off = ((ExPlayerEntity) this.mc.player).getSwingOffhandProgress(partialTick);
+            ((ExHeldItemRenderer) this.itemInHandRenderer).renderItemInFirstPerson(partialTick, main, off, hand);
+            if (((ExHeldItemRenderer) this.offHandItemRenderer).hasItem())
+                ((ExHeldItemRenderer) this.offHandItemRenderer).renderItemInFirstPerson(partialTick, off, main, HandLighting.mirrored(hand));
         }
+        if (!this.mc.options.thirdPersonView && !this.mc.cameraEntity.isSleeping())
+            LegacyPassBridge.drawLegacy(parameters, null, () -> this.itemInHandRenderer.renderScreenEffect(partialTick));
     }
 
-    @Inject(
-        method = "moveCameraToPlayer",
-        at = @At(
-            value = "INVOKE",
-            target = "Lorg/lwjgl/opengl/GL11;glTranslatef(FFF)V",
-            shift = At.Shift.BEFORE,
-            ordinal = 3,
-            remap = false
-        ),
-        cancellable = true
-    )
-    private void rotateCameraInsteadOfMoving(float var1, CallbackInfo ci) {
-        if (((ExMinecraft) this.mc).isCameraActive()) {
-            AC_CutsceneCameraPoint point = ((ExMinecraft) this.mc).getCutsceneCamera().getCurrentPoint(var1);
-            GL11.glRotatef(point.rotPitch, 1.0F, 0.0F, 0.0F);
-            GL11.glRotatef(point.rotYaw + 180.0F, 0.0F, 1.0F, 0.0F);
-            ci.cancel();
-        }
+    @Unique
+    private ColorMask ac$eyeMask(int eye) {
+        return this.mc.options.anaglyph3d ? new ColorMask(eye != 0, eye == 0, eye == 0, false) : ColorMask.RGBA;
     }
 
-    @ModifyExpressionValue(
-        method = "renderItemInHand",
-        at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/client/Options;bobView:Z",
-            ordinal = 0
-        )
-    )
-    private boolean noBobWhenCameraActive(boolean value) {
-        return value && !((ExMinecraft) this.mc).isCameraActive();
+    @Overwrite
+    public void render(float partialTick, long chunkDeadline) {
+        this.ac$worldRenderer.render(partialTick, chunkDeadline, this);
     }
 
-    @ModifyExpressionValue(
-        method = "renderItemInHand",
-        at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/client/Options;thirdPersonView:Z",
-            ordinal = 0
-        )
-    )
-    private boolean noHandWhenCameraActive(boolean value) {
-        return value || ((ExMinecraft) this.mc).isCameraActive();
+    @Override
+    public void ac$pick(float partialTick) {
+        ((GameRenderer) (Object) this).pick(partialTick);
     }
 
-    @Redirect(
-        method = "renderItemInHand",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/ItemInHandRenderer;render(F)V"
-        )
-    )
-    private void renderBothHands(ItemInHandRenderer instance, float partialTick) {
-        float prog1 = this.mc.player.getAttackAnim(partialTick);
-        float prog2 = ((ExPlayerEntity) this.mc.player).getSwingOffhandProgress(partialTick);
-
-        ((ExHeldItemRenderer) this.itemInHandRenderer).renderItemInFirstPerson(partialTick, prog1, prog2);
-
-        if (((ExHeldItemRenderer) this.offHandItemRenderer).hasItem()) {
-            GL11.glScalef(-1.0F, 1.0F, 1.0F);
-            GL11.glFrontFace(GL11.GL_CW);
-            ((ExHeldItemRenderer) this.offHandItemRenderer).renderItemInFirstPerson(partialTick, prog2, prog1);
-            GL11.glFrontFace(GL11.GL_CCW);
-        }
+    @Override
+    public WorldRenderContext ac$camera(float partialTick, int eye) {
+        this.setupCamera(partialTick, eye);
+        return RenderScene.worldContext();
     }
 
-    @ModifyVariable(
-        method = "setupClearColor",
-        at = @At(
-            value = "STORE",
-            ordinal = 0
-        ),
-        ordinal = 1
-    )
-    private float changeFogDividend(float value) {
-        return 1.0f - (float) Math.pow(0.5f, 0.25);
-        //return (float) (4 - this.mc.options.viewDistance) / 4.0F;
-    }
+    @Override
+    public void ac$weather(float partialTick) { this.renderSnowAndRain(partialTick); }
 
-    @Redirect(
-        method = "render(FJ)V",
-        at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/client/Options;viewDistance:I",
-            opcode = Opcodes.GETFIELD
-        )
-    )
-    private int disableSkyOnLowDistance(Options instance) {
-        if (((ExGameOptions) instance).ofChunkRenderDistance() >= 4) {
-            return 0;
-        }
-        return 1000;
-    }
+    @Override
+    public void ac$hands(float partialTick, int eye) { this.renderItemInHand(partialTick, eye); }
 
-    //@ModifyConstant(method = "setupClearColor", constant = @Constant(intValue = 4))
-    //private int changeFogDividend(int constant) {
-    //    // TODO: Was 5 to account for Very Far, but Optifine gives us Farview instead.
-    //    return constant;
-    //}
+    @Override
+    public boolean ac$normalView() { return this.zoom == 1; }
 
     @Unique
     public float getFarPlane() {
         var options = (ExGameOptions) this.mc.options;
-        int range = options.ofChunkRenderDistance() * 16 / 2;
+        // Preloaded columns are a movement reserve outside the visible range.
+        int visibleColumns = options.ofChunkRenderDistance() - options.ofPreloadedChunks();
+        int range = visibleColumns * 16 / 2;
         return 0.9f * range;
     }
 

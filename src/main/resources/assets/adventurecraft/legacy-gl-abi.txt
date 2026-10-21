@@ -1,0 +1,158 @@
+# Reviewed legacy OpenGL ABI translated by VulkanRenderRouting.
+# Format: support originalMethodName(JVM argument descriptors)returnDescriptor adapterTarget
+# Signatures intentionally exclude the GL class owner: inherited LWJGL aliases share routes.
+# Only reviewed GL entry points are listed; public native helpers are not part of this ABI.
+#
+# emulated: represented by the adapter's legacy state, geometry, texture or readback path.
+# fallback: a conservative placeholder or reduced legacy behavior; not a native OpenGL call.
+# unsupported: routed to a throwing bridge, even when strict ABI checking is disabled.
+# Unlisted calls also throw; ac.vulkan.strictAbi rejects them during transformation.
+
+# Fixed-function compatibility, including inherited LWJGL 2 names and LWJGL 3 aliases.
+emulated glActiveTexture(I)V activeTexture
+emulated glActiveTextureARB(I)V activeTextureARB
+emulated glAlphaFunc(IF)V alphaFunc
+emulated glBegin(I)V begin
+emulated glBindTexture(II)V bindTexture
+emulated glBlendColor(FFFF)V blendColor
+emulated glBlendFunc(II)V blendFunc
+emulated glCallList(I)V callList
+emulated glCallLists(Ljava/nio/IntBuffer;)V callLists
+emulated glClear(I)V clear
+emulated glClearColor(FFFF)V clearColor
+emulated glClearDepth(D)V clearDepth
+emulated glColor3d(DDD)V color3d
+emulated glColor3f(FFF)V color3f
+emulated glColor4d(DDDD)V color4d
+emulated glColor4f(FFFF)V color4f
+emulated glColor4ub(BBBB)V color4ub
+emulated glColorMask(ZZZZ)V colorMask
+emulated glColorMaterial(II)V colorMaterial
+emulated glCullFace(I)V cullFace
+emulated glDeleteLists(II)V deleteLists
+emulated glDeleteTextures(I)V deleteTextures
+emulated glDeleteTextures(Ljava/nio/IntBuffer;)V deleteTextures
+emulated glDepthFunc(I)V depthFunc
+emulated glDepthMask(Z)V depthMask
+emulated glDepthRange(DD)V depthRange
+emulated glDisable(I)V disable
+emulated glEnable(I)V enable
+emulated glEnd()V end
+emulated glEndList()V endList
+emulated glFinish()V finish
+emulated glFlush()V flush
+emulated glFog(ILjava/nio/FloatBuffer;)V fog
+emulated glFogf(IF)V fogf
+emulated glFogfv(ILjava/nio/FloatBuffer;)V fogfv
+emulated glFogi(II)V fogi
+emulated glFrontFace(I)V frontFace
+emulated glFrustum(DDDDDD)V frustum
+emulated glGenLists(I)I genLists
+emulated glGenTextures()I genTextures
+emulated glGenTextures(Ljava/nio/IntBuffer;)V genTextures
+emulated glGetBoolean(I)Z getBoolean
+emulated glGetBooleanv(ILjava/nio/ByteBuffer;)V getBooleanv
+emulated glGetError()I getError
+emulated glGetFloat(I)F getFloat
+emulated glGetFloat(ILjava/nio/FloatBuffer;)V getFloat
+emulated glGetFloatv(ILjava/nio/FloatBuffer;)V getFloatv
+emulated glGetFloatv(I[F)V getFloatv
+emulated glGetInteger(I)I getInteger
+emulated glGetInteger(ILjava/nio/IntBuffer;)V getInteger
+emulated glGetIntegerv(ILjava/nio/IntBuffer;)V getIntegerv
+emulated glGetIntegerv(I[I)V getIntegerv
+emulated glGetTexLevelParameteri(III)I getTexLevelParameteri
+emulated glGetTexParameterf(II)F getTexParameterf
+emulated glGetTexParameteri(II)I getTexParameteri
+emulated glIsEnabled(I)Z isEnabled
+emulated glIsList(I)Z isList
+emulated glIsTexture(I)Z isTexture
+emulated glLight(IILjava/nio/FloatBuffer;)V light
+emulated glLightModel(ILjava/nio/FloatBuffer;)V lightModel
+emulated glLightModelfv(ILjava/nio/FloatBuffer;)V lightModelfv
+emulated glLightfv(IILjava/nio/FloatBuffer;)V lightfv
+emulated glLineWidth(F)V lineWidth
+emulated glLoadIdentity()V loadIdentity
+emulated glLoadMatrix(Ljava/nio/FloatBuffer;)V loadMatrix
+emulated glLoadMatrixf(Ljava/nio/FloatBuffer;)V loadMatrixf
+emulated glMatrixMode(I)V matrixMode
+emulated glMultMatrix(Ljava/nio/FloatBuffer;)V multMatrix
+emulated glMultMatrixf(Ljava/nio/FloatBuffer;)V multMatrixf
+emulated glNewList(II)V newList
+emulated glNormal3f(FFF)V normal3f
+emulated glOrtho(DDDDDD)V ortho
+emulated glPixelStorei(II)V pixelStorei
+emulated glPolygonOffset(FF)V polygonOffset
+emulated glPopAttrib()V popAttrib
+emulated glPopMatrix()V popMatrix
+emulated glPushAttrib(I)V pushAttrib
+emulated glPushMatrix()V pushMatrix
+emulated glReadPixels(IIIIIILjava/nio/ByteBuffer;)V readPixels
+emulated glReadPixels(IIIIIILjava/nio/FloatBuffer;)V readPixels
+emulated glRotated(DDDD)V rotated
+emulated glRotatef(FFFF)V rotatef
+emulated glScaled(DDD)V scaled
+emulated glScalef(FFF)V scalef
+emulated glScissor(IIII)V scissor
+emulated glTexCoord2d(DD)V texCoord2d
+emulated glTexCoord2f(FF)V texCoord2f
+emulated glTexImage2D(IIIIIIIILjava/nio/ByteBuffer;)V texImage2D
+emulated glTexImage2D(IIIIIIIILjava/nio/IntBuffer;)V texImage2D
+emulated glTexParameterf(IIF)V texParameterf
+emulated glTexParameteri(III)V texParameteri
+emulated glTexStorage2D(IIIII)V texStorage2D
+emulated glTexSubImage2D(IIIIIIIILjava/nio/ByteBuffer;)V texSubImage2D
+emulated glTexSubImage2D(IIIIIIIILjava/nio/IntBuffer;)V texSubImage2D
+emulated glTranslated(DDD)V translated
+emulated glTranslatef(FFF)V translatef
+emulated glVertex2d(DD)V vertex2d
+emulated glVertex2f(FF)V vertex2f
+emulated glVertex3d(DDD)V vertex3d
+emulated glVertex3f(FFF)V vertex3f
+emulated glViewport(IIII)V viewport
+
+# Reduced compatibility behavior, kept visible in ABI audit output.
+# Shade mode and client texture state are tracked without a native client-array path.
+# Only texture unit zero contributes fixed-function texture coordinates.
+# Material and quality hints do not change the built-in shader's material implementation.
+# Read/draw buffer selection uses the renderer's single offscreen target.
+# Texture reads return stored RGBA pixels; buffer/query IDs are placeholders only.
+# Query results conservatively report visible; occlusion queries are disabled by capabilities.
+fallback glClientActiveTexture(I)V clientActiveTexture
+fallback glClientActiveTextureARB(I)V clientActiveTextureARB
+fallback glDrawBuffer(I)V drawBuffer
+fallback glGenBuffers()I genBuffers
+fallback glGenBuffers(Ljava/nio/IntBuffer;)V genBuffers
+fallback glGenBuffersARB(Ljava/nio/IntBuffer;)V genBuffersARB
+fallback glGenQueriesARB(Ljava/nio/IntBuffer;)V genQueriesARB
+fallback glGetQueryObjectuARB(IILjava/nio/IntBuffer;)V getQueryObjectuARB
+fallback glGetQueryObjectuivARB(IILjava/nio/IntBuffer;)V getQueryObjectuivARB
+fallback glGetString(I)Ljava/lang/String; getString
+fallback glGetTexImage(IIIILjava/nio/ByteBuffer;)V getTexImage
+fallback glHint(II)V hint
+fallback glMaterial(IILjava/nio/FloatBuffer;)V material
+fallback glMultiTexCoord2f(IFF)V multiTexCoord2f
+fallback glMultiTexCoord2fARB(IFF)V multiTexCoord2fARB
+fallback glReadBuffer(I)V readBuffer
+fallback glShadeModel(I)V shadeModel
+
+# Original Minecraft paths replaced by native tessellation or disabled occlusion culling.
+# Reaching one of these APIs is a compatibility error, not a request for an OpenGL context.
+# Generic vertex attributes have no mapping to the fixed packed-vertex shader interface.
+unsupported glBeginQueryARB(II)V -
+unsupported glBindBufferARB(II)V -
+unsupported glBufferDataARB(ILjava/nio/ByteBuffer;I)V -
+unsupported glColorPointer(IIIJ)V -
+unsupported glColorPointer(IZILjava/nio/ByteBuffer;)V -
+unsupported glDisableClientState(I)V -
+unsupported glDrawArrays(III)V -
+unsupported glEnableClientState(I)V -
+unsupported glEndQueryARB(I)V -
+unsupported glNormalPointer(IIJ)V -
+unsupported glNormalPointer(ILjava/nio/ByteBuffer;)V -
+unsupported glTexCoordPointer(IIIJ)V -
+unsupported glTexCoordPointer(IILjava/nio/FloatBuffer;)V -
+unsupported glVertexAttrib2f(IFF)V -
+unsupported glVertexPointer(IIIJ)V -
+unsupported glVertexPointer(IILjava/nio/FloatBuffer;)V -
+

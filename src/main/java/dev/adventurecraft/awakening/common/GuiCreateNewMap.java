@@ -1,5 +1,7 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
+import dev.adventurecraft.awakening.client.render.material.MapMaterials;
 import java.util.Random;
 import net.minecraft.client.gamemode.SurvivalGameMode;
 import net.minecraft.client.gui.components.Button;
@@ -137,10 +139,11 @@ public class GuiCreateNewMap extends Screen {
             }
 
             this.minecraft.gameMode = new SurvivalGameMode(this.minecraft);
-            dev.adventurecraft.awakening.editor.EditorSession.requestMapEditing();
+            EditorSession.requestMapEditing();
             String wName = this.textboxMapName.getValue().trim();
             ((ExMinecraft) this.minecraft).saveMapUsed(wName, wName);
             Level world = ((ExMinecraft) this.minecraft).getWorld(wName, wSeed, wName);
+            MapMaterials.createDefaults(world, ((ExWorld) world).getLevelDir());
             WorldGenProperties wgpS = this.worldGenProps;
             WorldGenProperties wgpD = ((ExWorldProperties) world.levelData).getWorldGenProps();
             wgpD.useImages = wgpS.useImages;

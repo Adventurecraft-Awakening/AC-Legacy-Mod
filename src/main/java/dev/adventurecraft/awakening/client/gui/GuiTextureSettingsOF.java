@@ -19,6 +19,6 @@ public class GuiTextureSettingsOF extends GuiBaseSettingsOF {
             OptionOF.ANIMATED_REDSTONE, OptionOF.ANIMATED_EXPLOSION,
             OptionOF.ANIMATED_FLAME, OptionOF.ANIMATED_SMOKE,
             OptionOF.MIPMAP_TYPE, OptionOF.MIPMAP_LEVEL,
-            OptionOF.AF_LEVEL, OptionOF.LEAVES};
+            OptionOF.LEAVES};
     }
 }

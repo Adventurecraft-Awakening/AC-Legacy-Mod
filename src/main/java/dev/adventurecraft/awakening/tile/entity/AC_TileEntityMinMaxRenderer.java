@@ -1,13 +1,14 @@
 package dev.adventurecraft.awakening.tile.entity;
 
 import dev.adventurecraft.awakening.editor.EditorSession;
-import dev.adventurecraft.awakening.common.AC_DebugMode;
+import dev.adventurecraft.awakening.client.render.DebugDraw;
+import dev.adventurecraft.awakening.client.render.compat.LegacyPassBridge;
+import dev.adventurecraft.awakening.image.Rgba;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.world.BlockPos;
 import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 import net.minecraft.world.level.tile.Tile;
 import net.minecraft.world.level.tile.entity.TileEntity;
-import org.lwjgl.opengl.GL11;
 
 public class AC_TileEntityMinMaxRenderer extends TileEntityRenderer {
 
@@ -38,36 +39,22 @@ public class AC_TileEntityMinMaxRenderer extends TileEntityRenderer {
         float g,
         float b
     ) {
-        GL11.glPushMatrix();
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glDisable(GL11.GL_LIGHTING);
-        GL11.glTranslatef((float) (x + 0.5), (float) (y + 0.5), (float) (z + 0.5));
-        GL11.glLineWidth(6.0F);
-        GL11.glShadeModel(GL11.GL_SMOOTH);
-        GL11.glBegin(GL11.GL_LINES);
-
+        int color = Rgba.fromRgba8(Rgba.saturateToByte(r), Rgba.saturateToByte(g), Rgba.saturateToByte(b), 255);
+        DebugDraw.with(LegacyPassBridge::capture, debug -> {
         for (int bX = min.x(); bX <= max.x(); bX++) {
             for (int bY = min.y(); bY <= max.y(); bY++) {
                 for (int bZ = min.z(); bZ <= max.z(); bZ++) {
                     Tile tile = Tile.tiles[entity.level.getTile(bX, bY, bZ)];
                     if (tile != null && ((ExBlock) tile).canBeTriggered()) {
-                        GL11.glColor3f(0.0F, 0.0F, 0.0F);
-                        GL11.glVertex3f(0.0F, 0.0F, 0.0F);
-                        GL11.glColor3f(r, g, b);
-                        GL11.glVertex3f(bX - entity.x, bY - entity.y, bZ - entity.z);
+                        debug.line(x + 0.5, y + 0.5, z + 0.5,
+                            x + 0.5 + bX - entity.x, y + 0.5 + bY - entity.y, z + 0.5 + bZ - entity.z,
+                            Rgba.BLACK, color, 6, true);
                     }
                 }
             }
         }
 
-        GL11.glEnd();
-        GL11.glShadeModel(GL11.GL_FLAT);
-        GL11.glLineWidth(1.0F);
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        GL11.glDisable(GL11.GL_BLEND);
-        GL11.glPopMatrix();
+        });
     }
 
     public @Override void render(TileEntity entity, double x, double y, double z, float tickTime) {

@@ -16,7 +16,7 @@ Additional tasks:
 ./gradlew -p wiki generateWiki           # generate pages without running all checks
 ./gradlew -p wiki checkWikiSources       # source facts and authored Markdown
 ./gradlew -p wiki checkWikiLinks         # advisory external-link report
-./gradlew -p wiki verifyWikiAssets       # compare native renders in build/wiki-assets-llvmpipe
+./gradlew -p wiki verifyWikiAssets       # compare native renders in build/wiki-assets-lavapipe
 ./gradlew -p wiki syncBaseline           # intentional network refresh only
 ./gradlew -p wiki checkBaseline          # compare live baseline without writing
 ```

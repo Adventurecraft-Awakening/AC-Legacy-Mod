@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.tile;
 
+import dev.adventurecraft.awakening.client.render.chunk.LevelRegion;
 import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.AC_TriggerArea;
 import dev.adventurecraft.awakening.common.gui.AC_GuiRedstoneTrigger;
@@ -33,6 +34,9 @@ public class AC_BlockRedstoneTrigger extends TileEntityTile implements AC_ITrigg
 
     @Override
     public int getTexture(LevelSource view, int x, int y, int z, int side) {
+        if (view instanceof LevelRegion region) {
+            return region.redstoneTriggerActivated(x, y, z) ? this.tex : this.tex + 1;
+        }
         var entity = ((AC_LevelSource) view).ac$getTileEntity(x, y, z, AC_TileEntityRedstoneTrigger.class);
         if (entity != null) {
             return entity.isActivated ? this.tex : this.tex + 1;

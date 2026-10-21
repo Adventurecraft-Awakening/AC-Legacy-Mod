@@ -1,15 +1,17 @@
 package dev.adventurecraft.awakening.script;
 
+import dev.adventurecraft.awakening.client.render.ModelRenderContext;
+import dev.adventurecraft.awakening.client.render.RenderScene;
+import dev.adventurecraft.awakening.client.render.RenderSystem;
+import dev.adventurecraft.awakening.client.render.RenderPhase;
+import dev.adventurecraft.awakening.client.render.compat.LegacyPassBridge;
+import dev.adventurecraft.awakening.client.render.state.*;
 import dev.adventurecraft.awakening.extension.client.model.ExCuboid;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.renderer.Textures;
 import net.minecraft.world.level.Level;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL12;
-import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
 
@@ -60,15 +62,16 @@ public abstract class ScriptModelBase implements ScriptColor {
     }
 
     protected void render(float partialTick, Matrix4f transform) {
+        var captured = LegacyPassBridge.capture(false);
+        this.render(partialTick, transform, new ModelRenderContext(captured.view(), captured.material(),
+            captured.raster().withCull(CullMode.NONE), LegacyPassBridge.currentTexture()));
+    }
+
+    protected void render(float partialTick, Matrix4f transform, ModelRenderContext context) {
         if (boxes.isEmpty()) {
             return;
         }
         Level world = Minecraft.instance.level;
-        Textures texMan = Minecraft.instance.textures;
-        if (this.texture != null && !this.texture.isEmpty()) {
-            texMan.bind(texMan.loadTexture(this.texture));
-        }
-
         var localMat = new Matrix4f();
         this.transform(partialTick, localMat);
 
@@ -109,37 +112,19 @@ public abstract class ScriptModelBase implements ScriptColor {
         float g = (float) color.getG();
         float b = (float) color.getB();
         float a = (float) color.getA();
-        if (a < 1.0) {
-            GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-            GL11.glEnable(GL11.GL_BLEND);
-            GL11.glColor4f(r, g, b, Math.min(a, 1.0F));
-        }
-        else {
-            GL11.glColor3f(r, g, b);
-        }
-
+        float[] tint = {r, g, b, Math.min(a, 1.0F)};
         Matrix4f.mul(transform, localMat, localMat);
-        try (var stack = MemoryStack.stackPush()) {
-            var matBuf = stack.mallocFloat(16);
-
-            var mat = new Matrix4f();
-            for (ModelPart cuboid : this.boxes) {
-                var exCuboid = (ExCuboid) cuboid;
-                if (!exCuboid.canRender()) {
-                    continue;
-                }
-
-                mat.load(localMat);
-                exCuboid.translateTo(mat);
-
-                mat.store(matBuf);
-                GL11.glLoadMatrixf(matBuf.flip());
-                exCuboid.render();
+        var mat = new Matrix4f();
+        for (ModelPart cuboid : this.boxes) {
+            var exCuboid = (ExCuboid) cuboid;
+            if (!exCuboid.canRender()) {
+                continue;
             }
-        }
-
-        if (a < 1.0) {
-            GL11.glDisable(GL11.GL_BLEND);
+            mat.load(localMat);
+            exCuboid.translateTo(mat);
+            float[] values = new float[16];
+            mat.store(java.nio.FloatBuffer.wrap(values));
+            exCuboid.render(context, new Matrix4(values), Color4.of(tint));
         }
     }
 
@@ -327,16 +312,17 @@ public abstract class ScriptModelBase implements ScriptColor {
     protected static final ArrayList<ScriptModelBase> activeModels = new ArrayList<>();
 
     public static void renderAll(float partialTick, Matrix4f transform) {
-        GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-        GL11.glDisable(GL11.GL_CULL_FACE);
-        GL11.glEnable(GL11.GL_ALPHA_TEST);
-
-        for (ScriptModelBase scriptModel : activeModels) {
-            scriptModel.render(partialTick, transform);
+        var captured = LegacyPassBridge.capture(false);
+        var view = RenderScene.hasWorld() ? RenderScene.world() : captured.view();
+        var raster = captured.raster().withCull(CullMode.NONE);
+        var material = captured.material().withAlpha(CompareOp.GREATER, .1F);
+        var context = new ModelRenderContext(view, material, raster, LegacyPassBridge.currentTexture());
+        RenderSystem.phase(RenderPhase.ENTITIES);
+        for (ScriptModelBase model : activeModels) {
+            if (model.texture != null && !model.texture.isEmpty()) context = context.withTexture(
+                ((dev.adventurecraft.awakening.extension.client.ExTextureManager)Minecraft.instance.textures).texture(model.texture));
+            model.render(partialTick, transform, context);
         }
-
-        GL11.glEnable(GL11.GL_CULL_FACE);
-        GL11.glDisable(GL12.GL_RESCALE_NORMAL);
     }
 
     public static void updateAll() {

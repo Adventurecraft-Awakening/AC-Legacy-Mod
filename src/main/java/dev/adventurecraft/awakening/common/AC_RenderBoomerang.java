@@ -1,15 +1,16 @@
 package dev.adventurecraft.awakening.common;
 
-import dev.adventurecraft.awakening.client.gl.GLTexture;
-import dev.adventurecraft.awakening.client.gl.GLTextureTarget;
+import dev.adventurecraft.awakening.client.render.compat.LegacyPassBridge;
+import dev.adventurecraft.awakening.client.render.EntityMeshes;
+import dev.adventurecraft.awakening.client.render.NativeRenderer;
+import dev.adventurecraft.awakening.client.render.PoseStack;
+import dev.adventurecraft.awakening.client.render.QuadBuilder;
+import net.minecraft.client.Minecraft;
 import dev.adventurecraft.awakening.entity.AC_EntityBoomerang;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.layout.Size;
-import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.world.entity.Entity;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL12;
 
 public class AC_RenderBoomerang extends EntityRenderer {
 
@@ -22,13 +23,12 @@ public class AC_RenderBoomerang extends EntityRenderer {
         float pitch = entity.xRotO + (entity.xRot - entity.xRotO) * deltaTime;
         float rotation =
             entity.prevBoomerangRotation + (entity.boomerangRotation - entity.prevBoomerangRotation) * deltaTime;
-        GL11.glPushMatrix();
-        GL11.glTranslated(x, y, z);
-        GL11.glRotatef(-angle, 0.0F, 1.0F, 0.0F);
-        GL11.glRotatef(pitch, 1.0F, 0.0F, 0.0F);
-        GL11.glRotatef(rotation, 0.0F, 1.0F, 0.0F);
-        this.bindTexture("/gui/items.png");
-        Size texSize = GLTexture.getSize(GLTextureTarget.TEXTURE_2D, 0);
+        var pose = new PoseStack(LegacyPassBridge.worldEntry());
+        pose.translate((float)x,(float)y,(float)z); pose.rotate(-angle,0,1,0);
+        pose.rotate(pitch,1,0,0); pose.rotate(rotation,0,1,0); pose.translate(-.5f,0,-.5f);
+        var texture = ((dev.adventurecraft.awakening.extension.client.ExTextureManager) Minecraft.instance.textures).texture("/gui/items.png");
+        Size texSize = texture.size(0);
+        var mesh = EntityMeshes.mesh("boomerang:"+texSize.w+":"+texSize.h, () -> {
         int texCols = texSize.w / 16;
         int texRows = texSize.h / 16;
         float tReciX = 0.5F / (float) texSize.w;
@@ -41,10 +41,7 @@ public class AC_RenderBoomerang extends EntityRenderer {
         float vX = 1.0F;
         float vY = 1.0F / 16.0F;
 
-        GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-        GL11.glTranslatef(-0.5F, 0.0F, -0.5F);
-        Tesselator ts = Tesselator.instance;
-        ts.begin();
+        QuadBuilder ts = new QuadBuilder(8 + (texCols + texRows) * 8);
 
         ts.normal(0.0F, 0.0F, 1.0F);
         ts.vertexUV(0.0D, 0.0D - vY, 0.0D, tX2, tY2);
@@ -102,9 +99,9 @@ public class AC_RenderBoomerang extends EntityRenderer {
             ts.vertexUV(vX, 0.0D, pZ, tX1, tY);
         }
 
-        ts.end();
-        GL11.glDisable(GL12.GL_RESCALE_NORMAL);
-        GL11.glPopMatrix();
+            return ts.vertices();
+        });
+        NativeRenderer.drawMesh(mesh,texture,pose.parameters());
     }
 
     @Override

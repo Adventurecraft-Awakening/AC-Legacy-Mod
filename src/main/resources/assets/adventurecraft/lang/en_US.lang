@@ -69,7 +69,6 @@ options.framerateLimit.tooltip="FPS Limit", "  Max FPS - no limit (fastest)", " 
 options.anaglyph.tooltip="3D mode used with red-cyan 3D glasses."
 options.viewBobbing.tooltip="More realistic movement.", "When using mipmaps set it to OFF for best results."
 options.guiScale.tooltip="GUI Scale", "Smaller GUI might be faster"
-options.advancedOpengl.tooltip="Detect and render only visible geometry", "  OFF - all geometry is rendered (slower)", "  Fast - ony visible geometry is rendered (fastest)", "  Fancy - conservative, avoids visual artifacts (faster)", "The option is available only if it is supported by the ", "graphic card."
 options.of.brightness.tooltip="Increases the brightness of darker objects", "  OFF - standard brightness", "  100% - maximum brightness for darker objects", "This options does not change the brightness of ", "fully black objects"
 options.of.msaa.tooltip="Multisample anti-aliasing", " OFF - (default) no anti-aliasing (faster)", " 2-16 - anti-aliased lines and edges (slower)", "The anti-aliasing smooths jagged lines and ", "sharp color transitions.", "Higher values may substantially decrease the FPS.", "Effective after a RESTART."
 

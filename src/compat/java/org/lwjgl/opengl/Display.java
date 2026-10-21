@@ -17,11 +17,8 @@ public final class Display {
     public static void create() throws LWJGLException { GameWindow.create(); dev.adventurecraft.awakening.client.platform.input.legacy.LegacyInputLifecycle.initialize(); }
     public static void create(PixelFormat pixelFormat) throws LWJGLException {
         java.util.Objects.requireNonNull(pixelFormat, "pixelFormat must be not be null.");
-        GameWindow.create(pixelFormat);
-        dev.adventurecraft.awakening.client.platform.input.legacy.LegacyInputLifecycle.initialize();
+        create();
     }
-    /** GLFW desktop windows do not embed in the legacy applet canvas. */
-    public static void setParent(java.awt.Canvas parent) { }
     public static void setLocation(int new_x, int new_y) { GameWindow.setLocation(new_x, new_y); }
     public static void setFullscreen(boolean fullscreen) throws LWJGLException { GameWindow.setFullscreen(fullscreen); }
     public static void setDisplayMode(DisplayMode mode) throws LWJGLException { GameWindow.setDisplayMode(mode); }

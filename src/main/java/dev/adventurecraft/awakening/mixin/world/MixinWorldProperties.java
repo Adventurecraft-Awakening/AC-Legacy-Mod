@@ -6,9 +6,9 @@ import dev.adventurecraft.awakening.common.LightHelper;
 import dev.adventurecraft.awakening.common.WorldGenProperties;
 import dev.adventurecraft.awakening.extension.nbt.ExCompoundTag;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
+import net.minecraft.client.Minecraft;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import dev.adventurecraft.awakening.world.GameRules;
-import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
@@ -279,6 +279,7 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
 
     @Override
     public void setTempOffset(float value) {
+        if (Float.compare(this.tempOffset, value) == 0) return;
         this.tempOffset = value;
     }
 

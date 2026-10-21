@@ -1,5 +1,13 @@
 package dev.adventurecraft.awakening.mixin.client.render.entity;
 
+import dev.adventurecraft.awakening.client.render.block.BlockMesher;
+import dev.adventurecraft.awakening.client.render.block.BlockMeshing;
+import dev.adventurecraft.awakening.client.render.block.BlockPreviewView;
+
+import dev.adventurecraft.awakening.client.render.*;
+import dev.adventurecraft.awakening.extension.client.ExTextureManager;
+import dev.adventurecraft.awakening.client.render.compat.LegacyPassBridge;
+import net.minecraft.client.Minecraft;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.entity.ExFallingBlockEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
@@ -10,7 +18,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.item.FallingTile;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.tile.Tile;
-import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -26,25 +33,19 @@ public abstract class MixinFallingBlockRenderer extends EntityRenderer {
         int bX = Mth.floor(entity.x);
         int bY = Mth.floor(entity.y);
         int bZ = Mth.floor(entity.z);
-        GL11.glPushMatrix();
-        GL11.glTranslatef((float) rX, (float) rY, (float) rZ);
+        var pose = new PoseStack(LegacyPassBridge.worldEntry());
+        pose.translate((float) rX, (float) rY, (float) rZ);
         Tile block = Tile.tiles[entity.tileId];
         int textureNum = ((ExBlock) block).getTextureNum();
-        if (textureNum == 0) {
-            this.bindTexture("/terrain.png");
-        } else {
-            this.bindTexture(String.format("/terrain%d.png", textureNum));
-        }
-
+        String path = textureNum == 0 ? "/terrain.png" : "/terrain%d.png".formatted(textureNum);
+        var texture = ((ExTextureManager)Minecraft.instance.textures).texture(path);
+        var parameters = pose.parameters().withMaterial(pose.parameters().material().withLighting(false));
         Level world = entity.getLevel();
-        GL11.glDisable(GL11.GL_LIGHTING);
-        int id = world.getTile(bX, bY, bZ);
-        int meta = world.getData(bX, bY, bZ);
-        int entityMeta = ((ExFallingBlockEntity) entity).getMetadata();
-        ((ExWorld) world).setBlockAndMetadataTemp(bX, bY, bZ, entity.tileId, entityMeta);
-        this.tileRenderer.renderBlock(block, world, bX, bY, bZ);
-        ((ExWorld) world).setBlockAndMetadataTemp(bX, bY, bZ, id, meta);
-        GL11.glEnable(GL11.GL_LIGHTING);
-        GL11.glPopMatrix();
+        var preview=new BlockPreviewView(world,bX,bY,bZ,entity.tileId,((ExFallingBlockEntity)entity).getMetadata());
+        var vertices=new QuadBuilder(128);
+        var mesher=new BlockMesher(preview,vertices,bX+.5,bY+.5,bZ+.5,BlockMeshing.options(world));
+        mesher.worldUnculled(block,bX,bY,bZ);
+        NativeRenderer.drawQuads(vertices.vertices(),texture,parameters);
+
     }
 }

@@ -40,8 +40,8 @@ public final class ImageMipmapper {
             int levelWidth = Math.max(1, width >> level);
             int levelHeight = Math.max(1, height >> level);
 
-            int prevWidth = width >> (level - 1);
-            int prevHeight = height >> (level - 1);
+            int prevWidth = Math.max(1, width >> (level - 1));
+            int prevHeight = Math.max(1, height >> (level - 1));
 
             IntBuffer srcSpan = levelBuffer.slice(srcOffset, prevWidth * prevHeight);
             srcOffset += srcSpan.limit();
@@ -58,21 +58,14 @@ public final class ImageMipmapper {
             throw new IllegalArgumentException();
         }
 
-        int y = 0;
-        for (; y + 1 < srcH; y += 2) {
-            int y0 = srcW * y;
-            int y1 = srcW * (y + 1);
-            int y2 = dstW * y;
-
-            int x = 0;
-            for (; x + 1 < srcW; x += 2) {
-                int tR = src.get(y0 + x + 1);
-                int tL = src.get(y0 + x);
-                int bR = src.get(y1 + x + 1);
-                int bL = src.get(y1 + x);
-
-                int color = Rgba.weightedAverageColor(tL, tR, bR, bL);
-                dst.put((y2 + x) >> 1, color);
+        for (int y = 0; y < dstH; y++) {
+            int top = Math.min(y * 2, srcH - 1) * srcW;
+            int bottom = Math.min(y * 2 + 1, srcH - 1) * srcW;
+            for (int x = 0; x < dstW; x++) {
+                int left = Math.min(x * 2, srcW - 1);
+                int right = Math.min(x * 2 + 1, srcW - 1);
+                dst.put(y * dstW + x, Rgba.weightedAverageColor(
+                    src.get(top + left), src.get(top + right), src.get(bottom + right), src.get(bottom + left)));
             }
         }
     }

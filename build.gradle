@@ -29,7 +29,7 @@ version = project.mod_version
 group = project.maven_group
 
 // The native wiki asset exporter writes to the committed registry asset tree by
-// default. CI overrides this with -PwikiAssetExportDir=build/wiki-assets-llvmpipe
+// default. CI overrides this with -PwikiAssetExportDir=build/wiki-assets-lavapipe
 // so that it can validate a clean regeneration without modifying the checkout.
 def wikiAssetExportDir = file(
     providers.gradleProperty("wikiAssetExportDir").getOrElse("wiki/assets/registry")
@@ -48,7 +48,6 @@ base {
 
 loom {
     accessWidenerPath = file("src/main/resources/${project.mod_id}.accesswidener")
-
     // Beta has no vanilla server-GUI Queue appender used by Loom's default config.
     log4jConfigs.setFrom(file("config/log4j2.xml"))
 
@@ -64,8 +63,6 @@ loom {
             // TODO: add sponge-mixin agent automatically
             vmArgs("-XX:+UnlockDiagnosticVMOptions", "-XX:+UseCompactObjectHeaders", "--enable-native-access=ALL-UNNAMED")
 
-            // TODO: make optional?
-            programArgs("--glDebugContext")
         }
 
         wikiAssetExporter {
@@ -80,6 +77,16 @@ loom {
             )
             ideConfigGenerated(false)
         }
+
+        vulkanClient {
+            client()
+            runDir("run/vulkan")
+            vmArgs("--enable-native-access=ALL-UNNAMED", "-Dac.renderer=vulkan")
+            if (providers.gradleProperty("vulkanValidation").getOrElse("false").toBoolean()) {
+                vmArgs("-Dac.vulkan.validation=true")
+            }
+        }
+
     }
 }
 
@@ -114,6 +121,31 @@ sourceSets {
     // Original game bytecode still links these org.lwjgl names. Compile the ABI
     // shims together with main, while keeping them out of native source packages.
     main.java.srcDir("src/compat/java")
+    shaderCompiler {
+        java.setSrcDirs(["src/tools/java"])
+    }
+    main.resources.srcDir(layout.buildDirectory.dir("generated/shaders"))
+}
+
+tasks.register("compileShaders", JavaExec) {
+    dependsOn(tasks.named("shaderCompilerClasses"))
+    classpath = sourceSets.shaderCompiler.runtimeClasspath
+    mainClass = "dev.adventurecraft.awakening.tools.ShaderCompiler"
+    jvmArgs("--enable-native-access=ALL-UNNAMED")
+    def shaderRoot = layout.projectDirectory.dir("src/main/resources/assets/adventurecraft/shaders/vulkan")
+    def shaderOutput = layout.buildDirectory.dir("generated/shaders/assets/adventurecraft/shaders/vulkan")
+    inputs.dir(shaderRoot)
+    outputs.dir(shaderOutput)
+    args(shaderRoot.asFile.absolutePath, shaderOutput.get().asFile.absolutePath)
+}
+
+tasks.named("processResources") {
+    dependsOn(tasks.named("compileShaders"))
+}
+
+// Build-time access-widener validation remains part of normal packaging checks.
+tasks.named("check") {
+    setDependsOn([tasks.named("validateAccessWidener")])
 }
 
 static String getOsArchSuffix() {
@@ -144,7 +176,10 @@ dependencies {
     implementation "org.lwjgl:lwjgl-glfw"
     implementation "org.lwjgl:lwjgl-stb"
     implementation "org.lwjgl:lwjgl-openal"
-    implementation "org.lwjgl:lwjgl-opengl"
+    implementation "org.lwjgl:lwjgl-vulkan"
+    shaderCompilerImplementation platform("org.lwjgl:lwjgl-bom:${project.lwjgl_version}")
+    shaderCompilerImplementation "org.lwjgl:lwjgl"
+    shaderCompilerImplementation "org.lwjgl:lwjgl-shaderc"
 
     // Annotations used by the bundled LWJGL compatibility sources.
     compileOnly "com.google.code.findbugs:jsr305:3.0.2"
@@ -156,8 +191,14 @@ dependencies {
     runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
     runtimeOnly "org.lwjgl:lwjgl-glfw::$lwjglNatives"
     runtimeOnly "org.lwjgl:lwjgl-openal::$lwjglNatives"
-    runtimeOnly "org.lwjgl:lwjgl-opengl::$lwjglNatives"
     runtimeOnly "org.lwjgl:lwjgl-stb::$lwjglNatives"
+    shaderCompilerRuntimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
+    shaderCompilerRuntimeOnly "org.lwjgl:lwjgl-shaderc::$lwjglNatives"
+    // MoltenVK supplies the Vulkan loader/driver on macOS. Other platforms
+    // use their installed Vulkan loader and graphics driver.
+    if (OperatingSystem.current() == OperatingSystem.MAC_OS) {
+        runtimeOnly "org.lwjgl:lwjgl-vulkan::$lwjglNatives"
+    }
 
     // Rhino is the JS engine: https://github.com/mozilla/rhino/releases
     // Archived versions: https://www-archive.mozilla.org/rhino/rhino16r2
@@ -260,6 +301,7 @@ jar {
 }
 
 tasks.named("sourcesJar") {
+    dependsOn(tasks.named("compileShaders"))
     from("LICENSE-LWJGL3")
 }
 

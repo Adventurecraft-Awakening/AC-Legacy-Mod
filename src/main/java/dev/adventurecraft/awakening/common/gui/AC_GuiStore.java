@@ -1,13 +1,12 @@
 package dev.adventurecraft.awakening.common.gui;
 
-import net.minecraft.client.Lighting;
+import dev.adventurecraft.awakening.client.render.compat.LegacyPassBridge;
+import dev.adventurecraft.awakening.extension.client.render.entity.ExItemRenderer;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.locale.I18n;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.item.Item;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL12;
 
 public class AC_GuiStore extends Screen {
     ItemInstance buyItem = new ItemInstance(0, 0, 0);
@@ -61,29 +60,19 @@ public class AC_GuiStore extends Screen {
             this.fill(w0 - size - 1, y1 - 1, w0 + size + 1, y2 + 1, bgColor);
         }
 
-        GL11.glPushMatrix();
-        GL11.glRotatef(120.0F, 1.0F, 0.0F, 0.0F);
-        Lighting.turnOn();
-        GL11.glPopMatrix();
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-
-        if (Item.items[this.buyItem.id] != null) {
-            int x = this.sellItem.id == 0 ? -size : left;
-            itemRenderer.renderAndDecorateItem(font, textures, this.buyItem, w0 + x, y1);
-            itemRenderer.renderGuiItemDecorations(font, textures, this.buyItem, w0 + x, y1);
+        try (var ui = LegacyPassBridge.uiContext(font, textures)) {
+            var preview = (ExItemRenderer) this.itemRenderer;
+            if (Item.items[this.buyItem.id] != null) {
+                int x = this.sellItem.id == 0 ? -size : left;
+                preview.renderGuiItem(ui, this.buyItem, w0 + x, y1);
+                preview.renderGuiItemDecorations(ui, this.buyItem, w0 + x, y1);
+            }
+            if (Item.items[this.sellItem.id] != null) {
+                int x = this.buyItem.id == 0 ? -size : -right;
+                preview.renderGuiItem(ui, this.sellItem, w0 + x, y1);
+                preview.renderGuiItemDecorations(ui, this.sellItem, w0 + x, y1);
+            }
         }
-
-        if (Item.items[this.sellItem.id] != null) {
-            int x = this.buyItem.id == 0 ? -size : -right;
-            itemRenderer.renderAndDecorateItem(font, textures, this.sellItem, w0 + x, y1);
-            itemRenderer.renderGuiItemDecorations(font, textures, this.sellItem, w0 + x, y1);
-        }
-
-        GL11.glDisable(GL12.GL_RESCALE_NORMAL);
-        Lighting.turnOff();
-        GL11.glDisable(GL11.GL_LIGHTING);
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
     }
 
     public void setBuyItem(int id, int count, int damage) {

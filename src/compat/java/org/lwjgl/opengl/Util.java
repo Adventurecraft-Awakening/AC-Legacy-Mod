@@ -1,11 +1,13 @@
 package org.lwjgl.opengl;
 
-/** Legacy Minecraft error reporting ABI. Checks the current OpenGL context. */
+import dev.adventurecraft.awakening.client.render.compat.LegacyGlAdapter;
+
+/** Legacy Minecraft error reporting ABI. Rendering is owned by Vulkan. */
 public final class Util {
     private Util() { }
 
     public static void checkGLError() {
-        int error = GL11.glGetError();
+        int error = LegacyGlAdapter.getError();
         if (error != 0) throw new OpenGLException(error);
     }
 

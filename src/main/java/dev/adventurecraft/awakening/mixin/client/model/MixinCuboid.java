@@ -1,13 +1,22 @@
 package dev.adventurecraft.awakening.mixin.client.model;
 
+import dev.adventurecraft.awakening.client.render.NativeRenderer;
+import dev.adventurecraft.awakening.client.render.ModelRenderContext;
+import dev.adventurecraft.awakening.client.render.state.Matrix4;
+import dev.adventurecraft.awakening.client.render.state.Color4;
+import dev.adventurecraft.awakening.client.render.compat.LegacyPassBridge;
+import dev.adventurecraft.awakening.client.render.vulkan.VulkanRenderer;
+import dev.adventurecraft.awakening.client.render.mesh.MemoryTesselator;
+import dev.adventurecraft.awakening.client.render.mesh.PoolingBlockAllocator;
 import dev.adventurecraft.awakening.extension.client.model.ExCuboid;
 import dev.adventurecraft.awakening.extension.client.model.ExTexturedQuad;
 import net.minecraft.client.model.Polygon;
 import net.minecraft.client.model.Vertex;
 import net.minecraft.client.model.geom.ModelPart;
-import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Matrix4f;
+import java.nio.FloatBuffer;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -41,10 +50,12 @@ public abstract class MixinCuboid implements ExCuboid {
     @Shadow
     public float zRot;
 
-    @Shadow
-    private boolean compiled;
-    @Shadow
-    private int list;
+    @Shadow private boolean compiled;
+    @Unique private static final PoolingBlockAllocator AC_MODEL_BLOCKS = new PoolingBlockAllocator(4096, 16);
+    @Unique private VulkanRenderer.Mesh ac$mesh;
+    @Unique private long ac$meshGeneration = -1;
+    @Unique private float ac$compiledScale;
+    @Unique private boolean ac$hasCompiledScale;
     @Shadow
     public boolean mirror;
     @Shadow
@@ -57,8 +68,6 @@ public abstract class MixinCuboid implements ExCuboid {
     @Unique
     private int tHeight;
 
-    @Shadow
-    protected abstract void compile(float scale);
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(int j, int par2, CallbackInfo ci) {
@@ -148,15 +157,112 @@ public abstract class MixinCuboid implements ExCuboid {
         return true;
     }
 
+    @Overwrite
+    private void compile(float scale) {
+        this.ac$mesh(scale);
+        this.compiled = true;
+    }
+
+    @Unique
+    private VulkanRenderer.Mesh ac$mesh(float scale) {
+        long generation = NativeRenderer.generation();
+        if (this.ac$mesh == null || this.ac$meshGeneration != generation) {
+            if (!this.ac$hasCompiledScale) {
+                this.ac$compiledScale = scale;
+                this.ac$hasCompiledScale = true;
+            }
+            var writer = MemoryTesselator.create();
+            writer.setAllocator(AC_MODEL_BLOCKS);
+            writer.ac$color8(-1);
+            try {
+                for (Polygon polygon : this.polygons) {
+                    ((ExTexturedQuad)polygon).ac$write(writer, this.ac$compiledScale);
+                }
+                try (var data = writer.takeMesh()) {
+                    this.ac$mesh = NativeRenderer.uploadQuads(data.vertexBlocks, Math.toIntExact(data.getVertexCount()));
+                    this.compiled = true;
+                    NativeRenderer.track(this, this.ac$mesh);
+                    this.ac$meshGeneration = generation;
+                }
+            } finally {
+                writer.clear();
+            }
+        }
+        return this.ac$mesh;
+    }
+
     @Override
     public void render() {
+        if (this.canRender()) {
+            try (var pass = LegacyPassBridge.modelPass(LegacyPassBridge.modelView(), LegacyPassBridge.currentTint())) {
+                pass.draw(this.ac$mesh(1F / 16F), LegacyPassBridge.currentTexture());
+            }
+        }
+    }
+
+    @Override
+    public void render(Matrix4f modelView, float[] tint) {
+        if (this.canRender()) {
+            try (var pass = LegacyPassBridge.scriptModelPass(ac$array(modelView), tint)) {
+                pass.draw(this.ac$mesh(1F / 16F), LegacyPassBridge.currentTexture());
+            }
+        }
+    }
+
+    @Override
+    public void render(ModelRenderContext context, Matrix4 model, Color4 tint) {
+        if (this.canRender()) context.draw(this.ac$mesh(1F / 16F), model, tint);
+    }
+
+    @Override
+    public Matrix4 pose(Matrix4 parent,float scale,boolean rollable) {
+        var pose=parent.translated(this.x*scale,this.y*scale,this.z*scale);
+        float degrees=180F/(float)Math.PI;
+        if(rollable) return pose.rotated(this.yRot*degrees,0,1,0).rotated(this.xRot*degrees,1,0,0).rotated(this.zRot*degrees,0,0,1);
+        return pose.rotated(this.zRot*degrees,0,0,1).rotated(this.yRot*degrees,0,1,0).rotated(this.xRot*degrees,1,0,0);
+    }
+    @Override
+    public void render(ModelRenderContext context,Matrix4 parent,Color4 tint,float scale,boolean rollable) {
+        if(this.canRender()) context.draw(this.ac$mesh(scale),this.pose(parent,scale,rollable),tint);
+    }
+
+    /** Vanilla model parts now submit retained meshes without modifying global matrices. */
+    @Overwrite
+    public void render(float scale) {
+        this.ac$renderTransformed(scale, false);
+    }
+
+    @Overwrite
+    public void renderRollable(float scale) {
+        this.ac$renderTransformed(scale, true);
+    }
+
+    @Unique
+    private void ac$renderTransformed(float scale, boolean rollable) {
         if (!this.canRender()) {
             return;
         }
-        if (!this.compiled) {
-            this.compile(1F / 16F);
+        var model = new Matrix4f().load(FloatBuffer.wrap(LegacyPassBridge.modelView()));
+        model.translate(this.x * scale, this.y * scale, this.z * scale);
+        if (rollable) {
+            model.rotateY(this.yRot);
+            model.rotateX(this.xRot);
+            model.rotateZ(this.zRot);
+        } else {
+            model.rotateZ(this.zRot);
+            model.rotateY(this.yRot);
+            model.rotateX(this.xRot);
         }
-        GL11.glCallList(this.list);
+        try (var pass = LegacyPassBridge.modelPass(ac$array(model), LegacyPassBridge.currentTint())) {
+            pass.draw(this.ac$mesh(scale), LegacyPassBridge.currentTexture());
+        }
+    }
+
+    @Unique
+    private static float[] ac$array(Matrix4f matrix) {
+        float[] values = new float[16];
+        matrix.store(FloatBuffer.wrap(values));
+        return values;
     }
 
     @Override

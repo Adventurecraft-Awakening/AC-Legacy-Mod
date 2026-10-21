@@ -34,7 +34,31 @@ public class AC_GuiLightBulb extends Screen {
     }
     @Override public void render(int mouseX, int mouseY, float delta) {
         this.fill(0, 0, this.width, this.height, Integer.MIN_VALUE);
+        this.drawCenteredString(this.font, "Light Bulb", this.width / 2, 34, 0xFFFFFF);
+        int helpWidth = Math.max(1, Math.min(300, this.width - 16));
+        int y = this.drawHelp("An invisible, non-solid light source.", 52, helpWidth);
+        y = this.drawHelp("Light Value changes its own emission only. It does not block other lights.", y, helpWidth);
+        this.drawHelp("Use solid blocks for visible walls. Clip Blocks block ray-traced light but stay invisible.", y, helpWidth);
         super.render(mouseX, mouseY, delta);
+    }
+
+    private int drawHelp(String message, int y, int maxWidth) {
+        String line = "";
+        for (String word : message.split(" ")) {
+            String next = line.isEmpty() ? word : line + " " + word;
+            if (!line.isEmpty() && this.font.width(next) > maxWidth) {
+                this.drawCenteredString(this.font, line, this.width / 2, y, 0xD0D0D0);
+                y += 12;
+                line = word;
+            } else {
+                line = next;
+            }
+        }
+        if (!line.isEmpty()) {
+            this.drawCenteredString(this.font, line, this.width / 2, y, 0xD0D0D0);
+            y += 12;
+        }
+        return y + 4;
     }
 
     public static void showUI(Level world, int x, int y, int z) { Minecraft.instance.setScreen(new AC_GuiLightBulb(world, x, y, z)); }

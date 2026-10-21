@@ -1,14 +1,18 @@
 package dev.adventurecraft.awakening.mixin.client.render;
 
 import dev.adventurecraft.awakening.editor.EditorSession;
+import dev.adventurecraft.awakening.client.render.compat.LegacyPassBridge;
+import dev.adventurecraft.awakening.client.render.*;
+import dev.adventurecraft.awakening.client.render.state.*;
+import net.minecraft.client.renderer.Tesselator;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.ACMod;
-import dev.adventurecraft.awakening.client.gl.GLBufferTarget;
-import dev.adventurecraft.awakening.client.gl.GLDevice;
-import dev.adventurecraft.awakening.client.renderer.ChunkBuilder;
-import dev.adventurecraft.awakening.client.renderer.ChunkBuilderEntry;
-import dev.adventurecraft.awakening.client.renderer.ChunkMesh;
+import dev.adventurecraft.awakening.client.render.chunk.ChunkBuildScheduler;
+import dev.adventurecraft.awakening.client.render.chunk.ChunkBuildStatistics;
+import dev.adventurecraft.awakening.client.render.chunk.ChunkMesh;
+import dev.adventurecraft.awakening.client.render.lighting.TorchLightSections;
+import dev.adventurecraft.awakening.client.render.lighting.TorchLightUpdateBatch;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.entity.AC_Particle;
 import dev.adventurecraft.awakening.extension.ExClass_66;
@@ -21,12 +25,10 @@ import dev.adventurecraft.awakening.extension.entity.ExMob;
 import dev.adventurecraft.awakening.extension.world.chunk.ExChunkCache;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.item.AC_Items;
-import dev.adventurecraft.awakening.layout.IntRect;
 import dev.adventurecraft.awakening.script.ScriptModelBase;
-import dev.adventurecraft.awakening.util.GLUtil;
+import dev.adventurecraft.awakening.util.RenderUtil;
 import dev.adventurecraft.awakening.util.MathF;
 import dev.adventurecraft.awakening.world.BlockPos;
-import it.unimi.dsi.fastutil.ints.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.particle.*;
@@ -35,7 +37,6 @@ import net.minecraft.client.renderer.DistanceChunkSorter;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.OffsettedRenderList;
-import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.client.renderer.Textures;
 import net.minecraft.client.renderer.culling.Culler;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
@@ -55,8 +56,6 @@ import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.level.tile.Tile;
 import net.minecraft.world.level.tile.entity.TileEntity;
 import net.minecraft.world.phys.Vec3;
-import org.lwjgl.input.Mouse;
-import org.lwjgl.opengl.*;
 import org.lwjgl.util.vector.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -67,14 +66,10 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.nio.IntBuffer;
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Mixin(LevelRenderer.class)
 public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
-
-    @Unique private static final int GL_QUERY_RESULT_NO_WAIT = 0x9194;
 
     @Unique private static final double CHUNK_SORT_THRESHOLD = 32.0;
 
@@ -88,8 +83,6 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     @Shadow private int yChunks;
     @Shadow private int zChunks;
     @Shadow private Minecraft mc;
-    @Shadow private IntBuffer occlusionCheckIds;
-    @Shadow private boolean occlusionCheck;
     @Shadow private int ticks;
     @Shadow private int xMinChunk;
     @Shadow private int yMinChunk;
@@ -103,7 +96,6 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     @Shadow private int renderedEntities;
     @Shadow private int culledEntities;
     @Shadow int[] toRender;
-    @Shadow IntBuffer resultBuffer;
     @Shadow private int totalChunks;
     @Shadow private int offscreenChunks;
     @Shadow private int occludedChunks;
@@ -117,11 +109,10 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     @Unique private long lastMovedTime = System.currentTimeMillis();
 
     @Unique private final List<ChunkMesh>[] renderBuffers = new List[ChunkMesh.MAX_TEXTURES];
-    @Unique private final Int2ObjectSortedMap<Deque<Chunk>> dirtyBuckets = new Int2ObjectRBTreeMap<>();
-    @Unique private final Deque<Chunk> rebuildBuffer = new ArrayDeque<>();
-    @Unique private final Queue<ChunkBuilderEntry> completionList = new ConcurrentLinkedQueue<>();
-
-    @Unique private final Queue<ChunkBuilder> builderPool = new ConcurrentLinkedQueue<>();
+    @Unique private final ChunkBuildScheduler chunkBuildScheduler = new ChunkBuildScheduler(ACMod.CHUNK_MESH_EXECUTOR);
+    @Unique private final TorchLightUpdateBatch torchUpdates = new TorchLightUpdateBatch();
+    @Unique private final Set<Chunk> torchDirtyChunks = Collections.newSetFromMap(new IdentityHashMap<>());
+    @Unique private int lastTorchDirtyChunks;
 
     @Unique double prevReposX;
     @Unique double prevReposY;
@@ -146,6 +137,9 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
 
     @Overwrite
     public void allChanged() {
+        this.torchUpdates.reset();
+        this.lastTorchDirtyChunks = 0;
+        this.chunkBuildScheduler.reset(this.level);
         var options = (ExGameOptions) this.mc.options;
         Tile.LEAVES.setFancy(options.isLeavesFancy());
 
@@ -186,13 +180,6 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         }
         this.dirtyChunks.clear();
 
-        for (var bucketEntry : this.dirtyBuckets.int2ObjectEntrySet()) {
-            for (Chunk viz : bucketEntry.getValue()) {
-                viz.dirty = false;
-            }
-        }
-        this.dirtyBuckets.clear();
-
         this.renderableTileEntities.clear();
 
         int vizId = 0;
@@ -202,10 +189,6 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
                     int vizIndex = (cZ * this.yChunks + cY) * this.xChunks + cX;
                     var viz = new Chunk(this.level, this.renderableTileEntities, cX * 16, cY * 16, cZ * 16, 16, -1);
                     this.sortedChunks[vizIndex] = viz;
-
-                    if (this.occlusionCheck) {
-                        viz.occlusion_id = this.occlusionCheckIds.get(vizId);
-                    }
 
                     viz.occlusion_querying = false;
                     viz.occlusion_visible = true;
@@ -236,7 +219,8 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     @Overwrite
     public int render(Mob entity, int renderPass, double deltaTime) {
         var options = (ExGameOptions) this.mc.options;
-        if (this.mc.options.viewDistance != this.lastViewDistance && !options.ofLoadFar()) {
+        int renderDistance = options.ofChunkRenderDistance();
+        if (this.xChunks != renderDistance || this.zChunks != renderDistance) {
             // TODO: don't delete all meshes when only viewdist changes
             this.allChanged();
         }
@@ -249,9 +233,6 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             this.emptyChunks = 0;
         }
 
-        double peX = entity.xOld + (entity.x - entity.xOld) * deltaTime;
-        double peY = entity.yOld + (entity.y - entity.yOld) * deltaTime;
-        double peZ = entity.zOld + (entity.z - entity.zOld) * deltaTime;
         double eVizX = entity.x - this.xOld;
         double eVizY = entity.y - this.yOld;
         double eVizZ = entity.z - this.zOld;
@@ -261,13 +242,13 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             this.yOld = entity.y;
             this.zOld = entity.z;
 
-            final int chunkLoadThreshold = 64;
-            int preloadCount = options.ofPreloadedChunks() * chunkLoadThreshold;
+            // Extra columns are split between both sides of the grid. Recenter before
+            // movement consumes that reserve, independently of simulation retention.
+            int preloadMargin = Math.max(8, options.ofPreloadedChunks() * 8);
             double eprX = entity.x - this.prevReposX;
-            double eprY = entity.y - this.prevReposY;
             double eprZ = entity.z - this.prevReposZ;
-            double eprSqr = eprX * eprX + eprY * eprY + eprZ * eprZ;
-            if (eprSqr > (preloadCount * preloadCount) + chunkLoadThreshold) {
+            double eprSqr = eprX * eprX + eprZ * eprZ;
+            if (eprSqr > (long) preloadMargin * preloadMargin) {
                 this.prevReposX = entity.x;
                 this.prevReposY = entity.y;
                 this.prevReposZ = entity.z;
@@ -277,146 +258,7 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             Arrays.sort(this.sortedChunks, new DistanceChunkSorter(entity));
         }
 
-        if (renderPass != 0 || !this.occlusionCheck || !this.mc.options.advancedOpengl || this.mc.options.anaglyph3d) {
-            int chunkCount = this.renderChunks(0, this.sortedChunks.length, renderPass, deltaTime);
-            return chunkCount;
-        }
-
-        int vizStart0 = 0;
-        int vizEnd0 = 20;
-        this.checkOcclusionQueryResult(vizStart0, vizEnd0, entity.x, entity.y, entity.z);
-
-        for (int vizIndex = vizStart0; vizIndex < vizEnd0; ++vizIndex) {
-            this.sortedChunks[vizIndex].occlusion_visible = true;
-        }
-
-        int queryCount = 0;
-        int chunkCount = this.renderChunks(vizStart0, vizEnd0, renderPass, deltaTime);
-        int vizEnd = vizEnd0;
-        int vizOffset = 0;
-        int vizStep = 30;
-
-        int vizLimit = this.xChunks / 2;
-        while (vizEnd < this.sortedChunks.length) {
-            int vizStart = vizEnd;
-            if (vizOffset < vizLimit) {
-                ++vizOffset;
-            }
-            else {
-                --vizOffset;
-            }
-
-            vizEnd += vizOffset * vizStep;
-            if (vizEnd <= vizStart) {
-                vizEnd = vizStart + 10;
-            }
-            vizEnd = Math.min(vizEnd, this.sortedChunks.length);
-
-            GL11.glDisable(GL11.GL_TEXTURE_2D);
-            GL11.glDisable(GL11.GL_LIGHTING);
-            GL11.glDisable(GL11.GL_ALPHA_TEST);
-            GL11.glDisable(GL11.GL_FOG);
-            GL11.glColorMask(false, false, false, false);
-            GL11.glDepthMask(false);
-            this.checkOcclusionQueryResult(vizStart, vizEnd, entity.x, entity.y, entity.z);
-            boolean isOcclusionFancy = options.isOcclusionFancy();
-
-            for (int vizIndex = vizStart; vizIndex < vizEnd; ++vizIndex) {
-                Chunk viz = this.sortedChunks[vizIndex];
-                if (viz.isEmpty()) {
-                    viz.visible = false;
-                    continue;
-                }
-                if (!viz.visible) {
-                    continue;
-                }
-
-                var exViz = (ExClass_66) viz;
-                if (isOcclusionFancy && !exViz.isInFrustrumFully()) {
-                    viz.occlusion_visible = true;
-                    continue;
-                }
-                if (!viz.visible || viz.occlusion_querying) {
-                    continue;
-                }
-
-                if (exViz.isVisibleFromPosition()) {
-                    double dX = Math.abs(exViz.visibleFromX() - entity.x);
-                    double dY = Math.abs(exViz.visibleFromY() - entity.y);
-                    double dZ = Math.abs(exViz.visibleFromZ() - entity.z);
-                    double len = dX + dY + dZ;
-                    if (len < 10.0D + vizIndex / 1000.0D) {
-                        viz.occlusion_visible = true;
-                        continue;
-                    }
-                    exViz.isVisibleFromPosition(false);
-                }
-
-                double dX = viz.xRender - peX;
-                double dY = viz.yRender - peY;
-                double dZ = viz.zRender - peZ;
-
-                ARBOcclusionQuery.glBeginQueryARB(GL15.GL_SAMPLES_PASSED, viz.occlusion_id);
-                var ts = Tesselator.instance;
-                ts.begin();
-                exViz.ac$renderQueryBox(ts, dX, dY, dZ);
-                ts.end();
-                ARBOcclusionQuery.glEndQueryARB(GL15.GL_SAMPLES_PASSED);
-                viz.occlusion_querying = true;
-                ++queryCount;
-            }
-
-            GL11.glColorMask(true, true, true, true);
-            GL11.glDepthMask(true);
-            GL11.glEnable(GL11.GL_TEXTURE_2D);
-            GL11.glEnable(GL11.GL_ALPHA_TEST);
-            GL11.glEnable(GL11.GL_FOG);
-
-            chunkCount += this.renderChunks(vizStart, vizEnd, renderPass, deltaTime);
-        }
-        return chunkCount;
-    }
-
-    @Unique
-    private void checkOcclusionQueryResult(int vizStart, int vizEnd, double x, double y, double z) {
-        var glCaps = GLContext.getCapabilities();
-        boolean noWait = glCaps.GL_ARB_query_buffer_object || glCaps.OpenGL44;
-        IntBuffer buffer = this.resultBuffer;
-        buffer.clear();
-
-        for (int vizIndex = vizStart; vizIndex < vizEnd; ++vizIndex) {
-            Chunk viz = this.sortedChunks[vizIndex];
-            if (!viz.occlusion_querying) {
-                continue;
-            }
-
-            int queryResult;
-            if (noWait) {
-                buffer.put(0, -1);
-                ARBOcclusionQuery.glGetQueryObjectuivARB(viz.occlusion_id, GL_QUERY_RESULT_NO_WAIT, buffer);
-                queryResult = buffer.get(0);
-                if (queryResult == -1) {
-                    continue;
-                }
-                viz.occlusion_querying = false;
-            }
-            else {
-                ARBOcclusionQuery.glGetQueryObjectuivARB(viz.occlusion_id, GL15.GL_QUERY_RESULT_AVAILABLE, buffer);
-                if (buffer.get(0) == 0) {
-                    continue;
-                }
-                viz.occlusion_querying = false;
-
-                ARBOcclusionQuery.glGetQueryObjectuivARB(viz.occlusion_id, GL15.GL_QUERY_RESULT, buffer);
-                queryResult = buffer.get(0);
-            }
-
-            boolean wasVisible = viz.occlusion_visible;
-            viz.occlusion_visible = queryResult > 0;
-            if (wasVisible && viz.occlusion_visible) {
-                ((ExClass_66) viz).setVisibleFromPosition(x, y, z, true);
-            }
-        }
+        return this.renderChunks(0, this.sortedChunks.length, renderPass, deltaTime);
     }
 
     @Overwrite
@@ -435,16 +277,9 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
                 else if (!viz.visible) {
                     ++this.offscreenChunks;
                 }
-                else if (this.occlusionCheck && !viz.occlusion_visible) {
-                    ++this.occludedChunks;
-                }
                 else {
                     ++this.renderedChunks;
                 }
-            }
-
-            if (this.occlusionCheck && !viz.occlusion_visible) {
-                continue;
             }
 
             var renderList = ((ExClass_66) viz).getRenderList(renderPass);
@@ -464,51 +299,26 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         double eprprY = entity.yOld + (entity.y - entity.yOld) * deltaTime;
         double eprprZ = entity.zOld + (entity.z - entity.zOld) * deltaTime;
 
-        GL11.glPushMatrix();
-        GL11.glTranslated(-eprprX, -eprprY, -eprprZ);
-
-        GLDevice device = ((ExMinecraft) this.mc).getGlDevice();
-
-        GL11.glEnableClientState(GL11.GL_VERTEX_ARRAY);
-        GL11.glEnableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
-        GL11.glEnableClientState(GL11.GL_COLOR_ARRAY);
-        GL11.glEnableClientState(GL11.GL_NORMAL_ARRAY);
-
         int renderCount = 0;
-
-        Textures texMan = Minecraft.instance.textures;
-        int[] textures = new int[] {
-            texMan.loadTexture("/terrain.png"), 0, texMan.loadTexture("/terrain2.png"),
-            texMan.loadTexture("/terrain3.png")
+        Textures texMan = this.mc.textures;
+        var catalog = (dev.adventurecraft.awakening.extension.client.ExTextureManager) texMan;
+        dev.adventurecraft.awakening.client.render.resource.RenderTexture[] textures = {
+            catalog.texture("/terrain.png"), null, catalog.texture("/terrain2.png"), catalog.texture("/terrain3.png")
         };
 
-        List<ChunkMesh>[] buffers = this.renderBuffers;
-        for (int texId = 0; texId < buffers.length; texId++) {
-            List<ChunkMesh> list = buffers[texId];
-            if (list.isEmpty()) {
-                continue;
+        dev.adventurecraft.awakening.client.render.RenderSystem.phase(renderPass == 0 ?
+            dev.adventurecraft.awakening.client.render.RenderPhase.TERRAIN_OPAQUE : dev.adventurecraft.awakening.client.render.RenderPhase.TERRAIN_TRANSLUCENT);
+        var mask = RenderScene.colorMask();
+        var terrain = dev.adventurecraft.awakening.client.render.RenderScene.terrainParameters(renderPass != 0, mask);
+        try (var pass = NativeRenderer.pass(terrain)) {
+            for (int texId = 0; texId < this.renderBuffers.length; texId++) {
+                List<ChunkMesh> list = this.renderBuffers[texId];
+                for (int j = 0; j < list.size(); j++) {
+                    list.get(j).draw(pass, textures[texId]);
+                }
+                renderCount += list.size();
             }
-
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, textures[texId]);
-
-            //noinspection ForLoopReplaceableByForEach
-            for (int j = 0; j < list.size(); j++) {
-                ChunkMesh mesh = list.get(j);
-                mesh.draw(device);
-            }
-            renderCount += list.size();
         }
-
-        // Need to unbind buffers; unexpecting places may try to read from it.
-        device.unbind(GLBufferTarget.ARRAY_BUFFER);
-        device.unbind(GLBufferTarget.ELEMENT_BUFFER);
-
-        GL11.glDisableClientState(GL11.GL_VERTEX_ARRAY);
-        GL11.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
-        GL11.glDisableClientState(GL11.GL_COLOR_ARRAY);
-        GL11.glDisableClientState(GL11.GL_NORMAL_ARRAY);
-
-        GL11.glPopMatrix();
 
         return renderCount;
     }
@@ -519,92 +329,199 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     }
 
 
-    @Redirect(
-        method = "renderSky",
-        at = @At(
-            value = "INVOKE",
-            target = "Lorg/lwjgl/opengl/GL11;glCallList(I)V",
-            remap = false,
-            ordinal = 0
-        )
-    )
-    private void configurableSky1(int list) {
-        if (((ExGameOptions) this.mc.options).ofSky()) {
-            GL11.glCallList(list);
+    @Overwrite
+    public void renderSky(float partialTick) {
+        if (this.level.dimension.natural) return;
+        RenderSystem.phase(RenderPhase.SKY);
+        var options = (ExGameOptions) this.mc.options;
+        var skyColor = this.ac$skyColor(this.level.getSkyColor(this.mc.cameraEntity, partialTick), 1);
+        var base = RenderScene.worldParameters();
+        base = base.withMaterial(MaterialState.UNLIT).withRaster(base.raster().withDepth(true, false)
+            .withColorMask(this.ac$eyeMask(false)));
+        boolean atmosphere = base.view().environment().fog().x() > .5F;
+        if (atmosphere) base = base.withView(this.ac$centeredSkyView(base.view()));
+        if (options.ofSky()) {
+            if (atmosphere) {
+                NativeRenderer.drawMesh(SkyMeshes.atmosphere(), null,
+                    this.ac$environmentParameters(base, MaterialEffect.ATMOSPHERE));
+            } else {
+                NativeRenderer.drawMesh(SkyMeshes.plane(false), null,
+                    base.withObject(base.object().withTint(skyColor))
+                        .withMaterial(base.material().withEffect(MaterialEffect.SKY_BACKGROUND)));
+            }
         }
-    }
 
-    @Redirect(
-        method = "renderSky",
-        at = @At(
-            value = "INVOKE",
-            target = "Lorg/lwjgl/opengl/GL11;glCallList(I)V",
-            remap = false,
-            ordinal = 2
-        )
-    )
-    private void configurableSky2(int list) {
-        if (((ExGameOptions) this.mc.options).ofSky()) {
-            GL11.glCallList(list);
+        var clear = base.withView(base.view().withFog(FogState.NONE));
+        float time = this.level.getTimeOfDay(partialTick);
+        float[] sunrise = this.level.dimension.getSunriseColor(time, partialTick);
+        if (!atmosphere && sunrise != null) {
+            var color = this.ac$skyColor(Vec3.newTemp(sunrise[0], sunrise[1], sunrise[2]), sunrise[3]);
+            var vertices = new QuadBuilder(16 * 4);
+            for (int i = 0; i < 16; i++) {
+                vertices.color(color.r(), color.g(), color.b(), color.a());
+                vertices.vertexUV(0, 100, 0, 0, 0);
+                for (int corner = 0; corner < 3; corner++) {
+                    float angle = (i + Math.min(corner, 1)) * (float) Math.PI * 2 / 16;
+                    float cosine = Mth.cos(angle);
+                    vertices.color(sunrise[0], sunrise[1], sunrise[2], 0);
+                    vertices.vertexUV(Mth.sin(angle) * 120, cosine * 120, -cosine * 40 * sunrise[3], 0, 0);
+                }
+            }
+            var object = clear.object().withModel(Matrix4.identity().rotated(90, 1, 0, 0)
+                .rotated(time > .5F ? 180 : 0, 0, 0, 1));
+            NativeRenderer.drawQuads(vertices.vertices(), null, clear.withObject(object)
+                .withRaster(clear.raster().withBlend(BlendState.ALPHA)));
         }
-    }
 
-    @Redirect(
-        method = "renderSky",
-        at = @At(
-            value = "INVOKE",
-            target = "Lorg/lwjgl/opengl/GL11;glCallList(I)V",
-            remap = false,
-            ordinal = 1
-        )
-    )
-    private void configurableStars(int list) {
-        if (((ExGameOptions) this.mc.options).ofStars()) {
-            GL11.glCallList(list);
+        float weather = 1 - this.level.getRainLevel(partialTick);
+        var celestialPose = Matrix4.identity().rotated(time * 360, 1, 0, 0);
+        // Scaling all coordinates preserves angular size while keeping custom celestial
+        // textures inside the far plane at the shortest distance that still draws a sky.
+        if (atmosphere) celestialPose = celestialPose.scaled(.25F, .25F, .25F);
+        var celestial = clear.withObject(new ObjectData(celestialPose,
+            Matrix4.identity(), new Color4(1, 1, 1, weather)))
+            .withRaster(clear.raster().withBlend(new BlendState(true, BlendFactor.SRC_ALPHA, BlendFactor.ONE, Color4.TRANSPARENT)));
+        NativeRenderer.drawMesh(SkyMeshes.celestial(false),
+            ((dev.adventurecraft.awakening.extension.client.ExTextureManager) this.textures).texture("/terrain/sun.png"), celestial);
+        NativeRenderer.drawMesh(SkyMeshes.celestial(true),
+            ((dev.adventurecraft.awakening.extension.client.ExTextureManager) this.textures).texture("/terrain/moon.png"), celestial);
+        float brightness = this.level.getStarBrightness(partialTick) * weather;
+        if (options.ofStars() && brightness > 0) {
+            NativeRenderer.drawMesh(SkyMeshes.stars(), null, celestial.withObject(celestial.object()
+                .withTint(new Color4(brightness, brightness, brightness, brightness))));
         }
-    }
-
-    @Inject(
-        method = "renderClouds",
-        at = @At("HEAD"),
-        cancellable = true
-    )
-    private void configurableClouds(float alpha, CallbackInfo ci) {
-        if (((ExGameOptions) this.mc.options).isCloudsOff()) {
-            ci.cancel();
+        if (options.ofSky() && !atmosphere) {
+            var dark = this.level.dimension.hasNormalSkyColor()
+                ? new Color4(skyColor.r() * .2F + .04F, skyColor.g() * .2F + .04F, skyColor.b() * .6F + .1F, 1)
+                : skyColor;
+            NativeRenderer.drawMesh(SkyMeshes.plane(true), null, base.withObject(base.object().withTint(dark))
+                .withMaterial(base.material().withEffect(MaterialEffect.SKY_BACKGROUND)));
         }
-    }
-
-    @Redirect(
-        method = "renderClouds",
-        at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/client/Options;fancyGraphics:Z"
-        )
-    )
-    private boolean fancyClouds(Options instance) {
-        return ((ExGameOptions) instance).isCloudsFancy();
-    }
-
-    @Redirect(
-        method = "renderClouds",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/world/level/dimension/Dimension;getCloudHeight()F"
-        )
-    )
-    private float redirectCloudHeight(Dimension instance) {
-        float height = instance.getCloudHeight();
-        height += ((ExGameOptions) this.mc.options).ofCloudsHeight() * 25.0F;
-        return height;
     }
 
     @Overwrite
+    public void renderClouds(float partialTick) {
+        var options = (ExGameOptions) this.mc.options;
+        if (this.level.dimension.natural || options.isCloudsOff()) return;
+        if (this.ac$renderProceduralClouds()) return;
+        if (options.isCloudsFancy()) {
+            this.renderAdvancedClouds(partialTick);
+            return;
+        }
+        RenderSystem.phase(RenderPhase.CLOUDS);
+        Mob camera = this.mc.cameraEntity;
+        double x = camera.xo + (camera.x - camera.xo) * partialTick + (this.ticks + partialTick) * .03F;
+        double z = camera.zo + (camera.z - camera.zo) * partialTick;
+        double y = camera.yOld + (camera.y - camera.yOld) * partialTick;
+        if (((ExMinecraft) this.mc).isCameraActive()) {
+            var point = ((ExMinecraft) this.mc).getCutsceneCamera().getCurrentPoint(partialTick);
+            x = point.posX + (this.ticks + partialTick) * .03F;
+            y = point.posY;
+            z = point.posZ;
+        }
+        x -= Mth.floor(x / 2048) * 2048;
+        z -= Mth.floor(z / 2048) * 2048;
+        float height = (float) (this.level.dimension.getCloudHeight() - y + .33) + options.ofCloudsHeight() * 25;
+        var base = RenderScene.worldParameters();
+        var object = new ObjectData(Matrix4.identity().translated(0, height, 0),
+            Matrix4.identity().translated((float) x / 2048, (float) z / 2048, 0),
+            this.ac$skyColor(this.level.getCloudColor(partialTick), .8F));
+        NativeRenderer.drawMesh(CloudMeshes.flat(), ((dev.adventurecraft.awakening.extension.client.ExTextureManager) this.textures).texture("/environment/clouds.png"),
+            base.withObject(object).withRaster(base.raster()
+                .withCull(CullMode.NONE).withBlend(BlendState.ALPHA).withColorMask(this.ac$eyeMask(true))));
+    }
+
+    @Unique
+    private FrameView ac$centeredSkyView(FrameView view) {
+        double[] inverse = RenderMath.inverse(view.view());
+        var environment = view.environment();
+        var camera = environment.camera();
+        // Third-person and camera effects move the eye within camera-relative space.
+        // The direction carrier is centered on that eye, and its volume origin must agree.
+        environment = new EnvironmentState(environment.sun(), environment.sky(), environment.weather(),
+            new Vector4(camera.x() + (float) inverse[12], camera.y() + (float) inverse[13],
+                camera.z() + (float) inverse[14], camera.w()), environment.clouds(), environment.fog());
+        float[] rotation = view.view().copyArray();
+        rotation[12] = rotation[13] = rotation[14] = 0;
+        return view.withView(new Matrix4(rotation)).withEnvironment(environment);
+    }
+
+    @Unique
+    private DrawParameters ac$environmentParameters(DrawParameters base, MaterialEffect effect) {
+        return base.withView(this.ac$centeredSkyView(base.view()).withFog(FogState.NONE))
+            .withObject(ObjectData.IDENTITY)
+            .withMaterial(MaterialState.UNLIT.withEffect(effect))
+            .withRaster(base.raster().withDepth(true, false).withCull(CullMode.NONE)
+                .withBlend(effect == MaterialEffect.CLOUDS ? BlendState.ALPHA : BlendState.OPAQUE)
+                .withColorMask(this.ac$eyeMask(effect == MaterialEffect.CLOUDS)));
+    }
+
+    /** Both original cloud entry points share one procedural draw when enabled. */
+    @Unique
+    private boolean ac$renderProceduralClouds() {
+        var base = RenderScene.worldParameters();
+        var environment = base.view().environment();
+        if (environment.fog().x() <= .5F) return false;
+        if (environment.clouds().z() > .5F) {
+            RenderSystem.phase(RenderPhase.CLOUDS);
+            NativeRenderer.drawMesh(SkyMeshes.atmosphere(), null,
+                this.ac$environmentParameters(base, MaterialEffect.CLOUDS));
+        }
+        return true;
+    }
+
+    @Unique
+    private Color4 ac$skyColor(Vec3 color, float alpha) {
+        float r = (float) color.x, g = (float) color.y, b = (float) color.z;
+        if (this.mc.options.anaglyph3d) {
+            return new Color4((r * 30 + g * 59 + b * 11) / 100, (r * 30 + g * 70) / 100,
+                (r * 30 + b * 70) / 100, alpha);
+        }
+        return new Color4(r, g, b, alpha);
+    }
+
+    @Unique
+    private ColorMask ac$eyeMask(boolean alpha) {
+        if (!this.mc.options.anaglyph3d) return ColorMask.RGBA;
+        return RenderScene.eye() == 0 ? new ColorMask(false, true, true, alpha) : new ColorMask(true, false, false, alpha);
+    }
+
+    // Sky geometry is now retained natively. Suppress the inherited constructor's obsolete list recording.
+    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MemoryTracker;genLists(I)I", ordinal = 2))
+    private int ac$skipSkyLists(int count) { return 0; }
+
+    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;renderStars()V"))
+    private void ac$skipStarRecording(LevelRenderer renderer) { }
+
+    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glPushMatrix()V", remap = false))
+    private void ac$skipSkyPush() { }
+
+    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glPopMatrix()V", remap = false))
+    private void ac$skipSkyPop() { }
+
+    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glEndList()V", remap = false))
+    private void ac$skipSkyListEnd() { }
+
+    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glNewList(II)V", remap = false))
+    private void ac$skipSkyListBegin(int list, int mode) { }
+
+    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/Tesselator;begin()V"))
+    private void ac$skipSkyUploadBegin(Tesselator tesselator) { }
+
+    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/Tesselator;end()V"))
+    private void ac$skipSkyUploadEnd(Tesselator tesselator) { }
+
+    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/Tesselator;vertex(DDD)V"))
+    private void ac$skipSkyVertex(Tesselator tesselator, double x, double y, double z) { }
+
+    @Overwrite
     public void renderAdvancedClouds(float deltaTime) {
-        GL11.glDisable(GL11.GL_CULL_FACE);
+        var options = (ExGameOptions) this.mc.options;
+        if (this.level.dimension.natural || options.isCloudsOff()) return;
+        if (this.ac$renderProceduralClouds()) return;
+        dev.adventurecraft.awakening.client.render.RenderSystem.phase(dev.adventurecraft.awakening.client.render.RenderPhase.CLOUDS);
         Mob camera = this.mc.cameraEntity;
         double cloudBaseY = camera.yOld + (camera.y - camera.yOld) * deltaTime;
-        Tesselator ts = Tesselator.instance;
         int tileWidth = 12;
         int tileHeight = 4;
         double cloudX =
@@ -616,9 +533,6 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         int cloudWrapZ = Mth.floor(cloudZ / 2048.0);
         cloudX -= cloudWrapX * 2048;
         cloudZ -= cloudWrapZ * 2048;
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.textures.loadTexture("/environment/clouds.png"));
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         Vec3 cloudColor = this.level.getCloudColor(deltaTime);
         float red = (float) cloudColor.x;
         float green = (float) cloudColor.y;
@@ -632,272 +546,97 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             blue = b3D;
         }
 
-        double uvScale = 1 / 256.0;
-        double baseU = Mth.floor(cloudX) * uvScale;
-        double baseV = Mth.floor(cloudZ) * uvScale;
 
-        double cloudFracX = cloudX - Mth.floor(cloudX);
-        double cloudFracZ = cloudZ - Mth.floor(cloudZ);
-        int patchWidth = 8;
-        int patchBound = 3;
-        double xOffset = 0; //1.0 / 1024.0; TODO this offset seemed to make things worse
-        GL11.glScaled(tileWidth, 1.0, tileWidth);
+        var parameters = RenderScene.worldParameters();
+        var object = parameters.object();
+        var pose = object.model().scaled(tileWidth,1,tileWidth).translated(
+            (float)-(cloudX-Mth.floor(cloudX)),(float)cloudY,(float)-(cloudZ-Mth.floor(cloudZ)));
+        var uv = object.textureTransform().translated(Mth.floor(cloudX)/256f,Mth.floor(cloudZ)/256f,0);
+        parameters = parameters.withObject(new dev.adventurecraft.awakening.client.render.state.ObjectData(
+            pose,uv,new dev.adventurecraft.awakening.client.render.state.Color4(red,green,blue,1)))
+            .withRaster(parameters.raster().withCull(dev.adventurecraft.awakening.client.render.state.CullMode.NONE)
+                .withBlend(dev.adventurecraft.awakening.client.render.state.BlendState.ALPHA));
+        var mesh = dev.adventurecraft.awakening.client.render.CloudMeshes.lattice(cloudY > -tileHeight-1,cloudY <= tileHeight+1);
+        var texture = ((dev.adventurecraft.awakening.extension.client.ExTextureManager) this.textures).texture("/environment/clouds.png");
+        NativeRenderer.drawMesh(mesh,texture,parameters.withRaster(parameters.raster()
+            .withColorMask(dev.adventurecraft.awakening.client.render.state.ColorMask.NONE)));
+        var mask = dev.adventurecraft.awakening.client.render.state.ColorMask.RGBA;
+        if (this.mc.options.anaglyph3d) mask = RenderScene.eye() == 0
+            ? new dev.adventurecraft.awakening.client.render.state.ColorMask(false,true,true,true)
+            : new dev.adventurecraft.awakening.client.render.state.ColorMask(true,false,false,true);
+        NativeRenderer.drawMesh(mesh,texture,parameters.withRaster(parameters.raster().withColorMask(mask)));
+    }
 
-        for (int renderPass = 0; renderPass < 2; ++renderPass) {
-            if (renderPass == 0) {
-                GL11.glColorMask(false, false, false, false);
-            }
-            else if (this.mc.options.anaglyph3d) {
-                if (GameRenderer.currentRenderLayer == 0) {
-                    GL11.glColorMask(false, true, true, true);
+    @Inject(method = "setLevel", at = @At("HEAD"))
+    private void ac$resetChunkWork(Level level, CallbackInfo ci) {
+        this.chunkBuildScheduler.reset(level);
+        this.torchUpdates.reset();
+        this.lastTorchDirtyChunks = 0;
+    }
+
+    @Override
+    public long ac$beginTorchLightUpdate(Level level) {
+        if (this.level != level || this.chunks == null) return -1;
+        return this.torchUpdates.begin();
+    }
+
+    @Inject(method = "tileChanged", at = @At("HEAD"), cancellable = true)
+    private void ac$batchTorchTileChanged(int x, int y, int z, CallbackInfo ci) {
+        if (this.torchUpdates.tileChanged(x, y, z)) ci.cancel();
+    }
+
+    @Override
+    public void ac$endTorchLightUpdate(Level level, long epoch, TorchLightSections sections) {
+        if (this.level != level) return;
+        try {
+            boolean flushed = this.torchUpdates.end(epoch, sections, (x, y, z) -> {
+                // Preserve setDirty's finite ring-grid mapping, including negative
+                // coordinates. Distant old/new sections can alias the same Chunk.
+                int index = (Math.floorMod(z, this.zChunks) * this.yChunks + Math.floorMod(y, this.yChunks)) *
+                    this.xChunks + Math.floorMod(x, this.xChunks);
+                Chunk chunk = this.chunks[index];
+                if (this.torchDirtyChunks.add(chunk) && !chunk.dirty) {
+                    this.dirtyChunks.add(chunk);
+                    chunk.setDirty();
                 }
-                else {
-                    GL11.glColorMask(true, false, false, true);
-                }
-            }
-            else {
-                GL11.glColorMask(true, true, true, true);
-            }
-
-            ts.begin();
-
-            double y0 = cloudY + 0.0;
-            double y1 = y0 + tileHeight;
-
-            for (int xPatch = -patchBound + 1; xPatch <= patchBound; ++xPatch) {
-
-                double startU = xPatch * patchWidth;
-                double x0 = startU - cloudFracX;
-                double x1 = x0 + patchWidth;
-
-                double u0 = startU * uvScale + baseU;
-                double u1 = (startU + patchWidth) * uvScale + baseU;
-
-                for (int zPatch = -patchBound + 1; zPatch <= patchBound; ++zPatch) {
-
-                    double startV = zPatch * patchWidth;
-                    double z0 = startV - cloudFracZ;
-                    double z1 = z0 + patchWidth;
-
-                    double v0 = startV * uvScale + baseV;
-                    double v1 = (startV + patchWidth) * uvScale + baseV;
-
-                    ts.color(red * 0.9F, green * 0.9F, blue * 0.9F, 0.8F);
-                    if (xPatch > -1) {
-                        ts.normal(-1.0F, 0.0F, 0.0F);
-
-                        for (int pX = 0; pX < patchWidth; ++pX) {
-                            double vX = x0 + pX;
-                            double vU = (startU + pX + 0.5) * uvScale + baseU;
-                            ts.vertexUV(vX, y0, z1, vU, v1);
-                            ts.vertexUV(vX, y1, z1, vU, v1);
-                            ts.vertexUV(vX, y1, z0, vU, v0);
-                            ts.vertexUV(vX, y0, z0, vU, v0);
-                        }
-                    }
-
-                    if (xPatch <= 1) {
-                        ts.normal(1.0F, 0.0F, 0.0F);
-
-                        for (int pX = 0; pX < patchWidth; ++pX) {
-                            double vX = x0 + pX + 1.0 - xOffset;
-                            double vU = (startU + pX + 0.5) * uvScale + baseU;
-                            ts.vertexUV(vX, y0, z1, vU, v1);
-                            ts.vertexUV(vX, y1, z1, vU, v1);
-                            ts.vertexUV(vX, y1, z0, vU, v0);
-                            ts.vertexUV(vX, y0, z0, vU, v0);
-                        }
-                    }
-
-                    ts.color(red * 0.8F, green * 0.8F, blue * 0.8F, 0.8F);
-                    if (zPatch > -1) {
-                        ts.normal(0.0F, 0.0F, -1.0F);
-
-                        for (int pZ = 0; pZ < patchWidth; ++pZ) {
-                            double vZ = z0 + pZ;
-                            double vV = (startV + pZ + 0.5) * uvScale + baseV;
-                            ts.vertexUV(x0, y1, vZ, u0, vV);
-                            ts.vertexUV(x1, (y1), vZ, u1, vV);
-                            ts.vertexUV(x1, y0, vZ, u1, vV);
-                            ts.vertexUV(x0, y0, vZ, u0, vV);
-                        }
-                    }
-
-                    if (zPatch <= 1) {
-                        ts.normal(0.0F, 0.0F, 1.0F);
-
-                        for (int pZ = 0; pZ < patchWidth; ++pZ) {
-                            double vZ = z0 + pZ + 1.0 - xOffset;
-                            double vV = (startV + pZ + 0.5) * uvScale + baseV;
-                            ts.vertexUV(x0, y1, vZ, u0, vV);
-                            ts.vertexUV(x1, y1, vZ, u1, vV);
-                            ts.vertexUV(x1, y0, vZ, u1, vV);
-                            ts.vertexUV(x0, y0, vZ, u0, vV);
-                        }
-                    }
-
-                    if (y0 > -tileHeight - 1) {
-                        ts.color(red * 0.7F, green * 0.7F, blue * 0.7F, 0.8F);
-                        ts.normal(0.0F, -1.0F, 0.0F);
-
-                        ts.vertexUV(x0, y0, z1, u0, v1);
-                        ts.vertexUV(x1, y0, z1, u1, v1);
-                        ts.vertexUV(x1, y0, z0, u1, v0);
-                        ts.vertexUV(x0, y0, z0, u0, v0);
-                    }
-
-                    if (y0 <= tileHeight + 1) {
-                        ts.color(red, green, blue, 0.8F);
-                        ts.normal(0.0F, 1.0F, 0.0F);
-
-                        double vY = y1 - xOffset;
-                        ts.vertexUV(x0, vY, z1, u0, v1);
-                        ts.vertexUV(x1, vY, z1, u1, v1);
-                        ts.vertexUV(x1, vY, z0, u1, v0);
-                        ts.vertexUV(x0, vY, z0, u0, v0);
-                    }
-                }
-            }
-
-            ts.end();
+            });
+            if (flushed) this.lastTorchDirtyChunks = this.torchDirtyChunks.size();
+        } finally {
+            this.torchDirtyChunks.clear();
         }
+    }
 
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        GL11.glDisable(GL11.GL_BLEND);
-        GL11.glEnable(GL11.GL_CULL_FACE);
+    @Override
+    public int ac$lastTorchDirtySections() {
+        return this.torchUpdates.lastDirtySections();
+    }
+
+    @Override
+    public int ac$lastTorchDirtyChunks() {
+        return this.lastTorchDirtyChunks;
     }
 
     @Overwrite
     public boolean updateDirtyChunks(Mob camera, boolean force) {
-        var options = (ExGameOptions) this.mc.options;
-
-        // TODO: throttle by time taken to copy world data, not amount
-        //       e.g. alloc 12ms of every frame to copying+uploads
-        int targetFrameUpdates = 1;
-        if (options.ofChunkUpdatesDynamic() && !this.isMoving(camera)) {
-            if (((ExMinecraft) this.mc).isCameraActive()) {
-                targetFrameUpdates *= 2;
-            }
-            else {
-                targetFrameUpdates *= 3;
-            }
-        }
-
-        // TODO: build+upload nearby chunks here (yes, on main thread)
-
-        for (Chunk viz : this.dirtyChunks) {
-            int x = ((int) camera.x - viz.xm);
-            int y = ((int) camera.y - viz.ym);
-            int z = ((int) camera.z - viz.zm);
-            int dist = (int) MathF.sqrt(x * x + y * y + z * z);
-            this.dirtyBuckets.computeIfAbsent(dist, ArrayDeque::new).add(viz);
-        }
-        this.dirtyChunks.clear();
-
-        int x0 = Integer.MAX_VALUE;
-        int z0 = Integer.MAX_VALUE;
-        int x1 = Integer.MIN_VALUE;
-        int z1 = Integer.MIN_VALUE;
-
-        int bucketMinKey = this.dirtyBuckets.isEmpty() ? 0 : this.dirtyBuckets.firstIntKey();
-        var bucketIter = this.dirtyBuckets.int2ObjectEntrySet().iterator();
-        outer:
-        while (bucketIter.hasNext()) {
-            var bucketEntry = bucketIter.next();
-            int bucketKey = bucketEntry.getIntKey();
-            Deque<Chunk> bucket = bucketEntry.getValue();
-
-            while (true) {
-                Chunk viz = bucket.poll();
-                if (viz == null) {
-                    break;
-                }
-
-                // TODO: De-prioritize invisible entries? e.g. by moving them to distant bucket
-                //if (!viz.visible && bucketKey > bucketMinKey + 4) {
-                //    //this.dirtyBuckets.computeIfAbsent(bucketEntry.getIntKey() + 1, ArrayDeque::new).add(viz);
-                //    continue;
-                //}
-
-                IntRect bounds = getChunkBounds(viz);
-                x0 = Math.min(x0, bounds.x);
-                z0 = Math.min(z0, bounds.y);
-                x1 = Math.max(x1, bounds.right());
-                z1 = Math.max(z1, bounds.bot());
-
-                this.rebuildBuffer.add(viz);
-                if (this.rebuildBuffer.size() >= 256) {
-                    break outer;
-                }
-            }
-
-            if (bucket.isEmpty()) {
-                bucketIter.remove();
-            }
-        }
-
-        if (this.level.chunkSource instanceof ExChunkCache cache) {
-            int cx0 = x0 >> 4;
-            int cz0 = z0 >> 4;
-            int cx1 = x1 >> 4;
-            int cz1 = z1 >> 4;
-            // TODO: request chunks individually?
-            //       this is currently high overhead when chunks are far apart since bounds cover massive area.
-            //       could use quadtree to collect adjacent chunks.
-            cache.ac$requestChunks(cx0, cz0, cx1, cz1, false);
-        }
-
-        // TODO: abort previous completion if it exists (add version field?)
-        for (Chunk viz : this.rebuildBuffer) {
-            if (!viz.dirty || viz.level == null) {
-                continue;
-            }
-            // TODO: only read when all chunks are loaded (re-add viz to dirtyChunks if not ready)
-            ChunkBuilder threadBuilder = this.rentChunkBuilder();
-            ((ExClass_66) viz).ac$readWorldData(threadBuilder);
-            viz.dirty = false;
-
-            ACMod.CHUNK_MESH_EXECUTOR.submit(() -> {
-                ((ExClass_66) viz).ac$generateMesh(threadBuilder);
-                this.completionList.add(new ChunkBuilderEntry(threadBuilder, viz));
-            });
-        }
-        this.rebuildBuffer.clear();
-
-        this.uploadPendingChunks(camera, force);
+        this.ac$updateChunks(camera, 0);
+        // One bounded pass also prevents legacy callers spinning on IO readiness.
         return true;
     }
 
-    @Unique
-    private ChunkBuilder rentChunkBuilder() {
-        ChunkBuilder b = this.builderPool.poll();
-        if (b == null) {
-            b = new ChunkBuilder();
+    @Override
+    public void ac$updateChunks(Mob camera, long deadline) {
+        int multiplier = 1;
+        var options = (ExGameOptions) this.mc.options;
+        if (options.ofChunkUpdatesDynamic() && !this.isMoving(camera)) {
+            multiplier = ((ExMinecraft) this.mc).isCameraActive() ? 2 : 3;
         }
-        return b;
+        this.chunkBuildScheduler.update(this.level, this.dirtyChunks, camera,
+            RenderSystem.frameSequence(), deadline, multiplier);
     }
 
-    @Unique
-    private void uploadPendingChunks(Mob camera, boolean force) {
-        // TODO: (time)limit uploads per frame
-        while (true) {
-            ChunkBuilderEntry entry = this.completionList.poll();
-            if (entry == null) {
-                break;
-            }
-            ((ExClass_66) entry.chunk()).ac$submitMesh(entry.builder());
-            this.builderPool.add(entry.builder());
-        }
-    }
-
-    @Unique
-    private static IntRect getChunkBounds(Chunk chunk) {
-        var pos = new Coord(chunk.x, chunk.y, chunk.z);
-        var size = new Coord(chunk.xs, chunk.ys, chunk.zs);
-        var pad = new Coord(2);
-        var origin = pos.sub(pad);
-        var end = size.add(pad);
-        return new IntRect(origin.x, origin.z, end.x, end.z);
+    @Override
+    public ChunkBuildStatistics ac$chunkBuildStatistics() {
+        return this.chunkBuildScheduler.statistics();
     }
 
     @Unique
@@ -937,14 +676,6 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         return Math.abs(entity.z - entity.zo) > threshold;
     }
 
-    @Unique
-    private boolean isActingNow() {
-        if (Mouse.isButtonDown(0)) {
-            return true;
-        }
-        return Mouse.isButtonDown(1);
-    }
-
     @Inject(
         method = "skyColorChanged",
         at = @At("HEAD"),
@@ -972,6 +703,8 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
 
     @Override
     public void updateAllTheRenderers() {
+        // Loading scripts may change world properties before this renderer is attached.
+        if (this.chunks == null || this.level != this.mc.level) return;
         for (Chunk item : this.chunks) {
             if (!item.dirty) {
                 this.dirtyChunks.add(item);
@@ -992,85 +725,85 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
 
     @Overwrite
     public void renderEntities(Vec3 cameraPos, Culler culler, float partialTick) {
-        if (this.noEntityRenderFrames > 0) {
-            --this.noEntityRenderFrames;
-            return;
-        }
-        Minecraft mc = this.mc;
-        Mob camera = mc.cameraEntity;
-        Level level = this.level;
-
-        TileEntityRenderDispatcher.instance.prepare(level, this.textures, mc.font, camera, partialTick);
-        EntityRenderDispatcher.INSTANCE.prepare(level, this.textures, mc.font, camera, mc.options, partialTick);
-        this.totalEntities = 0;
-        this.renderedEntities = 0;
-        this.culledEntities = 0;
-
-        EntityRenderDispatcher.xOff = camera.xOld + (camera.x - camera.xOld) * partialTick;
-        EntityRenderDispatcher.yOff = camera.yOld + (camera.y - camera.yOld) * partialTick;
-        EntityRenderDispatcher.zOff = camera.zOld + (camera.z - camera.zOld) * partialTick;
-        TileEntityRenderDispatcher.xOff = camera.xOld + (camera.x - camera.xOld) * partialTick;
-        TileEntityRenderDispatcher.yOff = camera.yOld + (camera.y - camera.yOld) * partialTick;
-        TileEntityRenderDispatcher.zOff = camera.zOld + (camera.z - camera.zOld) * partialTick;
-
-        this.renderScriptModels(partialTick);
-
-        var allEntities = (List<Entity>) level.getAllEntities();
-        this.totalEntities = allEntities.size();
-
-        for (Entity entity : (List<Entity>) level.globalEntities) {
-            ++this.renderedEntities;
-            if (entity.shouldRender(cameraPos)) {
-                EntityRenderDispatcher.INSTANCE.render(entity, partialTick);
+        RenderSystem.phase(RenderPhase.ENTITIES);
+        try (var debug = DebugDraw.begin(dev.adventurecraft.awakening.client.render.RenderScene.worldParameters())) {
+            if (this.noEntityRenderFrames > 0) {
+                --this.noEntityRenderFrames;
+                return;
             }
-        }
+            Minecraft mc = this.mc;
+            Mob camera = mc.cameraEntity;
+            Level level = this.level;
 
-        var exMc = (ExMinecraft) mc;
-        boolean cameraPaused = (exMc.isCameraActive() && exMc.isCameraPause());
+            TileEntityRenderDispatcher.instance.prepare(level, this.textures, mc.font, camera, partialTick);
+            EntityRenderDispatcher.INSTANCE.prepare(level, this.textures, mc.font, camera, mc.options, partialTick);
+            this.totalEntities = 0;
+            this.renderedEntities = 0;
+            this.culledEntities = 0;
 
-        for (Entity entity : allEntities) {
-            if (!entity.shouldRender(cameraPos)) {
-                continue;
-            }
-            if (!entity.noCulling && !culler.isVisible(entity.bb)) {
-                continue;
-            }
-            if (entity == camera && !this.mc.options.thirdPersonView && !camera.isSleeping()) {
-                continue;
-            }
-            int eX = (int) Math.floor(entity.x);
-            int eY = MathF.clamp((int) Math.floor(entity.y), 0, 127);
-            int eZ = (int) Math.floor(entity.z);
-            if (!level.hasChunkAt(eX, eY, eZ)) {
-                continue;
+            EntityRenderDispatcher.xOff = camera.xOld + (camera.x - camera.xOld) * partialTick;
+            EntityRenderDispatcher.yOff = camera.yOld + (camera.y - camera.yOld) * partialTick;
+            EntityRenderDispatcher.zOff = camera.zOld + (camera.z - camera.zOld) * partialTick;
+            TileEntityRenderDispatcher.xOff = camera.xOld + (camera.x - camera.xOld) * partialTick;
+            TileEntityRenderDispatcher.yOff = camera.yOld + (camera.y - camera.yOld) * partialTick;
+            TileEntityRenderDispatcher.zOff = camera.zOld + (camera.z - camera.zOld) * partialTick;
+
+            this.renderScriptModels(partialTick);
+
+            var allEntities = (List<Entity>) level.getAllEntities();
+            this.totalEntities = allEntities.size();
+
+            for (Entity entity : (List<Entity>) level.globalEntities) {
+                ++this.renderedEntities;
+                if (entity.shouldRender(cameraPos)) {
+                    EntityRenderDispatcher.INSTANCE.render(entity, partialTick);
+                }
             }
 
-            float tickTime = partialTick;
-            if (cameraPaused || (EditorSession.current().active && !(entity instanceof Player)) ||
-                ((ExEntity) entity).getStunned() > 0) {
-                tickTime = 1.0F;
-            }
-            EntityRenderDispatcher.INSTANCE.render(entity, tickTime);
-            ++this.renderedEntities;
-        }
+            var exMc = (ExMinecraft) mc;
+            boolean cameraPaused = (exMc.isCameraActive() && exMc.isCameraPause());
 
-        for (TileEntity entity : (List<TileEntity>) this.renderableTileEntities) {
-            TileEntityRenderDispatcher.instance.render(entity, partialTick);
+            for (Entity entity : allEntities) {
+                if (!entity.shouldRender(cameraPos)) {
+                    continue;
+                }
+                if (!entity.noCulling && !culler.isVisible(entity.bb)) {
+                    continue;
+                }
+                if (entity == camera && !this.mc.options.thirdPersonView && !camera.isSleeping()) {
+                    continue;
+                }
+                int eX = (int) Math.floor(entity.x);
+                int eY = MathF.clamp((int) Math.floor(entity.y), 0, 127);
+                int eZ = (int) Math.floor(entity.z);
+                if (!level.hasChunkAt(eX, eY, eZ)) {
+                    continue;
+                }
+
+                float tickTime = partialTick;
+                if (cameraPaused || (EditorSession.forLevel(this.level).active && !(entity instanceof Player)) ||
+                    ((ExEntity) entity).getStunned() > 0) {
+                    tickTime = 1.0F;
+                }
+                EntityRenderDispatcher.INSTANCE.render(entity, tickTime);
+                ++this.renderedEntities;
+            }
+
+            for (TileEntity entity : (List<TileEntity>) this.renderableTileEntities) {
+                TileEntityRenderDispatcher.instance.render(entity, partialTick);
+            }
+
         }
     }
 
     @Unique
     private void renderScriptModels(float partialTick) {
-        var transform = GLUtil.getModelViewMatrix(new Matrix4f());
-        transform.translate(
-            (float) -EntityRenderDispatcher.xOff,
-            (float) -EntityRenderDispatcher.yOff,
-            (float) -EntityRenderDispatcher.zOff
-        );
+        var transform = new Matrix4f();
+        transform.translate((float) -dev.adventurecraft.awakening.client.render.RenderScene.cameraX(),
+            (float) -dev.adventurecraft.awakening.client.render.RenderScene.cameraY(),
+            (float) -dev.adventurecraft.awakening.client.render.RenderScene.cameraZ());
 
-        GL11.glPushMatrix();
         ScriptModelBase.renderAll(partialTick, transform);
-        GL11.glPopMatrix();
     }
 
     /* TODO: Optifine messes with this. Figure out where to put it?
@@ -1092,140 +825,71 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     }
     */
 
-    @ModifyExpressionValue(
-        method = "renderClouds",
-        at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/world/entity/Mob;yOld:D",
-            ordinal = 0
-        )
-    )
-    private double changeCameraY(
-        double value, @Local(
-            ordinal = 0,
-            argsOnly = true
-        ) float var1
-    ) {
-        var exClient = (ExMinecraft) this.mc;
-        if (exClient.isCameraActive()) {
-            AC_CutsceneCameraPoint point = exClient.getCutsceneCamera().getCurrentPoint(var1);
-            return point.posY;
-        }
-        return value;
-    }
-
-    @ModifyExpressionValue(
-        method = "renderClouds",
-        at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/world/entity/Mob;xo:D",
-            ordinal = 0
-        )
-    )
-    private double changeCameraX(
-        double value, @Local(
-            ordinal = 0,
-            argsOnly = true
-        ) float var1
-    ) {
-        var exClient = (ExMinecraft) this.mc;
-        if (exClient.isCameraActive()) {
-            AC_CutsceneCameraPoint point = exClient.getCutsceneCamera().getCurrentPoint(var1);
-            return (double) point.posX + (double) (((float) this.ticks + var1) * 0.03F);
-        }
-        return value;
-    }
-
-    @ModifyExpressionValue(
-        method = "renderClouds",
-        at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/world/entity/Mob;xo:D",
-            ordinal = 0
-        )
-    )
-    private double changeCameraZ(
-        double value, @Local(
-            ordinal = 0,
-            argsOnly = true
-        ) float var1
-    ) {
-        var exClient = (ExMinecraft) this.mc;
-        if (exClient.isCameraActive()) {
-            AC_CutsceneCameraPoint point = exClient.getCutsceneCamera().getCurrentPoint(var1);
-            return point.posZ;
-        }
-        return value;
-    }
-
     @Override
     public void drawCursorSelection(Mob entity, ItemInstance stack, float deltaTime) {
-        if (!EditorSession.current().selection.bothSet) {
+        if (!EditorSession.forLevel(this.level).selection.bothSet) {
             return;
         }
         if (stack == null || stack.id < AC_Items.cursor.id || stack.id > AC_Items.cursor.id + 20) {
             return;
         }
 
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glColor4f(1.0F, 0.6F, 0.0F, 0.4F);
-        GL11.glLineWidth(3.0F);
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        BlockPos c0 = AC_ItemCursor.one().min(AC_ItemCursor.two());
-        BlockPos c1 = AC_ItemCursor.one().max(AC_ItemCursor.two());
-        int x1 = c0.x();
-        int y1 = c0.y();
-        int z1 = c0.z();
-        int x2 = c1.x() + 1;
-        int y2 = c1.y() + 1;
-        int z2 = c1.z() + 1;
-        double dX = entity.xOld + (entity.x - entity.xOld) * (double) deltaTime;
-        double dY = entity.yOld + (entity.y - entity.yOld) * (double) deltaTime;
-        double dZ = entity.zOld + (entity.z - entity.zOld) * (double) deltaTime;
-        Tesselator ts = Tesselator.instance;
+        DebugLineBuilder.with(dev.adventurecraft.awakening.client.render.RenderScene::worldParameters, ts -> {
 
-        double pX1 = (double) x1 - dX;
-        double pX2 = (double) x2 - dX;
-        double pY1 = (double) y1 - dY;
-        double pY2 = (double) y2 - dY;
-        double pZ1 = (double) z1 - dZ;
-        double pZ2 = (double) z2 - dZ;
+            ts.color(1.0F, 0.6F, 0.0F, 0.4F);
+            ts.width(3.0F);
 
-        ts.begin(GL11.GL_LINE_STRIP);
+            BlockPos c0 = AC_ItemCursor.one().min(AC_ItemCursor.two());
+            BlockPos c1 = AC_ItemCursor.one().max(AC_ItemCursor.two());
+            int x1 = c0.x();
+            int y1 = c0.y();
+            int z1 = c0.z();
+            int x2 = c1.x() + 1;
+            int y2 = c1.y() + 1;
+            int z2 = c1.z() + 1;
+            double dX = entity.xOld + (entity.x - entity.xOld) * (double) deltaTime;
+            double dY = entity.yOld + (entity.y - entity.yOld) * (double) deltaTime;
+            double dZ = entity.zOld + (entity.z - entity.zOld) * (double) deltaTime;
 
-        for (int x = x1; x <= x2; ++x) {
-            double pX = (double) x - dX;
-            ts.vertex(pX, pY1, pZ1);
-            ts.vertex(pX, pY2, pZ1);
-            ts.vertex(pX, pY2, pZ2);
-            ts.vertex(pX, pY1, pZ2);
-            ts.vertex(pX, pY1, pZ1);
-        }
+            double pX1 = (double) x1 - dX;
+            double pX2 = (double) x2 - dX;
+            double pY1 = (double) y1 - dY;
+            double pY2 = (double) y2 - dY;
+            double pZ1 = (double) z1 - dZ;
+            double pZ2 = (double) z2 - dZ;
 
-        for (int y = y1; y <= y2; ++y) {
-            double pY = (double) y - dY;
-            ts.vertex(pX1, pY, pZ1);
-            ts.vertex(pX2, pY, pZ1);
-            ts.vertex(pX2, pY, pZ2);
-            ts.vertex(pX1, pY, pZ2);
-            ts.vertex(pX1, pY, pZ1);
-        }
+            ts.strip();
 
-        for (int z = z1; z <= z2; ++z) {
-            double pZ = (double) z - dZ;
-            ts.vertex(pX1, pY1, pZ);
-            ts.vertex(pX2, pY1, pZ);
-            ts.vertex(pX2, pY2, pZ);
-            ts.vertex(pX1, pY2, pZ);
-            ts.vertex(pX1, pY1, pZ);
-        }
+            for (int x = x1; x <= x2; ++x) {
+                double pX = (double) x - dX;
+                ts.vertex(pX, pY1, pZ1);
+                ts.vertex(pX, pY2, pZ1);
+                ts.vertex(pX, pY2, pZ2);
+                ts.vertex(pX, pY1, pZ2);
+                ts.vertex(pX, pY1, pZ1);
+            }
 
-        ts.end();
+            for (int y = y1; y <= y2; ++y) {
+                double pY = (double) y - dY;
+                ts.vertex(pX1, pY, pZ1);
+                ts.vertex(pX2, pY, pZ1);
+                ts.vertex(pX2, pY, pZ2);
+                ts.vertex(pX1, pY, pZ2);
+                ts.vertex(pX1, pY, pZ1);
+            }
 
-        GL11.glLineWidth(1.0F);
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        GL11.glDisable(GL11.GL_BLEND);
+            for (int z = z1; z <= z2; ++z) {
+                double pZ = (double) z - dZ;
+                ts.vertex(pX1, pY1, pZ);
+                ts.vertex(pX2, pY1, pZ);
+                ts.vertex(pX2, pY2, pZ);
+                ts.vertex(pX1, pY2, pZ);
+                ts.vertex(pX1, pY1, pZ);
+            }
+
+            ts.end();
+
+        });
     }
 
     @Override
@@ -1239,33 +903,31 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             return;
         }
 
-        double vX = viewEntity.xOld + (viewEntity.x - viewEntity.xOld) * (double) deltaTime;
-        double vY = viewEntity.yOld + (viewEntity.y - viewEntity.yOld) * (double) deltaTime;
-        double vZ = viewEntity.zOld + (viewEntity.z - viewEntity.zOld) * (double) deltaTime;
-        Tesselator ts = Tesselator.instance;
-        ts.begin(GL11.GL_LINE_STRIP);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        if (entity instanceof PathfinderMob mob && mob.getTarget() != null) {
-            GL11.glColor4f(1.0F, 0.0F, 0.0F, 0.4F);
-        }
-        else {
-            GL11.glColor4f(1.0F, 1.0F, 0.0F, 0.4F);
-        }
+        DebugLineBuilder.with(dev.adventurecraft.awakening.client.render.RenderScene::worldParameters, ts -> {
+            double vX = viewEntity.xOld + (viewEntity.x - viewEntity.xOld) * (double) deltaTime;
+            double vY = viewEntity.yOld + (viewEntity.y - viewEntity.yOld) * (double) deltaTime;
+            double vZ = viewEntity.zOld + (viewEntity.z - viewEntity.zOld) * (double) deltaTime;
+            ts.strip();
 
-        GL11.glLineWidth(5.0F);
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        ts.vertex(entity.x - vX, entity.y - vY, entity.z - vZ);
+            if (entity instanceof PathfinderMob mob && mob.getTarget() != null) {
+                ts.color(1.0F, 0.0F, 0.0F, 0.4F);
+            }
+            else {
+                ts.color(1.0F, 1.0F, 0.0F, 0.4F);
+            }
 
-        for (int i = path.pos; i < path.length; ++i) {
-            Node node = path.nodes[i];
-            ts.vertex((double) node.x - vX + 0.5D, (double) node.y - vY + 0.5D, (double) node.z - vZ + 0.5D);
-        }
+            ts.width(5.0F);
 
-        ts.end();
-        GL11.glLineWidth(1.0F);
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        GL11.glDisable(GL11.GL_BLEND);
+            ts.vertex(entity.x - vX, entity.y - vY, entity.z - vZ);
+
+            for (int i = path.pos; i < path.length; ++i) {
+                Node node = path.nodes[i];
+                ts.vertex((double) node.x - vX + 0.5D, (double) node.y - vY + 0.5D, (double) node.z - vZ + 0.5D);
+            }
+
+            ts.end();
+
+        });
     }
 
     @Override
@@ -1274,36 +936,35 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
             return;
         }
 
-        double dX = viewEntity.xOld + (viewEntity.x - viewEntity.xOld) * (double) deltaTime;
-        double dY = viewEntity.yOld + (viewEntity.y - viewEntity.yOld) * (double) deltaTime;
-        double dZ = viewEntity.zOld + (viewEntity.z - viewEntity.zOld) * (double) deltaTime;
-        Tesselator ts = Tesselator.instance;
-        ts.begin(GL11.GL_LINE_STRIP);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        if (((ExMob) entity).getExtraFov() > 0.0F) {
-            GL11.glColor4f(1.0F, 0.5F, 0.0F, 0.4F);
-        }
-        else {
-            GL11.glColor4f(0.0F, 1.0F, 0.0F, 0.4F);
-        }
+        DebugLineBuilder.with(dev.adventurecraft.awakening.client.render.RenderScene::worldParameters, ts -> {
+            double dX = viewEntity.xOld + (viewEntity.x - viewEntity.xOld) * (double) deltaTime;
+            double dY = viewEntity.yOld + (viewEntity.y - viewEntity.yOld) * (double) deltaTime;
+            double dZ = viewEntity.zOld + (viewEntity.z - viewEntity.zOld) * (double) deltaTime;
+            ts.strip();
 
-        GL11.glLineWidth(5.0F);
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        float fov = Math.min(((ExMob) entity).getFov() / 2.0F + ((ExMob) entity).getExtraFov(), 180.0F);
-        double rX = 5.0D * Math.sin(-Math.PI * (double) (entity.yRot - fov) / 180.0D) + entity.x;
-        double rZ = 5.0D * Math.cos(-Math.PI * (double) (entity.yRot - fov) / 180.0D) + entity.z;
-        double rdY = entity.y - dY + (double) entity.getHeadHeight();
-        ts.vertex(rX - dX, rdY, rZ - dZ);
-        ts.vertex(entity.x - dX, rdY, entity.z - dZ);
-        rX = 5.0D * Math.sin(-Math.PI * (double) (entity.yRot + fov) / 180.0D) + entity.x;
-        rZ = 5.0D * Math.cos(-Math.PI * (double) (entity.yRot + fov) / 180.0D) + entity.z;
-        ts.vertex(rX - dX, rdY, rZ - dZ);
-        ts.end();
-        GL11.glLineWidth(1.0F);
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        GL11.glDisable(GL11.GL_BLEND);
+            if (((ExMob) entity).getExtraFov() > 0.0F) {
+                ts.color(1.0F, 0.5F, 0.0F, 0.4F);
+            }
+            else {
+                ts.color(0.0F, 1.0F, 0.0F, 0.4F);
+            }
+
+            ts.width(5.0F);
+
+            float fov = Math.min(((ExMob) entity).getFov() / 2.0F + ((ExMob) entity).getExtraFov(), 180.0F);
+            double rX = 5.0D * Math.sin(-Math.PI * (double) (entity.yRot - fov) / 180.0D) + entity.x;
+            double rZ = 5.0D * Math.cos(-Math.PI * (double) (entity.yRot - fov) / 180.0D) + entity.z;
+            double rdY = entity.y - dY + (double) entity.getHeadHeight();
+            ts.vertex(rX - dX, rdY, rZ - dZ);
+            ts.vertex(entity.x - dX, rdY, entity.z - dZ);
+            rX = 5.0D * Math.sin(-Math.PI * (double) (entity.yRot + fov) / 180.0D) + entity.x;
+            rZ = 5.0D * Math.cos(-Math.PI * (double) (entity.yRot + fov) / 180.0D) + entity.z;
+            ts.vertex(rX - dX, rdY, rZ - dZ);
+            ts.end();
+
+        });
     }
+
 
     @Overwrite
     public void spawnParticle(String type, double x, double y, double z, double vX, double vY, double vZ) {
@@ -1367,31 +1028,36 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
     }
 
     private void doReset(boolean var1) {
-        EditorSession.current().triggerResetActive = true;
+        var editor = EditorSession.forLevel(this.level);
+        boolean previous = editor.triggerResetActive;
+        editor.triggerResetActive = true;
+        try {
 
-        // TODO: iterate actual loaded chunks from level, not visuals from renderer
-        for (Chunk item : this.chunks) {
-            int x = item.x;
-            int y = item.y;
-            int z = item.z;
-            if (!this.level.hasChunkAt(x, y, z)) {
-                continue;
-            }
+            // TODO: iterate actual loaded chunks from level, not visuals from renderer
+            for (Chunk item : this.chunks) {
+                int x = item.x;
+                int y = item.y;
+                int z = item.z;
+                if (!this.level.hasChunkAt(x, y, z)) {
+                    continue;
+                }
 
-            LevelChunk chunk = this.level.getChunkAt(x, z);
-            for (int bX = 0; bX < 16; ++bX) {
-                for (int bZ = 0; bZ < 16; ++bZ) {
-                    for (int bY = 0; bY < 16; ++bY) {
-                        int bId = chunk.getTile(bX, y + bY, bZ);
-                        if (bId <= 0) {
-                            continue;
+                LevelChunk chunk = this.level.getChunkAt(x, z);
+                for (int bX = 0; bX < 16; ++bX) {
+                    for (int bZ = 0; bZ < 16; ++bZ) {
+                        for (int bY = 0; bY < 16; ++bY) {
+                            int bId = chunk.getTile(bX, y + bY, bZ);
+                            if (bId <= 0) {
+                                continue;
+                            }
+                            ((ExBlock) Tile.tiles[bId]).reset(this.level, x + bX, y + bY, z + bZ, var1);
                         }
-                        ((ExBlock) Tile.tiles[bId]).reset(this.level, x + bX, y + bY, z + bZ, var1);
                     }
                 }
             }
-        }
 
-        EditorSession.current().triggerResetActive = false;
+        } finally {
+            editor.triggerResetActive = previous;
+        }
     }
 }

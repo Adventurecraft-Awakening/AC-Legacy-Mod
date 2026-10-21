@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.extension.client;
 
-import dev.adventurecraft.awakening.client.gl.GLDevice;
-import dev.adventurecraft.awakening.client.renderer.BlockAllocator;
+import dev.adventurecraft.awakening.client.render.resource.RenderDevice;
+import dev.adventurecraft.awakening.client.render.mesh.BlockAllocator;
 import dev.adventurecraft.awakening.common.AC_CutsceneCamera;
 import dev.adventurecraft.awakening.common.gui.AC_GuiStore;
 
@@ -46,7 +46,7 @@ public interface ExMinecraft {
 
     AC_GuiStore getStoreGUI();
 
-    GLDevice getGlDevice();
+    RenderDevice getRenderDevice();
 
     BlockAllocator getChunkBlockAllocator();
 }

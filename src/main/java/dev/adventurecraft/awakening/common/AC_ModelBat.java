@@ -1,10 +1,11 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.client.render.compat.LegacyGlAdapter;
+import dev.adventurecraft.awakening.client.render.compat.LegacyGlConstants;
 import net.minecraft.client.model.Model;
 import net.minecraft.client.model.geom.ModelPart;
-import org.lwjgl.opengl.GL11;
 
-public class AC_ModelBat extends Model {
+public class AC_ModelBat extends Model implements dev.adventurecraft.awakening.extension.client.model.ExModel {
 
     public ModelPart theHead;
     public ModelPart ears;
@@ -31,9 +32,22 @@ public class AC_ModelBat extends Model {
         this.rightWing.setPos(-1.5F, 0.0F + var1, 0.0F);
     }
 
+    @Override public boolean ac$nativeModel() { return true; }
+    @Override public void ac$render(dev.adventurecraft.awakening.client.render.ModelRenderContext context,
+        dev.adventurecraft.awakening.client.render.state.Matrix4 pose,dev.adventurecraft.awakening.client.render.state.Color4 tint,
+        float time,float strength,float bob,float yaw,float pitch,float scale) {
+        this.setupAnim(time,strength,bob,yaw,pitch,scale);
+        context=context.withRaster(context.raster().withCull(dev.adventurecraft.awakening.client.render.state.CullMode.BACK));
+        dev.adventurecraft.awakening.client.render.NativeModels.part(this.theHead,context,pose,tint,scale,false);
+        dev.adventurecraft.awakening.client.render.NativeModels.part(this.ears,context,pose,tint,scale,false);
+        dev.adventurecraft.awakening.client.render.NativeModels.part(this.theBody,context,pose,tint,scale,false);
+        dev.adventurecraft.awakening.client.render.NativeModels.part(this.leftWing,context,pose,tint,scale,false);
+        dev.adventurecraft.awakening.client.render.NativeModels.part(this.rightWing,context,pose,tint,scale,false);
+    }
+
     @Override
     public void render(float var1, float var2, float var3, float var4, float var5, float var6) {
-        GL11.glEnable(GL11.GL_CULL_FACE);
+        LegacyGlAdapter.enable(LegacyGlConstants.CULL_FACE);
         this.setupAnim(var1, var2, var3, var4, var5, var6);
         this.theHead.render(var6);
         this.ears.render(var6);

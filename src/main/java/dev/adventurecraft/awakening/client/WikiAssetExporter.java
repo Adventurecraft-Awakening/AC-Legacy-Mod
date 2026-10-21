@@ -1,5 +1,7 @@
 package dev.adventurecraft.awakening.client;
 
+import dev.adventurecraft.awakening.client.render.compat.LegacyGlAdapter;
+import dev.adventurecraft.awakening.client.render.compat.LegacyGlConstants;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
@@ -10,9 +12,6 @@ import net.minecraft.world.ItemInstance;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.tile.Tile;
 import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL12;
-import org.lwjgl.opengl.GL30;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -65,13 +64,8 @@ public final class WikiAssetExporter {
         List<RegistryEntry<Item>> items = registryEntries(AC_Items.class, Item.class);
         var renderer = new ItemRenderer();
 
-        int framebuffer = GL30.glGenFramebuffers();
-        int colorTexture = GL11.glGenTextures();
-        int depthBuffer = GL30.glGenRenderbuffers();
+        beginRendering();
         try {
-            configureFramebuffer(framebuffer, colorTexture, depthBuffer);
-            beginRendering();
-
             List<ManifestEntry> blockManifest = new ArrayList<>(blocks.size());
             for (RegistryEntry<Tile> entry : blocks) {
                 Path file = blockDir.resolve(entry.field() + ".png");
@@ -98,7 +92,6 @@ public final class WikiAssetExporter {
                 ));
             }
 
-            endRendering();
             writeManifest(root.resolve("render-manifest.json"), blockManifest, itemManifest);
             ACMod.LOGGER.info(
                 "Exported {} block renders and {} item icons to {}",
@@ -108,10 +101,7 @@ public final class WikiAssetExporter {
             );
         }
         finally {
-            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
-            GL30.glDeleteRenderbuffers(depthBuffer);
-            GL11.glDeleteTextures(colorTexture);
-            GL30.glDeleteFramebuffers(framebuffer);
+            endRendering();
         }
     }
 
@@ -124,100 +114,57 @@ public final class WikiAssetExporter {
         }
     }
 
-    private static void configureFramebuffer(int framebuffer, int colorTexture, int depthBuffer) {
-        GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, framebuffer);
-
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, colorTexture);
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
-        GL11.glTexImage2D(
-            GL11.GL_TEXTURE_2D,
-            0,
-            GL11.GL_RGBA8,
-            IMAGE_SIZE,
-            IMAGE_SIZE,
-            0,
-            GL11.GL_RGBA,
-            GL11.GL_UNSIGNED_BYTE,
-            (ByteBuffer) null
-        );
-        GL30.glFramebufferTexture2D(
-            GL30.GL_FRAMEBUFFER,
-            GL30.GL_COLOR_ATTACHMENT0,
-            GL11.GL_TEXTURE_2D,
-            colorTexture,
-            0
-        );
-
-        GL30.glBindRenderbuffer(GL30.GL_RENDERBUFFER, depthBuffer);
-        GL30.glRenderbufferStorage(GL30.GL_RENDERBUFFER, GL14Depth.DEPTH_COMPONENT24, IMAGE_SIZE, IMAGE_SIZE);
-        GL30.glFramebufferRenderbuffer(
-            GL30.GL_FRAMEBUFFER,
-            GL30.GL_DEPTH_ATTACHMENT,
-            GL30.GL_RENDERBUFFER,
-            depthBuffer
-        );
-
-        int status = GL30.glCheckFramebufferStatus(GL30.GL_FRAMEBUFFER);
-        if (status != GL30.GL_FRAMEBUFFER_COMPLETE) {
-            throw new IllegalStateException("Wiki render framebuffer is incomplete: 0x" + Integer.toHexString(status));
-        }
-        GL11.glReadBuffer(GL30.GL_COLOR_ATTACHMENT0);
-    }
-
     private static void beginRendering() {
-        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
-        GL11.glViewport(0, 0, IMAGE_SIZE, IMAGE_SIZE);
+        LegacyGlAdapter.pushAttrib(LegacyGlConstants.ALL_ATTRIB_BITS);
+        LegacyGlAdapter.viewport(0, 0, IMAGE_SIZE, IMAGE_SIZE);
 
-        GL11.glMatrixMode(GL11.GL_PROJECTION);
-        GL11.glPushMatrix();
-        GL11.glLoadIdentity();
-        GL11.glOrtho(0.0, 16.0, 16.0, 0.0, -100.0, 100.0);
+        LegacyGlAdapter.matrixMode(LegacyGlConstants.PROJECTION);
+        LegacyGlAdapter.pushMatrix();
+        LegacyGlAdapter.loadIdentity();
+        LegacyGlAdapter.ortho(0.0, 16.0, 16.0, 0.0, -100.0, 100.0);
 
-        GL11.glMatrixMode(GL11.GL_MODELVIEW);
-        GL11.glPushMatrix();
-        GL11.glLoadIdentity();
+        LegacyGlAdapter.matrixMode(LegacyGlConstants.MODELVIEW);
+        LegacyGlAdapter.pushMatrix();
+        LegacyGlAdapter.loadIdentity();
 
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        GL11.glEnable(GL11.GL_DEPTH_TEST);
-        GL11.glDepthFunc(GL11.GL_LEQUAL);
-        GL11.glEnable(GL11.GL_ALPHA_TEST);
-        GL11.glAlphaFunc(GL11.GL_GREATER, 1.0F / 255.0F);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glEnable(GL12.GL_RESCALE_NORMAL);
+        LegacyGlAdapter.enable(LegacyGlConstants.TEXTURE_2D);
+        LegacyGlAdapter.enable(LegacyGlConstants.DEPTH_TEST);
+        LegacyGlAdapter.depthFunc(LegacyGlConstants.LEQUAL);
+        LegacyGlAdapter.enable(LegacyGlConstants.ALPHA_TEST);
+        LegacyGlAdapter.alphaFunc(LegacyGlConstants.GREATER, 1.0F / 255.0F);
+        LegacyGlAdapter.enable(LegacyGlConstants.BLEND);
+        LegacyGlAdapter.blendFunc(LegacyGlConstants.SRC_ALPHA, LegacyGlConstants.ONE_MINUS_SRC_ALPHA);
+        LegacyGlAdapter.enable(LegacyGlConstants.RESCALE_NORMAL);
 
-        GL11.glPushMatrix();
-        GL11.glRotatef(120.0F, 1.0F, 0.0F, 0.0F);
+        LegacyGlAdapter.pushMatrix();
+        LegacyGlAdapter.rotatef(120.0F, 1.0F, 0.0F, 0.0F);
         Lighting.turnOn();
-        GL11.glPopMatrix();
+        LegacyGlAdapter.popMatrix();
     }
 
     private static void endRendering() {
         Lighting.turnOff();
-        GL11.glMatrixMode(GL11.GL_MODELVIEW);
-        GL11.glPopMatrix();
-        GL11.glMatrixMode(GL11.GL_PROJECTION);
-        GL11.glPopMatrix();
-        GL11.glMatrixMode(GL11.GL_MODELVIEW);
-        GL11.glPopAttrib();
+        LegacyGlAdapter.matrixMode(LegacyGlConstants.MODELVIEW);
+        LegacyGlAdapter.popMatrix();
+        LegacyGlAdapter.matrixMode(LegacyGlConstants.PROJECTION);
+        LegacyGlAdapter.popMatrix();
+        LegacyGlAdapter.matrixMode(LegacyGlConstants.MODELVIEW);
+        LegacyGlAdapter.popAttrib();
     }
 
     private static void render(ItemRenderer renderer, Minecraft minecraft, ItemInstance stack, Path output)
         throws IOException {
-        GL11.glClearColor(0.0F, 0.0F, 0.0F, 0.0F);
-        GL11.glClearDepth(1.0);
-        GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        GL11.glDisable(GL11.GL_CULL_FACE);
+        LegacyGlAdapter.clearColor(0.0F, 0.0F, 0.0F, 0.0F);
+        LegacyGlAdapter.clearDepth(1.0);
+        LegacyGlAdapter.clear(LegacyGlConstants.COLOR_BUFFER_BIT | LegacyGlConstants.DEPTH_BUFFER_BIT);
+        LegacyGlAdapter.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        LegacyGlAdapter.disable(LegacyGlConstants.CULL_FACE);
         renderer.renderAndDecorateItem(minecraft.font, minecraft.textures, stack, 0, 0);
-        GL11.glFinish();
+        LegacyGlAdapter.finish();
 
         ByteBuffer pixels = BufferUtils.createByteBuffer(IMAGE_SIZE * IMAGE_SIZE * 4);
-        GL11.glPixelStorei(GL11.GL_PACK_ALIGNMENT, 1);
-        GL11.glReadPixels(0, 0, IMAGE_SIZE, IMAGE_SIZE, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, pixels);
+        LegacyGlAdapter.pixelStorei(LegacyGlConstants.PACK_ALIGNMENT, 1);
+        LegacyGlAdapter.readPixels(0, 0, IMAGE_SIZE, IMAGE_SIZE, LegacyGlConstants.RGBA, LegacyGlConstants.UNSIGNED_BYTE, pixels);
 
         BufferedImage image = new BufferedImage(IMAGE_SIZE, IMAGE_SIZE, BufferedImage.TYPE_INT_ARGB);
         for (int y = 0; y < IMAGE_SIZE; y++) {
@@ -350,8 +297,4 @@ public final class WikiAssetExporter {
     private record ManifestEntry(String field, int id, String file, String sha256, String alt) {
     }
 
-    /** Keeps the depth-format constant local to avoid depending on GL14 wrappers. */
-    private static final class GL14Depth {
-        private static final int DEPTH_COMPONENT24 = 0x81A6;
-    }
 }

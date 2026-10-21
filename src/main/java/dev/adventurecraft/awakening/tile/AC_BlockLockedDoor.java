@@ -2,7 +2,6 @@ package dev.adventurecraft.awakening.tile;
 
 import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.ACMod;
-import dev.adventurecraft.awakening.common.AC_DebugMode;
 import net.minecraft.client.renderer.BlockShapes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -46,7 +45,7 @@ public class AC_BlockLockedDoor extends Tile implements AC_ITriggerDebugBlock {
 
     @Override
     public int getRenderShape(LevelSource view, int x, int y, int z) {
-        if (EditorSession.current().active || view.getData(x, y, z) == 0) {
+        if (EditorSession.current().active || (view.getData(x, y, z) & 1) == 0) {
             return this.getRenderShape();
         }
         return BlockShapes.NONE;
@@ -70,6 +69,16 @@ public class AC_BlockLockedDoor extends Tile implements AC_ITriggerDebugBlock {
     }
 
     private void updateSegmentData(Level level, int x, int y, int z) {
+        int data = level.getData(x, y, z);
+        int newData = this.getConnectedData(level, x, y, z);
+        if (newData != data) {
+            level.setData(x, y, z, newData);
+        }
+    }
+
+    /** Resolve old map data against the full world before handing a region to a meshing worker. */
+    public int getConnectedData(Level level, int x, int y, int z) {
+        int unlocked = level.getData(x, y, z) & 1;
         int c = 1;
         while (level.getTile(x, y + c, z) == this.id) {
             ++c;
@@ -82,7 +91,7 @@ public class AC_BlockLockedDoor extends Tile implements AC_ITriggerDebugBlock {
         }
 
         if (c <= 2) {
-            return;
+            return unlocked;
         }
         int segment = 1;
         if (c / 2 == b - 1) {
@@ -114,11 +123,7 @@ public class AC_BlockLockedDoor extends Tile implements AC_ITriggerDebugBlock {
             }
         }
 
-        int data = level.getData(x, y, z);
-        int newData = (segment << 1) | (data & 1);
-        if (newData != data) {
-            level.setData(x, y, z, newData);
-        }
+        return (segment << 1) | unlocked;
     }
 
     @Override

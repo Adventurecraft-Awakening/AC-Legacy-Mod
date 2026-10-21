@@ -1,5 +1,7 @@
 package dev.adventurecraft.awakening.script;
 
+import dev.adventurecraft.awakening.client.render.UiDrawContext;
+
 import dev.adventurecraft.awakening.common.TextRendererState;
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
@@ -7,9 +9,6 @@ import dev.adventurecraft.awakening.image.Rgba;
 import dev.adventurecraft.awakening.primitives.IntRange;
 import dev.adventurecraft.awakening.text.LinesSpliterator;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.Tesselator;
-import net.minecraft.client.renderer.Textures;
 
 import java.util.ArrayList;
 
@@ -41,7 +40,7 @@ public class ScriptUILabel extends UIElement implements ScriptColor {
     }
 
     @Override
-    public void render(Font font, Textures textures, float deltaTime) {
+    public void render(UiDrawContext context, float deltaTime) {
         ScriptVec4 color = this.getColor();
         int alpha = Rgba.saturateToByte(color.getA());
         if (alpha == 0) {
@@ -62,13 +61,13 @@ public class ScriptUILabel extends UIElement implements ScriptColor {
         double y = this.getYAtTime(deltaTime);
         int shadowColor = this.shadow ? ExTextRenderer.getShadowColor(rgba) : 0;
 
-        TextRendererState state = ((ExTextRenderer) font).createState();
+        TextRendererState state = ((ExTextRenderer) context.font()).createState();
         state.setShadowOffset(1, 1);
 
         state.setColor(rgba);
         state.setShadow(shadowColor);
 
-        state.begin(Tesselator.instance);
+        state.begin(context);
         for (IntRange line : this.lines) {
             double lineX = x;
             if (this.centered) {

@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.common.gui;
 
+import dev.adventurecraft.awakening.client.render.UiDrawContext;
 import dev.adventurecraft.awakening.common.AC_MapInfo;
 import dev.adventurecraft.awakening.common.AC_MapList;
 import dev.adventurecraft.awakening.common.GuiCreateNewMap;
@@ -14,9 +15,7 @@ import net.minecraft.client.gamemode.SurvivalGameMode;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.OptionButton;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.locale.I18n;
-import org.lwjgl.opengl.GL11;
 
 import java.io.File;
 import java.util.List;
@@ -167,14 +166,14 @@ public class AC_GuiMapSelect extends Screen {
         }
 
         @Override
-        protected void beforeEntryRender(Tesselator ts, IntPoint mouseLocation, Point entryLocation) {
-            super.beforeEntryRender(ts, mouseLocation, entryLocation);
+        protected void beforeEntryRender(UiDrawContext ui, IntPoint mouseLocation, Point entryLocation) {
+            super.beforeEntryRender(ui, mouseLocation, entryLocation);
 
             this.hoveredEntry = this.getEntryUnderPoint(mouseLocation.asFloat());
         }
 
         @Override
-        protected void renderEntry(Tesselator ts, int entryIndex, Point entryLocation, int entryHeight) {
+        protected void renderEntry(UiDrawContext ui, int entryIndex, Point entryLocation, int entryHeight) {
             AC_MapInfo mapInfo = this.maps.get(entryIndex);
             var exText = (ExTextRenderer) AC_GuiMapSelect.this.font;
 
@@ -196,31 +195,19 @@ public class AC_GuiMapSelect extends Screen {
                 var borderColor = new IntCorner(isHover ? 0x80808080 : 0xff808080);
                 var backColor = new IntCorner(isHover ? 0x80000000 : 0xff000000);
 
-                GL11.glDisable(GL11.GL_TEXTURE_2D);
-                GL11.glEnable(GL11.GL_BLEND);
-                ts.begin();
-                this.renderContentSelection(ts, selectRect, new Border(1), borderColor, backColor, null, null);
-                ts.end();
-                GL11.glEnable(GL11.GL_TEXTURE_2D);
-                GL11.glDisable(GL11.GL_BLEND);
+                this.renderContentSelection(ui, selectRect, new Border(1), borderColor, backColor, null, null);
             }
 
-            if (mapInfo.bindTexture(this.client.textures, executor)) {
-                ts.begin();
-                ts.color(0xffffff);
-                ts.vertexUV(iconX, iconY + iconHeight, 0.0D, 0.0D, 1.0D);
-                ts.vertexUV(iconX + iconWidth, iconY + iconHeight, 0.0D, 1.0D, 1.0D);
-                ts.vertexUV(iconX + iconWidth, iconY, 0.0D, 1.0D, 0.0D);
-                ts.vertexUV(iconX, iconY, 0.0D, 0.0D, 0.0D);
-                ts.end();
-            }
+            var texture = mapInfo.texture(this.client.textures, executor);
+            if (texture != null) ui.image(texture, new Rect(iconX, iconY, iconWidth, iconHeight),
+                new Rect(0, 0, 1, 1), new IntCorner(-1));
 
             int textY = iconY;
             int textX = iconX + iconWidth;
 
-            exText.drawString(mapInfo.name, textX + 2, textY + 1, 0xFFFFFF, true);
-            exText.drawString(mapInfo.description1, textX + 2, textY + 12, 0x808080, true);
-            exText.drawString(mapInfo.description2, textX + 2, textY + 12 + 10, 0x808080, true);
+            ui.text(mapInfo.name, textX + 2, textY + 1, 0xffFFFFFF, true);
+            ui.text(mapInfo.description1, textX + 2, textY + 12, 0xff808080, true);
+            ui.text(mapInfo.description2, textX + 2, textY + 12 + 10, 0xff808080, true);
         }
     }
 }

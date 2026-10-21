@@ -3,13 +3,21 @@ package dev.adventurecraft.awakening.common;
 import net.minecraft.client.model.Model;
 import net.minecraft.client.model.geom.ModelPart;
 
-public class ModelCamera extends Model {
+public class ModelCamera extends Model implements dev.adventurecraft.awakening.extension.client.model.ExModel {
     
     public ModelPart head = new ModelPart(0, 0);
 
     public ModelCamera() {
         this.head.addBox(-4.0F, -4.0F, -4.0F, 8, 8, 8, 0.0F);
         this.head.setPos(0.0F, 24.0F, 0.0F);
+    }
+
+    @Override public boolean ac$nativeModel() { return true; }
+    @Override public void ac$render(dev.adventurecraft.awakening.client.render.ModelRenderContext context,
+        dev.adventurecraft.awakening.client.render.state.Matrix4 pose,dev.adventurecraft.awakening.client.render.state.Color4 tint,
+        float time,float strength,float bob,float yaw,float pitch,float scale) {
+        this.head.xRot=pitch/57.29578F;this.head.yRot=yaw/57.29578F;
+        dev.adventurecraft.awakening.client.render.NativeModels.part(this.head,context,pose,tint,scale,false);
     }
 
     @Override

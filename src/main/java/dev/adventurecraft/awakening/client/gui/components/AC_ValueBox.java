@@ -1,11 +1,11 @@
 package dev.adventurecraft.awakening.client.gui.components;
 
 import dev.adventurecraft.awakening.image.Rgba;
+import dev.adventurecraft.awakening.client.render.UiDrawContext;
 import dev.adventurecraft.awakening.layout.IntRect;
 import dev.adventurecraft.awakening.primitives.Property;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.gui.Font;
 
 import java.text.Format;
 import java.text.ParsePosition;
@@ -63,12 +63,12 @@ public class AC_ValueBox<T> extends AC_EditBox {
     }
 
     @Override
-    public void render(Font font) {
+    public void render(UiDrawContext ui) {
         if (this.resupply) {
             this.resupply = false;
             this.supply();
         }
 
-        super.render(font);
+        super.render(ui);
     }
 }

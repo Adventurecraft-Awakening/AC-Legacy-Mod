@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.common.gui;
 
+import dev.adventurecraft.awakening.client.render.UiDrawContext;
 import dev.adventurecraft.awakening.common.GuiSlider2;
 import dev.adventurecraft.awakening.common.InventoryDebug;
 import dev.adventurecraft.awakening.common.ScrollableContainer;
@@ -7,9 +8,7 @@ import dev.adventurecraft.awakening.common.ScrollableContainerScreen;
 import dev.adventurecraft.awakening.extension.client.ExInteractionManager;
 import dev.adventurecraft.awakening.util.MathF;
 import org.lwjgl.input.Keyboard;
-import org.lwjgl.opengl.GL11;
 
-import java.util.List;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.world.Container;
 import net.minecraft.world.inventory.Slot;
@@ -107,17 +106,6 @@ public class AC_GuiPalette extends ScrollableContainerScreen {
     @Override
     public void render(int mouseX, int mouseY, float deltaTime) {
         super.render(mouseX, mouseY, deltaTime);
-        GL11.glPushMatrix();
-        GL11.glDisable(GL11.GL_LIGHTING);
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
-
-        for (Button button : (List<Button>) this.buttons) {
-            button.render(this.minecraft, mouseX, mouseY);
-        }
-
-        GL11.glEnable(GL11.GL_LIGHTING);
-        GL11.glEnable(GL11.GL_DEPTH_TEST);
-        GL11.glPopMatrix();
         var intMan = (ExInteractionManager) this.minecraft.gameMode;
         intMan.setDestroyExtraDepth((int) Math.min(16.0F * this.extraDepth.sliderValue, 15.0F));
         intMan.setDestroyExtraWidth((int) Math.min(5.0F * this.extraWidth.sliderValue, 4.0F));
@@ -136,18 +124,23 @@ public class AC_GuiPalette extends ScrollableContainerScreen {
         }
     }
 
-    protected void renderForeground() {
-        this.font.draw(this.inv2.getName(), 8, 6, 0x404040);
-        this.font.draw(this.inv1.getName(), 8, this.containerHeight - 96 + 2, 0x404040);
+    @Override
+    protected void renderForeground(UiDrawContext ui) {
+        ui.text(this.inv2.getName(), 8, 6, 0xff404040, false);
+        ui.text(this.inv1.getName(), 8, this.containerHeight - 96 + 2, 0xff404040, false);
     }
 
     protected void renderContainerBackground(float f) {
-        int texId = this.minecraft.textures.loadTexture("/gui/container.png");
-        GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-        this.minecraft.textures.bind(texId);
         int x = (this.width - this.containerWidth) / 2;
         int y = (this.height - this.containerHeight) / 2;
-        this.blit(x, y, 0, 0, this.containerWidth, this.rowsPerPage * slotHeight + 17);
-        this.blit(x, y + this.rowsPerPage * slotHeight + 17, 0, 126, this.containerWidth, 96);
+        try (var ui = dev.adventurecraft.awakening.client.render.compat.LegacyPassBridge.uiContext(this.font, this.minecraft.textures)) {
+            var texture = ui.texture("/gui/container.png");
+            int topHeight = this.rowsPerPage * slotHeight + 17;
+            var color = new dev.adventurecraft.awakening.layout.IntCorner(-1);
+            ui.image(texture, new dev.adventurecraft.awakening.layout.Rect(x, y, this.containerWidth, topHeight),
+                new dev.adventurecraft.awakening.layout.Rect(0, 0, this.containerWidth / 256f, topHeight / 256f), color);
+            ui.image(texture, new dev.adventurecraft.awakening.layout.Rect(x, y + topHeight, this.containerWidth, 96),
+                new dev.adventurecraft.awakening.layout.Rect(0, 126 / 256f, this.containerWidth / 256f, 96 / 256f), color);
+        }
     }
 }

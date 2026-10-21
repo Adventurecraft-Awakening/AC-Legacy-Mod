@@ -1,7 +1,7 @@
 package dev.adventurecraft.awakening.extension;
 
-import dev.adventurecraft.awakening.client.renderer.ChunkBuilder;
-import dev.adventurecraft.awakening.client.renderer.ChunkMesh;
+import dev.adventurecraft.awakening.client.render.chunk.ChunkBuilder;
+import dev.adventurecraft.awakening.client.render.chunk.ChunkMesh;
 import net.minecraft.client.renderer.Tesselator;
 
 import javax.annotation.Nullable;
@@ -18,6 +18,8 @@ public interface ExClass_66 {
     void ac$generateMesh(ChunkBuilder builder);
 
     void ac$submitMesh(ChunkBuilder builder);
+
+    boolean ac$isMeshCurrent(ChunkBuilder builder);
 
     void setVisibleFromPosition(double x, double y, double z, boolean value);
 
