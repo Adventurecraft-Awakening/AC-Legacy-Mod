@@ -1,6 +1,8 @@
 package dev.adventurecraft.awakening.world.level.storage;
 
 import dev.adventurecraft.awakening.extension.world.level.chunk.storage.ExRegionFileCache;
+import dev.adventurecraft.awakening.extension.nbt.ExTag;
+import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.primitives.ChunkCoord;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -65,39 +67,72 @@ public class AsyncMcRegionChunkStorage implements AsyncChunkStorage {
 
     private @Nullable CompletableFuture<Void> getSaveFuture(int x, int z) {
         this.saveQueueLock.readLock().lock();
-        CompletableFuture<Void> saveFuture = this.saveQueue.get(ChunkCoord.pack(x, z));
-        this.saveQueueLock.readLock().unlock();
-        return saveFuture;
+        try {
+            return this.saveQueue.get(ChunkCoord.pack(x, z));
+        } finally {
+            this.saveQueueLock.readLock().unlock();
+        }
     }
 
     public void save(Level level, LevelChunk chunk) {
-        var saver = new LevelChunkSaver(level, chunk);
+        // Capture live entities, script scopes and arrays on the world thread.
+        // The I/O worker must never enter a world's Rhino context or read mutable chunks.
+        level.checkSession();
+        var levelTag = new CompoundTag();
+        OldChunkStorage.save(chunk, level, levelTag);
+        var root = new CompoundTag();
+        root.putTag("Level", levelTag);
+        var snapshot = (CompoundTag) ((ExTag) root).copy();
+        var saver = new LevelChunkSaver(chunk.x, chunk.z, snapshot, level.getLevelData());
+        long key = ChunkCoord.pack(chunk.x, chunk.z);
+        CompletableFuture<Void> queued;
         this.saveQueueLock.writeLock().lock();
-        this.saveQueue.compute(
-            ChunkCoord.pack(chunk.x, chunk.z), (key, entry) -> {
-                if (entry != null) {
-                    return entry.thenRunAsync(saver, this.executor);
-                }
-                return CompletableFuture.runAsync(saver, this.executor);
+        try {
+            CompletableFuture<Void> previous = this.saveQueue.get(key);
+            // A newer full snapshot can recover after a failed write of an older snapshot.
+            queued = previous == null ? CompletableFuture.runAsync(saver, this.executor)
+                : previous.handle((ignored, error) -> null).thenRunAsync(saver, this.executor);
+            this.saveQueue.put(key, queued);
+        } finally {
+            this.saveQueueLock.writeLock().unlock();
+        }
+        queued.whenComplete((ignored, error) -> {
+            if (error != null) {
+                ACMod.LOGGER.error("Failed to save chunk {}, {} in {}", saver.x, saver.z, this.basePath, error);
+                return; // Retain the failed tail so flush/load report the failure.
             }
-        );
-        this.saveQueueLock.writeLock().unlock();
+            this.saveQueueLock.writeLock().lock();
+            try {
+                // An earlier save must not remove a newer tail for the same coordinates.
+                this.saveQueue.remove(key, queued);
+            } finally {
+                this.saveQueueLock.writeLock().unlock();
+            }
+        });
     }
 
-    public void saveEntities(Level level, LevelChunk chunk) {
-    }
-
-    public void tick() {
-    }
+    public void saveEntities(Level level, LevelChunk chunk) { }
+    public void tick() { }
 
     public void flush() {
-        // TODO: flush saveQueue here?
-        //       could be problematic to write-lock here in case chunks are requested to save
-
-        this.saveQueueLock.writeLock().lock();
-        this.saveQueue.values().forEach(CompletableFuture::join);
-        this.saveQueue.clear();
-        this.saveQueueLock.writeLock().unlock();
+        while (true) {
+            CompletableFuture<?>[] pending;
+            this.saveQueueLock.readLock().lock();
+            try {
+                pending = this.saveQueue.values().toArray(CompletableFuture<?>[]::new);
+            } finally {
+                this.saveQueueLock.readLock().unlock();
+            }
+            if (pending.length == 0) return;
+            // Completion takes the write lock to remove its queue entry.
+            CompletableFuture.allOf(pending).join();
+            this.saveQueueLock.writeLock().lock();
+            try {
+                this.saveQueue.values().removeIf(future -> future.isDone() && !future.isCompletedExceptionally());
+            } finally {
+                this.saveQueueLock.writeLock().unlock();
+            }
+        }
     }
 
     private class LevelChunkLoader implements Supplier<LevelChunk> {
@@ -130,72 +165,57 @@ public class AsyncMcRegionChunkStorage implements AsyncChunkStorage {
         @Override
         public LevelChunk get() {
             var storage = AsyncMcRegionChunkStorage.this;
-            DataInputStream dataInputStream = RegionFileCache.getChunkDataInputStream(storage.basePath, x, z);
-            if (dataInputStream == null) {
+            CompoundTag root;
+            try (DataInputStream input = RegionFileCache.getChunkDataInputStream(storage.basePath, x, z)) {
+                if (input == null) return null;
+                root = NbtIo.read((DataInput) input);
+            } catch (IOException error) {
+                throw new UncheckedIOException("Failed to read chunk " + x + ", " + z, error);
+            }
+            if (!root.hasKey("Level")) {
+                ACMod.LOGGER.warn("Chunk file at {}, {} is missing level data, skipping", x, z);
                 return null;
             }
-            CompoundTag compoundTag = NbtIo.read((DataInput) dataInputStream);
-            if (!compoundTag.hasKey("Level")) {
-                System.out.println("Chunk file at " + x + "," + z + " is missing level data, skipping");
+            CompoundTag data = root.getCompoundTag("Level");
+            if (!data.hasKey("Blocks")) {
+                ACMod.LOGGER.warn("Chunk file at {}, {} is missing block data, skipping", x, z);
                 return null;
             }
-            if (!compoundTag.getCompoundTag("Level").hasKey("Blocks")) {
-                System.out.println("Chunk file at " + x + "," + z + " is missing block data, skipping");
-                return null;
-            }
-            LevelChunk chunk = OldChunkStorage.load(level, compoundTag.getCompoundTag("Level"));
+            LevelChunk chunk = OldChunkStorage.load(level, data);
             if (!chunk.isAt(x, z)) {
-                System.out.println(
-                    "Chunk file at " + x + "," + z + " is in the wrong location; relocating. (Expected " + x + ", " +
-                        z + ", got " + chunk.x + ", " + chunk.z + ")");
-                compoundTag.putInt("xPos", x);
-                compoundTag.putInt("zPos", z);
-                chunk = OldChunkStorage.load(level, compoundTag.getCompoundTag("Level"));
+                ACMod.LOGGER.warn("Relocating chunk {}, {} to {}, {}", chunk.x, chunk.z, x, z);
+                data.putInt("xPos", x);
+                data.putInt("zPos", z);
+                chunk = OldChunkStorage.load(level, data);
             }
             chunk.onLoad();
             return chunk;
         }
     }
 
-    private class LevelChunkSaver implements Runnable {
-        private final Level level;
-        private final LevelChunk chunk;
+    private final class LevelChunkSaver implements Runnable {
+        private final int x, z;
+        private final CompoundTag snapshot;
+        private final LevelData levelData;
 
-        public LevelChunkSaver(Level level, LevelChunk chunk) {
-            this.level = level;
-            this.chunk = chunk;
+        private LevelChunkSaver(int x, int z, CompoundTag snapshot, LevelData levelData) {
+            this.x = x;
+            this.z = z;
+            this.snapshot = snapshot;
+            this.levelData = levelData;
         }
 
         @Override
         public void run() {
-            level.checkSession();
-            var storage = AsyncMcRegionChunkStorage.this;
-            try {
-                DataOutputStream dataOutputStream = RegionFileCache.getChunkDataOutputStream(
-                    storage.basePath,
-                    chunk.x,
-                    chunk.z
-                );
-                CompoundTag chunkTag = new CompoundTag();
-                CompoundTag levelTag = new CompoundTag();
-                chunkTag.putTag("Level", levelTag);
-                OldChunkStorage.save(chunk, level, levelTag);
-                NbtIo.write(chunkTag, (DataOutput) dataOutputStream);
-                dataOutputStream.close();
-
-                LevelData levelData = level.getLevelData();
-                long sizeDelta = RegionFileCache.getSizeDelta(storage.basePath, chunk.x, chunk.z);
-                levelData.setSize(levelData.getSize() + sizeDelta);
+            try (DataOutputStream output = RegionFileCache.getChunkDataOutputStream(basePath, this.x, this.z)) {
+                NbtIo.write(this.snapshot, (DataOutput) output);
+            } catch (Exception error) {
+                throw new IllegalStateException("Failed to write chunk " + this.x + ", " + this.z, error);
             }
-            catch (Exception exception) {
-                exception.printStackTrace();
-            }
-            finally {
-                storage.saveQueueLock.writeLock().lock();
-                storage.saveQueue.remove(ChunkCoord.pack(chunk.x, chunk.z));
-                storage.saveQueueLock.writeLock().unlock();
+            long sizeDelta = RegionFileCache.getSizeDelta(basePath, this.x, this.z);
+            synchronized (this.levelData) {
+                this.levelData.setSize(this.levelData.getSize() + sizeDelta);
             }
         }
     }
 }
-

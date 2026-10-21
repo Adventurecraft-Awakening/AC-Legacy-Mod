@@ -25,6 +25,7 @@ import dev.adventurecraft.awakening.world.MapResources;
 import dev.adventurecraft.awakening.world.WorldScripts;
 import dev.adventurecraft.awakening.world.collision.CollisionQueries;
 import dev.adventurecraft.awakening.world.collision.LevelCollisionSource;
+import dev.adventurecraft.awakening.world.level.storage.WorldSavePolicy;
 import dev.adventurecraft.awakening.editor.EditorSession;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -122,6 +123,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
     @Unique private EditorSession editorSession;
     @Unique private MapResources mapResources;
     @Unique private WorldScripts worldScripts;
+    @Unique private WorldSavePolicy savePolicy;
     public AC_TriggerManager triggerManager;
     public boolean fogColorOverridden;
     public boolean fogDensityOverridden;
@@ -233,6 +235,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
         this.soundList = this.mapResources.sounds();
         this.mapHandler = new McRegionLevelStorageSource(mapsDir, mapName, false);
         this.levelDir = levelDir;
+        this.savePolicy = new WorldSavePolicy(this.mapHandler, dimData, () -> this.getEditorSession().levelEditing);
         this.lightUpdates = new ArrayList<>();
         this.entities = new ArrayList<>();
         this.entitiesToRemove = new ArrayList<>();
@@ -345,16 +348,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
 
     @Overwrite
     public ChunkSource createLevelSource() {
-        ChunkStorage io;
-        if (this.levelIo == null) {
-            io = this.mapHandler.readDimension(this.dimension);
-        }
-        else {
-            io = this.levelIo.readDimension(this.dimension);
-            if (this.mapHandler != null) {
-                io = new MapChunkLoader(this.mapHandler.readDimension(this.dimension), io);
-            }
-        }
+        ChunkStorage io = this.savePolicy.chunkStorage(this.dimension);
 
         Level self = (Level) (Object) this;
         var cache = UnsafeUtil.allocateInstance(ChunkCache.class);
@@ -408,12 +402,7 @@ public abstract class MixinWorld implements ExWorld, LevelSource, Closeable {
     )
     private void modifySave(LevelIO instance, LevelData worldProperties, List<Player> list) {
         this.worldScripts.save((ExWorldProperties) worldProperties);
-        if (this.levelIo != null) {
-            this.levelIo.saveWithPlayers(worldProperties, list);
-        }
-        if (this.getEditorSession().levelEditing || this.levelIo == null) {
-            this.mapHandler.saveWithPlayers(worldProperties, list);
-        }
+        this.savePolicy.save(worldProperties, list);
     }
 
     public @Override boolean outOfBounds(int x, int z) {
