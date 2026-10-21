@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import java.util.List;
 
 import dev.adventurecraft.awakening.extension.entity.ExEntity;
@@ -63,7 +64,7 @@ public class AC_UtilBullet {
 
         HitResult hit = rayTraceCore(world, ignore, pointA, pointB);
 
-        if (AC_DebugMode.renderRays) {
+        if (EditorSession.current().renderRays) {
             ((ExWorld) world).recordRayDebugList(paX, paY, paZ, pointB.x, pointB.y, pointB.z, hit);
         }
         return hit;

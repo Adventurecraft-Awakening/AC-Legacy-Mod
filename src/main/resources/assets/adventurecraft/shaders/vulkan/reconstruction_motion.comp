@@ -1,0 +1,24 @@
+#version 450
+layout(local_size_x = 8, local_size_y = 8) in;
+layout(set = 0, binding = 0) uniform sampler2D inputs[4];
+layout(set = 0, binding = 1, r32f) uniform writeonly image2D viewDepth;
+layout(set = 0, binding = 2, rgba16f) uniform writeonly image2D motion;
+layout(set = 0, binding = 9, rgba8) uniform writeonly image2D reactive;
+#include "reconstruction_parameters.glsl"
+void main() {
+    ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
+    if (any(greaterThanEqual(pixel,ivec2(reconstruction.dimensions.xy)))) return;
+    vec2 uv = (vec2(pixel)+0.5)/vec2(reconstruction.dimensions.xy);
+    float depth = texelFetch(inputs[0],pixel,0).r;
+    bool background = depth>=0.999999;
+    vec4 world = reconstruction.inverseJitteredViewProjection*vec4(uv*2.0-1.0,min(depth,0.999999),1.0);
+    bool valid = !any(isnan(world)) && !any(isinf(world)) && abs(world.w)>0.000001;
+    vec3 position = valid ? world.xyz/world.w : vec3(0.0);
+    imageStore(viewDepth,pixel,vec4(valid && !background
+        ? abs((reconstruction.worldToView*vec4(position,1)).z) : 1000000.0));
+    imageStore(motion,pixel,vec4(valid ? reconstructionMotion(position,uv,background) : vec2(0.0),0,0));
+    // Engine background class .5 is not an animated-object/reactive mask.
+    // Dynamic objects have camera motion only until previous-object transforms exist.
+    float dynamic = texelFetch(inputs[1],pixel,0).r>=0.75 || !valid ? 1.0 : 0.0;
+    imageStore(reactive,pixel,vec4(dynamic));
+}

@@ -3,6 +3,7 @@ package dev.adventurecraft.awakening.mixin.world.chunk;
 import com.llamalad7.mixinextras.injector.WrapWithCondition;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.ACMod;
+import dev.adventurecraft.awakening.client.render.RayLighting;
 import dev.adventurecraft.awakening.common.AC_BlockEditAction;
 import dev.adventurecraft.awakening.common.AC_UndoStack;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
@@ -31,6 +32,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
@@ -95,6 +97,17 @@ public abstract class MixinChunk implements ExChunk {
 
         this.worldGenLight.forEach(u -> this.level.updateLight(u.type, u.x0, u.y0, u.z0, u.x1, u.y1, u.z1));
         this.worldGenLight = null;
+        RayLighting.chunkLoaded((LevelChunk) (Object) this);
+    }
+
+    @Inject(method = "unload", at = @At("TAIL"))
+    private void removeRayLightCandidates(CallbackInfo ci) {
+        RayLighting.chunkUnloaded(this.level, this.x, this.z);
+    }
+
+    @Inject(method = "setBlocksAndData", at = @At("RETURN"))
+    private void refreshRayLightCandidates(CallbackInfoReturnable<Integer> cir) {
+        if (this.loaded) RayLighting.chunkLoaded((LevelChunk) (Object) this);
     }
 
     @Unique
@@ -205,6 +218,7 @@ public abstract class MixinChunk implements ExChunk {
         if (ACMod.chunkIsNotPopulating) {
             this.markUnsaved();
         }
+        if (this.loaded) RayLighting.blockChanged(this.level, bX, y, bZ, this.getTile(x, y, z));
         return true;
     }
 
@@ -314,6 +328,7 @@ public abstract class MixinChunk implements ExChunk {
     public boolean setBlockIDWithMetadataTemp(int x, int y, int z, int id, int meta) {
         this.blocks[x << 11 | z << 7 | y] = ExChunk.narrowByte(id);
         this.data.set(x, y, z, meta);
+        if (this.loaded) RayLighting.blockChanged(this.level, (this.x << 4) + x, y, (this.z << 4) + z, id);
         return true;
     }
 

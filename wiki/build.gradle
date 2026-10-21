@@ -1,0 +1,50 @@
+plugins {
+    id 'groovy'
+}
+
+// Use Gradle's bundled Groovy and the JDK. Wiki builds do not configure Loom,
+// resolve game dependencies, or require another scripting runtime.
+dependencies {
+    implementation localGroovy()
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+def repositoryRoot = layout.projectDirectory.dir('..')
+def outputDirectory = providers.gradleProperty('wikiOutput')
+    .map { repositoryRoot.dir(it).asFile.absolutePath }
+    .orElse(repositoryRoot.dir('build/wiki').asFile.absolutePath)
+def minimumPages = providers.gradleProperty('wikiMinimumPages').orElse('250')
+def registerWikiTask = { String name, String command, String help, List arguments = [] ->
+    tasks.register(name, JavaExec) {
+        group = 'documentation'
+        description = help
+        dependsOn classes
+        classpath = sourceSets.main.runtimeClasspath
+        mainClass = 'dev.adventurecraft.wiki.WikiTool'
+        args command, repositoryRoot.asFile.absolutePath
+        argumentProviders.add({ arguments.collect { it instanceof Provider ? it.get().toString() : it.toString() } } as CommandLineArgumentProvider)
+    }
+}
+
+def generateWiki = registerWikiTask('generateWiki', 'build', 'Generate the native GitHub wiki.', [outputDirectory])
+def checkWikiSources = registerWikiTask('checkWikiSources', 'sources', 'Validate authored Markdown and source-backed wiki facts.')
+def checkWiki = registerWikiTask('checkWiki', 'quality', 'Validate generated pages, media, and the publication manifest.', [outputDirectory, minimumPages])
+checkWiki.configure { dependsOn generateWiki }
+
+registerWikiTask('syncBaseline', 'sync-baseline', 'Refresh the retained Fandom baseline (requires network access).')
+registerWikiTask('checkBaseline', 'check-baseline', 'Compare the retained baseline with Fandom without changing it.')
+registerWikiTask('verifyWikiManifest', 'manifest', 'Verify a downloaded wiki artifact before publishing.', [outputDirectory, minimumPages])
+registerWikiTask('verifyWikiAssets', 'assets', 'Compare committed and freshly rendered registry assets.', [
+    providers.gradleProperty('wikiRenderedAssets').orElse('build/wiki-assets-lavapipe')
+])
+registerWikiTask('checkWikiLinks', 'links', 'Report external links; failures are advisory unless -PwikiLinksStrict=true.', [
+    outputDirectory,
+    providers.gradleProperty('wikiLinksReport').orElse('build/wiki-external-links.json'),
+    providers.gradleProperty('wikiLinksStrict').orElse('false')
+])
+
+check.setDependsOn([checkWikiSources, checkWiki])

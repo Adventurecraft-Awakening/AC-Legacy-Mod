@@ -1,0 +1,79 @@
+#version 460
+#include "restir_common.glsl"
+layout(local_size_x = 8, local_size_y = 8) in;
+
+void main() {
+    ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
+    if (!restirInBounds(pixel)) return;
+    uint pixelIndex = restirPixelIndex(pixel);
+    RestirSurface surface = restirSurface(pixel,false);
+    RestirRadiance raw = RestirRadiance(restirPush.rawAddress);
+    vec4 result = vec4(0.0);
+    if (surface.valid) {
+        RestirParameters parameters = RestirParameters(restirPush.parameterAddress);
+        vec3 sum = vec3(0.0), squares = vec3(0.0), upper = vec3(0.0), lower = vec3(1e30);
+        float weightSum = 0.0;
+        for (int y=-1;y<=1;y++) for (int x=-1;x<=1;x++) {
+            ivec2 neighbor = pixel+ivec2(x,y);
+            if (!restirInBounds(neighbor)) continue;
+            RestirSurface other = restirSurface(neighbor,false);
+            if (!restirFilterCompatible(surface,other)) continue;
+            vec3 sampleData = max(raw.values[restirPixelIndex(neighbor)].rgb,vec3(0.0));
+            float weight = float((x==0 ? 2 : 1)*(y==0 ? 2 : 1))
+                *pow(max(dot(surface.normal,other.normal),0.0),32.0);
+            sum += sampleData*weight;
+            squares += sampleData*sampleData*weight;
+            upper = max(upper,sampleData);
+            lower = min(lower,sampleData);
+            weightSum += weight;
+        }
+        vec3 current = weightSum>0.0 ? sum/weightSum : max(raw.values[pixelIndex].rgb,vec3(0.0));
+        vec3 variance = weightSum>0.0 ? max(squares/weightSum-current*current,vec3(0.0)) : vec3(0.0);
+        float historyLength = 1.0;
+        vec2 previousUv;
+        // Reservoir reuse and final coverage TAA do not replace denoising the
+        // stochastic lighting signal. Keep its geometrically validated history.
+        if (any(greaterThan(upper,vec3(0.000001)))
+            && restirDenoiseReproject(surface,previousUv)) {
+            vec2 historyPixel = previousUv*vec2(parameters.dimensions.xy)-0.5;
+            ivec2 base = ivec2(floor(historyPixel));
+            vec2 fraction = fract(historyPixel);
+            vec4 history = vec4(0.0);
+            float historyWeight = 0.0;
+            for (int y=0;y<2;y++) for (int x=0;x<2;x++) {
+                ivec2 previous = base+ivec2(x,y);
+                if (!restirInBounds(previous)) continue;
+                float weight = (x==0 ? 1.0-fraction.x : fraction.x)
+                    *(y==0 ? 1.0-fraction.y : fraction.y);
+                if (weight<=0.0) continue;
+                RestirSurface oldSurface = restirSurface(previous,true);
+                oldSurface.position -= parameters.originDelta.xyz;
+                if (!restirFilterCompatible(surface,oldSurface)) continue;
+                vec4 value = RestirRadiance(restirPush.previousFilteredAddress).values[restirPixelIndex(previous)];
+                if (value.a<=0.0 || any(isnan(value)) || any(isinf(value))) continue;
+                history += value*weight;
+                historyWeight += weight;
+            }
+            if (historyWeight>0.0) {
+                // Interpolate age with exactly the same accepted footprint as
+                // color, retaining fractional confidence through camera motion.
+                history /= historyWeight;
+                vec3 sigma = sqrt(variance);
+                // Clamp each color channel independently, so a light changing
+                // color or switching off cannot leave an old colored trail.
+                vec3 clipped = clamp(history.rgb,max(vec3(0.0),lower-1.5*sigma),upper+1.5*sigma+vec3(0.00001));
+                historyLength = min(history.a,15.0)+1.0;
+                current = mix(clipped,current,1.0/historyLength);
+            }
+        }
+        result = vec4(current,historyLength);
+        uint debug = (parameters.dimensions.z>>8u)&3u;
+        RestirReservoir reservoir = RestirReservoirs(restirPush.spatialAddress).values[pixelIndex];
+        if (debug==1u) result.rgb = vec3(clamp(float(reservoir.key.w)/256.0,0.0,1.0));
+        else if (debug==2u) {
+            uint color = restirHash(reservoir.key.x^restirHash(reservoir.key.y));
+            result.rgb = reservoir.weights.y>0.0 ? vec3(color&255u,(color>>8u)&255u,(color>>16u)&255u)/255.0 : vec3(0.0);
+        } else if (debug==3u) result.rgb = vec3(historyLength/16.0,0.0,1.0-historyLength/16.0);
+    }
+    RestirRadiance(restirPush.filteredAddress).values[pixelIndex] = result;
+}

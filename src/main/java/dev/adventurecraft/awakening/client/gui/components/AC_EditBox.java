@@ -1,21 +1,22 @@
 package dev.adventurecraft.awakening.client.gui.components;
 
 import dev.adventurecraft.awakening.client.gui.EditSelection;
+import dev.adventurecraft.awakening.client.render.UiDrawContext;
+import dev.adventurecraft.awakening.client.render.compat.LegacyPassBridge;
 import dev.adventurecraft.awakening.common.ClipboardHandler;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import dev.adventurecraft.awakening.image.Rgba;
 import dev.adventurecraft.awakening.layout.IntBorder;
 import dev.adventurecraft.awakening.layout.IntPoint;
 import dev.adventurecraft.awakening.layout.IntRect;
-import dev.adventurecraft.awakening.util.DrawUtil;
 import dev.adventurecraft.awakening.util.MathF;
 import dev.adventurecraft.awakening.util.ReverseMatcher;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.SharedConstants;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiComponent;
-import net.minecraft.client.renderer.Tesselator;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.input.Keyboard;
 
@@ -257,21 +258,25 @@ public class AC_EditBox extends GuiComponent {
     }
 
     public void render(Font font) {
+        try (var ui = LegacyPassBridge.uiContext(font, Minecraft.instance.textures)) {
+            this.render(ui);
+        }
+    }
+
+    public void render(UiDrawContext ui) {
         if (this.renderVersion != this.version) {
             this.renderVersion = this.version;
             this.onRenderVersionChange();
         }
 
-        var ts = Tesselator.instance;
-        var state = ((ExTextRenderer) font).createState();
+        var state = ((ExTextRenderer) ui.font()).createState();
 
         EditSelection sel = this.selection;
         IntRect rect = this.rect;
         IntPoint point = this.getValueRenderPoint();
 
-        DrawUtil.beginFill(ts);
-        DrawUtil.fillRect(ts, rect.expand(new IntBorder(1)).asFloat(), this.boxBorderColor);
-        DrawUtil.fillRect(ts, rect.asFloat(), this.boxBackColor);
+        ui.fill(rect.expand(new IntBorder(1)).asFloat(), this.boxBorderColor);
+        ui.fill(rect.asFloat(), this.boxBackColor);
 
         if (sel != null && !sel.isEmpty()) {
             // TODO: measure selection once per change
@@ -280,14 +285,13 @@ public class AC_EditBox extends GuiComponent {
             int right = left + 1 + state.measureText(this.value, i, sel.absEnd()).width();
             var selRect = IntRect.fromEdges(left, rect.top(), right, rect.bot());
 
-            DrawUtil.fillRect(ts, selRect.asFloat(), Rgba.fromRgba8(0xff, 0, 0, 0xa0));
+            ui.fill(selRect.asFloat(), Rgba.fromRgba8(0xff, 0, 0, 0xa0));
         }
-        DrawUtil.endFill(ts);
 
         state.setColor(this.visible ? this.activeTextColor : this.inactiveTextColor);
         state.setShadowToColor();
 
-        state.begin(ts);
+        state.begin(ui);
         state.drawText(this.value, point.x, point.y);
         if (sel != null) {
             boolean showCaret = this.tickCount / 6 % 2 == 0;

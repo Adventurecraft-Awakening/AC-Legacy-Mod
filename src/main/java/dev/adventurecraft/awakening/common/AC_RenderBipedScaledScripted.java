@@ -1,10 +1,10 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.client.render.compat.LegacyGlAdapter;
 import dev.adventurecraft.awakening.entity.AC_EntityLivingScript;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.renderer.entity.HumanoidMobRenderer;
 import net.minecraft.world.entity.Mob;
-import org.lwjgl.opengl.GL11;
 
 public class AC_RenderBipedScaledScripted extends HumanoidMobRenderer {
 
@@ -18,6 +18,6 @@ public class AC_RenderBipedScaledScripted extends HumanoidMobRenderer {
         float y = (1.0F - tick) * script.getPrevHeight() + tick * script.bbHeight;
         x /= 0.6F;
         this.shadowRadius = x * 0.5F;
-        GL11.glScalef(x, y / 1.8F, x);
+        LegacyGlAdapter.scalef(x, y / 1.8F, x);
     }
 }

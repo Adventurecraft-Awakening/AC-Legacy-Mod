@@ -1,14 +1,15 @@
 package dev.adventurecraft.awakening.mixin.client.particle;
 
+import dev.adventurecraft.awakening.client.render.*;
+import dev.adventurecraft.awakening.client.render.compat.LegacyParticleBridge;
+import dev.adventurecraft.awakening.extension.client.ExTextureManager;
+import dev.adventurecraft.awakening.extension.client.particle.ExParticle;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.particle.ExParticleManager;
-import dev.adventurecraft.awakening.extension.client.render.ExTesselator;
 import dev.adventurecraft.awakening.util.MathF;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.util.Mth;
-import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -33,6 +34,7 @@ public abstract class MixinParticleManager implements ExParticleManager {
     @Shadow private Textures textureManager;
 
     @Unique private ObjectArrayList<Particle>[] bufferLists;
+    @Unique private final QuadBuilder ac$vertices = QuadBuilder.frameOwned(1024);
 
     @Inject(
         method = "<init>",
@@ -99,61 +101,46 @@ public abstract class MixinParticleManager implements ExParticleManager {
 
     @Overwrite
     public void render(Entity camera, float partialTick) {
-        Tesselator tesselator = Tesselator.instance;
-        var et = (ExTesselator) tesselator;
-
-        float xRad = MathF.toRadians(camera.xRot);
-        float yRad = MathF.toRadians(camera.yRot);
-        float xSin = Mth.sin(xRad);
-        float x0 = Mth.cos(yRad);
-        float y0 = Mth.cos(xRad);
-        float z0 = Mth.sin(yRad);
-        float x1 = -z0 * xSin;
-        float z1 = x0 * xSin;
-
-        Particle.xOff = (camera.xOld - et.getX()) + (camera.x - camera.xOld) * (double) partialTick;
-        Particle.yOff = (camera.yOld - et.getY()) + (camera.y - camera.yOld) * (double) partialTick;
-        Particle.zOff = (camera.zOld - et.getZ()) + (camera.z - camera.zOld) * (double) partialTick;
-
-        for (int tex = 0; tex < this.particles.length - 1; ++tex) {
-            var list = this.particles[tex];
-            if (list.isEmpty()) {
-                continue;
+        RenderSystem.phase(RenderPhase.PARTICLES);
+        var context = ParticleRenderContext.of(camera, partialTick);
+        var textures = (ExTextureManager) this.textureManager;
+        try (var pass = NativeRenderer.pass(context.parameters())) {
+            for (int layer = 0; layer < this.particles.length - 1; layer++) {
+                var particles = this.particles[layer];
+                if (particles.isEmpty()) continue;
+                String path = switch (layer) {
+                    case 0 -> "/particles.png";
+                    case 1 -> "/terrain.png";
+                    case 2 -> "/gui/items.png";
+                    case 3 -> "/terrain2.png";
+                    case 4 -> "/terrain3.png";
+                    default -> throw new IllegalStateException("Unknown particle material " + layer);
+                };
+                var texture=textures.texture(path);
+                this.ac$vertices.clear();
+                for (int i = 0; i < particles.size(); i++) {
+                    var particle=particles.get(i);
+                    if(LegacyParticleBridge.nativeNormal(particle)) ((ExParticle)particle).ac$render(context,this.ac$vertices);
+                    else {
+                        pass.drawQuads(this.ac$vertices,texture);this.ac$vertices.clear();
+                        LegacyParticleBridge.render(particle,context,texture,false);
+                    }
+                }
+                pass.drawQuads(this.ac$vertices, texture);
             }
-
-            int texName = switch (tex) {
-                case 0 -> this.textureManager.loadTexture("/particles.png");
-                case 1 -> this.textureManager.loadTexture("/terrain.png");
-                case 2 -> this.textureManager.loadTexture("/gui/items.png");
-                case 3 -> this.textureManager.loadTexture("/terrain2.png");
-                case 4 -> this.textureManager.loadTexture("/terrain3.png");
-                default -> 0;
-            };
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, texName);
-
-            tesselator.begin();
-            //noinspection ForLoopReplaceableByForEach
-            for (int j = 0; j < list.size(); ++j) {
-                Particle particle = list.get(j);
-                particle.render(tesselator, partialTick, x0, y0, z0, x1, z1);
-            }
-            tesselator.end();
         }
     }
 
     @Overwrite
-    public void renderLit(Entity player, float partialTick) {
-        var list = this.particles[this.particles.length - 1];
-        if (list.isEmpty()) {
-            return;
-        }
-
-        Tesselator tesselator = Tesselator.instance;
-        //noinspection ForLoopReplaceableByForEach
-        for (int i = 0; i < list.size(); ++i) {
-            Particle particle = list.get(i);
-            // TODO: provide non-zero coords?
-            particle.render(tesselator, partialTick, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+    public void renderLit(Entity camera, float partialTick) {
+        var particles = this.particles[this.particles.length - 1];
+        if (particles.isEmpty()) return;
+        RenderSystem.phase(RenderPhase.PARTICLES);
+        var context = ParticleRenderContext.of(camera, partialTick);
+        for(int i=0;i<particles.size();i++) {
+            var particle=particles.get(i);
+            if(LegacyParticleBridge.nativeLit(particle)) ((ExParticle)particle).ac$renderLit(context);
+            else LegacyParticleBridge.render(particle,context,null,true);
         }
     }
 

@@ -1,0 +1,17 @@
+{
+  "upstream": "https://github.com/NVIDIA-RTX/SHARC",
+  "version": "1.8.3",
+  "commit": "4e21b585c33c83d723ca9a1e11bbb1090d145793",
+  "license": "NVIDIA RTX SDKs License and supplement (February 23, 2024)",
+  "license_url": "https://github.com/NVIDIA-RTX/SHARC/blob/4e21b585c33c83d723ca9a1e11bbb1090d145793/License.md",
+  "sdk_source_vendored": false,
+  "build_property": "sharcSdkDir",
+  "sha256": {
+    "License.md": "5575ad921bfe6027dc830887ff51ceb4097e31c2d538b6932cd4bbdf5c1899a9",
+    "include/HashGridCommon.h": "74585a8af1eee32c90c9f56ef0db5d50ca8929ac4d1fbc093ea8664957b02334",
+    "include/HashGridTypes.h": "f5a04ff7f7a511cb8ccd7150fdf39e689f10afa4c0c355982ef52f6859e9340f",
+    "include/SharcCommon.h": "097e5238a3c3a3360d1e8685b56189a75b5c663dbdcc74383d5384c61b936a76",
+    "include/SharcGlslHelpers.h": "a2498aabe6137f9b528907432d16c14ceddf5941c3cc059cb4c4bc74957d09dc",
+    "include/SharcTypes.h": "cde3f200e4e84f029968dffd9eede5228f2ae0b0bbc166d2babb1aa88dc044b3"
+  }
+}

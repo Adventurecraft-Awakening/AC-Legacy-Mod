@@ -1,13 +1,15 @@
 package dev.adventurecraft.awakening.tile.entity;
 
-import dev.adventurecraft.awakening.common.AC_DebugMode;
+import dev.adventurecraft.awakening.editor.EditorSession;
+import dev.adventurecraft.awakening.client.render.DebugDraw;
+import dev.adventurecraft.awakening.client.render.compat.LegacyPassBridge;
+import dev.adventurecraft.awakening.image.Rgba;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.world.BlockPos;
 import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 import net.minecraft.world.level.tile.Tile;
 import net.minecraft.world.level.tile.entity.TileEntity;
 import net.minecraft.world.phys.Vec3;
-import org.lwjgl.opengl.GL11;
 
 public class AC_TileEntityMobSpawnerRenderer extends TileEntityRenderer {
     Vec3[] lineColors = {
@@ -22,7 +24,7 @@ public class AC_TileEntityMobSpawnerRenderer extends TileEntityRenderer {
     };
 
     public void render(AC_TileEntityMobSpawner entity, double x, double y, double z, float tickTime) {
-        if (!AC_DebugMode.active) {
+        if (!EditorSession.forLevel(entity.level).active) {
             return;
         }
         if (!entity.showDebugInfo) {
@@ -32,16 +34,7 @@ public class AC_TileEntityMobSpawnerRenderer extends TileEntityRenderer {
     }
 
     private void renderBounds(AC_TileEntityMobSpawner entity, double x, double y, double z) {
-        GL11.glPushMatrix();
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glDisable(GL11.GL_LIGHTING);
-        GL11.glTranslatef((float) x + 0.5F, (float) y + 0.5F, (float) z + 0.5F);
-        GL11.glLineWidth(6.0F);
-        GL11.glShadeModel(GL11.GL_SMOOTH);
-        GL11.glBegin(GL11.GL_LINES);
-
+        DebugDraw.with(LegacyPassBridge::capture, debug -> {
         for (int i = 0; i < 8; i++) {
             BlockPos min = entity.minVec[i];
             BlockPos max = entity.maxVec[i];
@@ -50,23 +43,18 @@ public class AC_TileEntityMobSpawnerRenderer extends TileEntityRenderer {
                     for (int bZ = min.z(); bZ <= max.z(); bZ++) {
                         Tile block = Tile.tiles[entity.level.getTile(bX, bY, bZ)];
                         if (block != null && ((ExBlock) block).canBeTriggered()) {
-                            GL11.glColor3f(0.0F, 0.0F, 0.0F);
-                            GL11.glVertex3f(0.0F, 0.0F, 0.0F);
                             Vec3 c = this.lineColors[i];
-                            GL11.glColor3d(c.x, c.y, c.z);
-                            GL11.glVertex3f((float) (bX - entity.x), (float) (bY - entity.y), (float) (bZ - entity.z));
+                            int color = Rgba.fromRgba8(Rgba.saturateToByte(c.x), Rgba.saturateToByte(c.y), Rgba.saturateToByte(c.z), 255);
+                            debug.line(x + 0.5, y + 0.5, z + 0.5,
+                                x + 0.5 + bX - entity.x, y + 0.5 + bY - entity.y, z + 0.5 + bZ - entity.z,
+                                Rgba.BLACK, color, 6, true);
                         }
                     }
                 }
             }
         }
 
-        GL11.glEnd();
-        GL11.glShadeModel(GL11.GL_FLAT);
-        GL11.glLineWidth(1.0F);
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        GL11.glDisable(GL11.GL_BLEND);
-        GL11.glPopMatrix();
+        });
     }
 
     public @Override void render(TileEntity entity, double x, double y, double z, float tickTime) {

@@ -1,5 +1,7 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.client.render.compat.LegacyPassBridge;
+import dev.adventurecraft.awakening.client.render.UiDrawContext;
 import dev.adventurecraft.awakening.layout.*;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.util.DrawUtil;
@@ -8,7 +10,6 @@ import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.renderer.Tesselator;
 import org.lwjgl.input.Mouse;
-import org.lwjgl.opengl.GL11;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -63,7 +64,19 @@ public abstract class ScrollableWidget extends GuiComponent {
         return this.getEntryCount() * this.entryHeight + this.layoutPadding.height();
     }
 
-    protected abstract void renderEntry(Tesselator ts, int entryIndex, Point entryLocation, int entryHeight);
+    protected void renderEntry(Tesselator ts, int entryIndex, Point entryLocation, int entryHeight) { }
+
+    protected void renderEntry(UiDrawContext ui, int index, Point location, int height) {
+        LegacyPassBridge.legacyUi(ui, () -> this.renderEntry(Tesselator.instance, index, location, height), false);
+    }
+
+    protected void beforeEntryRender(UiDrawContext ui, IntPoint mouse, Point location) {
+        LegacyPassBridge.legacyUi(ui, () -> this.beforeEntryRender(Tesselator.instance, mouse, location), false);
+    }
+
+    protected void afterRender(UiDrawContext ui, IntPoint mouse, float time) {
+        LegacyPassBridge.legacyUi(ui, () -> this.afterRender(Tesselator.instance, mouse, time), false);
+    }
 
     protected boolean mouseClicked(IntPoint mouseLocation, int buttonIndex, boolean doubleClick) {
         return false;
@@ -170,6 +183,12 @@ public abstract class ScrollableWidget extends GuiComponent {
     }
 
     public void render(IntPoint mousePoint, float tickTime) {
+        try (var ui = LegacyPassBridge.uiContext(this.client.font, this.client.textures)) {
+            this.render(mousePoint, tickTime, ui);
+        }
+    }
+
+    public void render(IntPoint mousePoint, float tickTime, UiDrawContext ui) {
         IntRect borderRect = this.getBorderRect();
 
         var scrollBarBorder = new IntBorder(
@@ -269,132 +288,69 @@ public abstract class ScrollableWidget extends GuiComponent {
             this.clampTargetScroll(totalHeight);
         }
 
-        this.doRender(mousePoint, tickTime, borderRect, totalHeight, scrollBarBorder);
+        this.doRender(ui, mousePoint, tickTime, borderRect, totalHeight, scrollBarBorder);
     }
 
-    private void doRender(
-        IntPoint mousePoint,
-        float tickTime,
-        IntRect borderRect,
-        int totalHeight,
-        IntBorder scrollBarBorder
-    ) {
-        int contentTop = borderRect.top();
-        int contentBot = borderRect.bot();
-
+    private void doRender(UiDrawContext ui, IntPoint mousePoint, float tickTime, IntRect borderRect,
+                          int totalHeight, IntBorder scrollBarBorder) {
+        int contentTop = borderRect.top(), contentBot = borderRect.bot();
         IntRect contentRect = this.getContentRect();
-        int entryCount = this.getEntryCount();
-
-        GL11.glDisable(GL11.GL_LIGHTING);
-        GL11.glDisable(GL11.GL_FOG);
-        var ts = Tesselator.instance;
         Rect contentBackRect = IntRect.fromEdges(this.layoutRect, borderRect).asFloat();
-        this.renderContentBackground(ts, contentBackRect, this.scroll);
-
+        this.renderContentBackground(ui, contentBackRect, this.scroll);
         Point entryLocation = contentRect.location().asFloat().sub(this.scroll);
-        this.beforeEntryRender(ts, mousePoint, entryLocation);
-
-        for (int entryIndex = 0; entryIndex < entryCount; ++entryIndex) {
-            double entryY = entryLocation.y + entryIndex * this.entryHeight;
-            if (entryY > contentBot || entryY + this.entryHeight < contentTop) {
-                continue;
-            }
-            this.renderEntry(ts, entryIndex, new Point(entryLocation.x, entryY), this.entryHeight);
+        this.beforeEntryRender(ui, mousePoint, entryLocation);
+        for (int index = 0; index < this.getEntryCount(); index++) {
+            double entryY = entryLocation.y + index * this.entryHeight;
+            if (entryY > contentBot || entryY + this.entryHeight < contentTop) continue;
+            this.renderEntry(ui, index, new Point(entryLocation.x, entryY), this.entryHeight);
         }
-
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glShadeModel(GL11.GL_SMOOTH);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.client.textures.loadTexture("/gui/background.png"));
-        GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-        ts.begin();
-        var bgColor = new IntCorner(0xff404040);
-        this.renderBackground(ts, this.layoutRect.alongTop(this.layoutBorder.top).asFloat(), bgColor);
-        this.renderBackground(ts, this.layoutRect.alongBot(this.layoutBorder.bot).asFloat(), bgColor);
-        ts.end();
-        GL11.glDisable(GL11.GL_ALPHA_TEST);
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-
+        var backgroundColor = new IntCorner(0xff404040);
+        this.renderBackground(ui, this.layoutRect.alongTop(this.layoutBorder.top).asFloat(), backgroundColor);
+        this.renderBackground(ui, this.layoutRect.alongBot(this.layoutBorder.bot).asFloat(), backgroundColor);
         if (this.edgeShadowHeight > 0) {
-            Rect topRect = contentBackRect.alongTop(this.edgeShadowHeight);
-            Rect botRect = contentBackRect.alongBot(this.edgeShadowHeight);
-
-            ts.begin();
-            DrawUtil.fillRect(ts, topRect, IntCorner.vertical(0xff000000, 0), null);
-            DrawUtil.fillRect(ts, botRect, IntCorner.vertical(0, 0xff000000), null);
-            ts.end();
+            ui.fill(contentBackRect.alongTop(this.edgeShadowHeight), IntCorner.vertical(0xff000000, 0));
+            ui.fill(contentBackRect.alongBot(this.edgeShadowHeight), IntCorner.vertical(0, 0xff000000));
         }
-
-        int n3 = totalHeight - (contentBot - contentTop);
-        if (this.scrollbarWidth > 0 && n3 > 0) {
-            // Scrollbar rendering
-            double n2 = (contentBot - contentTop) * (contentBot - contentTop) / (double) totalHeight;
-            if (n2 < 32) {
-                n2 = 32;
-            }
-            if (n2 > contentBot - contentTop) {
-                n2 = contentBot - contentTop;
-            }
+        int overflow = totalHeight - (contentBot - contentTop);
+        if (this.scrollbarWidth > 0 && overflow > 0) {
+            double handleHeight = Math.clamp((contentBot - contentTop) * (contentBot - contentTop) / (double) totalHeight,
+                Math.min(32, contentBot - contentTop), contentBot - contentTop);
             Point scroll = this.clampTargetScroll(this.targetScroll, totalHeight);
-            double n = scroll.y * (contentBot - contentTop - n2) / n3 + contentTop;
-            if (n < contentTop) {
-                n = contentTop;
-            }
-
-            int scrollBarLeft = scrollBarBorder.left;
-            int scrollBarRight = scrollBarBorder.right;
-            Rect scrollBarBackRect = Rect.fromEdges(scrollBarLeft, contentTop, scrollBarRight, contentBot);
-            Rect scrollHandleRect = Rect.fromEdges(scrollBarLeft, n, scrollBarRight, n + n2);
-
-            ts.begin();
-            fillRect(ts, scrollBarBackRect, 0x7f000000);
-            DrawUtil.shadowRect(
-                ts,
-                scrollHandleRect,
-                new Border(0, 1, 0, 1),
-                new IntCorner(0x7f808080),
-                new IntCorner(0x7fC0C0C0),
-                null,
-                null
-            );
-            ts.end();
+            double y = Math.max(contentTop, scroll.y * (contentBot - contentTop - handleHeight) / overflow + contentTop);
+            ui.fill(Rect.fromEdges(scrollBarBorder.left, contentTop, scrollBarBorder.right, contentBot), 0x7f000000);
+            this.renderContentSelection(ui, Rect.fromEdges(scrollBarBorder.left, y, scrollBarBorder.right, y + handleHeight),
+                new Border(0, 1, 0, 1), new IntCorner(0x7f808080), new IntCorner(0x7fc0c0c0), null, null);
         }
-
-        this.afterRender(ts, mousePoint, tickTime);
-
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        GL11.glShadeModel(GL11.GL_FLAT);
-        GL11.glEnable(GL11.GL_ALPHA_TEST);
-        GL11.glDisable(GL11.GL_BLEND);
+        this.afterRender(ui, mousePoint, tickTime);
     }
 
+    protected void renderBackground(UiDrawContext ui, Rect rect, IntCorner color) {
+        ui.image(ui.texture("/gui/background.png"), rect, rect.divide(32), color);
+    }
+
+    protected void renderContentBackground(UiDrawContext ui, Rect rect, Point scroll) {
+        ui.image(ui.texture("/gui/background.png"), rect, rect.offset(scroll).divide(32), new IntCorner(0xff202020));
+    }
+
+    public void renderContentSelection(UiDrawContext ui, Rect rect, Border padding, IntCorner frontColor,
+                                       IntCorner backColor, @Nullable Rect frontUv, @Nullable Rect backUv) {
+        Rect front = rect.shrink(padding.min(Border.zero));
+        Rect back = rect.shrink(padding.max(Border.zero));
+        if (frontUv == null) ui.fill(front, frontColor);
+        else ui.image(ui.texture("/gui/background.png"), front, frontUv, frontColor);
+        if (backUv == null) ui.fill(back, backColor);
+        else ui.image(ui.texture("/gui/background.png"), back, backUv, backColor);
+    }
+
+    /** Compatibility callbacks for external widget subclasses. */
     protected void renderBackground(Tesselator ts, Rect rect, IntCorner color) {
-        double uvSize = 32.0;
-        Rect uv = rect.divide(new Rect(uvSize));
-        fillRect(ts, rect, color, uv);
+        fillRect(ts, rect, color, rect.divide(32));
     }
 
-    protected void renderContentBackground(Tesselator ts, Rect rect, Point scroll) {
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.client.textures.loadTexture("/gui/background.png"));
-        GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    protected void renderContentBackground(Tesselator ts, Rect rect, Point scroll) { }
 
-        double uvSize = 32.0;
-        Rect uv = rect.offset(scroll).divide(uvSize);
-        ts.begin();
-        fillRect(ts, rect, new IntCorner(0xff202020), uv);
-        ts.end();
-    }
-
-    public void renderContentSelection(
-        Tesselator ts,
-        Rect rect,
-        Border padding,
-        IntCorner frontColor,
-        IntCorner backColor,
-        @Nullable Rect frontUv,
-        @Nullable Rect backUv
-    ) {
+    public void renderContentSelection(Tesselator ts, Rect rect, Border padding, IntCorner frontColor,
+                                       IntCorner backColor, @Nullable Rect frontUv, @Nullable Rect backUv) {
         DrawUtil.shadowRect(ts, rect, padding, frontColor, backColor, frontUv, backUv);
     }
 

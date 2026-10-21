@@ -6,7 +6,7 @@ import dev.adventurecraft.awakening.extension.entity.ai.pathing.ExEntityPath;
 import dev.adventurecraft.awakening.extension.nbt.ExCompoundTag;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.script.EntityDescriptions;
-import dev.adventurecraft.awakening.script.ScopeTag;
+import dev.adventurecraft.awakening.script.ScriptAttachment;
 import dev.adventurecraft.awakening.script.ScriptEntity;
 import dev.adventurecraft.awakening.script.ScriptEntityDescription;
 import dev.adventurecraft.awakening.tile.entity.AC_TileEntityNpcPath;
@@ -19,9 +19,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
-import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
 
 public class AC_EntityLivingScript extends Mob implements IEntityPather {
 
@@ -29,7 +27,7 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
     private String descriptionName;
     private float prevWidth = 0.6F;
     private float prevHeight = 1.8F;
-    private Scriptable scope;
+    private final ScriptAttachment scriptAttachment = new ScriptAttachment();
     private String onCreated = "";
     private String onUpdate = "";
     private String onPathReached = "";
@@ -48,9 +46,16 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
 
     public AC_EntityLivingScript(Level world) {
         super(world);
-        this.scope = ((ExWorld) world).getScript().getNewScope();
-        Object jsEntity = Context.javaToJS(ScriptEntity.getEntityClass(this), this.scope);
-        ScriptableObject.putProperty(this.scope, "entity", jsEntity);
+        this.scriptAttachment.bind("entity", ScriptEntity.getEntityClass(this));
+    }
+
+    protected Scriptable scriptScope() {
+        return this.scriptAttachment.attach(((ExWorld) this.level).getScript());
+    }
+
+    protected void prepareAttackScript(Entity entity, int damage) {
+        this.scriptScope();
+        this.scriptAttachment.bind("attackingEntity", ScriptEntity.getEntityClass(entity)).bind("attackingDamage", damage);
     }
 
     public void setEntityDescription(String name) {
@@ -108,9 +113,7 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
 
     @Override
     public boolean hurt(Entity entity, int damage) {
-        Object jsEntity = Context.javaToJS(ScriptEntity.getEntityClass(entity), this.scope);
-        ScriptableObject.putProperty(this.scope, "attackingEntity", jsEntity);
-        ScriptableObject.putProperty(this.scope, "attackingDamage", damage);
+        this.prepareAttackScript(entity, damage);
         return this.runOnAttackedScript() && super.hurt(entity, damage);
     }
 
@@ -137,7 +140,7 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
         exTag.putNonEmptyString("onDeath", this.getOnDeath());
         exTag.putNonEmptyString("onInteraction", this.getOnInteraction());
 
-        tag.putTag("scope", ScopeTag.getTagFromScope(this.scope));
+        tag.putTag("scope", this.scriptAttachment.save());
     }
 
     @Override
@@ -151,14 +154,14 @@ public class AC_EntityLivingScript extends Mob implements IEntityPather {
         this.setOnDeath(tag.getString("onDeath"));
         this.setOnInteraction(tag.getString("onInteraction"));
 
-        ((ExCompoundTag) tag).findCompound("scope").ifPresent(c -> ScopeTag.loadScopeFromTag(this.scope, c));
+        ((ExCompoundTag) tag).findCompound("scope").ifPresent(this.scriptAttachment::load);
     }
 
     private Object runScript(String name) {
         if (name.isEmpty()) {
             return null;
         }
-        return ((ExWorld) this.level).getScriptHandler().runScript(name, this.scope);
+        return ((ExWorld) this.level).getScriptHandler().runScript(name, this.scriptScope());
     }
 
     private void runCreatedScript() {

@@ -1,14 +1,16 @@
 package dev.adventurecraft.awakening.mixin.client.options;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import dev.adventurecraft.awakening.client.gl.GLMipMode;
+import dev.adventurecraft.awakening.client.render.resource.MipmapMode;
+import dev.adventurecraft.awakening.client.render.RenderSystem;
 import dev.adventurecraft.awakening.client.options.Config;
 import dev.adventurecraft.awakening.client.options.ConnectedGrassOption;
-import dev.adventurecraft.awakening.client.options.OptionOF;
+import dev.adventurecraft.awakening.client.options.GameOptionRegistry;
+import dev.adventurecraft.awakening.client.options.OptionBindings;
+import dev.adventurecraft.awakening.client.options.OptionEffects;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
 import dev.adventurecraft.awakening.extension.client.render.ExWorldEventRenderer;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Option;
@@ -19,8 +21,7 @@ import net.minecraft.util.Language;
 import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.tile.Tile;
-import org.lwjgl.opengl.Display;
-import org.lwjgl.opengl.GLContext;
+import dev.adventurecraft.awakening.client.platform.window.GameWindow;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
@@ -29,7 +30,6 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -37,14 +37,9 @@ import java.util.Arrays;
 import java.util.List;
 
 @Mixin(Options.class)
-public abstract class MixinGameOptions implements ExGameOptions {
+public abstract class MixinGameOptions implements ExGameOptions, OptionEffects {
 
-    @Unique private static final int MIN_CHUNK_RENDER_DISTANCE = 2;
-    @Unique private static final int MAX_CHUNK_RENDER_DISTANCE = 124;
     @Unique private static final int MAX_CHUNK_SIMULATION_DISTANCE = 9;
-
-    @Unique private static final int MAX_CHAT_BUFFER_LIMIT = 10000;
-    @Unique private static final int MAX_PARTICLE_LIMIT = 1024 * 32;
 
     @Final @Shadow private static String[] DIFFICULTIES;
     @Final @Shadow private static String[] GUI_SCALES;
@@ -69,47 +64,116 @@ public abstract class MixinGameOptions implements ExGameOptions {
     @Shadow public int difficulty;
     @Shadow public int guiScale;
 
-    @Unique public boolean ofFogFancy = false;
-    @Unique public float ofFogStart = 0.8F;
-    @Unique public int ofMipmapLevel = 0;
-    @Unique public boolean ofMipmapLinear = false;
-    @Unique public boolean ofLoadFar = false;
-    @Unique public int ofPreloadedChunks = 0;
-    @Unique public boolean ofOcclusionFancy = false;
-    @Unique public float ofBrightness = 0.0F;
-    @Unique public float ofAoLevel = 0.0F;
-    @Unique public int ofAaLevel = 0;
-    @Unique public int ofAfLevel = 1;
-    @Unique public int ofClouds = 0;
-    @Unique public float ofCloudsHeight = 0.0F;
-    @Unique public int ofTrees = 0;
-    @Unique public int ofGrass = 0;
-    @Unique public int ofRain = 0;
-    @Unique public int ofWater = 0;
-    @Unique public ConnectedGrassOption ofConnectedGrass = ConnectedGrassOption.OFF;
-    @Unique public int ofAutoSaveTicks = 4000;
-    @Unique public boolean ofFastDebugInfo = false;
-    @Unique public boolean ofWeather = true;
-    @Unique public boolean ofSky = true;
-    @Unique public boolean ofStars = true;
-    @Unique public boolean ofChunkUpdatesDynamic = true;
-    @Unique public int ofTime = 0;
-    @Unique public boolean ofClearWater = false;
-    @Unique public int ofAnimatedWater = 0;
-    @Unique public int ofAnimatedLava = 0;
-    @Unique public boolean ofAnimatedFire = true;
-    @Unique public boolean ofAnimatedPortal = true;
-    @Unique public boolean ofAnimatedRedstone = true;
-    @Unique public boolean ofAnimatedExplosion = true;
-    @Unique public boolean ofAnimatedFlame = true;
-    @Unique public boolean ofAnimatedSmoke = true;
+    @Unique public boolean ofFogFancy = GameOptionRegistry.FOG_FANCY.defaultValue();
+    @Unique public float ofFogStart = GameOptionRegistry.FOG_START.defaultValue();
+    @Unique public int ofMipmapLevel = GameOptionRegistry.MIPMAP_LEVEL.defaultValue();
+    @Unique public boolean ofMipmapLinear = GameOptionRegistry.MIPMAP_LINEAR.defaultValue();
+    @Unique public boolean ofLoadFar = GameOptionRegistry.LOAD_FAR.defaultValue();
+    @Unique public int ofPreloadedChunks = GameOptionRegistry.PRELOADED_CHUNKS.defaultValue();
+    @Unique public float ofBrightness = GameOptionRegistry.BRIGHTNESS.defaultValue();
+    @Unique public float ofAoLevel = GameOptionRegistry.AO_LEVEL.defaultValue();
+    @Unique public int ofAaLevel = GameOptionRegistry.AA_LEVEL.defaultValue();
+    @Unique public int ofAfLevel = GameOptionRegistry.AF_LEVEL.defaultValue();
+    @Unique public int ofClouds = GameOptionRegistry.CLOUDS.defaultValue();
+    @Unique public float ofCloudsHeight = GameOptionRegistry.CLOUD_HEIGHT.defaultValue();
+    @Unique public int ofTrees = GameOptionRegistry.LEAVES.defaultValue();
+    @Unique public int ofGrass = GameOptionRegistry.GRASS.defaultValue();
+    @Unique public int ofRain = GameOptionRegistry.RAIN.defaultValue();
+    @Unique public int ofWater = GameOptionRegistry.WATER.defaultValue();
+    @Unique public ConnectedGrassOption ofConnectedGrass = GameOptionRegistry.CONNECTED_GRASS.defaultValue();
+    @Unique public int ofAutoSaveTicks = GameOptionRegistry.AUTOSAVE_TICKS.defaultValue();
+    @Unique public boolean ofFastDebugInfo = GameOptionRegistry.FAST_DEBUG_INFO.defaultValue();
+    @Unique public boolean ofWeather = GameOptionRegistry.WEATHER.defaultValue();
+    @Unique public boolean ofSky = GameOptionRegistry.SKY.defaultValue();
+    @Unique public boolean ofStars = GameOptionRegistry.STARS.defaultValue();
+    @Unique public boolean ofChunkUpdatesDynamic = GameOptionRegistry.CHUNK_UPDATES_DYNAMIC.defaultValue();
+    @Unique public int ofTime = GameOptionRegistry.TIME.defaultValue();
+    @Unique public boolean ofClearWater = GameOptionRegistry.CLEAR_WATER.defaultValue();
+    @Unique public int ofAnimatedWater = GameOptionRegistry.ANIMATED_WATER.defaultValue();
+    @Unique public int ofAnimatedLava = GameOptionRegistry.ANIMATED_LAVA.defaultValue();
+    @Unique public boolean ofAnimatedFire = GameOptionRegistry.ANIMATED_FIRE.defaultValue();
+    @Unique public boolean ofAnimatedPortal = GameOptionRegistry.ANIMATED_PORTAL.defaultValue();
+    @Unique public boolean ofAnimatedRedstone = GameOptionRegistry.ANIMATED_REDSTONE.defaultValue();
+    @Unique public boolean ofAnimatedExplosion = GameOptionRegistry.ANIMATED_EXPLOSION.defaultValue();
+    @Unique public boolean ofAnimatedFlame = GameOptionRegistry.ANIMATED_FLAME.defaultValue();
+    @Unique public boolean ofAnimatedSmoke = GameOptionRegistry.ANIMATED_SMOKE.defaultValue();
     @Unique public KeyMapping ofKeyBindZoom;
     @Unique public List<KeyMapping> keyBindings;
-    @Unique public boolean grass3d = true;
-    @Unique public int chatMessageBufferLimit = 100;
-    @Unique public int particleLimit = 1024 * 4;
-    @Unique public boolean allowJavaInScript = false;
-    @Unique public float chatWidth = 0.5f;
+    @Unique public boolean grass3d = GameOptionRegistry.GRASS_3D.defaultValue();
+    @Unique private boolean ac$rayTracing = GameOptionRegistry.RAY_TRACING.defaultValue();
+    @Unique private int ac$indirectLighting = GameOptionRegistry.INDIRECT_LIGHTING.defaultValue();
+    @Unique private boolean ac$temporalAa = GameOptionRegistry.TEMPORAL_AA.defaultValue();
+    @Unique private int ac$renderScale = GameOptionRegistry.RENDER_SCALE.defaultValue();
+    @Unique private int ac$parallaxMapping = GameOptionRegistry.PARALLAX_MAPPING.defaultValue();
+    @Unique private int ac$rayReconstruction = GameOptionRegistry.RAY_RECONSTRUCTION.defaultValue();
+    @Unique private int ac$upscaler = GameOptionRegistry.UPSCALER.defaultValue();
+    @Unique private int ac$frameGeneration = GameOptionRegistry.FRAME_GENERATION.defaultValue();
+    @Unique public int chatMessageBufferLimit = GameOptionRegistry.CHAT_MESSAGE_BUFFER_LIMIT.defaultValue();
+    @Unique public int particleLimit = GameOptionRegistry.PARTICLE_LIMIT.defaultValue();
+    @Unique public boolean allowJavaInScript = GameOptionRegistry.ALLOW_JAVA_IN_SCRIPT.defaultValue();
+    @Unique public float chatWidth = GameOptionRegistry.CHAT_WIDTH.defaultValue();
+    @Unique private boolean ac$hasStoredChunkRenderDistance;
+    @Unique private int ac$storedChunkRenderDistance;
+    @Unique private boolean ac$renderDistanceResolved;
+
+    @Unique private OptionBindings ac$optionBindings;
+
+    @Unique
+    private OptionBindings ac$options() {
+        if (this.ac$optionBindings == null) {
+            // Direct bindings retain the public legacy fields as the sole source of state.
+            this.ac$optionBindings = new OptionBindings(this)
+                .bind(GameOptionRegistry.CHUNK_RENDER_DISTANCE, () -> this.viewDistance, value -> this.viewDistance = value)
+                .bind(GameOptionRegistry.FOG_FANCY, () -> this.ofFogFancy, value -> this.ofFogFancy = value)
+                .bind(GameOptionRegistry.FOG_START, () -> this.ofFogStart, value -> this.ofFogStart = value)
+                .bind(GameOptionRegistry.MIPMAP_LEVEL, () -> this.ofMipmapLevel, value -> this.ofMipmapLevel = value)
+                .bind(GameOptionRegistry.MIPMAP_LINEAR, () -> this.ofMipmapLinear, value -> this.ofMipmapLinear = value)
+                .bind(GameOptionRegistry.LOAD_FAR, () -> this.ofLoadFar, value -> this.ofLoadFar = value)
+                .bind(GameOptionRegistry.PRELOADED_CHUNKS, () -> this.ofPreloadedChunks, value -> this.ofPreloadedChunks = value)
+                .bind(GameOptionRegistry.BRIGHTNESS, () -> this.ofBrightness, value -> this.ofBrightness = value)
+                .bind(GameOptionRegistry.AO_LEVEL, () -> this.ofAoLevel, value -> this.ofAoLevel = value)
+                .bind(GameOptionRegistry.CLOUDS, () -> this.ofClouds, value -> this.ofClouds = value)
+                .bind(GameOptionRegistry.CLOUD_HEIGHT, () -> this.ofCloudsHeight, value -> this.ofCloudsHeight = value)
+                .bind(GameOptionRegistry.LEAVES, () -> this.ofTrees, value -> this.ofTrees = value)
+                .bind(GameOptionRegistry.GRASS, () -> this.ofGrass, value -> this.ofGrass = value)
+                .bind(GameOptionRegistry.RAIN, () -> this.ofRain, value -> this.ofRain = value)
+                .bind(GameOptionRegistry.WATER, () -> this.ofWater, value -> this.ofWater = value)
+                .bind(GameOptionRegistry.ANIMATED_WATER, () -> this.ofAnimatedWater, value -> this.ofAnimatedWater = value)
+                .bind(GameOptionRegistry.ANIMATED_LAVA, () -> this.ofAnimatedLava, value -> this.ofAnimatedLava = value)
+                .bind(GameOptionRegistry.ANIMATED_FIRE, () -> this.ofAnimatedFire, value -> this.ofAnimatedFire = value)
+                .bind(GameOptionRegistry.ANIMATED_PORTAL, () -> this.ofAnimatedPortal, value -> this.ofAnimatedPortal = value)
+                .bind(GameOptionRegistry.ANIMATED_REDSTONE, () -> this.ofAnimatedRedstone, value -> this.ofAnimatedRedstone = value)
+                .bind(GameOptionRegistry.ANIMATED_EXPLOSION, () -> this.ofAnimatedExplosion, value -> this.ofAnimatedExplosion = value)
+                .bind(GameOptionRegistry.ANIMATED_FLAME, () -> this.ofAnimatedFlame, value -> this.ofAnimatedFlame = value)
+                .bind(GameOptionRegistry.ANIMATED_SMOKE, () -> this.ofAnimatedSmoke, value -> this.ofAnimatedSmoke = value)
+                .bind(GameOptionRegistry.FAST_DEBUG_INFO, () -> this.ofFastDebugInfo, value -> this.ofFastDebugInfo = value)
+                .bind(GameOptionRegistry.AUTOSAVE_TICKS, () -> this.ofAutoSaveTicks, value -> this.ofAutoSaveTicks = value)
+                .bind(GameOptionRegistry.CONNECTED_GRASS, () -> this.ofConnectedGrass, value -> this.ofConnectedGrass = value)
+                .bind(GameOptionRegistry.WEATHER, () -> this.ofWeather, value -> this.ofWeather = value)
+                .bind(GameOptionRegistry.SKY, () -> this.ofSky, value -> this.ofSky = value)
+                .bind(GameOptionRegistry.STARS, () -> this.ofStars, value -> this.ofStars = value)
+                .bind(GameOptionRegistry.CHUNK_UPDATES_DYNAMIC, () -> this.ofChunkUpdatesDynamic, value -> this.ofChunkUpdatesDynamic = value)
+                .bind(GameOptionRegistry.TIME, () -> this.ofTime, value -> this.ofTime = value)
+                .bind(GameOptionRegistry.CLEAR_WATER, () -> this.ofClearWater, value -> this.ofClearWater = value)
+                .bind(GameOptionRegistry.AA_LEVEL, () -> this.ofAaLevel, value -> this.ofAaLevel = value)
+                .bind(GameOptionRegistry.AF_LEVEL, () -> this.ofAfLevel, value -> this.ofAfLevel = value)
+                .bind(GameOptionRegistry.GRASS_3D, () -> this.grass3d, value -> this.grass3d = value)
+                .bind(GameOptionRegistry.RAY_TRACING, this::rayTracing, value -> this.ac$rayTracing = value)
+                .bind(GameOptionRegistry.INDIRECT_LIGHTING, this::indirectLighting, value -> this.ac$indirectLighting = value)
+                .bind(GameOptionRegistry.TEMPORAL_AA, this::temporalAa, value -> this.ac$temporalAa = value)
+                .bind(GameOptionRegistry.RENDER_SCALE, this::renderScale, value -> this.ac$renderScale = value)
+                .bind(GameOptionRegistry.PARALLAX_MAPPING, this::parallaxMapping, value -> this.ac$parallaxMapping = value)
+                .bind(GameOptionRegistry.RAY_RECONSTRUCTION, this::rayReconstruction, value -> this.ac$rayReconstruction = value)
+                .bind(GameOptionRegistry.UPSCALER, this::upscaler, value -> this.ac$upscaler = value)
+                .bind(GameOptionRegistry.FRAME_GENERATION, this::frameGeneration, value -> this.ac$frameGeneration = value)
+                .bind(GameOptionRegistry.CHAT_MESSAGE_BUFFER_LIMIT, () -> this.chatMessageBufferLimit, value -> this.chatMessageBufferLimit = value)
+                .bind(GameOptionRegistry.PARTICLE_LIMIT, () -> this.particleLimit, value -> this.particleLimit = value)
+                .bind(GameOptionRegistry.ALLOW_JAVA_IN_SCRIPT, () -> this.allowJavaInScript, value -> this.allowJavaInScript = value)
+                .bind(GameOptionRegistry.CHAT_WIDTH, () -> this.chatWidth, value -> this.chatWidth = value)
+                .complete();
+        }
+        return this.ac$optionBindings;
+    }
 
     @Shadow
     public abstract float getProgressValue(Option option);
@@ -134,6 +198,8 @@ public abstract class MixinGameOptions implements ExGameOptions {
     }
 
     private void sharedInit() {
+        this.advancedOpengl = false;
+        this.ac$resolveRenderDistance();
         this.keyBindings = new ArrayList<>();
         this.ofKeyBindZoom = new KeyMapping("key.ofZoom", 46);
 
@@ -150,45 +216,159 @@ public abstract class MixinGameOptions implements ExGameOptions {
         this.keyBindings.add(this.ofKeyBindZoom);
     }
 
+    @Inject(method = "load", at = @At("HEAD"))
+    private void ac$beginLoadingRenderDistance(CallbackInfo ci) {
+        this.ac$hasStoredChunkRenderDistance = false;
+        this.ac$renderDistanceResolved = false;
+    }
+
+    @Inject(method = "load", at = @At("RETURN"))
+    private void ac$finishLoadingRenderDistance(CallbackInfo ci) {
+        this.advancedOpengl = false;
+        this.ac$resolveRenderDistance();
+    }
+
+    @Unique
+    private void ac$resolveRenderDistance() {
+        if (this.ac$renderDistanceResolved) {
+            return;
+        }
+        int distance = this.ac$hasStoredChunkRenderDistance ? this.ac$storedChunkRenderDistance : this.viewDistance;
+        // Resolve after every line has loaded, so the native key wins regardless of file order.
+        this.viewDistance = GameOptionRegistry.resolveRenderDistance(distance, this.ac$hasStoredChunkRenderDistance);
+        this.ac$renderDistanceResolved = true;
+    }
+
+    @Redirect(
+        method = "toggle",
+        at = @At(
+            value = "FIELD",
+            opcode = Opcodes.PUTFIELD,
+            target = "Lnet/minecraft/client/Options;viewDistance:I"
+        )
+    )
+    private void ac$cycleChunkRenderDistance(Options options, int legacyValue, @Local(argsOnly = true) int step) {
+        // The vanilla assignment masks to 0..3; keep native chunk-grid diameters.
+        this.viewDistance = GameOptionRegistry.nextRenderDistance(this.viewDistance, step);
+    }
+
     @Inject(
         method = "set",
         at = @At("TAIL")
     )
     private void setFloatOptionOF(Option option, float value, CallbackInfo ci) {
-        if (option == OptionOF.BRIGHTNESS) {
-            this.ofBrightness = value;
-            this.updateWorldLightLevels();
-        }
-        else if (option == OptionOF.CLOUD_HEIGHT) {
-            this.ofCloudsHeight = value;
-        }
-        else if (option == OptionOF.AO_LEVEL) {
-            this.ofAoLevel = value;
-            this.ao = this.ofAoLevel > 0.0F;
-            this.minecraft.levelRenderer.allChanged();
-        }
-        else if (option == OptionOF.CHAT_MESSAGE_BUFFER_LIMIT) {
-            this.chatMessageBufferLimit = (int) MathF.lerp(value, 1, MAX_CHAT_BUFFER_LIMIT);
-        }
-        else if (option == OptionOF.PARTICLE_LIMIT) {
-            this.particleLimit = (int) (value * MAX_PARTICLE_LIMIT);
-        }
-        else if (option == OptionOF.CHAT_WIDTH) {
-            this.chatWidth = value;
-        }
-        else if (option == OptionOF.CHUNK_RENDER_DISTANCE) {
-            this.viewDistance = (int) MathF.lerp(value, MIN_CHUNK_RENDER_DISTANCE, MAX_CHUNK_RENDER_DISTANCE);
+        this.ac$options().setProgress(option, value);
+    }
+
+    @Override
+    public void reloadOptionTextures() {
+        this.minecraft.textures.reloadAll();
+    }
+
+    @Override
+    public void rebuildOptionTerrain() {
+        this.minecraft.levelRenderer.allChanged();
+    }
+
+    @Override
+    public void updateOptionAmbientOcclusion(boolean enabled, boolean rebuildTerrain) {
+        this.ao = enabled;
+        if (rebuildTerrain) {
+            this.rebuildOptionTerrain();
         }
     }
 
-    private void updateWorldLightLevels() {
+    @Override
+    public void updateOptionBrightness() {
         if (this.minecraft.level != null) {
             ((ExWorld) this.minecraft.level).loadBrightness();
-            ((ExWorldEventRenderer) this.minecraft.levelRenderer).updateAllTheRenderers();
+            if (!RenderSystem.renderer().rayTracingSupported()) {
+                ((ExWorldEventRenderer) this.minecraft.levelRenderer).updateAllTheRenderers();
+            }
         }
     }
 
-    private void updateWaterOpacity() {
+    @Override
+    public void updateOptionRayTracing(boolean enabled) {
+        if (!RenderSystem.isInitialized()) return;
+        this.ac$rayTracing = enabled && RenderSystem.rayTracingAvailable();
+        boolean changed = RenderSystem.rayTracingEnabled() != this.ac$rayTracing;
+        RenderSystem.setRayTracingEnabled(this.ac$rayTracing);
+        if (changed && this.minecraft != null && this.minecraft.level != null) {
+            this.rebuildOptionTerrain();
+        }
+    }
+
+    @Override
+    public boolean rayTracing() {
+        return this.ac$rayTracing && (!RenderSystem.isInitialized() || RenderSystem.rayTracingAvailable());
+    }
+
+    @Override
+    public void updateOptionIndirectLighting(int mode) {
+        this.ac$indirectLighting = GameOptionRegistry.INDIRECT_LIGHTING.normalize(mode);
+        RenderSystem.setIndirectLighting(this.ac$indirectLighting);
+    }
+
+    @Override
+    public int indirectLighting() { return this.ac$indirectLighting; }
+
+    @Override
+    public void updateOptionTemporalAa(boolean enabled) {
+        this.ac$temporalAa = enabled;
+        RenderSystem.setTemporalAaEnabled(enabled);
+    }
+
+    @Override
+    public boolean temporalAa() { return this.ac$temporalAa; }
+
+    @Override
+    public void updateOptionRenderScale(int mode) {
+        this.ac$renderScale = GameOptionRegistry.RENDER_SCALE.normalize(mode);
+        RenderSystem.setRenderScale(this.ac$renderScale);
+    }
+
+    @Override
+    public int renderScale() { return this.ac$renderScale; }
+
+    @Override
+    public void updateOptionParallaxMapping(int mode) {
+        this.ac$parallaxMapping = GameOptionRegistry.PARALLAX_MAPPING.normalize(mode);
+        RenderSystem.setParallaxMapping(this.ac$parallaxMapping);
+    }
+
+    @Override
+    public int parallaxMapping() { return this.ac$parallaxMapping; }
+
+    @Override
+    public void updateOptionRayReconstruction(int mode) {
+        this.ac$rayReconstruction = GameOptionRegistry.RAY_RECONSTRUCTION.normalize(mode);
+        RenderSystem.setRayReconstruction(this.ac$rayReconstruction);
+    }
+
+    @Override
+    public int rayReconstruction() { return this.ac$rayReconstruction; }
+
+    @Override
+    public void updateOptionUpscaler(int mode) {
+        this.ac$upscaler = GameOptionRegistry.UPSCALER.normalize(mode);
+        RenderSystem.setUpscaler(this.ac$upscaler);
+    }
+
+    @Override
+    public int upscaler() { return this.ac$upscaler; }
+
+    @Override
+    public void updateOptionFrameGeneration(int mode) {
+        this.ac$frameGeneration = GameOptionRegistry.FRAME_GENERATION.normalize(mode);
+        RenderSystem.setFrameGeneration(this.ac$frameGeneration);
+    }
+
+    @Override
+    public int frameGeneration() { return this.ac$frameGeneration; }
+
+    @Override
+    public void updateOptionWaterOpacity() {
         int waterOpacity = 3;
         if (this.ofClearWater) {
             waterOpacity = 1;
@@ -232,21 +412,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
         )
     )
     private void setIntOptionOF_ADVANCED_OPENGL(Options instance, boolean value) {
-        if (!GLContext.getCapabilities().GL_ARB_occlusion_query) {
-            this.ofOcclusionFancy = false;
-            this.advancedOpengl = false;
-        }
-        else if (!this.advancedOpengl) {
-            this.advancedOpengl = true;
-            this.ofOcclusionFancy = false;
-        }
-        else if (!this.ofOcclusionFancy) {
-            this.ofOcclusionFancy = true;
-        }
-        else {
-            this.ofOcclusionFancy = false;
-            this.advancedOpengl = false;
-        }
+        this.advancedOpengl = false;
 
         ((ExWorldEventRenderer) this.minecraft.levelRenderer).setAllRenderersVisible();
     }
@@ -273,7 +439,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
     )
     private void setIntOptionPutFpsLimit(Options instance, int value, @Local(argsOnly = true) int i) {
         this.fpsLimit = (this.fpsLimit + i) % 4;
-        Display.setVSyncEnabled(this.fpsLimit == 3);
+        GameWindow.setVSyncEnabled(this.fpsLimit == 3);
     }
 
     @Inject(
@@ -285,212 +451,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
         )
     )
     private void setIntOptionOF(Option option, int value, CallbackInfo ci) {
-        if (option == OptionOF.FOG_FANCY) {
-            if (!GLContext.getCapabilities().GL_NV_fog_distance) {
-                this.ofFogFancy = false;
-            }
-            else {
-                this.ofFogFancy = !this.ofFogFancy;
-            }
-        }
-
-        if (option == OptionOF.FOG_START) {
-            this.ofFogStart += 0.2F;
-            if (this.ofFogStart > 0.81F) {
-                this.ofFogStart = 0.2F;
-            }
-        }
-
-        if (option == OptionOF.MIPMAP_LEVEL) {
-            ++this.ofMipmapLevel;
-            if (this.ofMipmapLevel > 4) {
-                this.ofMipmapLevel = 0;
-            }
-
-            this.minecraft.textures.reloadAll();
-        }
-
-        if (option == OptionOF.MIPMAP_TYPE) {
-            this.ofMipmapLinear = !this.ofMipmapLinear;
-            this.minecraft.textures.reloadAll();
-        }
-
-        if (option == OptionOF.LOAD_FAR) {
-            this.ofLoadFar = !this.ofLoadFar;
-            this.minecraft.levelRenderer.allChanged();
-        }
-
-        if (option == OptionOF.PRELOADED_CHUNKS) {
-            this.ofPreloadedChunks += 2;
-            if (this.ofPreloadedChunks > 8) {
-                this.ofPreloadedChunks = 0;
-            }
-
-            this.minecraft.levelRenderer.allChanged();
-        }
-
-        if (option == OptionOF.CLOUDS) {
-            ++this.ofClouds;
-            if (this.ofClouds > 3) {
-                this.ofClouds = 0;
-            }
-        }
-
-        if (option == OptionOF.LEAVES) {
-            ++this.ofTrees;
-            if (this.ofTrees > 2) {
-                this.ofTrees = 0;
-            }
-
-            this.minecraft.levelRenderer.allChanged();
-        }
-
-        if (option == OptionOF.GRASS) {
-            ++this.ofGrass;
-            if (this.ofGrass > 2) {
-                this.ofGrass = 0;
-            }
-
-            this.minecraft.levelRenderer.allChanged();
-        }
-
-        if (option == OptionOF.RAIN) {
-            ++this.ofRain;
-            if (this.ofRain > 3) {
-                this.ofRain = 0;
-            }
-        }
-
-        if (option == OptionOF.WATER) {
-            ++this.ofWater;
-            if (this.ofWater > 2) {
-                this.ofWater = 0;
-            }
-        }
-
-        if (option == OptionOF.ANIMATED_WATER) {
-            ++this.ofAnimatedWater;
-            if (this.ofAnimatedWater > 2) {
-                this.ofAnimatedWater = 0;
-            }
-
-            this.minecraft.textures.reloadAll();
-        }
-
-        if (option == OptionOF.ANIMATED_LAVA) {
-            ++this.ofAnimatedLava;
-            if (this.ofAnimatedLava > 2) {
-                this.ofAnimatedLava = 0;
-            }
-
-            this.minecraft.textures.reloadAll();
-        }
-
-        if (option == OptionOF.ANIMATED_FIRE) {
-            this.ofAnimatedFire = !this.ofAnimatedFire;
-            this.minecraft.textures.reloadAll();
-        }
-
-        if (option == OptionOF.ANIMATED_PORTAL) {
-            this.ofAnimatedPortal = !this.ofAnimatedPortal;
-            this.minecraft.textures.reloadAll();
-        }
-
-        if (option == OptionOF.ANIMATED_REDSTONE) {
-            this.ofAnimatedRedstone = !this.ofAnimatedRedstone;
-        }
-
-        if (option == OptionOF.ANIMATED_EXPLOSION) {
-            this.ofAnimatedExplosion = !this.ofAnimatedExplosion;
-        }
-
-        if (option == OptionOF.ANIMATED_FLAME) {
-            this.ofAnimatedFlame = !this.ofAnimatedFlame;
-        }
-
-        if (option == OptionOF.ANIMATED_SMOKE) {
-            this.ofAnimatedSmoke = !this.ofAnimatedSmoke;
-        }
-
-        if (option == OptionOF.FAST_DEBUG_INFO) {
-            this.ofFastDebugInfo = !this.ofFastDebugInfo;
-        }
-
-        if (option == OptionOF.AUTOSAVE_TICKS) {
-            this.ofAutoSaveTicks *= 10;
-            if (this.ofAutoSaveTicks > 40000) {
-                this.ofAutoSaveTicks = 40;
-            }
-        }
-
-        if (option == OptionOF.CONNECTED_GRASS) {
-            ofConnectedGrass = switch (this.ofConnectedGrass) {
-                case OFF -> ConnectedGrassOption.FAST;
-                case FAST -> ConnectedGrassOption.FANCY;
-                case FANCY -> ConnectedGrassOption.OFF;
-            };
-            this.minecraft.levelRenderer.allChanged();
-        }
-
-        if (option == OptionOF.WEATHER) {
-            this.ofWeather = !this.ofWeather;
-        }
-
-        if (option == OptionOF.SKY) {
-            this.ofSky = !this.ofSky;
-        }
-
-        if (option == OptionOF.STARS) {
-            this.ofStars = !this.ofStars;
-        }
-
-        if (option == OptionOF.CHUNK_UPDATES_DYNAMIC) {
-            this.ofChunkUpdatesDynamic = !this.ofChunkUpdatesDynamic;
-        }
-
-        if (option == OptionOF.TIME) {
-            ++this.ofTime;
-            if (this.ofTime > 2) {
-                this.ofTime = 0;
-            }
-        }
-
-        if (option == OptionOF.CLEAR_WATER) {
-            this.ofClearWater = !this.ofClearWater;
-            this.updateWaterOpacity();
-        }
-
-        if (option == OptionOF.AA_LEVEL) {
-            int[] var3 = new int[] {0, 2, 4, 6, 8, 12, 16};
-            boolean var4 = false;
-
-            for (int i = 0; i < var3.length - 1; ++i) {
-                if (this.ofAaLevel == var3[i]) {
-                    this.ofAaLevel = var3[i + 1];
-                    var4 = true;
-                    break;
-                }
-            }
-
-            if (!var4) {
-                this.ofAaLevel = 0;
-            }
-        }
-
-        if (option == OptionOF.AF_LEVEL) {
-            this.ofAfLevel *= 2;
-            if (this.ofAfLevel > 16) {
-                this.ofAfLevel = 1;
-            }
-
-            this.ofAfLevel = Config.limit(this.ofAfLevel, 1, 16);
-            this.minecraft.textures.reloadAll();
-        }
-
-        if (option == OptionOF.GRASS_3D) {
-            this.grass3d = !this.grass3d;
-            this.minecraft.levelRenderer.allChanged();
-        }
+        this.ac$options().cycle(option, value);
     }
 
     @Inject(
@@ -499,30 +460,9 @@ public abstract class MixinGameOptions implements ExGameOptions {
         cancellable = true
     )
     private void getFloatValueOF(Option option, CallbackInfoReturnable<Float> cir) {
-        if (option == OptionOF.BRIGHTNESS) {
-            cir.setReturnValue(this.ofBrightness);
-        }
-        else if (option == OptionOF.CLOUD_HEIGHT) {
-            cir.setReturnValue(this.ofCloudsHeight);
-        }
-        else if (option == OptionOF.AO_LEVEL) {
-            cir.setReturnValue(this.ofAoLevel);
-        }
-        else if (option == OptionOF.CHAT_MESSAGE_BUFFER_LIMIT) {
-            cir.setReturnValue((float) MathF.inverseLerp(this.chatMessageBufferLimit, 1, MAX_CHAT_BUFFER_LIMIT));
-        }
-        else if (option == OptionOF.PARTICLE_LIMIT) {
-            cir.setReturnValue((float) ((double) this.particleLimit / MAX_PARTICLE_LIMIT));
-        }
-        else if (option == OptionOF.CHAT_WIDTH) {
-            cir.setReturnValue(this.chatWidth);
-        }
-        else if (option == OptionOF.CHUNK_RENDER_DISTANCE) {
-            cir.setReturnValue((float) MathF.inverseLerp(
-                this.viewDistance,
-                MIN_CHUNK_RENDER_DISTANCE,
-                MAX_CHUNK_RENDER_DISTANCE
-            ));
+        Float value = this.ac$options().progress(option);
+        if (value != null) {
+            cir.setReturnValue(value);
         }
     }
 
@@ -532,11 +472,9 @@ public abstract class MixinGameOptions implements ExGameOptions {
         cancellable = true
     )
     private void getBooleanValueOF(Option option, CallbackInfoReturnable<Boolean> cir) {
-        if (option == OptionOF.GRASS_3D) {
-            cir.setReturnValue(this.grass3d);
-        }
-        else if (option == OptionOF.ALLOW_JAVA_IN_SCRIPT) {
-            cir.setReturnValue(this.allowJavaInScript);
+        Boolean value = this.ac$options().booleanValue(option);
+        if (value != null) {
+            cir.setReturnValue(value);
         }
     }
 
@@ -547,16 +485,16 @@ public abstract class MixinGameOptions implements ExGameOptions {
         if (name == null) {
             name = option.getCaptionId();
         }
-
         String prefix = name + ": ";
+        String customValue = this.ac$options().label(option, ts);
+        if (customValue != null) {
+            return prefix + customValue;
+        }
+        if (option == Option.RENDER_DISTANCE) {
+            return prefix + this.viewDistance;
+        }
         if (option.isProgress()) {
             float value = this.getProgressValue(option);
-            if (option == OptionOF.CHAT_MESSAGE_BUFFER_LIMIT) {
-                return prefix + (int) MathF.lerp(value, 1, MAX_CHAT_BUFFER_LIMIT);
-            }
-            else if (option == OptionOF.CHUNK_RENDER_DISTANCE) {
-                return prefix + this.viewDistance;
-            }
             if (option == Option.SENSITIVITY) {
                 if (value == 0.0F) {
                     return prefix + ts.get("options.sensitivity.min");
@@ -566,194 +504,24 @@ public abstract class MixinGameOptions implements ExGameOptions {
                 }
                 return prefix + (int) (value * 200.0F) + "%";
             }
-            if (value == 0.0F) {
-                return prefix + ts.get("options.off");
-            }
-            return prefix + (int) (value * 100.0F) + "%";
+            return prefix + (value == 0.0F ? ts.get("options.off") : (int) (value * 100.0F) + "%");
         }
-        else if (option == Option.ADVANCED_OPENGL) {
-            if (!this.advancedOpengl) {
-                return prefix + "OFF";
-            }
-            return this.ofOcclusionFancy ? prefix + "Fancy" : prefix + "Fast";
+        if (option.isBoolean()) {
+            return prefix + ts.get(this.getBooleanValue(option) ? "options.on" : "options.off");
         }
-        else if (option.isBoolean()) {
-            boolean value = this.getBooleanValue(option);
-            if (value) {
-                return prefix + ts.get("options.on");
-            }
-            return prefix + ts.get("options.off");
-        }
-        else if (option == Option.DIFFICULTY) {
+        if (option == Option.DIFFICULTY) {
             return prefix + ts.get(DIFFICULTIES[this.difficulty]);
         }
-        else if (option == Option.GUI_SCALE) {
+        if (option == Option.GUI_SCALE) {
             return prefix + ts.get(GUI_SCALES[this.guiScale]);
         }
-        else if (option == Option.FRAMERATE_LIMIT) {
-            if (this.fpsLimit == 3) {
-                return prefix + "VSync";
-            }
-            return prefix + Language.getOrDefault(PERFORMANCE_OPTIONS[this.fpsLimit]);
+        if (option == Option.FRAMERATE_LIMIT) {
+            return prefix + (this.fpsLimit == 3 ? "VSync" : Language.getOrDefault(PERFORMANCE_OPTIONS[this.fpsLimit]));
         }
-        else if (option == OptionOF.FOG_FANCY) {
-            return this.ofFogFancy ? prefix + "Fancy" : prefix + "Fast";
+        if (option == Option.GRAPHICS) {
+            return prefix + ts.get(this.fancyGraphics ? "options.graphics.fancy" : "options.graphics.fast");
         }
-        else if (option == OptionOF.FOG_START) {
-            return prefix + this.ofFogStart;
-        }
-        else if (option == OptionOF.MIPMAP_LEVEL) {
-            return prefix + this.ofMipmapLevel;
-        }
-        else if (option == OptionOF.MIPMAP_TYPE) {
-            return this.ofMipmapLinear ? prefix + "Linear" : prefix + "Nearest";
-        }
-        else if (option == OptionOF.LOAD_FAR) {
-            return this.ofLoadFar ? prefix + "ON" : prefix + "OFF";
-        }
-        else if (option == OptionOF.PRELOADED_CHUNKS) {
-            if (this.ofPreloadedChunks == 0) {
-                return prefix + "OFF";
-            }
-            return prefix + this.ofPreloadedChunks;
-        }
-        else if (option == OptionOF.CLOUDS) {
-            return switch (this.ofClouds) {
-                case 1 -> prefix + "Fast";
-                case 2 -> prefix + "Fancy";
-                case 3 -> prefix + "OFF";
-                default -> prefix + "Default";
-            };
-        }
-        else if (option == OptionOF.LEAVES) {
-            return switch (this.ofTrees) {
-                case 1 -> prefix + "Fast";
-                case 2 -> prefix + "Fancy";
-                default -> prefix + "Default";
-            };
-        }
-        else if (option == OptionOF.GRASS) {
-            return switch (this.ofGrass) {
-                case 1 -> prefix + "Fast";
-                case 2 -> prefix + "Fancy";
-                default -> prefix + "Default";
-            };
-        }
-        else if (option == OptionOF.RAIN) {
-            return switch (this.ofRain) {
-                case 1 -> prefix + "Fast";
-                case 2 -> prefix + "Fancy";
-                case 3 -> prefix + "OFF";
-                default -> prefix + "Default";
-            };
-        }
-        else if (option == OptionOF.WATER) {
-            return switch (this.ofWater) {
-                case 1 -> prefix + "Fast";
-                case 2 -> prefix + "Fancy";
-                case 3 -> prefix + "OFF";
-                default -> prefix + "Default";
-            };
-        }
-        else if (option == OptionOF.ANIMATED_WATER) {
-            return switch (this.ofAnimatedWater) {
-                case 1 -> prefix + "Dynamic";
-                case 2 -> prefix + "OFF";
-                default -> prefix + "ON";
-            };
-        }
-        else if (option == OptionOF.ANIMATED_LAVA) {
-            return switch (this.ofAnimatedLava) {
-                case 1 -> prefix + "Dynamic";
-                case 2 -> prefix + "OFF";
-                default -> prefix + "ON";
-            };
-        }
-        else if (option == OptionOF.ANIMATED_FIRE) {
-            return this.ofAnimatedFire ? prefix + "ON" : prefix + "OFF";
-        }
-        else if (option == OptionOF.ANIMATED_PORTAL) {
-            return this.ofAnimatedPortal ? prefix + "ON" : prefix + "OFF";
-        }
-        else if (option == OptionOF.ANIMATED_REDSTONE) {
-            return this.ofAnimatedRedstone ? prefix + "ON" : prefix + "OFF";
-        }
-        else if (option == OptionOF.ANIMATED_EXPLOSION) {
-            return this.ofAnimatedExplosion ? prefix + "ON" : prefix + "OFF";
-        }
-        else if (option == OptionOF.ANIMATED_FLAME) {
-            return this.ofAnimatedFlame ? prefix + "ON" : prefix + "OFF";
-        }
-        else if (option == OptionOF.ANIMATED_SMOKE) {
-            return this.ofAnimatedSmoke ? prefix + "ON" : prefix + "OFF";
-        }
-        else if (option == OptionOF.FAST_DEBUG_INFO) {
-            return this.ofFastDebugInfo ? prefix + "ON" : prefix + "OFF";
-        }
-        else if (option == OptionOF.AUTOSAVE_TICKS) {
-            if (this.ofAutoSaveTicks <= 40) {
-                return prefix + "Default (2s)";
-            }
-            if (this.ofAutoSaveTicks <= 400) {
-                return prefix + "20s";
-            }
-            if (this.ofAutoSaveTicks <= 4000) {
-                return prefix + "3min";
-            }
-            return prefix + "30min";
-        }
-        else if (option == OptionOF.CONNECTED_GRASS) {
-            return switch (this.ofConnectedGrass) {
-                case FAST -> prefix + "Fast";
-                case FANCY -> prefix + "Fancy";
-                default -> prefix + "OFF";
-            };
-        }
-        else {
-            if (option == OptionOF.WEATHER) {
-                return this.ofWeather ? prefix + "ON" : prefix + "OFF";
-            }
-            if (option == OptionOF.SKY) {
-                return this.ofSky ? prefix + "ON" : prefix + "OFF";
-            }
-            if (option == OptionOF.STARS) {
-                return this.ofStars ? prefix + "ON" : prefix + "OFF";
-            }
-            if (option == OptionOF.CHUNK_UPDATES_DYNAMIC) {
-                return this.ofChunkUpdatesDynamic ? prefix + "ON" : prefix + "OFF";
-            }
-            if (option == OptionOF.TIME) {
-                if (this.ofTime == 1) {
-                    return prefix + "Day Only";
-                }
-                if (this.ofTime == 2) {
-                    return prefix + "Night Only";
-                }
-                return prefix + "Default";
-            }
-            if (option == OptionOF.CLEAR_WATER) {
-                return this.ofClearWater ? prefix + "ON" : prefix + "OFF";
-            }
-            if (option == OptionOF.AA_LEVEL) {
-                if (this.ofAaLevel == 0) {
-                    return prefix + "OFF";
-                }
-                return prefix + this.ofAaLevel;
-            }
-            if (option == OptionOF.AF_LEVEL) {
-                if (this.ofAfLevel == 1) {
-                    return prefix + "OFF";
-                }
-                return prefix + this.ofAfLevel;
-            }
-            if (option == Option.GRAPHICS) {
-                if (this.fancyGraphics) {
-                    return prefix + ts.get("options.graphics.fancy");
-                }
-                return prefix + ts.get("options.graphics.fast");
-            }
-            return prefix;
-        }
+        return prefix;
     }
 
     @Inject(
@@ -765,7 +533,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
         )
     )
     private void load_fpsLimit(CallbackInfo ci) {
-        Display.setVSyncEnabled(this.fpsLimit == 3);
+        GameWindow.setVSyncEnabled(this.fpsLimit == 3);
     }
 
     @Inject(
@@ -794,138 +562,16 @@ public abstract class MixinGameOptions implements ExGameOptions {
             ordinal = 0
         )
     )
-    private void loadOF(CallbackInfo ci, @Local BufferedReader reader, @Local String[] parts) {
+    private void loadOF(CallbackInfo ci, @Local String[] parts) {
         if (parts.length < 2) {
             return;
         }
-
-        String name = parts[0];
-        String value = parts[1];
-
-        switch (name) {
-            case "ofFogFancy" -> this.ofFogFancy = Boolean.parseBoolean(value);
-            case "ofFogStart" -> {
-                this.ofFogStart = Float.parseFloat(value);
-                if (this.ofFogStart < 0.2F) {
-                    this.ofFogStart = 0.2F;
-                }
-                if (this.ofFogStart > 0.81F) {
-                    this.ofFogStart = 0.8F;
-                }
-            }
-            case "ofMipmapLevel" -> {
-                this.ofMipmapLevel = Integer.parseInt(value);
-                if (this.ofMipmapLevel < 0) {
-                    this.ofMipmapLevel = 0;
-                }
-                if (this.ofMipmapLevel > 4) {
-                    this.ofMipmapLevel = 4;
-                }
-            }
-            case "ofMipmapLinear" -> this.ofMipmapLinear = Boolean.parseBoolean(value);
-            case "ofLoadFar" -> this.ofLoadFar = Boolean.parseBoolean(value);
-            case "ofPreloadedChunks" -> {
-                this.ofPreloadedChunks = Integer.parseInt(value);
-                if (this.ofPreloadedChunks < 0) {
-                    this.ofPreloadedChunks = 0;
-                }
-                if (this.ofPreloadedChunks > 8) {
-                    this.ofPreloadedChunks = 8;
-                }
-            }
-            case "ofOcclusionFancy" -> this.ofOcclusionFancy = Boolean.parseBoolean(value);
-            case "ofBrightness" -> {
-                this.ofBrightness = Float.parseFloat(value);
-                this.ofBrightness = Config.limit(this.ofBrightness, 0.0F, 1.0F);
-                this.updateWorldLightLevels();
-            }
-            case "ofAoLevel" -> {
-                this.ofAoLevel = Float.parseFloat(value);
-                this.ofAoLevel = Config.limit(this.ofAoLevel, 0.0F, 1.0F);
-                this.ao = this.ofAoLevel > 0.0F;
-            }
-            case "ofClouds" -> {
-                this.ofClouds = Integer.parseInt(value);
-                this.ofClouds = Config.limit(this.ofClouds, 0, 3);
-            }
-            case "ofCloudsHeight" -> {
-                this.ofCloudsHeight = Float.parseFloat(value);
-                this.ofCloudsHeight = Config.limit(this.ofCloudsHeight, 0.0F, 1.0F);
-            }
-            case "ofTrees" -> {
-                this.ofTrees = Integer.parseInt(value);
-                this.ofTrees = Config.limit(this.ofTrees, 0, 2);
-            }
-            case "ofGrass" -> {
-                this.ofGrass = Integer.parseInt(value);
-                this.ofGrass = Config.limit(this.ofGrass, 0, 2);
-            }
-            case "ofRain" -> {
-                this.ofRain = Integer.parseInt(value);
-                this.ofRain = Config.limit(this.ofRain, 0, 3);
-            }
-            case "ofWater" -> {
-                this.ofWater = Integer.parseInt(value);
-                this.ofWater = Config.limit(this.ofWater, 0, 3);
-            }
-            case "ofAnimatedWater" -> {
-                this.ofAnimatedWater = Integer.parseInt(value);
-                this.ofAnimatedWater = Config.limit(this.ofAnimatedWater, 0, 2);
-            }
-            case "ofAnimatedLava" -> {
-                this.ofAnimatedLava = Integer.parseInt(value);
-                this.ofAnimatedLava = Config.limit(this.ofAnimatedLava, 0, 2);
-            }
-            case "ofAnimatedFire" -> this.ofAnimatedFire = Boolean.parseBoolean(value);
-            case "ofAnimatedPortal" -> this.ofAnimatedPortal = Boolean.parseBoolean(value);
-            case "ofAnimatedRedstone" -> this.ofAnimatedRedstone = Boolean.parseBoolean(value);
-            case "ofAnimatedExplosion" -> this.ofAnimatedExplosion = Boolean.parseBoolean(value);
-            case "ofAnimatedFlame" -> this.ofAnimatedFlame = Boolean.parseBoolean(value);
-            case "ofAnimatedSmoke" -> this.ofAnimatedSmoke = Boolean.parseBoolean(value);
-            case "ofFastDebugInfo" -> this.ofFastDebugInfo = Boolean.parseBoolean(value);
-            case "ofAutoSaveTicks" -> {
-                this.ofAutoSaveTicks = Integer.parseInt(value);
-                this.ofAutoSaveTicks = Config.limit(this.ofAutoSaveTicks, 40, 40000);
-            }
-            case "ofConnectedGrass" -> {
-                try {
-                    this.ofConnectedGrass = ConnectedGrassOption.valueOf(value);
-                }
-                catch (IllegalArgumentException e) {
-                    this.ofConnectedGrass = ConnectedGrassOption.OFF;
-                }
-            }
-            case "ofWeather" -> this.ofWeather = Boolean.parseBoolean(value);
-            case "ofSky" -> this.ofSky = Boolean.parseBoolean(value);
-            case "ofStars" -> this.ofStars = Boolean.parseBoolean(value);
-            case "ofChunkUpdatesDynamic" -> this.ofChunkUpdatesDynamic = Boolean.parseBoolean(value);
-            case "ofTime" -> {
-                this.ofTime = Integer.parseInt(value);
-                this.ofTime = Config.limit(this.ofTime, 0, 2);
-            }
-            case "ofClearWater" -> {
-                this.ofClearWater = Boolean.parseBoolean(value);
-                this.updateWaterOpacity();
-            }
-            case "ofAaLevel" -> {
-                this.ofAaLevel = Integer.parseInt(value);
-                this.ofAaLevel = Config.limit(this.ofAaLevel, 0, 16);
-            }
-            case "ofAfLevel" -> {
-                this.ofAfLevel = Integer.parseInt(value);
-                this.ofAfLevel = Config.limit(this.ofAfLevel, 1, 16);
-            }
-            case "grass3d" -> this.grass3d = Boolean.parseBoolean(value);
-            case "chatMessageBufferLimit" -> {
-                this.chatMessageBufferLimit = Integer.parseInt(value);
-                this.chatMessageBufferLimit = Config.limit(this.chatMessageBufferLimit, 1, MAX_CHAT_BUFFER_LIMIT);
-            }
-            case "particleLimit" -> {
-                this.particleLimit = Integer.parseInt(value);
-                this.particleLimit = Config.limit(this.particleLimit, 0, MAX_PARTICLE_LIMIT);
-            }
-            case "allowJavaInScript" -> this.allowJavaInScript = Boolean.parseBoolean(value);
-            case "chatWidth" -> this.chatWidth = Float.parseFloat(value);
+        if (GameOptionRegistry.CHUNK_RENDER_DISTANCE.key().equals(parts[0])) {
+            this.ac$storedChunkRenderDistance = GameOptionRegistry.CHUNK_RENDER_DISTANCE.decode(parts[1]);
+            this.ac$hasStoredChunkRenderDistance = true;
+        }
+        else {
+            this.ac$options().load(parts[0], parts[1]);
         }
     }
 
@@ -938,45 +584,7 @@ public abstract class MixinGameOptions implements ExGameOptions {
         )
     )
     private void saveOptionsOF(CallbackInfo ci, @Local PrintWriter writer) {
-        writer.println("ofFogFancy:" + this.ofFogFancy);
-        writer.println("ofFogStart:" + this.ofFogStart);
-        writer.println("ofMipmapLevel:" + this.ofMipmapLevel);
-        writer.println("ofMipmapLinear:" + this.ofMipmapLinear);
-        writer.println("ofLoadFar:" + this.ofLoadFar);
-        writer.println("ofPreloadedChunks:" + this.ofPreloadedChunks);
-        writer.println("ofOcclusionFancy:" + this.ofOcclusionFancy);
-        writer.println("ofBrightness:" + this.ofBrightness);
-        writer.println("ofAoLevel:" + this.ofAoLevel);
-        writer.println("ofClouds:" + this.ofClouds);
-        writer.println("ofCloudsHeight:" + this.ofCloudsHeight);
-        writer.println("ofTrees:" + this.ofTrees);
-        writer.println("ofGrass:" + this.ofGrass);
-        writer.println("ofRain:" + this.ofRain);
-        writer.println("ofWater:" + this.ofWater);
-        writer.println("ofAnimatedWater:" + this.ofAnimatedWater);
-        writer.println("ofAnimatedLava:" + this.ofAnimatedLava);
-        writer.println("ofAnimatedFire:" + this.ofAnimatedFire);
-        writer.println("ofAnimatedPortal:" + this.ofAnimatedPortal);
-        writer.println("ofAnimatedRedstone:" + this.ofAnimatedRedstone);
-        writer.println("ofAnimatedExplosion:" + this.ofAnimatedExplosion);
-        writer.println("ofAnimatedFlame:" + this.ofAnimatedFlame);
-        writer.println("ofAnimatedSmoke:" + this.ofAnimatedSmoke);
-        writer.println("ofFastDebugInfo:" + this.ofFastDebugInfo);
-        writer.println("ofAutoSaveTicks:" + this.ofAutoSaveTicks);
-        writer.println("ofConnectedGrass:" + this.ofConnectedGrass);
-        writer.println("ofWeather:" + this.ofWeather);
-        writer.println("ofSky:" + this.ofSky);
-        writer.println("ofStars:" + this.ofStars);
-        writer.println("ofChunkUpdatesDynamic:" + this.ofChunkUpdatesDynamic);
-        writer.println("ofTime:" + this.ofTime);
-        writer.println("ofClearWater:" + this.ofClearWater);
-        writer.println("ofAaLevel:" + this.ofAaLevel);
-        writer.println("ofAfLevel:" + this.ofAfLevel);
-        writer.println("grass3d:" + this.grass3d);
-        writer.println("chatMessageBufferLimit:" + this.chatMessageBufferLimit);
-        writer.println("particleLimit:" + this.particleLimit);
-        writer.println("allowJavaInScript:" + this.allowJavaInScript);
-        writer.println("chatWidth:" + this.chatWidth);
+        this.ac$options().save(writer);
     }
 
     @Override
@@ -995,8 +603,8 @@ public abstract class MixinGameOptions implements ExGameOptions {
     }
 
     @Override
-    public GLMipMode ofMipmapMode() {
-        return ofMipmapLinear ? GLMipMode.LINEAR : GLMipMode.NEAREST;
+    public MipmapMode ofMipmapMode() {
+        return ofMipmapLinear ? MipmapMode.LINEAR : MipmapMode.NEAREST;
     }
 
     @Override
@@ -1011,7 +619,9 @@ public abstract class MixinGameOptions implements ExGameOptions {
 
     @Override
     public int ofChunkRenderDistance() {
-        return Math.max(1, this.viewDistance) + this.ofPreloadedChunks();
+        return Config.limit(this.viewDistance,
+            GameOptionRegistry.MIN_CHUNK_RENDER_DISTANCE, GameOptionRegistry.MAX_CHUNK_RENDER_DISTANCE)
+            + this.ofPreloadedChunks();
     }
 
     @Override
@@ -1031,20 +641,17 @@ public abstract class MixinGameOptions implements ExGameOptions {
 
     @Override
     public boolean ofOcclusionFancy() {
-        return ofOcclusionFancy;
+        return false;
     }
 
     @Override
     public boolean isOcclusionEnabled() {
-        return advancedOpengl;
+        return false;
     }
 
     @Override
     public boolean isOcclusionFancy() {
-        if (!isOcclusionEnabled()) {
-            return false;
-        }
-        return ofOcclusionFancy();
+        return false;
     }
 
     @Override

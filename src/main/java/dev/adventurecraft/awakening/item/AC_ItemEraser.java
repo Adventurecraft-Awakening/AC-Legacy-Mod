@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.item;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.world.BlockPos;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.ItemInstance;
@@ -15,12 +16,12 @@ public class AC_ItemEraser extends Item {
 
     @Override
     public boolean useOn(ItemInstance item, Player player, Level world, int x, int y, int z, int side) {
-        if (!AC_ItemCursor.bothSet) {
+        if (!EditorSession.forLevel(world).selection.bothSet) {
             return false;
         }
 
-        BlockPos min = AC_ItemCursor.one().min(AC_ItemCursor.two());
-        BlockPos max = AC_ItemCursor.one().max(AC_ItemCursor.two());
+        BlockPos min = EditorSession.forLevel(world).selection.one.min(EditorSession.forLevel(world).selection.two);
+        BlockPos max = EditorSession.forLevel(world).selection.one.max(EditorSession.forLevel(world).selection.two);
 
         BlockPos delta = max.sub(min);
         int width = delta.x() + 1;

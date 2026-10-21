@@ -1,6 +1,7 @@
 # gradle
 
 .gradle/
+gradle-local.properties
 build/
 out/
 classes/
@@ -33,8 +34,4 @@ bin/
 
 run/
 maps/
-
-# python
-
-__pycache__/
-*.py[cod]
+.lwjgl/

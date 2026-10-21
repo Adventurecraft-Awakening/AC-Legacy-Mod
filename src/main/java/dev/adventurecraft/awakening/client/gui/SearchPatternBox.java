@@ -1,6 +1,8 @@
 package dev.adventurecraft.awakening.client.gui;
 
 import dev.adventurecraft.awakening.client.gui.components.AC_EditBox;
+import dev.adventurecraft.awakening.client.render.UiDrawContext;
+import dev.adventurecraft.awakening.client.render.compat.LegacyPassBridge;
 import dev.adventurecraft.awakening.extension.client.gui.components.ExButton;
 import dev.adventurecraft.awakening.extension.client.gui.screen.ExScreen;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
@@ -8,6 +10,7 @@ import dev.adventurecraft.awakening.image.Rgba;
 import dev.adventurecraft.awakening.layout.IntPoint;
 import dev.adventurecraft.awakening.layout.IntRect;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 
@@ -104,10 +107,16 @@ public class SearchPatternBox {
     }
 
     public void render() {
-        this.textBox.render(this.font);
+        try (var ui = LegacyPassBridge.uiContext(this.font, Minecraft.instance.textures)) {
+            this.render(ui);
+        }
+    }
+
+    public void render(UiDrawContext ui) {
+        this.textBox.render(ui);
 
         if (this.syntaxError != null) {
-            this.renderSyntaxError(this.syntaxError);
+            this.renderSyntaxError(ui, this.syntaxError);
         }
     }
 
@@ -171,7 +180,7 @@ public class SearchPatternBox {
         this.textBox.resetTextColor();
     }
 
-    private void renderSyntaxError(PatternSyntaxException error) {
+    private void renderSyntaxError(UiDrawContext ui, PatternSyntaxException error) {
         var text = new StringBuilder();
         text.append(error.getDescription());
 
@@ -187,7 +196,7 @@ public class SearchPatternBox {
         int textWidth = font.measureText(text, 0).width();
         int x = rect.x + rect.w - textWidth - 4;
         int y = rect.y + rect.h + 4;
-        font.drawString(text, x, y, 0x8f, true);
+        ui.text(text.toString(), x, y, 0xff00008f, true);
     }
 
     public IntRect getBoxRect() {

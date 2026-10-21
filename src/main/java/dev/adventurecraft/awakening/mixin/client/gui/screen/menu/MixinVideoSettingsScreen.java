@@ -8,6 +8,7 @@ import net.minecraft.client.ScreenSizeCalculator;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.OptionButton;
 import net.minecraft.client.gui.components.SliderButton;
+import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.VideoSettingsScreen;
 import net.minecraft.locale.I18n;
@@ -17,6 +18,8 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.List;
 
 @Mixin(
     value = VideoSettingsScreen.class,
@@ -30,7 +33,7 @@ public abstract class MixinVideoSettingsScreen extends Screen implements OptionT
     @Shadow private static Option[] OPTIONS;
 
     @Unique private static final String[] extraOptions = {
-        "options.of.textures", "options.of.details", "options.of.other"
+        "options.ac.rayTracingSettings", "options.of.textures", "options.of.details", "options.of.other"
     };
 
     @Unique private int lastMouseX = 0;
@@ -44,7 +47,7 @@ public abstract class MixinVideoSettingsScreen extends Screen implements OptionT
     private static void init_rewriteOptions(CallbackInfo ci) {
         OPTIONS = new Option[] {
             Option.GRAPHICS, OptionOF.CHUNK_RENDER_DISTANCE, OptionOF.AO_LEVEL, Option.FRAMERATE_LIMIT, Option.ANAGLYPH,
-            Option.VIEW_BOBBING, Option.GUI_SCALE, Option.ADVANCED_OPENGL, OptionOF.AA_LEVEL, OptionOF.BRIGHTNESS
+            Option.VIEW_BOBBING, Option.GUI_SCALE, OptionOF.BRIGHTNESS
         };
     }
 
@@ -74,14 +77,26 @@ public abstract class MixinVideoSettingsScreen extends Screen implements OptionT
         }
 
         for (int i = 0; i < extraOptions.length; i++) {
-            int x = this.width / 2 - 155 + index % 2 * 160;
-            int y = this.height / 6 + 24 * (index / 2);
+            int x = this.width / 2 - 155 + i % 2 * 160;
+            int y = this.height / 6 + 24 * ((index + 1) / 2 + i / 2);
 
             this.buttons.add(new Button(100 + i, x, y, 150, 20, ts.get(extraOptions[i])));
-            index++;
         }
 
         this.buttons.add(new Button(200, this.width / 2 - 100, this.height / 6 + 168, ts.get("gui.done")));
+    }
+
+    @Override
+    public Option[] getOptions() {
+        return OPTIONS;
+    }
+
+    @Override
+    public List<String> getTooltipLines(GuiComponent element) {
+        if (element instanceof Button button && button.id == 100) {
+            return OptionTooltipProvider.parseOptionTooltip(I18n.getInstance().get("options.ac.rayTracingSettings.tooltip"));
+        }
+        return OptionTooltipProvider.super.getTooltipLines(element);
     }
 
     @Override
@@ -102,20 +117,25 @@ public abstract class MixinVideoSettingsScreen extends Screen implements OptionT
 
         if (button.id == 100) {
             this.minecraft.options.save();
-            var var2 = new GuiTextureSettingsOF(this, this.config);
+            var var2 = new GuiRayTracingSettingsOF(this, this.config);
             this.minecraft.setScreen(var2);
         }
 
         if (button.id == 101) {
             this.minecraft.options.save();
-            var var5 = new GuiDetailSettingsOF(this, this.config);
+            var var5 = new GuiTextureSettingsOF(this, this.config);
             this.minecraft.setScreen(var5);
         }
 
         if (button.id == 102) {
             this.minecraft.options.save();
-            var var7 = new GuiOtherSettingsOF(this, this.config);
+            var var7 = new GuiDetailSettingsOF(this, this.config);
             this.minecraft.setScreen(var7);
+        }
+
+        if (button.id == 103) {
+            this.minecraft.options.save();
+            this.minecraft.setScreen(new GuiOtherSettingsOF(this, this.config));
         }
 
         // TODO: rewrite this to not need manually adding checks - maybe check Option.isProgress?
@@ -148,4 +168,3 @@ public abstract class MixinVideoSettingsScreen extends Screen implements OptionT
         }
     }
 }
-

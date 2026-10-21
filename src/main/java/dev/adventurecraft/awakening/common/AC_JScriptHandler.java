@@ -1,197 +1,34 @@
 package dev.adventurecraft.awakening.common;
 
-import com.google.common.base.Stopwatch;
-import dev.adventurecraft.awakening.ACMod;
-import dev.adventurecraft.awakening.extension.util.ExProgressListener;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.minecraft.client.Minecraft;
+import dev.adventurecraft.awakening.script.ScriptCatalog;
+import dev.adventurecraft.awakening.script.WorldScriptRuntime;
 import net.minecraft.util.ProgressListener;
 import net.minecraft.world.level.Level;
-import org.mozilla.javascript.*;
+import org.mozilla.javascript.Scriptable;
 
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.stream.Stream;
+import java.util.Collection;
 
+/** Compatibility facade for a world's shared script catalog and execution statistics. */
 public class AC_JScriptHandler {
-
-    Level world;
-    File scriptDir;
-    private final Map<String, AC_JScriptInfo> scripts;
-    private final List<AC_JScriptInfo> scriptList;
-
-    public AC_JScriptHandler(Level var1, File var2) {
-        this.world = var1;
-        this.scriptDir = new File(var2, "scripts");
-        this.scripts = new Object2ObjectOpenHashMap<>();
-        this.scriptList = new ArrayList<>();
+    private final WorldScriptRuntime runtime;
+    private final ScriptCatalog catalog;
+    public AC_JScriptHandler(Level world, File mapDirectory) {
+        this(((ExWorld) world).getScript().runtime(), mapDirectory);
     }
 
-    public Path[] getFiles() {
-        if (this.scriptDir.exists()) {
-            try (Stream<Path> stream = Files.walk(this.scriptDir.toPath(), 1)) {
-                return stream.filter(Files::isRegularFile).toArray(Path[]::new);
-            }
-            catch (IOException ex) {
-                ACMod.LOGGER.warn("Failed to load scripts.", ex);
-            }
-        }
-        return new Path[] {};
+    public AC_JScriptHandler(WorldScriptRuntime runtime, File mapDirectory) {
+        this.runtime = runtime;
+        this.catalog = this.runtime.catalog();
+        this.catalog.directory(mapDirectory.toPath().resolve("scripts"));
     }
-
-    public String[] getFileNames() {
-        return Arrays.stream(this.getFiles()).map(path -> path.getFileName().toString()).toArray(String[]::new);
-    }
-
-    public void loadScripts(ProgressListener progressListener) {
-        Stopwatch stopwatch = Stopwatch.createStarted();
-        this.scripts.clear();
-        this.scriptList.clear();
-
-        if (progressListener != null) {
-            progressListener.progressStart("Loading scripts");
-        }
-
-        Path[] filePaths = this.getFiles();
-        if (filePaths.length == 0) {
-            return;
-        }
-
-        try {
-            var cxFactory = ((ExWorld) this.world).getScript().getContext().getFactory();
-            var queue = new ExecutorCompletionService<ScriptLoadTask>(ACMod.WORLD_IO_EXECUTOR);
-
-            int taskCount = 0;
-            for (Path path : filePaths) {
-                String fileName = path.getFileName().toString();
-                String name = fileName.toLowerCase(); // TODO: don't lower-case? (depends on FS)
-                if (!name.endsWith(".js")) {
-                    continue;
-                }
-                var task = new ScriptLoadTask(path, fileName, cxFactory);
-                queue.submit(task, task);
-                taskCount++;
-            }
-
-            int takeCount = 0;
-            while (takeCount < taskCount) {
-                ScriptLoadTask task;
-                try {
-                    task = queue.take().get();
-                }
-                catch (ExecutionException e) {
-                    throw new RuntimeException(e);
-                }
-                takeCount += 1;
-
-                String fileName = task.path.getFileName().toString();
-                String name = fileName.toLowerCase(); // TODO: don't lower-case?
-
-                if (task.result != null) {
-                    var info = new AC_JScriptInfo(fileName, task.result);
-                    this.scripts.put(name, info);
-                    this.scriptList.add(info);
-                }
-                else if (task.ex != null) {
-                    Exception e = task.ex;
-
-                    Minecraft.instance.gui.addMessage("JS: " + e.getMessage());
-                    if (e instanceof IOException) {
-                        ACMod.LOGGER.error("Failed to read script file \"{}\".", fileName, e);
-                    }
-                    else if (e instanceof RhinoException) {
-                        ACMod.LOGGER.error("Failed to parse script file \"{}\".", fileName, e);
-                    }
-                }
-
-                if (progressListener instanceof ExProgressListener exProgressListener) {
-                    String stage = String.format("%4d / %4d", takeCount, taskCount);
-                    exProgressListener.notifyProgress(stage, takeCount / (double) taskCount, false);
-                }
-            }
-
-            if (progressListener instanceof ExProgressListener exProgressListener) {
-                String stage = String.format("%4d / %4d", taskCount, taskCount);
-                exProgressListener.notifyProgress(stage, 1, true);
-            }
-        }
-        catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        finally {
-            this.scriptList.sort(Comparator.comparing(o -> o.name));
-
-            stopwatch.stop();
-            ACMod.LOGGER.info("Loaded {} scripts in {}.", this.scripts.size(), stopwatch);
-        }
-    }
-
-    public void loadScripts() {
-        this.loadScripts(null);
-    }
-
-    public Object runScript(String name, Scriptable scope) {
-        return this.runScript(name, scope, true);
-    }
-
-    public Object runScript(String name, Scriptable scope, boolean printMissing) {
-        AC_JScriptInfo scriptInfo = this.scripts.get(name.toLowerCase());
-        if (scriptInfo == null) {
-            if (printMissing) {
-                Minecraft.instance.gui.addMessage(String.format("(JS) Missing '%s'", name));
-            }
-            return null;
-        }
-
-        long time = System.nanoTime();
-        try {
-            return ((ExWorld) this.world).getScript().runScript(scriptInfo.compiledScript, scope);
-        }
-        finally {
-            scriptInfo.addTime(System.nanoTime() - time);
-        }
-    }
-
-    public Collection<AC_JScriptInfo> getScripts() {
-        return this.scriptList;
-    }
-
-    private static final class ScriptLoadTask implements Runnable {
-        public final Path path;
-        public final String scriptName;
-        public final ContextFactory cxFactory;
-
-        public Script result;
-        public Exception ex;
-
-        private ScriptLoadTask(Path path, String scriptName, ContextFactory cxFactory) {
-            this.path = path;
-            this.scriptName = scriptName;
-            this.cxFactory = cxFactory;
-        }
-
-        @Override
-        public void run() {
-            Context cx = Context.getCurrentContext();
-            if (cx == null) {
-                //noinspection resource
-                cx = this.cxFactory.enterContext();
-            }
-
-            // TODO: update charset to UTF-8 in new maps?
-            try (var reader = new FileReader(this.path.toFile(), StandardCharsets.ISO_8859_1)) {
-                this.result = cx.compileReader(reader, this.scriptName, 1, null);
-            }
-            catch (Exception ex) {
-                this.ex = ex;
-            }
-        }
-    }
+    public Path[] getFiles() { return this.catalog.files(); }
+    public String[] getFileNames() { return this.catalog.fileNames(); }
+    public void loadScripts(ProgressListener progress) { this.catalog.load(progress); }
+    public void loadScripts() { this.loadScripts(null); }
+    public Object runScript(String name, Scriptable scope) { return this.runScript(name, scope, true); }
+    public Object runScript(String name, Scriptable scope, boolean printMissing) { return this.catalog.run(name, scope, printMissing); }
+    public Collection<AC_JScriptInfo> getScripts() { return this.runtime.statistics(); }
 }

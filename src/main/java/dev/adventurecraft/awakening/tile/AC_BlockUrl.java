@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.tile;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.gui.AC_GuiUrl;
 import dev.adventurecraft.awakening.common.gui.AC_GuiUrlRequest;
@@ -53,6 +54,6 @@ public class AC_BlockUrl extends TileEntityTile implements AC_ITriggerDebugBlock
 
     @Override
     public boolean mayPick() {
-        return AC_DebugMode.active;
+        return EditorSession.current().active;
     }
 }

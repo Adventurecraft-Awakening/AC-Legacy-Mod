@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.tile;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.gui.AC_GuiScript;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
@@ -40,14 +41,14 @@ public class AC_BlockScript extends TileEntityTile implements AC_ITriggerDebugBl
 
     @Override
     public boolean mayPick() {
-        return AC_DebugMode.active;
+        return EditorSession.current().active;
     }
 
     @Override
     public void onTriggerActivated(Level world, int x, int y, int z) {
         var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityScript.class);
         if (!entity.onTriggerScriptFile.isEmpty()) {
-            ((ExWorld) world).getScriptHandler().runScript(entity.onTriggerScriptFile, entity.scope);
+            ((ExWorld) world).getScriptHandler().runScript(entity.onTriggerScriptFile, entity.scriptScope());
         }
         entity.isActivated = true;
     }
@@ -56,7 +57,7 @@ public class AC_BlockScript extends TileEntityTile implements AC_ITriggerDebugBl
     public void onTriggerDeactivated(Level world, int x, int y, int z) {
         var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityScript.class);
         if (!entity.onDetriggerScriptFile.isEmpty()) {
-            ((ExWorld) world).getScriptHandler().runScript(entity.onDetriggerScriptFile, entity.scope);
+            ((ExWorld) world).getScriptHandler().runScript(entity.onDetriggerScriptFile, entity.scriptScope());
         }
         entity.isActivated = false;
     }

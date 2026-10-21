@@ -1,21 +1,21 @@
 package dev.adventurecraft.awakening.mixin.client.render;
 
-import dev.adventurecraft.awakening.client.gl.GLTexture;
-import dev.adventurecraft.awakening.client.gl.GLTextureTarget;
+import dev.adventurecraft.awakening.client.render.compat.LegacyPassBridge;
+import dev.adventurecraft.awakening.client.render.*;
+import dev.adventurecraft.awakening.client.render.state.*;
+import dev.adventurecraft.awakening.client.render.resource.RenderTexture;
 import dev.adventurecraft.awakening.item.AC_IItemLight;
 import dev.adventurecraft.awakening.item.AC_Items;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
+import dev.adventurecraft.awakening.extension.client.ExTextureManager;
 import dev.adventurecraft.awakening.extension.client.render.ExHeldItemRenderer;
-import dev.adventurecraft.awakening.layout.Size;
-import net.minecraft.client.Lighting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.MapRenderer;
-import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.client.renderer.TileRenderer;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.PlayerRenderer;
@@ -26,8 +26,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.saveddata.MapItemSavedData;
 import net.minecraft.world.level.tile.Tile;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL12;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -74,118 +72,39 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
 
     @Overwrite
     public void renderItem(Mob mob, ItemInstance item) {
-        if (item.id < 256) {
-            Tile tile = Tile.tiles[item.id];
-            int texNum = ((ExBlock) tile).getTextureNum();
-            String texName = texNum == 0 ? "/terrain.png" : String.format("/terrain%d.png", texNum);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.textures.loadTexture(texName));
+        this.ac$renderItem(mob, item, LegacyPassBridge.capture());
+    }
 
-            if (TileRenderer.canRender(tile.getRenderShape())) {
-                this.tileRenderer.renderTile(tile, item.getAuxValue(), mob.getBrightness(1.0F));
-                return;
-            }
+    @Override public void renderItem(Mob mob,ItemInstance item,DrawParameters parameters) { this.ac$renderItem(mob,item,parameters); }
+
+    @Unique
+    private void ac$renderItem(Mob mob, ItemInstance item, DrawParameters parameters) {
+        String atlas = "/gui/items.png";
+        Tile tile = item.id < 256 ? Tile.tiles[item.id] : null;
+        if (tile != null) {
+            int number = ((ExBlock) tile).getTextureNum();
+            atlas = number == 0 ? "/terrain.png" : String.format("/terrain%d.png", number);
         }
-        else {
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.textures.loadTexture("/gui/items.png"));
+        var texture = ((ExTextureManager)this.mc.textures).texture(atlas);
+        if (tile != null && TileRenderer.canRender(tile.getRenderShape())) {
+            float brightness=mob.getBrightness(1);
+            NativeRenderer.drawMesh(BlockMeshes.inventory(tile,item.getAuxValue(),true),texture,
+                parameters.withObject(parameters.object().withTint(new Color4(brightness,brightness,brightness,1))));
+            return;
         }
-
-        Size size = GLTexture.getSize(GLTextureTarget.TEXTURE_2D, 0);
-        int w = size.w / 16;
-        int h = size.h / 16;
-        double rcpW = 0.5 / size.w;
-        double rcpH = 0.5 / size.h;
-
-        int texture = mob.getItemTexture(item);
-        int texX = texture % 16 * 16;
-        int texY = texture / 16 * 16;
-        double u0 = (texX + 0.0) / 256.0;
-        double u1 = (texX + 16.0) / 256.0;
-        double v0 = (texY + 0.0) / 256.0;
-        double v1 = (texY + 16.0) / 256.0;
-
-        float x1 = 1.0F;
-        float y1 = 0.3F;
-        double z1 = -1.0 / 16.0;
-        GL11.glPushMatrix();
-        GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-        GL11.glTranslatef(0.0F, -y1, 0.0F);
-
-        float scale = 1.5F;
-        GL11.glScalef(scale, scale, scale);
-
+        var pose = new PoseStack(parameters);
+        pose.translate(0, -.3F, 0);
+        pose.scale(1.5F, 1.5F, 1.5F);
         if (this.itemRotate) {
-            GL11.glRotatef(50.0F, 0.0F, 1.0F, 0.0F);
-            GL11.glRotatef(335.0F, 0.0F, 0.0F, 1.0F);
+            pose.rotate(50, 0, 1, 0);
+            pose.rotate(335, 0, 0, 1);
         }
-        GL11.glTranslatef(-(15.0F / 16.0F), -(1.0F / 16.0F), 0.0F);
-
-        Tesselator ts = Tesselator.instance;
-        ts.begin();
-
-        ts.normal(0.0F, 0.0F, 1.0F);
-        ts.vertexUV(0.0D, 0.0D, 0.0D, u1, v1);
-        ts.vertexUV(x1, 0.0D, 0.0D, u0, v1);
-        ts.vertexUV(x1, 1.0D, 0.0D, u0, v0);
-        ts.vertexUV(0.0D, 1.0D, 0.0D, u1, v0);
-
-        ts.normal(0.0F, 0.0F, -1.0F);
-        ts.vertexUV(0.0D, 1.0D, z1, u1, v0);
-        ts.vertexUV(x1, 1.0D, z1, u0, v0);
-        ts.vertexUV(x1, 0.0D, z1, u0, v1);
-        ts.vertexUV(0.0D, 0.0D, z1, u1, v1);
-
-        ts.normal(-1.0F, 0.0F, 0.0F);
-        for (int x = 0; x < w; ++x) {
-            double x2 = x / (double) w;
-            double u2 = u1 + (u0 - u1) * x2 - rcpW;
-            double x0 = x1 * x2;
-            ts.vertexUV(x0, 0.0D, z1, u2, v1);
-            ts.vertexUV(x0, 0.0D, 0.0D, u2, v1);
-            ts.vertexUV(x0, 1.0D, 0.0D, u2, v0);
-            ts.vertexUV(x0, 1.0D, z1, u2, v0);
-        }
-
-        ts.normal(1.0F, 0.0F, 0.0F);
-        for (int x = 0; x < w; ++x) {
-            double x2 = x / (double) w;
-            double u2 = u1 + (u0 - u1) * x2 - rcpW;
-            double x0 = x1 * x2 + 1.0 / w;
-            ts.vertexUV(x0, 1.0D, z1, u2, v0);
-            ts.vertexUV(x0, 1.0D, 0.0D, u2, v0);
-            ts.vertexUV(x0, 0.0D, 0.0D, u2, v1);
-            ts.vertexUV(x0, 0.0D, z1, u2, v1);
-        }
-
-        ts.normal(0.0F, 1.0F, 0.0F);
-        for (int y = 0; y < h; ++y) {
-            double y2 = y / (double) h;
-            double v2 = v1 + (v0 - v1) * y2 - rcpH;
-            double y0 = x1 * y2 + 1.0 / h;
-            ts.vertexUV(0.0D, y0, 0.0D, u1, v2);
-            ts.vertexUV(x1, y0, 0.0D, u0, v2);
-            ts.vertexUV(x1, y0, z1, u0, v2);
-            ts.vertexUV(0.0D, y0, z1, u1, v2);
-        }
-
-        ts.normal(0.0F, -1.0F, 0.0F);
-        for (int y = 0; y < h; ++y) {
-            double y2 = y / (double) h;
-            double v2 = v1 + (v0 - v1) * y2 - rcpH;
-            double y0 = x1 * y2;
-            ts.vertexUV(x1, y0, 0.0D, u0, v2);
-            ts.vertexUV(0.0D, y0, 0.0D, u1, v2);
-            ts.vertexUV(0.0D, y0, z1, u1, v2);
-            ts.vertexUV(x1, y0, z1, u0, v2);
-        }
-
-        ts.end();
-
+        pose.translate(-15F / 16, -1F / 16, 0);
+        var size = texture.size(0);
+        NativeRenderer.drawMesh(HeldItemMeshes.sprite(mob.getItemTexture(item), size.w, size.h), texture, pose.parameters());
         if (Item.items[item.id] instanceof AC_IItemLight lightItem && lightItem.isMuzzleFlash(item)) {
-            this.renderMuzzleFlash();
+            this.ac$renderMuzzleFlash(pose.parameters(), texture);
         }
-
-        GL11.glDisable(GL12.GL_RESCALE_NORMAL);
-        GL11.glPopMatrix();
     }
 
     @Inject(
@@ -200,61 +119,43 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
     }
 
     @Overwrite
-    public void renderScreenEffect(float var1) {
-        GL11.glDisable(GL11.GL_ALPHA_TEST);
-        int var2;
+    public void renderScreenEffect(float partialTick) {
+        var captured = LegacyPassBridge.capture();
+        var parameters = captured.withMaterial(captured.material().withAlpha(CompareOp.ALWAYS, 0));
+        var terrain = ((ExTextureManager)this.mc.textures).texture("/terrain.png");
         if (!((ExMinecraft) this.mc).isCameraActive() && this.mc.player.displayFireAnimation()) {
-            var2 = this.mc.textures.loadTexture("/terrain.png");
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, var2);
-            this.renderFire(var1);
+            LegacyPassBridge.drawLegacy(parameters, terrain, () -> this.renderFire(partialTick));
         }
-
         if (this.mc.cameraEntity.isInWall()) {
-            var2 = Mth.floor(this.mc.cameraEntity.x);
-            int var3 = Mth.floor(this.mc.cameraEntity.y);
-            int var4 = Mth.floor(this.mc.cameraEntity.z);
-            int var5 = this.mc.textures.loadTexture("/terrain.png");
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, var5);
-            int var6 = this.mc.level.getTile(var2, var3, var4);
-            if (this.mc.level.isSolidBlockingTile(var2, var3, var4) && this.mc.level.isSolidTile(var2, var3, var4)) {
-                this.renderTex(var1, Tile.tiles[var6].getTexture(2));
-            }
-            else {
-                for (int var7 = 0; var7 < 8; ++var7) {
-                    float var8 = ((float) ((var7 >> 0) % 2) - 0.5F) * this.mc.player.bbWidth * 0.9F;
-                    float var9 = ((float) ((var7 >> 1) % 2) - 0.5F) * this.mc.player.bbHeight * 0.2F;
-                    float var10 = ((float) ((var7 >> 2) % 2) - 0.5F) * this.mc.player.bbWidth * 0.9F;
-                    int var11 = Mth.floor((float) var2 + var8);
-                    int var12 = Mth.floor((float) var3 + var9);
-                    int var13 = Mth.floor((float) var4 + var10);
-                    if (this.mc.level.isSolidBlockingTile(var11, var12, var13)) {
-                        var6 = this.mc.level.getTile(var11, var12, var13);
-                    }
+            int x = Mth.floor(this.mc.cameraEntity.x), y = Mth.floor(this.mc.cameraEntity.y), z = Mth.floor(this.mc.cameraEntity.z);
+            int tile = this.mc.level.getTile(x, y, z);
+            if (this.mc.level.isSolidBlockingTile(x, y, z) && this.mc.level.isSolidTile(x, y, z)) {
+                int sprite = Tile.tiles[tile].getTexture(2);
+                LegacyPassBridge.drawLegacy(parameters, terrain, () -> this.renderTex(partialTick, sprite));
+            } else {
+                for (int i = 0; i < 8; i++) {
+                    int sx = Mth.floor(x + (((i >> 0) % 2) - .5F) * this.mc.player.bbWidth * .9F);
+                    int sy = Mth.floor(y + (((i >> 1) % 2) - .5F) * this.mc.player.bbHeight * .2F);
+                    int sz = Mth.floor(z + (((i >> 2) % 2) - .5F) * this.mc.player.bbWidth * .9F);
+                    if (this.mc.level.isSolidBlockingTile(sx, sy, sz)) tile = this.mc.level.getTile(sx, sy, sz);
                 }
             }
-
-            if (Tile.tiles[var6] != null) {
-                this.renderTex(var1, Tile.tiles[var6].getTexture(2));
+            if (Tile.tiles[tile] != null) {
+                int sprite = Tile.tiles[tile].getTexture(2);
+                LegacyPassBridge.drawLegacy(parameters, terrain, () -> this.renderTex(partialTick, sprite));
             }
         }
-
-        if (this.mc.cameraEntity.isUnderLiquid(Material.WATER)) {
-            var2 = this.mc.textures.loadTexture("/misc/water.png");
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, var2);
-            this.renderWater(var1);
-        }
-
-        GL11.glEnable(GL11.GL_ALPHA_TEST);
+        if (this.mc.cameraEntity.isUnderLiquid(Material.WATER)) this.renderWater(partialTick);
     }
 
     @Overwrite
     private void renderWater(float var1) {
-        Tesselator var2 = Tesselator.instance;
-        float var3 = this.mc.cameraEntity.getBrightness(var1);
-        GL11.glColor4f(var3, var3, var3, 0.5F);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glPushMatrix();
+        var var2 = new QuadBuilder(4);
+        float brightness = this.mc.cameraEntity.getBrightness(var1);
+        var captured = LegacyPassBridge.capture();
+        var parameters = captured.withObject(captured.object().withTint(new Color4(brightness, brightness, brightness, .5F)))
+            .withMaterial(captured.material().withAlpha(CompareOp.ALWAYS, 0))
+            .withRaster(captured.raster().withBlend(BlendState.ALPHA));
         float var4 = 4.0F;
         float var5 = -1.0F;
         float var6 = 1.0F;
@@ -263,21 +164,17 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
         float var9 = -0.5F;
         float var10 = -this.mc.cameraEntity.yRot / 64.0F;
         float var11 = this.mc.cameraEntity.xRot / 64.0F;
-        var2.begin();
+
         var2.vertexUV(var5, var7, var9, var4 + var10, var4 + var11);
         var2.vertexUV(var6, var7, var9, 0.0F + var10, var4 + var11);
         var2.vertexUV(var6, var8, var9, 0.0F + var10, 0.0F + var11);
         var2.vertexUV(var5, var8, var9, var4 + var10, 0.0F + var11);
-        var2.end();
-        GL11.glPopMatrix();
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        GL11.glDisable(GL11.GL_BLEND);
+        NativeRenderer.drawQuads(var2.vertices(), ((ExTextureManager)this.mc.textures).texture("/misc/water.png"), parameters);
     }
 
     @Unique
-    private void renderMuzzleFlash() {
-        Lighting.turnOff();
-        Tesselator var1 = Tesselator.instance;
+    private void ac$renderMuzzleFlash(DrawParameters parameters, RenderTexture texture) {
+        var var1 = new QuadBuilder(8);
         float var2 = 1.0F / 16.0F;
         float var3 = 13.0F / 16.0F;
         float var4 = 1.3125F;
@@ -287,8 +184,8 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
         float var8 = 7.0F / 16.0F;
         float var9 = 11.0F / 16.0F;
         float var10 = 12.0F / 16.0F;
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        var1.begin();
+
+
         var1.vertexUV(var3, var6, -6.0F * var2, var7, var9);
         var1.vertexUV(var4, var5, -6.0F * var2, var8, var9);
         var1.vertexUV(var4, var5, 7.0F * var2, var8, var10);
@@ -297,19 +194,25 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
         var1.vertexUV(var4, var5, 7.0F * var2, var8, var10);
         var1.vertexUV(var4, var5, -6.0F * var2, var8, var9);
         var1.vertexUV(var3, var6, -6.0F * var2, var7, var9);
-        var1.end();
+        NativeRenderer.drawQuads(var1.vertices(), texture, parameters.withMaterial(parameters.material().withLighting(false))
+            .withObject(parameters.object().withTint(Color4.WHITE)));
     }
 
     @Override
     public void renderItemInFirstPerson(float partialTick, float prog1, float prog2) {
+        this.renderItemInFirstPerson(partialTick, prog1, prog2, LegacyPassBridge.capture());
+    }
+
+    @Override
+    public void renderItemInFirstPerson(float partialTick, float prog1, float prog2, DrawParameters parameters) {
         float var4 = this.oHeight + (this.height - this.oHeight) * partialTick;
         LocalPlayer var5 = this.mc.player;
         float var6 = var5.xRotO + (var5.xRot - var5.xRotO) * partialTick;
-        GL11.glPushMatrix();
-        GL11.glRotatef(var6, 1.0F, 0.0F, 0.0F);
-        GL11.glRotatef(var5.yRotO + (var5.yRot - var5.yRotO) * partialTick, 0.0F, 1.0F, 0.0F);
-        Lighting.turnOn();
-        GL11.glPopMatrix();
+        var lightPose = parameters.view().view().multiply(parameters.object().model())
+            .rotated(var6, 1, 0, 0).rotated(var5.yRotO + (var5.yRot - var5.yRotO) * partialTick, 0, 1, 0);
+        parameters = HandLighting.apply(parameters, lightPose);
+        var pose = new PoseStack(parameters);
+        RenderTexture texture = null;
 
         ItemInstance item = this.selectedItem;
         float var8 = var5.getBrightness(partialTick);
@@ -318,19 +221,19 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
             float r = (float) (var9 >> 16 & 255) / 255.0F;
             float g = (float) (var9 >> 8 & 255) / 255.0F;
             float b = (float) (var9 & 255) / 255.0F;
-            GL11.glColor4f(var8 * r, var8 * g, var8 * b, 1.0F);
+            pose.tint(var8 * r, var8 * g, var8 * b, 1.0F);
         }
         else {
-            GL11.glColor4f(var8, var8, var8, 1.0F);
+            pose.tint(var8, var8, var8, 1.0F);
         }
 
         if (item != null && item.id == Item.MAP.id) {
-            GL11.glPushMatrix();
+            pose.push();
             float var17 = 0.8F;
             float var10 = var5.getAttackAnim(partialTick);
             float var11 = Mth.sin(var10 * 3.141593F);
             float var12 = Mth.sin(Mth.sqrt(var10) * 3.141593F);
-            GL11.glTranslatef(-var12 * 0.4F, Mth.sin(Mth.sqrt(var10) * 3.141593F * 2.0F) * 0.2F, -var11 * 0.2F);
+            pose.translate(-var12 * 0.4F, Mth.sin(Mth.sqrt(var10) * 3.141593F * 2.0F) * 0.2F, -var11 * 0.2F);
             var10 = 1.0F - var6 / 45.0F + 0.1F;
             if (var10 < 0.0F) {
                 var10 = 0.0F;
@@ -341,109 +244,99 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
             }
 
             var10 = -Mth.cos(var10 * 3.141593F) * 0.5F + 0.5F;
-            GL11.glTranslatef(0.0F, 0.0F * var17 - (1.0F - var4) * 1.2F - var10 * 0.5F + 0.04F, -0.9F * var17);
-            GL11.glRotatef(90.0F, 0.0F, 1.0F, 0.0F);
-            GL11.glRotatef(var10 * -85.0F, 0.0F, 0.0F, 1.0F);
-            GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-            GL11.glBindTexture(
-                GL11.GL_TEXTURE_2D,
-                this.mc.textures.loadHttpTexture(this.mc.player.customTextureUrl, this.mc.player.getTexture())
-            );
+            pose.translate(0.0F, 0.0F * var17 - (1.0F - var4) * 1.2F - var10 * 0.5F + 0.04F, -0.9F * var17);
+            pose.rotate(90.0F, 0.0F, 1.0F, 0.0F);
+            pose.rotate(var10 * -85.0F, 0.0F, 0.0F, 1.0F);
+            texture = ((ExTextureManager)this.mc.textures).skin(this.mc.player.customTextureUrl, this.mc.player.getTexture());
 
             for (var11 = 0.0F; var11 < 2.0F; ++var11) {
                 var12 = var11 * 2.0F - 1.0F;
-                GL11.glPushMatrix();
-                GL11.glTranslatef(-0.0F, -0.6F, 1.1F * var12);
-                GL11.glRotatef(-45.0F * var12, 1.0F, 0.0F, 0.0F);
-                GL11.glRotatef(-90.0F, 0.0F, 0.0F, 1.0F);
-                GL11.glRotatef(59.0F, 0.0F, 0.0F, 1.0F);
-                GL11.glRotatef(-65.0F * var12, 0.0F, 1.0F, 0.0F);
+                pose.push();
+                pose.translate(-0.0F, -0.6F, 1.1F * var12);
+                pose.rotate(-45.0F * var12, 1.0F, 0.0F, 0.0F);
+                pose.rotate(-90.0F, 0.0F, 0.0F, 1.0F);
+                pose.rotate(59.0F, 0.0F, 0.0F, 1.0F);
+                pose.rotate(-65.0F * var12, 0.0F, 1.0F, 0.0F);
                 var var19 = EntityRenderDispatcher.INSTANCE.getRenderer(this.mc.player);
                 var var14 = (PlayerRenderer) var19;
                 float var15 = 1.0F;
-                GL11.glScalef(var15, var15, var15);
-                var14.renderHand();
-                GL11.glPopMatrix();
+                pose.scale(var15, var15, var15);
+                ((dev.adventurecraft.awakening.extension.client.render.entity.ExPlayerRenderer)var14).renderHand(pose.parameters(),texture);
+                pose.pop();
             }
 
             var11 = var5.getAttackAnim(partialTick);
             var12 = Mth.sin(var11 * var11 * 3.141593F);
             float var20 = Mth.sin(Mth.sqrt(var11) * 3.141593F);
-            GL11.glRotatef(-var12 * 20.0F, 0.0F, 1.0F, 0.0F);
-            GL11.glRotatef(-var20 * 20.0F, 0.0F, 0.0F, 1.0F);
-            GL11.glRotatef(-var20 * 80.0F, 1.0F, 0.0F, 0.0F);
+            pose.rotate(-var12 * 20.0F, 0.0F, 1.0F, 0.0F);
+            pose.rotate(-var20 * 20.0F, 0.0F, 0.0F, 1.0F);
+            pose.rotate(-var20 * 80.0F, 1.0F, 0.0F, 0.0F);
             var11 = 0.38F;
-            GL11.glScalef(var11, var11, var11);
-            GL11.glRotatef(90.0F, 0.0F, 1.0F, 0.0F);
-            GL11.glRotatef(180.0F, 0.0F, 0.0F, 1.0F);
-            GL11.glTranslatef(-1.0F, -1.0F, 0.0F);
+            pose.scale(var11, var11, var11);
+            pose.rotate(90.0F, 0.0F, 1.0F, 0.0F);
+            pose.rotate(180.0F, 0.0F, 0.0F, 1.0F);
+            pose.translate(-1.0F, -1.0F, 0.0F);
             var12 = 0.015625F;
-            GL11.glScalef(var12, var12, var12);
-            this.mc.textures.bind(this.mc.textures.loadTexture("/misc/mapbg.png"));
-            var var21 = Tesselator.instance;
-            GL11.glNormal3f(0.0F, 0.0F, -1.0F);
-            var21.begin();
+            pose.scale(var12, var12, var12);
+            texture = ((ExTextureManager)this.mc.textures).texture("/misc/mapbg.png");
+            var var21 = new QuadBuilder(4);
+            var21.normal(0.0F, 0.0F, -1.0F);
             byte var22 = 7;
             var21.vertexUV(0 - var22, 128 + var22, 0.0D, 0.0D, 1.0D);
             var21.vertexUV(128 + var22, 128 + var22, 0.0D, 1.0D, 1.0D);
             var21.vertexUV(128 + var22, 0 - var22, 0.0D, 1.0D, 0.0D);
             var21.vertexUV(0 - var22, 0 - var22, 0.0D, 0.0D, 0.0D);
-            var21.end();
+            NativeRenderer.drawQuads(var21.vertices(), texture, pose.parameters());
             MapItemSavedData var16 = Item.MAP.getMapSaveData(item, this.mc.level);
-            this.mapRenderer.render(this.mc.player, this.mc.textures, var16);
-            GL11.glPopMatrix();
+            LegacyPassBridge.drawLegacy(pose.parameters(), texture, () -> this.mapRenderer.render(this.mc.player, this.mc.textures, var16));
+            pose.pop();
         }
         else {
             if (item != null) {
                 if (item.id != AC_Items.woodenShield.id && item.id != AC_Items.powerGlove.id) {
-                    GL11.glPushMatrix();
+                    pose.push();
                     float var17 = 0.8F;
                     float var10 = Mth.sin(prog1 * 3.141593F);
                     float var11 = Mth.sin(Mth.sqrt(prog1) * 3.141593F);
-                    GL11.glTranslatef(-var11 * 0.4F, Mth.sin(Mth.sqrt(prog1) * 3.141593F * 2.0F) * 0.2F, -var10 * 0.2F);
-                    GL11.glTranslatef(0.7F * var17, -0.65F * var17 - (1.0F - var4) * 0.6F, -0.9F * var17);
-                    GL11.glRotatef(45.0F, 0.0F, 1.0F, 0.0F);
-                    GL11.glEnable(GL12.GL_RESCALE_NORMAL);
+                    pose.translate(-var11 * 0.4F, Mth.sin(Mth.sqrt(prog1) * 3.141593F * 2.0F) * 0.2F, -var10 * 0.2F);
+                    pose.translate(0.7F * var17, -0.65F * var17 - (1.0F - var4) * 0.6F, -0.9F * var17);
+                    pose.rotate(45.0F, 0.0F, 1.0F, 0.0F);
                     var10 = Mth.sin(prog1 * prog1 * 3.141593F);
                     var11 = Mth.sin(Mth.sqrt(prog1) * 3.141593F);
-                    GL11.glRotatef(-var10 * 20.0F, 0.0F, 1.0F, 0.0F);
-                    GL11.glRotatef(-var11 * 20.0F, 0.0F, 0.0F, 1.0F);
-                    GL11.glRotatef(-var11 * 80.0F, 1.0F, 0.0F, 0.0F);
-                    GL11.glScalef(0.4F, 0.4F, 0.4F);
+                    pose.rotate(-var10 * 20.0F, 0.0F, 1.0F, 0.0F);
+                    pose.rotate(-var11 * 20.0F, 0.0F, 0.0F, 1.0F);
+                    pose.rotate(-var11 * 80.0F, 1.0F, 0.0F, 0.0F);
+                    pose.scale(0.4F, 0.4F, 0.4F);
                     if (item.getItem().isMirroredArt()) {
-                        GL11.glRotatef(180.0F, 0.0F, 1.0F, 0.0F);
+                        pose.rotate(180.0F, 0.0F, 1.0F, 0.0F);
                     }
 
-                    this.renderItem(var5, item);
-                    GL11.glPopMatrix();
+                    this.ac$renderItem(var5, item, pose.parameters());
+                    pose.pop();
                 }
                 else if (item.id == AC_Items.powerGlove.id) {
-                    GL11.glPushMatrix();
+                    pose.push();
                     float var17 = 0.8F;
                     float var10 = Mth.sin(prog1 * 3.141593F);
                     float var11 = Mth.sin(Mth.sqrt(prog1) * 3.141593F);
-                    GL11.glTranslatef(-var11 * 0.3F, Mth.sin(Mth.sqrt(prog1) * 3.141593F * 2.0F) * 0.4F, -var10 * 0.4F);
-                    GL11.glTranslatef(0.8F * var17, -(12.0F / 16.0F) * var17 - (1.0F - var4) * 0.6F, -0.9F * var17);
-                    GL11.glRotatef(45.0F, 0.0F, 1.0F, 0.0F);
-                    GL11.glEnable(GL12.GL_RESCALE_NORMAL);
+                    pose.translate(-var11 * 0.3F, Mth.sin(Mth.sqrt(prog1) * 3.141593F * 2.0F) * 0.4F, -var10 * 0.4F);
+                    pose.translate(0.8F * var17, -(12.0F / 16.0F) * var17 - (1.0F - var4) * 0.6F, -0.9F * var17);
+                    pose.rotate(45.0F, 0.0F, 1.0F, 0.0F);
                     var10 = Mth.sin(prog1 * prog1 * 3.141593F);
                     var11 = Mth.sin(Mth.sqrt(prog1) * 3.141593F);
-                    GL11.glRotatef(var11 * 70.0F, 0.0F, 1.0F, 0.0F);
-                    GL11.glRotatef(-var10 * 20.0F, 0.0F, 0.0F, 1.0F);
-                    GL11.glBindTexture(
-                        GL11.GL_TEXTURE_2D,
-                        this.mc.textures.loadHttpTexture(this.mc.player.customTextureUrl, this.mc.player.getTexture())
-                    );
-                    GL11.glTranslatef(-1.0F, 3.6F, 3.5F);
-                    GL11.glRotatef(120.0F, 0.0F, 0.0F, 1.0F);
-                    GL11.glRotatef(200.0F, 1.0F, 0.0F, 0.0F);
-                    GL11.glRotatef(-135.0F, 0.0F, 1.0F, 0.0F);
-                    GL11.glScalef(1.0F, 1.0F, 1.0F);
-                    GL11.glTranslatef(5.6F, 0.0F, 0.0F);
+                    pose.rotate(var11 * 70.0F, 0.0F, 1.0F, 0.0F);
+                    pose.rotate(-var10 * 20.0F, 0.0F, 0.0F, 1.0F);
+                    texture = ((ExTextureManager)this.mc.textures).skin(this.mc.player.customTextureUrl, this.mc.player.getTexture());
+                    pose.translate(-1.0F, 3.6F, 3.5F);
+                    pose.rotate(120.0F, 0.0F, 0.0F, 1.0F);
+                    pose.rotate(200.0F, 1.0F, 0.0F, 0.0F);
+                    pose.rotate(-135.0F, 0.0F, 1.0F, 0.0F);
+                    pose.scale(1.0F, 1.0F, 1.0F);
+                    pose.translate(5.6F, 0.0F, 0.0F);
                     var var18 = EntityRenderDispatcher.INSTANCE.getRenderer(this.mc.player);
                     var var13 = (PlayerRenderer) var18;
-                    var13.renderHand();
-                    GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.textures.loadTexture("/mob/powerGlove.png"));
+                    ((dev.adventurecraft.awakening.extension.client.render.entity.ExPlayerRenderer)var13).renderHand(pose.parameters(),texture);
+                    texture = ((ExTextureManager)this.mc.textures).texture("/mob/powerGlove.png");
                     this.refBiped.attackTime = 0.0F;
                     this.refBiped.setupAnim(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 1.0F / 16.0F);
                     this.powerGlove.x = this.refBiped.rightArm.x;
@@ -452,82 +345,76 @@ public abstract class MixinHeldItemRenderer implements ExHeldItemRenderer {
                     this.powerGlove.xRot = this.refBiped.rightArm.xRot;
                     this.powerGlove.yRot = this.refBiped.rightArm.yRot;
                     this.powerGlove.zRot = this.refBiped.rightArm.zRot;
-                    this.powerGlove.render(1.0F / 16.0F);
+                    NativeModels.part(this.powerGlove,ModelRenderContext.of(pose.parameters(),texture),pose.parameters().object().model(),pose.parameters().object().tint(),1F/16,false);
                     this.powerGloveRuby.x = this.refBiped.rightArm.x;
                     this.powerGloveRuby.y = this.refBiped.rightArm.y;
                     this.powerGloveRuby.z = this.refBiped.rightArm.z;
                     this.powerGloveRuby.xRot = this.refBiped.rightArm.xRot;
                     this.powerGloveRuby.yRot = this.refBiped.rightArm.yRot;
                     this.powerGloveRuby.zRot = this.refBiped.rightArm.zRot;
-                    this.powerGloveRuby.render(1.0F / 16.0F);
-                    GL11.glPopMatrix();
+                    NativeModels.part(this.powerGloveRuby,ModelRenderContext.of(pose.parameters(),texture),pose.parameters().object().model(),pose.parameters().object().tint(),1F/16,false);
+                    pose.pop();
                 }
                 else {
-                    this.renderShield(item, partialTick, prog1, prog2);
+                    this.renderShield(item, partialTick, prog1, prog2, pose.parameters());
                 }
             }
             else {
-                GL11.glPushMatrix();
+                pose.push();
                 float var17 = 0.8F;
                 float var10 = Mth.sin(prog1 * 3.141593F);
                 float var11 = Mth.sin(Mth.sqrt(prog1) * 3.141593F);
-                GL11.glTranslatef(-var11 * 0.3F, Mth.sin(Mth.sqrt(prog1) * 3.141593F * 2.0F) * 0.4F, -var10 * 0.4F);
-                GL11.glTranslatef(0.8F * var17, -(12.0F / 16.0F) * var17 - (1.0F - var4) * 0.6F, -0.9F * var17);
-                GL11.glRotatef(45.0F, 0.0F, 1.0F, 0.0F);
-                GL11.glEnable(GL12.GL_RESCALE_NORMAL);
+                pose.translate(-var11 * 0.3F, Mth.sin(Mth.sqrt(prog1) * 3.141593F * 2.0F) * 0.4F, -var10 * 0.4F);
+                pose.translate(0.8F * var17, -(12.0F / 16.0F) * var17 - (1.0F - var4) * 0.6F, -0.9F * var17);
+                pose.rotate(45.0F, 0.0F, 1.0F, 0.0F);
                 var10 = Mth.sin(prog1 * prog1 * 3.141593F);
                 var11 = Mth.sin(Mth.sqrt(prog1) * 3.141593F);
-                GL11.glRotatef(var11 * 70.0F, 0.0F, 1.0F, 0.0F);
-                GL11.glRotatef(-var10 * 20.0F, 0.0F, 0.0F, 1.0F);
-                GL11.glBindTexture(
-                    GL11.GL_TEXTURE_2D,
-                    this.mc.textures.loadHttpTexture(this.mc.player.customTextureUrl, this.mc.player.getTexture())
-                );
-                GL11.glTranslatef(-1.0F, 3.6F, 3.5F);
-                GL11.glRotatef(120.0F, 0.0F, 0.0F, 1.0F);
-                GL11.glRotatef(200.0F, 1.0F, 0.0F, 0.0F);
-                GL11.glRotatef(-135.0F, 0.0F, 1.0F, 0.0F);
-                GL11.glScalef(1.0F, 1.0F, 1.0F);
-                GL11.glTranslatef(5.6F, 0.0F, 0.0F);
+                pose.rotate(var11 * 70.0F, 0.0F, 1.0F, 0.0F);
+                pose.rotate(-var10 * 20.0F, 0.0F, 0.0F, 1.0F);
+                texture = ((ExTextureManager)this.mc.textures).skin(this.mc.player.customTextureUrl, this.mc.player.getTexture());
+                pose.translate(-1.0F, 3.6F, 3.5F);
+                pose.rotate(120.0F, 0.0F, 0.0F, 1.0F);
+                pose.rotate(200.0F, 1.0F, 0.0F, 0.0F);
+                pose.rotate(-135.0F, 0.0F, 1.0F, 0.0F);
+                pose.scale(1.0F, 1.0F, 1.0F);
+                pose.translate(5.6F, 0.0F, 0.0F);
                 var var18 = EntityRenderDispatcher.INSTANCE.getRenderer(this.mc.player);
                 var var13 = (PlayerRenderer) var18;
-                var13.renderHand();
-                GL11.glPopMatrix();
+                ((dev.adventurecraft.awakening.extension.client.render.entity.ExPlayerRenderer)var13).renderHand(pose.parameters(),texture);
+                pose.pop();
             }
         }
 
-        GL11.glDisable(GL12.GL_RESCALE_NORMAL);
-        Lighting.turnOff();
     }
 
-    private void renderShield(ItemInstance item, float partialTick, float prog1, float prog2) {
+    private void renderShield(ItemInstance item, float partialTick, float prog1, float prog2, DrawParameters parameters) {
+        var pose = new PoseStack(parameters);
         float var4 = this.oHeight + (this.height - this.oHeight) * partialTick;
         LocalPlayer var5 = this.mc.player;
         float var6 = var5.getBrightness(partialTick);
-        GL11.glColor4f(var6, var6, var6, 1.0F);
+        pose.tint(var6, var6, var6, 1.0F);
 
-        GL11.glPushMatrix();
+        pose.push();
         float var8 = 0.8F;
         if (prog2 == 0.0F) {
             float var9 = Mth.sin(prog1 * 3.141593F);
             float var10 = Mth.sin(Mth.sqrt(prog1) * 3.141593F);
-            GL11.glTranslatef(-var10 * 0.4F, Mth.sin(Mth.sqrt(prog1) * 3.141593F * 2.0F) * 0.2F, -var9 * 0.2F);
-            GL11.glTranslatef(1.0F, -0.65F * var8 - (1.0F - var4) * 0.6F, -0.9F * var8);
+            pose.translate(-var10 * 0.4F, Mth.sin(Mth.sqrt(prog1) * 3.141593F * 2.0F) * 0.2F, -var9 * 0.2F);
+            pose.translate(1.0F, -0.65F * var8 - (1.0F - var4) * 0.6F, -0.9F * var8);
         }
         else {
             float var9 = Mth.sin(prog2 * 3.141593F);
             float var10 = Mth.sin(Mth.sqrt(prog2) * 3.141593F);
-            GL11.glTranslatef(var10 * 0.4F, Mth.sin(Mth.sqrt(prog2) * 3.141593F * 2.0F) * 0.2F, -var9 * 0.2F);
-            GL11.glTranslatef(1.0F, -0.65F * var8 - (1.0F - var4) * 0.6F, -0.9F * var8);
-            GL11.glRotatef(-90.0F * var9, 0.0F, 1.0F, 0.0F);
+            pose.translate(var10 * 0.4F, Mth.sin(Mth.sqrt(prog2) * 3.141593F * 2.0F) * 0.2F, -var9 * 0.2F);
+            pose.translate(1.0F, -0.65F * var8 - (1.0F - var4) * 0.6F, -0.9F * var8);
+            pose.rotate(-90.0F * var9, 0.0F, 1.0F, 0.0F);
         }
 
-        GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-        GL11.glScalef(0.6F, 0.6F, 0.6F);
+        pose.scale(0.6F, 0.6F, 0.6F);
         this.itemRotate = false;
-        this.renderItem(var5, item);
+        this.ac$renderItem(var5, item, pose.parameters());
         this.itemRotate = true;
-        GL11.glPopMatrix();
+        pose.pop();
     }
 
     @Override

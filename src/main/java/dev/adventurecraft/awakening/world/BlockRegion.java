@@ -11,7 +11,8 @@ import net.minecraft.world.level.Level;
  * Represents a copied block region containing block IDs, metadata, and dimensional information.
  * <p>
  * This immutable data structure stores a 3D array of blocks in a flattened format
- * using the formula: <code>index = depth * (height * x + y) + z</code>
+ * in legacy storage order (X/Z/Y, with Y varying fastest), using the formula:
+ * <code>index = height * (depth * x + z) + y</code>
  *
  * @author Adventurecraft Team
  */
@@ -185,10 +186,10 @@ public final class BlockRegion implements BlockLayer {
      * @param height Height dimension of the region
      * @param depth Depth dimension of the region
      * @return The calculated array index
-     * @implNote Uses the formula: {@code index = depth * (height * x + y) + z}
+     * @implNote Uses legacy storage order: {@code index = height * (depth * x + z) + y}
      */
     public static int makeIndex(int x, int y, int z, int width, int height, int depth) {
-        return width * (depth * x + z) + y;
+        return height * (depth * x + z) + y;
     }
 
     @FunctionalInterface

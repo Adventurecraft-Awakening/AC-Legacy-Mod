@@ -1,12 +1,15 @@
 package dev.adventurecraft.awakening.mixin.client.render;
 
 import dev.adventurecraft.awakening.extension.client.render.ExTesselator;
+import dev.adventurecraft.awakening.client.render.compat.LegacyGlAdapter;
 import dev.adventurecraft.awakening.image.Rgba;
-import dev.adventurecraft.awakening.util.GLUtil;
+import dev.adventurecraft.awakening.client.render.VertexFormat;
+import dev.adventurecraft.awakening.client.render.VertexPacking;
 import net.minecraft.client.renderer.Tesselator;
 import org.spongepowered.asm.mixin.*;
 
 import java.nio.ByteOrder;
+import java.nio.ByteBuffer;
 
 @Mixin(Tesselator.class)
 public abstract class MixinTesselator implements ExTesselator {
@@ -22,7 +25,7 @@ public abstract class MixinTesselator implements ExTesselator {
     @Shadow private double v;
     @Shadow private int packedColor;
 
-    @Shadow private int[] array;
+    @Shadow private ByteBuffer buffer;
     @Shadow private int vertices;
     @Shadow private int p;
     @Shadow private int count;
@@ -38,14 +41,30 @@ public abstract class MixinTesselator implements ExTesselator {
     @Shadow public boolean tesselating;
     @Shadow private int size;
 
+
     static {
-        // TODO: use index buffer
+        // The Vulkan backend indexes quads without duplicating vertices.
         TRIANGLE_MODE = false;
-        USE_VBO = true;
+        USE_VBO = false;
     }
 
-    @Shadow
-    public abstract void end();
+    /** Submit packed vertices directly; inherited GL buffer and client-array state is unnecessary. */
+    @Overwrite
+    public void end() {
+        if (!this.tesselating) {
+            throw new IllegalStateException("Not tesselating!");
+        }
+        this.tesselating = false;
+        if (this.vertices > 0) {
+            this.buffer.position(0).limit(Math.multiplyExact(this.p, Integer.BYTES));
+            LegacyGlAdapter.submitVertices(this.buffer, this.mode, this.hasColor, this.hasTexture, this.hasNormal);
+        }
+        // Match vanilla clear without resetting attribute flags: automatic flushes continue the same batch.
+        this.vertices = 0;
+        this.buffer.clear();
+        this.p = 0;
+        this.count = 0;
+    }
 
     @Shadow
     public abstract void color(float r, float g, float b, float a);
@@ -99,7 +118,7 @@ public abstract class MixinTesselator implements ExTesselator {
     }
 
     public @Overwrite void normal(float x, float y, float z) {
-        this.ac$normal8(GLUtil.packByteNormal(x, y, z));
+        this.ac$normal8(VertexPacking.packByteNormal(x, y, z));
     }
 
     public @Override void ac$normal8(int xyz) {
@@ -113,46 +132,14 @@ public abstract class MixinTesselator implements ExTesselator {
 
     @Unique
     private void addVertex(float x, float y, float z, float u, float v) {
-        ++this.count;
-        if (this.mode == 7 && TRIANGLE_MODE && this.count % 4 == 0) {
-            this.triangulateQuad();
-        }
-
-        int i = this.p;
-        int[] a = this.array;
-        a[i + 0] = Float.floatToRawIntBits(x);
-        a[i + 1] = Float.floatToRawIntBits(y);
-        a[i + 2] = Float.floatToRawIntBits(z);
-        a[i + 3] = Float.floatToRawIntBits(u);
-        a[i + 4] = Float.floatToRawIntBits(v);
-        a[i + 5] = this.packedColor;
-        a[i + 6] = this.normal;
-        a[i + 7] = 0;
-        this.p = i + 8;
+        int color = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN ? this.packedColor : Integer.reverseBytes(this.packedColor);
+        VertexFormat.write(this.buffer, this.p * Integer.BYTES, x, y, z, u, v, color, this.normal);
+        this.p += VertexFormat.STRIDE / Integer.BYTES;
 
         ++this.vertices;
         if (this.vertices % 4 == 0 && this.p >= this.size - 32) {
             this.end();
             this.tesselating = true;
-        }
-    }
-
-    @Unique
-    private void triangulateQuad() {
-        int[] a = this.array;
-        for (int v = 0; v < 2; ++v) {
-            int n = 8 * (3 - v);
-            int i = this.p;
-            a[i + 0] = a[i - n + 0];
-            a[i + 1] = a[i - n + 1];
-            a[i + 2] = a[i - n + 2];
-            a[i + 3] = a[i - n + 3];
-            a[i + 4] = a[i - n + 4];
-            a[i + 5] = a[i - n + 5];
-            a[i + 6] = a[i - n + 6];
-            a[i + 7] = a[i - n + 7];
-            this.p = i + 8;
-            ++this.vertices;
         }
     }
 

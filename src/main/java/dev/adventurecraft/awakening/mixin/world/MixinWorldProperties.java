@@ -1,6 +1,8 @@
 package dev.adventurecraft.awakening.mixin.world;
 
 import dev.adventurecraft.awakening.extension.nbt.ExTag;
+import dev.adventurecraft.awakening.client.render.RenderSystem;
+import dev.adventurecraft.awakening.extension.client.render.ExWorldEventRenderer;
 import dev.adventurecraft.awakening.tile.AC_BlockEffect;
 import dev.adventurecraft.awakening.common.LightHelper;
 import dev.adventurecraft.awakening.common.WorldGenProperties;
@@ -279,7 +281,13 @@ public abstract class MixinWorldProperties implements ExWorldProperties {
 
     @Override
     public void setTempOffset(float value) {
+        if (Float.compare(this.tempOffset, value) == 0) return;
         this.tempOffset = value;
+        Minecraft client = Minecraft.instance;
+        if (client != null && client.level != null && client.level.levelData == (Object) this &&
+            client.levelRenderer != null && RenderSystem.isInitialized() && RenderSystem.renderer().rayTracingSupported()) {
+            ((ExWorldEventRenderer) client.levelRenderer).updateAllTheRenderers();
+        }
     }
 
     @Override

@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.mixin.block;
 
 import dev.adventurecraft.awakening.ACMod;
+import dev.adventurecraft.awakening.client.render.chunk.LevelRegion;
 import dev.adventurecraft.awakening.client.options.ConnectedGrassOption;
 import dev.adventurecraft.awakening.tile.AC_BlockShapes;
 import dev.adventurecraft.awakening.tile.AC_IBlockColor;
@@ -56,7 +57,8 @@ public abstract class MixinGrassBlock extends MixinBlock implements ExGrassBlock
     }
 
     private @Unique long getSideTexture(LevelSource view, int x, int y, int z, int side, Material topMaterial) {
-        ConnectedGrassOption option = ((ExGameOptions) Minecraft.instance.options).ofConnectedGrass();
+        ConnectedGrassOption option = view instanceof LevelRegion region ? region.connectedGrass()
+            : ((ExGameOptions) Minecraft.instance.options).ofConnectedGrass();
 
         if (topMaterial.color == MaterialColor.SNOW) {
             if (option == ConnectedGrassOption.OFF) {

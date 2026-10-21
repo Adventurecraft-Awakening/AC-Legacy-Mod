@@ -1,0 +1,21 @@
+// Stable GPU codes shared with VulkanStateCodes; Java enum order is independent.
+const int COMPARE_NEVER = 0;
+const int COMPARE_LESS = 1;
+const int COMPARE_EQUAL = 2;
+const int COMPARE_LESS_EQUAL = 3;
+const int COMPARE_GREATER = 4;
+const int COMPARE_NOT_EQUAL = 5;
+const int COMPARE_GREATER_EQUAL = 6;
+const int COMPARE_ALWAYS = 7;
+const int FOG_NONE = 0;
+const int FOG_LINEAR = 1;
+const int FOG_EXPONENTIAL = 2;
+const int FOG_EXPONENTIAL_SQUARED = 3;
+const int FOG_DISTANCE_EYE_PLANE = 0;
+const int FOG_DISTANCE_VERTEX = 1;
+const int FOG_DISTANCE_FRAGMENT = 2;
+const int MATERIAL_NONE = 0;
+const int MATERIAL_AMBIENT = 1;
+const int MATERIAL_DIFFUSE = 2;
+const int MATERIAL_AMBIENT_DIFFUSE = 3;
+const int MATERIAL_EMISSION = 4;

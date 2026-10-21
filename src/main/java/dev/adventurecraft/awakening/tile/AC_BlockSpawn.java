@@ -1,8 +1,8 @@
 package dev.adventurecraft.awakening.tile;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import java.util.Random;
 
-import dev.adventurecraft.awakening.common.AC_DebugMode;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -29,7 +29,7 @@ public class AC_BlockSpawn extends Tile implements AC_ITriggerDebugBlock {
 
     @Override
     public boolean mayPick() {
-        return AC_DebugMode.active;
+        return EditorSession.current().active;
     }
 
     @Override

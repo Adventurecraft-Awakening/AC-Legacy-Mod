@@ -1,0 +1,22 @@
+#version 450
+
+layout(local_size_x = 8, local_size_y = 8) in;
+layout(set = 0, binding = 0) uniform sampler2D inputs[6];
+layout(rgba16f, set = 0, binding = 1) uniform writeonly image2D outputImage;
+layout(push_constant) uniform RestoreSettings {
+    float linearOutput;
+    float reserved0;
+    float reserved1;
+    float reserved2;
+} settings;
+
+void main() {
+    ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
+    if (any(greaterThanEqual(pixel,imageSize(outputImage)))) return;
+    vec4 color = texelFetch(inputs[0],pixel,0);
+    if (settings.linearOutput>0.5) {
+        color.rgb = mix(color.rgb/12.92,pow((color.rgb+0.055)/1.055,vec3(2.4)),
+            greaterThan(color.rgb,vec3(0.04045)));
+    }
+    imageStore(outputImage,pixel,color);
+}

@@ -1,21 +1,19 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.client.render.compat.LegacyPassBridge;
+import dev.adventurecraft.awakening.client.render.UiDrawContext;
+import dev.adventurecraft.awakening.extension.client.render.entity.ExItemRenderer;
 import dev.adventurecraft.awakening.layout.*;
-import dev.adventurecraft.awakening.util.DrawUtil;
-import dev.adventurecraft.awakening.util.GLUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.Lighting;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.locale.I18n;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import org.lwjgl.input.Keyboard;
-import org.lwjgl.opengl.GL11;
 
 import java.util.ArrayList;
 
@@ -56,108 +54,42 @@ public abstract class ScrollableContainerScreen extends Screen {
     @Override
     public void render(int mouseX, int mouseY, float deltaTime) {
         this.renderBackground();
-
         int screenX = (this.width - this.containerWidth) / 2;
         int screenY = (this.height - this.containerHeight) / 2;
-
         this.renderContainerBackground(deltaTime);
-
-        GL11.glPushMatrix();
-        GL11.glRotatef(120.0f, 1.0f, 0.0f, 0.0f);
-        Lighting.turnOn();
-        GL11.glPopMatrix();
-
-        GL11.glPushMatrix();
-        GL11.glTranslatef(screenX, screenY, 0.0f);
-        GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-        GL11.glEnable(0x803a); // GL_RESCALE_NORMAL
-
-        for (Slot slot : this.container.getStaticSlots()) {
-            renderSlot(slot, IntPoint.zero);
-        }
-
-        IntRect contentRect = this.itemList.getBorderRect();
-        IntRect realContentRect = GLUtil.projectModelViewProj(contentRect.asFloat()).round().asInt();
-
-        GL11.glEnable(GL11.GL_SCISSOR_TEST);
-        GL11.glScissor(realContentRect.x, realContentRect.y, realContentRect.width(), realContentRect.height());
-
-        var mousePoint = new IntPoint(mouseX - screenX, mouseY - screenY);
-        this.itemList.render(mousePoint, deltaTime);
-
-        var ts = Tesselator.instance;
-        FoundSlot hoveredSlot = getSlot(new Point(mouseX, mouseY));
-        if (hoveredSlot != null) {
-            if (hoveredSlot.isStatic) {
-                GL11.glDisable(GL11.GL_SCISSOR_TEST);
+        try (var root = LegacyPassBridge.uiContext(this.font, this.minecraft.textures)) {
+            var ui = root.translated(screenX, screenY);
+            for (Slot slot : this.container.getStaticSlots()) this.renderSlot(ui, slot, IntPoint.zero);
+            var clipped = ui.clip(this.itemList.getBorderRect().asFloat());
+            var mousePoint = new IntPoint(mouseX - screenX, mouseY - screenY);
+            this.itemList.render(mousePoint, deltaTime, clipped);
+            FoundSlot hovered = this.getSlot(new Point(mouseX, mouseY));
+            if (hovered != null) {
+                Point location = hovered.isStatic ? new Point(hovered.slot.x, hovered.slot.z)
+                    : this.getScrollableSlotPoint(new Point(hovered.slot.x, hovered.slot.z));
+                (hovered.isStatic ? ui : clipped).fill(new Rect(location.x, location.y, 16, 16), 0x80ffffff);
             }
-
-            Slot slot = hoveredSlot.slot;
-            var slotLocation = new IntPoint(slot.x, slot.z);
-            GL11.glDisable(GL11.GL_LIGHTING);
-            GL11.glDisable(GL11.GL_DEPTH_TEST);
-
-            Point renderPoint = hoveredSlot.isStatic
-                ? slotLocation.asFloat()
-                : getScrollableSlotPoint(slotLocation.asFloat());
-            Rect renderRect = new Rect(renderPoint.x, renderPoint.y, 16, 16);
-
-            DrawUtil.beginFill(ts);
-            DrawUtil.fillRect(ts, renderRect, 0x80ffffff);
-            DrawUtil.endFill(ts);
-
-            GL11.glEnable(GL11.GL_LIGHTING);
-            GL11.glEnable(GL11.GL_DEPTH_TEST);
-        }
-        GL11.glDisable(GL11.GL_SCISSOR_TEST);
-
-        //var ts = Tesselator.instance;
-        //ts.begin();
-        //ScrollableWidget.drawRect(ts, this.itemList.getScreenRect().asFloat(), new Border(-2), new IntBorder(0x7f_00ff00));
-        //ScrollableWidget.drawRect(ts, contentRect.asFloat(), new Border(-1), new IntBorder(0x7f_ff00ff));
-        //ts.end();
-
-        Inventory playerInventory = this.minecraft.player.inventory;
-        if (playerInventory.getCarried() != null) {
-            // Render in front of everything.
-            GL11.glTranslatef(0.0f, 0.0f, 32.0f);
-
-            int iX = mousePoint.x - 16 / 2;
-            int iY = mousePoint.y - 16 / 2;
-
-            var item = playerInventory.getCarried();
-            itemRenderer.renderAndDecorateItem(this.font, this.minecraft.textures, item, iX, iY);
-            itemRenderer.renderGuiItemDecorations(this.font, this.minecraft.textures, item, iX, iY);
-        }
-        GL11.glDisable(0x803a); // GL_RESCALE_NORMAL
-        Lighting.turnOff();
-        GL11.glDisable(GL11.GL_LIGHTING);
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
-
-        this.renderForeground();
-
-        if (playerInventory.getCarried() == null && hoveredSlot != null) {
-            var item = hoveredSlot.slot.getItem();
-            if (item != null && hoveredSlot.slot.hasItem()) {
-                String name = (I18n.getInstance().getDescriptionString(item.getTranslationKey())).trim();
-                if (name.length() > 0) {
-                    int textX = mousePoint.x + 12;
-                    int textY = mousePoint.y - 12;
-                    int textWidth = this.font.width(name);
-                    var textRect = new Rect(textX, textY, textWidth, 8).expand(new Border(3));
-
-                    DrawUtil.beginFill(ts);
-                    DrawUtil.fillRect(ts, textRect, 0xc0000000);
-                    DrawUtil.endFill(ts);
-                    this.font.drawShadow(name, textX, textY, -1);
+            Inventory inventory = this.minecraft.player.inventory;
+            if (inventory.getCarried() != null) {
+                var front = ui.translated(0, 0, 32);
+                var item = inventory.getCarried();
+                int x = mousePoint.x - 8, y = mousePoint.y - 8;
+                var preview = (ExItemRenderer) this.itemRenderer;
+                preview.renderGuiItem(front, item, x, y);
+                preview.renderGuiItemDecorations(front, item, x, y);
+            }
+            this.renderForeground(ui);
+            if (inventory.getCarried() == null && hovered != null && hovered.slot.hasItem()) {
+                var item = hovered.slot.getItem();
+                String name = I18n.getInstance().getDescriptionString(item.getTranslationKey()).trim();
+                if (!name.isEmpty()) {
+                    int x = mousePoint.x + 12, y = mousePoint.y - 12;
+                    ui.fill(new Rect(x, y, this.font.width(name), 8).expand(new Border(3)), 0xc0000000);
+                    ui.text(name, x, y, -1, true);
                 }
             }
         }
-        GL11.glPopMatrix();
-
         super.render(mouseX, mouseY, deltaTime);
-        GL11.glEnable(GL11.GL_LIGHTING);
-        GL11.glEnable(GL11.GL_DEPTH_TEST);
     }
 
     public Point getScrollableSlotPoint(Point slotPoint) {
@@ -167,24 +99,24 @@ public abstract class ScrollableContainerScreen extends Screen {
     protected void renderForeground() {
     }
 
+    protected void renderForeground(UiDrawContext ui) {
+        LegacyPassBridge.legacyUi(ui, this::renderForeground, false);
+    }
+
     protected abstract void renderContainerBackground(float var1);
 
-    private void renderSlot(Slot slot, IntPoint offset) {
-        int x = slot.x + offset.x;
-        int y = slot.z + offset.y;
-        ItemInstance itemStack = slot.getItem();
-        if (itemStack == null) {
-            int n = slot.getNoItemIcon();
-            if (n >= 0) {
-                GL11.glDisable(2896);
-                this.minecraft.textures.bind(this.minecraft.textures.loadTexture("/gui/items.png"));
-                this.blit(x, y, n % 16 * 16, n / 16 * 16, 16, 16);
-                GL11.glEnable(2896);
-                return;
-            }
+    private void renderSlot(UiDrawContext ui, Slot slot, IntPoint offset) {
+        int x = slot.x + offset.x, y = slot.z + offset.y;
+        ItemInstance item = slot.getItem();
+        if (item == null && slot.getNoItemIcon() >= 0) {
+            int icon = slot.getNoItemIcon();
+            ui.image(ui.texture("/gui/items.png"), new Rect(x, y, 16, 16),
+                new Rect((icon % 16) / 16.0, (icon / 16) / 16.0, 1.0 / 16, 1.0 / 16), new IntCorner(-1));
+            return;
         }
-        itemRenderer.renderAndDecorateItem(this.font, this.minecraft.textures, itemStack, x, y);
-        itemRenderer.renderGuiItemDecorations(this.font, this.minecraft.textures, itemStack, x, y);
+        var preview = (ExItemRenderer) this.itemRenderer;
+        preview.renderGuiItem(ui, item, x, y);
+        preview.renderGuiItemDecorations(ui, item, x, y);
     }
 
     record FoundSlot(Slot slot, boolean isStatic) {
@@ -317,28 +249,17 @@ public abstract class ScrollableContainerScreen extends Screen {
         }
 
         @Override
-        protected void beforeEntryRender(Tesselator ts, IntPoint mouseLocation, Point entryLocation) {
-            super.beforeEntryRender(ts, mouseLocation, entryLocation);
-
-            GL11.glEnable(GL11.GL_LIGHTING);
-            GL11.glEnable(GL11.GL_DEPTH_TEST);
-        }
+        protected void beforeEntryRender(UiDrawContext ui, IntPoint mouse, Point location) { }
 
         @Override
-        protected void renderEntry(Tesselator ts, int entryIndex, Point entryLocation, int entryHeight) {
-            Row row = rows.get(entryIndex);
+        protected void renderEntry(UiDrawContext ui, int entryIndex, Point entryLocation, int entryHeight) {
+            Row row = this.rows.get(entryIndex);
             int yOffset = (int) (-row.rowY + entryLocation.y);
-            for (Slot slot : row.slots) {
-                renderSlot(slot, new IntPoint(0, yOffset));
-            }
+            for (Slot slot : row.slots) renderSlot(ui, slot, new IntPoint(0, yOffset));
         }
 
-        @Override
-        protected void renderBackground(Tesselator ts, Rect rect, IntCorner color) {
-        }
+        @Override protected void renderBackground(UiDrawContext ui, Rect rect, IntCorner color) { }
+        @Override protected void renderContentBackground(UiDrawContext ui, Rect rect, Point scroll) { }
 
-        @Override
-        protected void renderContentBackground(Tesselator ts, Rect rect, Point scroll) {
-        }
     }
 }

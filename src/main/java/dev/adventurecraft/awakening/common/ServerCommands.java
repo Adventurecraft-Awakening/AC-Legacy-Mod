@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.*;
@@ -8,6 +9,8 @@ import com.mojang.brigadier.tree.CommandNode;
 import dev.adventurecraft.awakening.common.gui.AC_GuiMapEditHUD;
 import dev.adventurecraft.awakening.common.gui.AC_GuiScriptStats;
 import dev.adventurecraft.awakening.common.gui.AC_GuiTextureAtlas;
+import dev.adventurecraft.awakening.client.render.RayLighting;
+import dev.adventurecraft.awakening.client.render.material.MapMaterials;
 import dev.adventurecraft.awakening.common.gui.AC_GuiWorldConfig;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.render.ExWorldEventRenderer;
@@ -17,6 +20,7 @@ import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 
+import java.io.File;
 import java.util.*;
 
 import dev.adventurecraft.awakening.world.GameRules;
@@ -42,6 +46,11 @@ public class ServerCommands {
         dispatcher.register(literal("scriptstats").executes(ServerCommands::cmdScriptStats));
 
         dispatcher.register(literal("textureatlas").executes(ServerCommands::cmdTextureAtlas));
+
+        dispatcher.register(literal("materials")
+            .then(literal("reload").executes(ServerCommands::cmdMaterialsReload))
+            .then(literal("defaults").executes(ServerCommands::cmdMaterialsDefaults))
+            .then(literal("save").executes(ServerCommands::cmdMaterialsSave)));
 
         dispatcher.register(literal("day").executes(descs.attach(ServerCommands::cmdDay, "Changes time to daytime")));
 
@@ -239,6 +248,51 @@ public class ServerCommands {
         return Command.SINGLE_SUCCESS;
     }
 
+    public static int cmdMaterialsReload(CommandContext<ServerCommandSource> context) {
+        var source = context.getSource();
+        var level = source.getLevel();
+        File directory = ((ExWorld) level).getLevelDir();
+        MapMaterials.load(level, directory);
+        RayLighting.clear(level);
+        ((ExWorld) level).loadMapTextures();
+        // Emission and translucent/water flags also live in retained terrain vertices.
+        source.getClient().levelRenderer.allChanged();
+        source.getClient().gui.addMessage("Reloaded map materials from " + directory);
+        return Command.SINGLE_SUCCESS;
+    }
+
+    public static int cmdMaterialsDefaults(CommandContext<ServerCommandSource> context) {
+        var source = context.getSource();
+        var level = source.getLevel();
+        File directory = ((ExWorld) level).getLevelDir();
+        boolean created = MapMaterials.createDefaults(level, directory);
+        if (created) {
+            RayLighting.clear(level);
+            ((ExWorld) level).loadMapTextures();
+            source.getClient().levelRenderer.allChanged();
+        }
+        source.getClient().gui.addMessage(created
+            ? "Created default materials in " + directory
+            : "Material set already exists (or could not be created)");
+        return created ? Command.SINGLE_SUCCESS : 0;
+    }
+
+    public static int cmdMaterialsSave(CommandContext<ServerCommandSource> context) {
+        var source = context.getSource();
+        var level = source.getLevel();
+        File directory = ((ExWorld) level).getLevelDir();
+        boolean saved = MapMaterials.save(level, directory);
+        if (saved) {
+            RayLighting.clear(level);
+            ((ExWorld) level).loadMapTextures();
+            source.getClient().levelRenderer.allChanged();
+        }
+        source.getClient().gui.addMessage(saved
+            ? "Saved map materials to " + directory
+            : "Could not save map materials");
+        return saved ? Command.SINGLE_SUCCESS : 0;
+    }
+
     public static int cmdDay(CommandContext<ServerCommandSource> context) {
         var world = context.getSource().getLevel();
         if (world instanceof ExWorld exWorld) {
@@ -396,49 +450,49 @@ public class ServerCommands {
 
     public static int cmdMapEdit(CommandContext<ServerCommandSource> context, Boolean value) {
         var client = context.getSource().getClient();
-        AC_DebugMode.levelEditing = value != null ? value : !AC_DebugMode.levelEditing;
+        EditorSession.forLevel(context.getSource().getLevel()).levelEditing = value != null ? value : !EditorSession.forLevel(context.getSource().getLevel()).levelEditing;
 
-        client.gui.addMessage(String.format("Level Editing: %b", AC_DebugMode.levelEditing));
+        client.gui.addMessage(String.format("Level Editing: %b", EditorSession.forLevel(context.getSource().getLevel()).levelEditing));
         return Command.SINGLE_SUCCESS;
     }
 
     public static int cmdRenderPaths(CommandContext<ServerCommandSource> context, Boolean value) {
         var client = context.getSource().getClient();
-        AC_DebugMode.renderPaths = value != null ? value : !AC_DebugMode.renderPaths;
+        EditorSession.forLevel(context.getSource().getLevel()).renderPaths = value != null ? value : !EditorSession.forLevel(context.getSource().getLevel()).renderPaths;
 
-        client.gui.addMessage(String.format("Render Paths: %b", AC_DebugMode.renderPaths));
+        client.gui.addMessage(String.format("Render Paths: %b", EditorSession.forLevel(context.getSource().getLevel()).renderPaths));
         return Command.SINGLE_SUCCESS;
     }
 
     public static int cmdRenderFov(CommandContext<ServerCommandSource> context, Boolean value) {
         var client = context.getSource().getClient();
-        AC_DebugMode.renderFov = value != null ? value : !AC_DebugMode.renderFov;
+        EditorSession.forLevel(context.getSource().getLevel()).renderFov = value != null ? value : !EditorSession.forLevel(context.getSource().getLevel()).renderFov;
 
-        client.gui.addMessage(String.format("Render FOV: %b", AC_DebugMode.renderFov));
+        client.gui.addMessage(String.format("Render FOV: %b", EditorSession.forLevel(context.getSource().getLevel()).renderFov));
         return Command.SINGLE_SUCCESS;
     }
 
     public static int cmdRenderCollisions(CommandContext<ServerCommandSource> context, Boolean value) {
         var client = context.getSource().getClient();
-        AC_DebugMode.renderCollisions = value != null ? value : !AC_DebugMode.renderCollisions;
+        EditorSession.forLevel(context.getSource().getLevel()).renderCollisions = value != null ? value : !EditorSession.forLevel(context.getSource().getLevel()).renderCollisions;
 
-        client.gui.addMessage(String.format("Render Collisions: %b", AC_DebugMode.renderCollisions));
+        client.gui.addMessage(String.format("Render Collisions: %b", EditorSession.forLevel(context.getSource().getLevel()).renderCollisions));
         return Command.SINGLE_SUCCESS;
     }
 
     public static int cmdRenderRays(CommandContext<ServerCommandSource> context, Boolean value) {
         var client = context.getSource().getClient();
-        AC_DebugMode.renderRays = value != null ? value : !AC_DebugMode.renderRays;
+        EditorSession.forLevel(context.getSource().getLevel()).renderRays = value != null ? value : !EditorSession.forLevel(context.getSource().getLevel()).renderRays;
 
-        client.gui.addMessage(String.format("Render Rays: %b", AC_DebugMode.renderRays));
+        client.gui.addMessage(String.format("Render Rays: %b", EditorSession.forLevel(context.getSource().getLevel()).renderRays));
         return Command.SINGLE_SUCCESS;
     }
 
     public static int cmdFluidCollision(CommandContext<ServerCommandSource> context, Boolean value) {
         var client = context.getSource().getClient();
-        AC_DebugMode.isFluidHittable = value != null ? value : !AC_DebugMode.isFluidHittable;
+        EditorSession.forLevel(context.getSource().getLevel()).isFluidHittable = value != null ? value : !EditorSession.forLevel(context.getSource().getLevel()).isFluidHittable;
 
-        client.gui.addMessage(String.format("Fluid Collision: %b", AC_DebugMode.isFluidHittable));
+        client.gui.addMessage(String.format("Fluid Collision: %b", EditorSession.forLevel(context.getSource().getLevel()).isFluidHittable));
         return Command.SINGLE_SUCCESS;
     }
 

@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.tile;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.gui.AC_GuiMobSpawner;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
@@ -44,7 +45,7 @@ public class AC_BlockMobSpawner extends TileEntityTile implements AC_ITriggerDeb
 
     @Override
     public void onTriggerActivated(Level world, int x, int y, int z) {
-        if (AC_DebugMode.triggerResetActive) {
+        if (EditorSession.forLevel(world).triggerResetActive) {
             return;
         }
         var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityMobSpawner.class);
@@ -55,7 +56,7 @@ public class AC_BlockMobSpawner extends TileEntityTile implements AC_ITriggerDeb
 
     @Override
     public void onTriggerDeactivated(Level world, int x, int y, int z) {
-        if (AC_DebugMode.triggerResetActive) {
+        if (EditorSession.forLevel(world).triggerResetActive) {
             return;
         }
         var entity = ((ExWorld) world).ac$getTileEntity(x, y, z, AC_TileEntityMobSpawner.class);
@@ -66,7 +67,7 @@ public class AC_BlockMobSpawner extends TileEntityTile implements AC_ITriggerDeb
 
     @Override
     public boolean mayPick() {
-        return AC_DebugMode.active;
+        return EditorSession.current().active;
     }
 
     @Override

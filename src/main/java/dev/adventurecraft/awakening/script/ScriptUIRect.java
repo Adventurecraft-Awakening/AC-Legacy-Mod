@@ -1,11 +1,8 @@
 package dev.adventurecraft.awakening.script;
 
+import dev.adventurecraft.awakening.client.render.UiDrawContext;
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.Tesselator;
-import net.minecraft.client.renderer.Textures;
-import org.lwjgl.opengl.GL11;
 
 @SuppressWarnings("unused")
 public class ScriptUIRect extends UIElement implements ScriptColor {
@@ -50,24 +47,16 @@ public class ScriptUIRect extends UIElement implements ScriptColor {
     }
 
     @Override
-    public void render(Font font, Textures textures, float deltaTime) {
+    public void render(UiDrawContext context, float deltaTime) {
         double x = this.getXAtTime(deltaTime);
         double y = this.getYAtTime(deltaTime);
-        Tesselator ts = Tesselator.instance;
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        ts.begin();
         ScriptVec4 c = this.getColor();
-        float r = (float) c.getR();
-        float g = (float) c.getG();
-        float b = (float) c.getB();
-        float a = (float) c.getA();
-        ts.color(r, g, b, a);
-        ts.vertex(x, y + this.height, 0.0D);
-        ts.vertex(x + this.width, y + this.height, 0.0D);
-        ts.vertex(x + this.width, y, 0.0D);
-        ts.vertex(x, y, 0.0D);
-        ts.end();
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
+        int rgba = dev.adventurecraft.awakening.image.Rgba.fromRgba8(
+            dev.adventurecraft.awakening.image.Rgba.saturateToByte(c.getR()),
+            dev.adventurecraft.awakening.image.Rgba.saturateToByte(c.getG()),
+            dev.adventurecraft.awakening.image.Rgba.saturateToByte(c.getB()),
+            dev.adventurecraft.awakening.image.Rgba.saturateToByte(c.getA()));
+        context.fill(new dev.adventurecraft.awakening.layout.Rect(x, y, this.width, this.height), rgba);
     }
 
     @Override

@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.entity;
 
 import dev.adventurecraft.awakening.extension.entity.ExFlyingEntity;
 import dev.adventurecraft.awakening.extension.entity.ExMob;
+import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.FlyingMob;
@@ -109,7 +110,7 @@ public class AC_EntityBat extends FlyingMob implements Enemy {
 
         for (int i = 1; (double) i < len; ++i) {
             aabb.grow(dX, dY, dZ);
-            if (!this.level.getCubes(this, aabb).isEmpty()) {
+            if (((ExWorld) this.level).ac$hasCollision(this, aabb)) {
                 return false;
             }
         }

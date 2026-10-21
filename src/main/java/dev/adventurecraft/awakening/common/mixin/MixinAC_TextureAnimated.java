@@ -1,8 +1,9 @@
 package dev.adventurecraft.awakening.common.mixin;
 
+import dev.adventurecraft.awakening.ACMod;
+import dev.adventurecraft.awakening.client.render.texture.TextureAnimationFrames;
 import dev.adventurecraft.awakening.common.AC_TextureAnimated;
 import dev.adventurecraft.awakening.image.ImageBuffer;
-import dev.adventurecraft.awakening.image.ImageFormat;
 import dev.adventurecraft.awakening.layout.IntRect;
 import dev.adventurecraft.awakening.mixin.client.render.MixinTextureBinder;
 import net.minecraft.client.Minecraft;
@@ -28,22 +29,27 @@ public abstract class MixinAC_TextureAnimated extends MixinTextureBinder {
 
     @Override
     public void loadImage(String name, ImageBuffer image) {
-        this.hasImages = false;
-        this.curFrame = 0;
+        // Keep the declared target dimensions so a later map reload can repair
+        // a missing or malformed source without reconstructing this binder.
+        this.resetImageSource();
 
         // TODO: improve error message and log to logger
         if (image == null) {
             Minecraft.instance.gui.addMessage(String.format("Unable to load texture '%s'", name));
+        } else if (this.width < 1 || this.height < 1) {
+            Minecraft.instance.gui.addMessage("Animated texture frame dimensions must be positive");
         } else if (this.width != image.getWidth()) {
             Minecraft.instance.gui.addMessage(String.format(
                 "Animated texture width of %d didn't match the specified width of %d", image.getWidth(), this.width));
         } else if (0 != image.getHeight() % this.height) {
             Minecraft.instance.gui.addMessage(String.format("Animated texture height of %d isn't a multiple of the specified height of %d", image.getHeight(), this.height));
         } else {
-            this.numFrames = image.getHeight() / this.height;
-            this.imageData = this.allocImageData(image.getWidth(), image.getHeight());
-            image.copyTo(this.imageData.asIntBuffer(), ImageFormat.RGBA_U8);
-            this.hasImages = true;
+            try {
+                this.loadFrames(TextureAnimationFrames.from(image, this.width, this.height));
+            } catch (IllegalArgumentException error) {
+                ACMod.LOGGER.warn("Ignoring invalid animation strip {}: {}", name, error.getMessage());
+                Minecraft.instance.gui.addMessage(String.format("Unable to load texture '%s': %s", name, error.getMessage()));
+            }
         }
     }
 }

@@ -1,9 +1,9 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.client.render.compat.LegacyGlAdapter;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.renderer.entity.HumanoidMobRenderer;
 import net.minecraft.world.entity.Mob;
-import org.lwjgl.opengl.GL11;
 
 public class RenderBipedScaled extends HumanoidMobRenderer {
     
@@ -16,6 +16,6 @@ public class RenderBipedScaled extends HumanoidMobRenderer {
 
     @Override
     protected void scale(Mob var1, float var2) {
-        GL11.glScalef(this.scaling, this.scaling, this.scaling);
+        LegacyGlAdapter.scalef(this.scaling, this.scaling, this.scaling);
     }
 }

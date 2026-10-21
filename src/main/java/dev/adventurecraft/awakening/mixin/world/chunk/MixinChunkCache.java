@@ -8,6 +8,7 @@ import dev.adventurecraft.awakening.primitives.ChunkCoord;
 import dev.adventurecraft.awakening.util.MathF;
 import dev.adventurecraft.awakening.world.level.chunk.ChunkTicket;
 import dev.adventurecraft.awakening.world.level.chunk.CompletionChunkTicket;
+import dev.adventurecraft.awakening.world.level.chunk.SupplierChunkTicket;
 import dev.adventurecraft.awakening.world.level.storage.AsyncChunkSource;
 import dev.adventurecraft.awakening.world.level.storage.AsyncChunkStorage;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
@@ -29,8 +30,6 @@ import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-import java.util.concurrent.CompletableFuture;
-
 @Mixin(ChunkCache.class)
 public abstract class MixinChunkCache implements ExChunkCache, AsyncChunkSource {
 
@@ -50,8 +49,6 @@ public abstract class MixinChunkCache implements ExChunkCache, AsyncChunkSource 
     @Unique int chunksWide;
 
     @Unique private AsyncChunkStorage asyncStorage;
-    @Unique private AsyncChunkSource asyncSource;
-
     @Unique private Long2ObjectMap<ChunkTicket> loadQueue;
 
     @Shadow
@@ -78,12 +75,6 @@ public abstract class MixinChunkCache implements ExChunkCache, AsyncChunkSource 
         this.source = source;
 
         this.asyncStorage = storage instanceof AsyncChunkStorage acs ? acs : null;
-
-        // TODO: async chunk sources are currently broken;
-        //       they may cascade and request missing chunks,
-        //       but we disallow loading chunks outside the main-thread at the moment
-        // this.asyncSource = source instanceof AsyncChunkSource acs ? acs : null;
-        this.asyncSource = null; // do not use async sources
 
         this.loadQueue = new Long2ObjectOpenHashMap<>();
     }
@@ -233,6 +224,28 @@ public abstract class MixinChunkCache implements ExChunkCache, AsyncChunkSource 
     }
 
     @Override
+    public boolean ac$prepareChunk(int x, int z, boolean publish) {
+        if (Thread.currentThread() != ACMainThread.MAIN_THREAD) {
+            throw new AssertionError("Preparing chunks outside the main-thread is not supported.");
+        }
+        // Snapshots use the same empty boundary as getChunk, including cache-edge padding.
+        if (!this.level.isFindingSpawn && !this.fits(x, z)) {
+            return true;
+        }
+        if (this.hasChunk(x, z)) {
+            return true;
+        }
+
+        ChunkTicket ticket = this.loadQueue.computeIfAbsent(ChunkCoord.pack(x, z), this::createTicket);
+        if (!publish || !ticket.isReady()) {
+            return false;
+        }
+        // This also surfaces failed storage tickets, and keeps generation/population on this thread.
+        this.getChunk(x, z);
+        return true;
+    }
+
+    @Override
     public void ac$requestChunks(int x0, int z0, int x1, int z1, boolean wait) {
         if (this.asyncStorage == null) {
             return;
@@ -271,26 +284,20 @@ public abstract class MixinChunkCache implements ExChunkCache, AsyncChunkSource 
     private ChunkTicket createTicket(long key) {
         int x = ChunkCoord.unpackX(key);
         int z = ChunkCoord.unpackZ(key);
-        var loadStage = this.asyncStorage.loadAsync(this.level, x, z);
+        ChunkTicket storageTicket = this.asyncStorage != null
+            ? new CompletionChunkTicket(this.asyncStorage.loadAsync(this.level, x, z))
+            : new SupplierChunkTicket(() -> this.storage == null ? null : this.storage.load(this.level, x, z));
 
-        if (this.asyncSource == null) {
-            return new CompletionChunkTicket(loadStage).thenApply(c -> {
-                if (c != null) {
-                    return c;
-                }
-                if (this.source == null) {
-                    return this.emptyChunk;
-                }
-                return onSourceLoad(this.source.loadChunk(x, z));
-            });
-        }
-
-        return new CompletionChunkTicket(loadStage.thenCompose(c -> {
+        // Generation may request more chunks, so it must remain lazy and run on the main thread.
+        return storageTicket.thenApply(c -> {
             if (c != null) {
-                return CompletableFuture.completedStage(c);
+                return c;
             }
-            return this.asyncSource.loadAsync(this.level, x, z).thenApply(MixinChunkCache::onSourceLoad);
-        }));
+            if (this.source == null) {
+                return this.emptyChunk;
+            }
+            return onSourceLoad(this.source.loadChunk(x, z));
+        });
     }
 
     @Unique

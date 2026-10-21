@@ -5,6 +5,7 @@ import com.mojang.brigadier.context.StringRange;
 import com.mojang.brigadier.suggestion.Suggestion;
 import com.mojang.brigadier.suggestion.Suggestions;
 import dev.adventurecraft.awakening.client.gui.components.AC_EditBox;
+import dev.adventurecraft.awakening.client.render.compat.LegacyPassBridge;
 import dev.adventurecraft.awakening.common.ServerCommandSource;
 import dev.adventurecraft.awakening.extension.client.entity.player.ExAbstractClientPlayerEntity;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
@@ -14,22 +15,18 @@ import dev.adventurecraft.awakening.js.CodeSuggestion;
 import dev.adventurecraft.awakening.js.Evaluator;
 import dev.adventurecraft.awakening.layout.IntBorder;
 import dev.adventurecraft.awakening.layout.IntRect;
-import dev.adventurecraft.awakening.util.DrawUtil;
 import dev.adventurecraft.awakening.util.StringUtil;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.Tesselator;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.input.Keyboard;
 import org.mozilla.javascript.*;
 import org.mozilla.javascript.ast.*;
 
-import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Stream;
 
 @Environment(EnvType.CLIENT)
 public class AC_ChatScreen extends Screen {
@@ -125,18 +122,10 @@ public class AC_ChatScreen extends Screen {
                 var eval = new Evaluator(); // TODO: store as field
                 AstRoot root = eval.parseAst(src, "<cmd_suggest>", 0);
                 if (root != null) {
-                    Stream<CodeSuggestion> keys = Evaluator.suggestAtCursor(
-                        script.getContext(),
-                        script.globalScope,
-                        root,
-                        new StringRange(cursor, cursor)
-                    );
-
                     this.suggestionFuture = CompletableFuture.completedFuture(
-                        Evaluator.wrap(keys
-                        .map(k -> (Suggestion) k)
-                        .sorted()
-                        .toList()));
+                        script.runtime().withContext(() -> Evaluator.wrap(Evaluator.suggestAtCursor(
+                            script.getContext(), script.globalScope, root, new StringRange(cursor, cursor))
+                            .map(k -> (Suggestion) k).sorted().toList())));
                 }
             }
             else {
@@ -146,61 +135,31 @@ public class AC_ChatScreen extends Screen {
     }
 
     public @Override void render(int mouseX, int mouseY, float a) {
-        /*
-        this.fill(2, this.height - 14, this.width - 2, this.height - 2, Integer.MIN_VALUE);
-        this.drawString(
-            this.font,
-            "> " + this.message + (this.frame / 6 % 2 == 0 ? "_" : ""),
-            4,
-            this.height - 12,
-            14737632
-        );
-        */
-        this.messageBox.render(this.font);
-
-        if (this.suggestionFuture != null && this.suggestionFuture.isDone()) {
-            Suggestions suggestions = this.suggestionFuture.join();
-            if (suggestions.isEmpty()) {
-
-            }
-            else {
+        try (var ui = LegacyPassBridge.uiContext(this.font, this.minecraft.textures)) {
+            this.messageBox.render(ui);
+            if (this.suggestionFuture != null && this.suggestionFuture.isDone()) {
+                Suggestions suggestions = this.suggestionFuture.join();
                 List<Suggestion> list = suggestions.getList();
-
-                IntRect rect = this.messageBox.getValueRenderRect(this.font);
-
-                var ts = Tesselator.instance;
-                var state = ((ExTextRenderer) font).createState();
-
-                var bgRect = rect.expand(new IntBorder(0, 100, list.size() * 10 + 2, -12));
-
-                DrawUtil.beginFill(ts);
-                DrawUtil.fillRect(ts, bgRect.expand(new IntBorder(1)).asFloat(), Rgba.withAlpha(Rgba.BLACK, 236));
-                DrawUtil.endFill(ts);
-
-                state.setColor(Rgba.fromRgb8(0xe0, 0xe0, 0xe0));
-                state.setShadowToColor();
-
-                var df = new DecimalFormat();
-                df.setMinimumFractionDigits(1);
-                df.setMaximumFractionDigits(3);
-
-                state.begin(ts);
-                for (int i = 0; i < list.size(); i++) {
-                    Suggestion sugg = list.get(list.size() - i - 1);
-                    int ty = rect.top() - i * 10 - 12;
-                    state.drawText(sugg.getText(), rect.x, ty);
-
-                    if (sugg instanceof CodeSuggestion codeSugg) {
-                        state.drawText(codeSugg.value().getString(), bgRect.right() + 2, ty);
-
-                        // TODO: render score in some kind of dev/debug mode?
-                        // state.drawText(df.format(codeSugg.getScore()), bgRect.right() + 2, ty);
+                if (!list.isEmpty()) {
+                    IntRect rect = this.messageBox.getValueRenderRect(this.font);
+                    var state = ((ExTextRenderer) font).createState();
+                    var background = rect.expand(new IntBorder(0, 100, list.size() * 10 + 2, -12));
+                    ui.fill(background.expand(new IntBorder(1)).asFloat(), Rgba.withAlpha(Rgba.BLACK, 236));
+                    state.setColor(Rgba.fromRgb8(0xe0, 0xe0, 0xe0));
+                    state.setShadowToColor();
+                    state.begin(ui);
+                    for (int i = 0; i < list.size(); i++) {
+                        Suggestion suggestion = list.get(list.size() - i - 1);
+                        int y = rect.top() - i * 10 - 12;
+                        state.drawText(suggestion.getText(), rect.x, y);
+                        if (suggestion instanceof CodeSuggestion code) {
+                            state.drawText(code.value().getString(), background.right() + 2, y);
+                        }
                     }
+                    state.end();
                 }
-                state.end();
             }
         }
-
         super.render(mouseX, mouseY, a);
     }
 

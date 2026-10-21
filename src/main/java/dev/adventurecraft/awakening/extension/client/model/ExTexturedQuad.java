@@ -5,6 +5,8 @@ import net.minecraft.client.model.Vertex;
 
 public interface ExTexturedQuad {
 
+    void ac$write(dev.adventurecraft.awakening.client.render.VertexSink sink,float scale);
+
     static Polygon create(Vertex[] var1, int var2, int var3, int var4, int var5, int var6, int var7) {
         var quad = new Polygon(var1);
         float var8 = 0.0015625F;

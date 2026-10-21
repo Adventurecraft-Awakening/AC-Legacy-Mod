@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.mixin.item;
 
-import dev.adventurecraft.awakening.common.AC_DebugMode;
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.entity.player.Player;
@@ -18,7 +18,7 @@ public abstract class MixinDyePowderItem {
     private void disableUsageOutsideOfDebugMode(ItemInstance item, Player player, Level level, int x, int y, int z, int face, CallbackInfoReturnable<Boolean> cir) {
         // Specifically Bonemeal
         if(item.getAuxValue() == 15) {
-            if (!AC_DebugMode.active && !((ExWorldProperties) level.levelData).getCanUseBonemeal()) {
+            if (!EditorSession.current().active && !((ExWorldProperties) level.levelData).getCanUseBonemeal()) {
                 cir.setReturnValue(false);
             }
         }

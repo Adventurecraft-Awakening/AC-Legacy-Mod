@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.tile;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.common.AC_DebugMode;
 import dev.adventurecraft.awakening.common.AC_TriggerArea;
 import dev.adventurecraft.awakening.common.gui.AC_GuiTrigger;
@@ -46,7 +47,7 @@ public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerDebugB
 
     @Override
     public boolean mayPick() {
-        return AC_DebugMode.active;
+        return EditorSession.current().active;
     }
 
     public @Override boolean canBeTriggered() {
@@ -125,7 +126,7 @@ public class AC_BlockTrigger extends TileEntityTile implements AC_ITriggerDebugB
 
     @Override
     public void entityInside(Level world, int x, int y, int z, Entity entity) {
-        if (AC_DebugMode.active) {
+        if (EditorSession.forLevel(world).active) {
             return;
         }
         if (!(entity instanceof Player)) {

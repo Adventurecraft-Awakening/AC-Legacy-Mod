@@ -32,7 +32,7 @@ public class ACMod implements ModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("AC");
     public static final Logger CHAT_LOGGER = LoggerFactory.getLogger("Chat");
     public static final Logger JS_LOGGER = LoggerFactory.getLogger("JS");
-    public static final Logger GL_LOGGER = LoggerFactory.getLogger("GL");
+    public static final Logger RENDER_LOGGER = LoggerFactory.getLogger("Render");
 
     public static @Nullable ModContainer MOD_CONTAINER;
     public static @Nullable GitMetadata GIT_META;
@@ -42,9 +42,11 @@ public class ACMod implements ModInitializer {
     public static ExecutorService CHUNK_MESH_EXECUTOR;
 
     static {
-        // Over-allocating threads should be fine since single-player has to wait
-        // for tasks to finish no matter what, so going at max speed should be optimal.
         int processors = Math.max(1, Runtime.getRuntime().availableProcessors());
+        // Leave CPU capacity for simulation and render submission. Diagnostics can
+        // compare another limit without changing the worker ownership contract.
+        int meshWorkers = Math.clamp(Integer.getInteger("ac.terrain.meshWorkers", Math.max(1, processors - 2)),
+            1, processors);
         {
             // IO is expected to do many blocking operations - virtual threads should be optimal for this.
             ThreadFactory factory = Thread.ofVirtual().name("World-IO-Worker", 0).factory();
@@ -60,7 +62,7 @@ public class ACMod implements ModInitializer {
             var factory = new CustomForkJoinWorkerThreadFactory()
                 .name("Chunk-Mesh-Worker", 0)
                 .priority(ACMainThread.WORKER_PRIORITY + 1);
-            CHUNK_MESH_EXECUTOR = new ForkJoinPool(processors, factory, null, true);
+            CHUNK_MESH_EXECUTOR = new ForkJoinPool(meshWorkers, factory, null, true);
         }
     }
 

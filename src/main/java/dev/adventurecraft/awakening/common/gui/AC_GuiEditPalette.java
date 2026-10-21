@@ -1,10 +1,11 @@
 package dev.adventurecraft.awakening.common.gui;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
+import dev.adventurecraft.awakening.client.render.compat.LegacyPassBridge;
+import dev.adventurecraft.awakening.extension.client.render.entity.ExItemRenderer;
 import java.util.ArrayList;
 import java.util.List;
 
-import dev.adventurecraft.awakening.common.AC_DebugMode;
-import net.minecraft.client.Lighting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiComponent;
@@ -12,8 +13,6 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.world.ItemInstance;
 import net.minecraft.world.level.tile.Tile;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL12;
 
 class AC_GuiEditPalette extends GuiComponent {
 	int numRows;
@@ -55,7 +54,7 @@ class AC_GuiEditPalette extends GuiComponent {
 					var4.soundEngine.playUI("random.click", 1.0F, 1.0F);
 					var11 = var9 + var10 * columns;
 					if(var11 + this.getOffset() < this.blocks.size()) {
-						AC_DebugMode.mapEditing.setBlock(((Tile)this.blocks.get(var11 + this.getOffset())).id, 0);
+						EditorSession.current().mapEditing.setBlock(((Tile)this.blocks.get(var11 + this.getOffset())).id, 0);
 						return true;
 					}
 				} else if(var9 == columns && var1 % 16 < 4 && this.needScrollbar()) {
@@ -85,21 +84,14 @@ class AC_GuiEditPalette extends GuiComponent {
 			this.fill(var5 + var6 - 4, var7 + var9, var5 + var6, var7 + var9 + scrollHeight, -2130706433);
 		}
 
-		GL11.glPushMatrix();
-		GL11.glRotatef(180.0F, 1.0F, 0.0F, 0.0F);
-		Lighting.turnOn();
-		GL11.glPopMatrix();
-		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-		GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-		var9 = this.getOffset();
-
-		for(int var10 = 0; var10 < rows * columns && var10 + var9 < this.blocks.size(); ++var10) {
-			this.item.id = ((Tile)this.blocks.get(var10 + var9)).id;
-			itemRenderer.renderAndDecorateItem(var2, var1.textures, this.item, var10 % columns * 16, var4 / 2 - rows * 8 + 16 * (var10 / columns));
-		}
-
-		GL11.glDisable(GL12.GL_RESCALE_NORMAL);
-		Lighting.turnOff();
+        try (var ui = LegacyPassBridge.uiContext(var2, var1.textures)) {
+            var preview = (ExItemRenderer) itemRenderer;
+            var9 = this.getOffset();
+            for (int index = 0; index < rows * columns && index + var9 < this.blocks.size(); index++) {
+                this.item.id = ((Tile) this.blocks.get(index + var9)).id;
+                preview.renderGuiItem(ui, this.item, index % columns * 16, var4 / 2 - rows * 8 + 16 * (index / columns));
+            }
+        }
 	}
 
 	private int getOffset() {

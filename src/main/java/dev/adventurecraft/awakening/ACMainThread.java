@@ -11,7 +11,7 @@ import java.io.File;
  * Extended Minecraft client implementation for Adventurecraft Legacy Mod.
  * This class provides additional functionality and configuration options
  * specific to the Adventurecraft mod, including custom crash handling,
- * maps directory management, and OpenGL debugging capabilities.
+ * and maps directory management.
  * 
  * @author Adventurecraft Team
  */
@@ -30,23 +30,6 @@ public final class ACMainThread extends Minecraft {
      * Initialized lazily via {@link #getMapsDirectory()}.
      */
     public static File mapsDirectory;
-
-    /**
-     * Flag to enable OpenGL debug context for development and debugging.
-     */
-    public static boolean glDebugContext;
-    
-    /**
-     * Severity level for OpenGL debug logging.
-     * Controls which OpenGL debug messages are logged to the console.
-     */
-    public static GlDebugSeverity glDebugLogSeverity = GlDebugSeverity.All;
-    
-    /**
-     * Severity level for OpenGL debug stack traces.
-     * Controls which OpenGL debug messages trigger stack trace output.
-     */
-    public static GlDebugSeverity glDebugTraceSeverity = GlDebugSeverity.High;
 
     /**
      * Constructs a new ACMainThread instance with the specified display parameters.
@@ -86,22 +69,4 @@ public final class ACMainThread extends Minecraft {
         return mapsDirectory;
     }
 
-    /**
-     * Enumeration of OpenGL debug severity levels.
-     * Used to control the verbosity of OpenGL debug output and stack traces.
-     */
-    public enum GlDebugSeverity {
-        /** Ignore all debug messages */
-        Ignore,
-        /** Only high severity messages (critical errors) */
-        High,
-        /** Medium severity messages (warnings and errors) */
-        Medium,
-        /** Low severity messages (minor warnings) */
-        Low,
-        /** Informational messages */
-        Info,
-        /** All debug messages regardless of severity */
-        All,
-    }
 }

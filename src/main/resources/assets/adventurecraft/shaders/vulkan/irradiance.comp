@@ -1,0 +1,37 @@
+#version 460
+#include "ray_lighting.glsl"
+#include "irradiance_cache.glsl"
+layout(local_size_x = 64) in;
+void main() {
+    uint vertex = gl_GlobalInvocationID.x;
+    if (vertex>=cacheJob.vertexCount) return;
+    Vertices vertices = Vertices(cacheJob.vertices);
+    uint quad = vertex/4u;
+    uint corner = vertex%4u;
+    uint expanded = quad*6u+(corner==3u ? 5u : corner);
+    vec3 position = cachePosition(vertices,expanded)-lighting.parameters.yzw;
+    vec3 center = (cachePosition(vertices,quad*6u)+cachePosition(vertices,quad*6u+1u)
+        +cachePosition(vertices,quad*6u+2u)+cachePosition(vertices,quad*6u+5u))*0.25-lighting.parameters.yzw;
+    // Edge vertices must sample inside their own face, rather than behind an adjacent face.
+    vec3 inward = center-position;
+    float inwardLength = length(inward);
+    if (inwardLength>1e-6) position += inward*min(0.01/inwardLength,0.125);
+    bool decorative = (vertices.words[expanded*8u+7u] & DECORATIVE_GRASS)!=0u;
+    vec3 normal = decorative ? vec3(0,1,0) : cacheNormal(vertices,quad);
+    vec3 front = vec3(0.0), back = vec3(0.0);
+    for (uint i=0u;i<cacheJob.sampleCount;i++) {
+        uint sampleIndex = cacheJob.sampleOffset+i;
+        front += diffuseSample(position,normal,sampleIndex);
+        if (!decorative) back += diffuseSample(position,-normal,sampleIndex);
+    }
+    if (decorative) back = front;
+    Irradiance outputCache = Irradiance(cacheJob.irradiance);
+    VertexIrradiance previous = outputCache.values[vertex];
+    // A rebuilt mesh can contain inherited corners beside genuinely new surfaces.
+    // Only the history actually stored at this corner contributes to its average.
+    float oldCount = clamp(previous.front.w,0.0,128.0);
+    float total = oldCount+float(cacheJob.sampleCount);
+    float confidence = min(total,128.0);
+    outputCache.values[vertex].front = vec4((previous.front.rgb*oldCount+front)/total,confidence);
+    outputCache.values[vertex].back = vec4((previous.back.rgb*oldCount+back)/total,confidence);
+}

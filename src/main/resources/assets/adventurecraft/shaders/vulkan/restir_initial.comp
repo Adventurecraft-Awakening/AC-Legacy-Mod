@@ -1,0 +1,147 @@
+#version 460
+#include "restir_common.glsl"
+layout(local_size_x = 8, local_size_y = 8) in;
+
+// A finite source cannot contribute when none of its samples lies within range
+// of any receiver in this tile. Retain every other source and its exact PDF.
+const uint RESTIR_TILE_LIGHTS = 512u;
+shared vec4 restirTilePoints[64];
+shared vec3 restirTileMinimum;
+shared vec3 restirTileMaximum;
+shared uint restirTileLightCount;
+shared float restirTileCdf[512];
+shared uint restirTileIndices[512];
+shared float restirTileWeight;
+shared uint restirTileValid;
+
+void restirBuildTileProposal(RestirSurface surface, bool inBounds) {
+    uint lane = gl_LocalInvocationIndex;
+    restirTilePoints[lane] = inBounds && surface.valid ? vec4(surface.position,1.0) : vec4(0.0);
+    if (lane==0u) {
+        restirTileLightCount = 0u;
+        restirTileWeight = 0.0;
+        restirTileValid = 0u;
+    }
+    barrier();
+    if (lane==0u) {
+        restirTileMinimum = vec3(3.402823e38);
+        restirTileMaximum = vec3(-3.402823e38);
+        for (uint i=0u;i<64u;i++) {
+            if (restirTilePoints[i].w<=0.0) continue;
+            restirTileMinimum = min(restirTileMinimum,restirTilePoints[i].xyz);
+            restirTileMaximum = max(restirTileMaximum,restirTilePoints[i].xyz);
+            restirTileValid = 1u;
+        }
+    }
+    barrier();
+    RestirEmitters source = RestirEmitters(restirPush.emitterAddress);
+    if (restirTileValid!=0u) {
+        for (uint i=lane;i<source.header.x;i+=64u) {
+            RestirEmitter light = source.emitters[i];
+            vec3 separation = max(max(restirTileMinimum-light.positionRadius.xyz,
+                light.positionRadius.xyz-restirTileMaximum),vec3(0.0));
+            float support = light.positionRadius.w+1.732050808*light.halfExtent+0.0001;
+            if (dot(separation,separation)>support*support) continue;
+            uint slot = atomicAdd(restirTileLightCount,1u);
+            if (slot<RESTIR_TILE_LIGHTS) {
+                restirTileIndices[slot] = i;
+                restirTileCdf[slot] = max(light.cdf-(i==0u ? 0.0 : source.emitters[i-1u].cdf),0.0);
+            }
+        }
+    }
+    barrier();
+    if (lane==0u && restirTileLightCount<=RESTIR_TILE_LIGHTS) {
+        float total = 0.0;
+        for (uint i=0u;i<restirTileLightCount;i++) {
+            total += restirTileCdf[i];
+            restirTileCdf[i] = total;
+        }
+        restirTileWeight = total;
+    }
+    barrier();
+}
+
+uint restirSampleTileEmitter(float uniformSample, out float pdf) {
+    if (restirTileLightCount>RESTIR_TILE_LIGHTS || restirTileWeight<=0.0) {
+        // Overflow is a proposal fallback, never a cap on contributing lights.
+        return restirSampleEmitter(uniformSample,pdf);
+    }
+    float target = uniformSample*restirTileWeight;
+    uint lo = 0u, hi = restirTileLightCount;
+    while (lo<hi) {
+        uint mid = lo+(hi-lo)/2u;
+        if (restirTileCdf[mid]<=target) lo = mid+1u;
+        else hi = mid;
+    }
+    uint index = restirTileIndices[min(lo,restirTileLightCount-1u)];
+    RestirEmitters source = RestirEmitters(restirPush.emitterAddress);
+    pdf = max(source.emitters[index].cdf-(index==0u ? 0.0 : source.emitters[index-1u].cdf),0.0)/restirTileWeight;
+    return index;
+}
+
+void main() {
+    ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
+    bool inBounds = restirInBounds(pixel);
+    RestirSurface surface;
+    surface.valid = false;
+    surface.position = vec3(0.0);
+    if (inBounds) surface = restirSurface(pixel,false);
+    // Edge and background lanes participate in every workgroup barrier too.
+    restirBuildTileProposal(surface,inBounds);
+    if (!inBounds) return;
+    uint pixelIndex = restirPixelIndex(pixel);
+    RestirReservoir reservoir = restirEmpty();
+    RestirEmitters source = RestirEmitters(restirPush.emitterAddress);
+    if (surface.valid && source.header.x>0u) {
+        RestirParameters parameters = RestirParameters(restirPush.parameterAddress);
+        uint rng = restirHash(pixelIndex^restirHash(parameters.dimensions.w+0xa511e9b3u));
+        uint count = uint(clamp(parameters.settings.x,1.0,32.0));
+        uint faceRotation = uint(restirRandom(rng)*6.0);
+        for (uint candidate=0u;candidate<count;candidate++) {
+            float lightPdf;
+            // The tile proposal retains every finite source that can reach any
+            // receiver here. Stratification uses its exact conditional PDF.
+            uint index = restirSampleTileEmitter((float(candidate)+restirRandom(rng))/float(count),lightPdf);
+            RestirEmitter light = source.emitters[index];
+            vec4 sampleData = vec4(restirRandom(rng),restirRandom(rng),-1.0,0.0);
+            float pdf = lightPdf;
+            if (light.halfExtent>0.0) {
+                sampleData.z = float((candidate+faceRotation)%6u);
+                pdf *= 1.0/6.0;
+            }
+            float target = restirTarget(restirEvaluate(surface,light,sampleData));
+            restirUpdate(reservoir,light.stableId,index,sampleData,target,
+                pdf>0.0 ? target/pdf : 0.0,1u,0.0,rng);
+        }
+        restirNormalize(reservoir);
+        if (reservoir.weights.y>0.0
+            && restirVisibleTarget(surface,source.emitters[reservoir.key.z],reservoir.sampleData)<=0.0) {
+            reservoir.weights.y = 0.0;
+        }
+        RestirReservoir fresh = reservoir;
+        RestirReservoir old = restirEmpty();
+        RestirSurface oldSurface = surface;
+        uint oldCount = 0u;
+        int selectedSource = 0;
+        reservoir = restirEmpty();
+        restirMerge(reservoir,fresh,surface,1024u,rng);
+        ivec2 previous;
+        if (restirReproject(surface,previous)) {
+            old = RestirReservoirs(restirPush.previousAddress).values[restirPixelIndex(previous)];
+            oldSurface = restirSurface(previous,true);
+            oldSurface.position -= parameters.originDelta.xyz;
+            oldCount = restirReuseCount(old,uint(clamp(parameters.settings.y,1.0,128.0)));
+            if (restirMerge(reservoir,old,surface,oldCount,rng)) selectedSource = 1;
+        }
+        if (reservoir.weights.z>0.0) {
+            RestirEmitter chosen = source.emitters[reservoir.key.z];
+            float currentTarget = restirVisibleTarget(surface,chosen,reservoir.sampleData);
+            float previousTarget = oldCount>0u ? restirVisibleTarget(oldSurface,chosen,reservoir.sampleData) : 0.0;
+            float numerator = selectedSource==0 ? currentTarget : previousTarget;
+            restirNormalizeMis(reservoir,numerator,currentTarget*float(fresh.key.w)+previousTarget*float(oldCount));
+            // Initial reservoirs have visibility support before spatial reuse.
+            if (currentTarget<=0.0) reservoir.weights.y = 0.0;
+        }
+    }
+    RestirReservoirs(restirPush.initialAddress).values[pixelIndex] = reservoir;
+}

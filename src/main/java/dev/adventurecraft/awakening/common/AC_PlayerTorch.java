@@ -1,11 +1,11 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.client.render.lighting.HeldTorchLightCache;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
+import dev.adventurecraft.awakening.extension.client.render.ExWorldEventRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.tile.Tile;
-
-// TODO: define "global" constant for max light level
 
 public class AC_PlayerTorch {
 
@@ -13,14 +13,9 @@ public class AC_PlayerTorch {
     static float posX;
     static float posY;
     static float posZ;
-    static int iX;
-    static int iY;
-    static int iZ;
 
     final static float moveThreshold = 0.05F;
-    final static int torchBrightness = 15;
-    final static int range = torchBrightness * 2 + 1;
-    final static float[] cache = new float[range * range * range];
+    private static final HeldTorchLightCache cache = new HeldTorchLightCache();
 
     public static boolean isTorchActive() {
         return torchActive;
@@ -28,8 +23,9 @@ public class AC_PlayerTorch {
 
     public static void setTorchState(Level world, boolean active) {
         if (torchActive != active) {
+            boolean wasActive = torchActive;
             torchActive = active;
-            markBlocksDirty(world);
+            markBlocksDirty(world, wasActive);
         }
     }
 
@@ -51,73 +47,54 @@ public class AC_PlayerTorch {
             posX = x;
             posY = y;
             posZ = z;
-            iX = (int) posX;
-            iY = (int) posY;
-            iZ = (int) posZ;
-            markBlocksDirty(world);
+            markBlocksDirty(world, torchActive);
         }
-    }
-
-    private static float getCachedTorchLight(int x, int y, int z) {
-        int bX = x - iX + torchBrightness;
-        int bY = y - iY + torchBrightness;
-        int bZ = z - iZ + torchBrightness;
-        if (bX >= 0 && bX < range && bY >= 0 && bY < range && bZ >= 0 && bZ < range) {
-            return cache[bX * range * range + bY * range + bZ];
-        }
-        return 0.0F;
     }
 
     public static float getTorchLight(int x, int y, int z) {
         if (torchActive) {
-            return getCachedTorchLight(x, y, z);
+            return cache.get(x, y, z);
         }
         return 0.0F;
     }
 
-    private static void markBlocksDirty(Level world) {
-        float baseX = (posX - (float) iX) - 0.5f;
-        float baseY = (posY - (float) iY) - 0.5f;
-        float baseZ = (posZ - (float) iZ) - 0.5f;
-        int index = 0;
+    public static HeldTorchLightCache.Statistics statistics() {
+        return cache.statistics();
+    }
 
-        final int range = torchBrightness;
-        final float emission = torchBrightness;
-
-        for (int rX = -range; rX <= range; ++rX) {
-            int x = rX + iX;
-
-            for (int rY = -range; rY <= range; ++rY) {
-                int y = rY + iY;
-
-                for (int rZ = -range; rZ <= range; ++rZ) {
-                    int z = rZ + iZ;
-
-                    // TODO: batch-get tiles, and maybe light?
-                    int id = world.getTile(x, y, z);
-                    float result = 0.0F;
-
-                    // TODO: light blocking is not correct when not done as a flood-fill;
-                    //       this results in way too much light, so compensate with some faked falloff
-                    float fakeFalloffFactor = 1.5f;
-
-                    float lightBlock = Tile.lightBlock[id];
-                    if (lightBlock < emission) {
-                        float xLight = Math.abs(rX - baseX);
-                        float yLight = Math.abs(rY - baseY);
-                        float zLight = Math.abs(rZ - baseZ);
-                        float light = (xLight + yLight + zLight) + lightBlock * fakeFalloffFactor;
-
-                        if (light <= emission) {
-                            if (emission - light > world.getLightLevel(x, y, z)) {
-                                world.sendTileUpdated(x, y, z);
-                            }
-                            result = emission - light;
-                        }
-                    }
-                    cache[index++] = result;
-                }
+    private static void markBlocksDirty(Level world, boolean wasActive) {
+        boolean nonnegativeOpacity = true;
+        for (int opacity : Tile.lightBlock) {
+            if (opacity < 0) {
+                nonnegativeOpacity = false;
+                break;
             }
+        }
+
+        var client = Minecraft.instance;
+        var renderer = client == null ? null : (ExWorldEventRenderer) client.levelRenderer;
+        long rendererEpoch = renderer == null ? -1 : renderer.ac$beginTorchLightUpdate(world);
+        try {
+            cache.update(posX, posY, posZ, wasActive, torchActive, nonnegativeOpacity, new HeldTorchLightCache.Samples() {
+                @Override
+                public int opacity(int x, int y, int z) {
+                    return Tile.lightBlock[world.getTile(x, y, z)];
+                }
+
+                @Override
+                public int lightLevel(int x, int y, int z) {
+                    return world.getLightLevel(x, y, z);
+                }
+
+                @Override
+                public void tileChanged(int x, int y, int z) {
+                    // Preserve the world's complete listener list and its callback order.
+                    world.sendTileUpdated(x, y, z);
+                }
+            });
+        } finally {
+            // Only renderer work is delayed, until every cache sample is available.
+            if (rendererEpoch != -1) renderer.ac$endTorchLightUpdate(world, rendererEpoch, cache.dirtySections());
         }
     }
 }

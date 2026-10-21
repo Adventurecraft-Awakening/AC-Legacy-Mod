@@ -1,7 +1,20 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        // LWJGL 3.4.3 ships Java 27 multi-release classes. Loom's remapper
+        // must be able to read them even when the build runs on JDK 25.
+        ["asm", "asm-analysis", "asm-commons", "asm-tree", "asm-util"].each {
+            classpath "org.ow2.asm:${it}:${project.asm_version}"
+        }
+    }
+}
+
 plugins {
     id "maven-publish"
-    id "fabric-loom" version "1.16.3"
-    id "babric-loom-extension" version "1.15.3"
+    id "fabric-loom" version "1.17.21"
+    id "babric-loom-extension" version "1.17.5"
 }
 
 
@@ -16,7 +29,7 @@ version = project.mod_version
 group = project.maven_group
 
 // The native wiki asset exporter writes to the committed registry asset tree by
-// default. CI overrides this with -PwikiAssetExportDir=build/wiki-assets-llvmpipe
+// default. CI overrides this with -PwikiAssetExportDir=build/wiki-assets-lavapipe
 // so that it can validate a clean regeneration without modifying the checkout.
 def wikiAssetExportDir = file(
     providers.gradleProperty("wikiAssetExportDir").getOrElse("wiki/assets/registry")
@@ -35,9 +48,8 @@ base {
 
 loom {
     accessWidenerPath = file("src/main/resources/${project.mod_id}.accesswidener")
-
-    // Our custom manifest replaces LWJGL2 with our LWJGL3 injector.
-    // customMinecraftMetadata = ""
+    // Beta has no vanilla server-GUI Queue appender used by Loom's default config.
+    log4jConfigs.setFrom(file("config/log4j2.xml"))
 
     if (OperatingSystem.current() == OperatingSystem.MAC_OS) {
         runConfigs.configureEach {
@@ -49,10 +61,8 @@ loom {
         client {
             client()
             // TODO: add sponge-mixin agent automatically
-            vmArgs("-XX:+UnlockDiagnosticVMOptions", "-XX:+UseCompactObjectHeaders")
+            vmArgs("-XX:+UnlockDiagnosticVMOptions", "-XX:+UseCompactObjectHeaders", "--enable-native-access=ALL-UNNAMED")
 
-            // TODO: make optional?
-            programArgs("--glDebugContext")
         }
 
         wikiAssetExporter {
@@ -61,17 +71,28 @@ loom {
             vmArgs(
                 "-XX:+UnlockDiagnosticVMOptions",
                 "-XX:+UseCompactObjectHeaders",
+                "--enable-native-access=ALL-UNNAMED",
                 "-Dac.wiki.export=true",
                 "-Dac.wiki.exportDir=${wikiAssetExportDir}"
             )
             ideConfigGenerated(false)
         }
+
+        vulkanClient {
+            client()
+            runDir("run/vulkan")
+            vmArgs("--enable-native-access=ALL-UNNAMED", "-Dac.renderer=vulkan")
+            if (providers.gradleProperty("vulkanValidation").getOrElse("false").toBoolean()) {
+                vmArgs("-Dac.vulkan.validation=true")
+            }
+        }
+
     }
 }
 
 babric {
     // Disable gambac library (M1 colours fix.)
-    // Our LWJGL3 injector already deals with it.
+    // The built-in LWJGL3 compatibility layer already deals with it.
     disableM1Fixes.set(true)
     disablePomOverride.set(true)
 }
@@ -96,6 +117,206 @@ repositories {
     }
 }
 
+sourceSets {
+    // Original game bytecode still links these org.lwjgl names. Compile the ABI
+    // shims together with main, while keeping them out of native source packages.
+    main.java.srcDir("src/compat/java")
+    shaderCompiler {
+        java.setSrcDirs(["src/tools/java"])
+    }
+    main.resources.srcDir(layout.buildDirectory.dir("generated/shaders"))
+    main.resources.srcDir(layout.buildDirectory.dir("generated/sharc-license"))
+}
+
+// SHARC's explicit installer records its accepted SDK path in an ignored local
+// development properties file; shader compilation reads that installation.
+def localDevProperties = new Properties()
+localDevProperties.load(new StringReader(providers.fileContents(layout.projectDirectory.file("gradle-local.properties")).asText.getOrElse("")))
+def sharcSdkPath = providers.gradleProperty("sharcSdkDir").getOrElse(localDevProperties.getProperty("sharcSdkDir", "")).trim()
+def sharcSdkDirectory = sharcSdkPath.isEmpty() ? null : file(sharcSdkPath).absoluteFile
+def sharcProvenanceFile = file("third_party/sharc/provenance.json")
+def sharcProvenance = new groovy.json.JsonSlurper().parse(sharcProvenanceFile)
+def sharcSdkFiles = sharcSdkDirectory == null ? [] : sharcProvenance.sha256.keySet().collect {
+    new File(sharcSdkDirectory, it.toString())
+}
+
+// Vendor sources and runtime libraries stay in the user's cache. A remembered
+// acceptance enables automatic setup for development; ordinary checkouts retain
+// the built-in renderer without downloading or accepting a proprietary SDK.
+def nativeSdkManifestFile = file("buildSrc/src/main/resources/native-rendering-sdks.json")
+def nativeSdkManifest = new groovy.json.JsonSlurper().parse(nativeSdkManifestFile)
+def nativeArchitecture = System.getProperty("os.arch").toLowerCase(Locale.ROOT)
+def nativePlatform = (OperatingSystem.current() == OperatingSystem.LINUX ? "linux" :
+    OperatingSystem.current() == OperatingSystem.WINDOWS ? "windows" : "unsupported") +
+    (["amd64", "x86_64"].contains(nativeArchitecture) ? "-x86_64" : "-${nativeArchitecture}")
+def nativeLicenseAccepted = providers.gradleProperty("acceptNvidiaNativeLicense").map { it.toBoolean() }.getOrElse(false) ||
+    localDevProperties.getProperty("nativeRenderingLicenseAcceptance", "") == nativeSdkManifest.acceptanceId
+def nativeSdkDefault = new File(gradle.gradleUserHomeDir, "sdks/ac-native/${nativeSdkManifest.bundle}/${nativePlatform}")
+def nativeSdkPath = providers.gradleProperty("nativeRenderingSdkRoot").getOrElse(
+    localDevProperties.getProperty("nativeRenderingSdkRoot", nativeSdkDefault.absolutePath)).trim()
+def nativeSdkRoot = file(nativeSdkPath).absoluteFile
+def nativeSourceDirectory = file("native/renderer")
+def nativeBuildDirectory = layout.buildDirectory.dir("native/renderer").get().asFile
+def nativeLibrary = new File(nativeBuildDirectory,
+    OperatingSystem.current() == OperatingSystem.WINDOWS ? "ac_render_native.dll" : "libac_render_native.so")
+def nativeDevelopmentEnabled = nativeLicenseAccepted && nativeSdkManifest.platforms.contains(nativePlatform)
+
+tasks.register("installNativeRenderingSdks", InstallNativeRenderingSdks) {
+    group = "development"
+    description = "Installs pinned DLSS, NRD, FidelityFX Vulkan sources and native build dependencies outside the repository after license acceptance."
+    acceptNvidiaLicense = nativeLicenseAccepted
+    offline = gradle.startParameter.offline
+    platform = nativePlatform
+    manifestFile = nativeSdkManifestFile
+    sdkDirectory = nativeSdkRoot
+    localPropertiesFile = layout.projectDirectory.file("gradle-local.properties")
+}
+
+tasks.register("configureNativeRendering", Exec) {
+    group = "development"
+    description = "Configures the optional native rendering bridge using the installed SDK cache."
+    dependsOn(tasks.named("installNativeRenderingSdks"))
+    onlyIf { nativeDevelopmentEnabled && new File(nativeSourceDirectory, "CMakeLists.txt").isFile() }
+    inputs.file(nativeSdkManifestFile)
+    inputs.files(fileTree(nativeSourceDirectory))
+    inputs.property("nativeSdkRoot", nativeSdkRoot.absolutePath)
+    outputs.file(new File(nativeBuildDirectory, "CMakeCache.txt"))
+    commandLine("cmake", "-S", nativeSourceDirectory.absolutePath, "-B", nativeBuildDirectory.absolutePath,
+        "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Release", "-DAC_NATIVE_SDK_ROOT=${nativeSdkRoot.absolutePath}",
+        "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${nativeBuildDirectory.absolutePath}",
+        "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${nativeBuildDirectory.absolutePath}")
+}
+
+tasks.register("buildNativeRendering", Exec) {
+    group = "development"
+    description = "Builds the optional native rendering bridge for this development checkout."
+    dependsOn(tasks.named("configureNativeRendering"))
+    onlyIf { nativeDevelopmentEnabled && new File(nativeSourceDirectory, "CMakeLists.txt").isFile() }
+    inputs.file(nativeSdkManifestFile)
+    inputs.files(fileTree(nativeSourceDirectory))
+    inputs.property("nativeSdkRoot", nativeSdkRoot.absolutePath)
+    outputs.file(nativeLibrary)
+    commandLine("cmake", "--build", nativeBuildDirectory.absolutePath, "--target", "ac_render_native",
+        "--config", "Release", "--parallel", Math.min(8, Runtime.runtime.availableProcessors()).toString())
+}
+
+tasks.register("setupNativeRendering") {
+    group = "development"
+    description = "Installs accepted SDKs and builds the native rendering bridge; remembers automatic setup for later development runs."
+    dependsOn(tasks.named("buildNativeRendering"))
+}
+
+if (nativeDevelopmentEnabled) {
+    tasks.named("classes") { dependsOn(tasks.named("buildNativeRendering")) }
+    loom.runs.configureEach {
+        vmArgs("-Dac.nativeRendering.library=${nativeLibrary.absolutePath}",
+            "-Dac.nativeRendering.sdkRoot=${nativeSdkRoot.absolutePath}")
+    }
+    tasks.matching { it.name in ["runClient", "runVulkanClient", "runWikiAssetExporter"] }.configureEach {
+        dependsOn(tasks.named("buildNativeRendering"))
+    }
+}
+
+tasks.register("installSharcSdk", InstallSharcSdk) {
+    group = "development"
+    description = "Installs the pinned NVIDIA SHARC SDK outside the repository after explicit license acceptance and configures local builds."
+    acceptLicense = providers.gradleProperty("acceptSharcLicense").map { it.toBoolean() }.orElse(false)
+    provenanceFile = layout.projectDirectory.file("third_party/sharc/provenance.json")
+    sdkDirectory = new File(gradle.gradleUserHomeDir, "sdks/nvidia-sharc/${sharcProvenance.commit}")
+    localPropertiesFile = layout.projectDirectory.file("gradle-local.properties")
+}
+
+tasks.register("verifySharcSdk") {
+    group = "verification"
+    mustRunAfter(tasks.named("installSharcSdk"))
+    description = "Verifies an explicitly supplied NVIDIA SHARC SDK against the pinned source and license hashes."
+    inputs.file(sharcProvenanceFile)
+    inputs.property("sdkPath", sharcSdkDirectory?.absolutePath ?: "")
+    inputs.files(sharcSdkFiles).withPropertyName("sharcSdkFiles").withPathSensitivity(PathSensitivity.RELATIVE)
+    onlyIf { sharcSdkDirectory != null }
+    doLast {
+        sharcProvenance.sha256.each { relative, expected ->
+            def source = new File(sharcSdkDirectory, relative.toString())
+            if (!source.isFile()) {
+                throw new GradleException("Missing NVIDIA SHARC SDK file ${source}; see third_party/sharc/README.md.")
+            }
+            def actual = java.security.MessageDigest.getInstance("SHA-256").digest(source.bytes).encodeHex().toString()
+            if (actual != expected) {
+                throw new GradleException("NVIDIA SHARC SDK hash mismatch for ${relative}; expected revision ${sharcProvenance.commit}. See third_party/sharc/README.md.")
+            }
+        }
+    }
+}
+
+tasks.register("generateSharcLicense") {
+    dependsOn(tasks.named("verifySharcSdk"))
+    inputs.file(sharcProvenanceFile)
+    inputs.property("sdkPath", sharcSdkDirectory?.absolutePath ?: "")
+    if (sharcSdkDirectory != null) inputs.file(new File(sharcSdkDirectory, "License.md"))
+    def licenseOutput = layout.buildDirectory.dir("generated/sharc-license")
+    outputs.dir(licenseOutput)
+    doLast {
+        def output = licenseOutput.get().asFile
+        if (output.exists()) {
+            java.nio.file.Files.walk(output.toPath()).withCloseable { paths ->
+                paths.sorted(Comparator.reverseOrder()).forEach { path -> java.nio.file.Files.delete(path) }
+            }
+        }
+        output.mkdirs()
+        if (sharcSdkDirectory != null) {
+            def notice = new File(output, "META-INF/licenses/NVIDIA-SHARC.txt")
+            notice.parentFile.mkdirs()
+            notice.setText("""Optional NVIDIA RTX SHARC integration
+This software contains source code provided by NVIDIA Corporation.
+NVIDIA RTX is a trademark of NVIDIA Corporation.
+SHARC ${sharcProvenance.version}, revision ${sharcProvenance.commit}
+${sharcProvenance.upstream}
+The NVIDIA shader implementation is separately licensed and is not covered by AdventureCraft's MIT license.
+
+""" + new File(sharcSdkDirectory, "License.md").getText("UTF-8"), "UTF-8")
+        }
+    }
+}
+
+tasks.register("compileShaders", JavaExec) {
+    dependsOn(tasks.named("shaderCompilerClasses"))
+    dependsOn(tasks.named("verifySharcSdk"))
+    classpath = sourceSets.shaderCompiler.runtimeClasspath
+    mainClass = "dev.adventurecraft.awakening.tools.ShaderCompiler"
+    jvmArgs("--enable-native-access=ALL-UNNAMED")
+    def shaderRoot = layout.projectDirectory.dir("src/main/resources/assets/adventurecraft/shaders/vulkan")
+    def shaderOutput = layout.buildDirectory.dir("generated/shaders/assets/adventurecraft/shaders/vulkan")
+    inputs.dir(shaderRoot)
+    inputs.file(sharcProvenanceFile)
+    inputs.property("sharcSdkPath", sharcSdkDirectory?.absolutePath ?: "")
+    inputs.files(sharcSdkFiles).withPropertyName("sharcSdkFiles").withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.dir(shaderOutput)
+    args(shaderRoot.asFile.absolutePath, shaderOutput.get().asFile.absolutePath)
+    if (sharcSdkDirectory != null) args(new File(sharcSdkDirectory, "include").absolutePath)
+}
+
+tasks.named("processResources") {
+    dependsOn(tasks.named("compileShaders"))
+    dependsOn(tasks.named("generateSharcLicense"))
+    def resourceDestination = destinationDir
+    doFirst {
+        // Copy tasks can retain removed inputs: discard optional artifacts before copying the current build.
+        def shaderDestination = new File(resourceDestination, "assets/adventurecraft/shaders/vulkan")
+        if (shaderDestination.isDirectory()) {
+            java.nio.file.Files.list(shaderDestination.toPath()).withCloseable { paths ->
+                paths.filter { path -> path.fileName.toString().startsWith("sharc_") && path.fileName.toString().endsWith(".comp.spv") }
+                        .forEach { path -> java.nio.file.Files.delete(path) }
+            }
+        }
+        java.nio.file.Files.deleteIfExists(new File(resourceDestination, "META-INF/licenses/NVIDIA-SHARC.txt").toPath())
+    }
+}
+
+// Build-time access-widener validation remains part of normal packaging checks.
+tasks.named("check") {
+    setDependsOn([tasks.named("validateAccessWidener")])
+}
+
 static String getOsArchSuffix() {
     def arch = System.getProperty("os.arch")
     return switch (arch) {
@@ -118,14 +339,19 @@ static String getLwjglNativesPrefix() {
 }
 
 dependencies {
-    // Adds LWJGL3 wrapper
-    implementation "com.github.Adventurecraft-Awakening:AC-LWJGL3-Injector:${project.lwjgl_injector_version}"
-
     implementation platform("org.lwjgl:lwjgl-bom:${project.lwjgl_version}")
 
-    implementation "org.lwjgl:lwjgl-glfw:${project.lwjgl_version}"
-    implementation "org.lwjgl:lwjgl-stb:${project.lwjgl_version}"
-    implementation "org.lwjgl:lwjgl-opengl:${project.lwjgl_version}"
+    implementation "org.lwjgl:lwjgl"
+    implementation "org.lwjgl:lwjgl-glfw"
+    implementation "org.lwjgl:lwjgl-stb"
+    implementation "org.lwjgl:lwjgl-openal"
+    implementation "org.lwjgl:lwjgl-vulkan"
+    shaderCompilerImplementation platform("org.lwjgl:lwjgl-bom:${project.lwjgl_version}")
+    shaderCompilerImplementation "org.lwjgl:lwjgl"
+    shaderCompilerImplementation "org.lwjgl:lwjgl-shaderc"
+
+    // Annotations used by the bundled LWJGL compatibility sources.
+    compileOnly "com.google.code.findbugs:jsr305:3.0.2"
 
     def lwjglNatives = Stream.of(getLwjglNativesPrefix(), getOsArchSuffix())
         .filter(part -> !part.isBlank())
@@ -134,8 +360,14 @@ dependencies {
     runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
     runtimeOnly "org.lwjgl:lwjgl-glfw::$lwjglNatives"
     runtimeOnly "org.lwjgl:lwjgl-openal::$lwjglNatives"
-    runtimeOnly "org.lwjgl:lwjgl-opengl::$lwjglNatives"
     runtimeOnly "org.lwjgl:lwjgl-stb::$lwjglNatives"
+    shaderCompilerRuntimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
+    shaderCompilerRuntimeOnly "org.lwjgl:lwjgl-shaderc::$lwjglNatives"
+    // MoltenVK supplies the Vulkan loader/driver on macOS. Other platforms
+    // use their installed Vulkan loader and graphics driver.
+    if (OperatingSystem.current() == OperatingSystem.MAC_OS) {
+        runtimeOnly "org.lwjgl:lwjgl-vulkan::$lwjglNatives"
+    }
 
     // Rhino is the JS engine: https://github.com/mozilla/rhino/releases
     // Archived versions: https://www-archive.mozilla.org/rhino/rhino16r2
@@ -145,7 +377,7 @@ dependencies {
     mappings "me.alphamode:nostalgia:${project.nostalgia_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    // Override ASM to support Java 25
+    // Keep ASM consistent across the game and build-time bytecode tools.
     implementation "org.ow2.asm:asm:${project.asm_version}"
     implementation "org.ow2.asm:asm-analysis:${project.asm_version}"
     implementation "org.ow2.asm:asm-commons:${project.asm_version}"
@@ -157,22 +389,23 @@ dependencies {
     include "com.github.Chocohead:Fabric-ASM:v2.3"
 
     // FastUtil provides specialized collection types.
-    implementation "it.unimi.dsi:fastutil-core:8.5.15"
+    implementation "it.unimi.dsi:fastutil-core:8.5.19"
 
     // Brigadier provides modern command parsing.
-    modImplementation "com.mojang:brigadier:1.3.10"
+    modImplementation "com.mojang:brigadier:1.3.11"
 
-    implementation "org.slf4j:slf4j-api:1.8.0-beta4"
-    implementation "org.apache.logging.log4j:log4j-slf4j18-impl:2.18.0"
+    implementation "org.slf4j:slf4j-api:2.0.20"
+    implementation platform("org.apache.logging.log4j:log4j-bom:2.26.1")
+    runtimeOnly "org.apache.logging.log4j:log4j-slf4j2-impl"
 
-    implementation "com.google.guava:guava:33.4.0-jre"
-    implementation "org.apache.commons:commons-lang3:3.19.0"
+    implementation "com.google.guava:guava:33.7.2-jre"
+    implementation "org.apache.commons:commons-lang3:3.21.0"
 
     // Optional dependencies for filesystem icon rendering.
-    implementation "net.java.dev.jna:jna:5.17.0"
-    implementation "net.java.dev.jna:jna-platform:5.17.0"
+    implementation "net.java.dev.jna:jna:5.19.1"
+    implementation "net.java.dev.jna:jna-platform:5.19.1"
 
-    implementation "com.github.bailuk:java-gtk:0.6.0"
+    implementation "com.github.bailuk:java-gtk:0.6.1"
 }
 
 configurations.configureEach {
@@ -216,7 +449,15 @@ java {
     // If you remove this line, sources will not be generated.
     withSourcesJar()
 
-    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_25
+    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_27
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(27)
+    }
+}
+
+// Select the game/tooling JVM independently of the JVM running Gradle itself.
+tasks.withType(JavaExec).configureEach {
+    javaLauncher = javaToolchains.launcherFor(java.toolchain)
 }
 
 jar {
@@ -224,6 +465,15 @@ jar {
     from("LICENSE") {
         rename { "${it}_${name}" }
     }
+    from("LICENSE-Macula")
+    from("LICENSE-LWJGL3")
+    from("THIRD-PARTY-NOTICES.md")
+}
+
+tasks.named("sourcesJar") {
+    dependsOn(tasks.named("compileShaders"))
+    dependsOn(tasks.named("generateSharcLicense"))
+    from("LICENSE-LWJGL3", "THIRD-PARTY-NOTICES.md")
 }
 
 // For information on how to set up publishing,

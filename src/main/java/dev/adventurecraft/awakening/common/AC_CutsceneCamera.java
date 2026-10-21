@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.client.render.DebugLineBuilder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -8,12 +9,10 @@ import dev.adventurecraft.awakening.entity.AC_EntityCamera;
 import dev.adventurecraft.awakening.util.MathF;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.Tesselator;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import org.lwjgl.opengl.GL11;
 
 public class AC_CutsceneCamera {
 
@@ -92,22 +91,11 @@ public class AC_CutsceneCamera {
         double prX = entity.xOld + (entity.x - entity.xOld) * (double) time;
         double prY = entity.yOld + (entity.y - entity.yOld) * (double) time;
         double prZ = entity.zOld + (entity.z - entity.zOld) * (double) time;
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glColor4f(1.0F, 0.2F, 0.0F, 1.0F);
-        GL11.glLineWidth(5.0F);
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        Tesselator ts = Tesselator.instance;
-        ts.begin(GL11.GL_LINE_STRIP);
-
-        for (Vec3 linePoint : this.linePoints) {
-            ts.vertex(linePoint.x - prX, linePoint.y - prY, linePoint.z - prZ);
-        }
-
-        ts.end();
-        GL11.glLineWidth(1.0F);
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        GL11.glDisable(GL11.GL_BLEND);
+        DebugLineBuilder.with(dev.adventurecraft.awakening.client.render.RenderScene::worldParameters,ts -> {
+            ts.width(5);ts.color(1,.2f,0,1);ts.strip();
+            for(Vec3 point:this.linePoints) ts.vertex(point.x-prX,point.y-prY,point.z-prZ);
+            ts.end();
+        });
     }
 
     private void fixYawPitch(float yaw, float pitch) {

@@ -1,8 +1,14 @@
 package dev.adventurecraft.awakening.client.gui;
 
 import dev.adventurecraft.awakening.ACMod;
+import dev.adventurecraft.awakening.client.render.UiDrawContext;
+import dev.adventurecraft.awakening.client.render.CameraView;
+import dev.adventurecraft.awakening.client.render.compat.LegacyPassBridge;
 import dev.adventurecraft.awakening.common.ScrollableWidget;
-import dev.adventurecraft.awakening.extension.client.ExTextureManager;
+import dev.adventurecraft.awakening.client.render.resource.RenderTexture;
+import dev.adventurecraft.awakening.client.render.resource.TextureFilter;
+import dev.adventurecraft.awakening.client.render.resource.MipmapMode;
+import dev.adventurecraft.awakening.client.render.texture.TextureUpload;
 import dev.adventurecraft.awakening.extension.client.gui.screen.ExScreen;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import dev.adventurecraft.awakening.filesystem.FileIconFlags;
@@ -14,9 +20,8 @@ import dev.adventurecraft.awakening.layout.*;
 import dev.adventurecraft.awakening.util.*;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.Tesselator;
 import org.lwjgl.input.Keyboard;
-import org.lwjgl.opengl.GL11;
+import org.lwjgl.BufferUtils;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -30,6 +35,17 @@ public class FilePickerWidget extends ScrollableWidget {
 
     private final List<Entry> storageList = new ArrayList<>();
     private final List<Entry> displayList = new ArrayList<>();
+    private static final int MAX_CACHED_ICONS = 32;
+    private final Map<IconKey, RenderTexture> iconCache = new LinkedHashMap<>(16, 0.75f, true);
+
+    private record IconKey(Path path, int width, int height, long modified, boolean anaglyph) { }
+
+    public void close() {
+        for (RenderTexture texture : this.iconCache.values()) {
+            if (texture != null) texture.close();
+        }
+        this.iconCache.clear();
+    }
 
     private final SearchPatternBox searchPatternBox;
     private Pattern searchPattern;
@@ -75,25 +91,25 @@ public class FilePickerWidget extends ScrollableWidget {
     }
 
     @Override
-    protected void renderContentBackground(Tesselator ts, Rect rect, Point scroll) {
-        DrawUtil.fillRect(ts, rect, IntCorner.vertical(0x0f101010, 0xd0101010), null);
+    protected void renderContentBackground(UiDrawContext ui, Rect rect, Point scroll) {
+        ui.fill(rect, IntCorner.vertical(0x0f101010, 0xd0101010));
     }
 
     @Override
-    protected void beforeEntryRender(Tesselator ts, IntPoint mouseLocation, Point entryLocation) {
-        super.beforeEntryRender(ts, mouseLocation, entryLocation);
+    protected void beforeEntryRender(UiDrawContext ui, IntPoint mouseLocation, Point entryLocation) {
+        super.beforeEntryRender(ui, mouseLocation, entryLocation);
 
         this.hoveredIndex = this.getEntryUnderPoint(mouseLocation.asFloat());
     }
 
     @Override
-    protected void afterRender(Tesselator ts, IntPoint mouseLocation, float tickTime) {
-        super.afterRender(ts, mouseLocation, tickTime);
+    protected void afterRender(UiDrawContext ui, IntPoint mouseLocation, float tickTime) {
+        super.afterRender(ui, mouseLocation, tickTime);
 
-        this.renderMatchCount();
+        this.renderMatchCount(ui);
     }
 
-    private void renderMatchCount() {
+    private void renderMatchCount(UiDrawContext ui) {
         int activeSize = this.getActiveList().size();
         String sizeText;
         if (this.searchPattern == null) {
@@ -110,12 +126,11 @@ public class FilePickerWidget extends ScrollableWidget {
         int width = exText.measureText(sizeText, 0).width();
         int x = boxRect.right() - 6 - width;
 
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        exText.drawString(sizeText, x, boxPos.y + 6, 0xffffff, true);
+        ui.text(sizeText, x, boxPos.y + 6, Rgba.WHITE, true);
     }
 
     @Override
-    protected void renderEntry(Tesselator ts, int entryIndex, Point entryLocation, int entryHeight) {
+    protected void renderEntry(UiDrawContext ui, int entryIndex, Point entryLocation, int entryHeight) {
         var exText = (ExTextRenderer) this.client.font;
         Entry entry = this.getActiveList().get(entryIndex);
         String displayName = entry.getDisplayName();
@@ -128,18 +143,12 @@ public class FilePickerWidget extends ScrollableWidget {
             var borderColor = new IntCorner(isHover ? 0x80808080 : 0xff808080);
             var backColor = new IntCorner(isHover ? 0x80000000 : 0xff000000);
 
-            GL11.glDisable(GL11.GL_TEXTURE_2D);
-            GL11.glEnable(GL11.GL_BLEND);
-            ts.begin();
-            this.renderContentSelection(ts, selectRect, new Border(1), borderColor, backColor, null, null);
-            ts.end();
-            GL11.glEnable(GL11.GL_TEXTURE_2D);
-            GL11.glDisable(GL11.GL_BLEND);
+            this.renderContentSelection(ui, selectRect, new Border(1), borderColor, backColor, null, null);
         }
 
         float x = (float) entryLocation.x + 3;
         float y = (float) entryLocation.y + 3;
-        exText.drawString(displayName, x, y, Rgba.WHITE, true);
+        ui.text(displayName, x, y, Rgba.WHITE, true);
     }
 
     public void charTyped(char codepoint, int key) {
@@ -219,15 +228,13 @@ public class FilePickerWidget extends ScrollableWidget {
         }
     }
 
-    public @Override void render(IntPoint mouseLocation, float tickTime) {
-        super.render(mouseLocation, tickTime);
-
-        this.searchPatternBox.render();
-
-        this.renderHoverTooltipUnderMouse(mouseLocation);
+    public @Override void render(IntPoint mouseLocation, float tickTime, UiDrawContext ui) {
+        super.render(mouseLocation, tickTime, ui);
+        this.searchPatternBox.render(ui);
+        this.renderHoverTooltipUnderMouse(ui, mouseLocation);
     }
 
-    private void renderHoverTooltipUnderMouse(IntPoint mousePoint) {
+    private void renderHoverTooltipUnderMouse(UiDrawContext ui, IntPoint mousePoint) {
         IntPoint mouseDelta = mousePoint.sub(this.lastMousePoint).abs();
         if (mouseDelta.x > 5 || mouseDelta.y > 5) {
             this.lastMousePoint = mousePoint;
@@ -245,12 +252,18 @@ public class FilePickerWidget extends ScrollableWidget {
             int hoverIndex = getHoveredIndex();
             if (hoverIndex != -1) {
                 this.lastMousePoint = mousePoint;
-                this.renderHoverTooltip(hoverIndex, mousePoint);
+                this.renderHoverTooltip(ui, hoverIndex, mousePoint);
             }
         }
     }
 
     public void renderHoverTooltip(int entryIndex, IntPoint mousePoint) {
+        try (var ui = LegacyPassBridge.uiContext(this.client.font, this.client.textures)) {
+            this.renderHoverTooltip(ui, entryIndex, mousePoint);
+        }
+    }
+
+    private void renderHoverTooltip(UiDrawContext ui, int entryIndex, IntPoint mousePoint) {
         Path path = this.getActiveList().get(entryIndex).value();
         File file = path.toFile();
 
@@ -275,49 +288,57 @@ public class FilePickerWidget extends ScrollableWidget {
         int xEnd = x + maxWidth + 10;
         int yEnd = y + 11 * lines.size() + 6;
 
-        fillGradient(x, y, xEnd, yEnd, 0xe0000000, 0xe0000000);
+        ui.fill(new Rect(x, y, xEnd - x, yEnd - y), 0xe0000000);
 
-        try (var renderer = FileIconRenderer.create()) {
-            if (renderer != null) {
-                double size = 32; // scaling test: (Math.sin(System.currentTimeMillis() / 4000.0) + 1.0) * 31 + 1;
-                this.renderFileIcon(renderer, path, new Rect(x - 32, y, size, size));
-            }
-        }
+        this.renderFileIcon(ui, path, new Rect(x - 32, y, 32, 32));
 
         int lineIndex = 0;
         for (String line : lines) {
-            this.client.font.drawShadow(line, x + 5, y + 5 + lineIndex++ * 11, 14540253);
+            ui.text(line, x + 5, y + 5 + lineIndex++ * 11, 0xffdddddd, true);
         }
     }
 
-    private void renderFileIcon(FileIconRenderer renderer, Path path, Rect rect) {
-        Rect realRect = GLUtil.projectModelViewProj(rect);
-        int realWidth = (int) Math.round(realRect.width());
-        int realHeight = (int) Math.round(realRect.height());
-
-        var flags = List.of(FileIconFlags.Icon, FileIconFlags.Symbolic);
-        var options = new FileIconOptions(ImageFormat.RGBA_U8, realWidth, realHeight, 1, flags);
-        var iconImage = renderer.getIcon(path, options);
-        if (iconImage == null) {
-            return;
+    private void renderFileIcon(UiDrawContext ui, Path path, Rect rect) {
+        var realRect = new CameraView(ui.parameters()).projectRect(rect.offset(ui.offsetX(), ui.offsetY()));
+        int width = Math.max(1, (int) Math.round(realRect.width()));
+        int height = Math.max(1, (int) Math.round(realRect.height()));
+        IconKey key = new IconKey(path.toAbsolutePath().normalize(), width, height, path.toFile().lastModified(), this.client.options.anaglyph3d);
+        RenderTexture texture = this.iconCache.get(key);
+        if (!this.iconCache.containsKey(key)) {
+            texture = this.loadIcon(key);
+            this.iconCache.put(key, texture);
+            if (this.iconCache.size() > MAX_CACHED_ICONS) {
+                var oldest = this.iconCache.entrySet().iterator();
+                RenderTexture removed = oldest.next().getValue();
+                oldest.remove();
+                if (removed != null) removed.close();
+            }
         }
+        if (texture == null) return;
 
-        var ts = Tesselator.instance;
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        GL11.glEnable(GL11.GL_BLEND);
+        ui.image(texture, rect, new Rect(0, 0, 1, 1), new IntCorner(Rgba.WHITE));
+    }
 
-        var texMan = (ExTextureManager) this.client.textures;
-        int texId = texMan.loadTexture(iconImage);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, texId);
-
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
-
-        ts.begin();
-        DrawUtil.fillRect(ts, rect, new IntCorner(Rgba.WHITE), new Rect(0, 0, 1, 1));
-        ts.end();
-
-        texMan.releaseTexture(texId);
+    private RenderTexture loadIcon(IconKey key) {
+        try (var renderer = FileIconRenderer.create()) {
+            if (renderer == null) return null;
+            var options = new FileIconOptions(ImageFormat.RGBA_U8, key.width, key.height, 1,
+                List.of(FileIconFlags.Icon, FileIconFlags.Symbolic));
+            var image = renderer.getIcon(key.path, options);
+            if (image == null) return null;
+            RenderTexture texture = RenderTexture.create(image.getWidth(), image.getHeight(), 1);
+            try {
+                var pixels = BufferUtils.createIntBuffer(Math.multiplyExact(image.getWidth(), image.getHeight()));
+                TextureUpload.prepare(image, pixels, 0, key.anaglyph);
+                texture.upload(0, 0, 0, image.getWidth(), image.getHeight(), pixels);
+                texture.setFilter(TextureFilter.LINEAR, TextureFilter.LINEAR, MipmapMode.NONE);
+                texture.setClamp(true);
+                return texture;
+            } catch (RuntimeException | Error error) {
+                texture.close();
+                throw error;
+            }
+        }
     }
 
     public Entry getSelectedEntry() {

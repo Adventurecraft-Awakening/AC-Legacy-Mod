@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.mixin.entity.player;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.entity.player.AdventureGameMode;
 import dev.adventurecraft.awakening.entity.player.DebugGameMode;
@@ -298,7 +299,7 @@ public abstract class MixinPlayerEntity extends MixinMob implements ExPlayerEnti
 
     @Inject(method = "actuallyHurt", at = @At("HEAD"), cancellable = true)
     private void noDamageInDebugMode(int var1, CallbackInfo ci) {
-        if (AC_DebugMode.active) {
+        if (EditorSession.current().active) {
             ci.cancel();
         }
     }
@@ -465,7 +466,7 @@ public abstract class MixinPlayerEntity extends MixinMob implements ExPlayerEnti
 
     @Override
     public GameMode getGameMode() {
-        // TODO: store as field after AC_DebugMode.active is migrated
-        return AC_DebugMode.active ? new DebugGameMode() : new AdventureGameMode();
+        // TODO: store as field after EditorSession.current().active is migrated
+        return EditorSession.current().active ? new DebugGameMode() : new AdventureGameMode();
     }
 }

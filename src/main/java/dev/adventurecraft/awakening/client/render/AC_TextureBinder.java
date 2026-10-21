@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.client.render;
 
 import dev.adventurecraft.awakening.extension.client.ExTextureManager;
+import dev.adventurecraft.awakening.client.render.resource.RenderTexture;
 
 import dev.adventurecraft.awakening.image.ImageBuffer;
 import dev.adventurecraft.awakening.image.ImageFormat;
@@ -15,6 +16,8 @@ public interface AC_TextureBinder {
 
     Frame EMPTY_FRAME = new Frame(IntRect.zero, ImageBuffer.create(0, 0, ImageFormat.RGBA_U8));
 
+    enum MaterialChannel { NORMAL, SPECULAR }
+
     void animate();
 
     void onTick(Size size);
@@ -25,10 +28,20 @@ public interface AC_TextureBinder {
 
     String getTexture();
 
+    /** Explicit destination; inherited bind() remains only an ABI wrapper. */
+    default RenderTexture destination(ExTextureManager textures) { return textures.texture(this.getTexture()); }
+
     IntRect getCurrentFrameRect();
 
     @Nullable
     Frame getCurrentFrame();
+
+    /** Optional linear-data companion at the albedo animation's current frame. */
+    @Nullable
+    default Frame getMaterialFrame(MaterialChannel channel) { return null; }
+
+    /** A valid authored strip is loaded, rather than a procedural fallback. */
+    default boolean hasCustomImage() { return false; }
 
     void setTileSize(int width, int height);
 

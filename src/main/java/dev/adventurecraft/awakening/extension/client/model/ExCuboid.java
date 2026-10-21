@@ -14,5 +14,18 @@ public interface ExCuboid {
 
     void render();
 
+    void render(Matrix4f modelView, float[] tint);
+
+    void render(dev.adventurecraft.awakening.client.render.ModelRenderContext context,
+                dev.adventurecraft.awakening.client.render.state.Matrix4 model,
+                dev.adventurecraft.awakening.client.render.state.Color4 tint);
+
+    void render(dev.adventurecraft.awakening.client.render.ModelRenderContext context,
+                dev.adventurecraft.awakening.client.render.state.Matrix4 model,
+                dev.adventurecraft.awakening.client.render.state.Color4 tint,float scale,boolean rollable);
+
+    dev.adventurecraft.awakening.client.render.state.Matrix4 pose(
+        dev.adventurecraft.awakening.client.render.state.Matrix4 parent,float scale,boolean rollable);
+
     void translateTo(Matrix4f transform);
 }

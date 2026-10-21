@@ -1,5 +1,7 @@
 package dev.adventurecraft.awakening.mixin.client.gui.screen.menu;
 
+import dev.adventurecraft.awakening.client.render.compat.LegacyGlAdapter;
+import dev.adventurecraft.awakening.client.render.compat.LegacyGlConstants;
 import dev.adventurecraft.awakening.common.gui.AC_GuiMapSelect;
 import dev.adventurecraft.awakening.common.AC_Version;
 import net.minecraft.client.gui.components.Button;
@@ -11,7 +13,6 @@ import net.minecraft.client.gui.screens.TexturePackSelectScreen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.locale.I18n;
 import net.minecraft.util.Mth;
-import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -71,19 +72,24 @@ public abstract class MixinTitleScreen extends Screen {
 
         int x = this.width / 2 - 320 / 2;
         int y = 30;
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.minecraft.textures.loadTexture("/acLogo.png"));
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        this.blit(x, y , 0, 0, 256, 31);
-        this.blit(x + 256, y, 0, 128, 64, 31);
+        try (var ui = dev.adventurecraft.awakening.client.render.compat.LegacyPassBridge.uiContext(this.font, this.minecraft.textures)) {
+            var logo = ui.texture("/acLogo.png");
+            var white = new dev.adventurecraft.awakening.layout.IntCorner(-1);
+            ui.image(logo, new dev.adventurecraft.awakening.layout.Rect(x, y, 256, 31),
+                new dev.adventurecraft.awakening.layout.Rect(0, 0, 1, 31 / 256f), white);
+            ui.image(logo, new dev.adventurecraft.awakening.layout.Rect(x + 256, y, 64, 31),
+                new dev.adventurecraft.awakening.layout.Rect(0, .5f, .25f, 31 / 256f), white);
+        }
+        LegacyGlAdapter.color4f(1, 1, 1, 1);
 
-        GL11.glPushMatrix();
-        GL11.glTranslatef((float) (this.width / 2 + 90), 70.0F, 0.0F);
-        GL11.glRotatef(-20.0F, 0.0F, 0.0F, 1.0F);
+        LegacyGlAdapter.pushMatrix();
+        LegacyGlAdapter.translatef((float) (this.width / 2 + 90), 70.0F, 0.0F);
+        LegacyGlAdapter.rotatef(-20.0F, 0.0F, 0.0F, 1.0F);
         float scale = 1.8F - Mth.abs(Mth.sin((float) (System.currentTimeMillis() % 1000L) / 1000.0F * 3.141593F * 2.0F) * 0.1F);
         scale = scale * 100.0F / (float) (this.font.width(this.splash) + 32);
-        GL11.glScalef(scale, scale, scale);
+        LegacyGlAdapter.scalef(scale, scale, scale);
         this.drawCenteredString(this.font, this.splash, 0, -8, 16776960);
-        GL11.glPopMatrix();
+        LegacyGlAdapter.popMatrix();
 
         this.drawString(this.font, AC_Version.version, 2, 2, 5263440);
 

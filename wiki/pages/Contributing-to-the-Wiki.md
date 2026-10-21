@@ -5,20 +5,16 @@ Authored wiki source lives in `wiki/pages`. Generated reference pages must not b
 Run the same validation as CI:
 
 ```shell
-python tools/wiki.py check
-python tools/wiki.py build --output build/wiki
-python tools/wiki_quality.py sources wiki/pages
-python tools/wiki_quality.py quality build/wiki --minimum-pages 250
-python -m unittest tools/test_wiki_quality.py tools/tests/test_wiki_script_api.py
+./gradlew -p wiki build
 ```
 
-The generated native-wiki checkout is written to `build/wiki`.
+The standalone Gradle build uses a supported JDK (21 or 25) and Gradle's bundled Groovy. It validates authored pages and source facts, and verifies the generated pages, assets, and manifest. The generated native-wiki checkout is written to `build/wiki`.
 
 To refresh the page-level Fandom inventory deliberately:
 
 ```shell
-python tools/wiki.py sync-baseline
-python tools/wiki.py check
+./gradlew -p wiki syncBaseline
+./gradlew -p wiki build
 ```
 
 Review baseline changes before committing them. A changed Fandom page remains historical by default; moving information into a current page requires evidence in this repository.

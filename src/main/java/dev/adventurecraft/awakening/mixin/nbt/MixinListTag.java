@@ -1,7 +1,6 @@
 package dev.adventurecraft.awakening.mixin.nbt;
 
 import dev.adventurecraft.awakening.collections.bytes.ByteArrayList;
-import dev.adventurecraft.awakening.collections.bytes.ByteList;
 import dev.adventurecraft.awakening.extension.nbt.ExListTag;
 import dev.adventurecraft.awakening.extension.nbt.ExTag;
 import dev.adventurecraft.awakening.nbt.SnbtTagVisitor;
@@ -48,7 +47,7 @@ public abstract class MixinListTag extends MixinTag implements ExListTag, Iterab
         }
 
         switch (list) {
-            case ByteList byteList -> {
+            case ByteArrayList byteList -> {
                 for (int i = 0; i < byteList.size(); i++) {
                     output.writeByte(byteList.getByte(i));
                 }
@@ -90,11 +89,18 @@ public abstract class MixinListTag extends MixinTag implements ExListTag, Iterab
             array.add(tag);
         }
         this.list = array;
+        this.isPrimitive = false;
     }
 
     @Overwrite
     public Tag get(int index) {
         return this.wrapPrimitives().get(index);
+    }
+
+    @Overwrite
+    public void add(Tag tag) {
+        this.type = tag.getId();
+        this.wrapPrimitives().add(tag);
     }
 
     /**
@@ -127,12 +133,13 @@ public abstract class MixinListTag extends MixinTag implements ExListTag, Iterab
 
     public @Override void setInnerList(List<?> list) {
         this.list = list;
+        this.isPrimitive = list instanceof ByteArrayList || list instanceof IntList || list instanceof FloatList || list instanceof DoubleList;
         this.type = list.isEmpty() ? Tags.TAG_END : TagUtil.getTypeId(list.getFirst());
     }
 
     public @Override <T> void forEach(Class<T> type, Consumer<T> consumer) {
-        // TODO: support primitives?
-        this.list.forEach(tag -> consumer.accept(type.cast(tag)));
+        List<?> values = Tag.class.isAssignableFrom(type) ? this.wrapPrimitives() : this.list;
+        values.forEach(tag -> consumer.accept(type.cast(tag)));
     }
 
     public @Override Stream<CompoundTag> compoundStream() {
@@ -157,7 +164,7 @@ public abstract class MixinListTag extends MixinTag implements ExListTag, Iterab
         var exTag = (ExListTag) tag;
         var list = this.list;
         exTag.setInnerList(switch (list) {
-            case ByteList byteList -> new ByteArrayList(byteList);
+            case ByteArrayList byteList -> new ByteArrayList(byteList);
             case IntList intList -> new IntArrayList(intList);
             case DoubleList doubleList -> new DoubleArrayList(doubleList);
             case FloatList floatList -> new FloatArrayList(floatList);
@@ -190,6 +197,9 @@ public abstract class MixinListTag extends MixinTag implements ExListTag, Iterab
         }
         var list = this.list;
         if (index >= 0 && index < list.size()) {
+            if (list instanceof ByteArrayList byteList) {
+                return Optional.of((int) byteList.getByte(index));
+            }
             if (list instanceof IntList intList) {
                 return Optional.of(intList.getInt(index));
             }

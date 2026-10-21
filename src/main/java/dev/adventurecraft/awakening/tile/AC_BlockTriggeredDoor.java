@@ -1,6 +1,6 @@
 package dev.adventurecraft.awakening.tile;
 
-import dev.adventurecraft.awakening.common.AC_DebugMode;
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockShapes;
@@ -26,12 +26,12 @@ public class AC_BlockTriggeredDoor extends Tile implements AC_ITriggerDebugBlock
 
     @Override
     public boolean mayPick() {
-        return AC_DebugMode.active || this.isActived;
+        return EditorSession.current().active || this.isActived;
     }
 
     @Override
     public int getRenderShape(LevelSource view, int x, int y, int z) {
-        if (AC_DebugMode.active || ((ExWorld) Minecraft.instance.level).getTriggerManager().isActivated(x, y, z)) {
+        if (EditorSession.current().active || ((ExWorld) Minecraft.instance.level).getTriggerManager().isActivated(x, y, z)) {
             return this.getRenderShape();
         }
         return BlockShapes.NONE;
@@ -39,7 +39,7 @@ public class AC_BlockTriggeredDoor extends Tile implements AC_ITriggerDebugBlock
 
     @Override
     public AABB getAABB(Level world, int x, int y, int z) {
-        if (((ExWorld) world).getTriggerManager().isActivated(x, y, z) && !AC_DebugMode.active) {
+        if (((ExWorld) world).getTriggerManager().isActivated(x, y, z) && !EditorSession.forLevel(world).active) {
             return super.getAABB(world, x, y, z);
         }
         return null;

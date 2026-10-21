@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.item;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.world.AC_BlockCopyUtils;
 import dev.adventurecraft.awakening.world.BlockPos;
@@ -59,7 +60,7 @@ public class AC_ItemNudge extends Item implements AC_ILeftClickItem {
     @Override
     public ItemInstance use(ItemInstance item, Level world, Player player) {
         // Ensure cursor selection is properly set
-        if (!AC_ItemCursor.bothSet) {
+        if (!EditorSession.forLevel(world).selection.bothSet) {
             return item;
         }
 
@@ -96,7 +97,7 @@ public class AC_ItemNudge extends Item implements AC_ILeftClickItem {
     @Override
     public void onItemLeftClick(ItemInstance item, Level world, Player player) {
         // Ensure cursor selection is properly set
-        if (!AC_ItemCursor.bothSet) {
+        if (!EditorSession.forLevel(world).selection.bothSet) {
             return;
         }
 

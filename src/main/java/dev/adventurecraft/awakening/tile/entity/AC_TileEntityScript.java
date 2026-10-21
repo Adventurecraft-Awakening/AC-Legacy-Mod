@@ -4,11 +4,8 @@ import dev.adventurecraft.awakening.extension.nbt.ExCompoundTag;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.tile.entity.TileEntity;
-import dev.adventurecraft.awakening.script.ScopeTag;
+import dev.adventurecraft.awakening.script.ScriptAttachment;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
-
-import javax.annotation.Nullable;
 
 public class AC_TileEntityScript extends TileEntity {
 
@@ -18,26 +15,14 @@ public class AC_TileEntityScript extends TileEntity {
     public String onDetriggerScriptFile = "";
     public String onUpdateScriptFile = "";
     public Scriptable scope;
-    private @Nullable CompoundTag scopeTag;
+    protected final ScriptAttachment scriptAttachment = new ScriptAttachment();
 
-    @Override
-    public void clearRemoved() {
-        super.clearRemoved();
-
-        // Workaround for tile-entities not having access to `level` during loading.
-        // Relies on the fact that `clearRemoved()` is called inside `LevelChunk.setTileEntity()`.
-
+    /** Chunk decoding may run on an I/O worker; attach only when gameplay invokes a script. */
+    public Scriptable scriptScope() {
         if (this.scope == null) {
-            this.scope = ((ExWorld) this.level).getScript().getNewScope();
-            ScriptableObject.putProperty(this.scope, "xCoord", this.x);
-            ScriptableObject.putProperty(this.scope, "yCoord", this.y);
-            ScriptableObject.putProperty(this.scope, "zCoord", this.z);
+            this.scriptAttachment.bind("xCoord", this.x).bind("yCoord", this.y).bind("zCoord", this.z);
         }
-
-        if (this.scopeTag != null) {
-            ScopeTag.loadScopeFromTag(this.scope, this.scopeTag);
-            this.scopeTag = null;
-        }
+        return this.scope = this.scriptAttachment.attach(((ExWorld) this.level).getScript());
     }
 
     @Override
@@ -48,7 +33,7 @@ public class AC_TileEntityScript extends TileEntity {
         }
 
         if (this.isActivated && !this.onUpdateScriptFile.isEmpty()) {
-            ((ExWorld) this.level).getScriptHandler().runScript(this.onUpdateScriptFile, this.scope);
+            ((ExWorld) this.level).getScriptHandler().runScript(this.onUpdateScriptFile, this.scriptScope());
         }
     }
 
@@ -60,7 +45,7 @@ public class AC_TileEntityScript extends TileEntity {
         this.onUpdateScriptFile = tag.getString("onUpdateScriptFile");
 
         this.isActivated = tag.getBoolean("isActivated");
-        this.scopeTag = tag.getCompoundTag("scope");
+        this.scriptAttachment.load(tag.getCompoundTag("scope"));
     }
 
     @Override
@@ -72,6 +57,6 @@ public class AC_TileEntityScript extends TileEntity {
         exTag.putNonEmptyString("onUpdateScriptFile", this.onUpdateScriptFile);
 
         tag.putBoolean("isActivated", this.isActivated);
-        tag.putTag("scope", ScopeTag.getTagFromScope(this.scope));
+        tag.putTag("scope", this.scriptAttachment.save());
     }
 }

@@ -1,7 +1,4 @@
-# Automatically build the project and run any configured tests for every push
-# and submitted pull request. This can help catch issues that only occur on
-# certain platforms or Java versions, and provides a first line of defence
-# against bad commits.
+# Automatically build the project for every push and submitted pull request.
 
 name: build
 on: [pull_request, push, workflow_dispatch]
@@ -10,7 +7,7 @@ jobs:
   build:
     strategy:
       matrix:
-        java: [25] # Use these Java versions
+        java: [27] # Use these Java versions
         os: [ubuntu-latest]
         artifacts: [true]
         
@@ -35,12 +32,6 @@ jobs:
 
       - name: build
         run: ./gradlew build --no-daemon
-
-      - name: upload build reports
-        uses: actions/upload-artifact@v7
-        with:
-          name: build-reports
-          path: build/reports/
 
       - name: capture build artifacts
         if: ${{ matrix.artifacts }}

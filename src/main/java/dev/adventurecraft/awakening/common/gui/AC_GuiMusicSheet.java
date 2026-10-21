@@ -1,5 +1,12 @@
 package dev.adventurecraft.awakening.common.gui;
 
+import dev.adventurecraft.awakening.client.render.compat.LegacyPassBridge;
+import dev.adventurecraft.awakening.client.render.UiDrawContext;
+import dev.adventurecraft.awakening.client.render.resource.RenderTexture;
+import dev.adventurecraft.awakening.client.render.state.CompareOp;
+import dev.adventurecraft.awakening.image.Rgba;
+import dev.adventurecraft.awakening.layout.Rect;
+import dev.adventurecraft.awakening.layout.IntCorner;
 import dev.adventurecraft.awakening.common.AC_MusicScriptEntry;
 import dev.adventurecraft.awakening.common.MusicPlayer;
 import dev.adventurecraft.awakening.common.instruments.IInstrumentConfig;
@@ -10,7 +17,6 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import org.lwjgl.input.Keyboard;
-import org.lwjgl.opengl.GL11;
 
 public class AC_GuiMusicSheet extends Screen {
 
@@ -125,42 +131,40 @@ public class AC_GuiMusicSheet extends Screen {
             }
         }
 
-        this.fill((this.width - 215) / 2, this.height - 59 - 4 - 48, (this.width + 215) / 2, this.height - 48, backColor);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glDisable(GL11.GL_ALPHA_TEST);
-        if (this.songPlayed != null) {
-            this.drawCenteredString(this.font, this.songPlayed.songName, this.width / 2, this.height - 59 - 48, 14737632 + foreColor);
-        }
-
-        int backTexId = this.minecraft.textures.loadTexture("/gui/musicSheet.png");
-        GL11.glColor4f(0.9F, 0.1F, 0.1F, alpha);
-        this.minecraft.textures.bind(backTexId);
-        this.blit((this.width - 205) / 2, this.height - 59 - 2 - 48, 0, 0, 205, 59);
-        int noteX = 0;
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, alpha);
-
-        for (int note : this.notesPlayed) {
-            if (note > 0) {
-                this.drawNote(noteX, note);
-                noteX += 11;
-            } else {
-                this.drawSharp(noteX, -note);
-                noteX += 14;
+        try (var root = LegacyPassBridge.uiContext(this.font, this.minecraft.textures)) {
+            var ui = root.withParameters(root.parameters().withMaterial(root.parameters().material().withAlpha(CompareOp.ALWAYS, 0)));
+            int sheetX = (this.width - 205) / 2;
+            int sheetY = this.height - 59 - 2 - 48;
+            ui.fill(new Rect((this.width - 215) / 2, this.height - 59 - 4 - 48, (this.width + 215) / 2 - (this.width - 215) / 2, 63), Rgba.fromBgra(backColor));
+            if (this.songPlayed != null) {
+                String song = this.songPlayed.songName;
+                ui.text(song, (this.width - this.font.width(song)) / 2f, this.height - 59 - 48,
+                    Rgba.fromBgra(14737632 + foreColor), true);
+            }
+            RenderTexture texture = ui.texture("/gui/musicSheet.png");
+            int fadeAlpha = Rgba.saturateToByte(alpha);
+            ui.image(texture, new Rect(sheetX, sheetY, 205, 59), new Rect(0, 0, 205 / 256f, 59 / 256f),
+                new IntCorner(Rgba.fromRgba8(Rgba.saturateToByte(.9F), Rgba.saturateToByte(.1F), Rgba.saturateToByte(.1F), fadeAlpha)));
+            int noteX = 0;
+            int noteColor = Rgba.withAlpha(Rgba.WHITE, fadeAlpha);
+            for (int note : this.notesPlayed) {
+                if (note > 0) { this.drawNote(ui, texture, noteX, note, noteColor); noteX += 11; }
+                else { this.drawSharp(ui, texture, noteX, -note, noteColor); noteX += 14; }
             }
         }
-
-        GL11.glEnable(GL11.GL_ALPHA_TEST);
-        GL11.glDisable(GL11.GL_BLEND);
         super.render(var1, var2, var3);
     }
 
-    private void drawNote(int x, int note) {
-        this.blit((this.width - 205) / 2 + 36 + x, this.height - 59 - 2 - 48 + 46 - (note - 2) * 4, 0, 64, 9, 7);
+    private void drawNote(UiDrawContext ui, RenderTexture texture, int x, int note, int color) {
+        ui.image(texture, new Rect((this.width - 205) / 2 + 36 + x,
+                this.height - 59 - 2 - 48 + 46 - (note - 2) * 4, 9, 7),
+            new Rect(0, 64 / 256f, 9 / 256f, 7 / 256f), new IntCorner(color));
     }
 
-    private void drawSharp(int x, int note) {
-        this.blit((this.width - 205) / 2 + 36 + x, this.height - 59 - 2 - 48 + 46 - (note - 2) * 4 - 5, 16, 64, 12, 17);
+    private void drawSharp(UiDrawContext ui, RenderTexture texture, int x, int note, int color) {
+        ui.image(texture, new Rect((this.width - 205) / 2 + 36 + x,
+                this.height - 59 - 2 - 48 + 46 - (note - 2) * 4 - 5, 12, 17),
+            new Rect(16 / 256f, 64 / 256f, 12 / 256f, 17 / 256f), new IntCorner(color));
     }
 
     public static void showUI(IInstrumentConfig instrumentConfig) {

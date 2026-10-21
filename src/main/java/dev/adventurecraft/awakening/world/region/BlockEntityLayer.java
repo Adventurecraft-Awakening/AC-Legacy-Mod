@@ -72,8 +72,8 @@ public final class BlockEntityLayer extends BlockMetaLayer {
             return changed;
         }
 
-        entity.load(tag);
         entity.level = level;
+        entity.load(tag);
         entity.x = x;
         entity.y = y;
         entity.z = z;

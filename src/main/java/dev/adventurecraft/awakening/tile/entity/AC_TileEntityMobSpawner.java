@@ -8,7 +8,6 @@ import dev.adventurecraft.awakening.extension.entity.ExFallingBlockEntity;
 import dev.adventurecraft.awakening.extension.nbt.ExCompoundTag;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
-import dev.adventurecraft.awakening.script.ScopeTag;
 import dev.adventurecraft.awakening.script.ScriptEntity;
 import dev.adventurecraft.awakening.util.ArrayUtil;
 import dev.adventurecraft.awakening.util.Xoshiro128PP;
@@ -27,7 +26,6 @@ import net.minecraft.world.entity.monster.Skeleton;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.tile.Tile;
-import org.mozilla.javascript.Scriptable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -62,7 +60,6 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
     private boolean ignoreSpawnConditions = false;
 
     private boolean spawnStill = false;
-    Scriptable scope;
 
     public AC_TileEntityMobSpawner() {
         this.delay = 20;
@@ -81,7 +78,6 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
         this.minSpawnVec = BlockPos.mutZero();
         this.maxSpawnVec = BlockPos.mutZero();
         this.delayLoadData = null;
-        this.scope = ((ExWorld) Minecraft.instance.level).getScript().getNewScope();
     }
 
     public int getNumAlive() {
@@ -116,7 +112,7 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
         if (this.ignoreSpawnConditions) {
             return true;
         }
-        return this.level.isUnobstructed(entity.bb) && this.level.getCubes(entity, entity.bb).isEmpty() &&
+        return this.level.isUnobstructed(entity.bb) && !((ExWorld) this.level).ac$hasCollision(entity, entity.bb) &&
             !this.level.containsAnyLiquid(entity.bb);
     }
 
@@ -460,7 +456,6 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
             this.delayLoadData = tag;
         }
 
-        exTag.findCompound("scope").ifPresent(c -> ScopeTag.loadScopeFromTag(this.scope, c));
     }
 
     @Override
@@ -504,7 +499,6 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
             ++id;
         }
 
-        tag.putTag("scope", ScopeTag.getTagFromScope(this.scope));
     }
 
     private void executeScript(String name) {
@@ -520,7 +514,7 @@ public class AC_TileEntityMobSpawner extends AC_TileEntityScript {
         }
 
         ((ExWorld) this.level).getScript().addObject("spawnedEntities", spawned);
-        ((ExWorld) this.level).getScriptHandler().runScript(name, this.scope);
+        ((ExWorld) this.level).getScriptHandler().runScript(name, this.scriptScope());
     }
 
     static {

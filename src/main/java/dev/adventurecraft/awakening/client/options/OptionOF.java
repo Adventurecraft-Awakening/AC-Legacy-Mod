@@ -42,6 +42,15 @@ public final class OptionOF {
     public static final Option CHUNK_RENDER_DISTANCE = ClassTinkerers.getEnum(Option.class, "CHUNK_RENDER_DISTANCE");
 
     public static final Option GRASS_3D = ClassTinkerers.getEnum(Option.class, "GRASS_3D");
+    public static final Option RAY_TRACING = ClassTinkerers.getEnum(Option.class, "RAY_TRACING");
+    public static final Option INDIRECT_LIGHTING = ClassTinkerers.getEnum(Option.class, "INDIRECT_LIGHTING");
+    public static final Option TEMPORAL_AA = ClassTinkerers.getEnum(Option.class, "TEMPORAL_AA");
+
+    public static final Option RENDER_SCALE = ClassTinkerers.getEnum(Option.class, "RENDER_SCALE");
+    public static final Option PARALLAX_MAPPING = ClassTinkerers.getEnum(Option.class, "PARALLAX_MAPPING");
+    public static final Option RAY_RECONSTRUCTION = ClassTinkerers.getEnum(Option.class, "RAY_RECONSTRUCTION");
+    public static final Option UPSCALER = ClassTinkerers.getEnum(Option.class, "UPSCALER");
+    public static final Option FRAME_GENERATION = ClassTinkerers.getEnum(Option.class, "FRAME_GENERATION");
     public static final Option PARTICLE_LIMIT = ClassTinkerers.getEnum(Option.class, "PARTICLE_LIMIT");
     public static final Option CHAT_MESSAGE_BUFFER_LIMIT = ClassTinkerers.getEnum(Option.class, "CHAT_MESSAGE_BUFFER_LIMIT");
     public static final Option ALLOW_JAVA_IN_SCRIPT = ClassTinkerers.getEnum(Option.class, "ALLOW_JAVA_IN_SCRIPT");

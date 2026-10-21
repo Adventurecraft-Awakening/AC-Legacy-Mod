@@ -1,0 +1,30 @@
+#version 450
+
+// Meter the linear, world-only image before hands, overlays, bloom or tone mapping.
+layout(local_size_x = 16, local_size_y = 8) in;
+layout(set = 0, binding = 0) uniform sampler2D sourceImage;
+layout(std430, set = 0, binding = 1) buffer Histogram { uint bins[256]; } histogram;
+shared uint localBins[256];
+
+void main() {
+    uint lane = gl_LocalInvocationIndex;
+    for (uint i = lane; i < 256; i += 128) localBins[i] = 0;
+    barrier();
+    ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
+    if (all(lessThan(pixel, textureSize(sourceImage, 0)))) {
+        vec3 color = texelFetch(sourceImage, pixel, 0).rgb;
+        if (!any(isnan(color)) && !any(isinf(color))) {
+            float luminance = dot(max(color, vec3(0)), vec3(0.2126, 0.7152, 0.0722));
+            if (luminance > 0.00001 && !isnan(luminance) && !isinf(luminance)) {
+                // 24 stops cover dim interiors and small HDR emitters without a floating-point atomic.
+                uint bin = uint(clamp((log2(luminance) + 12.0) * (256.0 / 24.0), 0.0, 255.0));
+                atomicAdd(localBins[bin], 1);
+            }
+        }
+    }
+    barrier();
+    for (uint i = lane; i < 256; i += 128) {
+        uint count = localBins[i];
+        if (count != 0) atomicAdd(histogram.bins[i], count);
+    }
+}

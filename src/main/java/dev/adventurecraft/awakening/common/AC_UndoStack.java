@@ -3,7 +3,9 @@ package dev.adventurecraft.awakening.common;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.Objects;
 
+import dev.adventurecraft.awakening.editor.EditorSelection;
 import dev.adventurecraft.awakening.world.history.AC_EditAction;
 import dev.adventurecraft.awakening.world.history.AC_EditActionList;
 import dev.adventurecraft.awakening.world.history.AC_UndoStackLayer;
@@ -17,13 +19,34 @@ public class AC_UndoStack {
     public static final int MAX_UNDO = 128;
 
     private boolean isRecording = false;
+    private final EditorSelection selection;
 
     public final Deque<Entry> undoStack = new ArrayDeque<>();
     public final Deque<Entry> redoStack = new ArrayDeque<>();
 
     private final Deque<AC_UndoStackLayer> layers = new ArrayDeque<>();
 
-    private final AC_UndoStackLayer cursorLayer = new CursorLayer();
+    /** Legacy callers capture and restore the currently active cursor. */
+    public AC_UndoStack() {
+        this.selection = null;
+    }
+
+    public AC_UndoStack(EditorSelection selection) {
+        this.selection = Objects.requireNonNull(selection);
+    }
+
+    private AC_Selection snapshotSelection() {
+        return this.selection == null ? AC_Selection.fromCursor() : this.selection.snapshot();
+    }
+
+    private void restoreSelection(AC_Selection snapshot) {
+        if (this.selection == null) {
+            snapshot.load();
+        }
+        else {
+            this.selection.load(snapshot);
+        }
+    }
 
     public static final AC_UndoStackLayer NULL_LAYER = new AC_UndoStackLayer() {
         @Override
@@ -60,12 +83,49 @@ public class AC_UndoStack {
             layer = NULL_LAYER;
         }
         this.layers.push(layer);
-        layer.begin();
+        try {
+            layer.begin();
+        }
+        catch (RuntimeException | Error failure) {
+            this.layers.pop();
+            this.checkIsRecording();
+            throw failure;
+        }
         this.checkIsRecording();
     }
 
     public void pushLayer() {
-        this.pushLayer(this.cursorLayer);
+        this.pushLayer(new CursorLayer());
+    }
+
+    public LayerScope recordingScope() {
+        this.pushLayer();
+        return new LayerScope(this.layers.peek());
+    }
+
+    public LayerScope suppressScope() {
+        this.pushLayer(null);
+        return new LayerScope(this.layers.peek());
+    }
+
+    public final class LayerScope implements AutoCloseable {
+        private final AC_UndoStackLayer layer;
+        private final int depth;
+        private boolean save = true;
+        private boolean closed;
+        private LayerScope(AC_UndoStackLayer layer) {
+            this.layer = layer;
+            this.depth = layers.size();
+        }
+        public void discard() { this.save = false; }
+        @Override public void close() {
+            if (this.closed) return;
+            if (layers.size() != this.depth || layers.peek() != this.layer) {
+                throw new IllegalStateException("Undo scopes must close in nesting order");
+            }
+            this.closed = true;
+            popLayer(this.save);
+        }
     }
 
     public AC_UndoStackLayer popLayer(boolean save) {
@@ -74,9 +134,15 @@ public class AC_UndoStack {
 
         Entry entry = layer.end(save);
         if (entry != null) {
-            this.redoStack.clear();
-
-            this.push(this.undoStack, entry);
+            AC_UndoStackLayer parent = this.layers.peek();
+            if (parent != null) {
+                // One outer command owns its nested edits, including discard/suppression.
+                parent.add(entry.action());
+            }
+            else {
+                this.redoStack.clear();
+                this.push(this.undoStack, entry);
+            }
         }
         return layer;
     }
@@ -108,7 +174,7 @@ public class AC_UndoStack {
         }
 
         entry.action.undo(world);
-        entry.selectionBefore.load();
+        this.restoreSelection(entry.selectionBefore);
 
         this.push(this.redoStack, entry);
     }
@@ -120,7 +186,7 @@ public class AC_UndoStack {
         }
 
         entry.action.redo(world);
-        entry.selectionAfter.load();
+        this.restoreSelection(entry.selectionAfter);
 
         this.push(this.undoStack, entry);
     }
@@ -135,7 +201,7 @@ public class AC_UndoStack {
     public record Entry(AC_EditAction action, AC_Selection selectionBefore, AC_Selection selectionAfter) {
     }
 
-    private static class CursorLayer implements AC_UndoStackLayer {
+    private class CursorLayer implements AC_UndoStackLayer {
         private final ArrayList<AC_EditAction> actionList = new ArrayList<>();
         private AC_Selection selectionBefore;
 
@@ -148,7 +214,7 @@ public class AC_UndoStack {
 
         @Override
         public void begin() {
-            this.selectionBefore = AC_Selection.fromCursor();
+            this.selectionBefore = snapshotSelection();
         }
 
         @Override
@@ -164,7 +230,7 @@ public class AC_UndoStack {
             var list = new AC_EditActionList(new ArrayList<>(this.actionList));
             this.actionList.clear();
 
-            var selectionAfter = AC_Selection.fromCursor();
+            var selectionAfter = snapshotSelection();
             return new Entry(list, this.selectionBefore, selectionAfter);
         }
 

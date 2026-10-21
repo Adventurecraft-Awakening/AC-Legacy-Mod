@@ -1,22 +1,27 @@
 package dev.adventurecraft.awakening.mixin.client;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
+import dev.adventurecraft.awakening.client.platform.window.GameWindow;
+import dev.adventurecraft.awakening.client.platform.window.WindowMode;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.ACMainThread;
 import dev.adventurecraft.awakening.ACMod;
-import dev.adventurecraft.awakening.client.gl.GLDevice;
+import dev.adventurecraft.awakening.client.render.resource.RenderDevice;
 import dev.adventurecraft.awakening.client.gui.AC_ChatScreen;
 import dev.adventurecraft.awakening.client.gui.AC_InBedChatScreen;
 import dev.adventurecraft.awakening.client.options.Config;
+import dev.adventurecraft.awakening.client.input.EditorInput;
+import dev.adventurecraft.awakening.client.render.RayLighting;
+import dev.adventurecraft.awakening.client.render.shader.MapShaderSupport;
 import dev.adventurecraft.awakening.client.WikiAssetExporter;
-import dev.adventurecraft.awakening.client.renderer.BlockAllocator;
-import dev.adventurecraft.awakening.client.renderer.PoolingBlockAllocator;
+import dev.adventurecraft.awakening.client.render.mesh.BlockAllocator;
+import dev.adventurecraft.awakening.client.render.mesh.PoolingBlockAllocator;
 import dev.adventurecraft.awakening.common.*;
 import dev.adventurecraft.awakening.common.gui.AC_GuiMapSelect;
 import dev.adventurecraft.awakening.common.gui.AC_GuiStore;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
-import dev.adventurecraft.awakening.extension.client.entity.player.ExAbstractClientPlayerEntity;
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import dev.adventurecraft.awakening.extension.client.gui.screen.ExScreen;
 import dev.adventurecraft.awakening.extension.client.options.ExGameOptions;
@@ -32,7 +37,6 @@ import dev.adventurecraft.awakening.item.AC_ILeftClickItem;
 import dev.adventurecraft.awakening.item.AC_IUseDelayItem;
 import dev.adventurecraft.awakening.script.*;
 import dev.adventurecraft.awakening.tile.AC_Blocks;
-import dev.adventurecraft.awakening.util.MathF;
 import net.fabricmc.loader.impl.util.Arguments;
 import net.minecraft.client.*;
 import net.minecraft.client.gamemode.CreativeMode;
@@ -71,11 +75,7 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
-import org.lwjgl.opengl.*;
-import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
-import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -193,7 +193,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
     @Unique ItemInstance lastItemUsed;
     @Unique Entity lastEntityHit;
     @Unique ScriptVec3 lastBlockHit;
-    @Unique private GLDevice glDevice;
+    @Unique private RenderDevice renderDevice;
     @Unique private BlockAllocator chunkBlockAllocator;
 
     @Overwrite(remap = false)
@@ -223,16 +223,6 @@ public abstract class MixinMinecraft implements ExMinecraft {
         if (arguments.containsKey("mapsDir")) {
             ACMainThread.mapsDirectory = new File(arguments.get("mapsDir"));
         }
-
-        ACMainThread.glDebugContext = arguments.getExtraArgs().contains("--glDebugContext");
-
-        ACMainThread.glDebugLogSeverity = ACMainThread.GlDebugSeverity.valueOf(arguments.getOrDefault("glDebugLogSeverity",
-            ACMainThread.glDebugLogSeverity.name()
-        ));
-
-        ACMainThread.glDebugTraceSeverity = ACMainThread.GlDebugSeverity.valueOf(arguments.getOrDefault("glDebugTraceSeverity",
-            ACMainThread.glDebugTraceSeverity.name()
-        ));
 
         boolean fullscreen = arguments.getExtraArgs().contains("--fullscreen");
         int width = Integer.parseInt(arguments.getOrDefault("width", "854"));
@@ -268,8 +258,9 @@ public abstract class MixinMinecraft implements ExMinecraft {
         at = @At("HEAD")
     )
     private void init_makeResizable(CallbackInfo ci) {
+        dev.adventurecraft.awakening.client.render.compat.LegacyPassBridge.installLifecycle();
         this.orgWidth = this.width;
-        Display.setResizable(true);
+        GameWindow.setResizable(true);
     }
 
     @Redirect(
@@ -295,76 +286,13 @@ public abstract class MixinMinecraft implements ExMinecraft {
     )
     private void init_createDisplay(CallbackInfo ci)
         throws LWJGLException {
-        int sampleCount = ((ExGameOptions) options).ofAaLevel();
-        ACMod.LOGGER.info("MSAA Samples: {}x", sampleCount);
-
         GLFW.glfwSetErrorCallback(GLFWErrorCallback.createPrint());
+        GameWindow.create();
+        dev.adventurecraft.awakening.client.platform.input.legacy.LegacyInputLifecycle.initialize();
+        Config.logRenderCaps();
 
-        // TODO: could come in handy for GL3 core experiment
-        //GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 2);
-        //GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 1);
-        //GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_FORWARD_COMPAT, GLFW.GLFW_TRUE);
-        //GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_COMPAT_PROFILE);
-
-        if (ACMainThread.glDebugContext) {
-            GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_DEBUG_CONTEXT, GLFW.GLFW_TRUE);
-        }
-        GLFW.glfwWindowHint(GLFW.GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW.GLFW_FALSE);
-
-        var pixelFormat = new PixelFormat();
-        try {
-            this.createDisplay(pixelFormat.withSamples(sampleCount), true);
-        }
-        catch (LWJGLException ex) {
-            ACMod.LOGGER.warn("Error setting MSAA {}x: ", sampleCount, ex);
-            this.createDisplay(pixelFormat, false);
-        }
-
-        var caps = GLContext.getCapabilities();
-        Config.logOpenGlCaps(caps);
-
-        this.glDevice = new GLDevice(caps);
+        this.renderDevice = new RenderDevice();
         this.chunkBlockAllocator = new PoolingBlockAllocator(1024 * 64 * 4, 4);
-    }
-
-    private void createDisplay(PixelFormat pixelFormat, boolean rethrowLast)
-        throws LWJGLException {
-        try {
-            Display.create(pixelFormat.withDepthBits(32));
-            return;
-        }
-        catch (LWJGLException e) {
-            ACMod.LOGGER.warn("Falling back to 24-bit depth buffer since 32-bit failed: ", e);
-        }
-
-        try {
-            Display.create(pixelFormat.withDepthBits(24));
-            return;
-        }
-        catch (LWJGLException e) {
-            ACMod.LOGGER.warn("Falling back to 16-bit depth buffer since 24-bit failed: ", e);
-        }
-
-        try {
-            Display.create(pixelFormat.withDepthBits(16));
-            return;
-        }
-        catch (LWJGLException e) {
-            ACMod.LOGGER.warn("Falling back to 8-bit depth buffer since 16-bit failed: ", e);
-        }
-
-        try {
-            Display.create(pixelFormat.withDepthBits(8));
-        }
-        catch (LWJGLException e) {
-            ACMod.LOGGER.warn("Falling back to unspecified depth buffer since 8-bit failed: ", e);
-
-            if (rethrowLast) {
-                throw e;
-            }
-        }
-
-        Display.create(pixelFormat.withDepthBits(0));
     }
 
     @Inject(
@@ -447,9 +375,9 @@ public abstract class MixinMinecraft implements ExMinecraft {
         )
     )
     private void fix_resize(CallbackInfo ci) {
-        if (!this.fullscreen && (Display.getWidth() != this.width || Display.getHeight() != this.height)) {
-            this.width = Display.getWidth();
-            this.height = Display.getHeight();
+        if (!this.fullscreen && (GameWindow.getWidth() != this.width || GameWindow.getHeight() != this.height)) {
+            this.width = GameWindow.getWidth();
+            this.height = GameWindow.getHeight();
             if (this.width <= 0) {
                 this.width = 1;
             }
@@ -524,6 +452,10 @@ public abstract class MixinMinecraft implements ExMinecraft {
         )
     )
     private void closeOnSetLevel(Minecraft instance, Level value) {
+        // Beta skips LevelRenderer.setLevel in the null-level branch. Retire its
+        // terrain workers/listener before closing the world, even without another world frame.
+        if (value == null && this.levelRenderer != null) this.levelRenderer.setLevel(null);
+        MapShaderSupport.unloadMap();
         if (this.level instanceof Closeable closeable) {
             try {
                 closeable.close();
@@ -533,6 +465,13 @@ public abstract class MixinMinecraft implements ExMinecraft {
             }
         }
         this.level = value;
+        MapShaderSupport.loadMap(value);
+    }
+
+    @Inject(method = "destroy", at = @At("HEAD"))
+    private void unloadShadersOnShutdown(CallbackInfo ci) {
+        if (this.levelRenderer != null) this.levelRenderer.setLevel(null);
+        MapShaderSupport.unloadMap();
     }
 
     @Redirect(
@@ -543,7 +482,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         )
     )
     private int fix_getWidthAfterFullscreen(Minecraft instance) {
-        return Display.getWidth();
+        return GameWindow.getWidth();
     }
 
     @Redirect(
@@ -554,7 +493,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         )
     )
     private int fix_getHeightAfterFullscreen(Minecraft instance) {
-        return Display.getHeight();
+        return GameWindow.getHeight();
     }
 
     @Inject(
@@ -568,8 +507,8 @@ public abstract class MixinMinecraft implements ExMinecraft {
     )
     private void fix_restoreSizeAfterFullscreen(CallbackInfo ci)
         throws LWJGLException {
-        if (!this.fullscreen && !Display.isMaximized()) {
-            Display.setDisplayMode(new DisplayMode(this.orgWidth, this.orgHeight));
+        if (!this.fullscreen && !GameWindow.isMaximized()) {
+            GameWindow.setDisplayMode(new WindowMode(this.orgWidth, this.orgHeight));
         }
     }
 
@@ -605,7 +544,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
     )
     private void updateDisplayAfterLoad()
         throws LWJGLException {
-        Display.update(false);
+        GameWindow.update(false);
     }
 
     /**
@@ -644,7 +583,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
             this.gameMode.tick();
         }
 
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.textures.loadTexture("/terrain.png"));
+        ((dev.adventurecraft.awakening.extension.client.ExTextureManager) this.textures).texture("/terrain.png");
         if (!this.pause) {
             this.textures.tick();
         }
@@ -748,45 +687,21 @@ public abstract class MixinMinecraft implements ExMinecraft {
                         else if (eventKey == Keyboard.KEY_F3) {
                             this.options.renderDebug = !this.options.renderDebug;
                         }
-                        else if (eventKey == Keyboard.KEY_F4) {
-                            AC_DebugMode.active = !AC_DebugMode.active;
-                            if (AC_DebugMode.active) {
-                                this.gui.addMessage("Debug Mode Active");
-                            }
-                            else {
-                                this.gui.addMessage("Debug Mode Deactivated");
-                            }
-                            ((ExWorldEventRenderer) this.levelRenderer).updateAllTheRenderers();
-                        }
                         else if (eventKey == Keyboard.KEY_F5) {
                             this.options.thirdPersonView = !this.options.thirdPersonView;
                         }
-                        else if (eventKey == Keyboard.KEY_F6) {
-                            if (AC_DebugMode.active) {
-                                ((ExWorldEventRenderer) this.levelRenderer).resetAll();
-                                this.gui.addMessage("Resetting all blocks in loaded chunks");
+                        else if (!EditorInput.handleShortcut((Minecraft) (Object) this, eventKey, isShiftPressed)) {
+                            if (eventKey == this.options.keyInventory.key) {
+                                this.setScreen(new InventoryScreen(this.player));
                             }
-                        }
-                        else if (eventKey == Keyboard.KEY_F7 ||
-                            (AC_DebugMode.active && eventKey == this.options.keyInventory.key && isShiftPressed)) {
-                            ((ExAbstractClientPlayerEntity) this.player).displayGUIPalette();
-                        }
-                        else if (eventKey == this.options.keyInventory.key) {
-                            this.setScreen(new InventoryScreen(this.player));
-                        }
-                        else if (eventKey == this.options.keyDrop.key) {
-                            this.player.drop();
-                        }
-                        else if ((this.isOnline() || AC_DebugMode.active) && eventKey == this.options.keyChat.key) {
-                            this.setScreen(new AC_ChatScreen(this.player));
-                        }
-                        else if (AC_DebugMode.active && isControlPressed) {
-                            var mc = (Minecraft) (Object) this;
-                            if (eventKey == Keyboard.KEY_Z) { // Undo
-                                ServerCommands.cmdUndo(new ServerCommandSource(mc, this.level, this.player), null);
+                            else if (eventKey == this.options.keyDrop.key) {
+                                this.player.drop();
                             }
-                            else if (eventKey == Keyboard.KEY_Y) { // Redo
-                                ServerCommands.cmdRedo(new ServerCommandSource(mc, this.level, this.player), null);
+                            else if ((this.isOnline() || EditorSession.forLevel(this.level).active) && eventKey == this.options.keyChat.key) {
+                                this.setScreen(new AC_ChatScreen(this.player));
+                            }
+                            else {
+                                EditorInput.handleHistoryShortcut((Minecraft) (Object) this, eventKey, isControlPressed);
                             }
                         }
                     }
@@ -844,12 +759,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
                 wheelDelta = -1;
             }
 
-            if (AC_DebugMode.active && menuDown) {
-                AC_DebugMode.reachDistance += wheelDelta;
-                AC_DebugMode.reachDistance = MathF.clamp(AC_DebugMode.reachDistance, 2, 100);
-                this.gui.addMessage(String.format("Reach Changed to %d", AC_DebugMode.reachDistance));
-            }
-            else {
+            if (!EditorInput.handleScroll((Minecraft) (Object) this, wheelDelta, menuDown)) {
                 if (ctrlDown) {
                     ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
                 }
@@ -952,7 +862,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         ItemInstance pickItem;
         if (slotId == -1) {
             // Only grant items in debug mode.
-            if (!AC_DebugMode.active) {
+            if (!EditorSession.forLevel(this.level).active) {
                 return;
             }
             pickItem = new ItemInstance(id, -64, meta);
@@ -1010,216 +920,200 @@ public abstract class MixinMinecraft implements ExMinecraft {
         }
 
         var exWorld = (ExWorld) this.level;
-        boolean hasRecording = AC_DebugMode.active;
-        if (hasRecording) {
-            exWorld.getUndoStack().pushLayer();
-        }
-
+        boolean hasRecording = EditorSession.forLevel(this.level).active;
+        var recording = hasRecording ? exWorld.getUndoStack().recordingScope() : null;
         boolean swapOffhand = false;
-        ItemInstance stack = this.player.inventory.getSelected();
-        if (!AC_DebugMode.active) {
-            if (mouseButton == 0) {
-                stack = ((ExPlayerInventory) this.player.inventory).getOffhandItemStack();
-                ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
-                swapOffhand = true;
-                ((ExPlayerEntity) this.player).setSwappedItems(true);
-            }
+        try {
+            ItemInstance stack = this.player.inventory.getSelected();
+            if (!EditorSession.forLevel(this.level).active) {
+                if (mouseButton == 0) {
+                    stack = ((ExPlayerInventory) this.player.inventory).getOffhandItemStack();
+                    ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
+                    swapOffhand = true;
+                    ((ExPlayerEntity) this.player).setSwappedItems(true);
+                }
 
-            int useDelay = 5;
-            if (stack != null && Item.items[stack.id] instanceof AC_IUseDelayItem useDelayItem) {
-                useDelay = useDelayItem.getItemUseDelay();
-            }
+                int useDelay = 5;
+                if (stack != null && Item.items[stack.id] instanceof AC_IUseDelayItem useDelayItem) {
+                    useDelay = useDelayItem.getItemUseDelay();
+                }
 
-            this.lastClickTicks[mouseButton] = this.ticks + useDelay;
+                this.lastClickTicks[mouseButton] = this.ticks + useDelay;
 
-            if (stack != null && (Item.items[stack.id] instanceof AC_ILeftClickItem leftClickItem) &&
-                leftClickItem.mainActionLeftClick()) {
-                mouseButton = 0;
-            }
-            else {
-                mouseButton = 1;
-            }
-        }
-        else {
-            Arrays.fill(this.lastClickTicks, this.ticks + 5);
-        }
-
-        if (mouseButton == 0) {
-            this.player.swing();
-        }
-
-        boolean useOnBlock = true;
-        if (this.hitResult == null) {
-            if (mouseButton == 0 && !(this.gameMode instanceof CreativeMode)) {
-                this.missTime = 10;
-            }
-        }
-        else if (this.hitResult.hitType == HitType.ENTITY) {
-            if (mouseButton == 0) {
-                this.gameMode.attack(this.player, this.hitResult.entity);
-            }
-
-            if (mouseButton == 1) {
-                this.gameMode.interact(this.player, this.hitResult.entity);
-            }
-        }
-        else if (this.hitResult.hitType == HitType.TILE) {
-            int bX = this.hitResult.x;
-            int bY = this.hitResult.y;
-            int bZ = this.hitResult.z;
-            int bSide = this.hitResult.face;
-            Tile block = Tile.tiles[this.level.getTile(bX, bY, bZ)];
-            if (block != null) {
-                if (!AC_DebugMode.active && (block.id == Tile.CHEST.id || block.id == AC_Blocks.store.id)) {
+                if (stack != null && (Item.items[stack.id] instanceof AC_ILeftClickItem leftClickItem) &&
+                    leftClickItem.mainActionLeftClick()) {
+                    mouseButton = 0;
+                }
+                else {
                     mouseButton = 1;
                 }
+            }
+            else {
+                Arrays.fill(this.lastClickTicks, this.ticks + 5);
+            }
 
-                if (!AC_DebugMode.active) {
-                    int var11 = ((ExBlock) block).alwaysUseClick(this.level, bX, bY, bZ);
-                    if (var11 != -1) {
-                        mouseButton = var11;
-                    }
+            if (mouseButton == 0) {
+                this.player.swing();
+            }
+
+            boolean useOnBlock = true;
+            if (this.hitResult == null) {
+                if (mouseButton == 0 && !(this.gameMode instanceof CreativeMode)) {
+                    this.missTime = 10;
                 }
-
+            }
+            else if (this.hitResult.hitType == HitType.ENTITY) {
                 if (mouseButton == 0) {
-                    this.gameMode.startDestroyBlock(bX, bY, bZ, this.hitResult.face);
-                    if (stack != null && Item.items[stack.id] instanceof AC_ILeftClickItem leftClickItem) {
-                        leftClickItem.onItemUseLeftClick(stack, this.player, this.level, bX, bY, bZ, bSide);
-                    }
+                    this.gameMode.attack(this.player, this.hitResult.entity);
                 }
-                else if (mouseButton == 1) {
-                    int count = stack == null ? 0 : stack.count;
-                    if (this.gameMode.useItemOn(this.player, this.level, stack, bX, bY, bZ, bSide)) {
-                        useOnBlock = false;
-                        this.player.swing();
-                    }
 
-                    if (stack == null) {
-                        this.endMouseClick(swapOffhand, exWorld, hasRecording);
-                        return;
-                    }
-
-                    if (stack.count == 0 && stack == this.player.inventory.items[this.player.inventory.selected]) {
-                        this.player.inventory.items[this.player.inventory.selected] = null;
-                    }
-                    else if (stack.count != count) {
-                        this.gameRenderer.itemInHandRenderer.itemPlaced();
-                    }
+                if (mouseButton == 1) {
+                    this.gameMode.interact(this.player, this.hitResult.entity);
                 }
             }
-        }
+            else if (this.hitResult.hitType == HitType.TILE) {
+                int bX = this.hitResult.x;
+                int bY = this.hitResult.y;
+                int bZ = this.hitResult.z;
+                int bSide = this.hitResult.face;
+                Tile block = Tile.tiles[this.level.getTile(bX, bY, bZ)];
+                if (block != null) {
+                    if (!EditorSession.forLevel(this.level).active && (block.id == Tile.CHEST.id || block.id == AC_Blocks.store.id)) {
+                        mouseButton = 1;
+                    }
 
-        if (useOnBlock && mouseButton == 0 && stack != null) {
-            if (Item.items[stack.id] instanceof AC_ILeftClickItem leftClickItem) {
-                leftClickItem.onItemLeftClick(stack, this.level, this.player);
-            }
-        }
+                    if (!EditorSession.forLevel(this.level).active) {
+                        int var11 = ((ExBlock) block).alwaysUseClick(this.level, bX, bY, bZ);
+                        if (var11 != -1) {
+                            mouseButton = var11;
+                        }
+                    }
 
-        if (useOnBlock && mouseButton == 1 && stack != null && this.gameMode.useItem(this.player, this.level, stack)) {
-            this.gameRenderer.itemInHandRenderer.itemUsed();
-        }
-        // Hitblock and hitEntity sets
-        Scriptable globalScope = exWorld.getScript().globalScope;
-        // lastItemUsed
-        if (stack != null) {
-            if (this.lastItemUsed != stack) {
-                var tmp = Context.javaToJS(new ScriptItem(stack), globalScope);
-                ScriptableObject.putProperty(globalScope, "lastItemUsed", tmp);
-                this.lastItemUsed = stack;
-            }
-        }
-        else {
-            var tmp = Context.javaToJS(null, globalScope);
-            ScriptableObject.putProperty(globalScope, "lastItemUsed", tmp);
-            this.lastItemUsed = null;
-        }
-        // Hit result sets
-        if (this.hitResult == null) {
-            // Hit Air
-            if (this.lastEntityHit != null) {
-                this.lastEntityHit = null;
-                var tmp = Context.javaToJS(null, globalScope);
-                ScriptableObject.putProperty(globalScope, "hitEntity", tmp);
-            }
+                    if (mouseButton == 0) {
+                        this.gameMode.startDestroyBlock(bX, bY, bZ, this.hitResult.face);
+                        if (stack != null && Item.items[stack.id] instanceof AC_ILeftClickItem leftClickItem) {
+                            leftClickItem.onItemUseLeftClick(stack, this.player, this.level, bX, bY, bZ, bSide);
+                        }
+                    }
+                    else if (mouseButton == 1) {
+                        int count = stack == null ? 0 : stack.count;
+                        if (this.gameMode.useItemOn(this.player, this.level, stack, bX, bY, bZ, bSide)) {
+                            useOnBlock = false;
+                            this.player.swing();
+                        }
 
-            if (this.lastBlockHit != null) {
-                this.lastBlockHit = null;
-                var tmp = Context.javaToJS(null, globalScope);
-                ScriptableObject.putProperty(globalScope, "hitBlock", tmp);
-            }
-        }
-        else if (this.hitResult.hitType == HitType.ENTITY) {
-            // Hit an entity
-            if (this.lastEntityHit != this.hitResult.entity) {
-                this.lastEntityHit = this.hitResult.entity;
-                var tmp = Context.javaToJS(ScriptEntity.getEntityClass(this.hitResult.entity), globalScope);
-                ScriptableObject.putProperty(globalScope, "hitEntity", tmp);
+                        if (stack == null) {
+                            return;
+                        }
+
+                        if (stack.count == 0 && stack == this.player.inventory.items[this.player.inventory.selected]) {
+                            this.player.inventory.items[this.player.inventory.selected] = null;
+                        }
+                        else if (stack.count != count) {
+                            this.gameRenderer.itemInHandRenderer.itemPlaced();
+                        }
+                    }
+                }
             }
 
-            if (this.lastBlockHit != null) {
-                this.lastBlockHit = null;
-                var tmp = Context.javaToJS(null, globalScope);
-                ScriptableObject.putProperty(globalScope, "hitBlock", tmp);
-            }
-        }
-        else if (this.hitResult.hitType != HitType.TILE) {
-            // Hit ???
-            if (this.lastEntityHit != null) {
-                this.lastEntityHit = null;
-                var tmp = Context.javaToJS(null, globalScope);
-                ScriptableObject.putProperty(globalScope, "hitEntity", tmp);
+            if (useOnBlock && mouseButton == 0 && stack != null) {
+                if (Item.items[stack.id] instanceof AC_ILeftClickItem leftClickItem) {
+                    leftClickItem.onItemLeftClick(stack, this.level, this.player);
+                }
             }
 
-            if (this.lastBlockHit != null) {
-                this.lastBlockHit = null;
-                var tmp = Context.javaToJS(null, globalScope);
-                ScriptableObject.putProperty(globalScope, "hitBlock", tmp);
+            if (useOnBlock && mouseButton == 1 && stack != null && this.gameMode.useItem(this.player, this.level, stack)) {
+                this.gameRenderer.itemInHandRenderer.itemUsed();
             }
-        }
-        else {
-            // Hit a block
-            if (this.lastBlockHit == null || this.lastBlockHit.x != (double) this.hitResult.x ||
-                this.lastBlockHit.y != (double) this.hitResult.y || this.lastBlockHit.z != (double) this.hitResult.z) {
-
-                this.lastBlockHit = new ScriptVec3(
-                    (float) this.hitResult.x,
-                    (float) this.hitResult.y,
-                    (float) this.hitResult.z
-                );
-                var tmp = Context.javaToJS(this.lastBlockHit, globalScope);
-                ScriptableObject.putProperty(globalScope, "hitBlock", tmp);
+            // Hitblock and hitEntity sets
+            var script = exWorld.getScript();
+            // lastItemUsed
+            if (stack != null) {
+                if (this.lastItemUsed != stack) {
+                    script.addObject("lastItemUsed", new ScriptItem(stack));
+                    this.lastItemUsed = stack;
+                }
             }
-
-            if (this.lastEntityHit != null) {
-                this.lastEntityHit = null;
-                var tmp = Context.javaToJS(null, globalScope);
-                ScriptableObject.putProperty(globalScope, "hitEntity", tmp);
+            else {
+                script.addObject("lastItemUsed", null);
+                this.lastItemUsed = null;
             }
-        }
-        // Trigger item scripts
-        String scriptName;
-        if (stack != null) {
-            scriptName = stack.isStackedByData()
-                ? String.format("item_%d_%d.js", stack.id, stack.getAuxValue())
-                : String.format("item_%d.js", stack.id);
-        }
-        else {
-            scriptName = "item_0.js";
-        }
-        exWorld.getScriptHandler().runScript(scriptName, exWorld.getScope(), false);
+            // Hit result sets
+            if (this.hitResult == null) {
+                // Hit Air
+                if (this.lastEntityHit != null) {
+                    this.lastEntityHit = null;
+                    script.addObject("hitEntity", null);
+                }
 
-        this.endMouseClick(swapOffhand, exWorld, hasRecording);
-    }
+                if (this.lastBlockHit != null) {
+                    this.lastBlockHit = null;
+                    script.addObject("hitBlock", null);
+                }
+            }
+            else if (this.hitResult.hitType == HitType.ENTITY) {
+                // Hit an entity
+                if (this.lastEntityHit != this.hitResult.entity) {
+                    this.lastEntityHit = this.hitResult.entity;
+                    script.addObject("hitEntity", ScriptEntity.getEntityClass(this.hitResult.entity));
+                }
 
-    @Unique
-    private void endMouseClick(boolean swapOffhand, ExWorld exWorld, boolean hasRecording) {
-        if (swapOffhand) {
-            ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
-            ((ExPlayerEntity) this.player).setSwappedItems(false);
-        }
+                if (this.lastBlockHit != null) {
+                    this.lastBlockHit = null;
+                    script.addObject("hitBlock", null);
+                }
+            }
+            else if (this.hitResult.hitType != HitType.TILE) {
+                // Hit ???
+                if (this.lastEntityHit != null) {
+                    this.lastEntityHit = null;
+                    script.addObject("hitEntity", null);
+                }
 
-        if (hasRecording) {
-            exWorld.getUndoStack().popLayer();
+                if (this.lastBlockHit != null) {
+                    this.lastBlockHit = null;
+                    script.addObject("hitBlock", null);
+                }
+            }
+            else {
+                // Hit a block
+                if (this.lastBlockHit == null || this.lastBlockHit.x != (double) this.hitResult.x ||
+                    this.lastBlockHit.y != (double) this.hitResult.y || this.lastBlockHit.z != (double) this.hitResult.z) {
+
+                    this.lastBlockHit = new ScriptVec3(
+                        (float) this.hitResult.x,
+                        (float) this.hitResult.y,
+                        (float) this.hitResult.z
+                    );
+                    script.addObject("hitBlock", this.lastBlockHit);
+                }
+
+                if (this.lastEntityHit != null) {
+                    this.lastEntityHit = null;
+                    script.addObject("hitEntity", null);
+                }
+            }
+            // Trigger item scripts
+            String scriptName;
+            if (stack != null) {
+                scriptName = stack.isStackedByData()
+                    ? String.format("item_%d_%d.js", stack.id, stack.getAuxValue())
+                    : String.format("item_%d.js", stack.id);
+            }
+            else {
+                scriptName = "item_0.js";
+            }
+            exWorld.getScriptHandler().runScript(scriptName, exWorld.getScope(), false);
+
+        } finally {
+            try {
+                if (swapOffhand) {
+                    ((ExPlayerInventory) this.player.inventory).swapOffhandWithMain();
+                    ((ExPlayerEntity) this.player).setSwappedItems(false);
+                }
+            } finally {
+                if (recording != null) recording.close();
+            }
         }
     }
 
@@ -1228,6 +1122,8 @@ public abstract class MixinMinecraft implements ExMinecraft {
         at = @At("HEAD")
     )
     private void resetStateOnInit(Level level, String stage, Player newPlayer, CallbackInfo ci) {
+        if (this.level != null && this.level != level) RayLighting.clear(this.level);
+        MapShaderSupport.unloadMap();
         ((ExInGameHud) this.gui).getScriptUI().clear();
         ScriptModel.clearAll();
         this.setCameraActive(false);
@@ -1389,8 +1285,8 @@ public abstract class MixinMinecraft implements ExMinecraft {
         }
         else {
             // TODO: reset global state in consistent matter
-            AC_DebugMode.active = false;
-            AC_DebugMode.levelEditing = false;
+            EditorSession.forLevel(this.level).active = false;
+            EditorSession.forLevel(this.level).levelEditing = false;
             LevelIO dimData = null;
             if (worldName != null) {
                 dimData = this.getLevelSource().method_1009(worldName, false);
@@ -1548,8 +1444,8 @@ public abstract class MixinMinecraft implements ExMinecraft {
         return this.storeGUI;
     }
 
-    public @Override GLDevice getGlDevice() {
-        return this.glDevice;
+    public @Override RenderDevice getRenderDevice() {
+        return this.renderDevice;
     }
 
     public @Override BlockAllocator getChunkBlockAllocator() {

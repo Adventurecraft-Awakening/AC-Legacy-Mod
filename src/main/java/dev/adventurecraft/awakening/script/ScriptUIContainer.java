@@ -1,13 +1,11 @@
 package dev.adventurecraft.awakening.script;
 
+import dev.adventurecraft.awakening.client.render.UiDrawContext;
+
 import java.util.LinkedList;
-import java.util.List;
 
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.Textures;
-import org.lwjgl.opengl.GL11;
 
 @SuppressWarnings("unused")
 public class ScriptUIContainer extends UIElement {
@@ -30,22 +28,12 @@ public class ScriptUIContainer extends UIElement {
     }
 
     @Override
-    public void render(Font font, Textures textures, float deltaTime) {
+    public void render(UiDrawContext context, float deltaTime) {
         double x = this.getXAtTime(deltaTime);
         double y = this.getYAtTime(deltaTime);
-        boolean hasMatrix = false;
-        if (x != 0.0F || y != 0.0F) {
-            hasMatrix = true;
-            GL11.glPushMatrix();
-            GL11.glTranslated(x, y, 0.0D);
-        }
-
+        var local = context.translated(x, y);
         for (UIElement element : this.uiElements) {
-            element.render(font, textures, deltaTime);
-        }
-
-        if (hasMatrix) {
-            GL11.glPopMatrix();
+            element.render(local, deltaTime);
         }
     }
 

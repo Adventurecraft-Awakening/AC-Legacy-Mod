@@ -1,5 +1,8 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.client.render.compat.LegacyGlAdapter;
+import dev.adventurecraft.awakening.client.render.compat.LegacyGlConstants;
+import dev.adventurecraft.awakening.client.render.resource.RenderTexture;
 import dev.adventurecraft.awakening.ACMod;
 import dev.adventurecraft.awakening.extension.client.ExTextureManager;
 import dev.adventurecraft.awakening.image.ImageBuffer;
@@ -7,7 +10,6 @@ import dev.adventurecraft.awakening.image.ImageFormat;
 import dev.adventurecraft.awakening.image.ImageLoadOptions;
 import dev.adventurecraft.awakening.image.ImageLoader;
 import dev.adventurecraft.awakening.util.FutureUtil;
-import org.lwjgl.opengl.GL11;
 
 import net.minecraft.client.renderer.Textures;
 
@@ -23,7 +25,8 @@ public class AC_MapInfo {
     public String description2;
     private File thumbnailFile;
     private Future<ImageBuffer> imageFuture;
-    private int textureID = -1;
+    private RenderTexture thumbnailTexture;
+    private boolean textureFailed;
 
     public AC_MapInfo(String name, String description1, String description2, File thumbnailFile) {
         this.name = name;
@@ -41,36 +44,37 @@ public class AC_MapInfo {
     }
 
     public boolean bindTexture(Textures textureManager, ExecutorService executor) {
+        RenderTexture texture = this.texture(textureManager, executor);
+        if (texture == null) return false;
+        LegacyGlAdapter.bindTexture(LegacyGlConstants.TEXTURE_2D, LegacyGlAdapter.idForTexture(texture));
+        return true;
+    }
+
+    public RenderTexture texture(Textures textureManager, ExecutorService executor) {
         if (this.imageFuture == null) {
             queueTextureLoad(executor);
         }
 
-        if (this.textureID == -1) {
+        if (this.thumbnailTexture == null && !this.textureFailed) {
             if (!this.imageFuture.isDone()) {
-                return false;
+                return null;
             }
 
             ImageBuffer image = FutureUtil.getOrElse(this.imageFuture, null);
             if (image != null) {
-                this.textureID = ((ExTextureManager) textureManager).loadTexture(image);
+                this.thumbnailTexture = ((ExTextureManager) textureManager).createTexture(image);
             } else {
-                this.textureID = -2;
+                this.textureFailed = true;
             }
         }
 
-        int id = this.textureID;
-        if (id < 0) {
-            id = textureManager.loadTexture("/gui/unknown_pack.png");
-        }
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, id);
-        return true;
+        return this.thumbnailTexture == null
+            ? ((ExTextureManager) textureManager).texture("/gui/unknown_pack.png") : this.thumbnailTexture.borrow();
     }
 
     public void releaseTexture(Textures textureManager) {
-        if (this.textureID >= 0) {
-            textureManager.releaseTexture(this.textureID);
-            this.textureID = -1;
-        }
+        if (this.thumbnailTexture != null) { this.thumbnailTexture.close(); this.thumbnailTexture = null; }
+        this.textureFailed = false;
     }
 
     private void queueTextureLoad(ExecutorService executor) {

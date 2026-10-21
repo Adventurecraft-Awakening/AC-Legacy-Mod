@@ -1,14 +1,20 @@
 package dev.adventurecraft.awakening.common;
 
+import dev.adventurecraft.awakening.editor.EditorSession;
+import dev.adventurecraft.awakening.client.render.compat.LegacyPassBridge;
+import dev.adventurecraft.awakening.client.render.DebugDraw;
+import dev.adventurecraft.awakening.client.render.NativeRenderer;
+import dev.adventurecraft.awakening.client.render.QuadBuilder;
+import dev.adventurecraft.awakening.client.render.RenderScene;
+import dev.adventurecraft.awakening.client.render.state.*;
+import dev.adventurecraft.awakening.client.render.block.BlockMesher;
+import dev.adventurecraft.awakening.client.render.block.BlockMeshing;
+import dev.adventurecraft.awakening.extension.client.ExTextureManager;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
-import dev.adventurecraft.awakening.extension.client.render.block.ExBlockRenderer;
-import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.item.AC_ItemCursor;
 import dev.adventurecraft.awakening.world.AC_BlockCopyUtils;
 import dev.adventurecraft.awakening.world.BlockPos;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.Tesselator;
-import net.minecraft.client.renderer.TileRenderer;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.tile.Tile;
@@ -17,30 +23,22 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.HitType;
 import net.minecraft.world.phys.Vec3;
 import org.lwjgl.input.Mouse;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL14;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.util.glu.GLU;
-
-// TODO: optimize with batching (using MemoryTesselator?)
 
 public class AC_MapEditing {
     public Minecraft mc;
     public Level world;
     public HitResult cursor;
-    private TileRenderer renderBlocks;
+    private final QuadBuilder previewVertices = QuadBuilder.frameOwned(256);
     public int selectedBlockID;
     public int selectedMetadata;
 
     public AC_MapEditing(Minecraft mc, Level world) {
         this.mc = mc;
         this.world = world;
-        this.renderBlocks = new TileRenderer(world);
     }
 
     public void updateWorld(Level world) {
         this.world = world;
-        this.renderBlocks.level = world;
     }
 
     public void updateCursor(Mob entity, float var2, float deltaTime) {
@@ -51,21 +49,14 @@ public class AC_MapEditing {
 
         int mouseX = Mouse.getX();
         int mouseY = Mouse.getY();
-        try (var stack = MemoryStack.stackPush()) {
-            var viewport = stack.mallocInt(16);
-            var modelMatrix = stack.mallocFloat(16);
-            var projMatrix = stack.mallocFloat(16);
-            var objPos = stack.mallocFloat(3);
-
-            GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, modelMatrix);
-            GL11.glGetFloat(GL11.GL_PROJECTION_MATRIX, projMatrix);
-            GL11.glGetInteger(GL11.GL_VIEWPORT, viewport);
-            GLU.gluUnProject(mouseX, mouseY, 1.0F, modelMatrix, projMatrix, viewport, objPos);
-
-            Vec3 start = entity.getPos(deltaTime);
-            Vec3 end = start.add(objPos.get(0) * 1024.0F, objPos.get(1) * 1024.0F, objPos.get(2) * 1024.0F);
-            this.cursor = this.world.clip(start, end);
-        }
+        var camera = dev.adventurecraft.awakening.client.render.RenderScene.hasWorld()
+            ? dev.adventurecraft.awakening.client.render.RenderScene.camera() : LegacyPassBridge.cameraView();
+        var ray = camera.screenRay(mouseX * (double) dev.adventurecraft.awakening.client.render.RenderSystem.width() / this.mc.width,
+            (this.mc.height - mouseY) * (double) dev.adventurecraft.awakening.client.render.RenderSystem.height() / this.mc.height);
+        Vec3 origin = entity.getPos(deltaTime);
+        Vec3 start = origin.add(ray.originX(), ray.originY(), ray.originZ());
+        Vec3 end = start.add(ray.directionX() * 1024, ray.directionY() * 1024, ray.directionZ() * 1024);
+        this.cursor = this.world.clip(start, end);
     }
 
     public void paint() {
@@ -97,123 +88,52 @@ public class AC_MapEditing {
     }
 
     public void render(float deltaTime) {
-        Mob entity = Minecraft.instance.cameraEntity;
-        if (this.mc.mouseGrabbed) {
-            return;
-        }
-        this.drawCursor(entity, deltaTime);
-        if (this.cursor == null) {
-            return;
-        }
-        float prX = (float) (entity.xOld + (entity.x - entity.xOld) * (double) deltaTime);
-        float prY = (float) (entity.yOld + (entity.y - entity.yOld) * (double) deltaTime);
-        float prZ = (float) (entity.zOld + (entity.z - entity.zOld) * (double) deltaTime);
-        GL11.glPushMatrix();
-        GL11.glTranslatef(-prX, -prY, -prZ);
-        GL14.glBlendColor(1.0F, 1.0F, 1.0F, 0.4F);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL14.GL_CONSTANT_ALPHA, GL14.GL_ONE_MINUS_CONSTANT_ALPHA);
-        this.mc.textures.bind(this.mc.textures.loadTexture("/terrain.png"));
-        ((ExBlockRenderer) this.renderBlocks).startRenderingBlocks(this.world);
-        this.drawBlock(
-            this.cursor.x + this.getCursorXOffset(),
-            this.cursor.y + this.getCursorYOffset(),
-            this.cursor.z + this.getCursorZOffset(),
-            this.selectedBlockID,
-            this.selectedMetadata
-        );
-        ((ExBlockRenderer) this.renderBlocks).stopRenderingBlocks();
-        GL11.glDisable(GL11.GL_BLEND);
-        GL11.glPopMatrix();
+        if (this.mc.mouseGrabbed) return;
+        this.drawCursor(this.mc.cameraEntity, deltaTime);
+        if (this.cursor == null || this.cursor.hitType != HitType.TILE) return;
+        Tile tile = Tile.tiles[this.selectedBlockID];
+        if (tile == null) return;
+        BlockMesher mesher = this.beginPreview(BlockMeshing.options(this.world));
+        mesher.preview(tile, this.cursor.x + this.getCursorXOffset(), this.cursor.y + this.getCursorYOffset(),
+            this.cursor.z + this.getCursorZOffset(), this.selectedMetadata);
+        this.finishPreview(((ExBlock) tile).getTextureNum());
     }
 
     public void renderSelection(float deltaTime) {
-        if (!AC_ItemCursor.bothSet) {
-            return;
-        }
-
-        Mob entity = Minecraft.instance.cameraEntity;
-        float prX = (float) (entity.xOld + (entity.x - entity.xOld) * (double) deltaTime);
-        float prY = (float) (entity.yOld + (entity.y - entity.yOld) * (double) deltaTime);
-        float prZ = (float) (entity.zOld + (entity.z - entity.zOld) * (double) deltaTime);
-        GL11.glPushMatrix();
-        GL11.glTranslatef(-prX, -prY, -prZ);
-        GL14.glBlendColor(1.0F, 1.0F, 1.0F, 0.4F);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL14.GL_CONSTANT_ALPHA, GL14.GL_ONE_MINUS_CONSTANT_ALPHA);
-
-        BlockPos pos = AC_BlockCopyUtils.calculatePastePosition().sub(AC_ItemCursor.min());
-
-        // TODO: generate mesh
-        for (int texIndex = 0; texIndex <= 3; ++texIndex) {
-            if (texIndex == 0) {
-                this.mc.textures.bind(this.mc.textures.loadTexture("/terrain.png"));
-            }
-            else {
-                this.mc.textures.bind(this.mc.textures.loadTexture(String.format("/terrain%d.png", texIndex)));
-            }
-
-            ((ExBlockRenderer) this.renderBlocks).startRenderingBlocks(this.world);
-
-            BlockPos min = AC_ItemCursor.min();
-            BlockPos max = AC_ItemCursor.max();
+        if (!EditorSession.forLevel(this.world).selection.bothSet) return;
+        BlockPos pos = AC_BlockCopyUtils.calculatePastePosition().sub(EditorSession.forLevel(this.world).selection.min);
+        BlockPos min = EditorSession.forLevel(this.world).selection.min, max = EditorSession.forLevel(this.world).selection.max;
+        var options = BlockMeshing.options(this.world);
+        for (int texture = 0; texture <= 3; texture++) {
+            BlockMesher mesher = this.beginPreview(options);
             for (int x = min.x(); x <= max.x(); x++) {
                 for (int y = min.y(); y <= max.y(); y++) {
                     for (int z = min.z(); z <= max.z(); z++) {
-                        int id = this.mc.level.getTile(x, y, z);
-                        Tile block = Tile.tiles[id];
-                        if (block != null && ((ExBlock) block).getTextureNum() == texIndex) {
-                            int meta = this.mc.level.getData(x, y, z);
-                            this.drawBlock(x + pos.x(), y + pos.y(), z + pos.z(), id, meta);
+                        Tile tile = Tile.tiles[this.mc.level.getTile(x, y, z)];
+                        if (tile != null && ((ExBlock) tile).getTextureNum() == texture) {
+                            mesher.preview(tile, x + pos.x(), y + pos.y(), z + pos.z(), this.mc.level.getData(x, y, z));
                         }
                     }
                 }
             }
-            ((ExBlockRenderer) this.renderBlocks).stopRenderingBlocks();
+            this.finishPreview(texture);
         }
-
-        GL11.glDisable(GL11.GL_BLEND);
-        GL11.glPopMatrix();
     }
 
-    private void drawBlock(int x, int y, int z, int id, int meta) {
-        Tile block = Tile.tiles[id];
-        if (block == null) {
-            return;
-        }
-        int prevId = this.world.getTile(x, y, z);
-        int prevMeta = this.world.getData(x, y, z);
-        ((ExWorld) this.world).setBlockAndMetadataTemp(x, y, z, id, meta);
-        this.renderBlocks.tesselateInWorld(block, x, y, z);
-        ((ExWorld) this.world).setBlockAndMetadataTemp(x, y, z, prevId, prevMeta);
+    private BlockMesher beginPreview(BlockMesher.Options options) {
+        this.previewVertices.clear();
+        return new BlockMesher(this.world, this.previewVertices, RenderScene.cameraX(), RenderScene.cameraY(),
+            RenderScene.cameraZ(), options);
     }
 
-    private void drawBox(AABB aabb) {
-        Tesselator ts = Tesselator.instance;
-        ts.begin(GL11.GL_LINE_STRIP);
-        ts.vertex(aabb.x0, aabb.y0, aabb.z0);
-        ts.vertex(aabb.x1, aabb.y0, aabb.z0);
-        ts.vertex(aabb.x1, aabb.y0, aabb.z1);
-        ts.vertex(aabb.x0, aabb.y0, aabb.z1);
-        ts.vertex(aabb.x0, aabb.y0, aabb.z0);
-        ts.end();
-        ts.begin(GL11.GL_LINE_STRIP);
-        ts.vertex(aabb.x0, aabb.y1, aabb.z0);
-        ts.vertex(aabb.x1, aabb.y1, aabb.z0);
-        ts.vertex(aabb.x1, aabb.y1, aabb.z1);
-        ts.vertex(aabb.x0, aabb.y1, aabb.z1);
-        ts.vertex(aabb.x0, aabb.y1, aabb.z0);
-        ts.end();
-        ts.begin(GL11.GL_LINES);
-        ts.vertex(aabb.x0, aabb.y0, aabb.z0);
-        ts.vertex(aabb.x0, aabb.y1, aabb.z0);
-        ts.vertex(aabb.x1, aabb.y0, aabb.z0);
-        ts.vertex(aabb.x1, aabb.y1, aabb.z0);
-        ts.vertex(aabb.x1, aabb.y0, aabb.z1);
-        ts.vertex(aabb.x1, aabb.y1, aabb.z1);
-        ts.vertex(aabb.x0, aabb.y0, aabb.z1);
-        ts.vertex(aabb.x0, aabb.y1, aabb.z1);
-        ts.end();
+    private void finishPreview(int textureIndex) {
+        var parameters = RenderScene.worldParameters();
+        var blend = new BlendState(true, BlendFactor.CONSTANT_ALPHA, BlendFactor.ONE_MINUS_CONSTANT_ALPHA,
+            new Color4(1, 1, 1, .4F));
+        parameters = parameters.withRaster(parameters.raster().withBlend(blend).withCull(CullMode.NONE));
+        String path = textureIndex == 0 ? "/terrain.png" : "/terrain" + textureIndex + ".png";
+        var texture = ((ExTextureManager) this.mc.textures).texture(path);
+        NativeRenderer.pass(parameters).drawQuads(this.previewVertices, texture);
     }
 
     private void drawCursor(Mob entity, float deltaTime) {
@@ -226,13 +146,6 @@ public class AC_MapEditing {
             return;
         }
 
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glColor4f(0.0F, 0.0F, 0.0F, 0.4F);
-        GL11.glLineWidth(2.0F);
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glDepthMask(false);
-
         Tile block = Tile.tiles[id];
         block.updateShape(this.world, this.cursor.x, this.cursor.y, this.cursor.z);
         double prX = entity.xOld + (entity.x - entity.xOld) * (double) deltaTime;
@@ -243,59 +156,57 @@ public class AC_MapEditing {
             .getTileAABB(this.world, this.cursor.x, this.cursor.y, this.cursor.z)
             .inflate(boxSize, boxSize, boxSize)
             .offset(-prX, -prY, -prZ);
-        this.drawBox(aabb);
-        GL11.glColor4f(1.0F, 0.0F, 0.0F, 0.4F);
-        GL11.glLineWidth(4.0F);
-        Tesselator ts = Tesselator.instance;
-        ts.begin(GL11.GL_LINE_STRIP);
+        DebugDraw.with(RenderScene::worldParameters, debug -> {
+            debug.box(aabb.x0, aabb.y0, aabb.z0, aabb.x1, aabb.y1, aabb.z1, 0x66000000, 2, false);
+            var points = new java.util.ArrayList<double[]>();
         if (this.cursor.face == 0) {
-            ts.vertex(aabb.x0, aabb.y0, aabb.z0);
-            ts.vertex(aabb.x1, aabb.y0, aabb.z0);
-            ts.vertex(aabb.x1, aabb.y0, aabb.z1);
-            ts.vertex(aabb.x0, aabb.y0, aabb.z1);
-            ts.vertex(aabb.x0, aabb.y0, aabb.z0);
+            points.add(new double[] {aabb.x0, aabb.y0, aabb.z0});
+            points.add(new double[] {aabb.x1, aabb.y0, aabb.z0});
+            points.add(new double[] {aabb.x1, aabb.y0, aabb.z1});
+            points.add(new double[] {aabb.x0, aabb.y0, aabb.z1});
+            points.add(new double[] {aabb.x0, aabb.y0, aabb.z0});
         }
         else if (this.cursor.face == 1) {
-            ts.vertex(aabb.x0, aabb.y1, aabb.z0);
-            ts.vertex(aabb.x1, aabb.y1, aabb.z0);
-            ts.vertex(aabb.x1, aabb.y1, aabb.z1);
-            ts.vertex(aabb.x0, aabb.y1, aabb.z1);
-            ts.vertex(aabb.x0, aabb.y1, aabb.z0);
+            points.add(new double[] {aabb.x0, aabb.y1, aabb.z0});
+            points.add(new double[] {aabb.x1, aabb.y1, aabb.z0});
+            points.add(new double[] {aabb.x1, aabb.y1, aabb.z1});
+            points.add(new double[] {aabb.x0, aabb.y1, aabb.z1});
+            points.add(new double[] {aabb.x0, aabb.y1, aabb.z0});
         }
         else if (this.cursor.face == 2) {
-            ts.vertex(aabb.x0, aabb.y0, aabb.z0);
-            ts.vertex(aabb.x1, aabb.y0, aabb.z0);
-            ts.vertex(aabb.x1, aabb.y1, aabb.z0);
-            ts.vertex(aabb.x0, aabb.y1, aabb.z0);
-            ts.vertex(aabb.x0, aabb.y0, aabb.z0);
+            points.add(new double[] {aabb.x0, aabb.y0, aabb.z0});
+            points.add(new double[] {aabb.x1, aabb.y0, aabb.z0});
+            points.add(new double[] {aabb.x1, aabb.y1, aabb.z0});
+            points.add(new double[] {aabb.x0, aabb.y1, aabb.z0});
+            points.add(new double[] {aabb.x0, aabb.y0, aabb.z0});
         }
         else if (this.cursor.face == 3) {
-            ts.vertex(aabb.x0, aabb.y0, aabb.z1);
-            ts.vertex(aabb.x1, aabb.y0, aabb.z1);
-            ts.vertex(aabb.x1, aabb.y1, aabb.z1);
-            ts.vertex(aabb.x0, aabb.y1, aabb.z1);
-            ts.vertex(aabb.x0, aabb.y0, aabb.z1);
+            points.add(new double[] {aabb.x0, aabb.y0, aabb.z1});
+            points.add(new double[] {aabb.x1, aabb.y0, aabb.z1});
+            points.add(new double[] {aabb.x1, aabb.y1, aabb.z1});
+            points.add(new double[] {aabb.x0, aabb.y1, aabb.z1});
+            points.add(new double[] {aabb.x0, aabb.y0, aabb.z1});
         }
         else if (this.cursor.face == 4) {
-            ts.vertex(aabb.x0, aabb.y0, aabb.z0);
-            ts.vertex(aabb.x0, aabb.y1, aabb.z0);
-            ts.vertex(aabb.x0, aabb.y1, aabb.z1);
-            ts.vertex(aabb.x0, aabb.y0, aabb.z1);
-            ts.vertex(aabb.x0, aabb.y0, aabb.z0);
+            points.add(new double[] {aabb.x0, aabb.y0, aabb.z0});
+            points.add(new double[] {aabb.x0, aabb.y1, aabb.z0});
+            points.add(new double[] {aabb.x0, aabb.y1, aabb.z1});
+            points.add(new double[] {aabb.x0, aabb.y0, aabb.z1});
+            points.add(new double[] {aabb.x0, aabb.y0, aabb.z0});
         }
         else if (this.cursor.face == 5) {
-            ts.vertex(aabb.x1, aabb.y0, aabb.z0);
-            ts.vertex(aabb.x1, aabb.y1, aabb.z0);
-            ts.vertex(aabb.x1, aabb.y1, aabb.z1);
-            ts.vertex(aabb.x1, aabb.y0, aabb.z1);
-            ts.vertex(aabb.x1, aabb.y0, aabb.z0);
+            points.add(new double[] {aabb.x1, aabb.y0, aabb.z0});
+            points.add(new double[] {aabb.x1, aabb.y1, aabb.z0});
+            points.add(new double[] {aabb.x1, aabb.y1, aabb.z1});
+            points.add(new double[] {aabb.x1, aabb.y0, aabb.z1});
+            points.add(new double[] {aabb.x1, aabb.y0, aabb.z0});
         }
 
-        ts.end();
-
-        GL11.glDepthMask(true);
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        GL11.glDisable(GL11.GL_BLEND);
+            for (int i = 1; i < points.size(); i++) {
+                double[] a = points.get(i - 1), b = points.get(i);
+                debug.line(a[0], a[1], a[2], b[0], b[1], b[2], 0x660000ff, 0x660000ff, 4, false);
+            }
+        });
     }
 
     public void setBlock(int id, int meta) {

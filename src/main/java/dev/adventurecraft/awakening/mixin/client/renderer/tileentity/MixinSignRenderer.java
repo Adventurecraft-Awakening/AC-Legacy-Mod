@@ -1,5 +1,6 @@
 package dev.adventurecraft.awakening.mixin.client.renderer.tileentity;
 
+import dev.adventurecraft.awakening.client.render.compat.LegacyGlAdapter;
 import dev.adventurecraft.awakening.extension.client.render.ExTextRenderer;
 import dev.adventurecraft.awakening.image.Rgba;
 import net.minecraft.client.model.SignModel;
@@ -8,7 +9,6 @@ import net.minecraft.client.renderer.tileentity.SignRenderer;
 import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 import net.minecraft.world.level.tile.Tile;
 import net.minecraft.world.level.tile.entity.SignTileEntity;
-import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -24,11 +24,11 @@ public abstract class MixinSignRenderer extends TileEntityRenderer {
         Tile tile = signTileEntity.getTile();
         float scale = 0.6666667f;
 
-        GL11.glPushMatrix();
-        GL11.glTranslatef((float) x + 0.5f, (float) y + 0.75f * scale, (float) z + 0.5f);
+        LegacyGlAdapter.pushMatrix();
+        LegacyGlAdapter.translatef((float) x + 0.5f, (float) y + 0.75f * scale, (float) z + 0.5f);
         if (tile == Tile.SIGN) {
             float angle = (float) (signTileEntity.getData() * 360) / 16.0f;
-            GL11.glRotatef(-angle, 0.0f, 1.0f, 0.0f);
+            LegacyGlAdapter.rotatef(-angle, 0.0f, 1.0f, 0.0f);
             this.signModel.stick.visible = true;
         }
         else {
@@ -39,27 +39,27 @@ public abstract class MixinSignRenderer extends TileEntityRenderer {
                 case 5 -> -90.0f;
                 default -> 0.0f;
             };
-            GL11.glRotatef(-angle, 0.0f, 1.0f, 0.0f);
-            GL11.glTranslatef(0.0f, -0.3125f, -0.4375f);
+            LegacyGlAdapter.rotatef(-angle, 0.0f, 1.0f, 0.0f);
+            LegacyGlAdapter.translatef(0.0f, -0.3125f, -0.4375f);
             this.signModel.stick.visible = false;
         }
         this.bindTexture("/item/sign.png");
-        GL11.glPushMatrix();
-        GL11.glScalef(scale, -scale, -scale);
+        LegacyGlAdapter.pushMatrix();
+        LegacyGlAdapter.scalef(scale, -scale, -scale);
         this.signModel.render();
-        GL11.glPopMatrix();
+        LegacyGlAdapter.popMatrix();
 
         String[] messages = signTileEntity.messages;
         if (!hasMessage(signTileEntity)) {
-            GL11.glPopMatrix();
+            LegacyGlAdapter.popMatrix();
             return;
         }
 
         float textScale = 0.016666668f * scale;
-        GL11.glTranslatef(0.0f, 0.5f * scale, 0.07f * scale);
-        GL11.glScalef(textScale, -textScale, textScale);
-        GL11.glNormal3f(0.0f, 0.0f, -textScale);
-        GL11.glDepthMask(false);
+        LegacyGlAdapter.translatef(0.0f, 0.5f * scale, 0.07f * scale);
+        LegacyGlAdapter.scalef(textScale, -textScale, textScale);
+        LegacyGlAdapter.normal3f(0.0f, 0.0f, -textScale);
+        LegacyGlAdapter.depthMask(false);
 
         var state = ((ExTextRenderer) this.getFont()).createState();
         state.setColor(Rgba.BLACK);
@@ -73,8 +73,8 @@ public abstract class MixinSignRenderer extends TileEntityRenderer {
             state.drawText(string, tx, i * 10 - messages.length * 5);
         }
         state.end();
-        GL11.glDepthMask(true);
-        GL11.glPopMatrix();
+        LegacyGlAdapter.depthMask(true);
+        LegacyGlAdapter.popMatrix();
     }
 
     @Unique

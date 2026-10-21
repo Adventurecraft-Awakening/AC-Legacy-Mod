@@ -1,10 +1,9 @@
 package dev.adventurecraft.awakening.script;
 
+import dev.adventurecraft.awakening.client.render.UiDrawContext;
+
 import dev.adventurecraft.awakening.extension.client.gui.ExInGameHud;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.Tesselator;
-import net.minecraft.client.renderer.Textures;
 
 @SuppressWarnings("unused")
 public class ScriptUISprite extends UIElement implements ScriptColor {
@@ -48,33 +47,19 @@ public class ScriptUISprite extends UIElement implements ScriptColor {
     }
 
     @Override
-    public void render(Font font, Textures textures, float deltaTime) {
-        if (this.texture.startsWith("http")) {
-            textures.bind(textures.loadHttpTexture(this.texture, "./pack.png"));
-        }
-        else {
-            textures.bind(textures.loadTexture(this.texture));
-        }
-
-        double x = this.getXAtTime(deltaTime);
-        double y = this.getYAtTime(deltaTime);
-        double w = this.width;
-        double h = this.height;
-        double ru = 1.0F / this.imageWidth;
-        double rv = 1.0F / this.imageHeight;
-        Tesselator ts = Tesselator.instance;
-        ts.begin();
+    public void render(UiDrawContext context, float deltaTime) {
+        double x = this.getXAtTime(deltaTime), y = this.getYAtTime(deltaTime);
         ScriptVec4 c = this.getColor();
-        float r = (float) c.getR();
-        float g = (float) c.getG();
-        float b = (float) c.getB();
-        float a = (float) c.getA();
-        ts.color(r, g, b, a);
-        ts.vertexUV(x, y + h, 0.0D, this.u * ru, (this.v + h) * rv);
-        ts.vertexUV(x + w, y + h, 0.0D, (this.u + w) * ru, (this.v + h) * rv);
-        ts.vertexUV(x + w, y, 0.0D, (this.u + w) * ru, this.v * rv);
-        ts.vertexUV(x, y, 0.0D, this.u * ru, this.v * rv);
-        ts.end();
+        int rgba = dev.adventurecraft.awakening.image.Rgba.fromRgba8(
+            dev.adventurecraft.awakening.image.Rgba.saturateToByte(c.getR()),
+            dev.adventurecraft.awakening.image.Rgba.saturateToByte(c.getG()),
+            dev.adventurecraft.awakening.image.Rgba.saturateToByte(c.getB()),
+            dev.adventurecraft.awakening.image.Rgba.saturateToByte(c.getA()));
+        context.image(context.texture(this.texture),
+            new dev.adventurecraft.awakening.layout.Rect(x, y, this.width, this.height),
+            new dev.adventurecraft.awakening.layout.Rect(this.u / this.imageWidth, this.v / this.imageHeight,
+                this.width / this.imageWidth, this.height / this.imageHeight),
+            new dev.adventurecraft.awakening.layout.IntCorner(rgba));
     }
 
     @Override
