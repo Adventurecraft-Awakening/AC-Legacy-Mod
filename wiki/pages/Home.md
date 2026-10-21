@@ -11,6 +11,8 @@ The configured mod version is **{{MOD_VERSION}}**. The codebase currently declar
 - [[Getting Started]] — build requirements, launcher guidance, and map locations
 - [[Controls and Game Modes]] — controls verified against current input handling
 - [[Scripting]] — current script loading, globals, and security model
+- [[Shader Creation]] — a map creator’s guide to surface appearance, lighting, water, and weather
+- [[Materials]] — map material manifests, texture channels, and reload commands
 - [[Current Commands]] — generated directly from command registrations
 - [[Current Blocks]], [[Current Items]], and [[Current Entities]] — generated from current registries
 - [[Scripting API]] — generated classes, methods, fields, and deprecations

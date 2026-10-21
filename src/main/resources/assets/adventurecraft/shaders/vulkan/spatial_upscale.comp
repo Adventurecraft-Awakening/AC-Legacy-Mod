@@ -1,0 +1,3 @@
+#version 450
+#define UPSCALE_OUTPUT_FORMAT rgba16f
+#include "spatial_upscale.glsl"

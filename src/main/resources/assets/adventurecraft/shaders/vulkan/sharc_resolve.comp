@@ -1,0 +1,23 @@
+#version 460
+#include "sharc_screen.glsl"
+#define SHARC_UPDATE 0
+#define SHARC_QUERY 0
+#include "sharc_sdk.glsl"
+layout(local_size_x = 128) in;
+
+void main() {
+    SharcFrameParameters p = SharcFrameParameters(sharcPush.parameters);
+    uint offset = gl_GlobalInvocationID.x;
+    if (offset>=p.control.z) return;
+    uint index = p.control.y+offset;
+    if (index>=p.dimensions.z) return;
+    SharcParameters cache = sharcCacheParameters(true);
+    SharcResolveParameters resolve;
+    resolve.cameraPositionPrev = p.previousGridCamera.xyz;
+    resolve.accumulationFrameNum = max(p.budget.z,1u);
+    resolve.responsiveFrameNum = 1u;
+    resolve.staleFrameNumMax = max(p.budget.w,1u);
+    resolve.frameIndex = p.dimensions.w;
+    SharcResolveEntry(index,cache,resolve);
+    if (cache.hashGridData.hashEntriesBuffer.data[index]!=uint64_t(0)) sharcStatistic(3u);
+}

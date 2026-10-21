@@ -12,6 +12,7 @@ import dev.adventurecraft.awakening.client.gui.AC_ChatScreen;
 import dev.adventurecraft.awakening.client.gui.AC_InBedChatScreen;
 import dev.adventurecraft.awakening.client.options.Config;
 import dev.adventurecraft.awakening.client.input.EditorInput;
+import dev.adventurecraft.awakening.client.render.RayLighting;
 import dev.adventurecraft.awakening.client.render.shader.MapShaderSupport;
 import dev.adventurecraft.awakening.client.WikiAssetExporter;
 import dev.adventurecraft.awakening.client.render.mesh.BlockAllocator;
@@ -1121,6 +1122,7 @@ public abstract class MixinMinecraft implements ExMinecraft {
         at = @At("HEAD")
     )
     private void resetStateOnInit(Level level, String stage, Player newPlayer, CallbackInfo ci) {
+        if (this.level != null && this.level != level) RayLighting.clear(this.level);
         MapShaderSupport.unloadMap();
         ((ExInGameHud) this.gui).getScriptUI().clear();
         ScriptModel.clearAll();

@@ -56,4 +56,12 @@ public final class ChunkMesh {
         return new ChunkMesh(mesh, count, size, textureId);
     }
 
+    /** Ray-only collision geometry is retained with its chunk and never added to raster draw lists. */
+    public static ChunkMesh fromOccluders(RenderDevice device, MemoryMesh source) {
+        int count = Math.toIntExact(source.getVertexCount());
+        long size = source.getSizeInBytes();
+        VulkanRenderer.Mesh mesh = NativeRenderer.uploadOccluderQuads(source.vertexBlocks, count);
+        device.meshAllocated(size);
+        return new ChunkMesh(mesh, count, size, 0);
+    }
 }

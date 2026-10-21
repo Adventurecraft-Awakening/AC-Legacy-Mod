@@ -33,6 +33,38 @@ options.ac.detail.particleLimit=Particle Limit
 
 options.ac.chatMessageBufferLimit=Chat Buffer Limit
 options.ac.chatWidth=Chat Width
+options.ac.rayTracing=Ray Tracing
+options.ac.rayTracing.unavailable=Unavailable
+options.ac.indirectLighting=Indirect Light
+options.ac.indirectLighting.unavailable=Vertex cache
+options.ac.indirectLighting.tooltip="Vertex cache is the default indirect lighting mode.", "SHARC uses a spatial cache with multiple diffuse bounces.", "SHARC requires Ray Tracing and an SDK-enabled build.", "64/128/256 MiB is the cache capacity; screen buffers use extra memory.", "Changing capacity clears cached lighting."
+options.ac.temporalAa=Temporal AA
+options.ac.temporalAa.unavailable=Unavailable
+options.ac.temporalAa.tooltip="Smooths static world detail across frames.", "  OFF - (default) no temporal anti-aliasing", "  ON - less flicker; uses extra GPU memory", "Moving objects use fresh color to avoid trails.", "Hands and interface remain sharp.", "Works with or without Ray Tracing.", "Changes take effect immediately."
+options.ac.renderScale=Render Scale
+options.ac.renderScale.native=Native 100%
+options.ac.renderScale.unavailable=Unavailable
+options.ac.renderScale.tooltip="Renders the world at lower resolution.", "Native 100% (default) keeps full detail.", "85%, 75%, 67%, 50% reduce GPU work.", "Spatial upscaling softens world detail.", "Hands and interface stay at native size.", "Works with or without Ray Tracing.", "Changes take effect immediately."
+options.ac.inactive=Inactive
+options.ac.available=Available
+options.ac.requested=Saved preference
+options.ac.effective=Active mode
+options.ac.requiresRayTracing=Enable Ray Tracing to use this lighting option.
+options.ac.rayReconstruction=Reconstruction
+options.ac.rayReconstruction.builtin=Built-in
+options.ac.rayReconstruction.dlss=DLSS RR
+options.ac.rayReconstruction.nrd=NRD
+options.ac.rayReconstruction.tooltip="Filters noisy ray-traced lighting.", "DLSS RR also includes DLSS Super Resolution.", "Built-in, DLSS RR, and NRD have different requirements.", "Only available modes can be selected.", "Unavailable saved preferences are retained."
+options.ac.upscaler=Upscaler
+options.ac.upscaler.cubic=Cubic
+options.ac.upscaler.dlss=DLSS SR
+options.ac.upscaler.fsr=FSR
+options.ac.upscaler.tooltip="Reconstructs the world at the selected Render Scale.", "Cubic is built in; DLSS SR and FSR need runtime support.", "Hands and interface remain at native resolution.", "Only available modes can be selected."
+options.ac.frameGeneration=Frame Generation
+options.ac.frameGeneration.off=OFF
+options.ac.frameGeneration.dlss=DLSS
+options.ac.frameGeneration.fsr=FSR
+options.ac.frameGeneration.tooltip="Adds presented frames when supported.", "Does not increase the game's simulation rate.", "DLSS and FSR have separate hardware requirements.", "Only available modes can be selected."
 
 ## Texture Settings names
 options.of.texture.animated.water=Animated Water
@@ -47,11 +79,23 @@ options.of.texture.mipLevel=Mipmap Level
 options.of.texture.mipType=Mipmap Type
 options.of.texture.anisoFilter=Anisotropic Filtering
 options.of.texture.leaves=Leaves
+options.ac.parallaxMapping=Parallax Mapping
+options.ac.parallaxMapping.off=OFF
+options.ac.parallaxMapping.fast=Fast
+options.ac.parallaxMapping.fancy=Fancy
+options.ac.parallaxMapping.unavailable=Unavailable
+options.ac.parallaxMapping.tooltip="Adds apparent depth to traced terrain textures.", "Uses height in the normal companion (_n) alpha.", "  OFF - (default) unchanged texture coordinates", "  Fast - up to 8 march steps", "  Fancy - up to 16 march steps", "Requires Ray Tracing; classic colors are unchanged.", "Changes take effect immediately."
 
 ## Other Settings names
 options.of.other.fastDebugInfo=Fast Debug Info
 
 ## Extra menus
+options.ac.rayTracingSettings=Ray Tracing...
+options.ac.rayTracingSettings.title=Ray Tracing Settings
+options.ac.rayTracingSettings.lighting=Lighting
+options.ac.rayTracingSettings.image=Image Reconstruction
+options.ac.rayTracingSettings.classic=TAA and scaling also work without ray tracing.
+options.ac.rayTracingSettings.tooltip="Lighting, reconstruction, upscaling and frame generation.", "Availability follows the current graphics capabilities.", "TAA and scaling also work without Ray Tracing."
 options.of.textures=Textures...
 options.of.texturesTitle=Texture Settings
 options.of.details=Details...
@@ -68,6 +112,8 @@ options.ao.tooltip="Smooth lighting", "  OFF - no smooth lighting (faster)", "  
 options.framerateLimit.tooltip="FPS Limit", "  Max FPS - no limit (fastest)", "  Balanced - limit 120 FPS (slower)", "  Power saver - limit 40 FPS (slowest)", "  VSync - limit to monitor framerate (60, 30, 20)", "Balanced and Power saver decrease the FPS even if", "the limit value is not reached."
 options.anaglyph.tooltip="3D mode used with red-cyan 3D glasses."
 options.viewBobbing.tooltip="More realistic movement.", "When using mipmaps set it to OFF for best results."
+options.ac.rayTracing.tooltip="Ray-traced lighting, atmosphere, clouds and water.", "Rain gradually wets exposed surfaces.", "  OFF - (default) original block lighting", "  ON - advanced lighting, uses more GPU resources", "Changes take effect immediately."
+options.ac.rayTracing.unavailable.tooltip="Ray tracing is unavailable on this system.", "The GPU or driver lacks the required support.", "Original block lighting remains available."
 options.guiScale.tooltip="GUI Scale", "Smaller GUI might be faster"
 options.of.brightness.tooltip="Increases the brightness of darker objects", "  OFF - standard brightness", "  100% - maximum brightness for darker objects", "This options does not change the brightness of ", "fully black objects"
 options.of.msaa.tooltip="Multisample anti-aliasing", " OFF - (default) no anti-aliasing (faster)", " 2-16 - anti-aliased lines and edges (slower)", "The anti-aliasing smooths jagged lines and ", "sharp color transitions.", "Higher values may substantially decrease the FPS.", "Effective after a RESTART."

@@ -1,0 +1,62 @@
+#version 450
+
+layout(local_size_x = 8, local_size_y = 8) in;
+layout(set = 0, binding = 0) uniform sampler2D inputs[6];
+layout(rgba8, set = 0, binding = 1) uniform writeonly image2D outputImage;
+layout(push_constant) uniform PostSettings {
+    float hdrEffects;
+    float exposure;
+    float bloomStrength;
+    float tonemapStrength;
+} settings;
+#include "post_exposure.glsl"
+
+vec3 upsample(sampler2D image, vec2 uv) {
+    vec2 texel = 1.0 / vec2(textureSize(image, 0));
+    // Separable 3x3 tent, with additional bilinear filtering by the sampler.
+    vec3 color = textureLod(image, uv, 0.0).rgb * 4.0;
+    color += textureLod(image, uv + texel * vec2(-1, 0), 0.0).rgb * 2.0;
+    color += textureLod(image, uv + texel * vec2( 1, 0), 0.0).rgb * 2.0;
+    color += textureLod(image, uv + texel * vec2(0, -1), 0.0).rgb * 2.0;
+    color += textureLod(image, uv + texel * vec2(0,  1), 0.0).rgb * 2.0;
+    color += textureLod(image, uv + texel * vec2(-1, -1), 0.0).rgb;
+    color += textureLod(image, uv + texel * vec2( 1, -1), 0.0).rgb;
+    color += textureLod(image, uv + texel * vec2(-1,  1), 0.0).rgb;
+    color += textureLod(image, uv + texel * vec2( 1,  1), 0.0).rgb;
+    return color / 16.0;
+}
+
+vec3 acesFit(vec3 color) {
+    return clamp((color * (2.51 * color + 0.03)) / (color * (2.43 * color + 0.59) + 0.14), 0.0, 1.0);
+}
+
+vec3 encodeSrgb(vec3 color) {
+    return mix(12.92 * color, 1.055 * pow(color, vec3(1.0 / 2.4)) - 0.055,
+        greaterThan(color, vec3(0.0031308)));
+}
+
+void main() {
+    ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 size = imageSize(outputImage);
+    if (any(greaterThanEqual(pixel, size))) return;
+    // Classic world color is already in display space, including legacy vertex
+    // lighting and blending. TAA may use a float target without changing it.
+    if (settings.hdrEffects<0.5) {
+        imageStore(outputImage,pixel,texelFetch(inputs[0],pixel,0));
+        return;
+    }
+    vec2 uv = (vec2(pixel) + 0.5) / vec2(size);
+    vec4 source = textureLod(inputs[0], uv, 0.0);
+    // Constant descriptor indices avoid requiring sampled-image dynamic indexing on baseline GPUs.
+    vec3 bloom = upsample(inputs[1], uv) * 0.30;
+    bloom += upsample(inputs[2], uv) * 0.25;
+    bloom += upsample(inputs[3], uv) * 0.20;
+    bloom += upsample(inputs[4], uv) * 0.15;
+    bloom += upsample(inputs[5], uv) * 0.10;
+    vec3 radiance = max(source.rgb + bloom * settings.bloomStrength, vec3(0.0)) * postExposure(settings.exposure);
+    vec3 mapped = mix(clamp(radiance, 0.0, 1.0), acesFit(radiance), settings.tonemapStrength);
+    // Fixed spatial dither avoids temporal noise while breaking up 8-bit gradients.
+    float dither = fract(52.9829189 * fract(dot(vec2(pixel), vec2(0.06711056, 0.00583715)))) - 0.5;
+    vec3 encoded = clamp(encodeSrgb(mapped) + dither / 255.0, 0.0, 1.0);
+    imageStore(outputImage, pixel, vec4(encoded, source.a));
+}

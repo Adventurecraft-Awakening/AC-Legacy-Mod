@@ -18,12 +18,17 @@ import java.util.function.Consumer;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.glfw.GLFWVulkan.*;
 import static org.lwjgl.vulkan.EXTDebugUtils.*;
+import static org.lwjgl.vulkan.KHRAccelerationStructure.VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME;
+import static org.lwjgl.vulkan.KHRDeferredHostOperations.VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME;
 import static org.lwjgl.vulkan.KHRGetPhysicalDeviceProperties2.VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME;
 import static org.lwjgl.vulkan.KHRPortabilityEnumeration.*;
 import static org.lwjgl.vulkan.KHRPortabilitySubset.VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME;
+import static org.lwjgl.vulkan.KHRRayQuery.VK_KHR_RAY_QUERY_EXTENSION_NAME;
 import static org.lwjgl.vulkan.KHRSurface.*;
 import static org.lwjgl.vulkan.KHRSwapchain.VK_KHR_SWAPCHAIN_EXTENSION_NAME;
 import static org.lwjgl.vulkan.VK10.*;
+import static org.lwjgl.vulkan.VK11.vkGetPhysicalDeviceFeatures2;
+import static org.lwjgl.vulkan.VK11.vkGetPhysicalDeviceProperties2;
 
 /**
  * Owns a Vulkan graphics device and command pool, optionally including a GLFW presentation surface.
@@ -36,6 +41,8 @@ public final class VulkanDevice implements AutoCloseable {
     private static final System.Logger LOGGER = System.getLogger(VulkanDevice.class.getName());
     private static final String VALIDATION_LAYER = "VK_LAYER_KHRONOS_validation";
     private static final int MAX_VALIDATION_MESSAGES = 256;
+    private static final int RAY_TEXTURE_COUNT = 16;
+    private static final int RAY_DESCRIPTOR_SETS = 5;
 
     private final Set<VulkanBuffer> buffers = ConcurrentHashMap.newKeySet();
     private final List<String> validationMessages = new ArrayList<>();
@@ -56,9 +63,17 @@ public final class VulkanDevice implements AutoCloseable {
     private VulkanMemoryProfile memoryProfile;
     private VulkanImageAllocator imageAllocator;
     private int instanceApiVersion;
+    private RayTracingSupport rayTracing = RayTracingSupport.unavailable("device is not initialized");
+    private SharcSupport sharc = SharcSupport.unavailable("device is not initialized");
     private boolean validationEnabled;
     private boolean wideLines;
     private boolean independentBlend;
+    private String[] nativeEnabledExtensions = new String[0];
+    private boolean nativeStorageExtended, nativeStorageRead, nativeStorageWrite;
+    private boolean nativePartiallyBound, nativeSynchronization2, nativeDynamicRendering, nativeMaintenance4;
+    private boolean nativeBufferDeviceAddress;
+    private boolean nativePushDescriptor;
+    private int nativeApiVersion;
     private volatile boolean closed;
 
     private VulkanDevice() {
@@ -123,6 +138,10 @@ public final class VulkanDevice implements AutoCloseable {
             if (available.contains(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME)) {
                 enabled.add(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
             }
+        }
+        for (String extension : NativeRenderingBridge.instanceExtensions()) {
+            if (available.contains(extension)) enabled.add(extension);
+            else LOGGER.log(System.Logger.Level.INFO, "Optional native rendering instance extension is unavailable: {0}", extension);
         }
         return enabled;
     }
@@ -219,27 +238,273 @@ public final class VulkanDevice implements AutoCloseable {
         if (this.queueFamily != this.presentFamily) {
             queueInfo.get(1).sType$Default().queueFamilyIndex(this.presentFamily).pQueuePriorities(stack.floats(1.0F));
         }
+        var deviceInfo = VkDeviceCreateInfo.calloc(stack).sType$Default().pQueueCreateInfos(queueInfo);
+        var properties = VkPhysicalDeviceProperties.malloc(stack);
+        vkGetPhysicalDeviceProperties(this.physicalDevice, properties);
+        this.nativeApiVersion = Math.min(this.instanceApiVersion, properties.apiVersion());
+        boolean core12 = this.nativeApiVersion >= VK_MAKE_VERSION(1, 2, 0);
+        boolean core13 = this.nativeApiVersion >= VK_MAKE_VERSION(1, 3, 0);
         var supportedFeatures = VkPhysicalDeviceFeatures.malloc(stack);
         vkGetPhysicalDeviceFeatures(this.physicalDevice, supportedFeatures);
         this.wideLines = supportedFeatures.wideLines();
         this.independentBlend = supportedFeatures.independentBlend();
         var enabledFeatures = VkPhysicalDeviceFeatures.calloc(stack).wideLines(this.wideLines)
             .independentBlend(this.independentBlend);
+        deviceInfo.pEnabledFeatures(enabledFeatures);
         Set<String> availableExtensions = deviceExtensions(this.physicalDevice, stack);
-        Set<String> enabledExtensions = new LinkedHashSet<>();
-        if (this.surface != VK_NULL_HANDLE) enabledExtensions.add(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+        Set<String> baseExtensions = new LinkedHashSet<>();
+        if (this.surface != VK_NULL_HANDLE) baseExtensions.add(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
         if (availableExtensions.contains(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME)) {
-            enabledExtensions.add(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
+            baseExtensions.add(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
         }
-        var deviceInfo = VkDeviceCreateInfo.calloc(stack).sType$Default().pQueueCreateInfos(queueInfo)
-            .pEnabledFeatures(enabledFeatures).ppEnabledExtensionNames(strings(stack, enabledExtensions));
+        Set<String> nativeExtensions = new LinkedHashSet<>();
+        for (String extension : NativeRenderingBridge.deviceExtensions(this.instance.address(), this.physicalDevice.address())) {
+            if (availableExtensions.contains(extension)) nativeExtensions.add(extension);
+            else LOGGER.log(System.Logger.Level.INFO, "Optional native rendering device extension is unavailable: {0}", extension);
+        }
+        // NRI uses push descriptors on Vulkan 1.3 even on non-NVIDIA devices,
+        // where the independent NGX extension query can legitimately be empty.
+        if (availableExtensions.contains("VK_KHR_push_descriptor")) nativeExtensions.add("VK_KHR_push_descriptor");
+        boolean nativeFeatures = NativeRenderingBridge.loadFailure() == null;
+        var supported11 = VkPhysicalDeviceVulkan11Features.calloc(stack).sType$Default();
+        var supported12 = VkPhysicalDeviceVulkan12Features.calloc(stack).sType$Default();
+        var supported13 = VkPhysicalDeviceVulkan13Features.calloc(stack).sType$Default();
+        var supportedBda = VkPhysicalDeviceBufferDeviceAddressFeaturesKHR.calloc(stack).sType$Default();
+        boolean extensionBda = !core12 && this.nativeApiVersion >= VK_MAKE_VERSION(1, 1, 0)
+            && availableExtensions.contains("VK_KHR_buffer_device_address");
+        if (core12) {
+            supported11.pNext(supported12.address());
+            if (core13) supported12.pNext(supported13.address());
+            var features = VkPhysicalDeviceFeatures2.calloc(stack).sType$Default().pNext(supported11.address());
+            vkGetPhysicalDeviceFeatures2(this.physicalDevice, features);
+        } else if (extensionBda) {
+            var features = VkPhysicalDeviceFeatures2.calloc(stack).sType$Default().pNext(supportedBda.address());
+            vkGetPhysicalDeviceFeatures2(this.physicalDevice, features);
+        }
+        this.rayTracing = inspectRayTracing(availableExtensions, supportedFeatures, stack);
+        this.sharc = inspectSharc(stack);
+        var vulkan11 = VkPhysicalDeviceVulkan11Features.calloc(stack).sType$Default();
+        var vulkan12 = VkPhysicalDeviceVulkan12Features.calloc(stack).sType$Default();
+        var vulkan13 = VkPhysicalDeviceVulkan13Features.calloc(stack).sType$Default();
+        var bda = VkPhysicalDeviceBufferDeviceAddressFeaturesKHR.calloc(stack).sType$Default();
+        var rayQuery = VkPhysicalDeviceRayQueryFeaturesKHR.calloc(stack).sType$Default();
+        var acceleration = VkPhysicalDeviceAccelerationStructureFeaturesKHR.calloc(stack).sType$Default();
         var pointer = stack.mallocPointer(1);
-        check(vkCreateDevice(this.physicalDevice, deviceInfo, null, pointer), "create Vulkan graphics device");
+        Set<String> enabledExtensions = new LinkedHashSet<>();
+        int result;
+        while (true) {
+            boolean ray = this.rayTracing.available();
+            boolean cache = this.sharc.available();
+            this.nativeStorageExtended = nativeFeatures && supportedFeatures.shaderStorageImageExtendedFormats();
+            this.nativeStorageRead = nativeFeatures && supportedFeatures.shaderStorageImageReadWithoutFormat();
+            this.nativeStorageWrite = nativeFeatures && supportedFeatures.shaderStorageImageWriteWithoutFormat();
+            this.nativePartiallyBound = nativeFeatures && core12 && supported12.descriptorBindingPartiallyBound();
+            this.nativePushDescriptor = nativeFeatures && nativeExtensions.contains("VK_KHR_push_descriptor");
+            this.nativeSynchronization2 = nativeFeatures && core13 && supported13.synchronization2();
+            this.nativeDynamicRendering = nativeFeatures && core13 && supported13.dynamicRendering();
+            this.nativeMaintenance4 = nativeFeatures && core13 && supported13.maintenance4();
+            this.nativeBufferDeviceAddress = ray || nativeFeatures &&
+                (core12 && supported12.bufferDeviceAddress() || extensionBda && supportedBda.bufferDeviceAddress());
+            enabledFeatures.shaderStorageImageExtendedFormats(this.nativeStorageExtended)
+                .shaderStorageImageReadWithoutFormat(this.nativeStorageRead)
+                .shaderStorageImageWriteWithoutFormat(this.nativeStorageWrite)
+                .shaderInt64(ray || nativeFeatures && supportedFeatures.shaderInt64())
+                .shaderInt16(nativeFeatures && supportedFeatures.shaderInt16());
+            long head = 0L;
+            if (ray) {
+                rayQuery.rayQuery(true).pNext(0L);
+                acceleration.accelerationStructure(true).pNext(rayQuery.address());
+                head = acceleration.address();
+            }
+            if (core13 && nativeFeatures) {
+                vulkan13.synchronization2(this.nativeSynchronization2).dynamicRendering(this.nativeDynamicRendering)
+                    .maintenance4(this.nativeMaintenance4).pNext(head);
+                head = vulkan13.address();
+            }
+            if (core12 && (nativeFeatures || ray)) {
+                vulkan12.bufferDeviceAddress(this.nativeBufferDeviceAddress)
+                    .shaderSampledImageArrayNonUniformIndexing(ray)
+                    .descriptorBindingPartiallyBound(this.nativePartiallyBound)
+                    .shaderFloat16(cache || nativeFeatures && supported12.shaderFloat16())
+                    .shaderBufferInt64Atomics(cache)
+                    .timelineSemaphore(nativeFeatures && supported12.timelineSemaphore())
+                    .scalarBlockLayout(nativeFeatures && supported12.scalarBlockLayout()).pNext(head);
+                head = vulkan12.address();
+                boolean storage16 = cache || nativeFeatures && supported11.storageBuffer16BitAccess();
+                if (storage16) {
+                    vulkan11.storageBuffer16BitAccess(true).pNext(head);
+                    head = vulkan11.address();
+                }
+            } else if (nativeFeatures && extensionBda) {
+                bda.bufferDeviceAddress(this.nativeBufferDeviceAddress).pNext(head);
+                head = bda.address();
+            }
+            deviceInfo.pNext(head);
+            enabledExtensions.clear();
+            enabledExtensions.addAll(baseExtensions);
+            if (ray) {
+                enabledExtensions.add(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
+                enabledExtensions.add(VK_KHR_RAY_QUERY_EXTENSION_NAME);
+                enabledExtensions.add(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
+            }
+            if (nativeFeatures) {
+                enabledExtensions.addAll(nativeExtensions);
+                if (extensionBda && this.nativeBufferDeviceAddress) enabledExtensions.add("VK_KHR_buffer_device_address");
+            }
+            deviceInfo.ppEnabledExtensionNames(strings(stack, enabledExtensions));
+            result = vkCreateDevice(this.physicalDevice, deviceInfo, null, pointer);
+            if (!optionalFeaturesRejected(result)) break;
+            if (cache) {
+                this.sharc = this.sharc.unavailableWith("driver rejected optional SHARC features (VkResult " + result + ")");
+            } else if (nativeFeatures) {
+                // Preserve ray queries when a separately installed SDK's optional features are rejected.
+                nativeFeatures = false;
+                LOGGER.log(System.Logger.Level.WARNING, "Driver rejected optional native rendering features (VkResult {0}); retrying the built-in renderer", result);
+            } else if (ray) {
+                this.rayTracing = RayTracingSupport.unavailable("driver rejected optional ray-query features (VkResult " + result + ")");
+                this.sharc = this.sharc.unavailableWith("ray queries are unavailable: " + this.rayTracing.unavailableReason());
+            } else break;
+        }
+        check(result, "create Vulkan graphics device");
+        this.nativeEnabledExtensions = enabledExtensions.toArray(String[]::new);
         this.device = new VkDevice(pointer.get(0), this.physicalDevice, deviceInfo);
         vkGetDeviceQueue(this.device, this.queueFamily, 0, pointer);
         this.queue = new VkQueue(pointer.get(0), this.device);
         vkGetDeviceQueue(this.device, this.presentFamily, 0, pointer);
         this.presentQueue = new VkQueue(pointer.get(0), this.device);
+        if (this.rayTracing.available()) {
+            LOGGER.log(System.Logger.Level.INFO, "Vulkan KHR ray queries available on {0} ({1} ray textures; opt-in video setting)",
+                this.deviceName, RAY_TEXTURE_COUNT);
+        } else {
+            LOGGER.log(System.Logger.Level.INFO, "Vulkan ray queries unavailable on {0}: {1}. Using raster lighting.",
+                this.deviceName, this.rayTracing.unavailableReason());
+        }
+        if (this.sharc.available()) {
+            LOGGER.log(System.Logger.Level.INFO,
+                "Vulkan SHARC device features available on {0} (native fp16, 16-bit storage, buffer int64 atomics; subgroup {1})",
+                this.deviceName, this.sharc.subgroupSize());
+        } else LOGGER.log(System.Logger.Level.INFO, "Vulkan SHARC unavailable on {0}: {1}",
+            this.deviceName, this.sharc.unavailableReason());
+    }
+
+    private static boolean optionalFeaturesRejected(int result) {
+        return result == VK_ERROR_FEATURE_NOT_PRESENT || result == VK_ERROR_EXTENSION_NOT_PRESENT;
+    }
+
+    /** The NVIDIA SDK baseline does not use subgroup or shared-memory atomics; expose subgroup limits without requiring them. */
+    private SharcSupport inspectSharc(MemoryStack stack) {
+        if (!this.rayTracing.available()) return SharcSupport.unavailable("ray queries are unavailable: " + this.rayTracing.unavailableReason());
+        var vulkan12 = VkPhysicalDeviceVulkan12Features.calloc(stack).sType$Default();
+        var vulkan11 = VkPhysicalDeviceVulkan11Features.calloc(stack).sType$Default().pNext(vulkan12.address());
+        var features = VkPhysicalDeviceFeatures2.calloc(stack).sType$Default().pNext(vulkan11.address());
+        vkGetPhysicalDeviceFeatures2(this.physicalDevice, features);
+        var subgroup = VkPhysicalDeviceSubgroupProperties.calloc(stack).sType$Default();
+        var properties = VkPhysicalDeviceProperties2.calloc(stack).sType$Default().pNext(subgroup.address());
+        vkGetPhysicalDeviceProperties2(this.physicalDevice, properties);
+        SharcSupport support = evaluateSharcSupport(true, vulkan11.storageBuffer16BitAccess(),
+            vulkan12.shaderFloat16(), vulkan12.shaderBufferInt64Atomics(),
+            subgroup.subgroupSize(), subgroup.supportedStages(), subgroup.supportedOperations());
+        return Boolean.getBoolean("ac.vulkan.disableSharcFeatures")
+            ? support.unavailableWith("disabled by ac.vulkan.disableSharcFeatures") : support;
+    }
+
+    /** Missing SHARC features never change the independent ray-query decision. */
+    static SharcSupport evaluateSharcSupport(boolean rayQueries, boolean storageBuffer16BitAccess,
+                                            boolean shaderFloat16, boolean shaderBufferInt64Atomics,
+                                            int subgroupSize, int subgroupStages, int subgroupOperations) {
+        String reason = !rayQueries ? "ray queries are unavailable"
+            : !storageBuffer16BitAccess ? "storageBuffer16BitAccess is unsupported"
+            : !shaderFloat16 ? "shaderFloat16 is unsupported"
+            : !shaderBufferInt64Atomics ? "shaderBufferInt64Atomics is unsupported" : null;
+        return new SharcSupport(subgroupSize, subgroupStages, subgroupOperations, reason);
+    }
+
+    /** Negotiated optional SHARC device support. SDK shader availability and the selected GI quality are independent. */
+    public record SharcSupport(int subgroupSize, int subgroupStages, int subgroupOperations, String unavailableReason) {
+        static SharcSupport unavailable(String reason) { return new SharcSupport(0, 0, 0, reason); }
+        SharcSupport unavailableWith(String reason) {
+            return new SharcSupport(subgroupSize, subgroupStages, subgroupOperations, reason);
+        }
+        public boolean available() { return unavailableReason == null; }
+    }
+
+    /** The raster path remains available when any optional ray-query requirement is missing. */
+    private RayTracingSupport inspectRayTracing(Set<String> extensions, VkPhysicalDeviceFeatures coreFeatures,
+                                                MemoryStack stack) {
+        var properties = VkPhysicalDeviceProperties.malloc(stack);
+        vkGetPhysicalDeviceProperties(this.physicalDevice, properties);
+        if (Math.min(this.instanceApiVersion, properties.apiVersion()) < VK_MAKE_VERSION(1, 2, 0)) {
+            return RayTracingSupport.unavailable("Vulkan 1.2 is required");
+        }
+        var queueCount = stack.mallocInt(1);
+        vkGetPhysicalDeviceQueueFamilyProperties(this.physicalDevice, queueCount, null);
+        var queueProperties = VkQueueFamilyProperties.malloc(queueCount.get(0), stack);
+        vkGetPhysicalDeviceQueueFamilyProperties(this.physicalDevice, queueCount, queueProperties);
+        if ((queueProperties.get(this.queueFamily).queueFlags() & VK_QUEUE_COMPUTE_BIT) == 0) {
+            return RayTracingSupport.unavailable("the graphics queue cannot build acceleration structures");
+        }
+        for (String extension : List.of(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
+            VK_KHR_RAY_QUERY_EXTENSION_NAME, VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME)) {
+            if (!extensions.contains(extension)) {
+                return RayTracingSupport.unavailable("missing " + extension);
+            }
+        }
+        if (!coreFeatures.shaderInt64()) {
+            return RayTracingSupport.unavailable("shaderInt64 is unsupported");
+        }
+        var rayQuery = VkPhysicalDeviceRayQueryFeaturesKHR.calloc(stack).sType$Default();
+        var acceleration = VkPhysicalDeviceAccelerationStructureFeaturesKHR.calloc(stack)
+            .sType$Default().pNext(rayQuery.address());
+        var vulkan12 = VkPhysicalDeviceVulkan12Features.calloc(stack).sType$Default().pNext(acceleration.address());
+        var features = VkPhysicalDeviceFeatures2.calloc(stack).sType$Default().pNext(vulkan12.address());
+        vkGetPhysicalDeviceFeatures2(this.physicalDevice, features);
+        if (!acceleration.accelerationStructure()) {
+            return RayTracingSupport.unavailable("accelerationStructure is unsupported");
+        }
+        if (!rayQuery.rayQuery()) {
+            return RayTracingSupport.unavailable("rayQuery is unsupported");
+        }
+        if (!vulkan12.bufferDeviceAddress()) {
+            return RayTracingSupport.unavailable("bufferDeviceAddress is unsupported");
+        }
+        if (!vulkan12.shaderSampledImageArrayNonUniformIndexing()) {
+            return RayTracingSupport.unavailable("nonuniform sampled-image indexing is unsupported");
+        }
+        var limits = properties.limits();
+        if (limits.maxBoundDescriptorSets() < RAY_DESCRIPTOR_SETS) {
+            return RayTracingSupport.unavailable("fewer than " + RAY_DESCRIPTOR_SETS + " descriptor sets are supported");
+        }
+        if (limits.maxPerStageDescriptorStorageBuffers() < 3 || limits.maxDescriptorSetStorageBuffers() < 3) {
+            return RayTracingSupport.unavailable("fewer than three ray-scene storage buffers are supported");
+        }
+        int sampledImages = RAY_TEXTURE_COUNT + 1;
+        if (limits.maxPerStageDescriptorSamplers() < sampledImages || limits.maxPerStageDescriptorSampledImages() < sampledImages ||
+            limits.maxDescriptorSetSamplers() < sampledImages || limits.maxDescriptorSetSampledImages() < sampledImages) {
+            return RayTracingSupport.unavailable("fewer than " + sampledImages + " fragment samplers and sampled images are supported");
+        }
+        var accelerationProperties = VkPhysicalDeviceAccelerationStructurePropertiesKHR.calloc(stack).sType$Default();
+        var extendedProperties = VkPhysicalDeviceProperties2.calloc(stack)
+            .sType$Default().pNext(accelerationProperties.address());
+        vkGetPhysicalDeviceProperties2(this.physicalDevice, extendedProperties);
+        if (accelerationProperties.maxPerStageDescriptorAccelerationStructures() < 1 ||
+            accelerationProperties.maxDescriptorSetAccelerationStructures() < 1 ||
+            accelerationProperties.maxInstanceCount() < 1 || accelerationProperties.maxGeometryCount() < 1 ||
+            accelerationProperties.maxPrimitiveCount() < 1 || accelerationProperties.minAccelerationStructureScratchOffsetAlignment() < 1) {
+            return RayTracingSupport.unavailable("acceleration-structure limits are insufficient");
+        }
+        return new RayTracingSupport(accelerationProperties.minAccelerationStructureScratchOffsetAlignment(),
+            accelerationProperties.maxInstanceCount(), accelerationProperties.maxPrimitiveCount(), null);
+    }
+
+    private record RayTracingSupport(int scratchAlignment, long maxInstances, long maxPrimitives,
+                                     String unavailableReason) {
+        static RayTracingSupport unavailable(String reason) {
+            return new RayTracingSupport(1, 0, 0, reason);
+        }
+
+        boolean available() {
+            return unavailableReason == null;
+        }
     }
 
     private void createCommandPool(MemoryStack stack) {
@@ -486,14 +751,67 @@ public final class VulkanDevice implements AutoCloseable {
 
     public boolean independentBlendSupported() { return independentBlend; }
 
+    /** Actual logical-device capabilities passed to the optional native integrations. */
+    public String[] nativeEnabledExtensions() { return this.nativeEnabledExtensions.clone(); }
+    public boolean nativeStorageExtended() { return this.nativeStorageExtended; }
+    public boolean nativeStorageRead() { return this.nativeStorageRead; }
+    public boolean nativeStorageWrite() { return this.nativeStorageWrite; }
+    public boolean nativePartiallyBound() { return this.nativePartiallyBound; }
+    public boolean nativeSynchronization2() { return this.nativeSynchronization2; }
+    public boolean nativeDynamicRendering() { return this.nativeDynamicRendering; }
+    public boolean nativeMaintenance4() { return this.nativeMaintenance4; }
+    public boolean nativeBufferDeviceAddress() { return this.nativeBufferDeviceAddress; }
+    public boolean nativePushDescriptorEnabled() { return this.nativePushDescriptor; }
+    public int nativeApiVersion() { return this.nativeApiVersion; }
+
     public boolean wideLines() {
         ensureOpen();
         return this.wideLines;
     }
 
+    /** Hardware and negotiated driver features, independent of the user's rendering choice. */
+    public boolean rayTracingAvailable() {
+        ensureOpen();
+        return this.rayTracing.available();
+    }
+
+    /** Compatibility alias for device capability checks in descriptor/pipeline creation. */
+    public boolean rayTracingSupported() { return rayTracingAvailable(); }
+
+    public boolean sharcAvailable() {
+        ensureOpen();
+        return this.sharc.available();
+    }
+
+    public String sharcUnavailableReason() {
+        ensureOpen();
+        return this.sharc.unavailableReason();
+    }
+
+    public SharcSupport sharcSupport() {
+        ensureOpen();
+        return this.sharc;
+    }
+
+    /** Buffer addresses may be enabled by native reconstruction without ray-query support. */
     public boolean bufferDeviceAddressSupported() {
         ensureOpen();
-        return false;
+        return this.nativeBufferDeviceAddress || this.rayTracing.available();
+    }
+
+    public int accelerationScratchAlignment() {
+        ensureOpen();
+        return this.rayTracing.scratchAlignment();
+    }
+
+    public long maxRayInstances() {
+        ensureOpen();
+        return this.rayTracing.maxInstances();
+    }
+
+    public long maxRayPrimitives() {
+        ensureOpen();
+        return this.rayTracing.maxPrimitives();
     }
 
     public int validationErrorCount() {

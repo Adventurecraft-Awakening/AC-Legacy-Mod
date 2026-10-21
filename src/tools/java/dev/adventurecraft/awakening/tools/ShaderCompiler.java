@@ -17,7 +17,9 @@ public final class ShaderCompiler {
     public static void main(String[] args) throws IOException {
         Path root = Path.of(args[0]).toAbsolutePath().normalize();
         Path output = Path.of(args[1]);
+        Path sdk = args.length > 2 ? Path.of(args[2]).toAbsolutePath().normalize() : null;
         Files.createDirectories(output);
+        removeOptionalShaders(output);
         long compiler = Shaderc.shaderc_compiler_initialize();
         if (compiler == 0) throw new IllegalStateException("Cannot initialize shader compiler");
         long options = Shaderc.shaderc_compile_options_initialize();
@@ -30,15 +32,21 @@ public final class ShaderCompiler {
             try (var files = Files.list(root)) {
                 for (Path path : files.sorted().toList()) {
                     String name = path.getFileName().toString();
+                    if (name.startsWith("sharc_") && sdk == null) continue;
                     int kind;
                     if (name.endsWith(".vert")) kind = Shaderc.shaderc_glsl_vertex_shader;
                     else if (name.endsWith(".frag")) kind = Shaderc.shaderc_glsl_fragment_shader;
                     else if (name.endsWith(".comp")) kind = Shaderc.shaderc_glsl_compute_shader;
                     else continue;
+                    // Ray queries and physical storage buffers require SPIR-V 1.4+.
+                    // Keep the ordinary shaders usable by older raster-only devices.
                     Shaderc.shaderc_compile_options_set_target_env(options, Shaderc.shaderc_target_env_vulkan,
-                        Shaderc.shaderc_env_version_vulkan_1_0);
-                    // Free expanded native strings explicitly after compiling each shader.
-                    var source = MemoryUtil.memUTF8(expand(root, path, new HashSet<>()), false);
+                        name.startsWith("terrain_ray.") || name.startsWith("terrain_ray_hdr.") || name.startsWith("terrain_restir.")
+                            || name.equals("irradiance.comp") || name.startsWith("restir_") || name.startsWith("sharc_")
+                            ? Shaderc.shaderc_env_version_vulkan_1_2 : Shaderc.shaderc_env_version_vulkan_1_0);
+                    // Expanded SDK sources exceed LWJGL's small thread-local stack.
+                    // Use explicitly freed native strings rather than CharSequence overloads.
+                    var source = MemoryUtil.memUTF8(expand(root, sdk, path, new HashSet<>()), false);
                     var sourceName = MemoryUtil.memUTF8(name);
                     var entryPoint = MemoryUtil.memUTF8("main");
                     long result;
@@ -66,15 +74,25 @@ public final class ShaderCompiler {
                     }
                 }
             }
+        } catch (IOException | RuntimeException | Error error) {
+            removeOptionalShaders(output);
+            throw error;
         } finally {
             Shaderc.shaderc_compile_options_release(options);
             Shaderc.shaderc_compiler_release(compiler);
         }
     }
 
-    private static String expand(Path root, Path file, Set<Path> visiting) throws IOException {
+    private static void removeOptionalShaders(Path output) throws IOException {
+        try (var files = Files.list(output)) {
+            for (Path file : files.filter(path -> path.getFileName().toString().startsWith("sharc_")
+                && path.getFileName().toString().endsWith(".comp.spv")).toList()) Files.delete(file);
+        }
+    }
+
+    private static String expand(Path root, Path sdk, Path file, Set<Path> visiting) throws IOException {
         file = file.normalize();
-        if (!file.startsWith(root)) {
+        if (!file.startsWith(root) && (sdk == null || !file.startsWith(sdk))) {
             throw new IOException("Shader include escapes source directories: " + file);
         }
         if (!visiting.add(file)) throw new IOException("Recursive shader include: " + file);
@@ -84,10 +102,11 @@ public final class ShaderCompiler {
             while (matcher.find()) {
                 Path include;
                 if (matcher.group(2) != null) {
-                    throw new IOException("Unsupported external shader include: " + matcher.group(2));
+                    if (sdk == null) throw new IOException("Shader requires an external SDK: " + matcher.group(2));
+                    include = sdk.resolve(matcher.group(2));
                 } else include = file.getParent().resolve(matcher.group(1));
                 matcher.appendReplacement(expanded, java.util.regex.Matcher.quoteReplacement(
-                    expand(root, include, visiting)));
+                    expand(root, sdk, include, visiting)));
             }
             matcher.appendTail(expanded);
             return expanded.toString();

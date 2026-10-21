@@ -21,6 +21,14 @@ public class EnumInitializer implements Runnable {
         addOptionEnum(type, "PARTICLE_LIMIT", "options.ac.detail.particleLimit", true, false);
         addOptionEnum(type, "ALLOW_JAVA_IN_SCRIPT", "options.ac.world.allowJavaInScript", false, true);
         addOptionEnum(type, "CHAT_WIDTH", "options.ac.chatWidth", true, false);
+        addOptionEnum(type, "RAY_TRACING", "options.ac.rayTracing", false, true);
+        addOptionEnum(type, "INDIRECT_LIGHTING", "options.ac.indirectLighting", false, false);
+        addOptionEnum(type, "TEMPORAL_AA", "options.ac.temporalAa", false, true);
+        addOptionEnum(type, "RENDER_SCALE", "options.ac.renderScale", false, false);
+        addOptionEnum(type, "PARALLAX_MAPPING", "options.ac.parallaxMapping", false, false);
+        addOptionEnum(type, "RAY_RECONSTRUCTION", "options.ac.rayReconstruction", false, false);
+        addOptionEnum(type, "UPSCALER", "options.ac.upscaler", false, false);
+        addOptionEnum(type, "FRAME_GENERATION", "options.ac.frameGeneration", false, false);
     }
 
     private void addOptifineOptions(String type) {

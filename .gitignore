@@ -1,6 +1,7 @@
 # gradle
 
 .gradle/
+gradle-local.properties
 build/
 out/
 classes/

@@ -1,0 +1,71 @@
+#version 460
+#include "sharc_screen.glsl"
+#include "sharc_lights.glsl"
+#define SHARC_UPDATE 0
+#define SHARC_QUERY 1
+#include "sharc_sdk.glsl"
+layout(local_size_x = 8, local_size_y = 8) in;
+
+void main() {
+    ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
+    if (!sharcInBounds(pixel)) return;
+    SharcFrameParameters p = SharcFrameParameters(sharcPush.parameters);
+    uint index = sharcPixelIndex(pixel);
+    SharcScreenSurface screen = sharcScreenSurface(pixel,false);
+    vec4 result = vec4(0.0);
+    float firstHitDistance = 0.0;
+    if (screen.valid && (p.control.x&2u)!=0u) {
+        // Primary emission is excluded from incoming irradiance, so the MRT has
+        // everything needed here; material recovery is only needed by updates.
+        Surface primary = sharcRecoverSurface(screen,false);
+        SharcParameters cache = sharcCacheParameters(false);
+        uint rng = sharcHash(index+sharcHash(p.dimensions.w+0x68bc21ebu));
+        vec3 total = vec3(0.0);
+        uint cacheHits = 0u, attempts = 0u;
+        uint depth = clamp(p.budget.y,1u,4u);
+        uint sampleCount = clamp(p.quality.x,2u,8u);
+        for (uint path=0u;path<sampleCount;path++) {
+            Surface surface = primary;
+            vec3 throughput = vec3(1.0);
+            for (uint bounce=0u;bounce<depth;bounce++) {
+                uint sampleIndex = p.dimensions.w*sampleCount+path;
+                vec2 samplePoint = sharcDiffuseSample(sampleIndex,index^sharcHash(bounce+0x9e3779b9u));
+                vec3 direction = sharcScatterSample(surface,samplePoint,sharcRandom(rng));
+                if (!surfaceReceivesLight(surface,direction)) break;
+                Surface hit;
+                if (!traceScene(rayOrigin(surface.position,surface.geometricNormal,direction),direction,256.0,hit)) {
+                    if (bounce==0u) firstHitDistance += 65504.0;
+                    total += throughput*skyRadiance(direction);
+                    break;
+                }
+                if (bounce==0u) firstHitDistance += length(hit.position-primary.position);
+                vec3 cached;
+                attempts++;
+                if (sharcLookup(cache,hit,length(hit.position-surface.position),cached)) {
+                    total += throughput*max(cached,vec3(0.0));
+                    cacheHits++;
+                    break;
+                }
+                // A miss has a bounded traced reference continuation rather than
+                // a black cache hole. Primary albedo/direct light is never added.
+                total += throughput*(sharcDirectDiffuse(hit,rng)+sharcEmission(hit));
+                throughput *= sharcDiffuseAlbedo(hit);
+                if (max(max(throughput.r,throughput.g),throughput.b)<=0.00001) break;
+                surface = hit;
+            }
+        }
+        result = vec4(max(total/float(sampleCount),vec3(0.0)),1.0);
+        firstHitDistance /= float(sampleCount);
+        if (p.control.w==1u) result.rgb = HashGridDebugColoredHash(primary.position+p.cacheOriginBias.xyz,
+            primary.geometricNormal,cache.hashGridParameters);
+        else if (p.control.w==2u) {
+            float ratio = attempts>0u ? float(cacheHits)/float(attempts) : 0.0;
+            result.rgb = vec3(1.0-ratio,ratio,0.0);
+        }
+    }
+    SharcRadianceBuffer(p.rawGI).values[index] = result;
+    if (p.quality.z!=0u) {
+        uint pixels = p.dimensions.x*p.dimensions.y;
+        SharcRadianceBuffer(p.rawGI).values[index+pixels] = vec4(result.rgb,firstHitDistance);
+    }
+}

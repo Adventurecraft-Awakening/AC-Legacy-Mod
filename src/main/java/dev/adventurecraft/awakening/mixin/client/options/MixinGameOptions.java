@@ -2,6 +2,7 @@ package dev.adventurecraft.awakening.mixin.client.options;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.adventurecraft.awakening.client.render.resource.MipmapMode;
+import dev.adventurecraft.awakening.client.render.RenderSystem;
 import dev.adventurecraft.awakening.client.options.Config;
 import dev.adventurecraft.awakening.client.options.ConnectedGrassOption;
 import dev.adventurecraft.awakening.client.options.GameOptionRegistry;
@@ -99,6 +100,14 @@ public abstract class MixinGameOptions implements ExGameOptions, OptionEffects {
     @Unique public KeyMapping ofKeyBindZoom;
     @Unique public List<KeyMapping> keyBindings;
     @Unique public boolean grass3d = GameOptionRegistry.GRASS_3D.defaultValue();
+    @Unique private boolean ac$rayTracing = GameOptionRegistry.RAY_TRACING.defaultValue();
+    @Unique private int ac$indirectLighting = GameOptionRegistry.INDIRECT_LIGHTING.defaultValue();
+    @Unique private boolean ac$temporalAa = GameOptionRegistry.TEMPORAL_AA.defaultValue();
+    @Unique private int ac$renderScale = GameOptionRegistry.RENDER_SCALE.defaultValue();
+    @Unique private int ac$parallaxMapping = GameOptionRegistry.PARALLAX_MAPPING.defaultValue();
+    @Unique private int ac$rayReconstruction = GameOptionRegistry.RAY_RECONSTRUCTION.defaultValue();
+    @Unique private int ac$upscaler = GameOptionRegistry.UPSCALER.defaultValue();
+    @Unique private int ac$frameGeneration = GameOptionRegistry.FRAME_GENERATION.defaultValue();
     @Unique public int chatMessageBufferLimit = GameOptionRegistry.CHAT_MESSAGE_BUFFER_LIMIT.defaultValue();
     @Unique public int particleLimit = GameOptionRegistry.PARTICLE_LIMIT.defaultValue();
     @Unique public boolean allowJavaInScript = GameOptionRegistry.ALLOW_JAVA_IN_SCRIPT.defaultValue();
@@ -149,6 +158,14 @@ public abstract class MixinGameOptions implements ExGameOptions, OptionEffects {
                 .bind(GameOptionRegistry.AA_LEVEL, () -> this.ofAaLevel, value -> this.ofAaLevel = value)
                 .bind(GameOptionRegistry.AF_LEVEL, () -> this.ofAfLevel, value -> this.ofAfLevel = value)
                 .bind(GameOptionRegistry.GRASS_3D, () -> this.grass3d, value -> this.grass3d = value)
+                .bind(GameOptionRegistry.RAY_TRACING, this::rayTracing, value -> this.ac$rayTracing = value)
+                .bind(GameOptionRegistry.INDIRECT_LIGHTING, this::indirectLighting, value -> this.ac$indirectLighting = value)
+                .bind(GameOptionRegistry.TEMPORAL_AA, this::temporalAa, value -> this.ac$temporalAa = value)
+                .bind(GameOptionRegistry.RENDER_SCALE, this::renderScale, value -> this.ac$renderScale = value)
+                .bind(GameOptionRegistry.PARALLAX_MAPPING, this::parallaxMapping, value -> this.ac$parallaxMapping = value)
+                .bind(GameOptionRegistry.RAY_RECONSTRUCTION, this::rayReconstruction, value -> this.ac$rayReconstruction = value)
+                .bind(GameOptionRegistry.UPSCALER, this::upscaler, value -> this.ac$upscaler = value)
+                .bind(GameOptionRegistry.FRAME_GENERATION, this::frameGeneration, value -> this.ac$frameGeneration = value)
                 .bind(GameOptionRegistry.CHAT_MESSAGE_BUFFER_LIMIT, () -> this.chatMessageBufferLimit, value -> this.chatMessageBufferLimit = value)
                 .bind(GameOptionRegistry.PARTICLE_LIMIT, () -> this.particleLimit, value -> this.particleLimit = value)
                 .bind(GameOptionRegistry.ALLOW_JAVA_IN_SCRIPT, () -> this.allowJavaInScript, value -> this.allowJavaInScript = value)
@@ -265,9 +282,90 @@ public abstract class MixinGameOptions implements ExGameOptions, OptionEffects {
     public void updateOptionBrightness() {
         if (this.minecraft.level != null) {
             ((ExWorld) this.minecraft.level).loadBrightness();
-            ((ExWorldEventRenderer) this.minecraft.levelRenderer).updateAllTheRenderers();
+            if (!RenderSystem.renderer().rayTracingSupported()) {
+                ((ExWorldEventRenderer) this.minecraft.levelRenderer).updateAllTheRenderers();
+            }
         }
     }
+
+    @Override
+    public void updateOptionRayTracing(boolean enabled) {
+        if (!RenderSystem.isInitialized()) return;
+        this.ac$rayTracing = enabled && RenderSystem.rayTracingAvailable();
+        boolean changed = RenderSystem.rayTracingEnabled() != this.ac$rayTracing;
+        RenderSystem.setRayTracingEnabled(this.ac$rayTracing);
+        if (changed && this.minecraft != null && this.minecraft.level != null) {
+            this.rebuildOptionTerrain();
+        }
+    }
+
+    @Override
+    public boolean rayTracing() {
+        return this.ac$rayTracing && (!RenderSystem.isInitialized() || RenderSystem.rayTracingAvailable());
+    }
+
+    @Override
+    public void updateOptionIndirectLighting(int mode) {
+        this.ac$indirectLighting = GameOptionRegistry.INDIRECT_LIGHTING.normalize(mode);
+        RenderSystem.setIndirectLighting(this.ac$indirectLighting);
+    }
+
+    @Override
+    public int indirectLighting() { return this.ac$indirectLighting; }
+
+    @Override
+    public void updateOptionTemporalAa(boolean enabled) {
+        this.ac$temporalAa = enabled;
+        RenderSystem.setTemporalAaEnabled(enabled);
+    }
+
+    @Override
+    public boolean temporalAa() { return this.ac$temporalAa; }
+
+    @Override
+    public void updateOptionRenderScale(int mode) {
+        this.ac$renderScale = GameOptionRegistry.RENDER_SCALE.normalize(mode);
+        RenderSystem.setRenderScale(this.ac$renderScale);
+    }
+
+    @Override
+    public int renderScale() { return this.ac$renderScale; }
+
+    @Override
+    public void updateOptionParallaxMapping(int mode) {
+        this.ac$parallaxMapping = GameOptionRegistry.PARALLAX_MAPPING.normalize(mode);
+        RenderSystem.setParallaxMapping(this.ac$parallaxMapping);
+    }
+
+    @Override
+    public int parallaxMapping() { return this.ac$parallaxMapping; }
+
+    @Override
+    public void updateOptionRayReconstruction(int mode) {
+        this.ac$rayReconstruction = GameOptionRegistry.RAY_RECONSTRUCTION.normalize(mode);
+        RenderSystem.setRayReconstruction(this.ac$rayReconstruction);
+    }
+
+    @Override
+    public int rayReconstruction() { return this.ac$rayReconstruction; }
+
+    @Override
+    public void updateOptionUpscaler(int mode) {
+        this.ac$upscaler = GameOptionRegistry.UPSCALER.normalize(mode);
+        RenderSystem.setUpscaler(this.ac$upscaler);
+    }
+
+    @Override
+    public int upscaler() { return this.ac$upscaler; }
+
+    @Override
+    public void updateOptionFrameGeneration(int mode) {
+        this.ac$frameGeneration = GameOptionRegistry.FRAME_GENERATION.normalize(mode);
+        RenderSystem.setFrameGeneration(this.ac$frameGeneration);
+    }
+
+    @Override
+    public int frameGeneration() { return this.ac$frameGeneration; }
 
     @Override
     public void updateOptionWaterOpacity() {

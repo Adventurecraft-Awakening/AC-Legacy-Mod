@@ -125,22 +125,191 @@ sourceSets {
         java.setSrcDirs(["src/tools/java"])
     }
     main.resources.srcDir(layout.buildDirectory.dir("generated/shaders"))
+    main.resources.srcDir(layout.buildDirectory.dir("generated/sharc-license"))
+}
+
+// SHARC's explicit installer records its accepted SDK path in an ignored local
+// development properties file; shader compilation reads that installation.
+def localDevProperties = new Properties()
+localDevProperties.load(new StringReader(providers.fileContents(layout.projectDirectory.file("gradle-local.properties")).asText.getOrElse("")))
+def sharcSdkPath = providers.gradleProperty("sharcSdkDir").getOrElse(localDevProperties.getProperty("sharcSdkDir", "")).trim()
+def sharcSdkDirectory = sharcSdkPath.isEmpty() ? null : file(sharcSdkPath).absoluteFile
+def sharcProvenanceFile = file("third_party/sharc/provenance.json")
+def sharcProvenance = new groovy.json.JsonSlurper().parse(sharcProvenanceFile)
+def sharcSdkFiles = sharcSdkDirectory == null ? [] : sharcProvenance.sha256.keySet().collect {
+    new File(sharcSdkDirectory, it.toString())
+}
+
+// Vendor sources and runtime libraries stay in the user's cache. A remembered
+// acceptance enables automatic setup for development; ordinary checkouts retain
+// the built-in renderer without downloading or accepting a proprietary SDK.
+def nativeSdkManifestFile = file("buildSrc/src/main/resources/native-rendering-sdks.json")
+def nativeSdkManifest = new groovy.json.JsonSlurper().parse(nativeSdkManifestFile)
+def nativeArchitecture = System.getProperty("os.arch").toLowerCase(Locale.ROOT)
+def nativePlatform = (OperatingSystem.current() == OperatingSystem.LINUX ? "linux" :
+    OperatingSystem.current() == OperatingSystem.WINDOWS ? "windows" : "unsupported") +
+    (["amd64", "x86_64"].contains(nativeArchitecture) ? "-x86_64" : "-${nativeArchitecture}")
+def nativeLicenseAccepted = providers.gradleProperty("acceptNvidiaNativeLicense").map { it.toBoolean() }.getOrElse(false) ||
+    localDevProperties.getProperty("nativeRenderingLicenseAcceptance", "") == nativeSdkManifest.acceptanceId
+def nativeSdkDefault = new File(gradle.gradleUserHomeDir, "sdks/ac-native/${nativeSdkManifest.bundle}/${nativePlatform}")
+def nativeSdkPath = providers.gradleProperty("nativeRenderingSdkRoot").getOrElse(
+    localDevProperties.getProperty("nativeRenderingSdkRoot", nativeSdkDefault.absolutePath)).trim()
+def nativeSdkRoot = file(nativeSdkPath).absoluteFile
+def nativeSourceDirectory = file("native/renderer")
+def nativeBuildDirectory = layout.buildDirectory.dir("native/renderer").get().asFile
+def nativeLibrary = new File(nativeBuildDirectory,
+    OperatingSystem.current() == OperatingSystem.WINDOWS ? "ac_render_native.dll" : "libac_render_native.so")
+def nativeDevelopmentEnabled = nativeLicenseAccepted && nativeSdkManifest.platforms.contains(nativePlatform)
+
+tasks.register("installNativeRenderingSdks", InstallNativeRenderingSdks) {
+    group = "development"
+    description = "Installs pinned DLSS, NRD, FidelityFX Vulkan sources and native build dependencies outside the repository after license acceptance."
+    acceptNvidiaLicense = nativeLicenseAccepted
+    offline = gradle.startParameter.offline
+    platform = nativePlatform
+    manifestFile = nativeSdkManifestFile
+    sdkDirectory = nativeSdkRoot
+    localPropertiesFile = layout.projectDirectory.file("gradle-local.properties")
+}
+
+tasks.register("configureNativeRendering", Exec) {
+    group = "development"
+    description = "Configures the optional native rendering bridge using the installed SDK cache."
+    dependsOn(tasks.named("installNativeRenderingSdks"))
+    onlyIf { nativeDevelopmentEnabled && new File(nativeSourceDirectory, "CMakeLists.txt").isFile() }
+    inputs.file(nativeSdkManifestFile)
+    inputs.files(fileTree(nativeSourceDirectory))
+    inputs.property("nativeSdkRoot", nativeSdkRoot.absolutePath)
+    outputs.file(new File(nativeBuildDirectory, "CMakeCache.txt"))
+    commandLine("cmake", "-S", nativeSourceDirectory.absolutePath, "-B", nativeBuildDirectory.absolutePath,
+        "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Release", "-DAC_NATIVE_SDK_ROOT=${nativeSdkRoot.absolutePath}",
+        "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${nativeBuildDirectory.absolutePath}",
+        "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${nativeBuildDirectory.absolutePath}")
+}
+
+tasks.register("buildNativeRendering", Exec) {
+    group = "development"
+    description = "Builds the optional native rendering bridge for this development checkout."
+    dependsOn(tasks.named("configureNativeRendering"))
+    onlyIf { nativeDevelopmentEnabled && new File(nativeSourceDirectory, "CMakeLists.txt").isFile() }
+    inputs.file(nativeSdkManifestFile)
+    inputs.files(fileTree(nativeSourceDirectory))
+    inputs.property("nativeSdkRoot", nativeSdkRoot.absolutePath)
+    outputs.file(nativeLibrary)
+    commandLine("cmake", "--build", nativeBuildDirectory.absolutePath, "--target", "ac_render_native",
+        "--config", "Release", "--parallel", Math.min(8, Runtime.runtime.availableProcessors()).toString())
+}
+
+tasks.register("setupNativeRendering") {
+    group = "development"
+    description = "Installs accepted SDKs and builds the native rendering bridge; remembers automatic setup for later development runs."
+    dependsOn(tasks.named("buildNativeRendering"))
+}
+
+if (nativeDevelopmentEnabled) {
+    tasks.named("classes") { dependsOn(tasks.named("buildNativeRendering")) }
+    loom.runs.configureEach {
+        vmArgs("-Dac.nativeRendering.library=${nativeLibrary.absolutePath}",
+            "-Dac.nativeRendering.sdkRoot=${nativeSdkRoot.absolutePath}")
+    }
+    tasks.matching { it.name in ["runClient", "runVulkanClient", "runWikiAssetExporter"] }.configureEach {
+        dependsOn(tasks.named("buildNativeRendering"))
+    }
+}
+
+tasks.register("installSharcSdk", InstallSharcSdk) {
+    group = "development"
+    description = "Installs the pinned NVIDIA SHARC SDK outside the repository after explicit license acceptance and configures local builds."
+    acceptLicense = providers.gradleProperty("acceptSharcLicense").map { it.toBoolean() }.orElse(false)
+    provenanceFile = layout.projectDirectory.file("third_party/sharc/provenance.json")
+    sdkDirectory = new File(gradle.gradleUserHomeDir, "sdks/nvidia-sharc/${sharcProvenance.commit}")
+    localPropertiesFile = layout.projectDirectory.file("gradle-local.properties")
+}
+
+tasks.register("verifySharcSdk") {
+    group = "verification"
+    mustRunAfter(tasks.named("installSharcSdk"))
+    description = "Verifies an explicitly supplied NVIDIA SHARC SDK against the pinned source and license hashes."
+    inputs.file(sharcProvenanceFile)
+    inputs.property("sdkPath", sharcSdkDirectory?.absolutePath ?: "")
+    inputs.files(sharcSdkFiles).withPropertyName("sharcSdkFiles").withPathSensitivity(PathSensitivity.RELATIVE)
+    onlyIf { sharcSdkDirectory != null }
+    doLast {
+        sharcProvenance.sha256.each { relative, expected ->
+            def source = new File(sharcSdkDirectory, relative.toString())
+            if (!source.isFile()) {
+                throw new GradleException("Missing NVIDIA SHARC SDK file ${source}; see third_party/sharc/README.md.")
+            }
+            def actual = java.security.MessageDigest.getInstance("SHA-256").digest(source.bytes).encodeHex().toString()
+            if (actual != expected) {
+                throw new GradleException("NVIDIA SHARC SDK hash mismatch for ${relative}; expected revision ${sharcProvenance.commit}. See third_party/sharc/README.md.")
+            }
+        }
+    }
+}
+
+tasks.register("generateSharcLicense") {
+    dependsOn(tasks.named("verifySharcSdk"))
+    inputs.file(sharcProvenanceFile)
+    inputs.property("sdkPath", sharcSdkDirectory?.absolutePath ?: "")
+    if (sharcSdkDirectory != null) inputs.file(new File(sharcSdkDirectory, "License.md"))
+    def licenseOutput = layout.buildDirectory.dir("generated/sharc-license")
+    outputs.dir(licenseOutput)
+    doLast {
+        def output = licenseOutput.get().asFile
+        if (output.exists()) {
+            java.nio.file.Files.walk(output.toPath()).withCloseable { paths ->
+                paths.sorted(Comparator.reverseOrder()).forEach { path -> java.nio.file.Files.delete(path) }
+            }
+        }
+        output.mkdirs()
+        if (sharcSdkDirectory != null) {
+            def notice = new File(output, "META-INF/licenses/NVIDIA-SHARC.txt")
+            notice.parentFile.mkdirs()
+            notice.setText("""Optional NVIDIA RTX SHARC integration
+This software contains source code provided by NVIDIA Corporation.
+NVIDIA RTX is a trademark of NVIDIA Corporation.
+SHARC ${sharcProvenance.version}, revision ${sharcProvenance.commit}
+${sharcProvenance.upstream}
+The NVIDIA shader implementation is separately licensed and is not covered by AdventureCraft's MIT license.
+
+""" + new File(sharcSdkDirectory, "License.md").getText("UTF-8"), "UTF-8")
+        }
+    }
 }
 
 tasks.register("compileShaders", JavaExec) {
     dependsOn(tasks.named("shaderCompilerClasses"))
+    dependsOn(tasks.named("verifySharcSdk"))
     classpath = sourceSets.shaderCompiler.runtimeClasspath
     mainClass = "dev.adventurecraft.awakening.tools.ShaderCompiler"
     jvmArgs("--enable-native-access=ALL-UNNAMED")
     def shaderRoot = layout.projectDirectory.dir("src/main/resources/assets/adventurecraft/shaders/vulkan")
     def shaderOutput = layout.buildDirectory.dir("generated/shaders/assets/adventurecraft/shaders/vulkan")
     inputs.dir(shaderRoot)
+    inputs.file(sharcProvenanceFile)
+    inputs.property("sharcSdkPath", sharcSdkDirectory?.absolutePath ?: "")
+    inputs.files(sharcSdkFiles).withPropertyName("sharcSdkFiles").withPathSensitivity(PathSensitivity.RELATIVE)
     outputs.dir(shaderOutput)
     args(shaderRoot.asFile.absolutePath, shaderOutput.get().asFile.absolutePath)
+    if (sharcSdkDirectory != null) args(new File(sharcSdkDirectory, "include").absolutePath)
 }
 
 tasks.named("processResources") {
     dependsOn(tasks.named("compileShaders"))
+    dependsOn(tasks.named("generateSharcLicense"))
+    def resourceDestination = destinationDir
+    doFirst {
+        // Copy tasks can retain removed inputs: discard optional artifacts before copying the current build.
+        def shaderDestination = new File(resourceDestination, "assets/adventurecraft/shaders/vulkan")
+        if (shaderDestination.isDirectory()) {
+            java.nio.file.Files.list(shaderDestination.toPath()).withCloseable { paths ->
+                paths.filter { path -> path.fileName.toString().startsWith("sharc_") && path.fileName.toString().endsWith(".comp.spv") }
+                        .forEach { path -> java.nio.file.Files.delete(path) }
+            }
+        }
+        java.nio.file.Files.deleteIfExists(new File(resourceDestination, "META-INF/licenses/NVIDIA-SHARC.txt").toPath())
+    }
 }
 
 // Build-time access-widener validation remains part of normal packaging checks.
@@ -298,11 +467,13 @@ jar {
     }
     from("LICENSE-Macula")
     from("LICENSE-LWJGL3")
+    from("THIRD-PARTY-NOTICES.md")
 }
 
 tasks.named("sourcesJar") {
     dependsOn(tasks.named("compileShaders"))
-    from("LICENSE-LWJGL3")
+    dependsOn(tasks.named("generateSharcLicense"))
+    from("LICENSE-LWJGL3", "THIRD-PARTY-NOTICES.md")
 }
 
 // For information on how to set up publishing,

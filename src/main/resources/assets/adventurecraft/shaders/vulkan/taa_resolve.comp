@@ -1,0 +1,300 @@
+#version 450
+// Baseline Vulkan 1.0: no ray query, buffer address, int64, or SDK dependency.
+layout(local_size_x = 8, local_size_y = 8) in;
+layout(set = 0, binding = 0) uniform sampler2D taaImages[5];
+layout(set = 0, binding = 1, rgba16f) uniform writeonly image2D taaColor;
+layout(set = 0, binding = 2, r32f) uniform writeonly image2D taaDepth;
+layout(set = 0, binding = 3, std140) uniform TemporalParameters {
+    mat4 inverseCurrentViewProjection;
+    mat4 previousViewProjection;
+    mat4 inversePreviousViewProjection;
+    vec4 originDelta;
+    uvec4 dimensions; // width, height, history-valid, sequence
+    vec4 settings; // history weight, variance gamma, world depth tolerance, coverage/HDR flags
+    vec4 eyeOrigin;
+    vec4 jitters; // current jitter NDC XY, previous jitter NDC XY
+} temporal;
+
+vec3 temporalYCoCg(vec3 rgb) {
+    return vec3(dot(rgb,vec3(0.25,0.5,0.25)),(rgb.r-rgb.b)*0.5,
+        dot(rgb,vec3(-0.25,0.5,-0.25)));
+}
+vec3 temporalRgb(vec3 value) {
+    return vec3(value.x+value.y-value.z,value.x+value.z,value.x-value.y-value.z);
+}
+bool temporalHdr() { return (uint(temporal.settings.w+0.5)&4u)!=0u; }
+float temporalLuminance(vec3 color) { return dot(color,vec3(0.2126,0.7152,0.0722)); }
+vec3 temporalWorkingColor(vec3 color) {
+    if (any(isnan(color)) || any(isinf(color))) return vec3(0.0);
+    color = max(color,vec3(0.0));
+    // Compression only conditions HDR reconstruction/statistics. The inverse below
+    // restores scene radiance before storage; classic display colors use identity.
+    return temporalHdr() ? color/(1.0+temporalLuminance(color)) : color;
+}
+vec3 temporalOutputColor(vec3 color) {
+    color = max(color,vec3(0.0));
+    if (!temporalHdr()) return color;
+    return min(color/max(1.0-temporalLuminance(color),0.000001),vec3(65504.0));
+}
+bool temporalInBounds(ivec2 pixel) {
+    return all(greaterThanEqual(pixel,ivec2(0))) && all(lessThan(pixel,ivec2(temporal.dimensions.xy)));
+}
+// Reactive zero is static terrain, one half is atmosphere/clear background, and one is dynamic.
+int temporalCurrentClass(ivec2 pixel) {
+    float reactive = texelFetch(taaImages[2],pixel,0).r;
+    return reactive<=0.001 ? 1 : abs(reactive-0.5)<0.01 ? 2 : 0;
+}
+int temporalHistoryClass(float depth) {
+    return depth>=0.0 && depth<0.9999999 ? 1 : depth==-2.0 ? 2 : depth==-3.0 ? 3 : 0;
+}
+vec3 temporalPosition(mat4 inverseViewProjection, vec2 uv, float depth) {
+    vec4 world = inverseViewProjection*vec4(uv*2.0-1.0,depth,1.0);
+    return world.xyz/world.w;
+}
+vec3 temporalCurrentPosition(ivec2 pixel, vec3 fallback) {
+    pixel = clamp(pixel,ivec2(0),ivec2(temporal.dimensions.xy)-1);
+    vec2 uv = (vec2(pixel)+0.5)/vec2(temporal.dimensions.xy);
+    float depth = texelFetch(taaImages[1],pixel,0).r;
+    return temporalCurrentClass(pixel)==1 && depth>=0.0 && depth<0.9999999
+        ? temporalPosition(temporal.inverseCurrentViewProjection,uv,depth) : fallback;
+}
+vec3 temporalNearestDelta(vec3 first, vec3 second) {
+    float a = dot(first,first), b = dot(second,second);
+    if (a<=1e-12) return second;
+    if (b<=1e-12) return first;
+    return a<b ? first : second;
+}
+
+// A rejected history still needs current-frame reconstruction at the stable output
+// center. Otherwise reactive pixels display the raster jitter directly. Current
+// dynamic colors are allowed here, but are never retained as reusable history.
+vec3 temporalCurrentColor(vec2 uv, vec3 fallback, out bool dynamicCoverage) {
+    vec2 coordinate = (uv+temporal.jitters.xy*0.5)*vec2(temporal.dimensions.xy)-0.5;
+    ivec2 base = ivec2(floor(coordinate));
+    vec2 fraction = fract(coordinate);
+    vec3 result = vec3(0.0);
+    float total = 0.0;
+    dynamicCoverage = false;
+    for (int y=0;y<2;y++) for (int x=0;x<2;x++) {
+        float weight = (x==0 ? 1.0-fraction.x : fraction.x)*(y==0 ? 1.0-fraction.y : fraction.y);
+        if (weight<=0.000001) continue;
+        ivec2 tap = base+ivec2(x,y);
+        if (!temporalInBounds(tap)) continue;
+        dynamicCoverage = dynamicCoverage || temporalCurrentClass(tap)==0;
+        result += temporalWorkingColor(texelFetch(taaImages[0],tap,0).rgb)*weight;
+        total += weight;
+    }
+    return total>0.000001 ? result/total : fallback;
+}
+
+struct TemporalSurface {
+    vec3 previousPosition;
+    vec3 normal;
+    float footprint;
+    float tolerance;
+    bool planeValid;
+};
+TemporalSurface temporalSurface(ivec2 pixel, float depth) {
+    vec2 size = vec2(temporal.dimensions.xy);
+    vec2 uv = (vec2(pixel)+0.5)/size;
+    vec3 position = temporalPosition(temporal.inverseCurrentViewProjection,uv,depth);
+    vec3 dx = temporalNearestDelta(temporalCurrentPosition(pixel+ivec2(1,0),position)-position,
+        position-temporalCurrentPosition(pixel-ivec2(1,0),position));
+    vec3 dy = temporalNearestDelta(temporalCurrentPosition(pixel+ivec2(0,1),position)-position,
+        position-temporalCurrentPosition(pixel-ivec2(0,1),position));
+    vec3 normal = cross(dx,dy);
+    float normalLength = length(normal);
+    bool planeValid = normalLength>0.000001;
+    normal = planeValid ? normal/normalLength : vec3(0.0);
+    // Isolated cutout texels have no usable neighboring positions. Their
+    // constant-depth ray footprint still bounds correspondence in world space.
+    if (dot(dx,dx)<=1e-12) dx = temporalPosition(temporal.inverseCurrentViewProjection,uv+vec2(1.0/size.x,0),depth)-position;
+    if (dot(dy,dy)<=1e-12) dy = temporalPosition(temporal.inverseCurrentViewProjection,uv+vec2(0,1.0/size.y),depth)-position;
+    float footprint = max(length(dx),length(dy));
+    float tolerance = max(temporal.settings.z,0.0001)+footprint*0.35;
+    return TemporalSurface(position+temporal.originDelta.xyz,normal,footprint,tolerance,planeValid);
+}
+bool temporalHistoryDepthMatches(ivec2 pixel, TemporalSurface surface) {
+    float depth = texelFetch(taaImages[4],pixel,0).r;
+    if (temporalHistoryClass(depth)!=1) return false;
+    vec2 uv = (vec2(pixel)+0.5)/vec2(temporal.dimensions.xy);
+    vec3 position = temporalPosition(temporal.inversePreviousViewProjection,uv,depth);
+    vec3 delta = position-surface.previousPosition;
+    return !any(isnan(delta)) && !any(isinf(delta))
+        && (!surface.planeValid || abs(dot(delta,surface.normal))<=surface.tolerance)
+        && length(delta)<=max(surface.tolerance*2.0,surface.footprint*2.5);
+}
+
+// Ordinary opaque taps require their own geometric support. Mixed silhouette
+// colors integrate several leaf layers and sky on the stable grid, so their
+// raw jittered depths cannot identify every accumulated color contribution.
+// Their foreground support is validated as a neighborhood below instead.
+bool temporalHistoryColor(vec2 uv, int requiredClass, bool mixedCoverage,
+                          TemporalSurface surface, out vec3 color) {
+    vec2 coordinate = uv*vec2(temporal.dimensions.xy)-0.5;
+    ivec2 base = ivec2(floor(coordinate));
+    vec2 fraction = fract(coordinate);
+    color = vec3(0.0);
+    float total = 0.0;
+    for (int y=0;y<2;y++) for (int x=0;x<2;x++) {
+        float weight = (x==0 ? 1.0-fraction.x : fraction.x)*(y==0 ? 1.0-fraction.y : fraction.y);
+        if (weight<=0.000001) continue;
+        ivec2 tap = base+ivec2(x,y);
+        if (!temporalInBounds(tap)) continue;
+        int oldClass = temporalHistoryClass(texelFetch(taaImages[4],tap,0).r);
+        if (oldClass==0 || (!mixedCoverage && oldClass!=requiredClass)) continue;
+        if (oldClass==1 && !mixedCoverage && !temporalHistoryDepthMatches(tap,surface)) continue;
+        color += temporalWorkingColor(texelFetch(taaImages[3],tap,0).rgb)*weight;
+        total += weight;
+    }
+    if (total<0.15) return false;
+    color /= total;
+    return true;
+}
+
+// Dilation follows actual foreground camera motion into its one-pixel sky edge.
+// Both stationary and moving contours require actual old foreground support in
+// the jittered depth grid. A small world-distance bound rejects a newly streamed
+// nearer tree without forcing accumulated leaf coverage onto one inferred plane.
+bool temporalSilhouetteHistory(ivec2 supportPixel, vec2 uv, TemporalSurface surface, out vec2 previousUv) {
+    vec2 size = vec2(temporal.dimensions.xy);
+    vec2 supportUv = (vec2(supportPixel)+0.5)/size;
+    previousUv = uv;
+    vec4 previousClip = temporal.previousViewProjection*vec4(surface.previousPosition,1.0);
+    if (!(previousClip.w>0.000001)) return false;
+    vec3 previousNdc = previousClip.xyz/previousClip.w;
+    if (!(previousNdc.z>=0.0 && previousNdc.z<0.9999999)) return false;
+    vec2 previousSupportUv = previousNdc.xy*0.5+0.5;
+    previousUv = uv+(previousSupportUv-supportUv)+(temporal.jitters.xy-temporal.jitters.zw)*0.5;
+    ivec2 previousPixel = ivec2(floor(previousSupportUv*size));
+    float currentDepth = texelFetch(taaImages[1],supportPixel,0).r;
+    vec3 position = surface.previousPosition-temporal.originDelta.xyz;
+    vec3 dx = temporalPosition(temporal.inverseCurrentViewProjection,supportUv+vec2(1.0/size.x,0.0),currentDepth)-position;
+    vec3 dy = temporalPosition(temporal.inverseCurrentViewProjection,supportUv+vec2(0.0,1.0/size.y),currentDepth)-position;
+    float tolerance = max(temporal.settings.z,0.0001)+max(length(dx),length(dy))*1.5;
+    for (int y=-1;y<=1;y++) for (int x=-1;x<=1;x++) {
+        ivec2 candidate = previousPixel+ivec2(x,y);
+        if (!temporalInBounds(candidate)) continue;
+        float oldDepth = texelFetch(taaImages[4],candidate,0).r;
+        if (temporalHistoryClass(oldDepth)!=1) continue;
+        vec2 oldUv = (vec2(candidate)+0.5)/size;
+        vec3 oldPosition = temporalPosition(temporal.inversePreviousViewProjection,oldUv,oldDepth);
+        if (length(oldPosition-surface.previousPosition)<=tolerance) return true;
+    }
+    return false;
+}
+
+void main() {
+    ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
+    if (!temporalInBounds(pixel)) return;
+    vec2 size = vec2(temporal.dimensions.xy);
+    vec2 uv = (vec2(pixel)+0.5)/size;
+    vec4 current = texelFetch(taaImages[0],pixel,0);
+    vec3 currentWorking = temporalWorkingColor(current.rgb);
+    bool dynamicCoverage;
+    vec3 reconstructed = temporalCurrentColor(uv,currentWorking,dynamicCoverage);
+    float depth = texelFetch(taaImages[1],pixel,0).r;
+    int currentClass = temporalCurrentClass(pixel);
+    if (currentClass==1 && !(depth>=0.0 && depth<0.9999999)) currentClass = 0;
+    if (currentClass==0) {
+        imageStore(taaDepth,pixel,vec4(-1.0));
+        imageStore(taaColor,pixel,vec4(temporalOutputColor(reconstructed),current.a));
+        return;
+    }
+    uint coverageFlags = uint(temporal.settings.w+0.5);
+    bool staticCamera = (coverageFlags&1u)!=0u;
+    bool leftStaticCoverage = !staticCamera && (coverageFlags&2u)!=0u;
+    bool hasForeground = false, hasBackground = false, hasDynamic = false;
+    for (int y=-1;y<=1;y++) for (int x=-1;x<=1;x++) {
+        ivec2 neighbor = clamp(pixel+ivec2(x,y),ivec2(0),ivec2(temporal.dimensions.xy)-1);
+        int kind = temporalCurrentClass(neighbor);
+        hasForeground = hasForeground || kind==1;
+        hasBackground = hasBackground || kind==2;
+        hasDynamic = hasDynamic || kind==0;
+    }
+    bool silhouette = hasForeground && hasBackground && !hasDynamic;
+    ivec2 supportPixel = pixel;
+    float supportDepth = 1.0;
+    if (silhouette) {
+        for (int y=-1;y<=1;y++) for (int x=-1;x<=1;x++) {
+            ivec2 neighbor = clamp(pixel+ivec2(x,y),ivec2(0),ivec2(temporal.dimensions.xy)-1);
+            if (temporalCurrentClass(neighbor)!=1) continue;
+            float neighborDepth = texelFetch(taaImages[1],neighbor,0).r;
+            if (neighborDepth>=0.0 && neighborDepth<supportDepth) {
+                supportDepth = neighborDepth;
+                supportPixel = neighbor;
+            }
+        }
+        silhouette = supportDepth<0.9999999;
+    }
+    bool mixedCoverage = silhouette;
+    // Mixed sky history never feeds ordinary foreground or rotation-only sky.
+    float storedDepth = currentClass==1 ? depth : silhouette ? -3.0 : -2.0;
+    bool validHistory = temporal.dimensions.z!=0u && !dynamicCoverage;
+    TemporalSurface support = TemporalSurface(vec3(0.0),vec3(0.0),0.0,0.0,false);
+    if (validHistory && (currentClass==1 || mixedCoverage)) {
+        support = temporalSurface(mixedCoverage ? supportPixel : pixel,mixedCoverage ? supportDepth : depth);
+    }
+    vec2 previousUv = uv;
+    if (mixedCoverage) {
+        validHistory = validHistory && temporalSilhouetteHistory(supportPixel,uv,support,previousUv);
+        if (staticCamera) previousUv = uv;
+    } else if (currentClass==1) {
+        vec4 previousClip = temporal.previousViewProjection*vec4(support.previousPosition,1.0);
+        validHistory = validHistory && previousClip.w>0.000001;
+        vec3 previousNdc = previousClip.xyz/max(previousClip.w,0.000001);
+        // Depth stays in the jittered raster grid; color integrates the stable grid.
+        previousUv = previousNdc.xy*0.5+0.5+(temporal.jitters.xy-temporal.jitters.zw)*0.5;
+        validHistory = validHistory && previousNdc.z>=0.0 && previousNdc.z<=1.0;
+    } else if (currentClass==2 && !leftStaticCoverage) {
+        vec4 farPoint = temporal.inverseCurrentViewProjection*vec4(uv*2.0-1.0,1.0,1.0);
+        vec3 direction = farPoint.xyz-temporal.eyeOrigin.xyz*farPoint.w;
+        vec4 previousClip = temporal.previousViewProjection*vec4(direction,0.0);
+        validHistory = validHistory && previousClip.w>0.000001;
+        previousUv = previousClip.xy/max(previousClip.w,0.000001)*0.5+0.5
+            +(temporal.jitters.xy-temporal.jitters.zw)*0.5;
+    } else validHistory = false;
+    vec2 halfTexel = 0.5/size;
+    validHistory = validHistory && !any(isnan(previousUv)) && !any(isinf(previousUv))
+        && all(greaterThanEqual(previousUv,halfTexel)) && all(lessThanEqual(previousUv,vec2(1.0)-halfTexel));
+    vec3 oldColor;
+    if (validHistory) validHistory = temporalHistoryColor(previousUv,currentClass,mixedCoverage,support,oldColor);
+    vec3 result = reconstructed;
+    if (validHistory) {
+        vec3 sum = vec3(0.0), squares = vec3(0.0), lower = vec3(1e30), upper = vec3(-1e30);
+        for (int y=-1;y<=1;y++) for (int x=-1;x<=1;x++) {
+            ivec2 neighbor = clamp(pixel+ivec2(x,y),ivec2(0),ivec2(temporal.dimensions.xy)-1);
+            vec3 value = temporalYCoCg(temporalWorkingColor(texelFetch(taaImages[0],neighbor,0).rgb));
+            sum += value;
+            squares += value*value;
+            lower = min(lower,value);
+            upper = max(upper,value);
+        }
+        vec3 mean = sum/9.0;
+        vec3 sigma = sqrt(max(squares/9.0-mean*mean,vec3(0.0)));
+        vec3 history = temporalYCoCg(oldColor);
+        float historyLuminance = max(history.x,0.0);
+        float currentLuminance = max(mean.x,0.0);
+        float change = max(abs(historyLuminance-currentLuminance)-sigma.x,0.0)
+            /max(max(historyLuminance,currentLuminance),0.1);
+        float gamma = max(temporal.settings.y,0.1);
+        vec3 clipLower = max(lower,mean-gamma*sigma), clipUpper = min(upper,mean+gamma*sigma);
+        if (temporalHdr()) {
+            // A scalar intersection preserves the line between two valid
+            // compressed RGB colors. Independent YCoCg component clamping can
+            // leave that convex domain and create negative RGB or luminance>=1.
+            vec3 delta = history-mean;
+            float amount = 1.0;
+            for (int axis=0;axis<3;axis++) {
+                if (delta[axis]>0.000001) amount = min(amount,(clipUpper[axis]-mean[axis])/delta[axis]);
+                else if (delta[axis]<-0.000001) amount = min(amount,(clipLower[axis]-mean[axis])/delta[axis]);
+            }
+            history = mean+delta*clamp(amount,0.0,1.0);
+        } else history = clamp(history,clipLower,clipUpper);
+        float historyWeight = clamp(temporal.settings.x,0.0,0.97)
+            *mix(1.0,0.35,smoothstep(0.15,0.75,change));
+        result = mix(currentWorking,temporalRgb(history),historyWeight);
+    } else if (dynamicCoverage) storedDepth = -1.0;
+    imageStore(taaDepth,pixel,vec4(storedDepth));
+    imageStore(taaColor,pixel,vec4(temporalOutputColor(result),current.a));
+}

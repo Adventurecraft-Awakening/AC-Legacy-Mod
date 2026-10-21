@@ -1,0 +1,53 @@
+#version 450
+
+// Only 256 bins need reduction; a single invocation avoids extra scan buffers and optional features.
+layout(local_size_x = 1) in;
+layout(std430, set = 0, binding = 1) readonly buffer Histogram { uint bins[256]; } histogram;
+layout(std430, set = 0, binding = 2) readonly buffer PreviousExposure { vec4 value; } previousExposure;
+layout(std430, set = 0, binding = 3) writeonly buffer OutputExposure { vec4 value; } outputExposure;
+layout(push_constant) uniform ExposureSettings {
+    float deltaSeconds;
+    float key;
+    float minExposure;
+    float maxExposure;
+    float brightenSpeed;
+    float darkenSpeed;
+    uint useHistory;
+    uint reserved;
+} settings;
+
+bool finitePositive(float value) { return value > 0 && !isnan(value) && !isinf(value); }
+
+void main() {
+    float neutral = clamp(1.0, settings.minExposure, settings.maxExposure);
+    float preceding = neutral;
+    bool history = settings.useHistory != 0;
+    if (history && finitePositive(previousExposure.value.x)) {
+        preceding = clamp(previousExposure.value.x, settings.minExposure, settings.maxExposure);
+    }
+    uint count = 0;
+    for (int i = 0; i < 256; ++i) count += histogram.bins[i];
+    if (count == 0) {
+        // An empty, black or invalid image must not drive exposure toward its upper bound.
+        outputExposure.value = vec4(preceding, preceding, 0.0, 0.0);
+        return;
+    }
+    float lower = float(count) * 0.1;
+    float upper = float(count) * 0.9;
+    float cumulative = 0.0;
+    float logSum = 0.0;
+    for (int i = 0; i < 256; ++i) {
+        float next = cumulative + float(histogram.bins[i]);
+        float weight = max(0.0, min(next, upper) - max(cumulative, lower));
+        float logLuminance = -12.0 + (float(i) + 0.5) * (24.0 / 256.0);
+        logSum += logLuminance * weight;
+        cumulative = next;
+    }
+    float metered = exp2(logSum / max(upper - lower, 0.000001));
+    float target = clamp(settings.key / metered, settings.minExposure, settings.maxExposure);
+    float speed = target > preceding ? settings.brightenSpeed : settings.darkenSpeed;
+    float blend = 1.0 - exp(-speed * settings.deltaSeconds);
+    // Reset frames start at neutral. Adaptation resumes on the next successfully submitted frame.
+    float adapted = history ? mix(preceding, target, blend) : neutral;
+    outputExposure.value = vec4(clamp(adapted, settings.minExposure, settings.maxExposure), target, metered, 1.0);
+}

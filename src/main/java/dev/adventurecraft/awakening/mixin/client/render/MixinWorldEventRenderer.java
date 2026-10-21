@@ -140,6 +140,9 @@ public abstract class MixinWorldEventRenderer implements ExWorldEventRenderer {
         this.torchUpdates.reset();
         this.lastTorchDirtyChunks = 0;
         this.chunkBuildScheduler.reset(this.level);
+        // Explicit option/world rebuilds replace every chunk object, so there is
+        // no resident-chunk fingerprint left to report changed grass/leaves.
+        NativeRenderer.terrainGeometryChanged();
         var options = (ExGameOptions) this.mc.options;
         Tile.LEAVES.setFancy(options.isLeavesFancy());
 

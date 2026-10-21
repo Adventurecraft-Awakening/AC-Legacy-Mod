@@ -9,6 +9,8 @@ import com.mojang.brigadier.tree.CommandNode;
 import dev.adventurecraft.awakening.common.gui.AC_GuiMapEditHUD;
 import dev.adventurecraft.awakening.common.gui.AC_GuiScriptStats;
 import dev.adventurecraft.awakening.common.gui.AC_GuiTextureAtlas;
+import dev.adventurecraft.awakening.client.render.RayLighting;
+import dev.adventurecraft.awakening.client.render.material.MapMaterials;
 import dev.adventurecraft.awakening.common.gui.AC_GuiWorldConfig;
 import dev.adventurecraft.awakening.extension.client.ExMinecraft;
 import dev.adventurecraft.awakening.extension.client.render.ExWorldEventRenderer;
@@ -18,6 +20,7 @@ import dev.adventurecraft.awakening.extension.entity.player.ExPlayerEntity;
 import dev.adventurecraft.awakening.extension.world.ExWorld;
 import dev.adventurecraft.awakening.extension.world.ExWorldProperties;
 
+import java.io.File;
 import java.util.*;
 
 import dev.adventurecraft.awakening.world.GameRules;
@@ -43,6 +46,11 @@ public class ServerCommands {
         dispatcher.register(literal("scriptstats").executes(ServerCommands::cmdScriptStats));
 
         dispatcher.register(literal("textureatlas").executes(ServerCommands::cmdTextureAtlas));
+
+        dispatcher.register(literal("materials")
+            .then(literal("reload").executes(ServerCommands::cmdMaterialsReload))
+            .then(literal("defaults").executes(ServerCommands::cmdMaterialsDefaults))
+            .then(literal("save").executes(ServerCommands::cmdMaterialsSave)));
 
         dispatcher.register(literal("day").executes(descs.attach(ServerCommands::cmdDay, "Changes time to daytime")));
 
@@ -238,6 +246,51 @@ public class ServerCommands {
         var source = context.getSource();
         source.getClient().setScreen(new AC_GuiTextureAtlas());
         return Command.SINGLE_SUCCESS;
+    }
+
+    public static int cmdMaterialsReload(CommandContext<ServerCommandSource> context) {
+        var source = context.getSource();
+        var level = source.getLevel();
+        File directory = ((ExWorld) level).getLevelDir();
+        MapMaterials.load(level, directory);
+        RayLighting.clear(level);
+        ((ExWorld) level).loadMapTextures();
+        // Emission and translucent/water flags also live in retained terrain vertices.
+        source.getClient().levelRenderer.allChanged();
+        source.getClient().gui.addMessage("Reloaded map materials from " + directory);
+        return Command.SINGLE_SUCCESS;
+    }
+
+    public static int cmdMaterialsDefaults(CommandContext<ServerCommandSource> context) {
+        var source = context.getSource();
+        var level = source.getLevel();
+        File directory = ((ExWorld) level).getLevelDir();
+        boolean created = MapMaterials.createDefaults(level, directory);
+        if (created) {
+            RayLighting.clear(level);
+            ((ExWorld) level).loadMapTextures();
+            source.getClient().levelRenderer.allChanged();
+        }
+        source.getClient().gui.addMessage(created
+            ? "Created default materials in " + directory
+            : "Material set already exists (or could not be created)");
+        return created ? Command.SINGLE_SUCCESS : 0;
+    }
+
+    public static int cmdMaterialsSave(CommandContext<ServerCommandSource> context) {
+        var source = context.getSource();
+        var level = source.getLevel();
+        File directory = ((ExWorld) level).getLevelDir();
+        boolean saved = MapMaterials.save(level, directory);
+        if (saved) {
+            RayLighting.clear(level);
+            ((ExWorld) level).loadMapTextures();
+            source.getClient().levelRenderer.allChanged();
+        }
+        source.getClient().gui.addMessage(saved
+            ? "Saved map materials to " + directory
+            : "Could not save map materials");
+        return saved ? Command.SINGLE_SUCCESS : 0;
     }
 
     public static int cmdDay(CommandContext<ServerCommandSource> context) {

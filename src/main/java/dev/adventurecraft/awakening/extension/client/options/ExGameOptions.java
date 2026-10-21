@@ -111,6 +111,22 @@ public interface ExGameOptions {
 
     boolean isGrass3d();
 
+    boolean rayTracing();
+
+    int indirectLighting();
+
+    boolean temporalAa();
+
+    int renderScale();
+
+    int parallaxMapping();
+
+    int rayReconstruction();
+
+    int upscaler();
+
+    int frameGeneration();
+
     int getChatMessageBufferLimit();
 
     int getParticleLimit();

@@ -21,27 +21,48 @@ import static org.lwjgl.vulkan.VK10.*;
 final class VulkanPipelines implements AutoCloseable {
     private static final int LIGHTING_SPECIALIZATION_ID = 0;
     private static final int FOG_SPECIALIZATION_ID = 1;
+    private static final int REFLECTION_SPECIALIZATION_ID = 2;
+    private static final int WRITE_COLOR_SPECIALIZATION_ID = 3;
     private static final int LINEAR_OUTPUT_SPECIALIZATION_ID = 4;
 
     private final VulkanDevice context;
     private final long pipelineLayout;
     private final long renderPass;
     private final boolean linearOutput;
+    private final boolean reactiveOutput;
+    private final boolean restirCapture;
     private final Map<Key, Long> pipelines = new HashMap<>();
     private VulkanPipelineCache pipelineCache;
     private long vertexShader;
     private long fragmentShader;
+    private long rayVertexShader;
+    private long rayFragmentShader;
 
     VulkanPipelines(VulkanDevice context, long pipelineLayout, long renderPass, boolean linearOutput) {
+        this(context, pipelineLayout, renderPass, linearOutput, false);
+    }
+
+    VulkanPipelines(VulkanDevice context, long pipelineLayout, long renderPass, boolean linearOutput, boolean restirCapture) {
+        this(context, pipelineLayout, renderPass, linearOutput, restirCapture, linearOutput && !restirCapture);
+    }
+
+    VulkanPipelines(VulkanDevice context, long pipelineLayout, long renderPass, boolean linearOutput,
+                    boolean restirCapture, boolean reactiveOutput) {
         this.context = context;
         this.pipelineLayout = pipelineLayout;
         this.renderPass = renderPass;
         this.linearOutput = linearOutput;
+        this.reactiveOutput = reactiveOutput;
+        this.restirCapture = restirCapture;
         try {
             this.vertexShader = loadShader("terrain.vert");
-            this.fragmentShader = loadShader("terrain.frag");
+            this.fragmentShader = loadShader(reactiveOutput ? "terrain_hdr.frag" : "terrain.frag");
+            if (context.rayTracingSupported()) {
+                this.rayVertexShader = loadShader("terrain_ray.vert");
+                this.rayFragmentShader = loadShader(restirCapture ? "terrain_restir.frag" : reactiveOutput ? "terrain_ray_hdr.frag" : "terrain_ray.frag");
+            }
             this.pipelineCache = new VulkanPipelineCache(context);
-            prewarmPipelines();
+            if (!restirCapture) prewarmPipelines();
         }
         catch (RuntimeException | Error error) {
             close();
@@ -75,14 +96,22 @@ final class VulkanPipelines implements AutoCloseable {
         UNLIT(false, false),
         UNLIT_FOG(false, true),
         LIT(true, false),
-        LIT_FOG(true, true);
+        LIT_FOG(true, true),
+        RAY(false, false, true),
+        RAY_FOG(false, true, true);
 
         final boolean lighting;
         final boolean fog;
+        final boolean ray;
 
         Variant(boolean lighting, boolean fog) {
+            this(lighting, fog, false);
+        }
+
+        Variant(boolean lighting, boolean fog, boolean ray) {
             this.lighting = lighting;
             this.fog = fog;
+            this.ray = ray;
         }
 
         static Variant of(boolean lighting, boolean fog) {
@@ -91,6 +120,8 @@ final class VulkanPipelines implements AutoCloseable {
             }
             return fog ? UNLIT_FOG : UNLIT;
         }
+
+        Variant traced() { return fog ? RAY_FOG : RAY; }
     }
 
     private static int compareOp(CompareOp value) {
@@ -212,9 +243,9 @@ final class VulkanPipelines implements AutoCloseable {
     private VkPipelineShaderStageCreateInfo.Buffer shaderStages(Key key, MemoryStack stack) {
         var stages = VkPipelineShaderStageCreateInfo.calloc(2, stack);
         stages.get(0).sType$Default().stage(VK_SHADER_STAGE_VERTEX_BIT)
-            .module(this.vertexShader).pName(stack.UTF8("main"));
+            .module(key.variant.ray ? this.rayVertexShader : this.vertexShader).pName(stack.UTF8("main"));
         stages.get(1).sType$Default().stage(VK_SHADER_STAGE_FRAGMENT_BIT)
-            .module(this.fragmentShader).pName(stack.UTF8("main"));
+            .module(key.variant.ray ? this.rayFragmentShader : this.fragmentShader).pName(stack.UTF8("main"));
         var specialization = specialization(key, stack);
         stages.get(0).pSpecializationInfo(specialization);
         stages.get(1).pSpecializationInfo(specialization);
@@ -222,25 +253,35 @@ final class VulkanPipelines implements AutoCloseable {
     }
 
     private VkSpecializationInfo specialization(Key key, MemoryStack stack) {
-        var mappings = VkSpecializationMapEntry.calloc(3, stack);
+        int count = 6;
+        var mappings = VkSpecializationMapEntry.calloc(count, stack);
         mappings.get(0).constantID(LIGHTING_SPECIALIZATION_ID).offset(0).size(Integer.BYTES);
         mappings.get(1).constantID(FOG_SPECIALIZATION_ID).offset(Integer.BYTES).size(Integer.BYTES);
-        mappings.get(2).constantID(LINEAR_OUTPUT_SPECIALIZATION_ID).offset(2 * Integer.BYTES).size(Integer.BYTES);
-        var data = stack.malloc(3 * Integer.BYTES)
+        var data = stack.malloc(count * Integer.BYTES)
             .putInt(0, key.variant.lighting ? 1 : 0)
-            .putInt(Integer.BYTES, key.variant.fog ? 1 : 0)
-            .putInt(2 * Integer.BYTES, linearOutput ? 1 : 0);
+            .putInt(Integer.BYTES, key.variant.fog ? 1 : 0);
+        mappings.get(2).constantID(REFLECTION_SPECIALIZATION_ID)
+            .offset(2 * Integer.BYTES).size(Integer.BYTES);
+        data.putInt(2 * Integer.BYTES, key.blend ? 1 : 0);
+        mappings.get(3).constantID(WRITE_COLOR_SPECIALIZATION_ID)
+            .offset(3 * Integer.BYTES).size(Integer.BYTES);
+        data.putInt(3 * Integer.BYTES, key.colorMask != 0 ? 1 : 0);
+        mappings.get(4).constantID(LINEAR_OUTPUT_SPECIALIZATION_ID).offset(4 * Integer.BYTES).size(Integer.BYTES);
+        data.putInt(4 * Integer.BYTES, linearOutput ? 1 : 0);
+        mappings.get(5).constantID(5).offset(5 * Integer.BYTES).size(Integer.BYTES);
+        data.putInt(5 * Integer.BYTES, restirCapture ? 1 : 0);
         return VkSpecializationInfo.calloc(stack).pMapEntries(mappings).pData(data);
     }
 
-    private static VkPipelineVertexInputStateCreateInfo vertexInput(MemoryStack stack) {
+    private static VkPipelineVertexInputStateCreateInfo vertexInput(MemoryStack stack, boolean ray) {
         var binding = VkVertexInputBindingDescription.calloc(1, stack)
             .binding(0).stride(VertexFormat.STRIDE).inputRate(VK_VERTEX_INPUT_RATE_VERTEX);
         var attributes = VkVertexInputAttributeDescription.calloc(4, stack);
         attributes.get(0).location(0).binding(0).format(VK_FORMAT_R32G32B32_SFLOAT).offset(VertexFormat.POSITION_OFFSET);
         attributes.get(1).location(1).binding(0).format(VK_FORMAT_R32G32_SFLOAT).offset(VertexFormat.UV_OFFSET);
         attributes.get(2).location(2).binding(0).format(VK_FORMAT_R8G8B8A8_UNORM).offset(VertexFormat.COLOR_OFFSET);
-        attributes.get(3).location(3).binding(0).format(VK_FORMAT_R8G8B8A8_SNORM).offset(VertexFormat.NORMAL_OFFSET);
+        if (ray) attributes.get(3).location(4).binding(0).format(VK_FORMAT_R32_UINT).offset(VertexFormat.MATERIAL_OFFSET);
+        else attributes.get(3).location(3).binding(0).format(VK_FORMAT_R8G8B8A8_SNORM).offset(VertexFormat.NORMAL_OFFSET);
         return VkPipelineVertexInputStateCreateInfo.calloc(stack)
             .sType$Default().pVertexBindingDescriptions(binding).pVertexAttributeDescriptions(attributes);
     }
@@ -248,7 +289,7 @@ final class VulkanPipelines implements AutoCloseable {
     private long createPipeline(Key key) {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             var stages = shaderStages(key, stack);
-            var vertex = vertexInput(stack);
+            var vertex = vertexInput(stack, key.variant.ray);
             var assembly = VkPipelineInputAssemblyStateCreateInfo.calloc(stack)
                 .sType$Default().topology(key.topology);
             var viewport = VkPipelineViewportStateCreateInfo.calloc(stack)
@@ -261,14 +302,23 @@ final class VulkanPipelines implements AutoCloseable {
             var depthState = VkPipelineDepthStencilStateCreateInfo.calloc(stack)
                 .sType$Default().depthTestEnable(key.depthTest).depthWriteEnable(key.depthWrite)
                 .depthCompareOp(key.depthFunc).minDepthBounds(0).maxDepthBounds(1);
-            var blendAttachment = VkPipelineColorBlendAttachmentState.calloc(1, stack);
+            var blendAttachment = VkPipelineColorBlendAttachmentState.calloc(restirCapture ? 4 : reactiveOutput ? 2 : 1, stack);
             for (int i = 0; i < blendAttachment.capacity(); i++) blendAttachment.get(i)
-                .blendEnable(key.blend)
+                .blendEnable(!restirCapture && key.blend)
                 .srcColorBlendFactor(key.blendSrc).dstColorBlendFactor(key.blendDst)
                 .colorBlendOp(VK_BLEND_OP_ADD)
                 .srcAlphaBlendFactor(key.blendSrc).dstAlphaBlendFactor(key.blendDst)
                 .alphaBlendOp(VK_BLEND_OP_ADD)
-                .colorWriteMask(key.colorMask);
+                .colorWriteMask(restirCapture ? ColorMask.RGBA.bits() : key.colorMask);
+            // Opaque geometry replaces the sky mask; translucent geometry preserves reactive coverage.
+            if (reactiveOutput && context.independentBlendSupported()) {
+                blendAttachment.get(1).blendEnable(key.blend)
+                    .srcColorBlendFactor(VK_BLEND_FACTOR_ONE).dstColorBlendFactor(VK_BLEND_FACTOR_ONE)
+                    .colorBlendOp(VK_BLEND_OP_MAX)
+                    .srcAlphaBlendFactor(VK_BLEND_FACTOR_ONE).dstAlphaBlendFactor(VK_BLEND_FACTOR_ONE)
+                    .alphaBlendOp(VK_BLEND_OP_MAX)
+                    .colorWriteMask(key.colorMask == 0 ? 0 : ColorMask.RGBA.bits());
+            }
             var blendState = VkPipelineColorBlendStateCreateInfo.calloc(stack)
                 .sType$Default().pAttachments(blendAttachment);
             var dynamic = VkPipelineDynamicStateCreateInfo.calloc(stack)
@@ -306,6 +356,10 @@ final class VulkanPipelines implements AutoCloseable {
         }
         this.vertexShader = VK_NULL_HANDLE;
         this.fragmentShader = VK_NULL_HANDLE;
+        if (this.rayVertexShader != VK_NULL_HANDLE) vkDestroyShaderModule(this.context.device(), this.rayVertexShader, null);
+        if (this.rayFragmentShader != VK_NULL_HANDLE) vkDestroyShaderModule(this.context.device(), this.rayFragmentShader, null);
+        this.rayVertexShader = VK_NULL_HANDLE;
+        this.rayFragmentShader = VK_NULL_HANDLE;
         if (this.pipelineCache != null) {
             this.pipelineCache.close();
             this.pipelineCache = null;

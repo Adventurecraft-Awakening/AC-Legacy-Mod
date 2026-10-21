@@ -1,0 +1,48 @@
+#version 460
+#include "sharc_screen.glsl"
+#include "sharc_lights.glsl"
+#define SHARC_UPDATE 1
+#define SHARC_QUERY 0
+#include "sharc_sdk.glsl"
+layout(local_size_x = 8, local_size_y = 8) in;
+
+void main() {
+    SharcFrameParameters p = SharcFrameParameters(sharcPush.parameters);
+    uint downscale = max(p.budget.x,1u);
+    uvec2 block = gl_GlobalInvocationID.xy;
+    uint rng = sharcHash(block.x+block.y*((p.dimensions.x+downscale-1u)/downscale)
+        +sharcHash(p.dimensions.w+0x9e3779b9u));
+    uvec2 jitter = uvec2(sharcRandom(rng)*float(downscale),sharcRandom(rng)*float(downscale));
+    ivec2 pixel = ivec2(block*downscale+jitter);
+    if (!sharcInBounds(pixel)) return;
+    SharcScreenSurface screen = sharcScreenSurface(pixel,false);
+    if (!screen.valid) return;
+    Surface surface = sharcRecoverSurface(screen,true);
+    SharcParameters cache = sharcCacheParameters(true);
+    SharcState state;
+    SharcInit(state);
+    sharcStatistic(2u);
+    uint depth = clamp(p.budget.y,1u,4u);
+    for (uint bounce=0u;bounce<depth;bounce++) {
+        if (!SharcUpdateHit(cache,state,sharcHit(surface),sharcDirectDiffuse(surface,rng),sharcRandom(rng))) break;
+        if (bounce+1u>=depth) break;
+        vec3 throughput = sharcDiffuseAlbedo(surface);
+        float survival = clamp(max(max(throughput.r,throughput.g),throughput.b),0.05,0.95);
+        if (bounce>0u) {
+            if (sharcRandom(rng)>=survival) break;
+            throughput /= survival;
+        }
+        if (max(max(throughput.r,throughput.g),throughput.b)<=0.00001) break;
+        SharcSetThroughput(state,throughput);
+        vec3 direction = sharcScatter(surface,rng);
+        // Shading-normal samples below an opaque geometric face have zero
+        // support. Moving the ray origin behind that face would leak light.
+        if (!surfaceReceivesLight(surface,direction)) break;
+        Surface next;
+        if (!traceScene(rayOrigin(surface.position,surface.geometricNormal,direction),direction,256.0,next)) {
+            SharcUpdateMiss(cache,state,skyRadiance(direction));
+            break;
+        }
+        surface = next;
+    }
+}

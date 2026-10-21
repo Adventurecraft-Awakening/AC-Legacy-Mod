@@ -1,6 +1,8 @@
 package dev.adventurecraft.awakening.client.render.chunk;
 
 import dev.adventurecraft.awakening.ACMod;
+import dev.adventurecraft.awakening.client.render.RenderSystem;
+import dev.adventurecraft.awakening.client.render.VertexFormat;
 import dev.adventurecraft.awakening.client.render.block.BlockMesher;
 import dev.adventurecraft.awakening.client.render.block.BlockMeshing;
 import dev.adventurecraft.awakening.client.render.mesh.BlockAllocator;
@@ -9,6 +11,7 @@ import dev.adventurecraft.awakening.collections.IdentityHashSet;
 import dev.adventurecraft.awakening.common.AoHelper;
 import dev.adventurecraft.awakening.common.Coord;
 import dev.adventurecraft.awakening.extension.block.ExBlock;
+import dev.adventurecraft.awakening.tile.AC_BlockClip;
 import dev.adventurecraft.awakening.util.Xoshiro128PP;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.tile.Tile;
@@ -19,6 +22,18 @@ import java.util.Arrays;
 import java.util.Set;
 
 public final class ChunkBuilder {
+
+    private static final int[][] OCCLUDER_NORMALS = {
+        {-1, 0, 0}, {1, 0, 0}, {0, -1, 0}, {0, 1, 0}, {0, 0, -1}, {0, 0, 1}
+    };
+    private static final int[][] OCCLUDER_CORNERS = {
+        {0,0,0, 0,0,1, 0,1,1, 0,1,0},
+        {1,0,1, 1,0,0, 1,1,0, 1,1,1},
+        {0,0,1, 0,0,0, 1,0,0, 1,0,1},
+        {0,1,0, 0,1,1, 1,1,1, 1,1,0},
+        {1,0,0, 0,0,0, 0,1,0, 1,1,0},
+        {0,0,1, 1,0,1, 1,1,1, 0,1,1}
+    };
 
     public static final Coord CHUNK_SIZE = new Coord(16);
     public static final Coord PADDING = new Coord(2);
@@ -39,6 +54,8 @@ public final class ChunkBuilder {
     private int blockRecipes;
 
     public final MemoryTesselator[] vertices = new MemoryTesselator[this.renderers.length];
+    public final MemoryTesselator occluders = MemoryTesselator.create();
+    public boolean captureOccluders;
 
     private final StringBuilder traceBuilder = new StringBuilder();
     private @Nullable BuildTarget target;
@@ -80,6 +97,15 @@ public final class ChunkBuilder {
             // Recipes retain their original per-position seeds; only recipe-state allocation is lazy.
             this.recipeRandoms[i] = new Xoshiro128PP();
         }
+        // Capture native renderer state here; workers only read the immutable region and this flag.
+        this.captureOccluders = RenderSystem.isInitialized() && RenderSystem.renderer().rayTracingSupported();
+        this.occluders.setAllocator(allocator);
+        this.occluders.begin();
+        this.occluders.offset(0, 0, 0);
+        this.occluders.ac$color8(-1);
+        this.occluders.ac$material(VertexFormat.SOLID_OCCLUDER);
+        this.occluders.ac$skyLight(0);
+        this.occluders.ac$surfaceFlags(0);
     }
 
     /** Worker-only geometry generation from this builder's captured inputs. */
@@ -91,6 +117,7 @@ public final class ChunkBuilder {
             if (this.isCancelled()) return;
             int blockId = region.getTileAt(index);
             Tile tile = region.tile(blockId);
+            if (tile instanceof AC_BlockClip) this.clipOccluder(position.x(), position.y(), position.z());
             int texture = ((ExBlock) tile).getTextureNum();
             int layer = region.renderLayer(blockId);
             int meshIndex = layer * ChunkMesh.MAX_TEXTURES + texture;
@@ -118,6 +145,21 @@ public final class ChunkBuilder {
 
     public record MeshingStatistics(int blockRecipes, int mesherCreations) { }
 
+    /** Clip collision volumes block lighting even when their editor texture is hidden. */
+    public void clipOccluder(int x, int y, int z) {
+        if (!this.captureOccluders) return;
+        for (int face = 0; face < OCCLUDER_NORMALS.length; face++) {
+            int[] normal = OCCLUDER_NORMALS[face];
+            Tile adjacent = this.region.tile(this.region.getTile(x + normal[0], y + normal[1], z + normal[2]));
+            if (adjacent instanceof AC_BlockClip) continue;
+            this.occluders.normal(normal[0], normal[1], normal[2]);
+            int[] corners = OCCLUDER_CORNERS[face];
+            for (int corner = 0; corner < corners.length; corner += 3) {
+                this.occluders.ac$vertexUV(x + corners[corner], y + corners[corner + 1], z + corners[corner + 2], 0, 0);
+            }
+        }
+    }
+
     public void captureTarget(Level level, int x, int y, int z, int width, int height, int depth, long generation) {
         this.cancelled = false;
         this.target = new BuildTarget(level, x, y, z, new Coord(width, height, depth), generation);
@@ -139,7 +181,7 @@ public final class ChunkBuilder {
     public boolean isCancelled() { return this.cancelled; }
 
     public long sizeInBytes() {
-        long bytes = 0;
+        long bytes = this.occluders.sizeInBytes();
         for (MemoryTesselator tesselator : this.vertices) bytes += tesselator.sizeInBytes();
         return bytes;
     }
@@ -152,6 +194,9 @@ public final class ChunkBuilder {
             }
             tesselator.clear();
         }
+        if (this.occluders.tesselating) this.occluders.end();
+        this.occluders.clear();
+        this.captureOccluders = false;
         this.region.clear();
         Arrays.fill(this.renderers, null);
         Arrays.fill(this.recipeRandoms, null);

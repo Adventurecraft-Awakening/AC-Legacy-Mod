@@ -1,6 +1,8 @@
 package dev.adventurecraft.awakening.client.render.chunk;
 
 import dev.adventurecraft.awakening.collections.BitArray;
+import dev.adventurecraft.awakening.client.render.RayLighting;
+import dev.adventurecraft.awakening.client.render.RenderSystem;
 import dev.adventurecraft.awakening.client.options.ConnectedGrassOption;
 import dev.adventurecraft.awakening.client.render.material.MapMaterialSet;
 import dev.adventurecraft.awakening.client.render.material.MapMaterials;
@@ -65,6 +67,7 @@ public final class LevelRegion implements AC_LevelSource, LevelSource {
     private final BitArray solidTileBitSet;
     private final BitArray occupiedTileBitSet;
     private final BitArray activatedTileBitSet;
+    private final BitArray rainExposedTileBitSet;
     private final CapturedTileProperties tileProperties = new CapturedTileProperties();
     private final TerrainLightCache lightCache;
     private int occupiedCells;
@@ -94,6 +97,7 @@ public final class LevelRegion implements AC_LevelSource, LevelSource {
         this.solidTileBitSet = new BitArray(volume);
         this.occupiedTileBitSet = new BitArray(volume);
         this.activatedTileBitSet = new BitArray(volume);
+        this.rainExposedTileBitSet = new BitArray(volume);
 
         this.brightnessRamp = new float[16];
         this.lightCache = new TerrainLightCache(volume, size.z * size.y, size.y, new TerrainLightCache.Samples() {
@@ -185,6 +189,8 @@ public final class LevelRegion implements AC_LevelSource, LevelSource {
         this.materials = MapMaterials.snapshot();
         this.torchActive = AC_PlayerTorch.isTorchActive();
         this.connectedGrass = ((ExGameOptions) Minecraft.instance.options).ofConnectedGrass();
+        this.rainExposedTileBitSet.clear();
+        boolean captureRain = RenderSystem.isInitialized() && RenderSystem.renderer().rayTracingSupported();
         var readBox = IntBox.fromBox(origin, this.size);
 
         forEachSectionSlice(
@@ -209,6 +215,19 @@ public final class LevelRegion implements AC_LevelSource, LevelSource {
 
                         blockBuffer.position(index);
                         chunk.getTileColumn(blockBuffer, x, y0, z, y1);
+
+                        // Rain reach is captured against the entire live column, once per
+                        // column, rather than guessed from the worker's padded region.
+                        int worldX = (cX << 4) + x;
+                        int worldZ = (cZ << 4) + z;
+                        boolean receivesRain = captureRain && ((ExWorld) level)
+                            .getTemperatureValue(worldX, worldZ) >= 0.5;
+                        if (receivesRain) {
+                            int rainSurface = level.getTopSolidBlock(worldX, worldZ) - 1;
+                            for (int iy = 0; iy < y1 - y0; iy++) {
+                                if (y0 + iy >= rainSurface) this.rainExposedTileBitSet.set(index + iy);
+                            }
+                        }
                     }
                 }
 
@@ -236,7 +255,7 @@ public final class LevelRegion implements AC_LevelSource, LevelSource {
             if (tile instanceof AC_BlockLockedDoor door) {
                 this.dataBuffer.put(index, door.getConnectedData(level, x, y, z));
             }
-            this.emissionBuffer.put(index, (byte) (tile == null ? 0 : MapMaterials.vertexEmission(level, tile, x, y, z)));
+            this.emissionBuffer.put(index, (byte) (tile == null ? 0 : RayLighting.vertexEmission(level, tile, x, y, z)));
             int renderShape = tile == null ? BlockShapes.NONE : ((ExBlock) tile).getRenderShape(level, x, y, z);
             this.renderShapeBuffer.put(index, (byte) renderShape);
             // Evaluate biome/image-dependent color hooks once while the world is owned here.
@@ -350,6 +369,9 @@ public final class LevelRegion implements AC_LevelSource, LevelSource {
 
     public boolean isActivated(int x,int y,int z) { return this.activatedTileBitSet.get(this.makeIndex(x,y,z)); }
 
+    public boolean rainExposed(int x, int y, int z) {
+        return this.rainExposedTileBitSet.get(this.makeIndex(x, y, z));
+    }
 
     public void setupCaches() {
         this.solidTileBitSet.clear();

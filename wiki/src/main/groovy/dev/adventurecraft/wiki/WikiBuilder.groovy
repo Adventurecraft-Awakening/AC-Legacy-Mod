@@ -37,6 +37,8 @@ class WikiBuilder {
         test: ['/test', 'Opens the map-editing HUD.', 'This is an internal/test-facing command in the current registry.'],
         scriptstats: ['/scriptstats', 'Opens the per-script timing statistics screen.', 'World required.'],
         textureatlas: ['/textureatlas', 'Opens the texture-atlas inspection screen.', 'Client-side inspection command.'],
+        materials: ['/materials defaults|reload|save', "Creates, reloads, or saves the current map's material and texture set.",
+            '`defaults` creates a missing `materials.json`, albedo copies and companion templates; it refuses to replace an existing manifest. `reload` reads edited material and texture files. `save` reloads and writes the resolved manifest and fills missing companion images. Existing images are retained. World required. See [[Materials]].'],
         day: ['/day', "Sets the current world's time of day to 0.", 'The value is source-derived, not inherited from historical documentation.'],
         night: ['/night', "Sets the current world's time of day to 14000.", 'Historical Fandom documentation stated 12000; that is not the current implementation.'],
         removemobs: ['/removemobs', 'Removes every loaded Mob except the player and reports the count.', 'Already-removed entities are counted separately from newly removed entities.'],
@@ -511,6 +513,8 @@ class WikiBuilder {
 * [[Getting Started]]
 * [[Controls and Game Modes]]
 * [[Scripting]]
+* [[Shader Creation]]
+* [[Materials]]
 * [[Glossary]]
 
 **Generated reference**

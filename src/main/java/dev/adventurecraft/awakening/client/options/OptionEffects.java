@@ -9,6 +9,22 @@ public interface OptionEffects {
 
     void updateOptionBrightness();
 
+    void updateOptionRayTracing(boolean enabled);
+
+    void updateOptionIndirectLighting(int mode);
+
+    void updateOptionTemporalAa(boolean enabled);
+
+    void updateOptionRenderScale(int mode);
+
+    void updateOptionParallaxMapping(int mode);
+
+    void updateOptionRayReconstruction(int mode);
+
+    void updateOptionUpscaler(int mode);
+
+    void updateOptionFrameGeneration(int mode);
+
     void updateOptionWaterOpacity();
 
     void updateOptionAmbientOcclusion(boolean enabled, boolean rebuildTerrain);

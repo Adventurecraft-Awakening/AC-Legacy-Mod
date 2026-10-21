@@ -1,0 +1,49 @@
+#version 450
+
+layout(local_size_x = 8, local_size_y = 8) in;
+layout(set = 0, binding = 0) uniform sampler2D inputs[6];
+layout(rgba16f, set = 0, binding = 1) uniform writeonly image2D outputImage;
+layout(push_constant) uniform PostSettings {
+    float extractBloom;
+    float exposure;
+    float bloomStrength;
+    float tonemapStrength;
+} settings;
+#include "post_exposure.glsl"
+
+vec3 sampleRadiance(vec2 uv) {
+    vec3 color = max(textureLod(inputs[0], uv, 0.0).rgb, vec3(0.0));
+    if (settings.extractBloom > 0.5) {
+        // Threshold in exposed units, while preserving scene-linear radiance in the pyramid.
+        float brightness = max(color.r, max(color.g, color.b)) * postExposure(settings.exposure);
+        const float threshold = 1.0;
+        const float knee = 0.5;
+        float soft = clamp(brightness - threshold + knee, 0.0, 2.0 * knee);
+        soft = soft * soft / (4.0 * knee);
+        color *= max(brightness - threshold, soft) / max(brightness, 1e-5);
+    }
+    return color;
+}
+
+void main() {
+    ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 size = imageSize(outputImage);
+    if (any(greaterThanEqual(pixel, size))) return;
+    vec2 uv = (vec2(pixel) + 0.5) / vec2(size);
+    vec2 texel = 1.0 / vec2(textureSize(inputs[0], 0));
+    // A normalized 13-tap low-pass filter reduces bright-pixel shimmer during downsampling.
+    vec3 color = sampleRadiance(uv) * 0.125;
+    color += sampleRadiance(uv + texel * vec2(-2, -2)) * 0.03125;
+    color += sampleRadiance(uv + texel * vec2( 2, -2)) * 0.03125;
+    color += sampleRadiance(uv + texel * vec2(-2,  2)) * 0.03125;
+    color += sampleRadiance(uv + texel * vec2( 2,  2)) * 0.03125;
+    color += sampleRadiance(uv + texel * vec2( 0, -2)) * 0.0625;
+    color += sampleRadiance(uv + texel * vec2(-2,  0)) * 0.0625;
+    color += sampleRadiance(uv + texel * vec2( 2,  0)) * 0.0625;
+    color += sampleRadiance(uv + texel * vec2( 0,  2)) * 0.0625;
+    color += sampleRadiance(uv + texel * vec2(-1, -1)) * 0.125;
+    color += sampleRadiance(uv + texel * vec2( 1, -1)) * 0.125;
+    color += sampleRadiance(uv + texel * vec2(-1,  1)) * 0.125;
+    color += sampleRadiance(uv + texel * vec2( 1,  1)) * 0.125;
+    imageStore(outputImage, pixel, vec4(color, 1.0));
+}

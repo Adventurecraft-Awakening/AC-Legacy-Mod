@@ -82,7 +82,22 @@ final class VulkanFrameTargets implements AutoCloseable {
         copyAttachment(command, result, world);
     }
 
-
+    /** Depth remains native-sized for later draws, retained attachments and screenshot readback. */
+    void upscaleDepthFrom(VkCommandBuffer command, VulkanFrameTargets source) {
+        try (var stack = MemoryStack.stackPush()) {
+            VulkanImage.barrier(command, depth, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                VK_ACCESS_TRANSFER_READ_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+            var blit = VkImageBlit.calloc(1, stack);
+            blit.srcSubresource().aspectMask(VK_IMAGE_ASPECT_DEPTH_BIT).layerCount(1);
+            blit.srcOffsets(1).set(source.width, source.height, 1);
+            blit.dstSubresource().aspectMask(VK_IMAGE_ASPECT_DEPTH_BIT).layerCount(1);
+            blit.dstOffsets(1).set(width, height, 1);
+            vkCmdBlitImage(command, source.depth.handle, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                depth.handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, blit, VK_FILTER_NEAREST);
+            VulkanImage.barrier(command, depth, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+        }
+    }
 
     private void copyAttachment(VkCommandBuffer command, VulkanImage source, VulkanImage target) {
         try (var stack = MemoryStack.stackPush()) {

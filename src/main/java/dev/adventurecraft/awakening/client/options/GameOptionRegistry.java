@@ -1,6 +1,7 @@
 package dev.adventurecraft.awakening.client.options;
 
 import dev.adventurecraft.awakening.util.MathF;
+import dev.adventurecraft.awakening.client.render.NativeRenderingOptions;
 import net.minecraft.client.Option;
 import net.minecraft.locale.I18n;
 
@@ -127,6 +128,82 @@ public final class GameOptionRegistry {
     public static final OptionDefinition<Boolean> GRASS_3D = define(
         toggle("grass3d", true, () -> OptionOF.GRASS_3D)
             .label(GameOptionRegistry::localizedBoolean).effect(terrainEffect()));
+    public static final OptionDefinition<Boolean> RAY_TRACING = define(
+        toggle("acRayTracing", false, () -> OptionOF.RAY_TRACING)
+            .label(GameOptionRegistry::localizedBoolean)
+            .effect((effects, value, source) -> {
+                if (source == INTERACTION) effects.updateOptionRayTracing(value);
+            }));
+    public static final OptionDefinition<Integer> INDIRECT_LIGHTING = define(
+        integer("acIndirectLighting", 0, 0, 3).option(() -> OptionOF.INDIRECT_LIGHTING)
+            .cycle(value -> (value + 1) % 4)
+            .label(value -> value == 0 ? "Vertex cache" : "SHARC " + (64 << (value - 1)) + "MiB")
+            .effect((effects, value, source) -> {
+                if (source == INTERACTION) effects.updateOptionIndirectLighting(value);
+            }));
+    public static final OptionDefinition<Boolean> TEMPORAL_AA = define(
+        toggle("acTemporalAa", false, () -> OptionOF.TEMPORAL_AA)
+            .label(GameOptionRegistry::localizedBoolean)
+            .effect((effects, value, source) -> {
+                if (source == INTERACTION) effects.updateOptionTemporalAa(value);
+            }));
+    public static final OptionDefinition<Integer> RENDER_SCALE = define(
+        integer("acRenderScale", 0, 0, 4).option(() -> OptionOF.RENDER_SCALE)
+            .cycle(value -> (value + 1) % 5)
+            .label((value, translations) -> switch (value) {
+                case 1 -> "85%";
+                case 2 -> "75%";
+                case 3 -> "67%";
+                case 4 -> "50%";
+                default -> translations.get("options.ac.renderScale.native");
+            })
+            .effect((effects, value, source) -> {
+                if (source == INTERACTION) effects.updateOptionRenderScale(value);
+            }));
+    public static final OptionDefinition<Integer> PARALLAX_MAPPING = define(
+        integer("acParallaxMapping", 0, 0, 2).option(() -> OptionOF.PARALLAX_MAPPING)
+            .cycle(value -> (value + 1) % 3)
+            .label((value, translations) -> translations.get(switch (value) {
+                case 1 -> "options.ac.parallaxMapping.fast";
+                case 2 -> "options.ac.parallaxMapping.fancy";
+                default -> "options.ac.parallaxMapping.off";
+            }))
+            .effect((effects, value, source) -> {
+                if (source == INTERACTION) effects.updateOptionParallaxMapping(value);
+            }));
+    public static final OptionDefinition<Integer> RAY_RECONSTRUCTION = define(
+        integer("acRayReconstruction", 0, 0, 2).option(() -> OptionOF.RAY_RECONSTRUCTION)
+            .cycle((value, direction) -> nextNativeMode(NativeRenderingOptions.Group.RECONSTRUCTION, value, direction))
+            .label((value, translations) -> translations.get(switch (value) {
+                case 1 -> "options.ac.rayReconstruction.dlss";
+                case 2 -> "options.ac.rayReconstruction.nrd";
+                default -> "options.ac.rayReconstruction.builtin";
+            }))
+            .effect((effects, value, source) -> {
+                if (source == INTERACTION) effects.updateOptionRayReconstruction(value);
+            }));
+    public static final OptionDefinition<Integer> UPSCALER = define(
+        integer("acUpscaler", 0, 0, 2).option(() -> OptionOF.UPSCALER)
+            .cycle((value, direction) -> nextNativeMode(NativeRenderingOptions.Group.UPSCALER, value, direction))
+            .label((value, translations) -> translations.get(switch (value) {
+                case 1 -> "options.ac.upscaler.dlss";
+                case 2 -> "options.ac.upscaler.fsr";
+                default -> "options.ac.upscaler.cubic";
+            }))
+            .effect((effects, value, source) -> {
+                if (source == INTERACTION) effects.updateOptionUpscaler(value);
+            }));
+    public static final OptionDefinition<Integer> FRAME_GENERATION = define(
+        integer("acFrameGeneration", 0, 0, 2).option(() -> OptionOF.FRAME_GENERATION)
+            .cycle((value, direction) -> nextNativeMode(NativeRenderingOptions.Group.FRAME_GENERATION, value, direction))
+            .label((value, translations) -> translations.get(switch (value) {
+                case 1 -> "options.ac.frameGeneration.dlss";
+                case 2 -> "options.ac.frameGeneration.fsr";
+                default -> "options.ac.frameGeneration.off";
+            }))
+            .effect((effects, value, source) -> {
+                if (source == INTERACTION) effects.updateOptionFrameGeneration(value);
+            }));
     public static final OptionDefinition<Integer> CHAT_MESSAGE_BUFFER_LIMIT = define(
         integerSlider("chatMessageBufferLimit", 100, 1, 10000)
             .option(() -> OptionOF.CHAT_MESSAGE_BUFFER_LIMIT));
@@ -143,6 +220,15 @@ public final class GameOptionRegistry {
     public static final List<OptionDefinition<?>> VALUES = List.copyOf(DEFINITIONS);
 
     private GameOptionRegistry() {
+    }
+
+    private static int nextNativeMode(NativeRenderingOptions.Group group, int current, int direction) {
+        int step = direction < 0 ? -1 : 1;
+        for (int offset = 1; offset <= 3; offset++) {
+            int candidate = Math.floorMod(current + step * offset, 3);
+            if (candidate == 0 || NativeRenderingOptions.status(group, candidate).available()) return candidate;
+        }
+        return current;
     }
 
     private static <T> OptionDefinition<T> define(OptionDefinition.Builder<T> builder) {

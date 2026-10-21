@@ -31,6 +31,7 @@ public final class VulkanSwapchain implements AutoCloseable {
     private int swapInterval;
     private int presentMode = VK_PRESENT_MODE_FIFO_KHR;
     private int nonFifoPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+    private boolean generatedPresentation;
     private boolean dirty = true;
     private boolean closed;
 
@@ -73,11 +74,23 @@ public final class VulkanSwapchain implements AutoCloseable {
 
     /** Source must be VK_FORMAT_R8G8B8A8_UNORM in VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL. */
     public synchronized void present(long sourceImage, int sourceWidth, int sourceHeight) {
+        generatedPresentation = false;
         presentImage(sourceImage, sourceWidth, sourceHeight);
     }
 
+    /**
+     * FIFO preserves both requests instead of letting MAILBOX replace the generated frame.
+     * This can add queue latency; it does not establish evenly spaced interpolation times.
+     * A zero generated image keeps FIFO during a producing backend's history reset.
+     */
+    public synchronized void presentGeneratedPair(long generatedImage, long realImage, int sourceWidth, int sourceHeight) {
+        generatedPresentation = true;
+        if (generatedImage != VK_NULL_HANDLE) presentImage(generatedImage, sourceWidth, sourceHeight);
+        presentImage(realImage, sourceWidth, sourceHeight);
+    }
+
     private int requestedPresentMode() {
-        return swapInterval != 0 ? VK_PRESENT_MODE_FIFO_KHR : nonFifoPresentMode;
+        return generatedPresentation || swapInterval != 0 ? VK_PRESENT_MODE_FIFO_KHR : nonFifoPresentMode;
     }
 
     private void presentImage(long sourceImage, int sourceWidth, int sourceHeight) {
@@ -251,7 +264,7 @@ public final class VulkanSwapchain implements AutoCloseable {
                     break;
                 }
             }
-            int selectedMode = swapInterval != 0 ? VK_PRESENT_MODE_FIFO_KHR : preferredMode;
+            int selectedMode = generatedPresentation || swapInterval != 0 ? VK_PRESENT_MODE_FIFO_KHR : preferredMode;
             var createInfo = VkSwapchainCreateInfoKHR.calloc(stack).sType$Default()
                 .surface(this.context.surface()).minImageCount(imageCount)
                 .imageFormat(format).imageColorSpace(colorSpace).imageArrayLayers(1)

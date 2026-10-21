@@ -4,6 +4,7 @@ import dev.adventurecraft.awakening.client.render.resource.RenderTexture;
 import dev.adventurecraft.awakening.client.render.state.DrawParameters;
 import dev.adventurecraft.awakening.client.render.state.MaterialRecipe;
 import dev.adventurecraft.awakening.client.render.vulkan.VulkanRenderer;
+import dev.adventurecraft.awakening.client.render.texture.TextureStore;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
@@ -35,6 +36,34 @@ public final class NativeRenderer {
 
     public static VulkanRenderer.Mesh uploadWorldQuads(List<ByteBuffer> blocks, int vertexCount, int atlasId, boolean translucent) {
         return backend().uploadWorldQuads(blocks, vertexCount, atlasId, translucent);
+    }
+
+    public static VulkanRenderer.Mesh uploadOccluderQuads(List<ByteBuffer> blocks, int vertexCount) {
+        return backend().uploadOccluderQuads(blocks, vertexCount);
+    }
+
+    /** Called only when an already resident chunk is rebuilt with different surface content. */
+    public static void terrainGeometryChanged() {
+        if (RenderSystem.isInitialized()) backend().terrainGeometryChanged();
+    }
+
+    public static void worldAtlas(int atlas, RenderTexture texture) {
+        if (!backend().rayTracingSupported()) return;
+        backend().terrainTextureGeneration(TextureStore.materialGeneration());
+        try (var snapshot = TextureStore.prepare(texture)) {
+            backend().worldAtlas(atlas, snapshot.nativeTexture());
+        }
+    }
+
+    /** Albedo, LabPBR normal/AO/height and LabPBR specular/emission for one atlas. */
+    public static void worldAtlas(int atlas, RenderTexture albedo, RenderTexture normal, RenderTexture specular) {
+        if (!backend().rayTracingSupported()) return;
+        backend().terrainTextureGeneration(TextureStore.materialGeneration());
+        try (var a = TextureStore.prepare(albedo);
+             var n = TextureStore.prepare(normal);
+             var s = TextureStore.prepare(specular)) {
+            backend().worldAtlas(atlas, a.nativeTexture(), n.nativeTexture(), s.nativeTexture());
+        }
     }
 
     /** Retirement always happens on the render thread, including GC retirement. */

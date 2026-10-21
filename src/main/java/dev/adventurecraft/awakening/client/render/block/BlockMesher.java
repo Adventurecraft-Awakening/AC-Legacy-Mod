@@ -3,6 +3,7 @@ package dev.adventurecraft.awakening.client.render.block;
 import dev.adventurecraft.awakening.client.render.OffsetVertexSink;
 import dev.adventurecraft.awakening.client.render.VertexSink;
 import dev.adventurecraft.awakening.client.render.VertexFormat;
+import dev.adventurecraft.awakening.client.render.RayLighting;
 import dev.adventurecraft.awakening.client.render.material.MapMaterials;
 import dev.adventurecraft.awakening.client.render.material.MaterialProfile;
 import dev.adventurecraft.awakening.client.render.chunk.LevelRegion;
@@ -3546,8 +3547,7 @@ public final class BlockMesher {
 
     private boolean ac$tesselateInWorld(Tile block, int x, int y, int z) {
         this.materialTint = this.foliageColor(block, x, y, z);
-        this.materialEmission = this.level instanceof LevelRegion region ? region.emission(x, y, z)
-            : MapMaterials.vertexEmission(this.level, block, x, y, z);
+        this.materialEmission = RayLighting.vertexEmission(this.level, block, x, y, z);
         int manifestFlags = MapMaterials.flags(this.level, block, x, y, z);
         this.materialFlags = block.material == Material.LEAVES || block.material == Material.PLANT ? VertexFormat.THIN_FOLIAGE : 0;
         if ((manifestFlags & MaterialProfile.FLAG_THIN) != 0) this.materialFlags |= VertexFormat.THIN_FOLIAGE;
@@ -3562,6 +3562,9 @@ public final class BlockMesher {
             ? VertexFormat.WATER : 0;
         if ((manifestFlags & MaterialProfile.FLAG_TRANSMISSIVE) != 0) {
             surfaceFlags |= VertexFormat.TRANSMISSIVE;
+        }
+        if (this.level instanceof LevelRegion region && region.rainExposed(x, y, z)) {
+            surfaceFlags |= VertexFormat.RAIN_EXPOSED;
         }
         this.writer.ac$surfaceFlags(surfaceFlags);
         try {

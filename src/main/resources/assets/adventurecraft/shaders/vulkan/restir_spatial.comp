@@ -1,0 +1,96 @@
+#version 460
+#include "restir_common.glsl"
+#include "restir_reconstruction_distance.glsl"
+layout(local_size_x = 8, local_size_y = 8) in;
+
+void main() {
+    ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
+    if (!restirInBounds(pixel)) return;
+    uint pixelIndex = restirPixelIndex(pixel);
+    RestirSurface surface = restirSurface(pixel,false);
+    RestirReservoir reservoir = restirEmpty();
+    vec3 direct = vec3(0.0);
+    vec3 diffuseSignal = vec3(0.0), specularSignal = vec3(0.0);
+    float hitDistance = 0.0;
+    if (surface.valid) {
+        RestirParameters parameters = RestirParameters(restirPush.parameterAddress);
+        uint rng = restirHash(pixelIndex^restirHash(parameters.dimensions.w+0x68bc21ebu));
+        RestirReservoirs initial = RestirReservoirs(restirPush.initialAddress);
+        ivec2 sources[9];
+        sources[0] = pixel;
+        uint sourceCount = 1u;
+        int selectedSource = 0;
+        restirMerge(reservoir,initial.values[pixelIndex],surface,1024u,rng);
+        uint neighbors = uint(clamp(parameters.settings.z,0.0,8.0));
+        float radius = clamp(parameters.settings.w,1.0,64.0);
+        for (uint neighbor=0u;neighbor<neighbors;neighbor++) {
+            float angle = restirRandom(rng)*6.28318530718;
+            float distance = sqrt(restirRandom(rng))*radius;
+            ivec2 samplePixel = pixel+ivec2(round(vec2(cos(angle),sin(angle))*distance));
+            if (!restirInBounds(samplePixel) || all(equal(pixel,samplePixel))) continue;
+            RestirSurface other = restirSurface(samplePixel,false);
+            if (!restirCompatible(surface,other)) continue;
+            sources[sourceCount] = samplePixel;
+            if (restirMerge(reservoir,initial.values[restirPixelIndex(samplePixel)],surface,1024u,rng)) {
+                selectedSource = int(sourceCount);
+            }
+            sourceCount++;
+        }
+        if (reservoir.weights.z>0.0) {
+            RestirEmitters source = RestirEmitters(restirPush.emitterAddress);
+            RestirEmitter light = source.emitters[reservoir.key.z];
+            float numerator = 0.0, denominator = 0.0, currentTarget = 0.0;
+            for (uint i=0u;i<sourceCount;i++) {
+                RestirSurface origin = i==0u ? surface : restirSurface(sources[i],false);
+                float target = restirVisibleTarget(origin,light,reservoir.sampleData);
+                if (i==0u) currentTarget = target;
+                if (int(i)==selectedSource) numerator = target;
+                uint count = restirReuseCount(initial.values[restirPixelIndex(sources[i])],1024u);
+                denominator += target*float(count);
+            }
+            restirNormalizeMis(reservoir,numerator,denominator);
+            if (currentTarget>0.0) {
+                direct = restirEvaluate(surface,light,reservoir.sampleData)*reservoir.weights.y;
+                if ((parameters.dimensions.z&8u)!=0u) {
+                    // Evaluate the same selected sample and normalization, retaining the
+                    // actual diffuse/specular lobes before material modulation.
+                    vec3 emitterNormal;
+                    vec3 point = restirEmitterPosition(light,reservoir.sampleData,emitterNormal);
+                    vec3 delta = point-surface.position;
+                    hitDistance = length(delta);
+                    vec3 direction = delta/max(hitDistance,0.00001);
+                    float relative = hitDistance/light.positionRadius.w;
+                    float window = max(1.0-relative*relative,0.0);
+                    vec3 incident = linearColor(light.colorIntensity.rgb)*max(light.colorIntensity.w,0.0)
+                        *(0.9*window*window/(1.0+0.22*hitDistance*hitDistance));
+                    if (light.halfExtent>0.0) incident *= (2.0/3.0)*max(dot(emitterNormal,-direction),0.0);
+                    diffuseSignal = max(incident*max(dot(surface.normal,direction),0.0)*reservoir.weights.y,vec3(0.0));
+                    vec3 view = parameters.eyeOrigin.xyz-surface.position;
+                    view = length(view)>0.000001 ? normalize(view) : surface.normal;
+                    specularSignal = diffuseSignal*specularBrdf(surface.normal,view,direction,surface.f0,surface.roughness)
+                        /max(surface.f0,vec3(0.02));
+                }
+            }
+            else reservoir.weights.y = 0.0;
+        }
+    }
+    RestirReservoirs(restirPush.spatialAddress).values[pixelIndex] = reservoir;
+    RestirRadiance(restirPush.rawAddress).values[pixelIndex] = vec4(direct,surface.valid ? 1.0 : 0.0);
+    RestirParameters parameters = RestirParameters(restirPush.parameterAddress);
+    if ((parameters.dimensions.z&8u)!=0u) {
+        uint pixels = parameters.dimensions.x*parameters.dimensions.y;
+        float diffuseDistance = 0.0, specularDistance = 0.0;
+        if (surface.valid) {
+            uint rng = restirHash(pixelIndex^restirHash(parameters.dimensions.w+0x19b3c62du));
+            vec3 diffuseDirection = hemisphere(surface.normal,restirRandom(rng),restirRandom(rng));
+            if (dot(surface.geometricNormal,diffuseDirection)<=0.0) diffuseDirection = surface.geometricNormal;
+            diffuseDistance = reconstructionHitDistance(surface,diffuseDirection);
+            vec3 view = parameters.eyeOrigin.xyz-surface.position;
+            view = length(view)>0.000001 ? normalize(view) : surface.normal;
+            specularDistance = reconstructionHitDistance(surface,reconstructionSpecularDirection(surface,view,
+                vec2(restirRandom(rng),restirRandom(rng))));
+        }
+        RestirRadiance(restirPush.rawAddress).values[pixelIndex+pixels] = vec4(diffuseSignal,diffuseDistance);
+        RestirRadiance(restirPush.rawAddress).values[pixelIndex+pixels*2u] = vec4(specularSignal,specularDistance);
+    }
+}

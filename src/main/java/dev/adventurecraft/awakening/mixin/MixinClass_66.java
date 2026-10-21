@@ -2,6 +2,9 @@ package dev.adventurecraft.awakening.mixin;
 
 import dev.adventurecraft.awakening.client.render.chunk.ChunkBuilder;
 import dev.adventurecraft.awakening.client.render.chunk.ChunkMesh;
+import dev.adventurecraft.awakening.client.render.NativeRenderer;
+import dev.adventurecraft.awakening.client.render.RenderSystem;
+import dev.adventurecraft.awakening.client.render.chunk.ChunkMeshFingerprint;
 import dev.adventurecraft.awakening.client.render.chunk.LevelRegion;
 import dev.adventurecraft.awakening.client.render.mesh.BlockAllocator;
 import dev.adventurecraft.awakening.client.render.mesh.MemoryMesh;
@@ -75,6 +78,9 @@ public abstract class MixinClass_66 implements ExClass_66 {
     @Unique private RenderDevice renderDevice;
     @Unique private BlockAllocator blockAllocator;
     @Unique private long meshGeneration;
+    @Unique private boolean ac$hasSubmittedGeometry;
+    @Unique private long ac$geometryFingerprint;
+    @Unique private @Nullable ChunkMesh ac$occluderMesh;
 
     @Unique private final List<ChunkMesh>[] meshLayers = new List[ChunkMesh.MAX_RENDER_LAYERS];
     @Unique private final Set<TileEntity> tileEntitySet = new IdentityHashSet<>();
@@ -106,6 +112,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
     )
     public void setNeedsBoxUpdate(int x, int y, int z, CallbackInfo ci) {
         ++this.meshGeneration;
+        this.ac$hasSubmittedGeometry = false;
         this.bb = AABB.create(x, y, z, x + this.xs, y + this.ys, z + this.zs);
         this.setDirty();
         this.isVisibleFromPosition = false;
@@ -119,6 +126,10 @@ public abstract class MixinClass_66 implements ExClass_66 {
 
     @Unique
     private void deleteBuffers() {
+        if (this.ac$occluderMesh != null) {
+            this.ac$occluderMesh.delete(this.renderDevice);
+            this.ac$occluderMesh = null;
+        }
         for (List<ChunkMesh> list : this.meshLayers) {
             if (list == null) {
                 continue;
@@ -138,6 +149,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
     )
     private void onReset(CallbackInfo ci) {
         ++this.meshGeneration;
+        this.ac$hasSubmittedGeometry = false;
         this.deleteBuffers();
 
         if (!this.tileEntitySet.isEmpty()) {
@@ -242,6 +254,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
 
         this.deleteBuffers();
 
+        long fingerprint = ChunkMeshFingerprint.SEED;
         for (int layer = 0; layer < this.meshLayers.length; ++layer) {
             for (int texId = 0; texId < ChunkMesh.MAX_TEXTURES; ++texId) {
                 int meshIndex = (layer * ChunkMesh.MAX_TEXTURES) + texId;
@@ -253,6 +266,7 @@ public abstract class MixinClass_66 implements ExClass_66 {
                 }
 
                 try (MemoryMesh meshData = tesselator.takeMesh()) {
+                    fingerprint = ChunkMeshFingerprint.append(fingerprint, meshData.vertexBlocks, meshIndex);
                     var mesh = ChunkMesh.fromMemory(this.renderDevice, meshData, texId, layer);
                     this.meshLayers[layer].add(mesh);
                 }
@@ -263,8 +277,27 @@ public abstract class MixinClass_66 implements ExClass_66 {
             this.empty[layer] = this.meshLayers[layer].isEmpty();
         }
 
+        builder.occluders.end();
+        if (!builder.occluders.isEmpty()) {
+            try (MemoryMesh occluders = builder.occluders.takeMesh()) {
+                fingerprint = ChunkMeshFingerprint.append(fingerprint, occluders.vertexBlocks,
+                    ChunkMesh.MAX_RENDER_LAYERS * ChunkMesh.MAX_TEXTURES);
+                if (RenderSystem.isInitialized() && RenderSystem.renderer().rayTracingSupported()) {
+                    this.ac$occluderMesh = ChunkMesh.fromOccluders(this.renderDevice, occluders);
+                }
+            }
+        }
+
         this.skyLit = builder.region.touchedSky;
         this.compiled = true;
+        // A recycled/new chunk is streaming, not a world edit. Identical remeshes
+        // likewise must not repeatedly discard the persistent radiance cache.
+        if (this.ac$hasSubmittedGeometry && this.ac$geometryFingerprint != fingerprint) {
+            NativeRenderer.terrainGeometryChanged();
+        }
+        this.ac$geometryFingerprint = fingerprint;
+        this.ac$hasSubmittedGeometry = true;
+
         StringBuilder traceBuilder = builder.getTraceBuilder();
         if (traceBuilder != null) {
             ACMod.LOGGER.trace("Chunk at X:{} Y:{} Z:{} - build time: \n{}", this.x, this.y, this.z, traceBuilder);

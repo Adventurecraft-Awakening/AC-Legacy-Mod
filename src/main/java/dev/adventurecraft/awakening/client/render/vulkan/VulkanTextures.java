@@ -274,6 +274,7 @@ final class VulkanTextures implements AutoCloseable {
 
         VulkanImage image() { return image; }
         long descriptor() { return descriptor; }
+        VulkanRayScene.TextureBinding rayBinding() { return new VulkanRayScene.TextureBinding(sampler(samplerKey), view); }
         int width() { return image.width; }
         int height() { return image.height; }
         int sampledWidth() { return Math.max(1, image.width >> baseLevel); }
